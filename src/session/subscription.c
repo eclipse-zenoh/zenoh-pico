@@ -25,8 +25,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-_Bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this) {
-    return this->_id == other->_id;
+_Bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
+    return this_->_id == other->_id;
 }
 
 void _z_subscription_clear(_z_subscription_t *sub) {

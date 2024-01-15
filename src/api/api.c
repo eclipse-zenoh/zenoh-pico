@@ -1093,9 +1093,9 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     return _zp_send_join(zs._val);
 }
 
-void _z_bytes_pair_clear(struct _z_bytes_pair_t *this) {
-    _z_bytes_clear(&this->key);
-    _z_bytes_clear(&this->value);
+void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_) {
+    _z_bytes_clear(&this_->key);
+    _z_bytes_clear(&this_->value);
 }
 
 z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_) {

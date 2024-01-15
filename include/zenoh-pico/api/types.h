@@ -559,7 +559,7 @@ struct _z_bytes_pair_t {
     _z_bytes_t value;
 };
 
-void _z_bytes_pair_clear(struct _z_bytes_pair_t *this);
+void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_);
 
 _Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)

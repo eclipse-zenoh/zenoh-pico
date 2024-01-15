@@ -83,23 +83,23 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
     while (current != NULL) {
         if (c_f(left, current->_val) == true) {
-            _z_list_t *this = current;
+            _z_list_t *this_ = current;
 
             // head removal
-            if (this == l) {
+            if (this_ == l) {
                 l = l->_tail;
             }
             // tail removal
-            else if (this->_tail == NULL) {
+            else if (this_->_tail == NULL) {
                 previous->_tail = NULL;
             }
             // middle removal
             else {
-                previous->_tail = this->_tail;
+                previous->_tail = this_->_tail;
             }
 
-            f_f(&this->_val);
-            z_free(this);
+            f_f(&this_->_val);
+            z_free(this_);
             break;
         } else {
             previous = current;
