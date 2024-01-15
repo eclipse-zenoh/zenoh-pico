@@ -544,12 +544,14 @@ z_owned_session_t z_open(z_owned_config_t *config) {
 }
 
 int8_t z_close(z_owned_session_t *zs) {
-    int8_t ret = _Z_RES_OK;
-
+    if ((zs == NULL) || (zs->_value == NULL)) {
+        return _Z_RES_OK;
+    }
     _z_close(zs->_value);
-    _z_session_free(&zs->_value);
-
-    return ret;
+    _z_session_clear(zs->_value);
+    zp_free(zs->_value);
+    zs->_value = NULL;
+    return _Z_RES_OK;
 }
 
 int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {

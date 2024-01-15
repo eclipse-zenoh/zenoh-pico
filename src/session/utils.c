@@ -121,17 +121,6 @@ void _z_session_clear(_z_session_t *zn) {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
-void _z_session_free(_z_session_t **zn) {
-    _z_session_t *ptr = *zn;
-
-    if (ptr != NULL) {
-        _z_session_clear(ptr);
-
-        zp_free(ptr);
-        *zn = NULL;
-    }
-}
-
 int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
     int8_t ret = _Z_ERR_GENERIC;
 
