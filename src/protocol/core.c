@@ -128,8 +128,8 @@ void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att) {
         _z_bytes_clear(&att->body.encoded);
     }
 }
-inline _Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
-inline int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx) {
+_Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
+int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx) {
     return this_.iteration_driver(this_.data, body, ctx);
 }
 z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
