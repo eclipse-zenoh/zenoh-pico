@@ -25,6 +25,7 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 
 #define _Z_OPTIONAL
@@ -98,6 +99,7 @@ typedef struct z_attachment_vtable_t {
      */
     z_attachment_iter_driver_t iteration_driver;
 } z_attachment_vtable_t;
+
 /**
  * A v-table based map of byte slice to byte slice.
  *
@@ -109,12 +111,24 @@ typedef struct z_attachment_t {
     z_attachment_iter_driver_t iteration_driver;
 } z_attachment_t;
 
-inline z_attachment_t z_attachment_null() { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
-inline _Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
-inline int8_t z_attachment_iterate(z_attachment_t this, z_attachment_iter_body_t body, void *ctx) {
-    return this.iteration_driver(this.data, body, ctx);
-}
+z_attachment_t z_attachment_null(void);
+_Bool z_attachment_check(const z_attachment_t *attachment);
+int8_t z_attachment_iterate(z_attachment_t this, z_attachment_iter_body_t body, void *ctx);
 _z_bytes_t z_attachment_get(z_attachment_t this, _z_bytes_t key);
+
+typedef struct {
+    union {
+        z_attachment_t decoded;
+        _z_bytes_t encoded;
+    } body;
+    _Bool is_encoded;
+} _z_owned_encoded_attachment_t;
+/**
+ * Estimate the length of an attachment once encoded.
+ */
+size_t _z_attachment_estimate_length(z_attachment_t att);
+z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
+void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att);
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);

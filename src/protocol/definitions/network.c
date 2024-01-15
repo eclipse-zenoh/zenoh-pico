@@ -168,7 +168,8 @@ _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id) {
     return ret;
 }
 _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
-                                     z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value) {
+                                     z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
+                                     z_attachment_t attachment) {
     return (_z_zenoh_message_t){
         ._tag = _Z_N_REQUEST,
         ._body._request =
@@ -176,13 +177,11 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                 ._rid = qid,
                 ._key = _z_keyexpr_steal(key),
                 ._tag = _Z_REQUEST_QUERY,
-                ._body._query =
-                    {
-                        ._parameters = _z_bytes_steal(parameters),
-                        ._ext_consolidation = consolidation,
-                        ._ext_value = _z_value_steal(value),
-                        ._ext_info = _z_source_info_null(),
-                    },
+                ._body._query = {._parameters = _z_bytes_steal(parameters),
+                                 ._ext_consolidation = consolidation,
+                                 ._ext_value = _z_value_steal(value),
+                                 ._ext_info = _z_source_info_null(),
+                                 ._ext_attachment = attachment},
                 ._ext_budget = 0,
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,

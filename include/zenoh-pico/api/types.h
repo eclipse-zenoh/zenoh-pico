@@ -274,9 +274,11 @@ typedef struct {
  *
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
+ *   z_attachment_t attachment: an attachment to the response.
  */
 typedef struct {
     z_encoding_t encoding;
+    z_attachment_t attachment;
 } z_query_reply_options_t;
 
 /**
@@ -559,8 +561,8 @@ struct _z_bytes_pair_t {
 
 void _z_bytes_pair_clear(struct _z_bytes_pair_t *this);
 
-_Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy);
-_Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t);
+_Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
 
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.

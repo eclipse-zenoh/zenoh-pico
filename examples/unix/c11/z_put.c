@@ -14,10 +14,16 @@
 
 #include <ctype.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
+
+#include "zenoh-pico/api/macros.h"
+#include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/core.h"
 
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
@@ -89,16 +95,19 @@ int main(int argc, char **argv) {
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hi", 2), _z_bytes_wrap((uint8_t *)"there", 5));
+    options.attachment = z_bytes_map_as_attachment(&map);
     if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
+    z_bytes_map_drop(&map);
     // z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
-
     z_close(z_move(s));
     return 0;
 }

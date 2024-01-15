@@ -230,7 +230,8 @@ _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
-                                       z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value);
+                                       z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
+                                       z_attachment_t attachment);
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_value_t) value);
 _z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);

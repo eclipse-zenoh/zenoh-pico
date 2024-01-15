@@ -153,7 +153,8 @@ _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_lo
 }
 
 int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp) {
+                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
+                                z_attachment_t att) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -177,6 +178,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
+        s.attachment = att;
         _z_subscription_sptr_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs\n", (uintmax_t)_z_subscription_sptr_list_len(xs));
         while (xs != NULL) {

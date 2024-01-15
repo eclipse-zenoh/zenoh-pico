@@ -18,7 +18,11 @@
 #include <string.h>
 
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/protocol/codec/core.h"
+#include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/utils/logging.h"
 
 uint8_t _z_id_len(_z_id_t id) {
     uint8_t len = 16;
@@ -86,3 +90,46 @@ _z_bytes_t z_attachment_get(z_attachment_t this, _z_bytes_t key) {
     z_attachment_iterate(this, _z_attachment_get_seeker, (void *)&seeker);
     return seeker.value;
 }
+int8_t _z_attachment_estimate_length_body(_z_bytes_t key, _z_bytes_t value, void *ctx) {
+    size_t *len = (size_t *)ctx;
+    *len += _z_zint_len(key.len) + key.len + _z_zint_len(value.len) + value.len;
+    return 0;
+}
+size_t _z_attachment_estimate_length(z_attachment_t att) {
+    size_t len = 0;
+    z_attachment_iterate(att, _z_attachment_estimate_length_body, &len);
+    return len;
+}
+
+int8_t _z_encoded_attachment_iteration_driver(const void *this, z_attachment_iter_body_t body, void *ctx) {
+    _z_zbuf_t data = _z_zbytes_as_zbuf(*(_z_bytes_t *)this);
+    while (_z_zbuf_can_read(&data)) {
+        _z_bytes_t key = _z_bytes_empty();
+        _z_bytes_t value = _z_bytes_empty();
+        _z_bytes_decode(&key, &data);
+        _z_bytes_decode(&value, &data);
+        int8_t ret = body(key, value, ctx);
+        if (ret != 0) {
+            return ret;
+        }
+    }
+    return 0;
+}
+
+z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att) {
+    if (att->is_encoded) {
+        return (z_attachment_t){.data = &att->body.encoded, .iteration_driver = _z_encoded_attachment_iteration_driver};
+    } else {
+        return att->body.decoded;
+    }
+}
+void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att) {
+    if (att->is_encoded) {
+        _z_bytes_clear(&att->body.encoded);
+    }
+}
+inline _Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
+inline int8_t z_attachment_iterate(z_attachment_t this, z_attachment_iter_body_t body, void *ctx) {
+    return this.iteration_driver(this.data, body, ctx);
+}
+z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }

@@ -18,6 +18,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -29,7 +30,8 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push) {
     _z_encoding_t encoding = push->_body._is_put ? push->_body._body._put._encoding : z_encoding_default();
     int kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
 #if Z_FEATURE_SUBSCRIPTION == 1
-    ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp);
+    z_attachment_t att = _z_encoded_as_attachment(&push->_body._body._put._attachment);
+    ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp, att);
 #endif
     return ret;
 }

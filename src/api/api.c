@@ -610,7 +610,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.priority = options->priority;
     }
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   opt.congestion_control, opt.priority);
+                   opt.congestion_control, opt.priority, options->attachment);
 
     return ret;
 }
@@ -624,7 +624,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.priority = options->priority;
     }
     ret = _z_write(zs._val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
-                   opt.priority);
+                   opt.priority, z_attachment_null());
 
     return ret;
 }
@@ -683,7 +683,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     }
 
     ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority);
+                   pub._val->_congestion_control, pub._val->_priority, options->attachment);
 
     return ret;
 }
@@ -691,7 +691,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
     (void)(options);
     return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                    pub._val->_congestion_control, pub._val->_priority);
+                    pub._val->_congestion_control, pub._val->_priority, z_attachment_null());
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
@@ -709,7 +709,8 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _
 z_get_options_t z_get_options_default(void) {
     return (z_get_options_t){.target = z_query_target_default(),
                              .consolidation = z_query_consolidation_default(),
-                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
+                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
+                             .attachment = z_attachment_null()};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -757,7 +758,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
-                   wrapped_ctx, callback->drop, ctx);
+                   wrapped_ctx, callback->drop, ctx, opt.attachment);
     return ret;
 }
 
@@ -1158,7 +1159,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         insert->key = _z_bytes_wrap(key.start, key.len);
         insert->value = _z_bytes_wrap(value.start, value.len);
-        _z_bytes_pair_list_push(this_->_inner, insert);
+        ((z_owned_bytes_map_t *)this_)->_inner = _z_bytes_pair_list_push(this_->_inner, insert);
     }
 }
 void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
@@ -1182,7 +1183,7 @@ void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key,
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         _z_bytes_copy(&insert->key, &key);
         _z_bytes_copy(&insert->value, &value);
-        _z_bytes_pair_list_push(this_->_inner, insert);
+        ((z_owned_bytes_map_t *)this_)->_inner = _z_bytes_pair_list_push(this_->_inner, insert);
     }
 }
 int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx) {

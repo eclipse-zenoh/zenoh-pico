@@ -25,7 +25,8 @@ _z_subscription_sptr_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8
 
 _z_subscription_sptr_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *sub);
 int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp);
+                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
+                                z_attachment_t att);
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_sptr_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
 

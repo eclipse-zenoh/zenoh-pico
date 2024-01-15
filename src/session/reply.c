@@ -16,6 +16,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/utils/logging.h"
 
