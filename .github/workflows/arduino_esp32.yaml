@@ -51,7 +51,7 @@ jobs:
 
           mkdir -p $ARDUINO_BASE
           cd $ARDUINO_BASE
-          platformio init -b esp32thing_plus --project-option="build_flags=-DZ_FEATURE_LINK_BLUETOOTH=1 -DZENOH_DEBUG=3"
+          platformio init -b esp32thing_plus --project-option="build_flags=-DZ_FEATURE_LINK_BLUETOOTH=1 -DZENOH_DEBUG=3 -DZENOH_COMPILER_GCC"
 
           cd $ARDUINO_BASE/lib
           ln -s $ZENOH_PICO_BASE
