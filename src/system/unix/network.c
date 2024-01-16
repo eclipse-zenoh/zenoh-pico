@@ -59,7 +59,7 @@ int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
-        z_time_t tv;
+        zp_time_t tv;
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -186,7 +186,7 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
-        z_time_t tv;
+        zp_time_t tv;
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -264,14 +264,14 @@ unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockad
             if (_z_str_eq(tmp->ifa_name, iface) == true) {
                 if (tmp->ifa_addr->sa_family == sa_family) {
                     if (tmp->ifa_addr->sa_family == AF_INET) {
-                        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
+                        *lsockaddr = (struct sockaddr *)zp_malloc(sizeof(struct sockaddr_in));
                         if (lsockaddr != NULL) {
                             (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in));
                             (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in));
                             addrlen = sizeof(struct sockaddr_in);
                         }
                     } else if (tmp->ifa_addr->sa_family == AF_INET6) {
-                        *lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in6));
+                        *lsockaddr = (struct sockaddr *)zp_malloc(sizeof(struct sockaddr_in6));
                         if (lsockaddr != NULL) {
                             (void)memset(*lsockaddr, 0, sizeof(struct sockaddr_in6));
                             (void)memcpy(*lsockaddr, tmp->ifa_addr, sizeof(struct sockaddr_in6));
@@ -300,7 +300,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
     if (addrlen != 0U) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
-            z_time_t tv;
+            zp_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -336,7 +336,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
 
             // Create lep endpoint
             if (ret == _Z_RES_OK) {
-                struct addrinfo *laddr = (struct addrinfo *)z_malloc(sizeof(struct addrinfo));
+                struct addrinfo *laddr = (struct addrinfo *)zp_malloc(sizeof(struct addrinfo));
                 if (laddr != NULL) {
                     laddr->ai_flags = 0;
                     laddr->ai_family = rep._iptcp->ai_family;
@@ -353,7 +353,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                     //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
                     // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
                     // #if defined(ZENOH_LINUX)
-                    //    z_free(lsockaddr);
+                    //    zp_free(lsockaddr);
                     // #endif
                 } else {
                     ret = _Z_ERR_GENERIC;
@@ -368,7 +368,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
         }
 
         if (ret != _Z_RES_OK) {
-            z_free(lsockaddr);
+            zp_free(lsockaddr);
         }
     } else {
         ret = _Z_ERR_GENERIC;
@@ -386,7 +386,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     if (addrlen != 0U) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
-            z_time_t tv;
+            zp_time_t tv;
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
@@ -470,7 +470,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
                         }
                     }
                 }
-                z_free(joins);
+                zp_free(joins);
             }
 
             if (ret != _Z_RES_OK) {
@@ -480,7 +480,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             ret = _Z_ERR_GENERIC;
         }
 
-        z_free(lsockaddr);
+        zp_free(lsockaddr);
     } else {
         ret = _Z_ERR_GENERIC;
     }

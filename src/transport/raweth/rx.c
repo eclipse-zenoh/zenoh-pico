@@ -27,10 +27,6 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-void print_buf(_z_zbuf_t *buf) {
-    printf("Buff info: %ld, %ld, %ld\n", buf->_ios._r_pos, buf->_ios._w_pos, buf->_ios._capacity);
-}
-
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
     size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr);
@@ -48,24 +44,41 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     if (has_vlan && (rb < sizeof(_zp_eth_vlan_header_t))) {
         return SIZE_MAX;
     }
-    // Update buffer but skip eth header
-    _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    size_t data_length = 0;
     if (has_vlan) {
+        _zp_eth_vlan_header_t *header = (_zp_eth_vlan_header_t *)buff;
+        // Retrieve data length
+        data_length = _z_raweth_ntohs(header->data_length);
+        if (rb < (data_length + sizeof(_zp_eth_vlan_header_t))) {
+            // Invalid data_length
+            return SIZE_MAX;
+        }
+        // Skip header
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + sizeof(_zp_eth_vlan_header_t) + data_length);
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_vlan_header_t));
     } else {
+        _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+        // Retrieve data length
+        data_length = _z_raweth_ntohs(header->data_length);
+        if (rb < (data_length + sizeof(_zp_eth_header_t))) {
+            // Invalid data_length
+            return SIZE_MAX;
+        }
+        // Skip header
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + sizeof(_zp_eth_header_t) + data_length);
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_header_t));
     }
-    return rb;
+    return data_length;
 }
 
 /*------------------ Reception helper ------------------*/
 int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
-    _Z_DEBUG(">> recv session msg\n");
+    _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    _z_mutex_lock(&ztm->_mutex_rx);
+    zp_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer
@@ -88,12 +101,12 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     }
     // Decode message
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju\n", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_rx);
+    zp_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

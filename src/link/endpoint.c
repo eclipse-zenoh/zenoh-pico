@@ -35,6 +35,8 @@
 #if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/link/config/ws.h"
 #endif
+#include "zenoh-pico/link/config/raweth.h"
+
 /*------------------ Locator ------------------*/
 void _z_locator_init(_z_locator_t *locator) {
     locator->_protocol = NULL;
@@ -54,7 +56,7 @@ void _z_locator_free(_z_locator_t **lc) {
     if (ptr != NULL) {
         _z_locator_clear(ptr);
 
-        z_free(ptr);
+        zp_free(ptr);
         *lc = NULL;
     }
 }
@@ -89,7 +91,7 @@ char *_z_locator_protocol_from_str(const char *str) {
         const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
         if ((p_end != NULL) && (p_start != p_end)) {
             size_t p_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-            ret = (char *)z_malloc(p_len);
+            ret = (char *)zp_malloc(p_len);
             if (ret != NULL) {
                 _z_str_n_copy(ret, p_start, p_len);
             }
@@ -116,7 +118,7 @@ char *_z_locator_address_from_str(const char *str) {
 
         if (p_start != p_end) {
             size_t a_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-            ret = (char *)z_malloc(a_len);
+            ret = (char *)zp_malloc(a_len);
             if (ret != NULL) {
                 _z_str_n_copy(ret, p_start, a_len);
             }
@@ -254,7 +256,7 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
  */
 char *_z_locator_to_str(const _z_locator_t *l) {
     size_t len = _z_locator_strlen(l) + (size_t)1;
-    char *dst = (char *)z_malloc(len);
+    char *dst = (char *)zp_malloc(len);
     if (dst != NULL) {
         __z_locator_onto_str(dst, len, l);
     }
@@ -279,7 +281,7 @@ void _z_endpoint_free(_z_endpoint_t **ep) {
         _z_locator_clear(&ptr->_locator);
         _z_str_intmap_clear(&ptr->_config);
 
-        z_free(ptr);
+        zp_free(ptr);
         *ep = NULL;
     }
 }
@@ -317,7 +319,9 @@ int8_t _z_endpoint_config_from_str(_z_str_intmap_t *strint, const char *str, con
             ret = _z_ws_config_from_str(strint, p_start);
         } else
 #endif
-        {
+            if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+            _z_raweth_config_from_str(strint, p_start);
+        } else {
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
         }
     }
@@ -354,10 +358,9 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, const char *proto) {
         len = _z_ws_config_strlen(s);
     } else
 #endif
-    {
-        __asm__("nop");
+        if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+        len = _z_raweth_config_strlen(s);
     }
-
     return len;
 }
 
@@ -390,10 +393,9 @@ char *_z_endpoint_config_to_str(const _z_str_intmap_t *s, const char *proto) {
         res = _z_ws_config_to_str(s);
     } else
 #endif
-    {
-        __asm__("nop");
+        if (_z_str_eq(proto, RAWETH_SCHEMA) == true) {
+        _z_raweth_config_to_str(s);
     }
-
     return res;
 }
 
@@ -428,7 +430,7 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
         }
 
         // Reconstruct the endpoint as a string
-        ret = (char *)z_malloc(len);
+        ret = (char *)zp_malloc(len);
         if (ret != NULL) {
             ret[0] = '\0';
             len = len - (size_t)1;

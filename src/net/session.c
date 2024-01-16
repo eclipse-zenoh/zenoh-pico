@@ -135,12 +135,12 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                     break;
                 }
             } else {
-                _Z_ERROR("Trying to configure an invalid mode.\n");
+                _Z_ERROR("Trying to configure an invalid mode.");
             }
         }
         _z_str_array_clear(&locators);
     } else {
-        _Z_ERROR("A valid config is missing.\n");
+        _Z_ERROR("A valid config is missing.");
         ret = _Z_ERR_GENERIC;
     }
 
@@ -150,7 +150,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
 void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
 
 _z_config_t *_z_info(const _z_session_t *zn) {
-    _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
+    _z_config_t *ps = (_z_config_t *)zp_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
         _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
@@ -179,10 +179,10 @@ int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_t
 int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
+int8_t _zp_start_read_task(_z_session_t *zn, zp_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    zp_task_t *task = (zp_task_t *)zp_malloc(sizeof(zp_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -203,15 +203,15 @@ int8_t _zp_start_read_task(_z_session_t *zn, _z_task_attr_t *attr) {
     }
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
-        z_free(task);
+        zp_free(task);
     }
     return ret;
 }
 
-int8_t _zp_start_lease_task(_z_session_t *zn, _z_task_attr_t *attr) {
+int8_t _zp_start_lease_task(_z_session_t *zn, zp_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    zp_task_t *task = (zp_task_t *)zp_malloc(sizeof(zp_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -232,7 +232,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn, _z_task_attr_t *attr) {
     }
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
-        z_free(task);
+        zp_free(task);
     }
     return ret;
 }

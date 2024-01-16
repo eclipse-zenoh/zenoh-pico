@@ -93,13 +93,26 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
  *
  * Returns:
  *   The :c:type:`z_bytes_t` pointing to key expression string representation if it's possible
-
  */
 z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
 
 /**
+ * Indicates if the key expression has been declared but don't guarantee it's still in session.
+ *
+ * If given keyexpr was declared, to retrieve the keyexpr string representation the user must use
+ * :c:func:zp_keyexpr_resolve
+ *
+ * Parameters:
+ *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
+ *
+ * Returns:
+ *   Returns ``true`` if the keyexpr was declared or ``false`` otherwise.
+ */
+_Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr);
+
+/**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
- * The user is responsible of dropping the returned string using ``z_free``.
+ * The user is responsible of dropping the returned string using ``zp_free``.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to resolve the keyexpr.

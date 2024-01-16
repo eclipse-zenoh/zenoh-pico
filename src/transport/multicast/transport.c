@@ -52,17 +52,17 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&ztm->_mutex_tx);
+    ret = zp_mutex_init(&ztm->_mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztm->_mutex_rx);
+        ret = zp_mutex_init(&ztm->_mutex_rx);
         if (ret == _Z_RES_OK) {
-            ret = _z_mutex_init(&ztm->_mutex_peer);
+            ret = zp_mutex_init(&ztm->_mutex_peer);
             if (ret != _Z_RES_OK) {
-                _z_mutex_free(&ztm->_mutex_tx);
-                _z_mutex_free(&ztm->_mutex_rx);
+                zp_mutex_free(&ztm->_mutex_tx);
+                zp_mutex_free(&ztm->_mutex_rx);
             }
         } else {
-            _z_mutex_free(&ztm->_mutex_tx);
+            zp_mutex_free(&ztm->_mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -78,9 +78,9 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_free(&ztm->_mutex_tx);
-            _z_mutex_free(&ztm->_mutex_rx);
-            _z_mutex_free(&ztm->_mutex_peer);
+            zp_mutex_free(&ztm->_mutex_tx);
+            zp_mutex_free(&ztm->_mutex_rx);
+            zp_mutex_free(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&ztm->_wbuf);
@@ -123,7 +123,7 @@ int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, c
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t initial_sn_tx = 0;
-    z_random_fill(&initial_sn_tx, sizeof(initial_sn_tx));
+    zp_random_fill(&initial_sn_tx, sizeof(initial_sn_tx));
     initial_sn_tx = initial_sn_tx & !_z_sn_modulo_mask(Z_SN_RESOLUTION);
 
     _z_conduit_sn_list_t next_sn;
@@ -135,7 +135,7 @@ int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, c
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     // Encode and send the message
-    _Z_INFO("Sending Z_JOIN message\n");
+    _Z_INFO("Sending Z_JOIN message");
     switch (zl->_cap._transport) {
         case Z_LINK_CAP_TRANSPORT_MULTICAST:
             ret = _z_link_send_t_msg(zl, &jsm);
@@ -183,17 +183,17 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL) {
-        _z_task_join(ztm->_read_task);
-        _z_task_free(&ztm->_read_task);
+        zp_task_join(ztm->_read_task);
+        zp_task_free(&ztm->_read_task);
     }
     if (ztm->_lease_task != NULL) {
-        _z_task_join(ztm->_lease_task);
-        _z_task_free(&ztm->_lease_task);
+        zp_task_join(ztm->_lease_task);
+        zp_task_free(&ztm->_lease_task);
     }
     // Clean up the mutexes
-    _z_mutex_free(&ztm->_mutex_tx);
-    _z_mutex_free(&ztm->_mutex_rx);
-    _z_mutex_free(&ztm->_mutex_peer);
+    zp_mutex_free(&ztm->_mutex_tx);
+    zp_mutex_free(&ztm->_mutex_rx);
+    zp_mutex_free(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

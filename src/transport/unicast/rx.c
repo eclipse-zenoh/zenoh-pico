@@ -28,11 +28,11 @@
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
-    _Z_DEBUG(">> recv session msg\n");
+    _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    _z_mutex_lock(&ztu->_mutex_rx);
+    zp_mutex_lock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -75,7 +75,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     } while (false);  // The 1-iteration loop to use continue to break the entire loop on error
 
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode\n");
+        _Z_DEBUG(">> \t transport_message_decode");
         ret = _z_transport_message_decode(t_msg, &ztu->_zbuf);
 
         // Mark the session that we have received data
@@ -85,7 +85,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztu->_mutex_rx);
+    zp_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -96,9 +96,11 @@ int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t
 }
 
 int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+    int8_t ret = _Z_RES_OK;
+
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
-            _Z_INFO("Received Z_FRAME message\n");
+            _Z_INFO("Received Z_FRAME message");
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
@@ -107,7 +109,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
-                    _Z_INFO("Reliable message dropped because it is out of order\n");
+                    _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
             } else {
@@ -115,7 +117,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
-                    _Z_INFO("Best effort message dropped because it is out of order\n");
+                    _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
             }
@@ -162,7 +164,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
                                         // zenoh messages are released when their transport message is released.
                 } else {
-                    _Z_DEBUG("Failed to decode defragmented message\n");
+                    _Z_DEBUG("Failed to decode defragmented message");
                 }
 
                 // Free the decoding buffer
@@ -174,7 +176,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
-            _Z_INFO("Received Z_KEEP_ALIVE message\n");
+            _Z_INFO("Received Z_KEEP_ALIVE message");
             break;
         }
 
@@ -189,17 +191,18 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
 
         case _Z_MID_T_CLOSE: {
-            _Z_INFO("Closing session as requested by the remote peer\n");
+            _Z_INFO("Closing session as requested by the remote peer");
+            ret = _Z_ERR_CONNECTION_CLOSED;
             break;
         }
 
         default: {
-            _Z_ERROR("Unknown session message ID\n");
+            _Z_ERROR("Unknown session message ID");
             break;
         }
     }
 
-    return _Z_RES_OK;
+    return ret;
 }
 #else
 int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {

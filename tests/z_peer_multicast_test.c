@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     zp_start_read_task(z_loan(s1), NULL);
     zp_start_lease_task(z_loan(s1), NULL);
 
-    z_sleep_s(SLEEP);
+    zp_sleep_s(SLEEP);
 
     config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     zp_start_read_task(z_loan(s2), NULL);
     zp_start_lease_task(z_loan(s2), NULL);
 
-    z_sleep_s(SLEEP * 5);
+    zp_sleep_s(SLEEP * 5);
 
     // Declare subscribers on second session
     char *s1_res = (char *)malloc(64);
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         memset(s1_res, 0, 64);
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
-        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
+        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)zp_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id,
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 
     // Write data from first session
     size_t len = MSG_LEN;
-    uint8_t *payload = (uint8_t *)z_malloc(len);
+    uint8_t *payload = (uint8_t *)zp_malloc(len);
     memset(payload, 1, MSG_LEN);
 
     total = MSG * SET;
@@ -133,13 +133,13 @@ int main(int argc, char **argv) {
     }
 
     // Wait to receive all the data
-    z_time_t now = z_time_now();
+    zp_time_t now = zp_time_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected) {
-        assert(z_time_elapsed_s(&now) < TIMEOUT);
+        assert(zp_time_elapsed_s(&now) < TIMEOUT);
         (void)(now);
         printf("Waiting for datas... %u/%u\n", datas, expected);
-        z_sleep_s(SLEEP);
+        zp_sleep_s(SLEEP);
     }
     if (is_reliable == true)
         assert(datas == expected);
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
         assert(datas >= expected);
     datas = 0;
 
-    z_sleep_s(SLEEP);
+    zp_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
     while (subs2) {
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
 
-    z_sleep_s(SLEEP);
+    zp_sleep_s(SLEEP);
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
@@ -172,12 +172,12 @@ int main(int argc, char **argv) {
     printf("Closing session 1\n");
     z_close(z_move(s1));
 
-    z_sleep_s(SLEEP);
+    zp_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
     z_close(z_move(s2));
 
-    z_free((uint8_t *)payload);
+    zp_free((uint8_t *)payload);
     payload = NULL;
 
     free(s1_res);

@@ -215,9 +215,9 @@ int main(int argc, char **argv) {
     assert(hellos >= 1);
 
     uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
-    z_sleep_ms(_scouting_timeout);
+    zp_sleep_ms(_scouting_timeout);
     printf("Ok\n");
-    z_sleep_s(SLEEP);
+    zp_sleep_s(SLEEP);
 
     z_owned_session_t s1 = z_open(z_move(_ret_config));
     assert(z_check(s1));

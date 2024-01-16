@@ -15,31 +15,24 @@ name: integration
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ["**"]
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
   schedule:
-    - cron: '0 6 * * 1-5'
+    - cron: "0 6 * * 1-5"
 
 jobs:
   build:
-
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macOS-latest ]
+        os: [ubuntu-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1.0.7
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+      - name: Clone this repository
+        uses: actions/checkout@v4
 
       - name: Compile debug
         run: make all
@@ -51,9 +44,10 @@ jobs:
 
       - name: Test debug
         run: make test
+        timeout-minutes: 15
         env:
-          BUILD_TYPE: Debug     # Workaround for Windows as it seems the previous step is being ignored
-          BUILD_TESTING: OFF    # Workaround for Windows as it seems the previous step is being ignored
-          BUILD_MULTICAST: OFF  # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_TYPE: Debug # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_MULTICAST: OFF # Workaround for Windows as it seems the previous step is being ignored
           BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
           ZENOH_BRANCH: master

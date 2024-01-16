@@ -26,7 +26,7 @@ _z_bytes_t _z_bytes_empty(void) { return (_z_bytes_t){.start = NULL, .len = 0, .
 int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity) {
     int8_t ret = _Z_RES_OK;
 
-    bs->start = (uint8_t *)z_malloc(capacity);
+    bs->start = (uint8_t *)zp_malloc(capacity);
     if (bs->start != NULL) {
         bs->len = capacity;
         bs->_is_alloc = true;
@@ -61,7 +61,7 @@ void _z_bytes_reset(_z_bytes_t *bs) {
 
 void _z_bytes_clear(_z_bytes_t *bs) {
     if ((bs->_is_alloc == true) && (bs->start != NULL)) {
-        z_free((uint8_t *)bs->start);
+        zp_free((uint8_t *)bs->start);
     }
     _z_bytes_reset(bs);
 }
@@ -72,7 +72,7 @@ void _z_bytes_free(_z_bytes_t **bs) {
     if (ptr != NULL) {
         _z_bytes_clear(ptr);
 
-        z_free(ptr);
+        zp_free(ptr);
         *bs = NULL;
     }
 }

@@ -53,15 +53,15 @@ void app_main(void) {
     }
 
     char *buf = (char *)pvPortMalloc(256);
-    z_clock_t now = z_clock_now();
+    zp_clock_t now = zp_clock_now();
     for (int idx = 0; 1;) {
-        if (z_clock_elapsed_ms(&now) > 1000) {
+        if (zp_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, VALUE);
             printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
             z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
             ++idx;
 
-            now = z_clock_now();
+            now = zp_clock_now();
         }
 
         zp_read(z_loan(s), NULL);

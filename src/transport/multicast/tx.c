@@ -42,11 +42,11 @@ _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliabili
 
 int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send session message\n");
+    _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    _z_mutex_lock(&ztm->_mutex_tx);
+    zp_mutex_lock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer eventually reserving space for the message length
@@ -65,7 +65,7 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_tx);
+    zp_mutex_unlock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -74,7 +74,7 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
 int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                                z_congestion_control_t cong_ctrl) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send network message\n");
+    _Z_DEBUG(">> send network message");
 
     _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
 
@@ -82,13 +82,13 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
     _Bool drop = false;
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
 #if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_lock(&ztm->_mutex_tx);
+        zp_mutex_lock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        int8_t locked = _z_mutex_trylock(&ztm->_mutex_tx);
+        int8_t locked = zp_mutex_trylock(&ztm->_mutex_tx);
         if (locked != (int8_t)0) {
-            _Z_INFO("Dropping zenoh message because of congestion control\n");
+            _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             drop = true;
         }
@@ -116,7 +116,7 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
             } else {
                 // The message does not fit in the current batch, let's fragment it
                 // Create an expandable wbuf for fragmentation
-                _z_wbuf_t fbf = _z_wbuf_make(ztm->_wbuf._capacity - 12, true);
+                _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
 
                 ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
@@ -150,7 +150,7 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
         }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_unlock(&ztm->_mutex_tx);
+        zp_mutex_unlock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     }
 

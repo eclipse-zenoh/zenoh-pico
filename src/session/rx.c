@@ -39,7 +39,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
-            _Z_DEBUG("Handling _Z_N_DECLARE\n");
+            _Z_DEBUG("Handling _Z_N_DECLARE");
             _z_n_msg_declare_t decl = msg->_body._declare;
             switch (decl._decl._tag) {
                 case _Z_DECL_KEXPR: {
@@ -81,20 +81,20 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             }
         } break;
         case _Z_N_PUSH: {
-            _Z_DEBUG("Handling _Z_N_PUSH\n");
+            _Z_DEBUG("Handling _Z_N_PUSH");
             _z_n_msg_push_t *push = &msg->_body._push;
             ret = _z_trigger_push(zn, push);
         } break;
         case _Z_N_REQUEST: {
-            _Z_DEBUG("Handling _Z_N_REQUEST\n");
+            _Z_DEBUG("Handling _Z_N_REQUEST");
             _z_n_msg_request_t req = msg->_body._request;
             switch (req._tag) {
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req._body._query;
-                    ret = _z_trigger_queryables(zn, query, req._key, req._rid);
+                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid);
 #else
-                    _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported\n");
+                    _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif
                 } break;
                 case _Z_REQUEST_PUT: {
@@ -130,7 +130,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             }
         } break;
         case _Z_N_RESPONSE: {
-            _Z_DEBUG("Handling _Z_N_RESPONSE\n");
+            _Z_DEBUG("Handling _Z_N_RESPONSE");
             _z_n_msg_response_t response = msg->_body._response;
             switch (response._tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
@@ -141,7 +141,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     // @TODO: expose errors to the user
                     _z_msg_err_t error = response._body._err;
                     _z_bytes_t payload = error._ext_value.payload;
-                    _Z_ERROR("Received Err for query %zu: code=%d, message=%.*s\n", response._request_id, error._code,
+                    _Z_ERROR("Received Err for query %zu: code=%d, message=%.*s", response._request_id, error._code,
                              (int)payload.len, payload.start);
                 } break;
                 case _Z_RESPONSE_BODY_ACK: {
@@ -165,7 +165,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             }
         } break;
         case _Z_N_RESPONSE_FINAL: {
-            _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL\n");
+            _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL");
             ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
         } break;
     }

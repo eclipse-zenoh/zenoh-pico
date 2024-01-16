@@ -38,11 +38,11 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = zp_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = zp_mutex_init(&zt->_transport._unicast._mutex_rx);
         if (ret != _Z_RES_OK) {
-            _z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -51,14 +51,21 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
         size_t dbuf_size = 0;
+        size_t wbuf_size = 0;
+        size_t zbuf_size = 0;
         _Bool expandable = false;
 
         switch (zl->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
+                // Add stream length field to buffer size
+                wbuf_size = mtu + _Z_MSG_LEN_ENC_SIZE;
+                zbuf_size = Z_BATCH_UNICAST_SIZE + _Z_MSG_LEN_ENC_SIZE;
                 expandable = true;
                 break;
             case Z_LINK_CAP_FLOW_DATAGRAM:
             default:
+                wbuf_size = mtu;
+                zbuf_size = Z_BATCH_UNICAST_SIZE;
                 expandable = false;
                 break;
         }
@@ -67,16 +74,17 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
 #endif
-        zt->_transport._unicast._wbuf = _z_wbuf_make(mtu, false);
-        zt->_transport._unicast._zbuf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
+        // Initialize tx rx buffers
+        zt->_transport._unicast._wbuf = _z_wbuf_make(wbuf_size, false);
+        zt->_transport._unicast._zbuf = _z_zbuf_make(zbuf_size);
 
         // Initialize the defragmentation buffers
         zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, expandable);
         zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, expandable);
 
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != mtu) ||
-            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != Z_BATCH_UNICAST_SIZE) ||
+        if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != wbuf_size) ||
+            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != zbuf_size) ||
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
@@ -87,8 +95,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            _z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -149,7 +157,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
-    _Z_INFO("Sending Z_INIT(Syn)\n");
+    _Z_INFO("Sending Z_INIT(Syn)");
     ret = _z_link_send_t_msg(zl, &ism);
     _z_t_msg_clear(&ism);
     if (ret == _Z_RES_OK) {
@@ -157,7 +165,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
         ret = _z_link_recv_t_msg(&iam, zl);
         if (ret == _Z_RES_OK) {
             if ((_Z_MID(iam._header) == _Z_MID_T_INIT) && (_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A) == true)) {
-                _Z_INFO("Received Z_INIT(Ack)\n");
+                _Z_INFO("Received Z_INIT(Ack)");
 
                 // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
                 // otherwise the InitAck message is considered invalid and it should be treated as a
@@ -185,7 +193,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     param->_req_id_res = 0x08 << param->_req_id_res;
 
                     // The initial SN at TX side
-                    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+                    zp_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
                     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
                     // Initialize the Local and Remote Peer IDs
@@ -200,7 +208,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
 
                     // Encode and send the message
-                    _Z_INFO("Sending Z_OPEN(Syn)\n");
+                    _Z_INFO("Sending Z_OPEN(Syn)");
                     ret = _z_link_send_t_msg(zl, &osm);
                     if (ret == _Z_RES_OK) {
                         _z_transport_message_t oam;
@@ -208,7 +216,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                         if (ret == _Z_RES_OK) {
                             if ((_Z_MID(oam._header) == _Z_MID_T_OPEN) &&
                                 (_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A) == true)) {
-                                _Z_INFO("Received Z_OPEN(Ack)\n");
+                                _Z_INFO("Received Z_OPEN(Ack)");
                                 param->_lease = oam._body._open._lease;  // The session lease
 
                                 // The initial SN at RX side. Initialize the session as we had already received
@@ -260,17 +268,17 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL) {
-        _z_task_join(ztu->_read_task);
-        _z_task_free(&ztu->_read_task);
+        zp_task_join(ztu->_read_task);
+        zp_task_free(&ztu->_read_task);
     }
     if (ztu->_lease_task != NULL) {
-        _z_task_join(ztu->_lease_task);
-        _z_task_free(&ztu->_lease_task);
+        zp_task_join(ztu->_lease_task);
+        zp_task_free(&ztu->_lease_task);
     }
 
     // Clean up the mutexes
-    _z_mutex_free(&ztu->_mutex_tx);
-    _z_mutex_free(&ztu->_mutex_rx);
+    zp_mutex_free(&ztu->_mutex_tx);
+    zp_mutex_free(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

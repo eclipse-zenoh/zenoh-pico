@@ -141,7 +141,7 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     if (_z_zbuf_can_read(zbf) == true) {
         *u8 = _z_zbuf_read(zbf);
     } else {
-        _Z_DEBUG("WARNING: Not enough bytes to read\n");
+        _Z_DEBUG("WARNING: Not enough bytes to read");
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
@@ -296,8 +296,7 @@ int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     int8_t ret = _Z_RES_OK;
 
     if ((wbf->_expansion_step != 0) && (bs->len > Z_TSID_LENGTH)) {
-        // ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
-        ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
+        ret |= _z_wbuf_wrap_bytes(wbf, bs->start, 0, bs->len);
     } else {
         ret |= _z_wbuf_write_bytes(wbf, bs->start, 0, bs->len);
     }
@@ -323,7 +322,7 @@ int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
             *bs = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
             _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);  // Move the read position
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read\n");
+            _Z_DEBUG("WARNING: Not enough bytes to read");
             bs->len = 0;
             bs->start = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -363,8 +362,8 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
     _z_zint_t len = 0;
     ret |= _z_zint_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
-        if (_z_zbuf_len(zbf) >= len) {                      // Check if we have enough bytes to read
-            char *tmp = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
+        if (_z_zbuf_len(zbf) >= len) {                       // Check if we have enough bytes to read
+            char *tmp = (char *)zp_malloc(len + (size_t)1);  // Allocate space for the string terminator
             if (tmp != NULL) {
                 tmp[len] = '\0';
                 _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);
@@ -373,7 +372,7 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
             }
             *str = tmp;
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read\n");
+            _Z_DEBUG("WARNING: Not enough bytes to read");
             *str = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }

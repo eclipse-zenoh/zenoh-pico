@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
         zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_config_loan(&config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
     }
 
     printf("Opening session...\n");
@@ -81,15 +81,15 @@ int main(int argc, char **argv) {
     }
 
     char *buf = (char *)malloc(256);
-    z_clock_t now = z_clock_now();
+    zp_clock_t now = zp_clock_now();
     for (int idx = 0; 1;) {
-        if (z_clock_elapsed_ms(&now) > 1000) {
+        if (zp_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
             z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
             ++idx;
 
-            now = z_clock_now();
+            now = zp_clock_now();
         }
 
         zp_read(z_session_loan(&s), NULL);

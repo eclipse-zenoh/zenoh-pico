@@ -41,14 +41,14 @@
 /*------------------ Payload field ------------------*/
 int8_t _z_payload_encode(_z_wbuf_t *wbf, const _z_bytes_t *pld) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _PAYLOAD\n");
+    _Z_DEBUG("Encoding _PAYLOAD");
     ret |= _z_bytes_encode(wbf, pld);
 
     return ret;
 }
 
 int8_t _z_payload_decode_na(_z_bytes_t *pld, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _PAYLOAD\n");
+    _Z_DEBUG("Decoding _PAYLOAD");
     return _z_bytes_decode(pld, zbf);
 }
 
@@ -84,7 +84,7 @@ int8_t _z_id_decode_as_zbytes(_z_id_t *id, _z_zbuf_t *zbf) {
 /*------------------ Timestamp Field ------------------*/
 int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _TIMESTAMP\n");
+    _Z_DEBUG("Encoding _TIMESTAMP");
 
     _Z_RETURN_IF_ERR(_z_uint64_encode(wbf, ts->time))
     ret |= _z_id_encode_as_zbytes(wbf, &ts->id);
@@ -97,7 +97,7 @@ int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
 }
 
 int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _TIMESTAMP\n");
+    _Z_DEBUG("Decoding _TIMESTAMP");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint64_decode(&ts->time, zbf);
@@ -109,7 +109,7 @@ int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
 /*------------------ ResKey Field ------------------*/
 int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *fld) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _RESKEY\n");
+    _Z_DEBUG("Encoding _RESKEY");
 
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, fld->_id))
     if (has_suffix == true) {
@@ -120,7 +120,7 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *f
 }
 
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
-    _Z_DEBUG("Decoding _RESKEY\n");
+    _Z_DEBUG("Decoding _RESKEY");
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint16_decode(&ke->_id, zbf);
@@ -144,19 +144,19 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
 /*------------------ Locators Field ------------------*/
 int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _LOCATORS\n");
+    _Z_DEBUG("Encoding _LOCATORS");
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
         char *s = _z_locator_to_str(&la->_val[i]);
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, s))
-        z_free(s);
+        zp_free(s);
     }
 
     return ret;
 }
 
 int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
-    _Z_DEBUG("Decoding _LOCATORS\n");
+    _Z_DEBUG("Decoding _LOCATORS");
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t len = 0;  // Number of elements in the array
@@ -171,7 +171,7 @@ int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
             if (ret == _Z_RES_OK) {
                 _z_locator_init(&a_loc->_val[i]);
                 ret |= _z_locator_from_str(&a_loc->_val[i], str);
-                z_free(str);
+                zp_free(str);
             } else {
                 a_loc->_len = i;
             }
@@ -494,7 +494,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 }
 
 int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_Z_QUERY\n");
+    _Z_DEBUG("Decoding _Z_MID_Z_QUERY");
     *msg = (_z_msg_query_t){0};
     msg->_ext_consolidation = Z_CONSOLIDATION_MODE_AUTO;
     int8_t ret = _Z_RES_OK;
@@ -790,7 +790,7 @@ int8_t _z_pull_decode(_z_msg_pull_t *pull, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *msg) {
     int8_t ret = _Z_RES_OK;
     (void)(header);
-    _Z_DEBUG("Encoding _Z_MID_SCOUT\n");
+    _Z_DEBUG("Encoding _Z_MID_SCOUT");
 
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
 
@@ -811,7 +811,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
 int8_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
     (void)(header);
-    _Z_DEBUG("Decoding _Z_MID_SCOUT\n");
+    _Z_DEBUG("Decoding _Z_MID_SCOUT");
     *msg = (_z_s_msg_scout_t){0};
 
     ret |= _z_uint8_decode(&msg->_version, zbf);
@@ -831,7 +831,7 @@ int8_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 /*------------------ Hello Message ------------------*/
 int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_HELLO\n");
+    _Z_DEBUG("Encoding _Z_MID_HELLO");
 
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
     uint8_t zidlen = _z_id_len(msg->_zid);
@@ -849,7 +849,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
 }
 
 int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_HELLO\n");
+    _Z_DEBUG("Decoding _Z_MID_HELLO");
     int8_t ret = _Z_RES_OK;
     *msg = (_z_s_msg_hello_t){0};
 
@@ -899,7 +899,7 @@ int8_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_t *m
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)\n", _Z_MID(msg->_header));
+            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
@@ -928,7 +928,7 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
                 } break;
 
                 default: {
-                    _Z_DEBUG("WARNING: Trying to decode scouting message with unknown ID(0x%x)\n", mid);
+                    _Z_DEBUG("WARNING: Trying to decode scouting message with unknown ID(0x%x)", mid);
                     ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
                     is_last = true;
                 } break;

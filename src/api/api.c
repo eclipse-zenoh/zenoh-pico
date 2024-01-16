@@ -31,6 +31,7 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/multicast.h"
@@ -58,7 +59,7 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
         size_t ke_len = _z_str_size(keyexpr._suffix);
 
-        ret._value = (char *)z_malloc(ke_len);
+        ret._value = (char *)zp_malloc(ke_len);
         if (ret._value != NULL) {
             _z_str_n_copy(ret._value, keyexpr._suffix, ke_len);
         }
@@ -75,6 +76,14 @@ z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
         z_bytes_t ret = {.start = NULL, .len = 0, ._is_alloc = false};
         return ret;
     }
+}
+
+_Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
+    _Bool ret = false;
+    if (keyexpr->_id != Z_RESOURCE_ID_NONE) {
+        ret = true;
+    }
+    return ret;
 }
 
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
@@ -338,7 +347,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
-        ret._value = (type *)z_malloc(sizeof(type));                             \
+        ret._value = (type *)zp_malloc(sizeof(type));                            \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value);                                     \
         }                                                                        \
@@ -359,7 +368,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
 #define OWNED_FUNCTIONS_PTR_CLONE(type, ownedtype, name, f_copy) \
     ownedtype z_##name##_clone(ownedtype *val) {                 \
         ownedtype ret;                                           \
-        ret._value = (_##type *)z_malloc(sizeof(_##type));       \
+        ret._value = (_##type *)zp_malloc(sizeof(_##type));      \
         if (ret._value != NULL) {                                \
             f_copy(ret._value, val->_value);                     \
         }                                                        \
@@ -381,7 +390,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
         size_t size = _z_str_size(val->_value);                                  \
-        ret._value = (_##type)z_malloc(size);                                    \
+        ret._value = (_##type)zp_malloc(size);                                   \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value, size);                               \
         }                                                                        \
@@ -478,7 +487,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_hello_handler_wrapper_t *wrapped_ctx =
-        (__z_hello_handler_wrapper_t *)z_malloc(sizeof(__z_hello_handler_wrapper_t));
+        (__z_hello_handler_wrapper_t *)zp_malloc(sizeof(__z_hello_handler_wrapper_t));
     if (wrapped_ctx != NULL) {
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
@@ -509,7 +518,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 
         _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
-        z_free(wrapped_ctx);
+        zp_free(wrapped_ctx);
         z_scouting_config_drop(config);
     } else {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -519,12 +528,12 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
-    z_owned_session_t zs = {._value = (_z_session_t *)z_malloc(sizeof(_z_session_t))};
+    z_owned_session_t zs = {._value = (_z_session_t *)zp_malloc(sizeof(_z_session_t))};
     memset(zs._value, 0, sizeof(_z_session_t));
 
     if (zs._value != NULL) {
         if (_z_open(zs._value, config->_value) != _Z_RES_OK) {
-            z_free(zs._value);
+            zp_free(zs._value);
             zs._value = NULL;
         }
 
@@ -612,6 +621,9 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    opt.congestion_control, opt.priority, options->attachment);
 
+    // Trigger local subscriptions
+    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len);
+
     return ret;
 }
 
@@ -685,6 +697,9 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    pub._val->_congestion_control, pub._val->_priority, options->attachment);
 
+    // Trigger local subscriptions
+    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len);
+
     return ret;
 }
 
@@ -695,7 +710,7 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
-    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
+    z_owned_keyexpr_t ret = {._value = zp_malloc(sizeof(_z_keyexpr_t))};
     if (ret._value != NULL && publisher._val != NULL) {
         *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
     }
@@ -751,7 +766,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_reply_handler_wrapper_t *wrapped_ctx =
-        (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
+        (__z_reply_handler_wrapper_t *)zp_malloc(sizeof(__z_reply_handler_wrapper_t));
     if (wrapped_ctx != NULL) {
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
@@ -843,7 +858,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
 z_owned_keyexpr_t z_keyexpr_new(const char *name) {
     z_owned_keyexpr_t key;
 
-    key._value = name ? (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t)) : NULL;
+    key._value = name ? (z_keyexpr_t *)zp_malloc(sizeof(z_keyexpr_t)) : NULL;
     if (key._value != NULL) {
         *key._value = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     }
@@ -854,7 +869,7 @@ z_owned_keyexpr_t z_keyexpr_new(const char *name) {
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
 
-    key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
+    key._value = (z_keyexpr_t *)zp_malloc(sizeof(z_keyexpr_t));
     if (key._value != NULL) {
         uint16_t id = _z_declare_resource(zs._val, keyexpr);
         *key._value = _z_rid_with_suffix(id, NULL);
@@ -907,7 +922,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
             if (wild != NULL && wild != keyexpr._suffix) {
                 wild -= 1;
                 size_t len = wild - keyexpr._suffix;
-                suffix = z_malloc(len + 1);
+                suffix = zp_malloc(len + 1);
                 if (suffix != NULL) {
                     memcpy(suffix, keyexpr._suffix, len);
                     suffix[len] = 0;
@@ -930,7 +945,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     }
     _z_subscriber_t *sub = _z_declare_subscriber(zs._val, key, subinfo, callback->call, callback->drop, ctx);
     if (suffix != NULL) {
-        z_free(suffix);
+        zp_free(suffix);
     }
 
     return (z_owned_subscriber_t){._value = sub};
@@ -989,7 +1004,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
             _z_subscription_sptr_t *head = _z_subscription_sptr_list_head(tail);
             if (head->ptr->_id == lookup) {
                 _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
-                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
+                ret = (z_owned_keyexpr_t){._value = zp_malloc(sizeof(_z_keyexpr_t))};
                 if (ret._value != NULL) {
                     *ret._value = key;
                 } else {

@@ -65,7 +65,7 @@ void app_main(void) {
     }
 
     while (1) {
-        z_sleep_s(5);
+        zp_sleep_s(5);
     }
 
     z_undeclare_subscriber(z_move(sub));

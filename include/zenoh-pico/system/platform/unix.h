@@ -15,7 +15,6 @@
 #ifndef ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 #define ZENOH_PICO_SYSTEM_UNIX_TYPES_H
 
-#include <pthread.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,14 +23,16 @@
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef pthread_t _z_task_t;
-typedef pthread_attr_t _z_task_attr_t;
-typedef pthread_mutex_t _z_mutex_t;
-typedef pthread_cond_t _z_condvar_t;
+#include <pthread.h>
+
+typedef pthread_t zp_task_t;
+typedef pthread_attr_t zp_task_attr_t;
+typedef pthread_mutex_t zp_mutex_t;
+typedef pthread_cond_t zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef struct timespec zp_clock_t;
+typedef struct timeval zp_time_t;
 
 typedef struct {
     union {

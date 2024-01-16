@@ -477,6 +477,8 @@ typedef struct {
 } _z_t_msg_fragment_t;
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg);
 
+#define _Z_FRAGMENT_HEADER_SIZE 12
+
 /*------------------ Transport Message ------------------*/
 typedef union {
     _z_t_msg_join_t _join;

@@ -73,7 +73,7 @@ void _z_transport_free(_z_transport_t **zt) {
     }
     // Clear and free transport
     _z_transport_clear(ptr);
-    z_free(ptr);
+    zp_free(ptr);
     *zt = NULL;
 }
 

@@ -23,14 +23,14 @@
 typedef int _z_socket_t;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef void *_z_task_t;       // Workaround as MBED is a C++ library
-typedef void *_z_task_attr_t;  // Workaround as MBED is a C++ library
-typedef void *_z_mutex_t;      // Workaround as MBED is a C++ library
-typedef void *_z_condvar_t;    // Workaround as MBED is a C++ library
+typedef void *zp_task_t;       // Workaround as MBED is a C++ library
+typedef void *zp_task_attr_t;  // Workaround as MBED is a C++ library
+typedef void *zp_mutex_t;      // Workaround as MBED is a C++ library
+typedef void *zp_condvar_t;    // Workaround as MBED is a C++ library
 #endif                         // Z_FEATURE_MULTI_THREAD == 1
 
-typedef void *z_clock_t;  // Not defined
-typedef struct timeval z_time_t;
+typedef void *zp_clock_t;  // Not defined
+typedef struct timeval zp_time_t;
 
 typedef struct BufferedSerial BufferedSerial;  // Forward declaration to be used in _z_sys_net_socket_t
 typedef struct UDPSocket UDPSocket;            // Forward declaration to be used in _z_sys_net_socket_t

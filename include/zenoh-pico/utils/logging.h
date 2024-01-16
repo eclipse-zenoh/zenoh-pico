@@ -17,55 +17,57 @@
 
 #include <stdio.h>
 
+// Logging values
+#define _Z_LOG_LVL_ERROR 1
+#define _Z_LOG_LVL_INFO 2
+#define _Z_LOG_LVL_DEBUG 3
+
+// Timestamp function
 static inline void __z_print_timestamp(void) {
     char ret[64];
-    printf("[%s ", z_time_now_as_str(ret, sizeof(ret)));
+    printf("[%s ", zp_time_now_as_str(ret, sizeof(ret)));
 }
 
+// Logging macros
 #define _Z_LOG_PREFIX(prefix) \
     __z_print_timestamp();    \
     printf(#prefix " ::%s] ", __func__);
 
-#if (ZENOH_DEBUG == 3)
-#define _Z_DEBUG(x, ...)  \
-    _Z_LOG_PREFIX(DEBUG); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_DEBUG_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
-#define _Z_INFO(x, ...)  \
-    _Z_LOG_PREFIX(INFO); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_INFO_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
-#define _Z_ERROR(x, ...)  \
-    _Z_LOG_PREFIX(ERROR); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+// Ignore print only if log deactivated and build is release
+#if ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
 
-#elif (ZENOH_DEBUG == 2)
-#define _Z_DEBUG(x, ...) (void)(0)
-#define _Z_DEBUG_CONTINUE(x, ...) (void)(0);
-#define _Z_INFO(x, ...)  \
-    _Z_LOG_PREFIX(INFO); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_INFO_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
-#define _Z_ERROR(x, ...)  \
-    _Z_LOG_PREFIX(ERROR); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+#define _Z_DEBUG(...) (void)(0)
+#define _Z_INFO(...) (void)(0)
+#define _Z_ERROR(...) (void)(0)
 
-#elif (ZENOH_DEBUG == 1)
-#define _Z_DEBUG(x, ...) (void)(0)
-#define _Z_DEBUG_CONTINUE(x, ...) (void)(0);
-#define _Z_INFO(x, ...) (void)(0);
-#define _Z_INFO_CONTINUE(x, ...) (void)(0);
-#define _Z_ERROR(x, ...)  \
-    _Z_LOG_PREFIX(ERROR); \
-    printf(x, ##__VA_ARGS__);
-#define _Z_ERROR_CONTINUE(x, ...) printf(x, ##__VA_ARGS__);
+#else  // ZENOH_DEBUG != 0 || defined(Z_BUILD_DEBUG)
 
-#elif (ZENOH_DEBUG == 0)
-#define _Z_DEBUG(x, ...) (void)(0)
-#define _Z_INFO(x, ...) (void)(0)
-#define _Z_ERROR(x, ...) (void)(0)
-#endif
+#define _Z_DEBUG(...)                          \
+    do {                                       \
+        if (ZENOH_DEBUG >= _Z_LOG_LVL_DEBUG) { \
+            _Z_LOG_PREFIX(DEBUG);              \
+            printf(__VA_ARGS__);               \
+            printf("\n");                      \
+        }                                      \
+    } while (false)
 
-#endif /* ZENOH_PICO_UTILS_LOGGING_H */
+#define _Z_INFO(...)                          \
+    do {                                      \
+        if (ZENOH_DEBUG >= _Z_LOG_LVL_INFO) { \
+            _Z_LOG_PREFIX(INFO);              \
+            printf(__VA_ARGS__);              \
+            printf("\n");                     \
+        }                                     \
+    } while (false)
+
+#define _Z_ERROR(...)                          \
+    do {                                       \
+        if (ZENOH_DEBUG >= _Z_LOG_LVL_ERROR) { \
+            _Z_LOG_PREFIX(ERROR);              \
+            printf(__VA_ARGS__);               \
+            printf("\n");                      \
+        }                                      \
+    } while (false)
+#endif  // ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+
+#endif  // ZENOH_PICO_UTILS_LOGGING_H

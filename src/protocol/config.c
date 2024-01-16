@@ -81,7 +81,7 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
             }
 
             size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start) + (size_t)1;
-            char *p_value = (char *)z_malloc(p_value_len);
+            char *p_value = (char *)zp_malloc(p_value_len);
             if (p_value != NULL) {
                 _z_str_n_copy(p_value, p_value_start, p_value_len);
 
@@ -155,7 +155,7 @@ char *_z_str_intmap_to_str(const _z_str_intmap_t *s, uint8_t argc, _z_str_intmap
     // Calculate the string length to allocate
     size_t len = _z_str_intmap_strlen(s, argc, argv) + (size_t)1;
     // Build the string
-    char *dst = (char *)z_malloc(len);
+    char *dst = (char *)zp_malloc(len);
     if (dst != NULL) {
         _z_str_intmap_onto_str(dst, len, s, argc, argv);
     }

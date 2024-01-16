@@ -247,7 +247,7 @@ int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t 
 int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_N_RESPONSE;
-    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
     _Bool has_qos_ext = msg->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
     _Bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
     _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
@@ -326,7 +326,7 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_response_t *msg = (_z_n_msg_response_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            msg->_ext_qos._val = extension->_body._zint._val;
+            msg->_ext_qos._val = (uint8_t)extension->_body._zint._val;
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
@@ -353,7 +353,7 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
 }
 
 int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
-    _Z_DEBUG("Decoding _Z_MID_N_RESPONSE\n");
+    _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
     *msg = (_z_n_msg_response_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     int8_t ret = _Z_RES_OK;
@@ -395,7 +395,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
             break;
         }
         default: {
-            _Z_ERROR("Unknown N_MID: %d\n", _Z_MID(inner_header));
+            _Z_ERROR("Unknown N_MID: %d", _Z_MID(inner_header));
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -405,7 +405,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
 /*------------------ Response Final Message ------------------*/
 int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE\n");
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
     uint8_t header = _Z_MID_N_RESPONSE_FINAL;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_request_id));
@@ -450,7 +450,7 @@ int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_n_msg_declare_t *decl = (_z_n_msg_declare_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            decl->_ext_qos._val = extension->_body._zint._val;
+            decl->_ext_qos._val = (uint8_t)extension->_body._zint._val;
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
