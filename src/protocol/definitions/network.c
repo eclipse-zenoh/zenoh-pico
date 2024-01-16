@@ -181,7 +181,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                                  ._ext_consolidation = consolidation,
                                  ._ext_value = _z_value_steal(value),
                                  ._ext_info = _z_source_info_null(),
-                                 ._ext_attachment = attachment},
+                                 ._ext_attachment = {.body.decoded = attachment, .is_encoded = false}},
                 ._ext_budget = 0,
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
