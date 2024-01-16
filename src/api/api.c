@@ -542,16 +542,17 @@ z_owned_session_t z_open(z_owned_config_t *config) {
     // Create rc
     _z_session_rc_t zsrc = _z_session_rc_new(tmp_sess);
     if (zsrc.ptr == NULL) {
+        z_config_drop(config);
         return zs;
     }
     // Open session
     if (_z_open(zsrc.ptr, config->_value) != _Z_RES_OK) {
         _z_session_rc_drop(&zsrc);
+        z_config_drop(config);
         return zs;
     }
     // Store rc in session
     zs._value = zsrc;
-
     z_config_drop(config);
     return zs;
 }
