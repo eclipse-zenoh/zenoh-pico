@@ -722,10 +722,12 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 
 z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t){.target = z_query_target_default(),
-                             .consolidation = z_query_consolidation_default(),
-                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
-                             .attachment = z_attachment_null()};
+    return (z_get_options_t){
+        .target = z_query_target_default(),
+        .consolidation = z_query_consolidation_default(),
+        .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
+        // TODO: .attachment = z_attachment_null()
+    };
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -773,7 +775,9 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
-                   wrapped_ctx, callback->drop, ctx, opt.attachment);
+                   wrapped_ctx, callback->drop, ctx, z_attachment_null()
+                   // TODO: opt.attachment
+    );
     return ret;
 }
 
