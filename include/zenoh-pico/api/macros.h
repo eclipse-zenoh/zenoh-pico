@@ -19,7 +19,7 @@
 
 #if ZENOH_C_STANDARD != 99
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) || ZENOH_CXX_ATOMIC_FALLBACK
 
 // clang-format off
 
@@ -322,7 +322,7 @@ inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }
 inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
 inline bool z_check(const z_owned_str_t& v) { return z_str_check(&v); }
 
-inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample) 
+inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample)
     { z_closure_sample_call(&closure, sample); }
 inline void z_call(const z_owned_closure_query_t &closure, const z_query_t *query)
     { z_closure_query_call(&closure, query); }

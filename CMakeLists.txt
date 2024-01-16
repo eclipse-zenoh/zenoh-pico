@@ -26,7 +26,7 @@ set(FRAG_MAX_SIZE 0 CACHE STRING "Use this to override the maximum size for frag
 set(BATCH_UNICAST_SIZE 0 CACHE STRING "Use this to override the maximum unicast batch size")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
-  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
+  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
       ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 endif()
 
@@ -61,6 +61,19 @@ if(NOT CMAKE_C_STANDARD)
 endif()
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+
+check_cxx_source_compiles("
+#include <atomic>
+
+int main() {
+  std::atomic<int> u{5};
+  return u;
+}" HAVE_CXX_STD_ATOMIC)
+
+if (NOT HAVE_CXX_STD_ATOMIC)
+  message(STATUS "Did not find std::atomic support, using fallback mechanism")
+  add_definition(ZENOH_CXX_ATOMIC_FALLBACK)
+endif()
 
 # while in development, use timestamp for patch version:
 string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
