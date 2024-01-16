@@ -622,7 +622,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
                    opt.congestion_control, opt.priority, options->attachment);
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len);
+    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len, options->attachment);
 
     return ret;
 }
@@ -698,7 +698,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
                    pub._val->_congestion_control, pub._val->_priority, options->attachment);
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len);
+    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len, options->attachment);
 
     return ret;
 }
@@ -1170,7 +1170,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
         _z_bytes_clear(&head->value);
         head->value = _z_bytes_wrap(value.start, value.len);
     } else {
-        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
+        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         insert->key = _z_bytes_wrap(key.start, key.len);
         insert->value = _z_bytes_wrap(value.start, value.len);
@@ -1194,7 +1194,7 @@ void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key,
             _z_bytes_copy(&head->key, &key);
         }
     } else {
-        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
+        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         _z_bytes_copy(&insert->key, &key);
         _z_bytes_copy(&insert->value, &value);
