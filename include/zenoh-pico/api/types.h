@@ -126,15 +126,11 @@ _OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
  * Represents a Zenoh session.
  */
 typedef struct {
-    _z_session_t *ptr;
-} _z_indir_session_t;
-
-typedef struct {
-    _z_indir_session_t _val;
+    _z_session_rc_t _val;
 } z_session_t;
 
 typedef struct {
-    _z_indir_session_t _value;
+    _z_session_rc_t _value;
 } z_owned_session_t;
 
 /**

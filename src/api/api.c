@@ -423,11 +423,11 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_s
 
 _Bool z_session_check(const z_owned_session_t *val) { return val->_value.ptr != NULL; }
 z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
-z_owned_session_t z_session_null(void) { return (z_owned_session_t){._value = {.ptr = NULL}}; }
+z_owned_session_t z_session_null(void) { return (z_owned_session_t){._value = {.ptr = NULL, ._cnt = 0}}; }
 z_owned_session_t *z_session_move(z_owned_session_t *val) { return val; }
 z_owned_session_t z_session_clone(z_owned_session_t *val) {
     z_owned_session_t ret;
-    ret._value = val->_value;  // ret._value = _z_session_rc_clone(&val->_value);
+    ret._value = _z_session_rc_clone(&val->_value);
     return ret;
 }
 void z_session_drop(z_owned_session_t *val) { z_close(val); }
@@ -535,29 +535,22 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
-    z_owned_session_t zs = {._value = {.ptr = NULL}};
+    z_owned_session_t zs = {._value = {.ptr = NULL, ._cnt = 0}};
+    _z_session_t tmp_sess;
+    memset(&tmp_sess, 0, sizeof(_z_session_t));
 
-    _z_session_t *tmp_sess = (_z_session_t *)zp_malloc(sizeof(_z_session_t));
-    if (tmp_sess == NULL) {
-        return zs;
-    }
-    memset(tmp_sess, 0, sizeof(_z_session_t));
-
-    // Open session
-    if (_z_open(tmp_sess, config->_value) != _Z_RES_OK) {
-        return zs;
-    }
     // Create rc
-    // _z_session_rc_t zsrc = _z_session_rc_new(tmp_sess);
-    // if (zsrc.ptr == NULL) {
-    //     _z_close(&tmp_sess);
-    //     _z_session_clear(&tmp_sess);
-    //     return zs;
-    // }
-    // // Store rc in session
-    // zs._value = zsrc;
-
-    zs._value.ptr = tmp_sess;
+    _z_session_rc_t zsrc = _z_session_rc_new(tmp_sess);
+    if (zsrc.ptr == NULL) {
+        return zs;
+    }
+    // Open session
+    if (_z_open(zsrc.ptr, config->_value) != _Z_RES_OK) {
+        _z_session_rc_drop(&zsrc);
+        return zs;
+    }
+    // Store rc in session
+    zs._value = zsrc;
 
     z_config_drop(config);
     return zs;
@@ -568,9 +561,7 @@ int8_t z_close(z_owned_session_t *zs) {
         return _Z_RES_OK;
     }
     _z_close(zs->_value.ptr);
-    // _z_session_rc_drop(&zs->_value);
-    _z_session_clear(zs->_value.ptr);
-    zp_free(zs->_value.ptr);
+    _z_session_rc_drop(&zs->_value);
     zs->_value.ptr = NULL;
     return _Z_RES_OK;
 }
