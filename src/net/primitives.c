@@ -100,28 +100,28 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority) {
+    // Allocate publisher
     _z_publisher_t *ret = (_z_publisher_t *)zp_malloc(sizeof(_z_publisher_t));
-    if (ret != NULL) {
-        ret->_zn = _z_session_rc_clone(zn);
-        ret->_key = _z_keyexpr_duplicate(keyexpr);
-        ret->_id = _z_get_entity_id(zn->ptr);
-        ret->_congestion_control = congestion_control;
-        ret->_priority = priority;
+    if (ret == NULL) {
+        return NULL;
     }
+    // Fill publisher
+    ret->_key = _z_keyexpr_duplicate(keyexpr);
+    ret->_id = _z_get_entity_id(zn->ptr);
+    ret->_congestion_control = congestion_control;
+    ret->_priority = priority;
+    ret->_zn = _z_session_rc_clone(zn);
     return ret;
 }
 
 int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
-    int8_t ret = _Z_RES_OK;
-
-    if (pub != NULL) {
-        // Build the declare message to send on the wire
-        _z_undeclare_resource(pub->_zn.ptr, pub->_key._id);
-        _z_session_rc_drop(&pub->_zn);
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
+    if (pub == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
     }
-    return ret;
+    // Clear publisher
+    _z_undeclare_resource(pub->_zn.ptr, pub->_key._id);
+    _z_session_rc_drop(&pub->_zn);
+    return _Z_RES_OK;
 }
 
 /*------------------ Write ------------------*/
