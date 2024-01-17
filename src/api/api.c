@@ -955,7 +955,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
-    _z_subscriber_t *sub = _z_declare_subscriber(zs._val.ptr, key, subinfo, callback->call, callback->drop, ctx);
+    _z_subscriber_t *sub = _z_declare_subscriber(&zs._val, key, subinfo, callback->call, callback->drop, ctx);
     if (suffix != NULL) {
         zp_free(suffix);
     }
@@ -984,7 +984,7 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
     }
 
     return (z_owned_pull_subscriber_t){
-        ._value = _z_declare_subscriber(zs._val.ptr, key, subinfo, callback->call, callback->drop, ctx)};
+        ._value = _z_declare_subscriber(&zs._val, key, subinfo, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) {
@@ -1011,7 +1011,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
     z_owned_keyexpr_t ret = z_keyexpr_null();
     uint32_t lookup = sub._val->_entity_id;
     if (sub._val != NULL) {
-        _z_subscription_rc_list_t *tail = sub._val->_zn->_local_subscriptions;
+        _z_subscription_rc_list_t *tail = sub._val->_zn.ptr->_local_subscriptions;
         while (tail != NULL && !z_keyexpr_check(&ret)) {
             _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
             if (head->ptr->_id == lookup) {

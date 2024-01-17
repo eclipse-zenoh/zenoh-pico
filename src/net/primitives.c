@@ -177,12 +177,12 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+_z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
-    s._id = _z_get_entity_id(zn);
+    s._id = _z_get_entity_id(zn->ptr);
     s._key_id = keyexpr._id;
-    s._key = _z_get_expanded_key_from_key(zn, &keyexpr);
+    s._key = _z_get_expanded_key_from_key(zn->ptr, &keyexpr);
     s._info = sub_info;
     s._callback = callback;
     s._dropper = dropper;
@@ -190,19 +190,19 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_t *zn, _z_keyexpr_t keyexpr, _
 
     _z_subscriber_t *ret = (_z_subscriber_t *)zp_malloc(sizeof(_z_subscriber_t));
     if (ret != NULL) {
-        ret->_zn = zn;
+        ret->_zn = _z_session_rc_clone(zn);
         ret->_entity_id = s._id;
 
         _z_subscription_rc_t *sp_s = _z_register_subscription(
-            zn, _Z_RESOURCE_IS_LOCAL, &s);  // This a pointer to the entry stored at session-level.
-                                            // Do not drop it by the end of this function.
+            zn->ptr, _Z_RESOURCE_IS_LOCAL, &s);  // This a pointer to the entry stored at session-level.
+                                                 // Do not drop it by the end of this function.
         if (sp_s != NULL) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration = _z_make_decl_subscriber(
                 &keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE, sub_info.mode == Z_SUBMODE_PULL);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                _z_unregister_subscription(zn, _Z_RESOURCE_IS_LOCAL, sp_s);
+            if (_z_send_n_msg(zn->ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                _z_unregister_subscription(zn->ptr, _Z_RESOURCE_IS_LOCAL, sp_s);
                 _z_subscriber_free(&ret);
             }
             _z_n_msg_clear(&n_msg);
@@ -220,15 +220,16 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     int8_t ret = _Z_ERR_GENERIC;
 
     if (sub != NULL) {
-        _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+        _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
         if (s != NULL) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->ptr->_key);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-            if (_z_send_n_msg(sub->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+            if (_z_send_n_msg(sub->_zn.ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local subscription state can be removed
-                _z_undeclare_resource(sub->_zn, s->ptr->_key_id);
-                _z_unregister_subscription(sub->_zn, _Z_RESOURCE_IS_LOCAL, s);
+                _z_undeclare_resource(sub->_zn.ptr, s->ptr->_key_id);
+                _z_unregister_subscription(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, s);
+                _z_session_rc_drop(&sub->_zn);
             } else {
                 ret = _Z_ERR_ENTITY_UNKNOWN;
             }
@@ -247,11 +248,11 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     int8_t ret = _Z_RES_OK;
 
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
     if (s != NULL) {
-        _z_zint_t pull_id = _z_get_pull_id(sub->_zn);
+        _z_zint_t pull_id = _z_get_pull_id(sub->_zn.ptr);
         _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
-        if (_z_send_n_msg(sub->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(sub->_zn.ptr, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
     } else {
