@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"

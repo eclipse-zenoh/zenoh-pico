@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/net/query.h"
 
 #if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
