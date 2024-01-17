@@ -23,7 +23,6 @@
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/manager.h"
 
@@ -111,6 +110,7 @@ typedef struct {
     uint32_t _id;
 } _z_publication_t;
 
+typedef struct z_query_t z_query_t;  // Forward type declaration to avoid cyclical include
 /**
  * The callback signature of the functions handling query messages.
  */

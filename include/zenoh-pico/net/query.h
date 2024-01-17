@@ -25,7 +25,7 @@ typedef struct _z_session_t _z_session_t;
 /**
  * The query to be answered by a queryable.
  */
-typedef struct {
+typedef struct z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
