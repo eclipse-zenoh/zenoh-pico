@@ -536,11 +536,9 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 
 z_owned_session_t z_open(z_owned_config_t *config) {
     z_owned_session_t zs = {._value = {.ptr = NULL, ._cnt = 0}};
-    _z_session_t tmp_sess;
-    memset(&tmp_sess, 0, sizeof(_z_session_t));
 
     // Create rc
-    _z_session_rc_t zsrc = _z_session_rc_new(tmp_sess);
+    _z_session_rc_t zsrc = _z_session_rc_new();
     if (zsrc.ptr == NULL) {
         z_config_drop(config);
         return zs;
