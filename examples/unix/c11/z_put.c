@@ -22,8 +22,6 @@
 
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
-#include "zenoh-pico/protocol/core.h"
 
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {

@@ -20,9 +20,6 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#include "zenoh-pico/api/types.h"
-#include "zenoh-pico/protocol/core.h"
-
 #if Z_FEATURE_SUBSCRIPTION == 1
 int8_t attachment_handler(z_bytes_t key, z_bytes_t value, void *ctx) {
     (void)ctx;

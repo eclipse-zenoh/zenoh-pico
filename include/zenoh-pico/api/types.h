@@ -274,11 +274,11 @@ typedef struct {
  *
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
+ *   z_attachment_t attachment: an attachment to the response.
  */
 typedef struct {
     z_encoding_t encoding;
-    // TODO:  *   z_attachment_t attachment: an attachment to the response.
-    // TODO: z_attachment_t attachment;
+    z_attachment_t attachment;
 } z_query_reply_options_t;
 
 /**
@@ -343,7 +343,7 @@ typedef struct {
     z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
-    // TODO: z_attachment_t attachment;
+    z_attachment_t attachment;
 } z_get_options_t;
 
 /**
