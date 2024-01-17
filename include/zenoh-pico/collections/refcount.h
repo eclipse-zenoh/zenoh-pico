@@ -47,7 +47,21 @@
         type##_t *ptr;                                                                          \
         _z_atomic(unsigned int) * _cnt;                                                         \
     } name##_rc_t;                                                                              \
-    static inline name##_rc_t name##_rc_new(type##_t val) {                                     \
+    static inline name##_rc_t name##_rc_new(void) {                                             \
+        name##_rc_t p;                                                                          \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
+        if (p.ptr != NULL) {                                                                    \
+            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int)));     \
+            if (p._cnt != NULL) {                                                               \
+                memset(p.ptr, 0, sizeof(type##_t));                                             \
+                _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
+            } else {                                                                            \
+                zp_free(p.ptr);                                                                 \
+            }                                                                                   \
+        }                                                                                       \
+        return p;                                                                               \
+    }                                                                                           \
+    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                            \
         name##_rc_t p;                                                                          \
         p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
         if (p.ptr != NULL) {                                                                    \
@@ -104,7 +118,22 @@
         type##_t *ptr;                                                                    \
         unsigned int *_cnt;                                                               \
     } name##_rc_t;                                                                        \
-    static inline name##_rc_t name##_rc_new(type##_t val) {                               \
+    static inline name##_rc_t name##_rc_new(void) {                                       \
+        name##_rc_t p;                                                                    \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
+        if (p.ptr != NULL) {                                                              \
+            p._cnt = (unsigned int *)zp_malloc(sizeof(unsigned int));                     \
+            if (p._cnt != NULL) {                                                         \
+                memset(p.ptr, 0, sizeof(type##_t));                                       \
+                __sync_fetch_and_and(p._cnt, 0);                                          \
+                __sync_fetch_and_add(p._cnt, 1);                                          \
+            } else {                                                                      \
+                zp_free(p.ptr);                                                           \
+            }                                                                             \
+        }                                                                                 \
+        return p;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
         name##_rc_t p;                                                                    \
         p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
         if (p.ptr != NULL) {                                                              \
@@ -165,7 +194,21 @@
         type##_t *ptr;                                                                    \
         volatile unsigned int *_cnt;                                                      \
     } name##_rc_t;                                                                        \
-    static inline name##_rc_t name##_rc_new(type##_t val) {                               \
+    static inline name##_rc_t name##_rc_new(void) {                                       \
+        name##_rc_t p;                                                                    \
+        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
+        if (p.ptr != NULL) {                                                              \
+            p._cnt = (unsigned int *)zp_malloc(sizeof(unsigned int));                     \
+            if (p._cnt != NULL) {                                                         \
+                memset(p.ptr, 0, sizeof(type##_t));                                       \
+                *p._cnt = 1;                                                              \
+            } else {                                                                      \
+                zp_free(p.ptr);                                                           \
+            }                                                                             \
+        }                                                                                 \
+        return p;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
         name##_rc_t p;                                                                    \
         p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
         if (p.ptr != NULL) {                                                              \

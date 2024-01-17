@@ -128,7 +128,7 @@ _z_questionable_rc_t *_z_register_questionable(_z_session_t *zn, _z_questionable
 
     ret = (_z_questionable_rc_t *)zp_malloc(sizeof(_z_questionable_rc_t));
     if (ret != NULL) {
-        *ret = _z_questionable_rc_new(*q);
+        *ret = _z_questionable_rc_new_from_val(*q);
         zn->_local_questionable = _z_questionable_rc_list_push(zn->_local_questionable, ret);
     }
 

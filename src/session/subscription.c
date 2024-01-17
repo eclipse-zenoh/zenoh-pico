@@ -136,7 +136,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
     if (subs == NULL) {  // A subscription for this name does not yet exists
         ret = (_z_subscription_rc_t *)zp_malloc(sizeof(_z_subscription_rc_t));
         if (ret != NULL) {
-            *ret = _z_subscription_rc_new(*s);
+            *ret = _z_subscription_rc_new_from_val(*s);
             if (is_local == _Z_RESOURCE_IS_LOCAL) {
                 zn->_local_subscriptions = _z_subscription_rc_list_push(zn->_local_subscriptions, ret);
             } else {
