@@ -17,10 +17,8 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
-
-// Forward type declaration to avoid cyclical include
-typedef struct _z_session_t _z_session_t;
 
 /**
  * The query to be answered by a queryable.
