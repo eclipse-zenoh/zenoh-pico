@@ -837,7 +837,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     }
 
     return (z_owned_queryable_t){
-        ._value = _z_declare_queryable(zs._val.ptr, key, opt.complete, callback->call, callback->drop, ctx)};
+        ._value = _z_declare_queryable(&zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
 }
 
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {

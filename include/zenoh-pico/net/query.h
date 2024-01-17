@@ -37,7 +37,7 @@ typedef struct z_query_t {
  */
 typedef struct {
     uint32_t _entity_id;
-    _z_session_t *_zn;
+    _z_session_rc_t _zn;
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1

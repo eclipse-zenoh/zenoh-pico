@@ -265,11 +265,11 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+_z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_questionable_t q;
-    q._id = _z_get_entity_id(zn);
-    q._key = _z_get_expanded_key_from_key(zn, &keyexpr);
+    q._id = _z_get_entity_id(zn->ptr);
+    q._key = _z_get_expanded_key_from_key(zn->ptr, &keyexpr);
     q._complete = complete;
     q._callback = callback;
     q._dropper = dropper;
@@ -277,20 +277,20 @@ _z_queryable_t *_z_declare_queryable(_z_session_t *zn, _z_keyexpr_t keyexpr, _Bo
 
     _z_queryable_t *ret = (_z_queryable_t *)zp_malloc(sizeof(_z_queryable_t));
     if (ret != NULL) {
-        ret->_zn = zn;
+        ret->_zn = _z_session_rc_clone(zn);
         ret->_entity_id = q._id;
 
         _z_questionable_rc_t *sp_q =
-            _z_register_questionable(zn, &q);  // This a pointer to the entry stored at session-level.
-                                               // Do not drop it by the end of this function.
+            _z_register_questionable(zn->ptr, &q);  // This a pointer to the entry stored at session-level.
+                                                    // Do not drop it by the end of this function.
         if (sp_q != NULL) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration =
                 _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            if (_z_send_n_msg(zn->ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 // ret = _Z_ERR_TRANSPORT_TX_FAILED;
-                _z_unregister_questionable(zn, sp_q);
+                _z_unregister_questionable(zn->ptr, sp_q);
                 _z_queryable_free(&ret);
             }
             _z_n_msg_clear(&n_msg);
@@ -308,22 +308,22 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     int8_t ret = _Z_RES_OK;
 
     if (qle != NULL) {
-        _z_questionable_rc_t *q = _z_get_questionable_by_id(qle->_zn, qle->_entity_id);
+        _z_questionable_rc_t *q = _z_get_questionable_by_id(qle->_zn.ptr, qle->_entity_id);
         if (q != NULL) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration = _z_make_undecl_queryable(qle->_entity_id, &q->ptr->_key);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-            if (_z_send_n_msg(qle->_zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+            if (_z_send_n_msg(qle->_zn.ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
                 // Only if message is successfully send, local queryable state can be removed
-                _z_unregister_questionable(qle->_zn, q);
+                _z_unregister_questionable(qle->_zn.ptr, q);
             } else {
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }
             _z_n_msg_clear(&n_msg);
-
         } else {
             ret = _Z_ERR_ENTITY_UNKNOWN;
         }
+        _z_session_rc_drop(&qle->_zn);
     } else {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
