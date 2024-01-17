@@ -700,8 +700,7 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
         opt.priority = options->priority;
     }
 
-    return (z_owned_publisher_t){._value =
-                                     _z_declare_publisher(zs._val.ptr, key, opt.congestion_control, opt.priority)};
+    return (z_owned_publisher_t){._value = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority)};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
@@ -738,7 +737,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 #endif
     }
 
-    ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+    ret = _z_write(pub._val->_zn.ptr, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -747,7 +746,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len
+    _z_trigger_local_subscriptions(pub._val->_zn.ptr, pub._val->_key, payload, len);
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -759,7 +758,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
     (void)(options);
-    return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
+    return _z_write(pub._val->_zn.ptr, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
                     pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                     ,
