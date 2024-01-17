@@ -18,7 +18,6 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/logging.h"
 

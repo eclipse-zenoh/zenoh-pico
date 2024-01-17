@@ -16,7 +16,6 @@
 #define INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H
 
 #include <assert.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -25,7 +24,6 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
 
 #define _Z_OPTIONAL
