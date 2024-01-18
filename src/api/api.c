@@ -665,7 +665,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-    ret = _z_write(&zs._val.in->val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+    ret = _z_write(&zs._val.in->val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
                    opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -833,7 +833,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
         wrapped_ctx->ctx = ctx;
     }
 
-    ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
+    ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
                    wrapped_ctx, callback->drop, ctx
 
 #if Z_FEATURE_ATTACHMENT == 1
