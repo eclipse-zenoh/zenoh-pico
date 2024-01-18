@@ -771,7 +771,7 @@ z_get_options_t z_get_options_default(void) {
         .target = z_query_target_default(), .consolidation = z_query_consolidation_default(),
         .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null()
+        // TODO:ATT.attachment = z_attachment_null()
 #endif
     };
 }
@@ -825,7 +825,8 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
 
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
-                   opt.attachment
+                   z_attachment_null()
+    // TODO:ATT opt.attachment
 #endif
     );
     return ret;
