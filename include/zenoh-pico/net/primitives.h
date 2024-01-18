@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_PRIMITIVES_NETAPI_H
-#define ZENOH_PICO_PRIMITIVES_NETAPI_H
+#ifndef INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H
+#define INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H
 
 #include <stdint.h>
 
@@ -119,7 +119,12 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  */
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority);
+                z_priority_t priority
+#if Z_FEATURE_ATTACHMENT == 1
+                ,
+                z_attachment_t attachment
+#endif
+);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -228,7 +233,12 @@ int8_t _z_send_reply(const z_query_t *query, const _z_keyexpr_t keyexpr, const _
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop
+#if Z_FEATURE_ATTACHMENT == 1
+                ,
+                z_attachment_t attachment
+#endif
+);
 #endif
 
-#endif /* ZENOH_PICO_PRIMITIVES_NETAPI_H */
+#endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */

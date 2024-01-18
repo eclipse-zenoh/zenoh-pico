@@ -105,3 +105,6 @@ _z_bytes_t _z_bytes_steal(_z_bytes_t *b) {
     *b = _z_bytes_empty();
     return ret;
 }
+_Bool _z_bytes_eq(const _z_bytes_t *left, const _z_bytes_t *right) {
+    return left->len == right->len && memcmp(left->start, right->start, left->len) == 0;
+}

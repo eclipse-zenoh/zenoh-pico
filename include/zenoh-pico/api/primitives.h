@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_API_PRIMITIVES_H
-#define ZENOH_PICO_API_PRIMITIVES_H
+#ifndef INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
+#define INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -32,6 +32,8 @@ extern "C" {
 #endif
 
 /********* Data Types Handlers *********/
+#define z_bytes_wrap _z_bytes_wrap
+
 /**
  * Constructs a :c:type:`z_string_t` departing from a ``const char *``.
  * It is a loaned key expression that aliases ``value``.
@@ -1413,4 +1415,4 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options);
 }
 #endif
 
-#endif /* ZENOH_PICO_API_PRIMITIVES_H */
+#endif /* INCLUDE_ZENOH_PICO_API_PRIMITIVES_H */

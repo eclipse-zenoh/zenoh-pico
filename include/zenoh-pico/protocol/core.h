@@ -71,6 +71,65 @@ typedef struct {
     uint64_t time;
 } _z_timestamp_t;
 
+#if Z_FEATURE_ATTACHMENT == 1
+/**
+ * The body of a loop over an attachment's key-value pairs.
+ *
+ * `key` and `value` are loaned to the body for the duration of a single call.
+ * `context` is passed transparently through the iteration driver.
+ *
+ * Returning `0` is treated as `continue`.
+ * Returning any other value is treated as `break`.
+ */
+typedef int8_t (*z_attachment_iter_body_t)(_z_bytes_t key, _z_bytes_t value, void *context);
+/**
+ * The driver of a loop over an attachment's key-value pairs.
+ *
+ * This function is expected to call `loop_body` once for each key-value pair
+ * within `iterator`, passing `context`, and returning any non-zero value immediately (breaking iteration).
+ */
+typedef int8_t (*z_attachment_iter_driver_t)(const void *iterator, z_attachment_iter_body_t loop_body, void *context);
+/**
+ * The v-table for an attachment.
+ */
+typedef struct z_attachment_vtable_t {
+    /**
+     * See `z_attachment_iteration_driver_t`'s documentation.
+     */
+    z_attachment_iter_driver_t iteration_driver;
+} z_attachment_vtable_t;
+
+/**
+ * A v-table based map of byte slice to byte slice.
+ *
+ * `vtable == NULL` marks the gravestone value, as this type is often optional.
+ * Users are encouraged to use `z_attachment_null` and `z_attachment_check` to interact.
+ */
+typedef struct z_attachment_t {
+    const void *data;
+    z_attachment_iter_driver_t iteration_driver;
+} z_attachment_t;
+
+z_attachment_t z_attachment_null(void);
+_Bool z_attachment_check(const z_attachment_t *attachment);
+int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
+_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
+
+typedef struct {
+    union {
+        z_attachment_t decoded;
+        _z_bytes_t encoded;
+    } body;
+    _Bool is_encoded;
+} _z_owned_encoded_attachment_t;
+/**
+ * Estimate the length of an attachment once encoded.
+ */
+size_t _z_attachment_estimate_length(z_attachment_t att);
+z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
+void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att);
+#endif
+
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
@@ -168,6 +227,9 @@ typedef struct {
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_t attachment;
+#endif
 } _z_sample_t;
 
 /**

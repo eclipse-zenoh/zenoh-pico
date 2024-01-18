@@ -128,7 +128,12 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority) {
+                z_priority_t priority
+#if Z_FEATURE_ATTACHMENT == 1
+                ,
+                z_attachment_t attachment
+#endif
+) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
@@ -146,6 +151,9 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
                                 ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
                                 ._payload = _z_bytes_wrap(payload, len),
                                 ._encoding = encoding,
+#if Z_FEATURE_ATTACHMENT == 1
+                                ._attachment = {.is_encoded = false, .body.decoded = attachment},
+#endif
                             },
                     },
             };
@@ -382,7 +390,12 @@ int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_valu
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop
+#if Z_FEATURE_ATTACHMENT == 1
+                ,
+                z_attachment_t attachment
+#endif
+) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
@@ -403,7 +416,12 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
             _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
-            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value);
+            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value
+#if Z_FEATURE_ATTACHMENT == 1
+                                                         ,
+                                                         attachment
+#endif
+            );
 
             if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);

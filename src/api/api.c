@@ -599,9 +599,13 @@ OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owne
 void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
 
 z_put_options_t z_put_options_default(void) {
-    return (z_put_options_t){.encoding = z_encoding_default(),
-                             .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
-                             .priority = Z_PRIORITY_DEFAULT};
+    return (z_put_options_t) {
+        .encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
+        .priority = Z_PRIORITY_DEFAULT,
+#if Z_FEATURE_ATTACHMENT == 1
+        .attachment = z_attachment_null()
+#endif
+    };
 }
 
 z_delete_options_t z_delete_options_default(void) {
@@ -617,12 +621,25 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.congestion_control = options->congestion_control;
         opt.encoding = options->encoding;
         opt.priority = options->priority;
+#if Z_FEATURE_ATTACHMENT == 1
+        opt.attachment = options->attachment;
+#endif
     }
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   opt.congestion_control, opt.priority);
+                   opt.congestion_control, opt.priority
+#if Z_FEATURE_ATTACHMENT == 1
+                   ,
+                   opt.attachment
+#endif
+    );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len);
+    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len
+#if Z_FEATURE_ATTACHMENT == 1
+                                   ,
+                                   opt.attachment
+#endif
+    );
 
     return ret;
 }
@@ -636,7 +653,12 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.priority = options->priority;
     }
     ret = _z_write(zs._val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
-                   opt.priority);
+                   opt.priority
+#if Z_FEATURE_ATTACHMENT == 1
+                   ,
+                   z_attachment_null()
+#endif
+    );
 
     return ret;
 }
@@ -678,7 +700,12 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
 }
 
 z_publisher_put_options_t z_publisher_put_options_default(void) {
-    return (z_publisher_put_options_t){.encoding = z_encoding_default()};
+    return (z_publisher_put_options_t) {
+        .encoding = z_encoding_default(),
+#if Z_FEATURE_ATTACHMENT == 1
+        .attachment = z_attachment_null()
+#endif
+    };
 }
 
 z_publisher_delete_options_t z_publisher_delete_options_default(void) {
@@ -692,13 +719,26 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     z_publisher_put_options_t opt = z_publisher_put_options_default();
     if (options != NULL) {
         opt.encoding = options->encoding;
+#if Z_FEATURE_ATTACHMENT == 1
+        opt.attachment = options->attachment;
+#endif
     }
 
     ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority);
+                   pub._val->_congestion_control, pub._val->_priority
+#if Z_FEATURE_ATTACHMENT == 1
+                   ,
+                   opt.attachment
+#endif
+    );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len);
+    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len
+#if Z_FEATURE_ATTACHMENT == 1
+                                   ,
+                                   opt.attachment
+#endif
+    );
 
     return ret;
 }
@@ -706,7 +746,12 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
     (void)(options);
     return _z_write(pub._val->_zn, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                    pub._val->_congestion_control, pub._val->_priority);
+                    pub._val->_congestion_control, pub._val->_priority
+#if Z_FEATURE_ATTACHMENT == 1
+                    ,
+                    z_attachment_null()
+#endif
+    );
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
@@ -722,9 +767,13 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 
 z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t){.target = z_query_target_default(),
-                             .consolidation = z_query_consolidation_default(),
-                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()}};
+    return (z_get_options_t) {
+        .target = z_query_target_default(), .consolidation = z_query_consolidation_default(),
+        .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
+#if Z_FEATURE_ATTACHMENT == 1
+        // TODO:ATT.attachment = z_attachment_null()
+#endif
+    };
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -772,7 +821,14 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     ret = _z_query(zs._val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
-                   wrapped_ctx, callback->drop, ctx);
+                   wrapped_ctx, callback->drop, ctx
+
+#if Z_FEATURE_ATTACHMENT == 1
+                   ,
+                   z_attachment_null()
+    // TODO:ATT opt.attachment
+#endif
+    );
     return ret;
 }
 
@@ -1106,3 +1162,114 @@ int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
     return _zp_send_join(zs._val);
 }
+#if Z_FEATURE_ATTACHMENT == 1
+void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_) {
+    _z_bytes_clear(&this_->key);
+    _z_bytes_clear(&this_->value);
+}
+
+z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_) {
+    if (!z_bytes_map_check(this_)) {
+        return z_attachment_null();
+    }
+    return (z_attachment_t){.data = this_, .iteration_driver = (z_attachment_iter_driver_t)z_bytes_map_iter};
+}
+bool z_bytes_map_check(const z_owned_bytes_map_t *this_) { return this_->_inner != NULL; }
+void z_bytes_map_drop(z_owned_bytes_map_t *this_) { _z_bytes_pair_list_free(&this_->_inner); }
+
+int8_t _z_bytes_map_insert_by_alias(z_bytes_t key, z_bytes_t value, void *this_) {
+    z_bytes_map_insert_by_alias((z_owned_bytes_map_t *)this_, key, value);
+    return 0;
+}
+int8_t _z_bytes_map_insert_by_copy(z_bytes_t key, z_bytes_t value, void *this_) {
+    z_bytes_map_insert_by_copy((z_owned_bytes_map_t *)this_, key, value);
+    return 0;
+}
+z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_) {
+    if (!z_attachment_check(&this_)) {
+        return z_bytes_map_null();
+    }
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_attachment_iterate(this_, _z_bytes_map_insert_by_copy, &map);
+    return map;
+}
+z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_) {
+    if (!z_attachment_check(&this_)) {
+        return z_bytes_map_null();
+    }
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_attachment_iterate(this_, _z_bytes_map_insert_by_alias, &map);
+    return map;
+}
+z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            return _z_bytes_wrap(head->value.start, head->value.len);
+        }
+    }
+    return z_bytes_null();
+}
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            break;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    if (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        _z_bytes_clear(&head->value);
+        head->value = _z_bytes_wrap(value.start, value.len);
+    } else {
+        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
+        memset(insert, 0, sizeof(struct _z_bytes_pair_t));
+        insert->key = _z_bytes_wrap(key.start, key.len);
+        insert->value = _z_bytes_wrap(value.start, value.len);
+        ((z_owned_bytes_map_t *)this_)->_inner = _z_bytes_pair_list_push(this_->_inner, insert);
+    }
+}
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        if (_z_bytes_eq(&key, &head->key)) {
+            break;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    if (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        _z_bytes_clear(&head->value);
+        _z_bytes_copy(&head->value, &value);
+        if (!head->key._is_alloc) {
+            _z_bytes_copy(&head->key, &key);
+        }
+    } else {
+        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
+        memset(insert, 0, sizeof(struct _z_bytes_pair_t));
+        _z_bytes_copy(&insert->key, &key);
+        _z_bytes_copy(&insert->value, &value);
+        ((z_owned_bytes_map_t *)this_)->_inner = _z_bytes_pair_list_push(this_->_inner, insert);
+    }
+}
+int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx) {
+    _z_bytes_pair_list_t *current = this_->_inner;
+    while (current) {
+        struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
+        int8_t ret = body(head->key, head->value, ctx);
+        if (ret) {
+            return ret;
+        }
+        current = _z_bytes_pair_list_tail(current);
+    }
+    return 0;
+}
+z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner = _z_bytes_pair_list_new()}; }
+z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
+z_bytes_t z_bytes_from_str(const char *str) { return z_bytes_wrap((const uint8_t *)str, strlen(str)); }
+z_bytes_t z_bytes_null(void) { return (z_bytes_t){.len = 0, ._is_alloc = false, .start = NULL}; }
+#endif
