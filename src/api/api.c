@@ -647,7 +647,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len);
+    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -666,7 +666,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.priority = options->priority;
     }
     ret = _z_write(&zs._val.in->val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                   opt.priority
+                   opt.congestion_control, opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    z_attachment_null()
@@ -746,7 +746,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len);
+    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -834,8 +834,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   wrapped_ctx, callback->drop, ctx
-
+                   __z_reply_handler, wrapped_ctx, callback->drop, ctx
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    z_attachment_null()
