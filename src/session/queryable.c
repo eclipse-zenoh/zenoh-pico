@@ -42,7 +42,7 @@ _z_questionable_rc_t *__z_get_questionable_by_id(_z_questionable_rc_list_t *qles
     _z_questionable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_questionable_rc_t *qle = _z_questionable_rc_list_head(xs);
-        if (id == qle->ptr->_id) {
+        if (id == qle->in->val._id) {
             ret = qle;
             break;
         }
@@ -59,7 +59,7 @@ _z_questionable_rc_list_t *__z_get_questionable_by_key(_z_questionable_rc_list_t
     _z_questionable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_questionable_rc_t *qle = _z_questionable_rc_list_head(xs);
-        if (_z_keyexpr_intersects(qle->ptr->_key._suffix, strlen(qle->ptr->_key._suffix), key._suffix,
+        if (_z_keyexpr_intersects(qle->in->val._key._suffix, strlen(qle->in->val._key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
             ret = _z_questionable_rc_list_push(ret, _z_questionable_rc_clone_as_ptr(qle));
         }
@@ -174,7 +174,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         _z_questionable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_questionable_rc_t *qle = _z_questionable_rc_list_head(xs);
-            qle->ptr->_callback(&q, qle->ptr->_arg);
+            qle->in->val._callback(&q, qle->in->val._arg);
             xs = _z_questionable_rc_list_tail(xs);
         }
 

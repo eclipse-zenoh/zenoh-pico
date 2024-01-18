@@ -89,7 +89,7 @@ _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_str_t ret = {._value = NULL};
 
-    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(zs._val.ptr, &keyexpr);
+    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&zs._val.in->val, &keyexpr);
     ret._value = (char *)ekey._suffix;  // ekey will be out of scope so
                                         //  - suffix can be safely casted as non-const
                                         //  - suffix does not need to be copied
@@ -421,9 +421,9 @@ OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
 
-_Bool z_session_check(const z_owned_session_t *val) { return val->_value.ptr != NULL; }
+_Bool z_session_check(const z_owned_session_t *val) { return val->_value.in != NULL; }
 z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
-z_owned_session_t z_session_null(void) { return (z_owned_session_t){._value = {.ptr = NULL, ._cnt = 0}}; }
+z_owned_session_t z_session_null(void) { return (z_owned_session_t){._value = {.in = NULL}}; }
 z_owned_session_t *z_session_move(z_owned_session_t *val) { return val; }
 z_owned_session_t z_session_clone(z_owned_session_t *val) {
     z_owned_session_t ret;
@@ -535,16 +535,16 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 }
 
 z_owned_session_t z_open(z_owned_config_t *config) {
-    z_owned_session_t zs = {._value = {.ptr = NULL, ._cnt = 0}};
+    z_owned_session_t zs = {._value = {.in = NULL}};
 
     // Create rc
     _z_session_rc_t zsrc = _z_session_rc_new();
-    if (zsrc.ptr == NULL) {
+    if (zsrc.in == NULL) {
         z_config_drop(config);
         return zs;
     }
     // Open session
-    if (_z_open(zsrc.ptr, config->_value) != _Z_RES_OK) {
+    if (_z_open(&zsrc.in->val, config->_value) != _Z_RES_OK) {
         _z_session_rc_drop(&zsrc);
         z_config_drop(config);
         return zs;
@@ -556,21 +556,21 @@ z_owned_session_t z_open(z_owned_config_t *config) {
 }
 
 int8_t z_close(z_owned_session_t *zs) {
-    if ((zs == NULL) || (zs->_value.ptr == NULL)) {
+    if ((zs == NULL) || (zs->_value.in == NULL)) {
         return _Z_RES_OK;
     }
-    _z_close(zs->_value.ptr);
+    _z_close(&zs->_value.in->val);
     _z_session_rc_drop(&zs->_value);
-    zs->_value.ptr = NULL;
+    zs->_value.in = NULL;
     return _Z_RES_OK;
 }
 
 int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     // Call transport function
-    switch (zs._val.ptr->_tp._type) {
+    switch (zs._val.in->val._tp._type) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _zp_multicast_fetch_zid(&zs._val.ptr->_tp, callback);
+            _zp_multicast_fetch_zid(&zs._val.in->val._tp, callback);
             break;
         default:
             break;
@@ -587,9 +587,9 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
 
 int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     // Call transport function
-    switch (zs._val.ptr->_tp._type) {
+    switch (zs._val.in->val._tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _zp_unicast_fetch_zid(&zs._val.ptr->_tp, callback);
+            _zp_unicast_fetch_zid(&zs._val.in->val._tp, callback);
             break;
         default:
             break;
@@ -604,7 +604,7 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     return 0;
 }
 
-z_id_t z_info_zid(const z_session_t zs) { return zs._val.ptr->_local_zid; }
+z_id_t z_info_zid(const z_session_t zs) { return zs._val.in->val._local_zid; }
 
 #if Z_FEATURE_PUBLICATION == 1
 OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
@@ -638,7 +638,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.attachment = options->attachment;
 #endif
     }
-    ret = _z_write(zs._val.ptr, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
+    ret = _z_write(&zs._val.in->val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    opt.congestion_control, opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -647,7 +647,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(zs._val.ptr, keyexpr, payload, payload_len);
+    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len);
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -665,7 +665,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-    ret = _z_write(zs._val.ptr, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+    ret = _z_write(&zs._val.in->val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE, opt.congestion_control,
                    opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -686,10 +686,10 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.ptr->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(zs._val.ptr, &keyexpr);
+    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(zs._val.ptr, keyexpr);
+            uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -737,7 +737,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 #endif
     }
 
-    ret = _z_write(pub._val->_zn.ptr, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+    ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -746,7 +746,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(pub._val->_zn.ptr, pub._val->_key, payload, len);
+    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len);
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -758,7 +758,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
     (void)(options);
-    return _z_write(pub._val->_zn.ptr, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
+    return _z_write(&pub._val->_zn.in->val, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
                     pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                     ,
@@ -833,7 +833,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
         wrapped_ctx->ctx = ctx;
     }
 
-    ret = _z_query(zs._val.ptr, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
+    ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value, __z_reply_handler,
                    wrapped_ctx, callback->drop, ctx
 
 #if Z_FEATURE_ATTACHMENT == 1
@@ -879,10 +879,10 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.ptr->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(zs._val.ptr, &keyexpr);
+    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(zs._val.ptr, keyexpr);
+            uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -939,7 +939,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
 
     key._value = (z_keyexpr_t *)zp_malloc(sizeof(z_keyexpr_t));
     if (key._value != NULL) {
-        uint16_t id = _z_declare_resource(zs._val.ptr, keyexpr);
+        uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
         *key._value = _z_rid_with_suffix(id, NULL);
     }
 
@@ -949,7 +949,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
 int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_undeclare_resource(zs._val.ptr, keyexpr->_value->_id);
+    ret = _z_undeclare_resource(&zs._val.in->val, keyexpr->_value->_id);
     z_keyexpr_drop(keyexpr);
 
     return ret;
@@ -982,8 +982,8 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.ptr->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(zs._val.ptr, &keyexpr);
+    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
         if (r == NULL) {
             char *wild = strpbrk(keyexpr._suffix, "*$");
             _Bool do_keydecl = true;
@@ -1001,7 +1001,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
                 }
             }
             if (do_keydecl) {
-                uint16_t id = _z_declare_resource(zs._val.ptr, keyexpr);
+                uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
                 key = _z_rid_with_suffix(id, wild);
             }
         }
@@ -1028,9 +1028,9 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
     callback->context = NULL;
 
     z_keyexpr_t key = keyexpr;
-    _z_resource_t *r = _z_get_resource_by_key(zs._val.ptr, &keyexpr);
+    _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
     if (r == NULL) {
-        uint16_t id = _z_declare_resource(zs._val.ptr, keyexpr);
+        uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
         key = _z_rid_with_suffix(id, NULL);
     }
 
@@ -1067,11 +1067,11 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
     z_owned_keyexpr_t ret = z_keyexpr_null();
     uint32_t lookup = sub._val->_entity_id;
     if (sub._val != NULL) {
-        _z_subscription_rc_list_t *tail = sub._val->_zn.ptr->_local_subscriptions;
+        _z_subscription_rc_list_t *tail = sub._val->_zn.in->val._local_subscriptions;
         while (tail != NULL && !z_keyexpr_check(&ret)) {
             _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
-            if (head->ptr->_id == lookup) {
-                _z_keyexpr_t key = _z_keyexpr_duplicate(head->ptr->_key);
+            if (head->in->val._id == lookup) {
+                _z_keyexpr_t key = _z_keyexpr_duplicate(head->in->val._key);
                 ret = (z_owned_keyexpr_t){._value = zp_malloc(sizeof(_z_keyexpr_t))};
                 if (ret._value != NULL) {
                     *ret._value = key;
@@ -1104,7 +1104,7 @@ int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options)
     if (options != NULL) {
         opt.task_attributes = options->task_attributes;
     }
-    return _zp_start_read_task(zs._val.ptr, opt.task_attributes);
+    return _zp_start_read_task(&zs._val.in->val, opt.task_attributes);
 #else
     (void)(zs);
     return -1;
@@ -1113,7 +1113,7 @@ int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options)
 
 int8_t zp_stop_read_task(z_session_t zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_read_task(zs._val.ptr);
+    return _zp_stop_read_task(&zs._val.in->val);
 #else
     (void)(zs);
     return -1;
@@ -1137,7 +1137,7 @@ int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *option
     if (options != NULL) {
         opt.task_attributes = options->task_attributes;
     }
-    return _zp_start_lease_task(zs._val.ptr, opt.task_attributes);
+    return _zp_start_lease_task(&zs._val.in->val, opt.task_attributes);
 #else
     (void)(zs);
     return -1;
@@ -1146,7 +1146,7 @@ int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *option
 
 int8_t zp_stop_lease_task(z_session_t zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_lease_task(zs._val.ptr);
+    return _zp_stop_lease_task(&zs._val.in->val);
 #else
     (void)(zs);
     return -1;
@@ -1157,7 +1157,7 @@ zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){.__
 
 int8_t zp_read(z_session_t zs, const zp_read_options_t *options) {
     (void)(options);
-    return _zp_read(zs._val.ptr);
+    return _zp_read(&zs._val.in->val);
 }
 
 zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) {
@@ -1166,14 +1166,14 @@ zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) {
 
 int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *options) {
     (void)(options);
-    return _zp_send_keep_alive(zs._val.ptr);
+    return _zp_send_keep_alive(&zs._val.in->val);
 }
 
 zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){.__dummy = 0}; }
 
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
     (void)(options);
-    return _zp_send_join(zs._val.ptr);
+    return _zp_send_join(&zs._val.in->val);
 }
 #if Z_FEATURE_ATTACHMENT == 1
 void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_) {

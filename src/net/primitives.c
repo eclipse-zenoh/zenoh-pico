@@ -107,7 +107,7 @@ _z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
     }
     // Fill publisher
     ret->_key = _z_keyexpr_duplicate(keyexpr);
-    ret->_id = _z_get_entity_id(zn->ptr);
+    ret->_id = _z_get_entity_id(&zn->in->val);
     ret->_congestion_control = congestion_control;
     ret->_priority = priority;
     ret->_zn = _z_session_rc_clone(zn);
@@ -119,7 +119,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Clear publisher
-    _z_undeclare_resource(pub->_zn.ptr, pub->_key._id);
+    _z_undeclare_resource(&pub->_zn.in->val, pub->_key._id);
     _z_session_rc_drop(&pub->_zn);
     return _Z_RES_OK;
 }
@@ -188,9 +188,9 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
-    s._id = _z_get_entity_id(zn->ptr);
+    s._id = _z_get_entity_id(&zn->in->val);
     s._key_id = keyexpr._id;
-    s._key = _z_get_expanded_key_from_key(zn->ptr, &keyexpr);
+    s._key = _z_get_expanded_key_from_key(&zn->in->val, &keyexpr);
     s._info = sub_info;
     s._callback = callback;
     s._dropper = dropper;
@@ -203,7 +203,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
         return NULL;
     }
     // Register subscription, stored at session-level, do not drop it by the end of this function.
-    _z_subscription_rc_t *sp_s = _z_register_subscription(zn->ptr, _Z_RESOURCE_IS_LOCAL, &s);
+    _z_subscription_rc_t *sp_s = _z_register_subscription(&zn->in->val, _Z_RESOURCE_IS_LOCAL, &s);
     if (sp_s == NULL) {
         _z_subscriber_free(&ret);
         return NULL;
@@ -212,8 +212,8 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
     _z_declaration_t declaration = _z_make_decl_subscriber(
         &keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE, sub_info.mode == Z_SUBMODE_PULL);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-    if (_z_send_n_msg(zn->ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        _z_unregister_subscription(zn->ptr, _Z_RESOURCE_IS_LOCAL, sp_s);
+    if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_unregister_subscription(&zn->in->val, _Z_RESOURCE_IS_LOCAL, sp_s);
         _z_subscriber_free(&ret);
         return NULL;
     }
@@ -229,20 +229,20 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find subscription entry
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    _z_subscription_rc_t *s = _z_get_subscription_by_id(&sub->_zn.in->val, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
     if (s == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->ptr->_key);
+    _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->in->val._key);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-    if (_z_send_n_msg(sub->_zn.ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    if (_z_send_n_msg(&sub->_zn.in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local subscription state can be removed
-    _z_undeclare_resource(sub->_zn.ptr, s->ptr->_key_id);
-    _z_unregister_subscription(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, s);
+    _z_undeclare_resource(&sub->_zn.in->val, s->in->val._key_id);
+    _z_unregister_subscription(&sub->_zn.in->val, _Z_RESOURCE_IS_LOCAL, s);
     _z_session_rc_drop(&sub->_zn);
     return _Z_RES_OK;
 }
@@ -251,11 +251,11 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
     int8_t ret = _Z_RES_OK;
 
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(sub->_zn.ptr, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    _z_subscription_rc_t *s = _z_get_subscription_by_id(&sub->_zn.in->val, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
     if (s != NULL) {
-        _z_zint_t pull_id = _z_get_pull_id(sub->_zn.ptr);
-        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->ptr->_key), pull_id);
-        if (_z_send_n_msg(sub->_zn.ptr, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_zint_t pull_id = _z_get_pull_id(&sub->_zn.in->val);
+        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->in->val._key), pull_id);
+        if (_z_send_n_msg(&sub->_zn.in->val, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
     } else {
@@ -271,8 +271,8 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
 _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_questionable_t q;
-    q._id = _z_get_entity_id(zn->ptr);
-    q._key = _z_get_expanded_key_from_key(zn->ptr, &keyexpr);
+    q._id = _z_get_entity_id(&zn->in->val);
+    q._key = _z_get_expanded_key_from_key(&zn->in->val, &keyexpr);
     q._complete = complete;
     q._callback = callback;
     q._dropper = dropper;
@@ -285,7 +285,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, 
         return NULL;
     }
     // Create questionable entry, stored at session-level, do not drop it by the end of this function.
-    _z_questionable_rc_t *sp_q = _z_register_questionable(zn->ptr, &q);
+    _z_questionable_rc_t *sp_q = _z_register_questionable(&zn->in->val, &q);
     if (sp_q == NULL) {
         _z_queryable_free(&ret);
         return NULL;
@@ -293,8 +293,8 @@ _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, 
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-    if (_z_send_n_msg(zn->ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        _z_unregister_questionable(zn->ptr, sp_q);
+    if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_unregister_questionable(&zn->in->val, sp_q);
         _z_queryable_free(&ret);
         return NULL;
     }
@@ -310,19 +310,19 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find questionable entry
-    _z_questionable_rc_t *q = _z_get_questionable_by_id(qle->_zn.ptr, qle->_entity_id);
+    _z_questionable_rc_t *q = _z_get_questionable_by_id(&qle->_zn.in->val, qle->_entity_id);
     if (q == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_undecl_queryable(qle->_entity_id, &q->ptr->_key);
+    _z_declaration_t declaration = _z_make_undecl_queryable(qle->_entity_id, &q->in->val._key);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-    if (_z_send_n_msg(qle->_zn.ptr, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    if (_z_send_n_msg(&qle->_zn.in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
-    _z_unregister_questionable(qle->_zn.ptr, q);
+    _z_unregister_questionable(&qle->_zn.in->val, q);
     _z_session_rc_drop(&qle->_zn);
     return _Z_RES_OK;
 }

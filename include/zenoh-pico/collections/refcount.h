@@ -42,81 +42,71 @@
 #endif  // __cplusplus
 
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_REFCOUNT_DEFINE(name, type)                                                          \
-    typedef struct name##_rc_t {                                                                \
-        type##_t *ptr;                                                                          \
-        _z_atomic(unsigned int) * _cnt;                                                         \
-    } name##_rc_t;                                                                              \
-    static inline name##_rc_t name##_rc_new(void) {                                             \
-        name##_rc_t p;                                                                          \
-        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
-        if (p.ptr != NULL) {                                                                    \
-            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int)));     \
-            if (p._cnt != NULL) {                                                               \
-                memset(p.ptr, 0, sizeof(type##_t));                                             \
-                _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
-            } else {                                                                            \
-                zp_free(p.ptr);                                                                 \
-            }                                                                                   \
-        }                                                                                       \
-        return p;                                                                               \
-    }                                                                                           \
-    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                            \
-        name##_rc_t p;                                                                          \
-        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                        \
-        if (p.ptr != NULL) {                                                                    \
-            p._cnt = (_z_atomic(unsigned int) *)zp_malloc(sizeof(_z_atomic(unsigned int)));     \
-            if (p._cnt != NULL) {                                                               \
-                *p.ptr = val;                                                                   \
-                _z_atomic_store_explicit(p._cnt, 1, _z_memory_order_relaxed);                   \
-            } else {                                                                            \
-                zp_free(p.ptr);                                                                 \
-            }                                                                                   \
-        }                                                                                       \
-        return p;                                                                               \
-    }                                                                                           \
-    static inline name##_rc_t name##_rc_clone(name##_rc_t *p) {                                 \
-        name##_rc_t c;                                                                          \
-        c._cnt = p->_cnt;                                                                       \
-        c.ptr = p->ptr;                                                                         \
-        _z_atomic_fetch_add_explicit(p->_cnt, 1, _z_memory_order_relaxed);                      \
-        return c;                                                                               \
-    }                                                                                           \
-    static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                         \
-        name##_rc_t *c = (name##_rc_t *)zp_malloc(sizeof(name##_rc_t));                         \
-        if (c != NULL) {                                                                        \
-            c->_cnt = p->_cnt;                                                                  \
-            c->ptr = p->ptr;                                                                    \
-            _z_atomic_fetch_add_explicit(p->_cnt, 1, _z_memory_order_relaxed);                  \
-        }                                                                                       \
-        return c;                                                                               \
-    }                                                                                           \
-    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {       \
-        return (left->ptr == right->ptr);                                                       \
-    }                                                                                           \
-    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                        \
-        _Bool dropped = false;                                                                  \
-        if (p->_cnt != NULL) {                                                                  \
-            unsigned int c = _z_atomic_fetch_sub_explicit(p->_cnt, 1, _z_memory_order_release); \
-            dropped = c == 1;                                                                   \
-            if (dropped == true) {                                                              \
-                atomic_thread_fence(_z_memory_order_acquire);                                   \
-                if (p->ptr != NULL) {                                                           \
-                    type##_clear(p->ptr);                                                       \
-                    zp_free(p->ptr);                                                            \
-                    zp_free((void *)p->_cnt);                                                   \
-                }                                                                               \
-            }                                                                                   \
-        }                                                                                       \
-        return dropped;                                                                         \
+#define _Z_REFCOUNT_DEFINE(name, type)                                                    \
+    typedef struct name##_inner_rc_t {                                                    \
+        type##_t val;                                                                     \
+        _z_atomic(unsigned int) _cnt;                                                     \
+    } name##_inner_rc_t;                                                                  \
+    typedef struct name##_rc_t {                                                          \
+        name##_inner_rc_t *in;                                                            \
+    } name##_rc_t;                                                                        \
+    static inline name##_rc_t name##_rc_new(void) {                                       \
+        name##_rc_t p;                                                                    \
+        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        if (p.in != NULL) {                                                               \
+            memset(&p.in->val, 0, sizeof(type##_t));                                      \
+            _z_atomic_store_explicit(&p.in->_cnt, 1, _z_memory_order_relaxed);            \
+        }                                                                                 \
+        return p;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
+        name##_rc_t p;                                                                    \
+        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        if (p.in != NULL) {                                                               \
+            p.in->val = val;                                                              \
+            _z_atomic_store_explicit(&p.in->_cnt, 1, _z_memory_order_relaxed);            \
+        }                                                                                 \
+        return p;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t name##_rc_clone(name##_rc_t *p) {                           \
+        name##_rc_t c;                                                                    \
+        c.in = p->in;                                                                     \
+        _z_atomic_fetch_add_explicit(&p->in->_cnt, 1, _z_memory_order_relaxed);           \
+        return c;                                                                         \
+    }                                                                                     \
+    static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
+        name##_rc_t *c = (name##_rc_t *)zp_malloc(sizeof(name##_rc_t));                   \
+        if (c != NULL) {                                                                  \
+            c->in = p->in;                                                                \
+            _z_atomic_fetch_add_explicit(&p->in->_cnt, 1, _z_memory_order_relaxed);       \
+        }                                                                                 \
+        return c;                                                                         \
+    }                                                                                     \
+    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) { \
+        return (left->in == right->in);                                                   \
+    }                                                                                     \
+    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                  \
+        if ((p == NULL) || (p->in == NULL)) {                                             \
+            return false;                                                                 \
+        }                                                                                 \
+        if (_z_atomic_fetch_sub_explicit(&p->in->_cnt, 1, _z_memory_order_release) > 1) { \
+            return false;                                                                 \
+        }                                                                                 \
+        atomic_thread_fence(_z_memory_order_acquire);                                     \
+        type##_clear(&p->in->val);                                                        \
+        zp_free(p->in);                                                                   \
+        return true;                                                                      \
     }
 #else  // ZENOH_C_STANDARD == 99
 #ifdef ZENOH_COMPILER_GCC
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
+    typedef struct name##_inner_rc_t {                                                    \
+        type##_t val;                                                                     \
+        unsigned int _cnt;                                                                \
+    } name##_inner_rc_t;                                                                  \
     typedef struct name##_rc_t {                                                          \
-        type##_t *ptr;                                                                    \
-        unsigned int *_cnt;                                                               \
+        name##_inner_rc_t *in;                                                            \
     } name##_rc_t;                                                                        \
     static inline name##_rc_t name##_rc_new(void) {                                       \
         name##_rc_t p;                                                                    \
@@ -190,13 +180,16 @@
 #else   // Z_FEATURE_MULTI_THREAD == 0
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                    \
+    typedef struct name##_inner_rc_t {                                                    \
+        type##_t val;                                                                     \
+        unsigned int _cnt;                                                                \
+    } name##_inner_rc_t;                                                                  \
     typedef struct name##_rc_t {                                                          \
-        type##_t *ptr;                                                                    \
-        volatile unsigned int *_cnt;                                                      \
+        name##_inner_rc_t *in;                                                            \
     } name##_rc_t;                                                                        \
     static inline name##_rc_t name##_rc_new(void) {                                       \
         name##_rc_t p;                                                                    \
-        p.ptr = (type##_t *)zp_malloc(sizeof(type##_t));                                  \
+        p.in = (type##_t *)zp_malloc(sizeof(type##_t));                                   \
         if (p.ptr != NULL) {                                                              \
             p._cnt = (unsigned int *)zp_malloc(sizeof(unsigned int));                     \
             if (p._cnt != NULL) {                                                         \

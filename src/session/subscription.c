@@ -45,7 +45,7 @@ _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs
     _z_subscription_rc_list_t *xs = subs;
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-        if (id == sub->ptr->_id) {
+        if (id == sub->in->val._id) {
             ret = sub;
             break;
         }
@@ -62,7 +62,7 @@ _z_subscription_rc_list_t *__z_get_subscriptions_by_key(_z_subscription_rc_list_
     _z_subscription_rc_list_t *xs = subs;
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-        if (_z_keyexpr_intersects(sub->ptr->_key._suffix, strlen(sub->ptr->_key._suffix), key._suffix,
+        if (_z_keyexpr_intersects(sub->in->val._key._suffix, strlen(sub->in->val._key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
             ret = _z_subscription_rc_list_push(ret, _z_subscription_rc_clone_as_ptr(sub));
         }
@@ -207,7 +207,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
         while (xs != NULL) {
             _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-            sub->ptr->_callback(&s, sub->ptr->_arg);
+            sub->in->val._callback(&s, sub->in->val._arg);
             xs = _z_subscription_rc_list_tail(xs);
         }
 
