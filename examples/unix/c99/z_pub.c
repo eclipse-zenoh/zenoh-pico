@@ -26,9 +26,10 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 10;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -45,8 +46,12 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -86,25 +91,20 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    char *buf = (char *)malloc(256);
-    for (int idx = 0; 1; ++idx) {
+    for (int idx = 0; idx < n; ++idx) {
         sleep(1);
-        snprintf(buf, 256, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+        (void)idx;
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), &options);
+        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)value, strlen(value), &options);
     }
-
+    // Clean up
     z_undeclare_publisher(z_publisher_move(&pub));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
-
     z_close(z_session_move(&s));
-
-    free(buf);
     return 0;
 }
 #else
