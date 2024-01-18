@@ -601,7 +601,8 @@ void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
 z_put_options_t z_put_options_default(void) {
     return (z_put_options_t){.encoding = z_encoding_default(),
                              .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
-                             .priority = Z_PRIORITY_DEFAULT};
+                             .priority = Z_PRIORITY_DEFAULT,
+                             .attachment = z_attachment_null()};
 }
 
 z_delete_options_t z_delete_options_default(void) {
@@ -678,7 +679,7 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
 }
 
 z_publisher_put_options_t z_publisher_put_options_default(void) {
-    return (z_publisher_put_options_t){.encoding = z_encoding_default()};
+    return (z_publisher_put_options_t){.encoding = z_encoding_default(), .attachment = z_attachment_null()};
 }
 
 z_publisher_delete_options_t z_publisher_delete_options_default(void) {
