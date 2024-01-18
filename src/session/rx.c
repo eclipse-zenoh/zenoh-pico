@@ -100,9 +100,16 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_PUT: {
                     _z_msg_put_t put = req._body._put;
 #if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_ATTACHMENT == 1
                     z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
+#endif
                     ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, att);
+                                                   put._commons._timestamp
+#if Z_FEATURE_ATTACHMENT == 1
+                                                   ,
+                                                   att
+#endif
+                    );
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
@@ -115,7 +122,12 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
                     ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, z_attachment_null());
+                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp
+#if Z_FEATURE_ATTACHMENT == 1
+                                                   ,
+                                                   z_attachment_null()
+#endif
+                    );
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
@@ -149,17 +161,29 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 } break;
                 case _Z_RESPONSE_BODY_PUT: {
                     _z_msg_put_t put = response._body._put;
-                    z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
 #if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_ATTACHMENT == 1
+                    z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
+#endif
                     ret = _z_trigger_subscriptions(zn, response._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, att);
+                                                   put._commons._timestamp
+#if Z_FEATURE_ATTACHMENT == 1
+                                                   ,
+                                                   att
+#endif
+                    );
 #endif
                 } break;
                 case _Z_RESPONSE_BODY_DEL: {
                     _z_msg_del_t del = response._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
                     ret = _z_trigger_subscriptions(zn, response._key, _z_bytes_empty(), z_encoding_default(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, z_attachment_null());
+                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp
+#if Z_FEATURE_ATTACHMENT == 1
+                                                   ,
+                                                   z_attachment_null()
+#endif
+                    );
 #endif
                 } break;
             }

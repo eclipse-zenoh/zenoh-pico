@@ -117,12 +117,14 @@ set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
 set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
+set(Z_FEATURE_ATTACHMENT 1 CACHE STRING "Toggle attachment feature")
 add_definition(Z_FEATURE_MULTI_THREAD=${Z_FEATURE_MULTI_THREAD})
 add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
 add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
 add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
 add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
 add_definition(Z_FEATURE_RAWETH_TRANSPORT=${Z_FEATURE_RAWETH_TRANSPORT})
+add_definition(Z_FEATURE_ATTACHMENT=${Z_FEATURE_ATTACHMENT})
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
@@ -130,6 +132,7 @@ message(STATUS "Building with feature confing:\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
+* ATTACHMENT: ${Z_FEATURE_ATTACHMENT}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
 
 # Print summary of CMAKE configurations

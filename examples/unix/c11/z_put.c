@@ -93,14 +93,18 @@ int main(int argc, char **argv) {
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+#if Z_FEATURE_ATTACHMENT == 1
     z_owned_bytes_map_t map = z_bytes_map_new();
     z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hi", 2), _z_bytes_wrap((uint8_t *)"there", 5));
     options.attachment = z_bytes_map_as_attachment(&map);
+#endif
     if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
+#if Z_FEATURE_ATTACHMENT == 1
     z_bytes_map_drop(&map);
+#endif
     // z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
     // Stop read and lease tasks for zenoh-pico

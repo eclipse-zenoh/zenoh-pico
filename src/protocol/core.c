@@ -72,6 +72,8 @@ _z_value_t _z_value_steal(_z_value_t *value) {
     *value = _z_value_null();
     return ret;
 }
+
+#if Z_FEATURE_ATTACHMENT == 1
 struct _z_seeker_t {
     _z_bytes_t key;
     _z_bytes_t value;
@@ -133,3 +135,4 @@ int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body,
     return this_.iteration_driver(this_.data, body, ctx);
 }
 z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
+#endif

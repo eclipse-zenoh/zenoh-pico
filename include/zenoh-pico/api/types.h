@@ -278,7 +278,9 @@ typedef struct {
  */
 typedef struct {
     z_encoding_t encoding;
-    z_attachment_t attachment;
+#if Z_FEATURE_ATTACHMENT == 1
+    // TODO:ATT z_attachment_t attachment;
+#endif
 } z_query_reply_options_t;
 
 /**
@@ -294,7 +296,9 @@ typedef struct {
     z_encoding_t encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment;
+#endif
 } z_put_options_t;
 
 /**
@@ -319,7 +323,9 @@ typedef struct {
  */
 typedef struct {
     z_encoding_t encoding;
+#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment;
+#endif
 } z_publisher_put_options_t;
 
 /**
@@ -343,7 +349,9 @@ typedef struct {
     z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
-    z_attachment_t attachment;
+#if Z_FEATURE_ATTACHMENT == 1
+// TODO:ATT z_attachment_t attachment;
+#endif
 } z_get_options_t;
 
 /**
@@ -553,7 +561,7 @@ typedef struct {
 } z_owned_closure_zid_t;
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
-
+#if Z_FEATURE_ATTACHMENT == 1
 struct _z_bytes_pair_t {
     _z_bytes_t key;
     _z_bytes_t value;
@@ -645,6 +653,8 @@ z_owned_bytes_map_t z_bytes_map_new(void);
  * Constructs the gravestone value for `z_owned_bytes_map_t`
  */
 z_owned_bytes_map_t z_bytes_map_null(void);
+#endif
+
 /**
  * Returns a view of `str` using `strlen`.
  *

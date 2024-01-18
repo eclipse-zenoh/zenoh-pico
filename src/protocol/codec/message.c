@@ -15,6 +15,7 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -241,7 +242,7 @@ int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, info->_source_sn));
     return ret;
 }
-
+#if Z_FEATURE_ATTACHMENT == 1
 int8_t _z_attachment_encode_ext_kv(_z_bytes_t key, _z_bytes_t value, void *ctx) {
     _z_wbuf_t *wbf = (_z_wbuf_t *)ctx;
     _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &key));
@@ -254,7 +255,7 @@ int8_t _z_attachment_encode_ext(_z_wbuf_t *wbf, z_attachment_t att) {
     _Z_RETURN_IF_ERR(z_attachment_iterate(att, _z_attachment_encode_ext_kv, wbf));
     return 0;
 }
-
+#endif
 /*------------------ Push Body Field ------------------*/
 int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     (void)(wbf);
@@ -263,8 +264,12 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     _Bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id) ||
                             pshb->_body._put._commons._source_info._source_sn != 0 ||
                             pshb->_body._put._commons._source_info._entity_id != 0;
+#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t att = _z_encoded_as_attachment(&pshb->_body._put._attachment);
     _Bool has_attachment = pshb->_is_put && z_attachment_check(&att);
+#else
+    _Bool has_attachment = false;
+#endif
     _Bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
     _Bool has_encoding = false;
     if (has_source_info || has_attachment) {
@@ -298,12 +303,12 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x01 | (has_attachment ? _Z_FLAG_Z_Z : 0)));
         _Z_RETURN_IF_ERR(_z_source_info_encode_ext(wbf, &pshb->_body._put._commons._source_info));
     }
-
+#if Z_FEATURE_ATTACHMENT == 1
     if (has_attachment) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x03));
         _Z_RETURN_IF_ERR(_z_attachment_encode_ext(wbf, att));
     }
-
+#endif
     if (pshb->_is_put) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &pshb->_body._put._payload));
     }
@@ -319,6 +324,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
             break;
         }
+#if Z_FEATURE_ATTACHMENT == 1
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {
             pshb->_body._put._attachment.is_encoded = true;
             pshb->_body._put._attachment.body.encoded = extension->_body._zbuf._val._is_alloc
@@ -326,6 +332,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                                                             : _z_bytes_duplicate(&extension->_body._zbuf._val);
             break;
         }
+#endif
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
                 ret = _z_msg_ext_unknown_error(extension, 0x08);
@@ -448,11 +455,13 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_source_info_encode_ext(wbf, &msg->_ext_info));
     }
+#if Z_FEATURE_ATTACHMENT == 1
     if (required_exts.attachment) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x05));
         z_attachment_t att = _z_encoded_as_attachment(&msg->_ext_attachment);
         _Z_RETURN_IF_ERR(_z_attachment_encode_ext(wbf, att));
     }
+#endif
 
     return ret;
 }
@@ -478,6 +487,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_bytes_copy(&msg->_ext_value.payload, &bytes);
             break;
         }
+#if Z_FEATURE_ATTACHMENT == 1
         case _Z_MSG_EXT_ENC_ZBUF | 0x05: {
             msg->_ext_attachment.is_encoded = true;
             msg->_ext_attachment.body.encoded = extension->_body._zbuf._val._is_alloc
@@ -485,6 +495,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                                                     : _z_bytes_duplicate(&extension->_body._zbuf._val);
             break;
         }
+#endif
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
                 ret = _z_msg_ext_unknown_error(extension, 0x09);
@@ -520,8 +531,12 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
         !_z_bytes_is_empty(&reply->_value.encoding.suffix)) {
         header |= _Z_FLAG_Z_R_E;
     }
+#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t att = _z_encoded_as_attachment(&reply->_ext_attachment);
     _Bool has_attachment = z_attachment_check(&att);
+#else
+    _Bool has_attachment = false;
+#endif
     _Bool has_sourceinfo = _z_id_check(reply->_ext_source_info._id) || reply->_ext_source_info._source_sn != 0 ||
                            reply->_ext_source_info._entity_id != 0;
     _Bool has_consolidation_ext = reply->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO;
@@ -555,10 +570,12 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_zint_encode(wbf, reply->_ext_consolidation));
     }
+#if Z_FEATURE_ATTACHMENT == 1
     if (has_attachment) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x04));
         _Z_RETURN_IF_ERR(_z_attachment_encode_ext(wbf, att));
     }
+#endif
     _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &reply->_value.payload));
     return ret;
 }
@@ -575,6 +592,7 @@ int8_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
             reply->_ext_consolidation = extension->_body._zint._val;
             break;
         }
+#if Z_FEATURE_ATTACHMENT == 1
         case _Z_MSG_EXT_ENC_ZBUF | 0x04: {
             reply->_ext_attachment.is_encoded = true;
             reply->_ext_attachment.body.encoded = extension->_body._zbuf._val._is_alloc
@@ -582,6 +600,7 @@ int8_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
                                                       : _z_bytes_duplicate(&extension->_body._zbuf._val);
             break;
         }
+#endif
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
                 ret = _z_msg_ext_unknown_error(extension, 0x0a);

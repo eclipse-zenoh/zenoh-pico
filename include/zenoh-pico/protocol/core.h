@@ -71,6 +71,7 @@ typedef struct {
     uint64_t time;
 } _z_timestamp_t;
 
+#if Z_FEATURE_ATTACHMENT == 1
 /**
  * The body of a loop over an attachment's key-value pairs.
  *
@@ -127,6 +128,7 @@ typedef struct {
 size_t _z_attachment_estimate_length(z_attachment_t att);
 z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
 void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att);
+#endif
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
@@ -225,7 +227,9 @@ typedef struct {
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
+#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment;
+#endif
 } _z_sample_t;
 
 /**
