@@ -14,17 +14,33 @@
 
 #include <ctype.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
+
+#if Z_FEATURE_ATTACHMENT == 1
+int8_t attachment_handler(z_bytes_t key, z_bytes_t value, void *ctx) {
+    (void)ctx;
+    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)value.len, value.start);
+    return 0;
+}
+#endif
+
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
            sample->payload.start);
+#if Z_FEATURE_ATTACHMENT == 1
+    if (z_attachment_check(&sample->attachment)) {
+        printf("Attachement found\n");
+        z_attachment_iterate(sample->attachment, attachment_handler, NULL);
+    }
+#endif
     z_drop(z_move(keystr));
 }
 

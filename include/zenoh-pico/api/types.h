@@ -15,6 +15,9 @@
 #ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
+#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
@@ -271,9 +274,13 @@ typedef struct {
  *
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
+ *   z_attachment_t attachment: an attachment to the response.
  */
 typedef struct {
     z_encoding_t encoding;
+#if Z_FEATURE_ATTACHMENT == 1
+    // TODO:ATT z_attachment_t attachment;
+#endif
 } z_query_reply_options_t;
 
 /**
@@ -289,6 +296,9 @@ typedef struct {
     z_encoding_t encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_t attachment;
+#endif
 } z_put_options_t;
 
 /**
@@ -313,6 +323,9 @@ typedef struct {
  */
 typedef struct {
     z_encoding_t encoding;
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_t attachment;
+#endif
 } z_publisher_put_options_t;
 
 /**
@@ -336,6 +349,9 @@ typedef struct {
     z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
+#if Z_FEATURE_ATTACHMENT == 1
+// TODO:ATT z_attachment_t attachment;
+#endif
 } z_get_options_t;
 
 /**
@@ -545,6 +561,110 @@ typedef struct {
 } z_owned_closure_zid_t;
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
+#if Z_FEATURE_ATTACHMENT == 1
+struct _z_bytes_pair_t {
+    _z_bytes_t key;
+    _z_bytes_t value;
+};
+
+void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_);
+
+_Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
+
+/**
+ * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
+ */
+typedef struct z_owned_bytes_map_t {
+    _z_bytes_pair_list_t *_inner;
+} z_owned_bytes_map_t;
+
+/**
+ * Aliases `this` into a generic `z_attachment_t`, allowing it to be passed to corresponding APIs.
+ */
+z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_);
+/**
+ * Returns `true` if the map is not in its gravestone state
+ */
+bool z_bytes_map_check(const z_owned_bytes_map_t *this_);
+/**
+ * Destroys the map, resetting `this` to its gravestone value.
+ *
+ * This function is double-free safe, passing a pointer to the gravestone value will have no effect.
+ */
+void z_bytes_map_drop(z_owned_bytes_map_t *this_);
+/**
+ * Constructs a map from the provided attachment, copying keys and values.
+ *
+ * If `this` is at gravestone value, the returned value will also be at gravestone value.
+ */
+z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_);
+/**
+ * Constructs a map from the provided attachment, aliasing the attachment's keys and values.
+ *
+ * If `this` is at gravestone value, the returned value will also be at gravestone value.
+ */
+
+z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_);
+/**
+ * Returns the value associated with `key`, returning a gravestone value if:
+ * - `this` or `key` is in gravestone state.
+ * - `this` has no value associated to `key`
+ */
+
+z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key);
+/**
+ * Associates `value` to `key` in the map, aliasing them.
+ *
+ * Note that once `key` is aliased, reinserting at the same key may alias the previous instance, or the new instance of
+ * `key`.
+ *
+ * Calling this with `NULL` or the gravestone value is undefined behaviour.
+ */
+
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
+/**
+ * Associates `value` to `key` in the map, copying them to obtain ownership: `key` and `value` are not aliased past the
+ * function's return.
+ *
+ * Calling this with `NULL` or the gravestone value is undefined behaviour.
+ */
+
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
+/**
+ * Iterates over the key-value pairs in the map.
+ *
+ * `body` will be called once per pair, with `ctx` as its last argument.
+ * If `body` returns a non-zero value, the iteration will stop immediately and the value will be returned.
+ * Otherwise, this will return 0 once all pairs have been visited.
+ * `body` is not given ownership of the key nor value, which alias the pairs in the map.
+ * It is safe to keep these aliases until existing keys are modified/removed, or the map is destroyed.
+ * Note that this map is unordered.
+ *
+ * Calling this with `NULL` or the gravestone value is undefined behaviour.
+ */
+
+int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx);
+/**
+ * Constructs a new map.
+ */
+z_owned_bytes_map_t z_bytes_map_new(void);
+/**
+ * Constructs the gravestone value for `z_owned_bytes_map_t`
+ */
+z_owned_bytes_map_t z_bytes_map_null(void);
+#endif
+
+/**
+ * Returns a view of `str` using `strlen` (this constructor should not be used on untrusted input).
+ *
+ * `str == NULL` will cause this to return `z_bytes_null()`
+ */
+z_bytes_t z_bytes_from_str(const char *str);
+/**
+ * Returns the gravestone value for `z_bytes_t`
+ */
+z_bytes_t z_bytes_null(void);
 
 #ifdef __cplusplus
 }

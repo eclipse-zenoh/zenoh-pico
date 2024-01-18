@@ -15,30 +15,30 @@ name: build-check
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ["**"]
   pull_request:
-    branches: [ '**' ]
+    branches: ["**"]
 
 jobs:
-  run_tests: 
+  run_tests:
     name: Run unit tests on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-  
+
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make test
-  
+
   check_format:
     name: Check codebase format with clang-format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-  
+
       - name: Run clang-format dry-run
         run: find include/ src/ tests/ examples/ -iname "*.ino" -o -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
 
@@ -48,11 +48,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-  
+
       - name: Build with C99
         run: |
           sudo apt install -y ninja-build
-          FORCE_C99=ON CMAKE_GENERATOR=Ninja make 
+          FORCE_C99=ON CMAKE_GENERATOR=Ninja make
 
   modular_build:
     name: Modular build on ubuntu-latest
@@ -64,30 +64,30 @@ jobs:
         feature_queryable: [1, 0]
         feature_query: [1, 0]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Run docker image
-      run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
+      - name: Run docker image
+        run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
 
-    - name: Build project
-      run: |
-        sudo apt install -y ninja-build
-        CMAKE_GENERATOR=Ninja make
-        python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
-      timeout-minutes: 5
-      env:
-        Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
-        Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
-        Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
-        Z_FEATURE_QUERY: ${{ matrix.feature_query }}
-    
-    - name: Stop docker image
-      if: always()
-      run: |
-        docker stop zenoh_router
-        docker rm zenoh_router
-  
+      - name: Build project
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
+        timeout-minutes: 5
+        env:
+          Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
+          Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
+          Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
+          Z_FEATURE_QUERY: ${{ matrix.feature_query }}
+
+      - name: Stop docker image
+        if: always()
+        run: |
+          docker stop zenoh_router
+          docker rm zenoh_router
+
   raweth_build:
     name: Build and test raweth transport on ubuntu-latest
     runs-on: ubuntu-latest
@@ -106,7 +106,7 @@ jobs:
         timeout-minutes: 5
         env:
           Z_FEATURE_RAWETH_TRANSPORT: ${{ matrix.feature_reth }}
-  
+
   st_build:
     name: Build and test in single thread on ubuntu-latest
     runs-on: ubuntu-latest
@@ -124,13 +124,13 @@ jobs:
           python3 ./build/tests/single_thread.py
         timeout-minutes: 5
         env:
-          Z_FEATURE_MULTI_THREAD: 0  
+          Z_FEATURE_MULTI_THREAD: 0
 
       - name: Stop docker image
         if: always()
         run: |
-           docker stop zenoh_router
-           docker rm zenoh_router
+          docker stop zenoh_router
+          docker rm zenoh_router
 
   fragment_test:
     name: Test multicast and unicast fragmentation
