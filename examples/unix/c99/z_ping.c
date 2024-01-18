@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
     if (zp_start_read_task(z_session_loan(&session), NULL) < 0 ||
         zp_start_lease_task(z_session_loan(&session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&session));
         return -1;
     }
 
