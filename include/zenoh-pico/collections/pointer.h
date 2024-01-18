@@ -30,6 +30,37 @@
 #define _z_memory_order_release memory_order_release
 #define _z_memory_order_relaxed memory_order_relaxed
 #else
+
+#ifdef ZENOH_CXX_ATOMIC_FALLBACK /* Useful for CXX platforms that don't provide std::atomic */
+typedef enum
+  {
+    memory_order_relaxed = __ATOMIC_RELAXED,
+    memory_order_consume = __ATOMIC_CONSUME,
+    memory_order_acquire = __ATOMIC_ACQUIRE,
+    memory_order_release = __ATOMIC_RELEASE,
+    memory_order_acq_rel = __ATOMIC_ACQ_REL,
+    memory_order_seq_cst = __ATOMIC_SEQ_CST
+  } memory_order;
+
+extern void atomic_thread_fence (memory_order);
+#define atomic_thread_fence(MO)	__atomic_thread_fence (MO)
+#if ULONG_MAX == 4294967295UL
+#define _z_atomic(T)              unsigned int
+#define _z_atomic_store_explicit __atomic_store_4
+#define _z_atomic_fetch_add_explicit __atomic_fetch_add_4
+#define _z_atomic_fetch_sub_explicit __atomic_fetch_sub_4
+#elif ULONG_MAX == 18446744073709551615UL
+#define _z_atomic(T)              unsigned int
+#define _z_atomic_store_explicit __atomic_store_8
+#define _z_atomic_fetch_add_explicit __atomic_fetch_add_8
+#define _z_atomic_fetch_sub_explicit __atomic_fetch_sub_8
+#else
+#error "Can't determine size of unsigned int"
+#endif
+#define _z_memory_order_acquire memory_order_acquire
+#define _z_memory_order_release memory_order_release
+#define _z_memory_order_relaxed memory_order_relaxed
+#else
 #include <atomic>
 #define _z_atomic(X) std::atomic<X>
 #define _z_atomic_store_explicit std::atomic_store_explicit
@@ -38,6 +69,7 @@
 #define _z_memory_order_acquire std::memory_order_acquire
 #define _z_memory_order_release std::memory_order_release
 #define _z_memory_order_relaxed std::memory_order_relaxed
+#endif
 #endif  // __cplusplus
 
 /*------------------ Internal Array Macros ------------------*/
