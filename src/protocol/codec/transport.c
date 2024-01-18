@@ -351,6 +351,7 @@ int8_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
             // Mark the reading position of the iobfer
             size_t r_pos = _z_zbuf_get_rpos(zbf);
             _z_network_message_t *nm = (_z_network_message_t *)zp_malloc(sizeof(_z_network_message_t));
+            memset(nm, 0, sizeof(_z_network_message_t));
             ret |= _z_network_message_decode(nm, zbf);
             if (ret == _Z_RES_OK) {
                 _z_network_message_vec_append(&msg->_messages, nm);
