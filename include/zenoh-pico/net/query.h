@@ -17,16 +17,17 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
 /**
  * The query to be answered by a queryable.
  */
-typedef struct {
+typedef struct z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_session_t *_zn;
     char *_parameters;
     _Bool _anyke;
 } z_query_t;
@@ -36,7 +37,7 @@ typedef struct {
  */
 typedef struct {
     uint32_t _entity_id;
-    void *_zn;  // FIXME: _z_session_t *zn;
+    _z_session_rc_t _zn;
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1

@@ -115,8 +115,12 @@ int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
 }
 
 void _z_link_clear(_z_link_t *l) {
-    l->_close_f(l);
-    l->_free_f(l);
+    if (l->_close_f != NULL) {
+        l->_close_f(l);
+    }
+    if (l->_free_f != NULL) {
+        l->_free_f(l);
+    }
     _z_endpoint_clear(&l->_endpoint);
 }
 

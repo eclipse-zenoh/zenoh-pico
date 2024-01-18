@@ -53,6 +53,9 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
                                                                     _z_transport_peer_entry_t *entry);
 
+// Forward type declaration to avoid cyclical include
+typedef struct _z_session_t _z_session_t;
+
 // Forward declaration to be used in _zp_f_send_tmsg*
 typedef struct _z_transport_multicast_t _z_transport_multicast_t;
 // Send function prototype
@@ -60,6 +63,7 @@ typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_trans
 
 typedef struct {
     // Session associated to the transport
+    _z_session_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
@@ -85,8 +89,6 @@ typedef struct {
     _z_zint_t _sn_rx_best_effort;
     volatile _z_zint_t _lease;
 
-    void *_session;
-
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_task_t *_read_task;
     zp_task_t *_lease_task;
@@ -100,7 +102,7 @@ typedef struct {
 
 typedef struct _z_transport_multicast_t {
     // Session associated to the transport
-    void *_session;
+    _z_session_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes

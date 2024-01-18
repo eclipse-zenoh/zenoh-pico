@@ -25,7 +25,7 @@
  */
 typedef struct {
     uint32_t _entity_id;
-    _z_session_t *_zn;
+    _z_session_rc_t _zn;
 } _z_subscriber_t;
 
 typedef _z_subscriber_t _z_pull_subscriber_t;

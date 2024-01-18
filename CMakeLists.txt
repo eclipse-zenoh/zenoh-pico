@@ -75,6 +75,7 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE)
 
 set(CHECK_THREADS "ON")
 
+# System definition
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   add_definition(ZENOH_LINUX)
 elseif(POSIX_COMPATIBLE)
@@ -99,6 +100,20 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
 else()
   message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
   return()
+endif()
+
+# Compiler definition
+message("Compilers in use: ${CMAKE_C_COMPILER_ID}, ${CMAKE_CXX_COMPILER_ID}")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  add_definition(ZENOH_COMPILER_CLANG)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_definition(ZENOH_COMPILER_GCC)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR CMAKE_C_COMPILER_ID STREQUAL "Intel")
+  add_definition(ZENOH_COMPILER_INTEL)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+  add_definition(ZENOH_COMPILER_MSVC)
+else()
+  add_definition(ZENOH_COMPILER_OTHER)
 endif()
 
 add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})

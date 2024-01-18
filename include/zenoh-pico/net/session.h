@@ -27,7 +27,7 @@
 /**
  * A zenoh-net session.
  */
-typedef struct {
+typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -51,18 +51,22 @@ typedef struct {
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_subscription_sptr_list_t *_local_subscriptions;
-    _z_subscription_sptr_list_t *_remote_subscriptions;
+    _z_subscription_rc_list_t *_local_subscriptions;
+    _z_subscription_rc_list_t *_remote_subscriptions;
 #endif
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
-    _z_questionable_sptr_list_t *_local_questionable;
+    _z_questionable_rc_list_t *_local_questionable;
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;
 #endif
 } _z_session_t;
+
+extern void _z_session_clear(_z_session_t *zn);  // Forward type declaration to avoid cyclical include
+
+_Z_REFCOUNT_DEFINE(_z_session, _z_session)
 
 /**
  * Open a zenoh-net session
