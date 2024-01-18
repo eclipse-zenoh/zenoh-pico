@@ -618,12 +618,13 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.congestion_control = options->congestion_control;
         opt.encoding = options->encoding;
         opt.priority = options->priority;
+        opt.attachment = options->attachment;
     }
     ret = _z_write(zs._val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   opt.congestion_control, opt.priority, options->attachment);
+                   opt.congestion_control, opt.priority, opt.attachment);
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len, options->attachment);
+    _z_trigger_local_subscriptions(zs._val, keyexpr, payload, payload_len, opt.attachment);
 
     return ret;
 }
@@ -693,13 +694,14 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     z_publisher_put_options_t opt = z_publisher_put_options_default();
     if (options != NULL) {
         opt.encoding = options->encoding;
+        opt.attachment = options->attachment;
     }
 
     ret = _z_write(pub._val->_zn, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority, options->attachment);
+                   pub._val->_congestion_control, pub._val->_priority, opt.attachment);
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len, options->attachment);
+    _z_trigger_local_subscriptions(pub._val->_zn, pub._val->_key, payload, len, opt.attachment);
 
     return ret;
 }
