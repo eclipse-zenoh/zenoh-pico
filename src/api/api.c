@@ -1270,8 +1270,6 @@ int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body
 }
 z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner = _z_bytes_pair_list_new()}; }
 z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
-z_bytes_t z_bytes_new(const char *str) {
-    return (z_bytes_t){.len = strlen(str), ._is_alloc = false, .start = (unsigned char *)str};
-}
+z_bytes_t z_bytes_from_str(const char *str) { return z_bytes_wrap((const uint8_t *)str, strlen(str)); }
 z_bytes_t z_bytes_null(void) { return (z_bytes_t){.len = 0, ._is_alloc = false, .start = NULL}; }
 #endif

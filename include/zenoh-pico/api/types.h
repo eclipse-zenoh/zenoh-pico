@@ -656,11 +656,11 @@ z_owned_bytes_map_t z_bytes_map_null(void);
 #endif
 
 /**
- * Returns a view of `str` using `strlen`.
+ * Returns a view of `str` using `strlen` (this constructor should not be used on untrusted input).
  *
  * `str == NULL` will cause this to return `z_bytes_null()`
  */
-z_bytes_t z_bytes_new(const char *str);
+z_bytes_t z_bytes_from_str(const char *str);
 /**
  * Returns the gravestone value for `z_bytes_t`
  */

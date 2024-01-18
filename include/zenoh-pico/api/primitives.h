@@ -32,6 +32,8 @@ extern "C" {
 #endif
 
 /********* Data Types Handlers *********/
+#define z_bytes_wrap _z_bytes_wrap
+
 /**
  * Constructs a :c:type:`z_string_t` departing from a ``const char *``.
  * It is a loaned key expression that aliases ``value``.
