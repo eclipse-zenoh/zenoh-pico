@@ -265,7 +265,7 @@ void zbuf_compact(void) {
         assert(_z_zbuf_len(&zbf) == len01);
         printf("    Len: %zu, Rpos: %zu, Wpos: %zu\n", len01, _z_zbuf_get_rpos(&zbf), _z_zbuf_get_wpos(&zbf));
 
-        uint8_t vs = 1 + gen_uint8() % (len - counter);
+        uint8_t vs = (uint8_t)(1 + gen_uint8() % (len - counter));
         printf("    Read %u bytes => [", vs);
         for (uint8_t i = 0; i < vs; i++) {
             uint8_t l = counter++;
@@ -291,7 +291,7 @@ void zbuf_view(void) {
     uint8_t counter = 0;
 
     while (counter < len) {
-        uint8_t vs = 1 + gen_uint8() % (len - counter);
+        uint8_t vs = (uint8_t)(1 + gen_uint8() % (len - counter));
         _z_zbuf_t rv = _z_zbuf_view(&zbf, vs);
 
         printf("    View of %u bytes: ", vs);
@@ -448,7 +448,7 @@ void wbuf_reusable_write_zbuf_read(void) {
         printf("    Writing %zu bytes\n", len);
         for (size_t z = 0; z < len; z++) {
             size_t prev_len = _z_wbuf_len(&wbf);
-            assert(_z_wbuf_write(&wbf, z % (uint8_t)255) == 0);
+            assert(_z_wbuf_write(&wbf, (uint8_t)(z % 255)) == 0);
             assert(_z_wbuf_len(&wbf) == prev_len + 1);
         }
 

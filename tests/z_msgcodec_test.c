@@ -137,7 +137,7 @@ _Bool gen_bool(void) { return zp_random_u8() % 2; }
 
 uint8_t gen_uint8(void) { return zp_random_u8(); }
 
-uint8_t gen_uint16(void) { return zp_random_u16(); }
+uint16_t gen_uint16(void) { return zp_random_u16(); }
 
 uint64_t gen_uint64(void) {
     uint64_t ret = 0;
@@ -496,7 +496,8 @@ void payload_field(void) {
 }
 
 _z_source_info_t gen_source_info(void) {
-    return (_z_source_info_t){._id = gen_zid(), ._source_sn = gen_uint64(), ._entity_id = gen_uint64()};
+    return (_z_source_info_t){
+        ._id = gen_zid(), ._source_sn = (uint32_t)gen_uint64(), ._entity_id = (uint32_t)gen_uint64()};
 }
 
 void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t *right) {
@@ -607,7 +608,7 @@ void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right) {
 /*------------------ ResKey field ------------------*/
 _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
-    key._id = gen_zint();
+    key._id = gen_uint16();
     key._mapping._val = gen_uint8();
     _Bool is_numerical = gen_bool();
     if (is_numerical == true) {
@@ -671,7 +672,7 @@ void keyexpr_field(void) {
 /*=============================*/
 /*------------------ Resource declaration ------------------*/
 _z_decl_kexpr_t gen_resource_declaration(void) {
-    return (_z_decl_kexpr_t){._id = gen_zint(), ._keyexpr = gen_keyexpr()};
+    return (_z_decl_kexpr_t){._id = gen_uint16(), ._keyexpr = gen_keyexpr()};
 }
 
 void assert_eq_resource_declaration(const _z_decl_kexpr_t *left, const _z_decl_kexpr_t *right) {
@@ -715,7 +716,7 @@ void resource_declaration(void) {
 _z_decl_subscriber_t gen_subscriber_declaration(void) {
     _z_subinfo_t subinfo = gen_subinfo();
     _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(),
-                                 ._id = gen_uint64(),
+                                 ._id = (uint32_t)gen_uint64(),
                                  ._ext_subinfo = {._pull_mode = subinfo.mode == Z_SUBMODE_PULL,
                                                   ._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
     return e_sd;
@@ -761,8 +762,8 @@ void subscriber_declaration(void) {
 /*------------------ Queryable declaration ------------------*/
 _z_decl_queryable_t gen_queryable_declaration(void) {
     _z_decl_queryable_t e_qd = {._keyexpr = gen_keyexpr(),
-                                ._id = gen_uint64(),
-                                ._ext_queryable_info = {._complete = gen_zint(), ._distance = gen_zint()}};
+                                ._id = (uint32_t)gen_uint64(),
+                                ._ext_queryable_info = {._complete = gen_uint8(), ._distance = (uint32_t)gen_zint()}};
 
     return e_qd;
 }
@@ -811,7 +812,7 @@ void queryable_declaration(void) {
 _z_undecl_kexpr_t gen_forget_resource_declaration(void) {
     _z_undecl_kexpr_t e_frd;
 
-    e_frd._id = gen_zint();
+    e_frd._id = gen_uint16();
 
     return e_frd;
 }
@@ -853,7 +854,7 @@ void forget_resource_declaration(void) {
 
 /*------------------ Forget Subscriber declaration ------------------*/
 _z_undecl_subscriber_t gen_forget_subscriber_declaration(void) {
-    _z_undecl_subscriber_t e_fsd = {._ext_keyexpr = gen_keyexpr(), ._id = gen_uint64()};
+    _z_undecl_subscriber_t e_fsd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
     return e_fsd;
 }
 
@@ -895,7 +896,7 @@ void forget_subscriber_declaration(void) {
 
 /*------------------ Forget Queryable declaration ------------------*/
 _z_undecl_queryable_t gen_forget_queryable_declaration(void) {
-    _z_undecl_queryable_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = gen_zint()};
+    _z_undecl_queryable_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_zint()};
     return e_fqd;
 }
 
@@ -1293,8 +1294,8 @@ _z_n_msg_request_t gen_request(void) {
         ._ext_qos = gen_bool() ? _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8) : _Z_N_QOS_DEFAULT,
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_target = gen_uint8() % 3,
-        ._ext_budget = gen_bool() ? gen_uint64() : 0,
-        ._ext_timeout_ms = gen_bool() ? gen_uint64() : 0,
+        ._ext_budget = gen_bool() ? (uint32_t)gen_uint64() : 0,
+        ._ext_timeout_ms = gen_bool() ? (uint32_t)gen_uint64() : 0,
     };
     switch (gen_uint8() % 4) {
         case 0: {
@@ -1574,7 +1575,7 @@ void open_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-_z_transport_message_t gen_close(void) { return _z_t_msg_make_close(gen_uint(), gen_bool()); }
+_z_transport_message_t gen_close(void) { return _z_t_msg_make_close(gen_uint8(), gen_bool()); }
 void assert_eq_close(const _z_t_msg_close_t *left, const _z_t_msg_close_t *right) {
     assert(left->_reason == right->_reason);
 }
