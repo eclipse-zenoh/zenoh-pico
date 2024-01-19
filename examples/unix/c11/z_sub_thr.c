@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     printf("Start listening.\n");
     char c = 0;
     while (c != 'q') {
-        c = fgetc(stdin);
+        c = (char)fgetc(stdin);
     }
     // Wait for everything to settle
     printf("End of test\n");
