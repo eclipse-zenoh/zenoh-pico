@@ -84,6 +84,9 @@ int main(int argc, char **argv) {
     z_owned_keyexpr_t ke = z_declare_keyexpr(z_session_loan(&s), z_keyexpr(keyexpr));
     if (!z_keyexpr_check(&ke)) {
         printf("Unable to declare key expression!\n");
+        zp_stop_read_task(z_session_loan(&s));
+        zp_stop_lease_task(z_session_loan(&s));
+        z_close(z_session_move(&s));
         return -1;
     }
 
@@ -94,12 +97,10 @@ int main(int argc, char **argv) {
         printf("Oh no! Put has failed...\n");
     }
 
+    // Clean up
     z_undeclare_keyexpr(z_session_loan(&s), z_keyexpr_move(&ke));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
     zp_stop_lease_task(z_session_loan(&s));
-
     z_close(z_session_move(&s));
     return 0;
 }
