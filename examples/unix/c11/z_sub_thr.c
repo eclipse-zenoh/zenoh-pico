@@ -86,7 +86,8 @@ int main(int argc, char **argv) {
     }
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks");
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
         exit(-1);
     }
     // Declare Subscriber/resource
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
     printf("Start listening.\n");
     char c = 0;
     while (c != 'q') {
-        c = fgetc(stdin);
+        c = (char)fgetc(stdin);
     }
     // Wait for everything to settle
     printf("End of test\n");

@@ -71,7 +71,8 @@ int main(int argc, char** argv) {
     }
 
     if (zp_start_read_task(z_loan(session), NULL) < 0 || zp_start_lease_task(z_loan(session), NULL) < 0) {
-        printf("Unable to start read and lease tasks");
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&session));
         return -1;
     }
 
@@ -93,7 +94,7 @@ int main(int argc, char** argv) {
 
     uint8_t* data = zp_malloc(args.size);
     for (unsigned int i = 0; i < args.size; i++) {
-        data[i] = i % 10;
+        data[i] = (uint8_t)(i % 10);
     }
     zp_mutex_lock(&mutex);
     if (args.warmup_ms) {
@@ -151,17 +152,17 @@ struct args_t parse_args(int argc, char** argv) {
     char* arg = getopt(argc, argv, 's');
     unsigned int size = DEFAULT_PKT_SIZE;
     if (arg) {
-        size = atoi(arg);
+        size = (unsigned int)atoi(arg);
     }
     arg = getopt(argc, argv, 'n');
     unsigned int number_of_pings = DEFAULT_PING_NB;
     if (arg) {
-        number_of_pings = atoi(arg);
+        number_of_pings = (unsigned int)atoi(arg);
     }
     arg = getopt(argc, argv, 'w');
     unsigned int warmup_ms = DEFAULT_WARMUP_MS;
     if (arg) {
-        warmup_ms = atoi(arg);
+        warmup_ms = (unsigned int)atoi(arg);
     }
     return (struct args_t){
         .help_requested = 0,

@@ -46,6 +46,7 @@ void app_main(void) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
         return;
     }
 
@@ -53,6 +54,9 @@ void app_main(void) {
     z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(KEYEXPR));
     if (!z_check(ke)) {
         printf("Unable to declare key expression!\n");
+        zp_stop_read_task(z_loan(s));
+        zp_stop_lease_task(z_loan(s));
+        z_close(z_move(s));
         return;
     }
 
@@ -67,12 +71,10 @@ void app_main(void) {
         zp_sleep_s(1);
     }
 
+    // Clean up
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
-
     z_close(z_move(s));
 }
 #else

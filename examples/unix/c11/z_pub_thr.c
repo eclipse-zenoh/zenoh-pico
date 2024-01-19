@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     char *keyexpr = "test/thr";
-    size_t len = atoi(argv[1]);
+    size_t len = (size_t)atoi(argv[1]);
     uint8_t *value = (uint8_t *)malloc(len);
     memset(value, 1, len);
 
@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
     }
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks");
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
         exit(-1);
     }
     // Declare publisher

@@ -79,16 +79,20 @@ int main(int argc, char **argv) {
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks");
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
         return -1;
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
-    // z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
-    // if (!z_check(ke)) {
-    //     printf("Unable to declare key expression!\n");
-    //     return -1;
-    // }
+    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
+    if (!z_check(ke)) {
+        printf("Unable to declare key expression!\n");
+        zp_stop_read_task(z_loan(s));
+        zp_stop_lease_task(z_loan(s));
+        z_close(z_move(s));
+        return -1;
+    }
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options = z_put_options_default();
@@ -105,9 +109,9 @@ int main(int argc, char **argv) {
 #if Z_FEATURE_ATTACHMENT == 1
     z_bytes_map_drop(&map);
 #endif
-    // z_undeclare_keyexpr(z_loan(s), z_move(ke));
 
-    // Stop read and lease tasks for zenoh-pico
+    // Clean up
+    z_undeclare_keyexpr(z_loan(s), z_move(ke));
     zp_stop_read_task(z_loan(s));
     zp_stop_lease_task(z_loan(s));
     z_close(z_move(s));
