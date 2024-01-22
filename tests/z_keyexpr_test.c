@@ -96,6 +96,12 @@ int main(void) {
     assert(_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/bc", strlen("a/bc")));
     assert(_z_keyexpr_intersects("a/**/$*b$*", strlen("a/**/$*b$*"), "a/ebc", strlen("a/ebc")));
     assert(_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/cb", strlen("a/cb")));
+    assert(_z_keyexpr_intersects("a/**/b/c/**/d", strlen("a/**/b/c/**/d"), "a/b/b/b/c/d", strlen("a/b/b/b/c/d")));
+    assert(
+        !_z_keyexpr_intersects("a/**/b/c/**/d", strlen("a/**/b/c/**/d"), "a/b/b/b/c/@c/d", strlen("a/b/b/b/c/@c/d")));
+    assert(!_z_keyexpr_intersects("a/**/b/c/**/d", strlen("a/**/b/c/**/d"), "a/b/@b/b/c/d", strlen("a/b/@b/b/c/d")));
+    assert(_z_keyexpr_intersects("a/**/b/@b/**/b/c/**/d", strlen("a/**/b/@b/**/b/c/**/d"), "a/b/@b/b/c/d",
+                                 strlen("a/b/@b/b/c/d")));
     assert(!_z_keyexpr_intersects("a/**/b$*", strlen("a/**/b$*"), "a/ebc", strlen("a/ebc")));
     assert(!_z_keyexpr_intersects("a/**/$*b", strlen("a/**/$*b"), "a/cbc", strlen("a/cbc")));
 
@@ -170,6 +176,29 @@ int main(void) {
     assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cb") == 0);
     assert(zp_keyexpr_intersect_null_terminated("a/**/b$*", "a/ebc") == -1);
     assert(zp_keyexpr_intersect_null_terminated("a/**/$*b", "a/cbc") == -1);
+
+    assert((zp_keyexpr_intersect_null_terminated("@a", "@a") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a", "@ab") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a", "@a/b") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a", "@a/*") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a", "@a/*/**") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a", "@a$*/**") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a", "@a/**") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("**/xyz$*xyz", "@a/b/xyzdefxyz") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/c/**/e", "@a/b/b/b/c/d/d/d/e") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a/**/c/**/e", "@a/@b/b/b/c/d/d/d/e") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/@c/**/e", "@a/b/b/b/@c/d/d/d/e") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/e", "@a/b/b/d/d/d/e") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/e", "@a/b/b/b/d/d/d/e") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/e", "@a/b/b/c/d/d/d/e") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a/**/e", "@a/b/b/@c/b/d/d/d/e") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a/*", "@a/@b") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a/**", "@a/@b") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/@b", "@a/@b") == 0));
+    assert(!(zp_keyexpr_intersect_null_terminated("@a/**/@b", "@a/**/@c/**/@b") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/@b/**", "@a/@b") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/@c/@b", "@a/**/@c/**/@b") == 0));
+    assert((zp_keyexpr_intersect_null_terminated("@a/**/@c/**/@b", "@a/**/@c/@b") == 0));
 
     assert(_z_keyexpr_includes("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_includes("a/b", strlen("a/b"), "a/b", strlen("a/b")));

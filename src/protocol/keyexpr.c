@@ -246,7 +246,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
 typedef _Bool (*_z_ke_chunk_matcher)(_z_str_se_t l, _z_str_se_t r);
 
 enum _zp_wildness_t { _ZP_WILDNESS_ANY = 1, _ZP_WILDNESS_SUPERCHUNKS = 2, _ZP_WILDNESS_SUBCHUNK_DSL = 4 };
-int8_t _zp_ke_wildness(_z_str_se_t ke, size_t *n_segments) {
+int8_t _zp_ke_wildness(_z_str_se_t ke, size_t *n_segments, size_t *n_verbatims) {
     const char *start = ke.start;
     const char *end = ke.end;
     int8_t result = 0;
@@ -267,7 +267,9 @@ int8_t _zp_ke_wildness(_z_str_se_t ke, size_t *n_segments) {
             case '/': {
                 *n_segments = *n_segments + (size_t)1;
             } break;
-
+            case '@': {
+                *n_verbatims = *n_verbatims + (size_t)1;
+            }
             default: {
                 // Do nothing
             } break;
@@ -282,6 +284,7 @@ int8_t _zp_ke_wildness(_z_str_se_t ke, size_t *n_segments) {
 const char *_Z_DELIMITER = "/";
 const char *_Z_DOUBLE_STAR = "**";
 const char *_Z_DOLLAR_STAR = "$*";
+char _Z_VERBATIM = '@';
 _Bool _z_ke_isdoublestar(_z_str_se_t s) {
     return ((_z_ptr_char_diff(s.end, s.start) == 2) && (s.start[0] == '*') && (s.start[1] == '*'));
 }
@@ -337,175 +340,16 @@ _Bool _z_ke_chunk_includes_stardsl(_z_str_se_t l1, _z_str_se_t r) {
 
     return result;
 }
-
-/*------------------ Intersection helpers ------------------*/
-_Bool _z_ke_chunk_intersect_nodsl(_z_str_se_t l, _z_str_se_t r) {
-    _Bool result = ((l.start[0] == '*') || (r.start[0] == '*'));
-    if (result == false) {
-        size_t lclen = _z_ptr_char_diff(l.end, l.start);
-        result = ((lclen == _z_ptr_char_diff(r.end, r.start)) && (strncmp(l.start, r.start, lclen) == 0));
-    }
-
-    return result;
-}
-_Bool _z_ke_chunk_intersect_rhasstardsl(_z_str_se_t l, _z_str_se_t r) {
-    _Bool result = true;
-    _z_splitstr_t rchunks = {.s = r, .delimiter = _Z_DOLLAR_STAR};
-    _z_str_se_t split_r = _z_splitstr_next(&rchunks);
-    result = _z_ptr_char_diff(split_r.end, split_r.start) <= _z_ptr_char_diff(l.end, l.start);
-    while ((result == true) && (split_r.start < split_r.end)) {
-        result = (l.start[0] == split_r.start[0]);
-        l.start = _z_cptr_char_offset(l.start, 1);
-        split_r.start = _z_cptr_char_offset(split_r.start, 1);
-    }
-    if (result == true) {
-        split_r = _z_splitstr_nextback(&rchunks);
-        result = (_z_ptr_char_diff(split_r.end, split_r.start) <= _z_ptr_char_diff(l.end, l.start));
-        l.end = _z_cptr_char_offset(l.end, -1);
-        split_r.end = _z_cptr_char_offset(split_r.end, -1);
-        while ((result == true) && (split_r.start <= split_r.end)) {
-            result = (l.end[0] == split_r.end[0]);
-            l.end = _z_cptr_char_offset(l.end, -1);
-            split_r.end = _z_cptr_char_offset(split_r.end, -1);
-        }
-        l.end = _z_cptr_char_offset(l.end, 1);
-    }
-    while (result == true) {
-        split_r = _z_splitstr_next(&rchunks);
-        if (split_r.start == NULL) {
-            break;
-        }
-        l.start = _z_bstrstr_skipneedle(l, split_r);
-        if (l.start == NULL) {
-            result = false;
-        }
-    }
-
-    return result;
-}
-_Bool _z_ke_chunk_intersect_stardsl(_z_str_se_t l, _z_str_se_t r) {
-    _Bool result = _z_ke_chunk_intersect_nodsl(l, r);
-    if (result == false) {
-        result = true;
-        _Bool l_has_stardsl = (_z_strstr(l.start, l.end, _Z_DOLLAR_STAR) != NULL);
-        if (l_has_stardsl == true) {
-            _Bool r_has_stardsl = (_z_strstr(r.start, r.end, _Z_DOLLAR_STAR) != NULL);
-            if (r_has_stardsl == true) {
-                char const *lc = l.start;
-                char const *rc = r.start;
-                while ((result == true) && (lc < l.end) && (lc[0] != '$') && (rc < r.end) && (rc[0] != '$')) {
-                    result = (lc[0] == rc[0]);
-                    lc = _z_cptr_char_offset(lc, 1);
-                    rc = _z_cptr_char_offset(rc, 1);
-                }
-                lc = _z_cptr_char_offset(l.end, -1);
-                rc = _z_cptr_char_offset(r.end, -1);
-                while ((result == true) && (lc >= l.start) && (lc[0] != '*') && (rc >= r.start) && (rc[0] != '*')) {
-                    result = (lc[0] == rc[0]);
-                    lc = _z_cptr_char_offset(lc, -1);
-                    rc = _z_cptr_char_offset(rc, -1);
-                }
-            } else {
-                result = _z_ke_chunk_intersect_rhasstardsl(r, l);
-            }
-        } else {
-            // r is guaranteed to have a stardsl if l doesn't and this function has been called.
-            result = _z_ke_chunk_intersect_rhasstardsl(l, r);
-        }
-    }
-
-    return result;
-}
-_Bool _z_ke_intersect_rhassuperchunks(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_matcher chunk_intersector) {
-    _Bool result = true;
-    _z_splitstr_t lchunks = {.s = l, .delimiter = _Z_DELIMITER};
-    _z_splitstr_t rsplitatsuperchunks = {.s = r, .delimiter = _Z_DOUBLE_STAR};
-    _z_str_se_t rnosuper = _z_splitstr_next(&rsplitatsuperchunks);
-    if (rnosuper.start != rnosuper.end) {
-        _z_splitstr_t prefix_chunks = {.s = {.start = rnosuper.start, .end = _z_cptr_char_offset(rnosuper.end, -1)},
-                                       .delimiter = _Z_DELIMITER};
-        _z_str_se_t pchunk = _z_splitstr_next(&prefix_chunks);
-        while ((result == true) && (pchunk.start != NULL)) {
-            _z_str_se_t lchunk = _z_splitstr_next(&lchunks);
-            if (lchunk.start != NULL) {
-                result = chunk_intersector(lchunk, pchunk);
-                pchunk = _z_splitstr_next(&prefix_chunks);
-            } else {
-                result = false;
-            }
-        }
-    }
-    if (result == true) {
-        rnosuper = _z_splitstr_nextback(&rsplitatsuperchunks);
-        if (rnosuper.start != rnosuper.end) {
-            _z_splitstr_t suffix_chunks = {.s = {.start = _z_cptr_char_offset(rnosuper.start, 1), .end = rnosuper.end},
-                                           .delimiter = _Z_DELIMITER};
-            _z_str_se_t schunk = _z_splitstr_nextback(&suffix_chunks);
-            while ((result == true) && (schunk.start != NULL)) {
-                _z_str_se_t lchunk = _z_splitstr_nextback(&lchunks);
-                if (lchunk.start != NULL) {
-                    result = chunk_intersector(lchunk, schunk);
-                    schunk = _z_splitstr_nextback(&suffix_chunks);
-                } else {
-                    result = false;
-                }
-            }
-        }
-    }
-    while (result == true) {
-        rnosuper = _z_splitstr_next(&rsplitatsuperchunks);
-        if (rnosuper.start == NULL) {
-            break;
-        }
-        _z_splitstr_t needle = {
-            .s = {.start = _z_cptr_char_offset(rnosuper.start, 1), .end = _z_cptr_char_offset(rnosuper.end, -1)},
-            .delimiter = _Z_DELIMITER};
-        _z_splitstr_t haystack = lchunks;
-        _z_str_se_t needle_start = _z_splitstr_next(&needle);
-        _Bool needle_found = false;
-
-        _z_str_se_t h = _z_splitstr_next(&haystack);
-        while ((needle_found == false) && (h.start != NULL)) {
-            if (chunk_intersector(needle_start, h) == true) {
-                needle_found = true;
-                _z_splitstr_t needlecp = needle;
-                _z_str_se_t n = _z_splitstr_next(&needlecp);
-                _z_splitstr_t haystackcp = haystack;
-                while ((needle_found == true) && (n.start != NULL)) {
-                    h = _z_splitstr_next(&haystackcp);
-                    if (h.start != NULL) {
-                        if (chunk_intersector(n, h) == false) {
-                            needle_found = false;
-                        } else {
-                            n = _z_splitstr_next(&needlecp);
-                        }
-                    } else {
-                        needle_found = false;
-                        haystack.s = (_z_str_se_t){.start = NULL, .end = NULL};
-                    }
-                }
-                if (needle_found == true) {
-                    lchunks = haystackcp;
-                }
-            } else {
-                needle_found = false;
-            }
-            h = _z_splitstr_next(&haystack);
-        }
-    }
-    return result;
-}
-
 /*------------------ Zenoh-Core helpers ------------------*/
 _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
     if (result == false) {
         _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
         _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
-        size_t ln_chunks = (size_t)0;
-        size_t rn_chunks = (size_t)0;
-        int8_t lwildness = _zp_ke_wildness(l, &ln_chunks);
-        int8_t rwildness = _zp_ke_wildness(r, &rn_chunks);
+        size_t ln_chunks = 0, ln_verbatim = 0;
+        size_t rn_chunks = 0, rn_verbatim = 0;
+        int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
+        int8_t rwildness = _zp_ke_wildness(r, &rn_chunks, &rn_verbatim);
         int8_t wildness = lwildness | rwildness;
         _z_ke_chunk_matcher chunk_intersector =
             ((wildness & (int8_t)_ZP_WILDNESS_SUBCHUNK_DSL) == (int8_t)_ZP_WILDNESS_SUBCHUNK_DSL)
@@ -601,58 +445,236 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
     return result;
 }
 
+/*------------------ Intersection helpers ------------------*/
+_Bool _z_ke_chunk_intersect_nodsl(_z_str_se_t l, _z_str_se_t r) {
+    _Bool result =
+        ((l.start[0] == '*' && r.start[0] != _Z_VERBATIM) || (r.start[0] == '*' && l.start[0] != _Z_VERBATIM));
+    if (result == false) {
+        size_t lclen = _z_ptr_char_diff(l.end, l.start);
+        result = ((lclen == _z_ptr_char_diff(r.end, r.start)) && (strncmp(l.start, r.start, lclen) == 0));
+    }
+
+    return result;
+}
+_Bool _z_ke_chunk_intersect_rhasstardsl(_z_str_se_t l, _z_str_se_t r) {
+    _Bool result = true;
+    _z_splitstr_t rchunks = {.s = r, .delimiter = _Z_DOLLAR_STAR};
+    _z_str_se_t split_r = _z_splitstr_next(&rchunks);
+    result = _z_ptr_char_diff(split_r.end, split_r.start) <= _z_ptr_char_diff(l.end, l.start);
+    while ((result == true) && (split_r.start < split_r.end)) {
+        result = (l.start[0] == split_r.start[0]);
+        l.start = _z_cptr_char_offset(l.start, 1);
+        split_r.start = _z_cptr_char_offset(split_r.start, 1);
+    }
+    if (result == true) {
+        split_r = _z_splitstr_nextback(&rchunks);
+        result = (_z_ptr_char_diff(split_r.end, split_r.start) <= _z_ptr_char_diff(l.end, l.start));
+        l.end = _z_cptr_char_offset(l.end, -1);
+        split_r.end = _z_cptr_char_offset(split_r.end, -1);
+        while ((result == true) && (split_r.start <= split_r.end)) {
+            result = (l.end[0] == split_r.end[0]);
+            l.end = _z_cptr_char_offset(l.end, -1);
+            split_r.end = _z_cptr_char_offset(split_r.end, -1);
+        }
+        l.end = _z_cptr_char_offset(l.end, 1);
+    }
+    while (result == true) {
+        split_r = _z_splitstr_next(&rchunks);
+        if (split_r.start == NULL) {
+            break;
+        }
+        l.start = _z_bstrstr_skipneedle(l, split_r);
+        if (l.start == NULL) {
+            result = false;
+        }
+    }
+
+    return result;
+}
+_Bool _z_ke_chunk_intersect_stardsl(_z_str_se_t l, _z_str_se_t r) {
+    _Bool result = _z_ke_chunk_intersect_nodsl(l, r);
+    if (result == false && !(l.start[0] == '@' || r.start[0] == '@')) {
+        result = true;
+        _Bool l_has_stardsl = (_z_strstr(l.start, l.end, _Z_DOLLAR_STAR) != NULL);
+        if (l_has_stardsl == true) {
+            _Bool r_has_stardsl = (_z_strstr(r.start, r.end, _Z_DOLLAR_STAR) != NULL);
+            if (r_has_stardsl == true) {
+                char const *lc = l.start;
+                char const *rc = r.start;
+                while ((result == true) && (lc < l.end) && (lc[0] != '$') && (rc < r.end) && (rc[0] != '$')) {
+                    result = (lc[0] == rc[0]);
+                    lc = _z_cptr_char_offset(lc, 1);
+                    rc = _z_cptr_char_offset(rc, 1);
+                }
+                lc = _z_cptr_char_offset(l.end, -1);
+                rc = _z_cptr_char_offset(r.end, -1);
+                while ((result == true) && (lc >= l.start) && (lc[0] != '*') && (rc >= r.start) && (rc[0] != '*')) {
+                    result = (lc[0] == rc[0]);
+                    lc = _z_cptr_char_offset(lc, -1);
+                    rc = _z_cptr_char_offset(rc, -1);
+                }
+            } else {
+                result = _z_ke_chunk_intersect_rhasstardsl(r, l);
+            }
+        } else {
+            // r is guaranteed to have a stardsl if l doesn't and this function has been called.
+            result = _z_ke_chunk_intersect_rhasstardsl(l, r);
+        }
+    }
+
+    return result;
+}
+_Bool _z_ke_intersect_rhassuperchunks(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_matcher chunk_intersector) {
+    _Bool result = true;
+    _z_splitstr_t lchunks = {.s = l, .delimiter = _Z_DELIMITER};
+    _z_splitstr_t rsplitatsuperchunks = {.s = r, .delimiter = _Z_DOUBLE_STAR};
+    _z_str_se_t rnosuper = _z_splitstr_next(&rsplitatsuperchunks);
+    if (rnosuper.start != rnosuper.end) {
+        _z_splitstr_t prefix_chunks = {.s = {.start = rnosuper.start, .end = _z_cptr_char_offset(rnosuper.end, -1)},
+                                       .delimiter = _Z_DELIMITER};
+        _z_str_se_t pchunk = _z_splitstr_next(&prefix_chunks);
+        while ((result == true) && (pchunk.start != NULL)) {
+            _z_str_se_t lchunk = _z_splitstr_next(&lchunks);
+            if (lchunk.start != NULL) {
+                result = chunk_intersector(lchunk, pchunk);
+                pchunk = _z_splitstr_next(&prefix_chunks);
+            } else {
+                result = false;
+            }
+        }
+    }
+    if (result == true) {
+        rnosuper = _z_splitstr_nextback(&rsplitatsuperchunks);
+        if (rnosuper.start != rnosuper.end) {
+            _z_splitstr_t suffix_chunks = {.s = {.start = _z_cptr_char_offset(rnosuper.start, 1), .end = rnosuper.end},
+                                           .delimiter = _Z_DELIMITER};
+            _z_str_se_t schunk = _z_splitstr_nextback(&suffix_chunks);
+            while ((result == true) && (schunk.start != NULL)) {
+                _z_str_se_t lchunk = _z_splitstr_nextback(&lchunks);
+                if (lchunk.start != NULL) {
+                    result = chunk_intersector(lchunk, schunk);
+                    schunk = _z_splitstr_nextback(&suffix_chunks);
+                } else {
+                    result = false;
+                }
+            }
+        }
+    }
+    while (result == true) {
+        rnosuper = _z_splitstr_next(&rsplitatsuperchunks);
+        if (rnosuper.start == NULL) {
+            break;
+        }
+        _z_splitstr_t needle = {
+            .s = {.start = _z_cptr_char_offset(rnosuper.start, 1), .end = _z_cptr_char_offset(rnosuper.end, -1)},
+            .delimiter = _Z_DELIMITER};
+        _z_splitstr_t haystack = lchunks;
+        _z_str_se_t needle_start = _z_splitstr_next(&needle);
+        _Bool needle_found = false;
+
+        _z_str_se_t h = _z_splitstr_next(&haystack);
+        while ((needle_found == false) && (h.start != NULL)) {
+            needle_found = chunk_intersector(needle_start, h);
+            if (needle_found == true) {
+                _z_splitstr_t needlecp = needle;
+                _z_str_se_t n = _z_splitstr_next(&needlecp);
+                _z_splitstr_t haystackcp = haystack;
+                while ((needle_found == true) && (n.start != NULL)) {
+                    h = _z_splitstr_next(&haystackcp);
+                    if (h.start != NULL) {
+                        if (chunk_intersector(n, h) == false) {
+                            needle_found = false;
+                        } else {
+                            n = _z_splitstr_next(&needlecp);
+                        }
+                    } else {
+                        needle_found = false;
+                        haystack.s = (_z_str_se_t){.start = NULL, .end = NULL};
+                    }
+                }
+                if (needle_found == true) {
+                    lchunks = haystackcp;
+                }
+            } else if (h.start[0] == _Z_VERBATIM) {
+                return false;
+            }
+            h = _z_splitstr_next(&haystack);
+        }
+    }
+    for (_z_str_se_t chunk = _z_splitstr_next(&lchunks); chunk.start != NULL && result == true;
+         chunk = _z_splitstr_next(&lchunks)) {
+        if (chunk.start[0] == _Z_VERBATIM) {
+            return false;
+        }
+    }
+    return result;
+}
+
+_Bool _z_keyexpr_is_superwild_chunk(_z_str_se_t s) {
+    return _z_ptr_char_diff(s.end, s.start) == 2 && s.start[0] == '*';
+}
+
+_Bool _z_keyexpr_has_verbatim(_z_str_se_t s) {
+    _z_splitstr_t it = {.s = s, .delimiter = _Z_DELIMITER};
+    _z_str_se_t chunk = _z_splitstr_next(&it);
+    while (chunk.start != NULL) {
+        if (chunk.start[0] == _Z_VERBATIM) {
+            return true;
+        }
+    }
+    return false;
+}
+
+_Bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_matcher chunk_intersector) {
+    _z_splitstr_t it1 = {.s = l, .delimiter = _Z_DELIMITER};
+    _z_splitstr_t it2 = {.s = r, .delimiter = _Z_DELIMITER};
+    _z_str_se_t current1 = {0};
+    _z_str_se_t current2 = {0};
+    while (!_z_splitstr_is_empty(&it1) && !_z_splitstr_is_empty(&it2)) {
+        _z_str_se_t advanced1 = _z_splitstr_split_once(it1, &current1);
+        _z_str_se_t advanced2 = _z_splitstr_split_once(it2, &current2);
+        if (_z_keyexpr_is_superwild_chunk(current1)) {
+            if (advanced1.start == NULL) {
+                return !_z_keyexpr_has_verbatim(it2.s);
+            }
+            return (current2.start[0] != _Z_VERBATIM &&
+                    _z_keyexpr_intersect_bothsuper(it1.s, advanced2, chunk_intersector)) ||
+                   _z_keyexpr_intersect_bothsuper(advanced1, it2.s, chunk_intersector);
+        } else if (_z_keyexpr_is_superwild_chunk(current2)) {
+            if (advanced2.start == NULL) {
+                return !_z_keyexpr_has_verbatim(it1.s);
+            }
+            return (current1.start[0] != _Z_VERBATIM &&
+                    _z_keyexpr_intersect_bothsuper(it2.s, advanced1, chunk_intersector)) ||
+                   _z_keyexpr_intersect_bothsuper(advanced2, it1.s, chunk_intersector);
+        } else if (chunk_intersector(current1, current2)) {
+            it1.s = advanced1;
+            it2.s = advanced2;
+        } else {
+            return false;
+        }
+    }
+    return (_z_splitstr_is_empty(&it1) || _z_keyexpr_is_superwild_chunk(it1.s)) &&
+           (_z_splitstr_is_empty(&it2) || _z_keyexpr_is_superwild_chunk(it2.s));
+}
+
 _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
     if (result == false) {
         _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
         _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
-        size_t ln_chunks = 0;
-        size_t rn_chunks = 0;
-        int8_t lwildness = _zp_ke_wildness(l, &ln_chunks);
-        int8_t rwildness = _zp_ke_wildness(r, &rn_chunks);
+        size_t ln_chunks = 0, ln_verbatim = 0;
+        size_t rn_chunks = 0, rn_verbatim = 0;
+        int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
+        int8_t rwildness = _zp_ke_wildness(r, &rn_chunks, &rn_verbatim);
         int8_t wildness = lwildness | rwildness;
         _z_ke_chunk_matcher chunk_intersector =
             ((wildness & (int8_t)_ZP_WILDNESS_SUBCHUNK_DSL) == (int8_t)_ZP_WILDNESS_SUBCHUNK_DSL)
                 ? _z_ke_chunk_intersect_stardsl
                 : _z_ke_chunk_intersect_nodsl;
-        if (wildness != (int8_t)0) {
+        if (wildness != (int8_t)0 && rn_verbatim == ln_verbatim) {
             if ((lwildness & rwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) {
-                // TODO: both expressions contain superchunks
-                _z_splitstr_t lchunks = {.s = l, .delimiter = _Z_DELIMITER};
-                _z_splitstr_t rchunks = {.s = r, .delimiter = _Z_DELIMITER};
-                result = true;
-                while (result == true) {
-                    _z_str_se_t lchunk = _z_splitstr_next(&lchunks);
-                    _z_str_se_t rchunk = _z_splitstr_next(&rchunks);
-                    if ((lchunk.start != NULL) || (rchunk.start != NULL)) {
-                        if ((_z_ke_isdoublestar(lchunk) == true) || (_z_ke_isdoublestar(rchunk) == true)) {
-                            break;
-                        } else if ((lchunk.start != NULL) && (rchunk.start != NULL)) {
-                            result = chunk_intersector(lchunk, rchunk);
-                        } else {
-                            // Guaranteed not to happen, as both iterators contain a `**` which will break
-                            // iteration.
-                        }
-                    } else {
-                        // Guaranteed not to happen, as both iterators contain a `**` which will break iteration.
-                    }
-                }
-                while (result == true) {
-                    _z_str_se_t lchunk = _z_splitstr_nextback(&lchunks);
-                    _z_str_se_t rchunk = _z_splitstr_nextback(&rchunks);
-                    if ((lchunk.start != NULL) || (rchunk.start != NULL)) {
-                        if ((_z_ke_isdoublestar(lchunk) == true) || (_z_ke_isdoublestar(rchunk) == true)) {
-                            break;
-                        } else if ((lchunk.start != NULL) && (rchunk.start != NULL)) {
-                            result = chunk_intersector(lchunk, rchunk);
-                        } else {
-                            // Happens in cases such as `a / ** / b` with `a / ** / c / b`
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
-                }
+                result = _z_keyexpr_intersect_bothsuper(l, r, chunk_intersector);
             } else if (((lwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) &&
                        (ln_chunks <= (rn_chunks * (size_t)2 + (size_t)1))) {
                 result = _z_ke_intersect_rhassuperchunks(r, l, chunk_intersector);
@@ -675,7 +697,8 @@ _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *r
                 // No superchunks detected, and number of chunks differ: no intersection guaranteed.
             }
         } else {
-            // No string equality and no wildness detected: no intersection guaranteed.
+            // No string equality and no wildness detected, or different count of verbatim chunks: no intersection
+            // guaranteed.
         }
     } else {
         // String equality guarantees intersection, no further process needed.

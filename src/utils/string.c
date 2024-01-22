@@ -91,6 +91,7 @@ char const *_z_bstrstr_skipneedle(_z_str_se_t haystack, _z_str_se_t needle) {
     return result;
 }
 
+_Bool _z_splitstr_is_empty(const _z_splitstr_t *src) { return src->s.start == NULL; }
 _z_str_se_t _z_splitstr_next(_z_splitstr_t *str) {
     _z_str_se_t result = str->s;
     if (str->s.start != NULL) {
@@ -105,6 +106,10 @@ _z_str_se_t _z_splitstr_next(_z_splitstr_t *str) {
         }
     }
     return result;
+}
+_z_str_se_t _z_splitstr_split_once(_z_splitstr_t src, _z_str_se_t *next) {
+    *next = _z_splitstr_next(&src);
+    return src.s;
 }
 
 _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str) {
