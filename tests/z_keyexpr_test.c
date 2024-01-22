@@ -268,6 +268,21 @@ int main(void) {
     assert(zp_keyexpr_includes_null_terminated("a/**/b$*", "a/ebc") == -1);
     assert(zp_keyexpr_includes_null_terminated("a/**/$*b", "a/cbc") == -1);
 
+    assert((zp_keyexpr_includes_null_terminated("@a", "@a") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a", "@ab") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a", "@a/b") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a", "@a/*") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a", "@a/*/**") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a$*/**", "@a") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a", "@a/**") == 0));
+    assert((zp_keyexpr_includes_null_terminated("@a/**", "@a") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("**/xyz$*xyz", "@a/b/xyzdefxyz") == 0));
+    assert((zp_keyexpr_includes_null_terminated("@a/**/c/**/e", "@a/b/b/b/c/d/d/d/e") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a/*", "@a/@b") == 0));
+    assert(!(zp_keyexpr_includes_null_terminated("@a/**", "@a/@b") == 0));
+    assert((zp_keyexpr_includes_null_terminated("@a/**/@b", "@a/@b") == 0));
+    assert((zp_keyexpr_includes_null_terminated("@a/@b/**", "@a/@b") == 0));
+
     // clang-format off
 
 #define N 31
