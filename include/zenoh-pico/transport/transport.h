@@ -26,9 +26,11 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 
 typedef struct {
+#if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
+#endif
 
     _z_id_t _remote_zid;
     _z_bytes_t _remote_addr;
@@ -73,9 +75,13 @@ typedef struct {
 
     _z_link_t _link;
 
-    // Buffers
-    _z_wbuf_t _dbuf_reliable;     // Defragmentation buffer
-    _z_wbuf_t _dbuf_best_effort;  // Defragmentation buffer
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Defragmentation buffer
+    _z_wbuf_t _dbuf_reliable;
+    _z_wbuf_t _dbuf_best_effort;
+#endif
+
+    // Regular Buffers
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
 

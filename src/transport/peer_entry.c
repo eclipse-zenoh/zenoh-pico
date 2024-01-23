@@ -17,16 +17,20 @@
 #include "zenoh-pico/transport/utils.h"
 
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src) {
+#if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&src->_dbuf_reliable);
     _z_wbuf_clear(&src->_dbuf_best_effort);
+#endif
 
     src->_remote_zid = _z_id_empty();
     _z_bytes_clear(&src->_remote_addr);
 }
 
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src) {
+#if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
+#endif
 
     dst->_sn_res = src->_sn_res;
     _z_conduit_sn_list_copy(&dst->_sn_rx_sns, &src->_sn_rx_sns);

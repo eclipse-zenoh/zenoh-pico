@@ -108,7 +108,9 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
+#if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
+#endif
                     _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
@@ -116,7 +118,9 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
+#if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
+#endif
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
@@ -134,6 +138,8 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
         }
 
         case _Z_MID_T_FRAGMENT: {
+            _Z_INFO("Received Z_FRAGMENT message");
+#if Z_FEATURE_FRAGMENTATION == 1
             _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &ztu->_dbuf_reliable
                                   : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
@@ -172,6 +178,9 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
+#else
+            _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
+#endif
             break;
         }
 

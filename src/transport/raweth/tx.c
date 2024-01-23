@@ -278,6 +278,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         // Mark the session that we have transmitted data
         ztm->_transmitted = true;
     } else {  // The message does not fit in the current batch, let's fragment it
+#if Z_FEATURE_FRAGMENTATION == 1
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
         // Encode the message on the expandable wbuf
@@ -307,6 +308,9 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         }
         // Clear the expandable buffer
         _z_wbuf_clear(&fbf);
+#else
+        _Z_INFO("Sending the message required fragmentation feature that is deactivated.");
+#endif
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_unlock(&ztm->_mutex_tx);
