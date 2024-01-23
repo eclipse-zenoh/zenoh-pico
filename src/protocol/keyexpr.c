@@ -606,16 +606,16 @@ _Bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_m
             if (advanced1.start == NULL) {
                 return !_z_keyexpr_has_verbatim(it2.s);
             }
-            return (current2.start[0] != _Z_VERBATIM &&
-                    _z_keyexpr_intersect_bothsuper(it1.s, advanced2, chunk_intersector)) ||
-                   _z_keyexpr_intersect_bothsuper(advanced1, it2.s, chunk_intersector);
+            return _z_keyexpr_intersect_bothsuper(advanced1, it2.s, chunk_intersector) ||
+                   (current2.start[0] != _Z_VERBATIM &&
+                    _z_keyexpr_intersect_bothsuper(it1.s, advanced2, chunk_intersector));
         } else if (_z_keyexpr_is_superwild_chunk(current2)) {
             if (advanced2.start == NULL) {
                 return !_z_keyexpr_has_verbatim(it1.s);
             }
-            return (current1.start[0] != _Z_VERBATIM &&
-                    _z_keyexpr_intersect_bothsuper(it2.s, advanced1, chunk_intersector)) ||
-                   _z_keyexpr_intersect_bothsuper(advanced2, it1.s, chunk_intersector);
+            return _z_keyexpr_intersect_bothsuper(advanced2, it1.s, chunk_intersector) ||
+                   (current1.start[0] != _Z_VERBATIM &&
+                    _z_keyexpr_intersect_bothsuper(it2.s, advanced1, chunk_intersector));
         } else if (chunk_intersector(current1, current2)) {
             it1.s = advanced1;
             it2.s = advanced2;
