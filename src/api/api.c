@@ -291,13 +291,14 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 z_bytes_t z_query_parameters(const z_query_t *query) {
-    z_bytes_t parameters = _z_bytes_wrap((uint8_t *)query->_parameters, strlen(query->_parameters));
+    z_bytes_t parameters =
+        _z_bytes_wrap((uint8_t *)query->_val._rc.in->val._parameters, strlen(query->_val._rc.in->val._parameters));
     return parameters;
 }
 
-z_value_t z_query_value(const z_query_t *query) { return query->_value; }
+z_value_t z_query_value(const z_query_t *query) { return query->_val._rc.in->val._value; }
 
-z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_key; }
+z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_val._rc.in->val._key; }
 
 _Bool z_value_is_initialized(z_value_t *value) {
     _Bool ret = false;
@@ -917,7 +918,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 .len = payload_len,
                             },
                         .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
-    return _z_send_reply(query, keyexpr, value);
+    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value);
     return _Z_ERR_GENERIC;
 }
 #endif

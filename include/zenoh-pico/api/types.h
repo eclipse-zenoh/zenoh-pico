@@ -192,6 +192,14 @@ typedef struct {
 _OWNED_TYPE_PTR(_z_queryable_t, queryable)
 
 /**
+ * Represents a Zenoh query entity, received by Zenoh Queryable entities.
+ *
+ */
+typedef struct z_query_t {
+    z_owned_query_t _val;
+} z_query_t;
+
+/**
  * Represents the encoding of a payload, in a MIME-like format.
  *
  * Members:

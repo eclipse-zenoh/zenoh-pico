@@ -13,6 +13,10 @@
 
 #include "zenoh-pico/net/query.h"
 
+void _z_query_clear(_z_query_t *q) {
+    _ZP_UNUSED(q);  // Nothing to do
+}
+
 #if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
     // Nothing to clear

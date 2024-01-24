@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
@@ -155,8 +156,8 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         zp_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-        // Build the query
-        z_query_t q;
+        // Build the _z_query
+        _z_query_t q;
         q._zn = zn;
         q._request_id = qid;
         q._key = key;
@@ -171,13 +172,17 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         q._value.encoding = query->_ext_value.encoding;
         q._value.payload = query->_ext_value.payload;
         q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+
+        // Build the z_query
+        z_query_t query = {._val = {._rc = _z_query_rc_new_from_val(q)}};
+
         _z_questionable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_questionable_rc_t *qle = _z_questionable_rc_list_head(xs);
-            qle->in->val._callback(&q, qle->in->val._arg);
+            qle->in->val._callback(&query, qle->in->val._arg);
             xs = _z_questionable_rc_list_tail(xs);
         }
-
+        _z_query_rc_drop(&query._val._rc);
         _z_keyexpr_clear(&key);
         _z_questionable_rc_list_free(&qles);
 #if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))

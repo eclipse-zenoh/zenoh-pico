@@ -327,7 +327,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return _Z_RES_OK;
 }
 
-int8_t _z_send_reply(const z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload) {
+int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload) {
     int8_t ret = _Z_RES_OK;
 
     _z_keyexpr_t q_ke;
