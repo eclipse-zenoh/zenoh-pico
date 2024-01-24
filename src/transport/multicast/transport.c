@@ -76,6 +76,7 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&ztm->_wbuf) != mtu) || (_z_zbuf_capacity(&ztm->_zbuf) != Z_BATCH_MULTICAST_SIZE)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
             zp_mutex_free(&ztm->_mutex_tx);

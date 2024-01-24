@@ -83,6 +83,7 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
         if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != wbuf_size) ||
             (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
             zp_mutex_free(&zt->_transport._unicast._mutex_tx);
@@ -108,6 +109,7 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
 #endif
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR("Not enough memory to allocate transport defragmentation buffers!");
 
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_reliable);
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);

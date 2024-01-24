@@ -282,9 +282,13 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 #else
                         entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
                         entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
-#endif
-#endif
 
+                        if ((_z_wbuf_capacity(&entry->_dbuf_reliable) != Z_FRAG_MAX_SIZE) ||
+                            (_z_wbuf_capacity(&entry->_dbuf_best_effort) != Z_FRAG_MAX_SIZE)) {
+                            _Z_ERROR("Not enough memory to allocate peer defragmentation buffers!");
+                        }
+#endif
+#endif
                         // Update lease time (set as ms during)
                         entry->_lease = t_msg->_body._join._lease;
                         entry->_next_lease = entry->_lease;
