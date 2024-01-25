@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
@@ -140,7 +141,7 @@ _z_questionable_rc_t *_z_register_questionable(_z_session_t *zn, _z_questionable
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, const _z_keyexpr_t q_key, uint32_t qid) {
+int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid) {
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -155,42 +156,20 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, cons
         zp_mutex_unlock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-        // Build the query
-        z_query_t q;
-        q._zn = zn;
-        q._request_id = qid;
-        q._key = key;
-#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
-        char *params = zp_malloc(query->_parameters.len + 1);
-#else
-        char params[query->_parameters.len + 1];
-#endif
-        memcpy(params, query->_parameters.start, query->_parameters.len);
-        params[query->_parameters.len] = 0;
-        q._parameters = params;
-        q._value.encoding = query->_ext_value.encoding;
-        q._value.payload = query->_ext_value.payload;
-        q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+        // Build the z_query
+        z_query_t query = {._val = {._rc = _z_query_rc_new()}};
+        query._val._rc.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zn, qid);
+        // Parse questionable list
         _z_questionable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_questionable_rc_t *qle = _z_questionable_rc_list_head(xs);
-            qle->in->val._callback(&q, qle->in->val._arg);
+            qle->in->val._callback(&query, qle->in->val._arg);
             xs = _z_questionable_rc_list_tail(xs);
         }
-
+        // Clean up
+        _z_query_rc_drop(&query._val._rc);
         _z_keyexpr_clear(&key);
         _z_questionable_rc_list_free(&qles);
-#if defined(__STDC_NO_VLA__) || ((__STDC_VERSION__ < 201000L) && (defined(_WIN32) || defined(WIN32)))
-        zp_free(params);
-#endif
-
-        // Send the final reply
-        // Create the final reply
-        _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q._request_id);
-        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-        _z_msg_clear(&z_msg);
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
         zp_mutex_unlock(&zn->_mutex_inner);

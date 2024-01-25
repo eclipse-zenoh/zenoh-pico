@@ -23,14 +23,24 @@
 /**
  * The query to be answered by a queryable.
  */
-typedef struct z_query_t {
+typedef struct _z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
     _z_session_t *_zn;
     char *_parameters;
     _Bool _anyke;
-} z_query_t;
+} _z_query_t;
+
+void _z_query_clear(_z_query_t *q);
+_Z_REFCOUNT_DEFINE(_z_query, _z_query)
+
+/**
+ * Container for an owned query rc
+ */
+typedef struct {
+    _z_query_rc_t _rc;
+} z_owned_query_t;
 
 /**
  * Return type when declaring a queryable.
@@ -41,6 +51,8 @@ typedef struct {
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1
+_z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_bytes_t *parameters,
+                           _z_session_t *zn, uint32_t request_id);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
 #endif
