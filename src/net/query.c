@@ -13,11 +13,38 @@
 
 #include "zenoh-pico/net/query.h"
 
+#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/logging.h"
+
 void _z_query_clear(_z_query_t *q) {
-    _ZP_UNUSED(q);  // Nothing to do
+    // Send REPLY_FINAL message
+    _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
+    if (_z_send_n_msg(q->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _Z_ERROR("Query send REPLY_FINAL transport failure !");
+    }
+    // Clean up memory
+    _z_msg_clear(&z_msg);
+    zp_free(q->_parameters);
+    _z_keyexpr_clear(&q->_key);
+    _z_value_clear(&q->_value);
+    // Ideally free session rc if you have one
 }
 
 #if Z_FEATURE_QUERYABLE == 1
+_z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_bytes_t *parameters,
+                           _z_session_t *zn, uint32_t request_id) {
+    _z_query_t q;
+    q._request_id = request_id;
+    q._zn = zn;  // Ideally would have been an rc
+    q._parameters = (char *)zp_malloc(parameters->len + 1);
+    memcpy(q._parameters, parameters->start, parameters->len);
+    q._parameters[parameters->len] = 0;
+    q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+    _z_keyexpr_copy(&q._key, key);
+    _z_value_copy(&q._value, value);
+    return q;
+}
+
 void _z_queryable_clear(_z_queryable_t *qbl) {
     // Nothing to clear
     (void)(qbl);
