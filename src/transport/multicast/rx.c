@@ -146,7 +146,9 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     true) {
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                 } else {
+#if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&entry->_dbuf_reliable);
+#endif
                     _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
@@ -155,7 +157,9 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                                    t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                 } else {
+#if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
+#endif
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
@@ -175,6 +179,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
         case _Z_MID_T_FRAGMENT: {
             _Z_INFO("Received Z_FRAGMENT message");
+#if Z_FEATURE_FRAGMENTATION == 1
             if (entry == NULL) {
                 break;
             }
@@ -218,6 +223,9 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                 // Reset the defragmentation buffer
                 _z_wbuf_reset(dbuf);
             }
+#else
+            _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
+#endif
             break;
         }
 
@@ -267,14 +275,20 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
                         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
 
+#if Z_FEATURE_FRAGMENTATION == 1
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 1
                         entry->_dbuf_reliable = _z_wbuf_make(0, true);
                         entry->_dbuf_best_effort = _z_wbuf_make(0, true);
 #else
                         entry->_dbuf_reliable = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
                         entry->_dbuf_best_effort = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
-#endif
 
+                        if ((_z_wbuf_capacity(&entry->_dbuf_reliable) != Z_FRAG_MAX_SIZE) ||
+                            (_z_wbuf_capacity(&entry->_dbuf_best_effort) != Z_FRAG_MAX_SIZE)) {
+                            _Z_ERROR("Not enough memory to allocate peer defragmentation buffers!");
+                        }
+#endif
+#endif
                         // Update lease time (set as ms during)
                         entry->_lease = t_msg->_body._join._lease;
                         entry->_next_lease = entry->_lease;

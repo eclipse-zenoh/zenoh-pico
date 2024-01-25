@@ -74,25 +74,16 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
 #endif
+
         // Initialize tx rx buffers
         zt->_transport._unicast._wbuf = _z_wbuf_make(wbuf_size, false);
         zt->_transport._unicast._zbuf = _z_zbuf_make(zbuf_size);
 
-        // Initialize the defragmentation buffers
-        zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, expandable);
-        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, expandable);
-
         // Clean up the buffers if one of them failed to be allocated
         if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != wbuf_size) ||
-            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != zbuf_size) ||
-#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
-#else
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != Z_IOSLICE_SIZE) ||
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
-#endif
+            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
             zp_mutex_free(&zt->_transport._unicast._mutex_tx);
@@ -101,9 +92,37 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
             _z_zbuf_clear(&zt->_transport._unicast._zbuf);
+        }
+
+#if Z_FEATURE_FRAGMENTATION == 1
+        // Initialize the defragmentation buffers
+        zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, expandable);
+        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, expandable);
+
+        // Clean up the buffers if one of them failed to be allocated
+        if (
+#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
+#else
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != Z_IOSLICE_SIZE) ||
+            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
+#endif
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR("Not enough memory to allocate transport defragmentation buffers!");
+
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_reliable);
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);
+
+#if Z_FEATURE_MULTI_THREAD == 1
+            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
+            zp_mutex_free(&zt->_transport._unicast._mutex_rx);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+            _z_wbuf_clear(&zt->_transport._unicast._wbuf);
+            _z_zbuf_clear(&zt->_transport._unicast._zbuf);
         }
+#endif
     }
 
     if (ret == _Z_RES_OK) {
@@ -284,8 +303,10 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_wbuf);
     _z_zbuf_clear(&ztu->_zbuf);
+#if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&ztu->_dbuf_reliable);
     _z_wbuf_clear(&ztu->_dbuf_best_effort);
+#endif
 
     // Clean up PIDs
     ztu->_remote_zid = _z_id_empty();

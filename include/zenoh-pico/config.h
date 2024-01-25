@@ -225,6 +225,13 @@
 #define Z_FEATURE_RAWETH_TRANSPORT 0
 #endif
 
+/**
+ * Enable message fragmentation.
+ */
+#ifndef Z_FEATURE_FRAGMENTATION
+#define Z_FEATURE_FRAGMENTATION 1
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.
