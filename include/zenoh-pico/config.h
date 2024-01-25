@@ -232,6 +232,13 @@
 #define Z_FEATURE_FRAGMENTATION 1
 #endif
 
+/**
+ * Enable attachments.
+ */
+#ifndef Z_FEATURE_ATTACHMENT
+#define Z_FEATURE_ATTACHMENT 1
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.
