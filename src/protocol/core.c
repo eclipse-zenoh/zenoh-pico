@@ -72,6 +72,11 @@ _z_value_t _z_value_steal(_z_value_t *value) {
     *value = _z_value_null();
     return ret;
 }
+void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
+    dst->encoding.prefix = src->encoding.prefix;
+    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
+    _z_bytes_copy(&dst->payload, &src->payload);
+}
 
 #if Z_FEATURE_ATTACHMENT == 1
 struct _z_seeker_t {
