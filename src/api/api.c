@@ -453,7 +453,7 @@ z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_han
     return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};
 }
 
-z_owned_closure_query_t z_closure_query(_z_questionable_handler_t call, _z_dropper_handler_t drop, void *context) {
+z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_query_t){.call = call, .drop = drop, .context = context};
 }
 

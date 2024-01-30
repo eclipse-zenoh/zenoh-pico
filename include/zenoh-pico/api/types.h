@@ -498,14 +498,14 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_samp
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   _z_questionable_handler_t call: `void (*_z_questionable_handler_t)(z_query_t *query, void *arg)` is the callback
- * function.
+ *   _z_queryable_handler_t call: `void (*_z_queryable_handler_t)(z_query_t *query, void *arg)` is the
+ * callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
     void *context;
-    _z_questionable_handler_t call;
+    _z_queryable_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
