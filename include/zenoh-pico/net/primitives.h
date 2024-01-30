@@ -185,7 +185,7 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
 _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
-                                     _z_questionable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+                                     _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.

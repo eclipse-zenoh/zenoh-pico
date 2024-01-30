@@ -57,7 +57,7 @@ typedef struct _z_session_t {
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
-    _z_questionable_rc_list_t *_local_questionable;
+    _z_session_queryable_rc_list_t *_local_queryable;
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;

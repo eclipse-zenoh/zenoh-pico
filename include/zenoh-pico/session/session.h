@@ -114,24 +114,25 @@ typedef struct z_query_t z_query_t;  // Forward type declaration to avoid cyclic
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_questionable_handler_t)(const z_query_t *query, void *arg);
+typedef void (*_z_queryable_handler_t)(const z_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
-    _z_questionable_handler_t _callback;
+    _z_queryable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
     _Bool _complete;
-} _z_questionable_t;
+} _z_session_queryable_t;
 
-_Bool _z_questionable_eq(const _z_questionable_t *one, const _z_questionable_t *two);
-void _z_questionable_clear(_z_questionable_t *res);
+_Bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
+void _z_session_queryable_clear(_z_session_queryable_t *res);
 
-_Z_REFCOUNT_DEFINE(_z_questionable, _z_questionable)
-_Z_ELEM_DEFINE(_z_questionable, _z_questionable_t, _z_noop_size, _z_questionable_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_questionable_rc, _z_questionable_rc_t, _z_noop_size, _z_questionable_rc_drop, _z_noop_copy)
-_Z_LIST_DEFINE(_z_questionable_rc, _z_questionable_rc_t)
+_Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
+_Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size, _z_session_queryable_rc_drop,
+               _z_noop_copy)
+_Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 typedef struct {
     _z_reply_t _reply;

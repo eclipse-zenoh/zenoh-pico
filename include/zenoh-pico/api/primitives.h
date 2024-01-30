@@ -589,7 +589,7 @@ z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_han
  * Returns:
  *   Returns a new query closure.
  */
-z_owned_closure_query_t z_closure_query(_z_questionable_handler_t call, _z_dropper_handler_t drop, void *context);
+z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new reply closure.
