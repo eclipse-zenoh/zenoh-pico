@@ -139,6 +139,6 @@ _z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_
 
 _z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
 _z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
-_z_declaration_t _z_make_final_decl(uint32_t id);
+_z_declaration_t _z_make_final_interest(uint32_t id);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_DECLARATIONS_H */

@@ -113,7 +113,7 @@ _z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
                                             ._keyexpr = _z_keyexpr_steal(key),
                                         }}};
 }
-_z_declaration_t _z_make_final_decl(uint32_t id) {
+_z_declaration_t _z_make_final_interest(uint32_t id) {
     return (_z_declaration_t){._tag = _Z_FINAL_INTEREST, ._body = {._final_interest = {._id = id}}};
 }
 _z_decl_kexpr_t _z_decl_kexpr_null(void) { return (_z_decl_kexpr_t){0}; }
