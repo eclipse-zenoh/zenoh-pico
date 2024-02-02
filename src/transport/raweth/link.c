@@ -104,7 +104,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
         self->_socket._raweth._interface = _ZP_RAWETH_CFG_INTERFACE;
     }
     // Open raweth link
-    return _z_open_raweth(&self->_socket._raweth._sock, _ZP_RAWETH_CFG_INTERFACE);
+    return _z_open_raweth(&self->_socket._raweth._sock, self->_socket._raweth._interface);
 }
 
 static int8_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }
