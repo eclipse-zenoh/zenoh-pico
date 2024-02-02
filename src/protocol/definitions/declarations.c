@@ -102,16 +102,17 @@ _z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_
     return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
                               ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
-_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
-    return (_z_declaration_t){._tag = _Z_UNDECL_TOKEN,
-                              ._body = {._undecl_token = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
-}
-_z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id) {
-    return (_z_declaration_t){._tag = _Z_DECL_TOKEN,
-                              ._body = {._decl_token = {
+_z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint8_t interest_flags) {
+    return (_z_declaration_t){._tag = _Z_DECL_INTEREST,
+                              ._body = {._decl_interest = {
                                             ._id = id,
                                             ._keyexpr = _z_keyexpr_steal(key),
+                                            .interest_flags = interest_flags,
                                         }}};
+}
+_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {
+    return (_z_declaration_t){._tag = _Z_UNDECL_INTEREST,
+                              ._body = {._undecl_interest = {._id = id, ._ext_keyexpr = _z_keyexpr_duplicate(*key)}}};
 }
 _z_declaration_t _z_make_final_interest(uint32_t id) {
     return (_z_declaration_t){._tag = _Z_FINAL_INTEREST, ._body = {._final_interest = {._id = id}}};
