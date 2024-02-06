@@ -187,4 +187,27 @@ typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_w
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
+/**
+ * The callback signature of the functions handling interest messages.
+ */
+typedef void (*_z_interest_handler_t)(const void *msg, void *arg);  // FIXME message type
+
+typedef struct {
+    _z_keyexpr_t _key;
+    uint32_t _id;
+    _z_interest_handler_t _callback;
+    _z_drop_handler_t _dropper;
+    void *_arg;
+    uint8_t _flags;
+} _z_session_interest_t;
+
+_Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
+void _z_session_interest_clear(_z_session_interest_t *res);
+
+_Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
+_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
+               _z_noop_copy)
+_Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
+
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */
