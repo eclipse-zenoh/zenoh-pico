@@ -26,6 +26,7 @@
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -421,5 +422,67 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     }
 
     return ret;
+}
+#endif
+
+#if Z_FEATURE_INTEREST == 1
+/*------------------ Interest Declaration ------------------*/
+_z_interest_t *_z_declare_interest(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback,
+                                   _z_drop_handler_t dropper, uint8_t flags, void *arg) {
+    _z_session_interest_t intr;
+    intr._id = _z_get_entity_id(&zn->in->val);
+    intr._key = _z_get_expanded_key_from_key(&zn->in->val, &keyexpr);
+    intr._flags = flags;
+    intr._callback = callback;
+    intr._dropper = dropper;
+    intr._arg = arg;
+
+    // Allocate queryable
+    _z_interest_t *ret = (_z_interest_t *)zp_malloc(sizeof(_z_interest_t));
+    if (ret == NULL) {
+        _z_session_interest_clear(&intr);
+        return NULL;
+    }
+    // Create interest entry, stored at session-level, do not drop it by the end of this function.
+    _z_session_interest_rc_t *sintr = _z_register_interest(&zn->in->val, &intr);
+    if (sintr == NULL) {
+        _z_interest_free(&ret);
+        return NULL;
+    }
+    // Build the declare message to send on the wire
+    _z_declaration_t declaration = _z_make_decl_interest(&keyexpr, intr._id, intr._flags);
+    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+    if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_unregister_interest(&zn->in->val, sintr);
+        _z_interest_free(&ret);
+        return NULL;
+    }
+    _z_n_msg_clear(&n_msg);
+    // Fill interest
+    ret->_entity_id = intr._id;
+    ret->_zn = _z_session_rc_clone(zn);
+    return NULL;
+}
+
+int8_t _z_undeclare_interest(_z_interest_t *intr) {
+    if (intr == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+    // Find interest entry
+    _z_session_interest_rc_t *sintr = _z_get_interest_by_id(&intr->_zn.in->val, intr->_entity_id);
+    if (sintr == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+    // Build the declare message to send on the wire
+    _z_declaration_t declaration = _z_make_undecl_interest(intr->_entity_id, &sintr->in->val._key);
+    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+    if (_z_send_n_msg(&intr->_zn.in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    _z_n_msg_clear(&n_msg);
+    // Only if message is successfully send, local interest state can be removed
+    _z_unregister_interest(&intr->_zn.in->val, sintr);
+    _z_session_rc_drop(&intr->_zn);
+    return _Z_RES_OK;
 }
 #endif
