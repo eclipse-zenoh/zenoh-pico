@@ -34,4 +34,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *z_msg, ui
 int8_t _z_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliability_t reliability,
                      z_congestion_control_t cong_ctrl);
 
+void _zp_session_lock_mutex(_z_session_t *zn);
+void _zp_session_unlock_mutex(_z_session_t *zn);
+
 #endif /* INCLUDE_ZENOH_PICO_SESSION_UTILS_H */
