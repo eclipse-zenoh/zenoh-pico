@@ -19,6 +19,7 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -191,6 +192,71 @@ int8_t _z_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
     return _Z_RES_OK;
 }
 
+static int8_t _z_send_resource_interest(_z_session_t *zn) {
+    _z_resource_list_t *xs = zn->_local_resources;
+    while (xs != NULL) {
+        _z_resource_t *res = _z_resource_list_head(xs);
+        // Build the declare message to send on the wire
+        _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &res->_key);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
+        xs = _z_resource_list_tail(xs);
+    }
+    return _Z_RES_OK;
+}
+
+#if Z_FEATURE_SUBSCRIPTION == 1
+static int8_t _z_send_subscriber_interest(_z_session_t *zn) {
+    _z_subscription_rc_list_t *xs = zn->_local_subscriptions;
+    while (xs != NULL) {
+        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        // Build the declare message to send on the wire
+        _z_declaration_t declaration = _z_make_decl_subscriber(&sub->in->val._key, sub->in->val._id,
+                                                               sub->in->val._info.reliability == Z_RELIABILITY_RELIABLE,
+                                                               sub->in->val._info.mode == Z_SUBMODE_PULL);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
+        xs = _z_subscription_rc_list_tail(xs);
+    }
+    return _Z_RES_OK;
+}
+#else
+static int8_t _z_send_subscriber_interest(_z_session_t *zn) {
+    _ZP_UNUSED(zn);
+    return _Z_RES_OK;
+}
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
+static int8_t _z_send_queryable_interest(_z_session_t *zn) {
+    _z_session_queryable_rc_list_t *xs = zn->_local_queryable;
+    while (xs != NULL) {
+        _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
+        // Build the declare message to send on the wire
+        _z_declaration_t declaration = _z_make_decl_queryable(&qle->in->val._key, qle->in->val._id,
+                                                              qle->in->val._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
+        xs = _z_subscription_rc_list_tail(xs);
+    }
+    return _Z_RES_OK;
+}
+#else
+static int8_t _z_send_queryable_interest(_z_session_t *zn) {
+    _ZP_UNUSED(zn);
+    return _Z_RES_OK;
+}
+#endif
+
 int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
     _ZP_UNUSED(key);
     _ZP_UNUSED(id);
@@ -203,51 +269,15 @@ int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t 
         // Send all declare
         if ((flags & _Z_INTEREST_FLAG_KEYEXPRS) != 0) {
             _Z_DEBUG("Sending declare resources");
-            _z_resource_list_t *xs = zn->_local_resources;
-            while (xs != NULL) {
-                _z_resource_t *res = _z_resource_list_head(xs);
-                // Build the declare message to send on the wire
-                _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &res->_key);
-                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                    return _Z_ERR_TRANSPORT_TX_FAILED;
-                }
-                _z_n_msg_clear(&n_msg);
-                xs = _z_subscription_rc_list_tail(xs);
-            }
+            _Z_RETURN_IF_ERR(_z_send_resource_interest(zn));
         }
         if ((flags & _Z_INTEREST_FLAG_SUBSCRIBERS) != 0) {
             _Z_DEBUG("Sending declare subscribers");
-            _z_subscription_rc_list_t *xs = zn->_local_subscriptions;
-            while (xs != NULL) {
-                _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-                // Build the declare message to send on the wire
-                _z_declaration_t declaration = _z_make_decl_subscriber(
-                    &sub->in->val._key, sub->in->val._id, sub->in->val._info.reliability == Z_RELIABILITY_RELIABLE,
-                    sub->in->val._info.mode == Z_SUBMODE_PULL);
-                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                    return _Z_ERR_TRANSPORT_TX_FAILED;
-                }
-                _z_n_msg_clear(&n_msg);
-                xs = _z_subscription_rc_list_tail(xs);
-            }
+            _Z_RETURN_IF_ERR(_z_send_subscriber_interest(zn));
         }
         if ((flags & _Z_INTEREST_FLAG_QUERYABLES) != 0) {
             _Z_DEBUG("Sending declare queryables");
-            _z_session_queryable_rc_list_t *xs = zn->_local_queryable;
-            while (xs != NULL) {
-                _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-                // Build the declare message to send on the wire
-                _z_declaration_t declaration = _z_make_decl_queryable(
-                    &qle->in->val._key, qle->in->val._id, qle->in->val._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
-                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
-                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-                    return _Z_ERR_TRANSPORT_TX_FAILED;
-                }
-                _z_n_msg_clear(&n_msg);
-                xs = _z_subscription_rc_list_tail(xs);
-            }
+            _Z_RETURN_IF_ERR(_z_send_queryable_interest(zn));
         }
         if ((flags & _Z_INTEREST_FLAG_TOKENS) != 0) {
             // Zenoh pico doesn't support liveliness token for now
