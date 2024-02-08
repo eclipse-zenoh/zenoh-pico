@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -94,30 +95,22 @@ _z_session_interest_rc_list_t *__unsafe_z_get_interest_by_key(_z_session_t *zn, 
 }
 
 _z_session_interest_rc_t *_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return intr;
 }
 
 _z_session_interest_rc_list_t *_z_get_interest_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
     _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return intrs;
 }
@@ -126,9 +119,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
     _Z_DEBUG(">>> Allocating interest for (%ju:%s)", (uintmax_t)intr->_key._id, intr->_key._suffix);
     _z_session_interest_rc_t *ret = NULL;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     ret = (_z_session_interest_rc_t *)zp_malloc(sizeof(_z_session_interest_rc_t));
     if (ret != NULL) {
@@ -136,9 +127,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
         zn->_local_interests = _z_session_interest_rc_list_push(zn->_local_interests, ret);
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return ret;
 }
@@ -146,64 +135,126 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
 int8_t _z_trigger_interests(_z_session_t *zn, const _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid) {
     int8_t ret = _Z_RES_OK;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
     if (key._suffix != NULL) {
-        _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
-
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-        // Parse session_interest list
-        _z_session_interest_rc_list_t *xs = intrs;
-        while (xs != NULL) {
-            _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-            if (intr->in->val._callback != NULL) {
-                intr->in->val._callback(NULL, intr->in->val._arg);
-            }
-            xs = _z_session_interest_rc_list_tail(xs);
-        }
-        // Clean up
-        _z_keyexpr_clear(&key);
-        _z_session_interest_rc_list_free(&intrs);
-    } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-        ret = _Z_ERR_KEYEXPR_UNKNOWN;
+        _zp_session_unlock_mutex(zn);
+        return _Z_ERR_KEYEXPR_UNKNOWN;
     }
+    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
+
+    // Parse session_interest list
+    _z_session_interest_rc_list_t *xs = intrs;
+    while (xs != NULL) {
+        _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
+        if (intr->in->val._callback != NULL) {
+            intr->in->val._callback(NULL, intr->in->val._arg);
+        }
+        xs = _z_session_interest_rc_list_tail(xs);
+    }
+    // Clean up
+    _z_keyexpr_clear(&key);
+    _z_session_interest_rc_list_free(&intrs);
 
     return ret;
 }
 
 void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     zn->_local_interests =
         _z_session_interest_rc_list_drop_filter(zn->_local_interests, _z_session_interest_rc_eq, intr);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }
 
 void _z_flush_interest(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_session_interest_rc_list_free(&zn->_local_interests);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
+}
+
+int8_t _z_process_final_interest(_z_session_t *zn, uint32_t id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    // Trigger writer side filtering
+    return _Z_RES_OK;
+}
+
+int8_t _z_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    // Update future masks
+    return _Z_RES_OK;
+}
+
+int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
+    _ZP_UNUSED(key);
+    _ZP_UNUSED(id);
+    // Check transport type
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        return _Z_RES_OK;  // Nothing to do on unicast
+    }
+    // Current flags process
+    if ((flags & _Z_INTEREST_FLAG_CURRENT) != 0) {
+        // Send all declare
+        if ((flags & _Z_INTEREST_FLAG_KEYEXPRS) != 0) {
+            _Z_DEBUG("Sending declare resources");
+            _z_resource_list_t *xs = zn->_local_resources;
+            while (xs != NULL) {
+                _z_resource_t *res = _z_resource_list_head(xs);
+                // Build the declare message to send on the wire
+                _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &res->_key);
+                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                    return _Z_ERR_TRANSPORT_TX_FAILED;
+                }
+                _z_n_msg_clear(&n_msg);
+                xs = _z_subscription_rc_list_tail(xs);
+            }
+        }
+        if ((flags & _Z_INTEREST_FLAG_SUBSCRIBERS) != 0) {
+            _Z_DEBUG("Sending declare subscribers");
+            _z_subscription_rc_list_t *xs = zn->_local_subscriptions;
+            while (xs != NULL) {
+                _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+                // Build the declare message to send on the wire
+                _z_declaration_t declaration = _z_make_decl_subscriber(
+                    &sub->in->val._key, sub->in->val._id, sub->in->val._info.reliability == Z_RELIABILITY_RELIABLE,
+                    sub->in->val._info.mode == Z_SUBMODE_PULL);
+                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                    return _Z_ERR_TRANSPORT_TX_FAILED;
+                }
+                _z_n_msg_clear(&n_msg);
+                xs = _z_subscription_rc_list_tail(xs);
+            }
+        }
+        if ((flags & _Z_INTEREST_FLAG_QUERYABLES) != 0) {
+            _Z_DEBUG("Sending declare queryables");
+            _z_session_queryable_rc_list_t *xs = zn->_local_queryable;
+            while (xs != NULL) {
+                _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
+                // Build the declare message to send on the wire
+                _z_declaration_t declaration = _z_make_decl_queryable(
+                    &qle->in->val._key, qle->in->val._id, qle->in->val._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+                _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+                if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                    return _Z_ERR_TRANSPORT_TX_FAILED;
+                }
+                _z_n_msg_clear(&n_msg);
+                xs = _z_subscription_rc_list_tail(xs);
+            }
+        }
+        if ((flags & _Z_INTEREST_FLAG_TOKENS) != 0) {
+            // Zenoh pico doesn't support liveliness token for now
+        }
+    }
+
+    return _Z_RES_OK;
 }
 
 #endif

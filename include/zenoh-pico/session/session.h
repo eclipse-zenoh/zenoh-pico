@@ -190,7 +190,7 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 /**
  * The callback signature of the functions handling interest messages.
  */
-typedef void (*_z_interest_handler_t)(const void *msg, void *arg);  // FIXME message type
+typedef void (*_z_interest_handler_t)(const void *msg, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
