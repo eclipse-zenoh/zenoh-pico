@@ -187,10 +187,23 @@ typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_w
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
+typedef enum {
+    _Z_INTEREST_MSG_TYPE_FINAL = 0,
+    _Z_INTEREST_MSG_TYPE_RESOURCE,
+    _Z_INTEREST_MSG_TYPE_SUBSCRIBER,
+    _Z_INTEREST_MSG_TYPE_QUERYABLE,
+    _Z_INTEREST_MSG_TYPE_TOKEN,
+} _z_interest_msg_type_t;
+
+typedef struct _z_interest_msg_t {
+    uint8_t _type;
+    uint32_t _id;
+} _z_interest_msg_t;
+
 /**
  * The callback signature of the functions handling interest messages.
  */
-typedef void (*_z_interest_handler_t)(const void *msg, void *arg);
+typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

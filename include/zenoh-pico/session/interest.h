@@ -32,9 +32,9 @@
 _z_session_interest_rc_t *_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_session_interest_rc_list_t *_z_get_interest_by_key(_z_session_t *zn, const _z_keyexpr_t key);
 
-_z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_interest_t *q);
-int8_t _z_trigger_interests(_z_session_t *zn, const _z_msg_query_t *query, const _z_keyexpr_t q_key, uint32_t qid);
-void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *q);
+_z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_interest_t *intr);
+int8_t _z_trigger_interests(_z_session_t *zn, const _z_declaration_t *decl);
+void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 void _z_flush_interest(_z_session_t *zn);
 int8_t _z_process_final_interest(_z_session_t *zn, uint32_t id);
 int8_t _z_process_undeclare_interest(_z_session_t *zn, uint32_t id);
