@@ -193,7 +193,10 @@ int8_t _z_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
 }
 
 static int8_t _z_send_resource_interest(_z_session_t *zn) {
-    _z_resource_list_t *xs = zn->_local_resources;
+    _zp_session_lock_mutex(zn);
+    _z_resource_list_t *res_list = _z_resource_list_clone(zn->_local_resources);
+    _zp_session_unlock_mutex(zn);
+    _z_resource_list_t *xs = res_list;
     while (xs != NULL) {
         _z_resource_t *res = _z_resource_list_head(xs);
         // Build the declare message to send on the wire
@@ -205,12 +208,16 @@ static int8_t _z_send_resource_interest(_z_session_t *zn) {
         _z_n_msg_clear(&n_msg);
         xs = _z_resource_list_tail(xs);
     }
+    _z_resource_list_free(&res_list);
     return _Z_RES_OK;
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 static int8_t _z_send_subscriber_interest(_z_session_t *zn) {
-    _z_subscription_rc_list_t *xs = zn->_local_subscriptions;
+    _zp_session_lock_mutex(zn);
+    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_local_subscriptions);
+    _zp_session_unlock_mutex(zn);
+    _z_subscription_rc_list_t *xs = sub_list;
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
@@ -224,6 +231,7 @@ static int8_t _z_send_subscriber_interest(_z_session_t *zn) {
         _z_n_msg_clear(&n_msg);
         xs = _z_subscription_rc_list_tail(xs);
     }
+    _z_subscription_rc_list_free(&sub_list);
     return _Z_RES_OK;
 }
 #else
@@ -235,7 +243,10 @@ static int8_t _z_send_subscriber_interest(_z_session_t *zn) {
 
 #if Z_FEATURE_QUERYABLE == 1
 static int8_t _z_send_queryable_interest(_z_session_t *zn) {
-    _z_session_queryable_rc_list_t *xs = zn->_local_queryable;
+    _zp_session_lock_mutex(zn);
+    _z_session_queryable_rc_list_t *qle_list = _z_session_queryable_rc_list_clone(zn->_local_queryable);
+    _zp_session_unlock_mutex(zn);
+    _z_session_queryable_rc_list_t *xs = qle_list;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
         // Build the declare message to send on the wire
@@ -248,6 +259,7 @@ static int8_t _z_send_queryable_interest(_z_session_t *zn) {
         _z_n_msg_clear(&n_msg);
         xs = _z_subscription_rc_list_tail(xs);
     }
+    _z_session_queryable_rc_list_free(&qle_list);
     return _Z_RES_OK;
 }
 #else
