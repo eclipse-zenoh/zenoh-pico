@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include "zenoh-pico/net/interest.h"
+
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
