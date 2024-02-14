@@ -17,7 +17,6 @@
 
 #include <stdbool.h>
 
-#include "zenoh-pico/net/interest.h"
 #include "zenoh-pico/net/session.h"
 
 #if Z_FEATURE_INTEREST == 1

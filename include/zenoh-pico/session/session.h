@@ -211,7 +211,6 @@ typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
     _z_interest_handler_t _callback;
-    _z_drop_handler_t _dropper;
     void *_arg;
     uint8_t _flags;
 } _z_session_interest_t;

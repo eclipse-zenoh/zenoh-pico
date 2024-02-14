@@ -33,12 +33,7 @@ _Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_
     return one->_id == two->_id;
 }
 
-void _z_session_interest_clear(_z_session_interest_t *intr) {
-    if (intr->_dropper != NULL) {
-        intr->_dropper(intr->_arg);
-    }
-    _z_keyexpr_clear(&intr->_key);
-}
+void _z_session_interest_clear(_z_session_interest_t *intr) { _z_keyexpr_clear(&intr->_key); }
 
 /*------------------ interest ------------------*/
 _z_session_interest_rc_t *__z_get_interest_by_id(_z_session_interest_rc_list_t *intrs, const _z_zint_t id) {

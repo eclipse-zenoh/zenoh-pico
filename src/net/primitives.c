@@ -434,7 +434,6 @@ _z_interest_t *_z_declare_interest(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z
     intr._key = _z_get_expanded_key_from_key(&zn->in->val, &keyexpr);
     intr._flags = flags;
     intr._callback = callback;
-    intr._dropper = dropper;
     intr._arg = arg;
 
     // Allocate queryable
