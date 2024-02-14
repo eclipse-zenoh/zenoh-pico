@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_INTEREST_NETAPI_H
-#define ZENOH_PICO_INTEREST_NETAPI_H
+#ifndef ZENOH_PICO_FILTERING_NETAPI_H
+#define ZENOH_PICO_FILTERING_NETAPI_H
 
 #include <stdint.h>
 
@@ -20,17 +20,28 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+typedef enum {
+    WRITE_FILTER_INIT = 0,
+    WRITE_FILTER_ACTIVE = 1,
+    WRITE_FILTER_OFF = 2,
+} _z_write_filter_state_t;
+
+typedef struct {
+    uint32_t decl_id;
+    uint8_t state;
+} _z_writer_filter_ctx_t;
+
 /**
  * Return type when declaring a queryable.
  */
 typedef struct _z_interest_t {
-    uint32_t _entity_id;
-    _z_session_rc_t _zn;
-} _z_interest_t;
+    uint32_t _interest_id;
+    _z_writer_filter_ctx_t *ctx;
+} _z_write_filter_t;
 
-#if Z_FEATURE_INTEREST == 1
-void _z_interest_clear(_z_interest_t *intr);
-void _z_interest_free(_z_interest_t **intr);
-#endif
+typedef struct _z_publisher_t _z_publisher_t;
 
-#endif /* ZENOH_PICO_INTEREST_NETAPI_H */
+int8_t _z_write_filter_create(_z_publisher_t *pub);
+int8_t _z_write_filter_destroy(_z_publisher_t *pub);
+
+#endif /* ZENOH_PICO_FILTERING_NETAPI_H */

@@ -23,6 +23,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/primitives.h"
@@ -694,14 +695,28 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
             key = _z_rid_with_suffix(id, NULL);
         }
     }
-
+    // Set options
     z_publisher_options_t opt = z_publisher_options_default();
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-
-    return (z_owned_publisher_t){._value = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority)};
+    // Set publisher
+    _z_publisher_t *pub = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority);
+    if (pub == NULL) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(&zs._val.in->val, key._id);
+        }
+        return (z_owned_publisher_t){._value = NULL};
+    }
+    // Create write filter
+    if (_z_write_filter_create(pub) != _Z_RES_OK) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(&zs._val.in->val, key._id);
+        }
+        return (z_owned_publisher_t){._value = NULL};
+    }
+    return (z_owned_publisher_t){._value = pub};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {

@@ -18,7 +18,6 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
-#include "zenoh-pico/net/interest.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
@@ -243,9 +242,9 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 #endif
 
 #if Z_FEATURE_INTEREST == 1
-_z_interest_t *_z_declare_interest(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback,
-                                   _z_drop_handler_t dropper, uint8_t flags, void *arg);
-int8_t _z_undeclare_interest(_z_interest_t *intr);
+uint32_t _z_declare_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
+                             void *arg);
+int8_t _z_undeclare_interest(_z_session_t *zn, uint32_t interest_id);
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */
