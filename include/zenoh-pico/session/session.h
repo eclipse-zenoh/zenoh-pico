@@ -189,7 +189,6 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
 typedef enum {
     _Z_INTEREST_MSG_TYPE_FINAL = 0,
-    _Z_INTEREST_MSG_TYPE_RESOURCE,
     _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER,
     _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE,
     _Z_INTEREST_MSG_TYPE_DECL_TOKEN,
