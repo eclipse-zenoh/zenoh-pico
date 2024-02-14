@@ -753,6 +753,11 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 #endif
     }
 
+    // Check if write filter is active before writing
+    if (_z_write_filter_active(pub._val)) {
+        return _Z_ERR_GENERIC;  // Filter is active
+    }
+
     ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
