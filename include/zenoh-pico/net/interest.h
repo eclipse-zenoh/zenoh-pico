@@ -23,7 +23,7 @@
 /**
  * Return type when declaring a queryable.
  */
-typedef struct {
+typedef struct _z_interest_t {
     uint32_t _entity_id;
     _z_session_rc_t _zn;
 } _z_interest_t;

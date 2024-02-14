@@ -123,13 +123,13 @@ int8_t _z_trigger_interests(_z_session_t *zn, const _z_declaration_t *decl) {
     _z_interest_msg_t msg;
     switch (decl->_tag) {
         case _Z_DECL_SUBSCRIBER:
-            msg._type = _Z_INTEREST_MSG_TYPE_SUBSCRIBER;
-            msg._id = decl->_body._decl_subscriber._id;
+            msg.type = _Z_INTEREST_MSG_TYPE_SUBSCRIBER;
+            msg.id = decl->_body._decl_subscriber._id;
             decl_key = &decl->_body._decl_subscriber._keyexpr;
             break;
         case _Z_DECL_QUERYABLE:
-            msg._type = _Z_INTEREST_MSG_TYPE_QUERYABLE;
-            msg._id = decl->_body._decl_queryable._id;
+            msg.type = _Z_INTEREST_MSG_TYPE_QUERYABLE;
+            msg.id = decl->_body._decl_queryable._id;
             decl_key = &decl->_body._decl_queryable._keyexpr;
             break;
         default:
@@ -173,7 +173,7 @@ void _z_flush_interest(_z_session_t *zn) {
 }
 
 int8_t _z_process_final_interest(_z_session_t *zn, uint32_t id) {
-    _z_interest_msg_t msg = {._type = _Z_INTEREST_MSG_TYPE_FINAL, ._id = id};
+    _z_interest_msg_t msg = {.type = _Z_INTEREST_MSG_TYPE_FINAL, .id = id};
     // Retrieve interest
     _zp_session_lock_mutex(zn);
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);

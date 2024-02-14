@@ -196,8 +196,8 @@ typedef enum {
 } _z_interest_msg_type_t;
 
 typedef struct _z_interest_msg_t {
-    uint8_t _type;
-    uint32_t _id;
+    uint8_t type;
+    uint32_t id;
 } _z_interest_msg_t;
 
 /**
