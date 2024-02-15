@@ -139,7 +139,8 @@ int8_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
 }
 
 void _z_f_link_close_udp_multicast(_z_link_t *self) {
-    _z_close_udp_multicast(&self->_socket._udp._sock, &self->_socket._udp._msock, self->_socket._udp._rep);
+    _z_close_udp_multicast(&self->_socket._udp._sock, &self->_socket._udp._msock, self->_socket._udp._rep,
+                           self->_socket._udp._lep);
 }
 
 void _z_f_link_free_udp_multicast(_z_link_t *self) {

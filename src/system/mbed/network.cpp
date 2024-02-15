@@ -251,7 +251,8 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
 }
 
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
-                            const _z_sys_net_endpoint_t rep) {
+                            const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
+    _ZP_UNUSED(lep);
     sockrecv->_udp->leave_multicast_group(*rep._iptcp);
     sockrecv->_udp->close();
     delete sockrecv->_udp;

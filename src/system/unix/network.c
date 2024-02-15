@@ -347,14 +347,6 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
                     laddr->ai_canonname = NULL;
                     laddr->ai_next = NULL;
                     lep->_iptcp = laddr;
-
-                    // This is leaking 16 bytes according to valgrind, but it is a know problem on some libc6
-                    // implementations:
-                    //    https://lists.debian.org/debian-glibc/2016/03/msg00241.html
-                    // To avoid a fix to break zenoh-pico, we are let it leak for the moment.
-                    // #if defined(ZENOH_LINUX)
-                    //    zp_free(lsockaddr);
-                    // #endif
                 } else {
                     ret = _Z_ERR_GENERIC;
                 }
@@ -489,7 +481,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
 }
 
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
-                            const _z_sys_net_endpoint_t rep) {
+                            const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
     if (rep._iptcp->ai_family == AF_INET) {
         struct ip_mreq mreq;
         (void)memset(&mreq, 0, sizeof(mreq));
@@ -507,7 +499,11 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         // Do nothing. It must never not enter here.
         // Required to be compliant with MISRA 15.7 rule
     }
-
+#if defined(ZENOH_LINUX)
+    zp_free(lep._iptcp->ai_addr);
+#else
+    _ZP_UNUSED(lep);
+#endif
     close(sockrecv->_fd);
     close(socksend->_fd);
 }
