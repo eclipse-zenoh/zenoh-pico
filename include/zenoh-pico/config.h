@@ -243,7 +243,7 @@
  * Enable interests.
  */
 #ifndef Z_FEATURE_INTEREST
-#define Z_FEATURE_INTEREST 1
+#define Z_FEATURE_INTEREST 0
 #endif
 
 /*------------------ Compile-time configuration properties ------------------*/
