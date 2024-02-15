@@ -743,8 +743,7 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void) {
 
 int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
-    int8_t ret = _Z_RES_OK;
-
+    // Build options
     z_publisher_put_options_t opt = z_publisher_put_options_default();
     if (options != NULL) {
         opt.encoding = options->encoding;
@@ -752,20 +751,6 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
         opt.attachment = options->attachment;
 #endif
     }
-
-    // Check if write filter is active before writing
-    if (_z_write_filter_active(pub._val)) {
-        return _Z_ERR_GENERIC;  // Filter is active
-    }
-
-    ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority
-#if Z_FEATURE_ATTACHMENT == 1
-                   ,
-                   opt.attachment
-#endif
-    );
-
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len
 #if Z_FEATURE_ATTACHMENT == 1
@@ -773,8 +758,18 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
                                    opt.attachment
 #endif
     );
-
-    return ret;
+    // Check if write filter is active before writing
+    if (_z_write_filter_active(pub._val)) {
+        return _Z_RES_OK;
+    }
+    // Write value
+    return _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+                    pub._val->_congestion_control, pub._val->_priority
+#if Z_FEATURE_ATTACHMENT == 1
+                    ,
+                    opt.attachment
+#endif
+    );
 }
 
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
