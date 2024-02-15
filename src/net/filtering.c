@@ -104,7 +104,7 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
     return _Z_RES_OK;
 }
 
-int8_t _z_write_filter_destroy(_z_publisher_t *pub) {
+int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
     _ZP_UNUSED(pub);
     return _Z_RES_OK;
 }
