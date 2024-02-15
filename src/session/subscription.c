@@ -153,7 +153,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 }
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len
+                                    _z_zint_t payload_len, _z_n_qos_t qos
 #if Z_FEATURE_ATTACHMENT == 1
                                     ,
                                     z_attachment_t att
@@ -161,9 +161,9 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
 ) {
     _z_encoding_t encoding = {.prefix = Z_ENCODING_PREFIX_DEFAULT, .suffix = _z_bytes_wrap(NULL, 0)};
     int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
-                                          _z_timestamp_null()
+                                          _z_timestamp_null(), qos
 #if Z_FEATURE_ATTACHMENT == 1
-                                              ,
+                                          ,
                                           att
 #endif
     );
@@ -171,7 +171,8 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
 }
 
 int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp
+                                const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
+                                const _z_n_qos_t qos
 #if Z_FEATURE_ATTACHMENT == 1
                                 ,
                                 z_attachment_t att
@@ -200,6 +201,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
+        s.qos = _z_n_qos_unmake(qos);
 #if Z_FEATURE_ATTACHMENT == 1
         s.attachment = att;
 #endif
@@ -256,11 +258,12 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len) {
+                                    _z_zint_t payload_len, _z_n_qos_t qos) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
     _ZP_UNUSED(payload_len);
+    _ZP_UNUSED(qos);
 }
 
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

@@ -212,6 +212,20 @@ _z_keyexpr_t _z_rname(const char *rname);
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
 
 /**
+ * QoS settings of zenoh message.
+ *
+ * Members:
+ *   _z_priority_t priority: Priority of the message.
+ *   _z_congestion_control_t congestion_control: Congestion control of the message.
+ *   bool express: If true, the message is not batched during transmission, in order to reduce latency
+ */
+typedef struct {
+    z_priority_t priority;
+    z_congestion_control_t congestion_control;
+    bool express;
+} _z_qos_t;
+
+/**
  * A zenoh-net data sample.
  *
  * A sample is the value associated to a given resource at a given point in time.
@@ -227,6 +241,7 @@ typedef struct {
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
+    _z_qos_t qos;
 #if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment;
 #endif
