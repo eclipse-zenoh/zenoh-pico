@@ -331,8 +331,39 @@ int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t 
             // Zenoh pico doesn't support liveliness token for now
         }
     }
-
     return _Z_RES_OK;
 }
 
+#else
+int8_t _z_interest_process_declare(_z_session_t *zn, const _z_declaration_t *decl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(decl);
+    return _Z_RES_OK;
+}
+
+int8_t _z_interest_process_undeclare(_z_session_t *zn, const _z_declaration_t *decl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(decl);
+    return _Z_RES_OK;
+}
+
+int8_t _z_process_final_interest(_z_session_t *zn, uint32_t id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    return _Z_RES_OK;
+}
+
+int8_t _z_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    return _Z_RES_OK;
+}
+
+int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(key);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(flags);
+    return _Z_RES_OK;
+}
 #endif
