@@ -20,6 +20,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/logging.h"
@@ -201,7 +202,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
-        s.qos = _z_n_qos_unmake(qos);
+        s.qos = _z_n_qos_unmake_public(qos);
 #if Z_FEATURE_ATTACHMENT == 1
         s.attachment = att;
 #endif
