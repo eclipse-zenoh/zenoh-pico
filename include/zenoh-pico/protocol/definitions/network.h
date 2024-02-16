@@ -64,7 +64,7 @@ typedef struct {
 
 #define _z_n_qos_make(express, nodrop, priority) \
     (_z_n_qos_t) { ._val = (((express) << 4) | ((nodrop) << 3) | (priority)) }
-inline _z_qos_t _z_n_qos_unmake(_z_n_qos_t n_qos) {
+static inline _z_qos_t _z_n_qos_unmake(_z_n_qos_t n_qos) {
     _z_qos_t qos;
     qos.priority = (z_priority_t)(n_qos._val & 0x07 /* 0b111 */);
     qos.congestion_control = (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
