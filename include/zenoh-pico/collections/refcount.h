@@ -124,6 +124,10 @@
         }                                                                                 \
         return c;                                                                         \
     }                                                                                     \
+    static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {           \
+        dst->in = p->in;                                                                  \
+        _ZP_RC_OP_INCR_CNT                                                                \
+    }                                                                                     \
     static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) { \
         return (left->in == right->in);                                                   \
     }                                                                                     \
