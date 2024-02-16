@@ -215,14 +215,14 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
  * QoS settings of zenoh message.
  *
  * Members:
- *   _z_priority_t priority: Priority of the message.
- *   _z_congestion_control_t congestion_control: Congestion control of the message.
- *   bool express: If true, the message is not batched during transmission, in order to reduce latency.
+ *   z_priority_t priority: Priority of the message.
+ *   z_congestion_control_t congestion_control: Congestion control of the message.
+ *   _Bool express: If true, the message is not batched during transmission, in order to reduce latency.
  */
 typedef struct {
     z_priority_t priority;
     z_congestion_control_t congestion_control;
-    bool express;
+    _Bool express;
 } _z_qos_t;
 
 /**
