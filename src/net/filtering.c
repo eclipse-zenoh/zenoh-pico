@@ -81,7 +81,7 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
     ctx->decl_id = 0;
 
     pub->_filter.ctx = ctx;
-    pub->_filter._interest_id = _z_declare_interest(&pub->_zn.in->val, _z_keyexpr_duplicate(pub->_key),
+    pub->_filter._interest_id = _z_declare_interest(&pub->_zn.in->val, _z_keyexpr_alias(pub->_key),
                                                     _z_write_filter_callback, flags, (void *)ctx);
     if (pub->_filter._interest_id == 0) {
         zp_free(ctx);
