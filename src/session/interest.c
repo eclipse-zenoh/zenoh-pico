@@ -132,7 +132,7 @@ int8_t _z_interest_process_declare(_z_session_t *zn, const _z_declaration_t *dec
     }
     _zp_session_lock_mutex(zn);
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
-    if (key._suffix != NULL) {
+    if (key._suffix == NULL) {
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
