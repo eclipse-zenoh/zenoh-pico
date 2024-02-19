@@ -53,27 +53,27 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
                 } break;
                 case _Z_DECL_INTEREST: {
-                    _z_process_declare_interest(zn, decl._decl._body._decl_interest._keyexpr,
-                                                decl._decl._body._decl_interest._id,
-                                                decl._decl._body._decl_interest.interest_flags);
+                    _z_interest_process_declare_interest(zn, decl._decl._body._decl_interest._keyexpr,
+                                                         decl._decl._body._decl_interest._id,
+                                                         decl._decl._body._decl_interest.interest_flags);
                 } break;
                 case _Z_UNDECL_INTEREST: {
-                    _z_process_undeclare_interest(zn, decl._decl._body._undecl_interest._id);
+                    _z_interest_process_undeclare_interest(zn, decl._decl._body._undecl_interest._id);
                 } break;
                 case _Z_FINAL_INTEREST: {
-                    _z_process_final_interest(zn, decl._decl._body._final_interest._id);
+                    _z_interest_process_final_interest(zn, decl._decl._body._final_interest._id);
                 } break;
                 case _Z_DECL_SUBSCRIBER: {
-                    _z_interest_process_declare(zn, &decl._decl);
+                    _z_interest_process_declares(zn, &decl._decl);
                 } break;
                 case _Z_DECL_QUERYABLE: {
-                    _z_interest_process_declare(zn, &decl._decl);
+                    _z_interest_process_declares(zn, &decl._decl);
                 } break;
                 case _Z_UNDECL_SUBSCRIBER: {
-                    _z_interest_process_undeclare(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl._decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
-                    _z_interest_process_undeclare(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl._decl);
                 } break;
                 case _Z_DECL_TOKEN: {
                     // TODO: add support or explicitly discard
