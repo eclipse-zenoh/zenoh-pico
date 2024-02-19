@@ -308,6 +308,16 @@ static int8_t _z_send_queryable_interest(_z_session_t *zn) {
 }
 #endif
 
+static int8_t _z_interest_send_final_interest(_z_session_t *zn, uint32_t id) {
+    _z_declaration_t decl = _z_make_final_interest(id);
+    _z_network_message_t n_msg = _z_n_msg_make_declare(decl);
+    if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    _z_n_msg_clear(&n_msg);
+    return _Z_RES_OK;
+}
+
 int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
     _ZP_UNUSED(key);
     _ZP_UNUSED(id);
@@ -333,6 +343,8 @@ int8_t _z_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t 
         if ((flags & _Z_INTEREST_FLAG_TOKENS) != 0) {
             // Zenoh pico doesn't support liveliness token for now
         }
+        // Send final declare
+        _Z_RETURN_IF_ERR(_z_interest_send_final_interest(zn, id));
     }
     return _Z_RES_OK;
 }
