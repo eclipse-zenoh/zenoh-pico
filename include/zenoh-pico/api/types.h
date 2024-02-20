@@ -437,7 +437,7 @@ static inline _Bool z_qos_get_express(z_qos_t qos) { return _z_n_qos_get_express
 /**
  * Returns default qos settings.
  */
-static inline z_qos_t z_qos_default() { return _Z_N_QOS_DEFAULT; }
+static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
 
 /**
  * Represents a data sample.
