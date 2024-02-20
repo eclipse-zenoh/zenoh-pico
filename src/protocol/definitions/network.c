@@ -276,10 +276,3 @@ void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
             break;
     }
 }
-_z_qos_t _z_n_qos_unmake_public(_z_n_qos_t n_qos) {
-    _z_qos_t qos = _z_n_qos_unmake(n_qos);
-    if (qos.priority == Z_PRIORITY_REAL_TIME) {
-        qos.priority = Z_PRIORITY_DEFAULT;
-    }
-    return qos;
-}

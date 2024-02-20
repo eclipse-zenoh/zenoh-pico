@@ -58,20 +58,17 @@
 #define _Z_FLAG_N_RESPONSE_N 0x20  // 1 << 5
 #define _Z_FLAG_N_RESPONSE_M 0x40  // 1 << 6
 
-typedef struct {
-    uint8_t _val;
-} _z_n_qos_t;
+typedef _z_qos_t _z_n_qos_t;
 
 #define _z_n_qos_make(express, nodrop, priority) \
     (_z_n_qos_t) { ._val = (((express) << 4) | ((nodrop) << 3) | (priority)) }
-static inline _z_qos_t _z_n_qos_unmake(_z_n_qos_t n_qos) {
-    _z_qos_t qos;
-    qos.priority = (z_priority_t)(n_qos._val & 0x07 /* 0b111 */);
-    qos.congestion_control = (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
-    qos.express = (bool)(n_qos._val & 0x10 /* 0b10000 */);
-    return qos;
+static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
+    return (z_priority_t)(n_qos._val & 0x07 /* 0b111 */);
 }
-_z_qos_t _z_n_qos_unmake_public(_z_n_qos_t n_qos);
+static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t n_qos) {
+    return (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
+}
+static inline _Bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (_Bool)(n_qos._val & 0x10 /* 0b10000 */); }
 #define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
 
 // RESPONSE FINAL message flags:

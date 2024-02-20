@@ -202,7 +202,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         s.encoding = encoding;
         s.kind = kind;
         s.timestamp = timestamp;
-        s.qos = _z_n_qos_unmake_public(qos);
+        s.qos = qos;
 #if Z_FEATURE_ATTACHMENT == 1
         s.attachment = att;
 #endif

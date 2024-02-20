@@ -30,7 +30,8 @@ void data_handler(const z_sample_t *sample, void *ctx) {
         }
     }
     printf("[rx]: Received packet on %s, len: %d, validity: %d, qos {priority: %d, cong_ctrl: %d}\n", z_loan(keystr),
-           (int)sample->payload.len, is_valid, sample->qos.priority, sample->qos.congestion_control);
+           (int)sample->payload.len, is_valid, z_qos_get_priority(sample->qos),
+           z_qos_get_congestion_control(sample->qos));
     z_drop(z_move(keystr));
 }
 

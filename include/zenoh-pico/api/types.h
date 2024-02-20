@@ -415,13 +415,29 @@ typedef struct {
 
 /**
  * QoS settings of zenoh message.
- *
- * Members:
- *   z_priority_t priority: Priority of the message.
- *   z_congestion_control_t congestion_control: Congestion control of the message.
- *   _Bool express: If true, the message is not batched during transmission, in order to reduce latency.
  */
 typedef _z_qos_t z_qos_t;
+/**
+ * Returns message priority.
+ */
+static inline z_priority_t z_qos_get_priority(z_qos_t qos) {
+    z_priority_t ret = _z_n_qos_get_priority(qos);
+    return ret == _Z_PRIORITY_CONTROL ? Z_PRIORITY_DEFAULT : ret;
+}
+/**
+ * Returns message congestion control.
+ */
+static inline z_congestion_control_t z_qos_get_congestion_control(z_qos_t qos) {
+    return _z_n_qos_get_congestion_control(qos);
+}
+/**
+ * Returns message express flag. If set to true, the message is not batched to reduce the latency.
+ */
+static inline _Bool z_qos_get_express(z_qos_t qos) { return _z_n_qos_get_express(qos); }
+/**
+ * Returns default qos settings.
+ */
+static inline z_qos_t z_qos_default() { return _Z_N_QOS_DEFAULT; }
 
 /**
  * Represents a data sample.
