@@ -127,37 +127,6 @@ int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *de
             msg.id = decl->_body._decl_queryable._id;
             decl_key = &decl->_body._decl_queryable._keyexpr;
             break;
-        default:
-            return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
-    }
-    _zp_session_lock_mutex(zn);
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
-    if (key._suffix == NULL) {
-        _zp_session_unlock_mutex(zn);
-        return _Z_ERR_KEYEXPR_UNKNOWN;
-    }
-    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
-    _zp_session_unlock_mutex(zn);
-
-    // Parse session_interest list
-    _z_session_interest_rc_list_t *xs = intrs;
-    while (xs != NULL) {
-        _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if (intr->in->val._callback != NULL) {
-            intr->in->val._callback(&msg, intr->in->val._arg);
-        }
-        xs = _z_session_interest_rc_list_tail(xs);
-    }
-    // Clean up
-    _z_keyexpr_clear(&key);
-    _z_session_interest_rc_list_free(&intrs);
-    return _Z_RES_OK;
-}
-
-int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl) {
-    const _z_keyexpr_t *decl_key = NULL;
-    _z_interest_msg_t msg;
-    switch (decl->_tag) {
         case _Z_UNDECL_SUBSCRIBER:
             msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER;
             msg.id = decl->_body._undecl_subscriber._id;
@@ -173,7 +142,8 @@ int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *
     }
     _zp_session_lock_mutex(zn);
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
-    if (key._suffix != NULL) {
+    if (key._suffix == NULL) {
+        _z_keyexpr_clear(&key);
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }

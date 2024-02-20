@@ -28,7 +28,6 @@ void _z_flush_interest(_z_session_t *zn);
 #endif  // Z_FEATURE_INTEREST == 1
 
 int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
-int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
 int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id);
 int8_t _z_interest_process_undeclare_interest(_z_session_t *zn, uint32_t id);
 int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
