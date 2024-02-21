@@ -27,15 +27,30 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-#define RAWETH_CONFIG_ARGC 1
+#define RAWETH_CONFIG_ARGC 4
 
 #define RAWETH_CONFIG_IFACE_KEY 0x01
 #define RAWETH_CONFIG_IFACE_STR "iface"
 
+#define RAWETH_CONFIG_ETHTYPE_KEY 0x02
+#define RAWETH_CONFIG_ETHTYPE_STR "ethtype"
+
+#define RAWETH_CONFIG_MAPPING_KEY 0x03
+#define RAWETH_CONFIG_MAPPING_STR "mapping"
+
+#define RAWETH_CONFIG_WHITELIST_KEY 0x04
+#define RAWETH_CONFIG_WHITELIST_STR "whitelist"
+
 #define RAWETH_CONFIG_MAPPING_BUILD               \
     _z_str_intmapping_t args[RAWETH_CONFIG_ARGC]; \
     args[0]._key = RAWETH_CONFIG_IFACE_KEY;       \
-    args[0]._str = RAWETH_CONFIG_IFACE_STR;
+    args[0]._str = RAWETH_CONFIG_IFACE_STR;       \
+    args[1]._key = RAWETH_CONFIG_ETHTYPE_KEY;     \
+    args[1]._str = RAWETH_CONFIG_ETHTYPE_STR;     \
+    args[2]._key = RAWETH_CONFIG_MAPPING_KEY;     \
+    args[2]._str = RAWETH_CONFIG_MAPPING_STR;     \
+    args[3]._key = RAWETH_CONFIG_WHITELIST_KEY;   \
+    args[3]._str = RAWETH_CONFIG_WHITELIST_STR;
 
 static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
     const char *iface = _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
@@ -44,6 +59,20 @@ static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
 
 static const char *_z_get_iface_raweth(_z_str_intmap_t *config) {
     return _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
+}
+
+static _Bool _z_valid_ethtype_raweth(_z_str_intmap_t *config) {
+    const char *s_ethtype = _z_str_intmap_get(config, RAWETH_CONFIG_ETHTYPE_KEY);
+    if (s_ethtype == NULL) {
+        return false;
+    }
+    int ethtype = atoi(s_ethtype);
+    return ((ethtype & 0xff) > 0x6);  // Ethtype must be above 0x600 in network order
+}
+
+static int _z_get_ethtype_raweth(_z_str_intmap_t *config) {
+    const char *s_ethtype = _z_str_intmap_get(config, RAWETH_CONFIG_ETHTYPE_KEY);
+    return atoi(s_ethtype);
 }
 
 static _Bool _z_valid_address_raweth(const char *address) {
@@ -102,6 +131,12 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
         self->_socket._raweth._interface = _z_get_iface_raweth(&self->_endpoint._config);
     } else {
         self->_socket._raweth._interface = _ZP_RAWETH_CFG_INTERFACE;
+    }
+    // Init socket ethtype
+    if (_z_valid_ethtype_raweth(&self->_endpoint._config)) {
+        self->_socket._raweth._ethtype = _z_get_ethtype_raweth(&self->_endpoint._config);
+    } else {
+        self->_socket._raweth._ethtype = _ZP_RAWETH_CFG_ETHTYPE;
     }
     // Open raweth link
     return _z_open_raweth(&self->_socket._raweth._sock, self->_socket._raweth._interface);

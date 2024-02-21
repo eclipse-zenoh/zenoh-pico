@@ -52,7 +52,7 @@ typedef struct {
     const char *_interface;
     _z_sys_net_socket_t _sock;
     uint16_t _vlan;
-    uint16_t ethtype;
+    uint16_t _ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     uint8_t _smac[_ZP_MAC_ADDR_LENGTH];
     _Bool _has_vlan;
