@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
@@ -30,6 +31,18 @@
 
 // Max frame size
 #define _ZP_MAX_ETH_FRAME_SIZE 1514
+
+// Endpoing config types
+typedef struct {
+    _z_keyexpr_t _keyexpr;
+    uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
+    uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
+    _Bool _has_vlan;
+} _zp_raweth_mapping_entry_t;
+
+typedef struct {
+    uint8_t _mac[_ZP_MAC_ADDR_LENGTH];
+} _zp_raweth_whitelist_entry_t;
 
 // Ethernet header structure type
 typedef struct {
@@ -51,6 +64,10 @@ typedef struct {
 typedef struct {
     const char *_interface;
     _z_sys_net_socket_t _sock;
+    const _zp_raweth_mapping_entry_t *_mapping;
+    size_t _mapping_size;
+    const _zp_raweth_whitelist_entry_t *_whitelist;
+    size_t _whitelist_size;
     uint16_t _vlan;
     uint16_t _ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];

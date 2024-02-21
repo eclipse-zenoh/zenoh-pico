@@ -26,7 +26,7 @@ const char *_ZP_RAWETH_CFG_INTERFACE = "lo";
 const uint8_t _ZP_RAWETH_CFG_SMAC[_ZP_MAC_ADDR_LENGTH] = {0x30, 0x03, 0xc8, 0x37, 0x25, 0xa1};
 
 // Should be generated
-const _zp_raweth_cfg_entry _ZP_RAWETH_CFG_ARRAY[] = {
+const _zp_raweth_mapping_entry_t _ZP_RAWETH_CFG_MAPPING[] = {
     {{0, {0}, ""}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false},                            // Default mac addr
     {{0, {0}, "some/key/expr"}, 0x8c00, {0x00, 0x11, 0x22, 0x33, 0x44, 0x55}, true},                // entry1
     {{0, {0}, "demo/example/zenoh-pico-pub"}, 0xab00, {0x41, 0x55, 0xa8, 0x00, 0x9d, 0xc0}, true},  // entry2
@@ -34,14 +34,14 @@ const _zp_raweth_cfg_entry _ZP_RAWETH_CFG_ARRAY[] = {
 };
 
 // Should be generated
-const _zp_raweth_cfg_whitelist_val _ZP_RAWETH_CFG_WHITELIST[] = {
+const _zp_raweth_whitelist_entry_t _ZP_RAWETH_CFG_WHITELIST[] = {
     {{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}},
     {{0x00, 0x11, 0x22, 0x33, 0x44, 0x55}},
     {{0x30, 0x03, 0xc8, 0x37, 0x25, 0xa1}},
 };
 
 // Don't modify
-const size_t _ZP_RAWETH_CFG_SIZE = _ZP_ARRAY_SIZE(_ZP_RAWETH_CFG_ARRAY);
+const size_t _ZP_RAWETH_CFG_MAPPING_SIZE = _ZP_ARRAY_SIZE(_ZP_RAWETH_CFG_MAPPING);
 const size_t _ZP_RAWETH_CFG_WHITELIST_SIZE = _ZP_ARRAY_SIZE(_ZP_RAWETH_CFG_WHITELIST);
 
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
