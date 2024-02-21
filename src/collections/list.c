@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <stddef.h>
-
 #include "zenoh-pico/collections/list.h"
+
+#include <stddef.h>
 
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x) {

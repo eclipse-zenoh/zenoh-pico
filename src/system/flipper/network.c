@@ -42,9 +42,7 @@ static void _z_serial_received_byte_callback(FuriHalSerialHandle* handle, FuriHa
 }
 
 int8_t _z_open_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
-    int8_t ret = _Z_ERR_GENERIC;
-
-    return ret;
+    return _Z_ERR_GENERIC;
 }
 
 int8_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
@@ -177,10 +175,9 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) 
 
 size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) {
     size_t n = len;
-    size_t rb = 0;
 
     do {
-        rb = _z_read_serial(sock, ptr, n);
+        size_t rb = _z_read_serial(sock, ptr, n);
         if (rb == SIZE_MAX) {
             return rb;
         }
