@@ -132,16 +132,13 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
     zp_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, s->_key);
-    if (subs == NULL) {  // A subscription for this name does not yet exists
-        ret = (_z_subscription_rc_t *)zp_malloc(sizeof(_z_subscription_rc_t));
-        if (ret != NULL) {
-            *ret = _z_subscription_rc_new_from_val(*s);
-            if (is_local == _Z_RESOURCE_IS_LOCAL) {
-                zn->_local_subscriptions = _z_subscription_rc_list_push(zn->_local_subscriptions, ret);
-            } else {
-                zn->_remote_subscriptions = _z_subscription_rc_list_push(zn->_remote_subscriptions, ret);
-            }
+    ret = (_z_subscription_rc_t *)zp_malloc(sizeof(_z_subscription_rc_t));
+    if (ret != NULL) {
+        *ret = _z_subscription_rc_new_from_val(*s);
+        if (is_local == _Z_RESOURCE_IS_LOCAL) {
+            zn->_local_subscriptions = _z_subscription_rc_list_push(zn->_local_subscriptions, ret);
+        } else {
+            zn->_remote_subscriptions = _z_subscription_rc_list_push(zn->_remote_subscriptions, ret);
         }
     }
 
