@@ -34,8 +34,6 @@ static inline _z_keyexpr_t _z_keyexpr_null(void) {
     _z_keyexpr_t keyexpr = {0, {0}, NULL};
     return keyexpr;
 }
-_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-void _z_timestamp_clear(_z_timestamp_t *tstamp);
 void _z_keyexpr_clear(_z_keyexpr_t *rk);
 void _z_keyexpr_free(_z_keyexpr_t **rk);
 

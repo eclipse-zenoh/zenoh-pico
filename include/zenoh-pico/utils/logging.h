@@ -47,7 +47,7 @@ static inline void __z_print_timestamp(void) {
         if (ZENOH_DEBUG >= _Z_LOG_LVL_DEBUG) { \
             _Z_LOG_PREFIX(DEBUG);              \
             printf(__VA_ARGS__);               \
-            printf("\n");                      \
+            printf("\r\n");                    \
         }                                      \
     } while (false)
 
@@ -56,7 +56,7 @@ static inline void __z_print_timestamp(void) {
         if (ZENOH_DEBUG >= _Z_LOG_LVL_INFO) { \
             _Z_LOG_PREFIX(INFO);              \
             printf(__VA_ARGS__);              \
-            printf("\n");                     \
+            printf("\r\n");                   \
         }                                     \
     } while (false)
 
@@ -65,7 +65,7 @@ static inline void __z_print_timestamp(void) {
         if (ZENOH_DEBUG >= _Z_LOG_LVL_ERROR) { \
             _Z_LOG_PREFIX(ERROR);              \
             printf(__VA_ARGS__);               \
-            printf("\n");                      \
+            printf("\r\n");                    \
         }                                      \
     } while (false)
 #endif  // ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)

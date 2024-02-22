@@ -32,6 +32,20 @@ _z_list_t *_z_list_push(_z_list_t *xs, void *x) {
     return lst;
 }
 
+_z_list_t *_z_list_push_back(_z_list_t *xs, void *x) {
+    _z_list_t *l = (_z_list_t *)xs;
+    while (l != NULL && l->_tail != NULL) {
+        l = l->_tail;
+    }
+    if (l == NULL) {
+        l = _z_list_of(x);
+        return l;
+    } else {
+        l->_tail = _z_list_of(x);
+        return xs;
+    }
+}
+
 void *_z_list_head(const _z_list_t *xs) { return xs->_val; }
 
 _z_list_t *_z_list_tail(const _z_list_t *xs) { return xs->_tail; }
