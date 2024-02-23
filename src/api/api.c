@@ -648,9 +648,10 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len
+    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len,
+                                   _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority)
 #if Z_FEATURE_ATTACHMENT == 1
-                                   ,
+                                       ,
                                    opt.attachment
 #endif
     );
@@ -747,7 +748,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len
+    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len, _Z_N_QOS_DEFAULT
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
