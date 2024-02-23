@@ -29,7 +29,8 @@
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
-    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr);
+    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr,
+                                  &link->_socket._raweth._whitelist);
     // Check validity
     if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;

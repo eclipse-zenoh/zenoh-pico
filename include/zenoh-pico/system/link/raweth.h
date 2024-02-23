@@ -40,9 +40,15 @@ typedef struct {
     _Bool _has_vlan;
 } _zp_raweth_mapping_entry_t;
 
+_Z_ELEM_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+_Z_ARRAY_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t)
+
 typedef struct {
     uint8_t _mac[_ZP_MAC_ADDR_LENGTH];
 } _zp_raweth_whitelist_entry_t;
+
+_Z_ELEM_DEFINE(_zp_raweth_whitelist, _zp_raweth_whitelist_entry_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+_Z_ARRAY_DEFINE(_zp_raweth_whitelist, _zp_raweth_whitelist_entry_t)
 
 // Ethernet header structure type
 typedef struct {
@@ -64,10 +70,8 @@ typedef struct {
 typedef struct {
     const char *_interface;
     _z_sys_net_socket_t _sock;
-    const _zp_raweth_mapping_entry_t *_mapping;
-    size_t _mapping_size;
-    const _zp_raweth_whitelist_entry_t *_whitelist;
-    size_t _whitelist_size;
+    _zp_raweth_mapping_array_t _mapping;
+    _zp_raweth_whitelist_array_t _whitelist;
     uint16_t _vlan;
     uint16_t _ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
@@ -78,7 +82,8 @@ typedef struct {
 int8_t _z_get_smac_raweth(_z_raweth_socket_t *resock);
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len);
-size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr);
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr,
+                         const _zp_raweth_whitelist_array_t *whitelist);
 int8_t _z_close_raweth(_z_sys_net_socket_t *sock);
 size_t _z_raweth_ntohs(size_t val);
 size_t _z_raweth_htons(size_t val);
