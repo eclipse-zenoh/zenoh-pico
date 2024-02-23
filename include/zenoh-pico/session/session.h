@@ -51,7 +51,6 @@ void _z_reply_data_clear(_z_reply_data_t *rd);
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
-_Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
 
 /**
  * An reply to a :c:func:`z_query`.
