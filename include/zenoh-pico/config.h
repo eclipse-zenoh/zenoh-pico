@@ -21,6 +21,7 @@
  * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
+// tags{c.z_config_mode_key}
 #define Z_CONFIG_MODE_KEY 0x40
 #define Z_CONFIG_MODE_CLIENT "client"
 #define Z_CONFIG_MODE_PEER "peer"
@@ -32,6 +33,7 @@
  * Default value : None.
  * Multiple values are not accepted in zenoh-pico.
  */
+// tags{c.z_config_connect_key}
 #define Z_CONFIG_CONNECT_KEY 0x41
 
 /**
@@ -40,6 +42,7 @@
  * Default value : None.
  * Multiple values accepted.
  */
+// tags{c.z_config_listen_key}
 #define Z_CONFIG_LISTEN_KEY 0x42
 
 /**
@@ -47,6 +50,7 @@
  * Accepted values : `<string>`.
  * Default value : None.
  */
+// tags{c.z_config_user_key}
 #define Z_CONFIG_USER_KEY 0x43
 
 /**
@@ -54,6 +58,7 @@
  * Accepted values : `<string>`.
  * Default value : None.
  */
+// tags{c.z_config_password_key}
 #define Z_CONFIG_PASSWORD_KEY 0x44
 
 /**
@@ -61,6 +66,7 @@
  * Accepted values : `false`, `true`.
  * Default value : `true`.
  */
+// tags{c.z_config_multicast_scouting_key}
 #define Z_CONFIG_MULTICAST_SCOUTING_KEY 0x45
 #define Z_CONFIG_MULTICAST_SCOUTING_DEFAULT "true"
 
@@ -69,6 +75,7 @@
  * Accepted values : `<ip address>:<port>`.
  * Default value : `"224.0.0.224:7446"`.
  */
+// tags{c.z_config_multicast_locator_key}
 #define Z_CONFIG_MULTICAST_LOCATOR_KEY 0x46
 #define Z_CONFIG_MULTICAST_LOCATOR_DEFAULT "udp/224.0.0.224:7446"
 
@@ -77,6 +84,7 @@
  * Accepted values : `<int in milliseconds>`.
  * Default value : `"3000"`.
  */
+// tags{c.z_config_scouting_timeout_key}
 #define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x47
 #define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3000"
 
@@ -85,6 +93,7 @@
  * Accepted values : [0-7]. Bitwise value are defined in :c:enum:`z_whatami_t`.
  * Default value : `3`.
  */
+// tags{c.z_config_scouting_what_key}
 #define Z_CONFIG_SCOUTING_WHAT_KEY 0x48
 #define Z_CONFIG_SCOUTING_WHAT_DEFAULT "3"
 
@@ -92,6 +101,7 @@
  * A configurable and static Zenoh ID to be used on Zenoh Sessions.
  * Accepted values : `<UUDI 128-bit>`.
  */
+// tags{c.z_config_session_zid_key}
 #define Z_CONFIG_SESSION_ZID_KEY 0x49
 
 /**
@@ -99,6 +109,7 @@
  * Accepted values : `false`, `true`.
  * Default value : `false`.
  */
+// tags{c.z_config_add_timestamp_key}
 #define Z_CONFIG_ADD_TIMESTAMP_KEY 0x4A
 #define Z_CONFIG_ADD_TIMESTAMP_DEFAULT "false"
 
