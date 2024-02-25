@@ -684,6 +684,7 @@ z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper
  * Returns:
  *   Returns a new hello closure.
  */
+// tags{c.z_closure_hello}
 z_owned_closure_hello_t z_closure_hello(z_owned_hello_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
@@ -711,6 +712,7 @@ z_owned_closure_hello_t z_closure_hello(z_owned_hello_handler_t call, _z_dropper
  * Returns:
  *   Returns a new zid closure.
  */
+// tags{c.z_closure_zid}
 z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
@@ -758,6 +760,7 @@ _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
  * Returns:
  *   Returns ``0`` if the scouting is successful triggered, or a ``negative value`` otherwise.
  */
+// tags{c.z_scout}
 int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
@@ -783,6 +786,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
  *   A :c:type:`z_owned_session_t` with either a valid open session or a failing session.
  *   Should the session opening fail, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_open}
 z_owned_session_t z_open(z_owned_config_t *config);
 
 /**
@@ -794,6 +798,7 @@ z_owned_session_t z_open(z_owned_config_t *config);
  * Returns:
  *   Returns ``0`` if the session is successful closed, or a ``negative value`` otherwise.
  */
+// tags{c.z_close}
 int8_t z_close(z_owned_session_t *zs);
 
 /**
@@ -809,6 +814,7 @@ int8_t z_close(z_owned_session_t *zs);
  * Returns:
  *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
+// tags{c.z_info_peers_zid}
 int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback);
 
 /**
@@ -824,6 +830,7 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback);
  * Returns:
  *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
  */
+// tags{c.z_info_routers_zid}
 int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback);
 
 /**
@@ -838,6 +845,7 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
  * Returns:
  *   Returns the local Zenoh ID of the given :c:type:`z_session_t`.
  */
+// tags{c.z_info_zid}
 z_id_t z_info_zid(const z_session_t zs);
 
 #if Z_FEATURE_PUBLICATION == 1
@@ -847,6 +855,7 @@ z_id_t z_info_zid(const z_session_t zs);
  * Returns:
  *   Returns the constructed :c:type:`z_put_options_t`.
  */
+// tags{c.z_put_options_default}
 z_put_options_t z_put_options_default(void);
 
 /**
@@ -855,6 +864,7 @@ z_put_options_t z_put_options_default(void);
  * Returns:
  *   Returns the constructed :c:type:`z_delete_options_t`.
  */
+// tags{c.z_delete_options_default}
 z_delete_options_t z_delete_options_default(void);
 
 /**
@@ -870,6 +880,7 @@ z_delete_options_t z_delete_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_put}
 int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
              const z_put_options_t *options);
 
@@ -884,6 +895,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
  * Returns:
  *   Returns ``0`` if the delete operation is successful, or a ``negative value`` otherwise.
  */
+// tagz{c.z_delete}
 int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *options);
 
 /**
@@ -892,6 +904,7 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
  * Returns:
  *   Returns the constructed :c:type:`z_publisher_options_t`.
  */
+// tags{c.z_publisher_options_default}
 z_publisher_options_t z_publisher_options_default(void);
 
 /**
@@ -922,6 +935,7 @@ z_publisher_options_t z_publisher_options_default(void);
  *   A :c:type:`z_owned_publisher_t` with either a valid publisher or a failing publisher.
  *   Should the publisher be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_declare_publisher}
 z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options);
 
 /**
@@ -933,8 +947,10 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
  * Returns:
  *   Returns ``0`` if the undeclare publisher operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_undeclare_publisher}
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub);
 
+// tags{c.z_publisher_keyexpr}
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher);
 
 /**
@@ -943,6 +959,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher);
  * Returns:
  *   Returns the constructed :c:type:`z_publisher_put_options_t`.
  */
+// tags{c.z_publisher_put_options_default}
 z_publisher_put_options_t z_publisher_put_options_default(void);
 
 /**
@@ -951,6 +968,7 @@ z_publisher_put_options_t z_publisher_put_options_default(void);
  * Returns:
  *   Returns the constructed :c:type:`z_publisher_delete_options_t`.
  */
+// tags{c.z_publisher_delete_options_default}
 z_publisher_delete_options_t z_publisher_delete_options_default(void);
 
 /**
@@ -963,6 +981,7 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_publisher_put}
 int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options);
 
@@ -976,6 +995,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
  * Returns:
  *   Returns ``0`` if the delete operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_publisher_delete}
 int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options);
 #endif
 
@@ -986,6 +1006,7 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
  * Returns:
  *   Returns the constructed :c:type:`z_get_options_t`.
  */
+// tags{c.z_get_options_default}
 z_get_options_t z_get_options_default(void);
 
 /**
@@ -1001,6 +1022,7 @@ z_get_options_t z_get_options_default(void);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_get}
 int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
              const z_get_options_t *options);
 /**
@@ -1016,6 +1038,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
  *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or
  * ``false`` otherwise.
  */
+// tags{c.z_reply_is_ok}
 _Bool z_reply_is_ok(const z_owned_reply_t *reply);
 
 /**
@@ -1029,6 +1052,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_sample_t` wrapped in the query reply.
  */
+// tags{c.z_reply_ok}
 z_sample_t z_reply_ok(const z_owned_reply_t *reply);
 
 /**
@@ -1042,6 +1066,7 @@ z_sample_t z_reply_ok(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_value_t` wrapped in the query reply.
  */
+// tags{c.z_reply_err}
 z_value_t z_reply_err(const z_owned_reply_t *reply);
 #endif
 
@@ -1052,6 +1077,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the constructed :c:type:`z_queryable_options_t`.
  */
+// tags{c.z_queryable_options_default}
 z_queryable_options_t z_queryable_options_default(void);
 
 /**
@@ -1083,6 +1109,7 @@ z_queryable_options_t z_queryable_options_default(void);
  *   A :c:type:`z_owned_queryable_t` with either a valid queryable or a failing queryable.
  *   Should the queryable be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_declare_queryable}
 z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
                                         const z_queryable_options_t *options);
 
@@ -1095,6 +1122,7 @@ z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_o
  * Returns:
  *   Returns ``0`` if the undeclare queryable operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_undeclare_queryable}
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
 /**
@@ -1103,6 +1131,7 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
  * Returns:
  *   Returns the constructed :c:type:`z_query_reply_options_t`.
  */
+// tags{c.z_query_reply_options_default}
 z_query_reply_options_t z_query_reply_options_default(void);
 
 /**
@@ -1124,6 +1153,7 @@ z_query_reply_options_t z_query_reply_options_default(void);
  * Returns:
  *   Returns ``0`` if the send query reply operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_query_reply}
 int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
                      const z_query_reply_options_t *options);
 #endif
@@ -1131,6 +1161,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
 /**
  * Creates keyexpr owning string passed to it
  */
+// tags{c.z_keyexpr_new}
 z_owned_keyexpr_t z_keyexpr_new(const char *name);
 
 /**
@@ -1160,6 +1191,7 @@ z_owned_keyexpr_t z_keyexpr_new(const char *name);
  *   A :c:type:`z_owned_keyexpr_t` with either a valid or invalid keyexpr.
  *   Should the keyexpr be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_declare_keyexpr}
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr);
 
 /**
@@ -1172,6 +1204,7 @@ z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``0`` if the undeclare keyexpr operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_undeclare_keyexpr}
 int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -1181,6 +1214,7 @@ int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr);
  * Returns:
  *   Returns the constructed :c:type:`z_subscriber_options_t`.
  */
+// tags{c.z_subscriber_options_default}
 z_subscriber_options_t z_subscriber_options_default(void);
 
 /**
@@ -1212,6 +1246,7 @@ z_subscriber_options_t z_subscriber_options_default(void);
  *   A :c:type:`z_owned_subscriber_t` with either a valid subscriber or a failing subscriber.
  *   Should the subscriber be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_declare_subscriber}
 z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,
                                           const z_subscriber_options_t *options);
 
@@ -1224,12 +1259,14 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
  * Returns:
  *   Returns ``0`` if the undeclare (push) subscriber operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_undeclare_subscriber}
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
 /**
  * @brief
  *
  */
+// tags{c.z_subscriber_keyexpr}
 z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub);
 
 /**
@@ -1238,6 +1275,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub);
  * Returns:
  *   Returns the constructed :c:type:`z_pull_subscriber_options_t`.
  */
+// tags{c.z_pull_subscriber_options_default}
 z_pull_subscriber_options_t z_pull_subscriber_options_default(void);
 
 /**
@@ -1270,6 +1308,7 @@ z_pull_subscriber_options_t z_pull_subscriber_options_default(void);
  *   A :c:type:`z_owned_pull_subscriber_t` with either a valid subscriber or a failing subscriber.
  *   Should the pull subscriber be invalid, ``z_check(val)`` ing the returned value will return ``false``.
  */
+// tags{c.z_declare_pull_subscriber}
 z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t keyexpr,
                                                     z_owned_closure_sample_t *callback,
                                                     const z_pull_subscriber_options_t *options);
@@ -1283,6 +1322,7 @@ z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t 
  * Returns:
  *   Returns ``0`` if the undeclare pull subscriber operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_undeclare_pull_subscriber}
 int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
 
 /**
@@ -1295,6 +1335,7 @@ int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub);
  * Returns:
  *   Returns ``0`` if the pull operation is successful, or a ``negative value`` otherwise.
  */
+// tags{c.z_subscriber_pull}
 int8_t z_subscriber_pull(const z_pull_subscriber_t sub);
 #endif
 
@@ -1307,6 +1348,7 @@ int8_t z_subscriber_pull(const z_pull_subscriber_t sub);
  * Returns:
  *   Returns ``true`` if the value is valid, or ``false`` otherwise.
  */
+// tags{c.z_value_is_initialized}
 _Bool z_value_is_initialized(z_value_t *value);
 
 /************* Multi Thread Tasks helpers **************/
@@ -1316,6 +1358,7 @@ _Bool z_value_is_initialized(z_value_t *value);
  * Returns:
  *   Returns the constructed :c:type:`zp_task_read_options_t`.
  */
+// tags{c.zp_task_read_options_default}
 zp_task_read_options_t zp_task_read_options_default(void);
 
 /**
@@ -1331,6 +1374,7 @@ zp_task_read_options_t zp_task_read_options_default(void);
  * Returns:
  *   Returns ``0`` if the read task started successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_start_read_task}
 int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options);
 
 /**
@@ -1344,6 +1388,7 @@ int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options)
  * Returns:
  *   Returns ``0`` if the read task stopped successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_stop_read_task}
 int8_t zp_stop_read_task(z_session_t zs);
 
 /**
@@ -1352,6 +1397,7 @@ int8_t zp_stop_read_task(z_session_t zs);
  * Returns:
  *   Returns the constructed :c:type:`zp_task_lease_options_t`.
  */
+// tags{c.zp_task_lease_options_default}
 zp_task_lease_options_t zp_task_lease_options_default(void);
 
 /**
@@ -1369,6 +1415,7 @@ zp_task_lease_options_t zp_task_lease_options_default(void);
  * Returns:
  *   Returns ``0`` if the lease task started successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_start_lease_task}
 int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options);
 
 /**
@@ -1382,6 +1429,7 @@ int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *option
  * Returns:
  *   Returns ``0`` if the lease task stopped successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_stop_lease_task}
 int8_t zp_stop_lease_task(z_session_t zs);
 
 /************* Single Thread helpers **************/
@@ -1391,6 +1439,7 @@ int8_t zp_stop_lease_task(z_session_t zs);
  * Returns:
  *   Returns the constructed :c:type:`zp_read_options_t`.
  */
+// tags{c.zp_read_options_default}
 zp_read_options_t zp_read_options_default(void);
 
 /**
@@ -1404,6 +1453,7 @@ zp_read_options_t zp_read_options_default(void);
  * Returns:
  *   Returns ``0`` if the reading procedure was executed successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_read}
 int8_t zp_read(z_session_t zs, const zp_read_options_t *options);
 
 /**
@@ -1412,6 +1462,7 @@ int8_t zp_read(z_session_t zs, const zp_read_options_t *options);
  * Returns:
  *   Returns the constructed :c:type:`zp_send_keep_alive_options_t`.
  */
+// tags{c.zp_send_keep_alive_options_default}
 zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void);
 
 /**
@@ -1427,6 +1478,7 @@ zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void);
  * Returns:
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_send_keep_alive}
 int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *options);
 
 /**
@@ -1435,6 +1487,7 @@ int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *op
  * Returns:
  *   Returns the constructed :c:type:`zp_send_join_options_t`.
  */
+// tags{c.zp_send_join_options_default}
 zp_send_join_options_t zp_send_join_options_default(void);
 
 /**
@@ -1450,6 +1503,7 @@ zp_send_join_options_t zp_send_join_options_default(void);
  * Returns:
  *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
  */
+// tags{c.zp_send_join}
 int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options);
 
 #ifdef __cplusplus
