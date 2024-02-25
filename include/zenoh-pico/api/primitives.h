@@ -44,6 +44,7 @@ extern "C" {
  * Returns:
  *   The :c:type:`z_string_t` corresponding to the given string.
  */
+// tags{c.z_string_make}
 z_string_t z_string_make(const char *value);
 
 /**
@@ -57,6 +58,7 @@ z_string_t z_string_make(const char *value);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
+// tags{c.z_keyexpr}
 z_keyexpr_t z_keyexpr(const char *name);
 
 /**
@@ -70,6 +72,7 @@ z_keyexpr_t z_keyexpr(const char *name);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
+// tags{c.z_keyexpr_unchecked}
 z_keyexpr_t z_keyexpr_unchecked(const char *name);
 
 /**
@@ -85,6 +88,7 @@ z_keyexpr_t z_keyexpr_unchecked(const char *name);
  * Returns:
  *   The :c:type:`z_owned_str_t` containing key expression string representation if it's possible
  */
+// tags{c.z_keyexpr_to_string}
 z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
 
 /**
@@ -96,6 +100,7 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr);
  * Returns:
  *   The :c:type:`z_bytes_t` pointing to key expression string representation if it's possible
  */
+// tags{c.z_keyexpr_as_bytes}
 z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
 
 /**
@@ -110,6 +115,7 @@ z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr was declared or ``false`` otherwise.
  */
+// tags{c.zp_keyexpr_was_declared}
 _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr);
 
 /**
@@ -123,6 +129,7 @@ _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr);
  * Returns:
  *   The string representation of a keyexpr for a given session.
  */
+// tags{c.zp_keyexpr_resolve}
 z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
 
 /**
@@ -134,6 +141,7 @@ z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr);
  * Returns:
  *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
  */
+// tags{c.z_keyexpr_is_initialized}
 _Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr);
 
 /**
@@ -147,6 +155,7 @@ _Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr);
  *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
+// tags{c.z_keyexpr_is_canon}
 int8_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
@@ -160,6 +169,7 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len);
  *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
+// tags{c.zp_keyexpr_is_canon_null_terminated}
 int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
 
 /**
@@ -174,6 +184,7 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
  *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
+// tags{c.z_keyexpr_canonize}
 int8_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
@@ -188,6 +199,7 @@ int8_t z_keyexpr_canonize(char *start, size_t *len);
  *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
+// tags{c.zp_keyexpr_canonize_null_terminated}
 int8_t zp_keyexpr_canonize_null_terminated(char *start);
 
 /**
@@ -201,6 +213,7 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start);
  *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
  * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
+// tags{c.z_keyexpr_includes}
 int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
@@ -216,6 +229,7 @@ int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r);
  *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
  * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
+// tags{c.zp_keyexpr_includes_null_terminated}
 int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
@@ -229,6 +243,7 @@ int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
  * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
+// tags{c.z_keyexpr_intersects}
 int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
@@ -244,6 +259,7 @@ int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r);
  *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
  * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
  */
+// tags{c.zp_keyexpr_intersect_null_terminated}
 int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
@@ -257,6 +273,7 @@ int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
  * errors.
  */
+// tags{c.z_keyexpr_equals}
 int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
 
 /**
@@ -272,6 +289,7 @@ int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r);
  *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
  * errors.
  */
+// tags{c.zp_keyexpr_equals_null_terminated}
 int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 /**
@@ -294,6 +312,7 @@ int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r);
  * Returns:
  *   Returns a new, zenoh-allocated, empty configuration.
  */
+// tags{c.z_config_new}
 z_owned_config_t z_config_new(void);
 
 /**
@@ -316,6 +335,7 @@ z_owned_config_t z_config_new(void);
  * Returns:
  *   Returns a new, zenoh-allocated, default configuration.
  */
+// tags{c.z_config_default}
 z_owned_config_t z_config_default(void);
 
 /**
@@ -328,6 +348,7 @@ z_owned_config_t z_config_default(void);
  * Returns:
  *   Returns the property with the given integer key from the configuration.
  */
+// tags{c.zp_config_get}
 const char *zp_config_get(z_config_t config, uint8_t key);
 
 /**
@@ -341,6 +362,7 @@ const char *zp_config_get(z_config_t config, uint8_t key);
  * Returns:
  *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
  */
+// tags{c.zp_config_insert}
 int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value);
 
 /**
@@ -364,6 +386,7 @@ int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value);
  * Returns:
  *   Returns a new, zenoh-allocated, default scouting configuration.
  */
+// tags{c.z_scouting_config_default}
 z_owned_scouting_config_t z_scouting_config_default(void);
 
 /**
@@ -390,6 +413,7 @@ z_owned_scouting_config_t z_scouting_config_default(void);
  * Returns:
  *   Returns a new, zenoh-allocated, default scouting configuration.
  */
+// tags{c.z_scouting_config_from}
 z_owned_scouting_config_t z_scouting_config_from(z_config_t config);
 
 /**
@@ -402,6 +426,7 @@ z_owned_scouting_config_t z_scouting_config_from(z_config_t config);
  * Returns:
  *   Returns the property with the given integer key from the configuration.
  */
+// tags{c.zp_scouting_config_get}
 const char *zp_scouting_config_get(z_scouting_config_t config, uint8_t key);
 
 /**
@@ -415,6 +440,7 @@ const char *zp_scouting_config_get(z_scouting_config_t config, uint8_t key);
  * Returns:
  *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
  */
+// tags{c.zp_scouting_config_insert}
 int8_t zp_scouting_config_insert(z_scouting_config_t config, uint8_t key, z_string_t value);
 
 /**
@@ -427,6 +453,7 @@ int8_t zp_scouting_config_insert(z_scouting_config_t config, uint8_t key, z_stri
  * Returns:
  *   Returns the constructed :c:type:`z_encoding_t`.
  */
+// tags{c.z_encoding}
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 
 /**
@@ -435,6 +462,7 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
  * Returns:
  *   Returns the constructed :c:type:`z_encoding_t`.
  */
+// tags{c.z_encoding_default}
 z_encoding_t z_encoding_default(void);
 
 /**
@@ -442,6 +470,7 @@ z_encoding_t z_encoding_default(void);
  * Checks validity of the timestamp
  *
  */
+// tags{c.z_timestamp_check}
 _Bool z_timestamp_check(z_timestamp_t ts);
 
 /**
@@ -450,6 +479,7 @@ _Bool z_timestamp_check(z_timestamp_t ts);
  * Returns:
  *   Returns the constructed :c:type:`z_query_target_t`.
  */
+// tags{c.z_query_target_default}
 z_query_target_t z_query_target_default(void);
 
 /**
@@ -462,6 +492,7 @@ z_query_target_t z_query_target_default(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
+// tags{c.z_query_consolidation_auto}
 z_query_consolidation_t z_query_consolidation_auto(void);
 
 /**
@@ -470,6 +501,7 @@ z_query_consolidation_t z_query_consolidation_auto(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
+// tags{c.z_query_consolidation_default}
 z_query_consolidation_t z_query_consolidation_default(void);
 
 /**
@@ -480,6 +512,7 @@ z_query_consolidation_t z_query_consolidation_default(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
+// tags{c.z_query_consolidation_latest}
 z_query_consolidation_t z_query_consolidation_latest(void);
 
 /**
@@ -491,6 +524,7 @@ z_query_consolidation_t z_query_consolidation_latest(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
+// tags{c.z_query_consolidation_monotonic}
 z_query_consolidation_t z_query_consolidation_monotonic(void);
 
 /**
@@ -501,6 +535,7 @@ z_query_consolidation_t z_query_consolidation_monotonic(void);
  * Returns:
  *   Returns the constructed :c:type:`z_query_consolidation_t`.
  */
+// tags{c.z_query_consolidation_none}
 z_query_consolidation_t z_query_consolidation_none(void);
 
 /**
@@ -512,6 +547,7 @@ z_query_consolidation_t z_query_consolidation_none(void);
  * Returns:
  *   Returns the value selector wrapped as a :c:type:`z_bytes_t`, since value selector is a user-defined representation.
  */
+// tags{c.z_query_parameters}
 z_bytes_t z_query_parameters(const z_query_t *query);
 
 /**
@@ -524,6 +560,7 @@ z_bytes_t z_query_parameters(const z_query_t *query);
  * Returns:
  *   Returns the payload value wrapped as a :c:type:`z_value_t`, since payload value is a user-defined representation.
  */
+// tags{c.z_query_value}
 z_value_t z_query_value(const z_query_t *query);
 
 /**
@@ -535,6 +572,7 @@ z_value_t z_query_value(const z_query_t *query);
  * Returns:
  *   Returns the :c:type:`z_keyexpr_t` associated to the query.
  */
+// tags{c.z_query_keyexpr}
 z_keyexpr_t z_query_keyexpr(const z_query_t *query);
 
 /**
@@ -562,6 +600,7 @@ z_keyexpr_t z_query_keyexpr(const z_query_t *query);
  * Returns:
  *   Returns a new sample closure.
  */
+// tags{c.z_closure_sample}
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
@@ -589,6 +628,7 @@ z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_han
  * Returns:
  *   Returns a new query closure.
  */
+// tags{c.z_closure_query}
 z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
@@ -616,6 +656,7 @@ z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_
  * Returns:
  *   Returns a new reply closure.
  */
+// tags{c.z_closure_reply}
 z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper_handler_t drop, void *context);
 
 /**
