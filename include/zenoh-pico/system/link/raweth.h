@@ -40,7 +40,10 @@ typedef struct {
     _Bool _has_vlan;
 } _zp_raweth_mapping_entry_t;
 
-_Z_ELEM_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry);
+
+_Z_ELEM_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t, _z_noop_size, _z_raweth_clear_mapping_entry,
+               _z_noop_copy)
 _Z_ARRAY_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t)
 
 typedef struct {

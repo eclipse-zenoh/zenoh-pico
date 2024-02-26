@@ -31,6 +31,7 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform/unix.h"
 #include "zenoh-pico/utils/logging.h"
@@ -42,6 +43,8 @@
 #error "Raweth transport only supported on linux systems"
 #else
 #include <linux/if_packet.h>
+
+void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry) { _z_keyexpr_clear(&entry->_keyexpr); }
 
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     int8_t ret = _Z_RES_OK;
