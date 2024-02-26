@@ -27,6 +27,9 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
+#define RAWETH_CFG_TUPLE_SEPARATOR '#'
+#define RAWETH_CFG_LIST_SEPARATOR ','
+
 #define RAWETH_CONFIG_ARGC 4
 
 #define RAWETH_CONFIG_IFACE_KEY 0x01
@@ -120,7 +123,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     size_t size = 0;
     strcpy(s_mapping, cfg_str);
     // Parse list
-    char delim[] = ",";
+    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
     char *entry = strtok(s_mapping, delim);
     while (entry != NULL) {
         // Check entry
@@ -157,7 +160,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
     strcpy(s_whitelist, cfg_str);
     // Parse list
     size_t size = 0;
-    char delim[] = ",";
+    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
     char *entry = strtok(s_whitelist, delim);
     while (entry != NULL) {
         // Check entry
@@ -192,7 +195,7 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
     }
     size_t idx = 0;
     // Parse list
-    char delim[] = ",";
+    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
     char *entry = strtok(s_whitelist, delim);
     while ((entry != NULL) && (idx < array->_len)) {
         // Convert address from string to int array
@@ -220,10 +223,15 @@ static _Bool _z_valid_mapping_entry(const char *entry) {
     const char *p_start = &entry[0];
     const char *p_end = NULL;
     char c = '\0';
+    // Parse first tuple member (keyexpr)
     do {
         c = entry[idx];
         idx += 1;
-    } while ((idx < len) && (c != ' '));
+        // Out of bounds check
+        if (idx >= len) {
+            return false;
+        }
+    } while (c != RAWETH_CFG_TUPLE_SEPARATOR);
     return false;
 }
 
