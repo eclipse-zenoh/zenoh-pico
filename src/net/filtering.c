@@ -47,6 +47,9 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
                     ctx->state = WRITE_FILTER_OFF;
                     ctx->decl_id = msg->id;
                     break;
+
+                default:  // Nothing to do
+                    break;
             }
             break;
         // Remove filter if we receive a subscribe
