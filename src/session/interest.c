@@ -91,14 +91,6 @@ _z_session_interest_rc_t *_z_get_interest_by_id(_z_session_t *zn, const _z_zint_
     return intr;
 }
 
-_z_session_interest_rc_list_t *_z_get_interest_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    _zp_session_lock_mutex(zn);
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
-    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
-    _zp_session_unlock_mutex(zn);
-    return intrs;
-}
-
 _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_interest_t *intr) {
     _Z_DEBUG(">>> Allocating interest for (%ju:%s)", (uintmax_t)intr->_key._id, intr->_key._suffix);
     _z_session_interest_rc_t *ret = NULL;
