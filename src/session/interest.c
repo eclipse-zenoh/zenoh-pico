@@ -36,7 +36,7 @@ _Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_
 void _z_session_interest_clear(_z_session_interest_t *intr) { _z_keyexpr_clear(&intr->_key); }
 
 /*------------------ interest ------------------*/
-_z_session_interest_rc_t *__z_get_interest_by_id(_z_session_interest_rc_list_t *intrs, const _z_zint_t id) {
+static _z_session_interest_rc_t *__z_get_interest_by_id(_z_session_interest_rc_list_t *intrs, const _z_zint_t id) {
     _z_session_interest_rc_t *ret = NULL;
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
@@ -50,11 +50,15 @@ _z_session_interest_rc_t *__z_get_interest_by_id(_z_session_interest_rc_list_t *
     return ret;
 }
 
-_z_session_interest_rc_list_t *__z_get_interest_by_key(_z_session_interest_rc_list_t *intrs, const _z_keyexpr_t key) {
+static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_session_interest_rc_list_t *intrs,
+                                                                        uint8_t flags, const _z_keyexpr_t key) {
     _z_session_interest_rc_list_t *ret = NULL;
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
+        if ((intr->in->val._flags & flags) == 0) {
+            continue;
+        }
         if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
             ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
@@ -69,7 +73,7 @@ _z_session_interest_rc_list_t *__z_get_interest_by_key(_z_session_interest_rc_li
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_session_interest_rc_t *__unsafe_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id) {
+static _z_session_interest_rc_t *__unsafe_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id) {
     _z_session_interest_rc_list_t *intrs = zn->_local_interests;
     return __z_get_interest_by_id(intrs, id);
 }
@@ -79,9 +83,11 @@ _z_session_interest_rc_t *__unsafe_z_get_interest_by_id(_z_session_t *zn, const 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_session_interest_rc_list_t *__unsafe_z_get_interest_by_key(_z_session_t *zn, const _z_keyexpr_t key) {
+static _z_session_interest_rc_list_t *__unsafe_z_get_interest_by_key_and_flags(_z_session_t *zn, uint8_t flags,
+                                                                               const _z_keyexpr_t key) {
     _z_session_interest_rc_list_t *intrs = zn->_local_interests;
-    return __z_get_interest_by_key(intrs, key);
+    return __z_get_interest_by_key_and_flags(intrs, flags, key);
+}
 
 static int8_t _z_send_resource_interest(_z_session_t *zn) {
     _zp_session_lock_mutex(zn);
@@ -197,26 +203,31 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
 int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {
     const _z_keyexpr_t *decl_key = NULL;
     _z_interest_msg_t msg;
+    uint8_t flags = 0;
     switch (decl->_tag) {
         case _Z_DECL_SUBSCRIBER:
             msg.type = _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER;
             msg.id = decl->_body._decl_subscriber._id;
             decl_key = &decl->_body._decl_subscriber._keyexpr;
+            flags = _Z_INTEREST_FLAG_SUBSCRIBERS;
             break;
         case _Z_DECL_QUERYABLE:
             msg.type = _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE;
             msg.id = decl->_body._decl_queryable._id;
             decl_key = &decl->_body._decl_queryable._keyexpr;
+            flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
         case _Z_UNDECL_SUBSCRIBER:
             msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER;
             msg.id = decl->_body._undecl_subscriber._id;
             decl_key = &decl->_body._undecl_subscriber._ext_keyexpr;
+            flags = _Z_INTEREST_FLAG_SUBSCRIBERS;
             break;
         case _Z_UNDECL_QUERYABLE:
             msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE;
             msg.id = decl->_body._undecl_queryable._id;
             decl_key = &decl->_body._undecl_queryable._ext_keyexpr;
+            flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
@@ -228,7 +239,7 @@ int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *de
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
-    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key(zn, key);
+    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key_and_flags(zn, flags, key);
     _zp_session_unlock_mutex(zn);
 
     // Parse session_interest list
