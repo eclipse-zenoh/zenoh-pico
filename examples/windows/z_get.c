@@ -67,25 +67,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = '\0';
-    while (1) {
-        fflush(stdin);
-        scanf("%c", &c);
-        if (c == 'q') {
-            break;
-        }
-
-        printf("Sending Query '%s'...\n", keyexpr);
-        z_get_options_t opts = z_get_options_default();
-        if (value != NULL) {
-            opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
-        }
-        z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
-        if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
-            printf("Unable to send query.\n");
-            return -1;
-        }
+    printf("Sending Query '%s'...\n", keyexpr);
+    z_get_options_t opts = z_get_options_default();
+    if (value != NULL) {
+        opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+    }
+    z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
+    if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
+        printf("Unable to send query.\n");
+        return -1;
     }
 
     // Stop read and lease tasks for zenoh-pico

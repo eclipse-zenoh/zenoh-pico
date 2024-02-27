@@ -106,7 +106,7 @@ void setup() {
     delay(300);
 }
 
-void loop() { delay(5000); }
+void loop() { delay(1000); }
 
 #else
 void setup() {

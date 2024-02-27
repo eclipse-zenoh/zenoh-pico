@@ -27,6 +27,9 @@
 #endif
 
 #define KEYEXPR "demo/example/**"
+#define N 10
+
+int msg_nb = 0;
 
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
@@ -34,6 +37,7 @@ void data_handler(const z_sample_t *sample, void *ctx) {
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
            sample->payload.start);
     z_drop(z_move(keystr));
+    msg_nb++;
 }
 
 void app_main(void) {
@@ -58,7 +62,8 @@ void app_main(void) {
         return;
     }
 
-    while (1) {
+    printf("Running until %d messages are received...\n", N);
+    while (msg_nb < N) {
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);
         zp_send_join(z_loan(s), NULL);

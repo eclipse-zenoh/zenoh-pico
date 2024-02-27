@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "zenoh-pico.h"
 
@@ -99,14 +100,11 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     // Listen until stopped
-    printf("Start listening.\n");
-    char c = 0;
-    while (c != 'q') {
-        c = (char)fgetc(stdin);
+    printf("Press CTRL-C to quit...\n");
+    while (1) {
+        sleep(1);
     }
-    // Wait for everything to settle
-    printf("End of test\n");
-    z_sleep_s(1);
+
     // Clean up
     z_undeclare_subscriber(z_move(sub));
     zp_stop_read_task(z_loan(s));

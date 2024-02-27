@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
-    int n = -1;
+    int n = 2147483647;  // max int value by default
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
@@ -93,7 +93,8 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    while (msg_nb != n) {
+    printf("Press CTRL-C to quit...\n");
+    while (msg_nb < n) {
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);
         zp_send_join(z_loan(s), NULL);
