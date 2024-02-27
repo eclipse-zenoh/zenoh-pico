@@ -1,4 +1,6 @@
 import argparse
+import os
+from signal import SIGINT
 import subprocess
 import sys
 import time
@@ -15,16 +17,17 @@ def pub_and_sub(args):
         z_pub_expected_status = 0
         z_pub_expected_output = '''Opening session...
 Declaring publisher for 'demo/example/zenoh-pico-pub'...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...'''
+Press CTRL-C to quit...
+Putting Data ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   5] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   6] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   7] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')...'''
     else :
         z_pub_expected_status = 254
         z_pub_expected_output = ("ERROR: Zenoh pico was compiled without "
@@ -32,25 +35,25 @@ Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...'''
 
     # Expected z_sub output & status
     if args.sub == 1:
-        z_sub_expected_status = 0
+        z_sub_expected_status = -2
         if args.pub == 1:
             z_sub_expected_output = '''Opening session...
 Declaring Subscriber on 'demo/example/**'...
-Enter 'q' to quit...
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')'''
+Press CTRL-C to quit...
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   5] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   6] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   7] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')'''
         else:
             z_sub_expected_output = '''Opening session...
 Declaring Subscriber on 'demo/example/**'...
-Enter 'q' to quit...'''
+Press CTRL-C to quit...'''
     else :
         z_sub_expected_status = 254
         z_sub_expected_output = ("ERROR: Zenoh pico was compiled without "
@@ -58,19 +61,21 @@ Enter 'q' to quit...'''
 
     print("Start subscriber")
     # Start z_sub in the background
-    z_sub_command = f"./{DIR_EXAMPLES}/z_sub"
+    z_sub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub"
     z_sub_process = subprocess.Popen(z_sub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE, text=True)
+                                    stderr=subprocess.PIPE,
+                                    start_new_session=True,
+                                    text=True)
 
     # Introduce a delay to ensure z_sub starts
     time.sleep(2)
 
     print("Start publisher")
     # Start z_pub
-    z_pub_command = f"./{DIR_EXAMPLES}/z_pub"
+    z_pub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_pub -n 10"
     z_pub_process = subprocess.Popen(z_pub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,
@@ -83,9 +88,9 @@ Enter 'q' to quit...'''
 
     print("Stop subscriber")
     if z_sub_process.poll() is None:
-        # Send "q" command to z_sub to stop it
-        z_sub_process.stdin.write("q\n")
-        z_sub_process.stdin.flush()
+        # send SIGINT to group
+        z_sub_process_gid = os.getpgid(z_sub_process.pid)
+        os.killpg(z_sub_process_gid, SIGINT)
 
     # Wait for z_sub to finish
     z_sub_process.wait()
@@ -139,23 +144,11 @@ def query_and_queryable(args):
         z_query_expected_status = 0
         if args.queryable == 1:
             z_query_expected_output = '''Opening session...
-Enter any key to pull data or 'q' to quit...
-Sending Query 'demo/example/**'...
->> Received ('demo/example/zenoh-pico-queryable': 'Queryable from Pico!')
->> Received query final notification
-Sending Query 'demo/example/**'...
->> Received ('demo/example/zenoh-pico-queryable': 'Queryable from Pico!')
->> Received query final notification
 Sending Query 'demo/example/**'...
 >> Received ('demo/example/zenoh-pico-queryable': 'Queryable from Pico!')
 >> Received query final notification'''
         else:
             z_query_expected_output = '''Opening session...
-Enter any key to pull data or 'q' to quit...
-Sending Query 'demo/example/**'...
->> Received query final notification
-Sending Query 'demo/example/**'...
->> Received query final notification
 Sending Query 'demo/example/**'...
 >> Received query final notification'''
     else :
@@ -165,18 +158,16 @@ Sending Query 'demo/example/**'...
 
     # Expected z_queryable output & status
     if args.queryable == 1:
-        z_queryable_expected_status = 0
+        z_queryable_expected_status = -2
         if args.query == 1:
             z_queryable_expected_output = '''Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
-Enter 'q' to quit...
- >> [Queryable handler] Received Query 'demo/example/**?'
- >> [Queryable handler] Received Query 'demo/example/**?'
+Press CTRL-C to quit...
  >> [Queryable handler] Received Query 'demo/example/**?'''
         else:
             z_queryable_expected_output = '''Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
-Enter 'q' to quit...'''
+Press CTRL-C to quit...'''
     else :
         z_queryable_expected_status = 254
         z_queryable_expected_output = ("ERROR: Zenoh pico was compiled without "
@@ -184,12 +175,13 @@ Enter 'q' to quit...'''
 
     print("Start queryable")
     # Start z_queryable in the background
-    z_queryable_command = f"./{DIR_EXAMPLES}/z_queryable"
+    z_queryable_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_queryable"
     z_queryable_process = subprocess.Popen(z_queryable_command,
                                             shell=True,
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE,
+                                            start_new_session=True,
                                             text=True)
 
     # Introduce a delay to ensure z_queryable starts
@@ -197,7 +189,7 @@ Enter 'q' to quit...'''
 
     print("Start query")
     # Start z_query
-    z_query_command = f"./{DIR_EXAMPLES}/z_get"
+    z_query_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_get"
     z_query_process = subprocess.Popen(z_query_command,
                                         shell=True,
                                         stdin=subprocess.PIPE,
@@ -205,34 +197,14 @@ Enter 'q' to quit...'''
                                         stderr=subprocess.PIPE,
                                         text=True)
 
-    # Introduce a delay to ensure z_query starts
-    time.sleep(2)
-
-    print("Send requests")
-    if z_query_process.poll() is None:
-        z_query_process.stdin.write("\n")
-        z_query_process.stdin.flush()
-        time.sleep(1)
-        z_query_process.stdin.write("\n")
-        z_query_process.stdin.flush()
-        time.sleep(1)
-        z_query_process.stdin.write("\n")
-        z_query_process.stdin.flush()
-        time.sleep(1)
-
-    print("Stop query")
-    if z_query_process.poll() is None:
-        z_query_process.stdin.write("q\n")
-        z_query_process.stdin.flush()
-
     # Wait for z_query to finish
     z_query_process.wait()
 
     print("Stop queryable")
     if z_queryable_process.poll() is None:
-        # Send "q" command to z_sub to stop it
-        z_queryable_process.stdin.write("q\n")
-        z_queryable_process.stdin.flush()
+        # send SIGINT to group
+        z_quaryable_process_gid = os.getpgid(z_queryable_process.pid)
+        os.killpg(z_quaryable_process_gid, SIGINT)
 
     # Wait for z_queryable to finish
     z_queryable_process.wait()
