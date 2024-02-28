@@ -23,6 +23,7 @@
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
@@ -274,7 +275,6 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     return _Z_RES_OK;
 }
 static _Bool _z_valid_mapping_entry(char *entry) {
-    // some/key/expr 01:23:45:67:89:ab 12,another/ke aa:bb:cc:dd:ee:ff
     size_t len = strlen(entry);
     const char *entry_end = entry + (len - 1);
     // Check first tuple member (keyexpr)
@@ -353,18 +353,21 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
         memcpy(&self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
         zp_free(addr);
     } else {
+        _Z_DEBUG("Invalid locator source mac addr, using default value.");
         memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_DEFAULT_SMAC, _ZP_MAC_ADDR_LENGTH);
     }
     // Init socket interface
     if (_z_valid_iface_raweth(&self->_endpoint._config)) {
         self->_socket._raweth._interface = _z_get_iface_raweth(&self->_endpoint._config);
     } else {
+        _Z_DEBUG("Invalid locator interface, using default value %s", _ZP_RAWETH_DEFAULT_INTERFACE);
         self->_socket._raweth._interface = _ZP_RAWETH_DEFAULT_INTERFACE;
     }
     // Init socket ethtype
     if (_z_valid_ethtype_raweth(&self->_endpoint._config)) {
         self->_socket._raweth._ethtype = (uint16_t)_z_get_ethtype_raweth(&self->_endpoint._config);
     } else {
+        _Z_DEBUG("Invalid locator ethtype, using default value 0x%04x", _ZP_RAWETH_DEFAULT_ETHTYPE);
         self->_socket._raweth._ethtype = _ZP_RAWETH_DEFAULT_ETHTYPE;
     }
     // Init socket mapping
@@ -372,6 +375,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     if (size != 0) {
         _Z_RETURN_IF_ERR(_z_get_mapping_raweth(&self->_endpoint._config, &self->_socket._raweth._mapping, size));
     } else {
+        _Z_DEBUG("Invalid locator mapping, using default value.");
         self->_socket._raweth._mapping = _zp_raweth_mapping_array_make(1);
         if (_zp_raweth_mapping_array_len(&self->_socket._raweth._mapping) == 0) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -383,6 +387,8 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     size = _z_valid_whitelist_raweth(&self->_endpoint._config);
     if (size != 0) {
         _Z_RETURN_IF_ERR(_z_get_whitelist_raweth(&self->_endpoint._config, &self->_socket._raweth._whitelist, size));
+    } else {
+        _Z_DEBUG("Invalid locator whitelist, filtering deactivated.");
     }
     // Open raweth link
     return _z_open_raweth(&self->_socket._raweth._sock, self->_socket._raweth._interface);
