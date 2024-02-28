@@ -43,9 +43,9 @@
 
 // c11 atomic variant
 #define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_CNT _z_atomic_store_explicit(&p.in->_cnt, 1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_CNT _z_atomic_fetch_add_explicit(&p->in->_cnt, 1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_DECR_AND_CMP _z_atomic_fetch_sub_explicit(&p->in->_cnt, 1, _z_memory_order_release) > 1
+#define _ZP_RC_OP_INIT_CNT _z_atomic_store_explicit(&p.in->_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INCR_CNT _z_atomic_fetch_add_explicit(&p->in->_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_DECR_AND_CMP _z_atomic_fetch_sub_explicit(&p->in->_cnt, (unsigned int)1, _z_memory_order_release) > 1
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 
 #else  // ZENOH_C_STANDARD == 99

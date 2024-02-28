@@ -185,7 +185,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
     zp_mutex_lock(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    _Z_DEBUG("Resolving %d - %s on mapping 0x%x", keyexpr._id, keyexpr._suffix, _z_keyexpr_mapping_id(&keyexpr));
+//    _Z_DEBUG("Resolving %d - %s on mapping 0x%x", keyexpr._id, keyexpr._suffix, _z_keyexpr_mapping_id(&keyexpr));
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
     _Z_DEBUG("Triggering subs for %d - %s", key._id, key._suffix);
     if (key._suffix != NULL) {
