@@ -129,7 +129,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
             return 0;
         }
         size += 1;
-        entry = strtok(s_mapping, delim);
+        entry = strtok(NULL, delim);
     }
     // Clean up
     zp_free(s_mapping);
@@ -163,7 +163,7 @@ static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_
                                zp_free(s_mapping));
         // Next iteration
         idx += 1;
-        entry = strtok(s_mapping, delim);
+        entry = strtok(NULL, delim);
     }
     // Clean up
     zp_free(s_mapping);
@@ -193,8 +193,10 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
             return 0;
         }
         size += 1;
-        entry = strtok(s_whitelist, delim);
+        entry = strtok(NULL, delim);
     }
+    // Parse last entry
+
     // Clean up
     zp_free(s_whitelist);
     return size;
@@ -233,7 +235,7 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
         zp_free(addr);
         // Next iteration
         idx += 1;
-        entry = strtok(s_whitelist, delim);
+        entry = strtok(NULL, delim);
     }
     // Clean up
     zp_free(s_whitelist);
