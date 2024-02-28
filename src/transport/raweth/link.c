@@ -58,14 +58,8 @@
 const uint16_t _ZP_RAWETH_DEFAULT_ETHTYPE = 0x72e0;
 const char *_ZP_RAWETH_DEFAULT_INTERFACE = "lo";
 const uint8_t _ZP_RAWETH_DEFAULT_SMAC[_ZP_MAC_ADDR_LENGTH] = {0x30, 0x03, 0xc8, 0x37, 0x25, 0xa1};
-// const _zp_raweth_mapping_entry_t _ZP_RAWETH_DEFAULT_MAPPING[] = {
-//     {{0, {0}, ""}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false},                            // Default mac
-//     addr
-//     {{0, {0}, "some/key/expr"}, 0x8c00, {0x00, 0x11, 0x22, 0x33, 0x44, 0x55}, true},                // entry1
-//     {{0, {0}, "demo/example/zenoh-pico-pub"}, 0xab00, {0x41, 0x55, 0xa8, 0x00, 0x9d, 0xc0}, true},  // entry2
-//     {{0, {0}, "another/keyexpr"}, 0x4300, {0x01, 0x23, 0x45, 0x67, 0x89, 0xab}, true},              // entry3
-// };
-// some/key/expr 01:23:45:67:89:ab 12,another/ke aa:bb:cc:dd:ee:ff
+const _zp_raweth_mapping_entry_t _ZP_RAWETH_DEFAULT_MAPPING = {
+    {0, {0}, ""}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false};
 
 static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config);
 static const char *_z_get_iface_raweth(_z_str_intmap_t *config);
@@ -378,7 +372,12 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     if (size != 0) {
         _Z_RETURN_IF_ERR(_z_get_mapping_raweth(&self->_endpoint._config, &self->_socket._raweth._mapping, size));
     } else {
-        // self->_socket._raweth._mapping = _ZP_RAWETH_DEFAULT_MAPPING;
+        self->_socket._raweth._mapping = _zp_raweth_mapping_array_make(1);
+        if (_zp_raweth_mapping_array_len(&self->_socket._raweth._mapping) == 0) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&self->_socket._raweth._mapping, 0);
+        *entry = _ZP_RAWETH_DEFAULT_MAPPING;
     }
     // Init socket whitelist
     size = _z_valid_whitelist_raweth(&self->_endpoint._config);
