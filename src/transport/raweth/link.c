@@ -99,7 +99,7 @@ static _Bool _z_valid_ethtype_raweth(_z_str_intmap_t *config) {
         return false;
     }
     long ethtype = strtol(s_ethtype, NULL, 16);
-    return ((ethtype & 0xff) > 0x6);  // Ethtype must be above 0x600 in network order
+    return(_z_raweth_htons(ethtype) > 0x600); // Ethtype must be at least 0x600 in network order 
 }
 
 static long _z_get_ethtype_raweth(_z_str_intmap_t *config) {
