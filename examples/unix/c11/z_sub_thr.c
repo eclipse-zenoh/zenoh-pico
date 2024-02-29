@@ -53,8 +53,7 @@ void on_sample(const z_sample_t *sample, void *context) {
         // Stop set measurement
         stats->finished_rounds++;
         unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
-        printf("Received %d msg in %lu ms (%.1f msg/s)\n", PACKET_NB, elapsed_ms,
-               (double)(PACKET_NB * 1000) / (double)elapsed_ms);
+        printf("%f msg/s\n", (double)(PACKET_NB * 1000) / (double)elapsed_ms);
         stats->count = 0;
     }
 }
