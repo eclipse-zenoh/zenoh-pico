@@ -507,6 +507,7 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_encoding_t encoding: The encoding of the value of this data sample.
  *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
  *   z_timestamp_t timestamp: The timestamp of this data sample.
+ *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
 // tags{c.z_sample_t}
 typedef _z_sample_t z_sample_t;
