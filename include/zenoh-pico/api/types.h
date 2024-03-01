@@ -53,7 +53,9 @@ typedef _z_zint_t z_zint_t;
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
  */
+// tags{c.z_bytes_t}
 typedef _z_bytes_t z_bytes_t;
+// tags{c.z_bytes_check}
 _Bool z_bytes_check(const z_bytes_t *v);
 
 /**
@@ -64,6 +66,7 @@ _Bool z_bytes_check(const z_bytes_t *v);
  * Members:
  *   uint8_t id[16]: The array containing the 16 octets of a Zenoh ID.
  */
+// tags{c.z_id_t}
 typedef _z_id_t z_id_t;
 
 /**
@@ -73,8 +76,10 @@ typedef _z_id_t z_id_t;
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
  */
+// tags{c.z_string_t}
 typedef _z_string_t z_string_t;
 
+// tags{c.z_str_t}
 typedef _z_str_t z_str_t;
 _OWNED_TYPE_STR(z_str_t, str)
 
@@ -88,6 +93,7 @@ _OWNED_TYPE_STR(z_str_t, str)
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
  */
+// tags{c.z_keyexpr_t}
 typedef _z_keyexpr_t z_keyexpr_t;
 _OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
 
@@ -103,6 +109,7 @@ _OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
+// tags{c.z_config_t}
 typedef struct {
     _z_config_t *_val;
 } z_config_t;
@@ -120,6 +127,7 @@ _OWNED_TYPE_PTR(_z_config_t, config)
  *   - :c:func:`zp_scouting_config_get`
  *   - :c:func:`zp_scouting_config_insert`
  */
+// tags{c.z_scouting_config_t}
 typedef struct {
     _z_scouting_config_t *_val;
 } z_scouting_config_t;
@@ -128,10 +136,10 @@ _OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
 /**
  * Represents a Zenoh session.
  */
+// tags{c.z_session_t}
 typedef struct {
     _z_session_rc_t _val;
 } z_session_t;
-
 typedef struct {
     _z_session_rc_t _value;
 } z_owned_session_t;
@@ -144,6 +152,7 @@ typedef struct {
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
+// tags{c.z_subscriber_t}
 typedef struct {
     _z_subscriber_t *_val;
 } z_subscriber_t;
@@ -158,6 +167,7 @@ _OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
  *   - :c:func:`z_undeclare_pull_subscriber`
  *   - :c:func:`z_subscriber_pull`
  */
+// tags{c.z_pull_subscriber_t}
 typedef struct {
     _z_pull_subscriber_t *_val;
 } z_pull_subscriber_t;
@@ -173,6 +183,7 @@ _OWNED_TYPE_PTR(_z_pull_subscriber_t, pull_subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
+// tags{c.z_publisher_t}
 typedef struct {
     _z_publisher_t *_val;
 } z_publisher_t;
@@ -186,6 +197,7 @@ _OWNED_TYPE_PTR(_z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
+// tags{c.z_queryable_t}
 typedef struct {
     _z_queryable_t *_val;
 } z_queryable_t;
@@ -195,6 +207,7 @@ _OWNED_TYPE_PTR(_z_queryable_t, queryable)
  * Represents a Zenoh query entity, received by Zenoh Queryable entities.
  *
  */
+// tags{c.z_query_t}
 typedef struct z_query_t {
     z_owned_query_t _val;
 } z_query_t;
@@ -206,11 +219,13 @@ typedef struct z_query_t {
  *   z_encoding_prefix_t prefix: The integer prefix of this encoding.
  *   z_bytes_t suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
+// tags{c.z_encoding_t}
 typedef _z_encoding_t z_encoding_t;
 
 /*
  * Represents timestamp value in Zenoh
  */
+// tags{c.z_timestamp_t}
 typedef _z_timestamp_t z_timestamp_t;
 
 /**
@@ -220,6 +235,7 @@ typedef _z_timestamp_t z_timestamp_t;
  *   z_encoding_t encoding: The encoding of the `payload`.
  *   z_bytes_t payload: The payload of this zenoh value.
  */
+// tags{c.z_value_t}
 typedef _z_value_t z_value_t;
 
 /**
@@ -229,7 +245,9 @@ typedef _z_value_t z_value_t;
  * Members:
  *   z_reliability_t reliability: The subscription reliability.
  */
+// tags{c.z_subscriber_options_t}
 typedef struct {
+    // tags{c.z_subscriber_options_t.reliability}
     z_reliability_t reliability;
 } z_subscriber_options_t;
 
@@ -240,7 +258,9 @@ typedef struct {
  * Members:
  *   z_reliability_t reliability: The subscription reliability.
  */
+// tags{c.z_pull_subscriber_options_t}
 typedef struct {
+    // tags{c.z_pull_subscriber_options_t.reliability}
     z_reliability_t reliability;
 } z_pull_subscriber_options_t;
 
@@ -250,7 +270,9 @@ typedef struct {
  * Members:
  *   z_consolidation_mode_t mode: Defines the consolidation mode to apply to the replies.
  */
+// tags{c.z_query_consolidation_t}
 typedef struct {
+    // tags{c.z_query_consolidation_t.mode}
     z_consolidation_mode_t mode;
 } z_query_consolidation_t;
 
@@ -263,8 +285,11 @@ typedef struct {
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
  */
+// tags{c.z_publisher_options_t}
 typedef struct {
+    // tags{c.z_publisher_options_t.congestion_control}
     z_congestion_control_t congestion_control;
+    // tags{c.z_publisher_options_t.priority}`
     z_priority_t priority;
 } z_publisher_options_t;
 
@@ -275,7 +300,9 @@ typedef struct {
  * Members:
  *   _Bool complete: The completeness of the queryable.
  */
+// tags{c.z_queryable_options_t}
 typedef struct {
+    // tags{c.z_queryable_options_t.complete}
     _Bool complete;
 } z_queryable_options_t;
 
@@ -287,7 +314,9 @@ typedef struct {
  *   z_encoding_t encoding: The encoding of the payload.
  *   z_attachment_t attachment: an attachment to the response.
  */
+// tags{c.z_query_reply_options_t}
 typedef struct {
+    // tags{c.z_query_reply_options_t.encoding}
     z_encoding_t encoding;
 #if Z_FEATURE_ATTACHMENT == 1
     // TODO:ATT z_attachment_t attachment;
@@ -303,11 +332,16 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  */
+// tags{c.z_put_options_t}
 typedef struct {
+    // tags{c.z_put_options_t.encoding}
     z_encoding_t encoding;
+    // tags{c.z_put_options_t.congestion_control}
     z_congestion_control_t congestion_control;
+    // tags{c.z_put_options_t.priority}
     z_priority_t priority;
 #if Z_FEATURE_ATTACHMENT == 1
+    // tags{c.z_put_options_t.attachment}
     z_attachment_t attachment;
 #endif
 } z_put_options_t;
@@ -320,8 +354,11 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when router.
  */
+// tags{c.z_delete_options_t}
 typedef struct {
+    // tags{c.z_delete_options_t.congestion_control}
     z_congestion_control_t congestion_control;
+    // tags{c.z_delete_options_t.priority}
     z_priority_t priority;
 } z_delete_options_t;
 
@@ -332,9 +369,12 @@ typedef struct {
  * Members:
  *   z_encoding_t encoding: The encoding of the payload.
  */
+// tags{c.z_publisher_put_options_t}
 typedef struct {
+    // tags{c.z_publisher_put_options_t.encoding}
     z_encoding_t encoding;
 #if Z_FEATURE_ATTACHMENT == 1
+    // tags{c.z_publisher_put_options_t.attachment}
     z_attachment_t attachment;
 #endif
 } z_publisher_put_options_t;
@@ -343,6 +383,7 @@ typedef struct {
  * Represents the set of options that can be applied to the delete operation by a previously declared publisher,
  * whenever issued via :c:func:`z_publisher_delete`.
  */
+// tags{c.z_publisher_delete_options_t}
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } z_publisher_delete_options_t;
@@ -356,9 +397,13 @@ typedef struct {
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_value_t value: The payload to include in the query.
  */
+// tags{c.z_get_options_t}
 typedef struct {
+    // tags{c.z_get_options_t.value}
     z_value_t value;
+    // tags{c.z_get_options_t.consolidation}
     z_query_consolidation_t consolidation;
+    // tags{c.z_get_options_t.target}
     z_query_target_t target;
 #if Z_FEATURE_ATTACHMENT == 1
 // TODO:ATT z_attachment_t attachment;
@@ -369,8 +414,10 @@ typedef struct {
  * Represents the set of options that can be applied to the read task,
  * whenever issued via :c:func:`zp_start_read_task`.
  */
+// tags{c.zp_task_read_options_t}
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
+    // tags{c.zp_task_read_options_t.task_attributes}
     zp_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -381,8 +428,10 @@ typedef struct {
  * Represents the set of options that can be applied to the lease task,
  * whenever issued via :c:func:`zp_start_lease_task`.
  */
+// tags{c.zp_task_lease_options_t}
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
+    // tags{c.zp_task_lease_options_t.task_attributes}
     zp_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -393,6 +442,7 @@ typedef struct {
  * Represents the set of options that can be applied to the read operation,
  * whenever issued via :c:func:`zp_read`.
  */
+// tags{c.zp_read_options_t}
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } zp_read_options_t;
@@ -401,6 +451,7 @@ typedef struct {
  * Represents the set of options that can be applied to the keep alive send,
  * whenever issued via :c:func:`zp_send_keep_alive`.
  */
+// tags{c.zp_send_keep_alive_options_t}
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } zp_send_keep_alive_options_t;
@@ -409,6 +460,7 @@ typedef struct {
  * Represents the set of options that can be applied to the join send,
  * whenever issued via :c:func:`zp_send_join`.
  */
+// tags{c.zp_send_join_options_t}
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } zp_send_join_options_t;
@@ -416,10 +468,12 @@ typedef struct {
 /**
  * QoS settings of zenoh message.
  */
+// tags{c.z_qos_t}
 typedef _z_qos_t z_qos_t;
 /**
  * Returns message priority.
  */
+// tags{c.z_qos_get_priority}
 static inline z_priority_t z_qos_get_priority(z_qos_t qos) {
     z_priority_t ret = _z_n_qos_get_priority(qos);
     return ret == _Z_PRIORITY_CONTROL ? Z_PRIORITY_DEFAULT : ret;
@@ -427,16 +481,19 @@ static inline z_priority_t z_qos_get_priority(z_qos_t qos) {
 /**
  * Returns message congestion control.
  */
+// tags{c.z_qos_get_congestion_control}
 static inline z_congestion_control_t z_qos_get_congestion_control(z_qos_t qos) {
     return _z_n_qos_get_congestion_control(qos);
 }
 /**
  * Returns message express flag. If set to true, the message is not batched to reduce the latency.
  */
+// tags{c.z_qos_get_express}
 static inline _Bool z_qos_get_express(z_qos_t qos) { return _z_n_qos_get_express(qos); }
 /**
  * Returns default qos settings.
  */
+// tags{c.z_qos_default}
 static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
 
 /**
@@ -451,6 +508,7 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  */
+// tags{c.z_sample_t}
 typedef _z_sample_t z_sample_t;
 
 /**
@@ -461,6 +519,7 @@ typedef _z_sample_t z_sample_t;
  *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */
+// tags{c.z_hello_t}
 typedef _z_hello_t z_hello_t;
 _OWNED_TYPE_PTR(z_hello_t, hello)
 
@@ -471,6 +530,7 @@ _OWNED_TYPE_PTR(z_hello_t, hello)
  *   z_sample_t sample: The :c:type:`_z_sample_t` containing the key and value of the reply.
  *   z_bytes_t replier_id: The id of the replier that sent this reply.
  */
+// tags{c.z_reply_data_t}
 typedef _z_reply_data_t z_reply_data_t;
 
 /**
@@ -479,6 +539,7 @@ typedef _z_reply_data_t z_reply_data_t;
  * Members:
  *   z_reply_data_t data: the content of the reply.
  */
+// tags{c.z_reply_t}
 typedef _z_reply_t z_reply_t;
 _OWNED_TYPE_PTR(z_reply_t, reply)
 
@@ -491,6 +552,7 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``size_t z_str_array_len(z_str_array_t *a);``
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
+// tags{c.z_str_array_t}
 typedef _z_str_array_t z_str_array_t;
 
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
@@ -510,12 +572,14 @@ typedef void (*_z_dropper_handler_t)(void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// tags{c.z_owned_closure_sample_t}
 typedef struct {
     void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_sample_t;
 
+// tags{c.z_closure_sample_call}
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
 
 /**
@@ -529,12 +593,14 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_samp
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// tags{c.z_owned_closure_query_t}
 typedef struct {
     void *context;
     _z_queryable_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
+// tags{c.z_closure_query_call}
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
@@ -550,6 +616,7 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// tags{c.z_owned_closure_reply_t}
 typedef struct {
     void *context;
     z_owned_reply_handler_t call;
@@ -571,12 +638,14 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// tags{c.z_owned_closure_hello_t}
 typedef struct {
     void *context;
     z_owned_hello_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_hello_t;
 
+// tags{c.z_closure_hello_call}
 void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
@@ -591,12 +660,14 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// tags{c.z_owned_closure_zid_t}
 typedef struct {
     void *context;
     z_id_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_zid_t;
 
+// tags{c.z_closure_zid_call}
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 #if Z_FEATURE_ATTACHMENT == 1
 struct _z_bytes_pair_t {
@@ -612,6 +683,7 @@ _Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
  */
+// tags{c.z_owned_bytes_map_t}
 typedef struct z_owned_bytes_map_t {
     _z_bytes_pair_list_t *_inner;
 } z_owned_bytes_map_t;
@@ -619,36 +691,40 @@ typedef struct z_owned_bytes_map_t {
 /**
  * Aliases `this` into a generic `z_attachment_t`, allowing it to be passed to corresponding APIs.
  */
+// tags{c.z_bytes_map_as_attachment}
 z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_);
 /**
  * Returns `true` if the map is not in its gravestone state
  */
+// tags{c.z_bytes_map_check}
 bool z_bytes_map_check(const z_owned_bytes_map_t *this_);
 /**
  * Destroys the map, resetting `this` to its gravestone value.
  *
  * This function is double-free safe, passing a pointer to the gravestone value will have no effect.
  */
+// tags{c.z_bytes_map_drop}
 void z_bytes_map_drop(z_owned_bytes_map_t *this_);
 /**
  * Constructs a map from the provided attachment, copying keys and values.
  *
  * If `this` is at gravestone value, the returned value will also be at gravestone value.
  */
+// tags{c.z_bytes_map_from_attachment}
 z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_);
 /**
  * Constructs a map from the provided attachment, aliasing the attachment's keys and values.
  *
  * If `this` is at gravestone value, the returned value will also be at gravestone value.
  */
-
+// tags{c.z_bytes_map_from_attachment_aliasing}
 z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_);
 /**
  * Returns the value associated with `key`, returning a gravestone value if:
  * - `this` or `key` is in gravestone state.
  * - `this` has no value associated to `key`
  */
-
+// tags{c.z_bytes_map_get}
 z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key);
 /**
  * Associates `value` to `key` in the map, aliasing them.
@@ -658,7 +734,7 @@ z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key);
  *
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
-
+// tags{c.z_bytes_map_insert_by_alias}
 void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
 /**
  * Associates `value` to `key` in the map, copying them to obtain ownership: `key` and `value` are not aliased past the
@@ -666,7 +742,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
  *
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
-
+// tags{c.z_bytes_map_insert_by_copy}
 void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
 /**
  * Iterates over the key-value pairs in the map.
@@ -680,15 +756,17 @@ void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key,
  *
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
-
+// tags{c.z_bytes_map_iter}
 int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx);
 /**
  * Constructs a new map.
  */
+// tags{c.z_bytes_map_new}
 z_owned_bytes_map_t z_bytes_map_new(void);
 /**
  * Constructs the gravestone value for `z_owned_bytes_map_t`
  */
+// tags{c.z_bytes_map_null}
 z_owned_bytes_map_t z_bytes_map_null(void);
 #endif
 
@@ -697,10 +775,12 @@ z_owned_bytes_map_t z_bytes_map_null(void);
  *
  * `str == NULL` will cause this to return `z_bytes_null()`
  */
+// tags{c.z_bytes_from_str}
 z_bytes_t z_bytes_from_str(const char *str);
 /**
  * Returns the gravestone value for `z_bytes_t`
  */
+// tags{c.z_bytes_null}
 z_bytes_t z_bytes_null(void);
 
 #ifdef __cplusplus
