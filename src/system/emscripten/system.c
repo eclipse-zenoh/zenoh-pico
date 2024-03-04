@@ -27,7 +27,7 @@ uint16_t z_random_u16(void) { return (emscripten_random() * 65535.0); }
 
 uint32_t z_random_u32(void) { return (emscripten_random() * 4294967295.0); }
 
-uint64_t zp_random_u64(void) { return (emscripten_random() * 18446744073709551615.0); }
+uint64_t z_random_u64(void) { return (emscripten_random() * 18446744073709551615.0); }
 
 void z_random_fill(void *buf, size_t len) {
     for (size_t i = 0; i < len; i++) {

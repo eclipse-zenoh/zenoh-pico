@@ -27,7 +27,7 @@ uint16_t z_random_u16(void) { return random(); }
 
 uint32_t z_random_u32(void) { return random(); }
 
-uint64_t zp_random_u64(void) {
+uint64_t z_random_u64(void) {
     uint64_t ret = 0;
     ret |= z_random_u32();
     ret = ret << 32;

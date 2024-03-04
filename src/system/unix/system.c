@@ -67,7 +67,7 @@ uint32_t z_random_u32(void) {
     return ret;
 }
 
-uint64_t zp_random_u64(void) {
+uint64_t z_random_u64(void) {
     uint64_t ret = 0;
 #if defined(ZENOH_LINUX)
     while (getrandom(&ret, sizeof(uint64_t), 0) <= 0) {

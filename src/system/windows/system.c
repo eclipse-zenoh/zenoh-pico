@@ -41,7 +41,7 @@ uint32_t z_random_u32(void) {
     return ret;
 }
 
-uint64_t zp_random_u64(void) {
+uint64_t z_random_u64(void) {
     uint64_t ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
