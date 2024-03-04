@@ -35,7 +35,7 @@ char *__z_parse_port_segment_udp_unicast(char *address) {
         const char *p_end = &address[strlen(address)];
 
         size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-        ret = (char *)zp_malloc(len);
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
             _z_str_n_copy(ret, p_start, len);
         }
@@ -55,7 +55,7 @@ char *__z_parse_address_segment_udp_unicast(char *address) {
         p_start = _z_cptr_char_offset(p_start, 1);
         p_end = _z_cptr_char_offset(p_end, -1);
         size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-        ret = (char *)zp_malloc(len);
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
             _z_str_n_copy(ret, p_start, len);
         }
@@ -63,7 +63,7 @@ char *__z_parse_address_segment_udp_unicast(char *address) {
     // IPv4
     else {
         size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-        ret = (char *)zp_malloc(len);
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
             _z_str_n_copy(ret, p_start, len);
         }
@@ -84,7 +84,7 @@ int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
         if (s_address == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
-            zp_free(s_address);
+            z_free(s_address);
         }
     }
 
@@ -97,7 +97,7 @@ int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
             if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
-            zp_free(s_port);
+            z_free(s_port);
         }
     }
 
@@ -172,8 +172,8 @@ int8_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     char *s_address = __z_parse_address_segment_udp_unicast(endpoint._locator._address);
     char *s_port = __z_parse_port_segment_udp_unicast(endpoint._locator._address);
     ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_address, s_port);
-    zp_free(s_address);
-    zp_free(s_port);
+    z_free(s_address);
+    z_free(s_port);
 
     zl->_open_f = _z_f_link_open_udp_unicast;
     zl->_listen_f = _z_f_link_listen_udp_unicast;

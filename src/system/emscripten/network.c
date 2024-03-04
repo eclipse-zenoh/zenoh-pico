@@ -83,7 +83,7 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
 
         // WARNING: workaround as connect returns before the websocket is
         // actually open.
-        zp_sleep_ms(100);
+        z_sleep_ms(100);
 
         if (ret != _Z_RES_OK) {
             close(sock->_ws._fd);
@@ -111,9 +111,9 @@ void _z_close_ws(_z_sys_net_socket_t *sock) { close(sock->_ws._fd); }
 size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     // WARNING: workaroud implementing here the timeout
     ssize_t rb = 0;
-    zp_time_t start = zp_time_now();
-    while ((zp_time_elapsed_ms(&start) < sock._ws._tout) && (rb <= 0)) {
-        zp_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
+    z_time_t start = z_time_now();
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (rb <= 0)) {
+        z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         rb = recv(sock._ws._fd, ptr, len, 0);
     }
     // WARNING: workaround as the recv returns -1 not only in case of errors
@@ -144,9 +144,9 @@ size_t _z_read_exact_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len
 size_t _z_send_ws(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     // WARNING: workaroud implementing here the timeout
     ssize_t sb = 0;
-    zp_time_t start = zp_time_now();
-    while ((zp_time_elapsed_ms(&start) < sock._ws._tout) && (sb <= 0)) {
-        zp_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
+    z_time_t start = z_time_now();
+    while ((z_time_elapsed_ms(&start) < sock._ws._tout) && (sb <= 0)) {
+        z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         sb = send(sock._ws._fd, ptr, len, 0);
     }
     // WARNING: workaround as the recv returns -1 not only in case of errors

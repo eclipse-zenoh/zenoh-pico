@@ -48,7 +48,7 @@ void app_main(void) {
     static StackType_t read_task_stack[1000];
     static StaticTask_t read_task_buffer;
 
-    zp_task_attr_t read_task_attr = {
+    z_task_attr_t read_task_attr = {
         .name = "ZenohReadTask",
         .priority = 10,
         .stack_depth = 1000,
@@ -62,7 +62,7 @@ void app_main(void) {
     static StackType_t lease_task_stack[1000];
     static StaticTask_t lease_task_buffer;
 
-    zp_task_attr_t lease_task_attr = {
+    z_task_attr_t lease_task_attr = {
         .name = "ZenohLeaseTask",
         .priority = 10,
         .stack_depth = 1000,
@@ -89,7 +89,7 @@ void app_main(void) {
 
     char *buf = (char *)pvPortMalloc(256);
     for (int idx = 0; 1; ++idx) {
-        zp_sleep_s(1);
+        z_sleep_s(1);
         snprintf(buf, 256, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 

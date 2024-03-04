@@ -49,57 +49,57 @@ extern "C" {
 #endif
 
 /*------------------ Random ------------------*/
-uint8_t zp_random_u8(void);
-uint16_t zp_random_u16(void);
-uint32_t zp_random_u32(void);
+uint8_t z_random_u8(void);
+uint16_t z_random_u16(void);
+uint32_t z_random_u32(void);
 uint64_t zp_random_u64(void);
-void zp_random_fill(void *buf, size_t len);
+void z_random_fill(void *buf, size_t len);
 
 /*------------------ Memory ------------------*/
-void *zp_malloc(size_t size);
-void *zp_realloc(void *ptr, size_t size);
-void zp_free(void *ptr);
+void *z_malloc(size_t size);
+void *z_realloc(void *ptr, size_t size);
+void z_free(void *ptr);
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Thread ------------------*/
-int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t zp_task_join(zp_task_t *task);
-int8_t zp_task_cancel(zp_task_t *task);
-void zp_task_free(zp_task_t **task);
+int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+int8_t z_task_join(z_task_t *task);
+int8_t zp_task_cancel(z_task_t *task);
+void z_task_free(z_task_t **task);
 
 /*------------------ Mutex ------------------*/
-int8_t zp_mutex_init(zp_mutex_t *m);
-int8_t zp_mutex_free(zp_mutex_t *m);
+int8_t z_mutex_init(z_mutex_t *m);
+int8_t z_mutex_free(z_mutex_t *m);
 
-int8_t zp_mutex_lock(zp_mutex_t *m);
-int8_t zp_mutex_trylock(zp_mutex_t *m);
-int8_t zp_mutex_unlock(zp_mutex_t *m);
+int8_t z_mutex_lock(z_mutex_t *m);
+int8_t z_mutex_trylock(z_mutex_t *m);
+int8_t z_mutex_unlock(z_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
-int8_t zp_condvar_init(zp_condvar_t *cv);
-int8_t zp_condvar_free(zp_condvar_t *cv);
+int8_t z_condvar_init(z_condvar_t *cv);
+int8_t z_condvar_free(z_condvar_t *cv);
 
-int8_t zp_condvar_signal(zp_condvar_t *cv);
-int8_t zp_condvar_wait(zp_condvar_t *cv, zp_mutex_t *m);
+int8_t z_condvar_signal(z_condvar_t *cv);
+int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int zp_sleep_us(size_t time);
-int zp_sleep_ms(size_t time);
-int zp_sleep_s(size_t time);
+int z_sleep_us(size_t time);
+int z_sleep_ms(size_t time);
+int z_sleep_s(size_t time);
 
 /*------------------ Clock ------------------*/
-zp_clock_t zp_clock_now(void);
-unsigned long zp_clock_elapsed_us(zp_clock_t *time);
-unsigned long zp_clock_elapsed_ms(zp_clock_t *time);
-unsigned long zp_clock_elapsed_s(zp_clock_t *time);
+z_clock_t z_clock_now(void);
+unsigned long z_clock_elapsed_us(z_clock_t *time);
+unsigned long z_clock_elapsed_ms(z_clock_t *time);
+unsigned long z_clock_elapsed_s(z_clock_t *time);
 
 /*------------------ Time ------------------*/
-zp_time_t zp_time_now(void);
-const char *zp_time_now_as_str(char *const buf, unsigned long buflen);
-unsigned long zp_time_elapsed_us(zp_time_t *time);
-unsigned long zp_time_elapsed_ms(zp_time_t *time);
-unsigned long zp_time_elapsed_s(zp_time_t *time);
+z_time_t z_time_now(void);
+const char *z_time_now_as_str(char *const buf, unsigned long buflen);
+unsigned long z_time_elapsed_us(z_time_t *time);
+unsigned long z_time_elapsed_ms(z_time_t *time);
+unsigned long z_time_elapsed_s(z_time_t *time);
 
 #ifdef __cplusplus
 }

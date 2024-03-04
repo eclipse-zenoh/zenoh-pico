@@ -101,7 +101,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 _z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority) {
     // Allocate publisher
-    _z_publisher_t *ret = (_z_publisher_t *)zp_malloc(sizeof(_z_publisher_t));
+    _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
     if (ret == NULL) {
         return NULL;
     }
@@ -197,7 +197,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
     s._arg = arg;
 
     // Allocate subscriber
-    _z_subscriber_t *ret = (_z_subscriber_t *)zp_malloc(sizeof(_z_subscriber_t));
+    _z_subscriber_t *ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
     if (ret == NULL) {
         _z_subscription_clear(&s);
         return NULL;
@@ -279,7 +279,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, 
     q._arg = arg;
 
     // Allocate queryable
-    _z_queryable_t *ret = (_z_queryable_t *)zp_malloc(sizeof(_z_queryable_t));
+    _z_queryable_t *ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
     if (ret == NULL) {
         _z_session_queryable_clear(&q);
         return NULL;
@@ -387,7 +387,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)zp_malloc(sizeof(_z_pending_query_t));
+    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
     if (pq != NULL) {
         pq->_id = _z_get_query_id(zn);
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);

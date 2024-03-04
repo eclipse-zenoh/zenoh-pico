@@ -70,7 +70,7 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
         name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                                                \
         if (ptr != NULL) {                                                                                       \
             name##_elem_free(&ptr->_val);                                                                        \
-            zp_free(ptr);                                                                                        \
+            z_free(ptr);                                                                                        \
             *e = NULL;                                                                                           \
         }                                                                                                        \
     }                                                                                                            \

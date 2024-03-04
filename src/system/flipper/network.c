@@ -106,7 +106,7 @@ void _z_close_serial(_z_sys_net_socket_t* sock) {
         furi_hal_serial_control_release(sock->_serial);
 
         // Wait until the serial read timeout ends
-        zp_sleep_ms(FLIPPER_SERIAL_TIMEOUT_MS * 2);
+        z_sleep_ms(FLIPPER_SERIAL_TIMEOUT_MS * 2);
 
         furi_stream_buffer_free(sock->_rx_stream);
 
@@ -119,13 +119,13 @@ void _z_close_serial(_z_sys_net_socket_t* sock) {
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) {
     int8_t ret = _Z_RES_OK;
 
-    uint8_t* before_cobs = (uint8_t*)zp_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t* before_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         size_t len = 0;
         len = furi_stream_buffer_receive(sock._rx_stream, &before_cobs[i], 1, FLIPPER_SERIAL_TIMEOUT_MS);
         if (!len) {
-            zp_free(before_cobs);
+            z_free(before_cobs);
             return SIZE_MAX;
         }
         rb += 1;
@@ -135,7 +135,7 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) 
         }
     }
 
-    uint8_t* after_cobs = (uint8_t*)zp_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t* after_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t trb = _z_cobs_decode(before_cobs, rb, after_cobs);
 
     size_t i = 0;
@@ -162,8 +162,8 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) 
         ret = _Z_ERR_GENERIC;
     }
 
-    zp_free(before_cobs);
-    zp_free(after_cobs);
+    z_free(before_cobs);
+    z_free(after_cobs);
 
     rb = payload_len;
     if (ret != _Z_RES_OK) {
@@ -191,7 +191,7 @@ size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t* ptr, size_t len) {
     int8_t ret = _Z_RES_OK;
 
-    uint8_t* before_cobs = (uint8_t*)zp_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t* before_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t i = 0;
     for (i = 0; i < sizeof(uint16_t); ++i) {
         before_cobs[i] = (len >> (i * (size_t)8)) & (size_t)0XFF;
@@ -206,15 +206,15 @@ size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t* ptr, size_t
         i++;
     }
 
-    uint8_t* after_cobs = (uint8_t*)zp_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t* after_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     ssize_t twb = _z_cobs_encode(before_cobs, i, after_cobs);
     after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
 
     furi_hal_serial_tx(sock._serial, after_cobs, twb + (ssize_t)1);
     furi_hal_serial_tx_wait_complete(sock._serial);
 
-    zp_free(before_cobs);
-    zp_free(after_cobs);
+    z_free(before_cobs);
+    z_free(after_cobs);
 
     return len;
 }

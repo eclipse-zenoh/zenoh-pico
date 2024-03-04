@@ -73,7 +73,7 @@ static _Bool _z_valid_address_raweth(const char *address) {
 static uint8_t *_z_parse_address_raweth(const char *address) {
     size_t len = strlen(address);
     // Allocate data
-    uint8_t *ret = (uint8_t *)zp_malloc(_ZP_MAC_ADDR_LENGTH);
+    uint8_t *ret = (uint8_t *)z_malloc(_ZP_MAC_ADDR_LENGTH);
     if (ret == NULL) {
         return ret;
     }
@@ -93,7 +93,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     if (_z_valid_address_raweth(self->_endpoint._locator._address)) {
         uint8_t *addr = _z_parse_address_raweth(self->_endpoint._locator._address);
         memcpy(&self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
-        zp_free(addr);
+        z_free(addr);
     } else {
         memcpy(&self->_socket._raweth._smac, _ZP_RAWETH_CFG_SMAC, _ZP_MAC_ADDR_LENGTH);
     }

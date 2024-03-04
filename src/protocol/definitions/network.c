@@ -139,7 +139,7 @@ void _z_n_msg_free(_z_network_message_t **msg) {
     if (ptr != NULL) {
         _z_n_msg_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *msg = NULL;
     }
 }

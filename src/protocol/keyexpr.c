@@ -69,7 +69,7 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
     if (ptr != NULL) {
         _z_keyexpr_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *rk = NULL;
     }
 }

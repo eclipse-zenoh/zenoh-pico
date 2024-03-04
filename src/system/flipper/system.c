@@ -21,36 +21,36 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/
-uint8_t zp_random_u8(void) { return random(); }
+uint8_t z_random_u8(void) { return random(); }
 
-uint16_t zp_random_u16(void) { return random(); }
+uint16_t z_random_u16(void) { return random(); }
 
-uint32_t zp_random_u32(void) { return random(); }
+uint32_t z_random_u32(void) { return random(); }
 
 uint64_t zp_random_u64(void) {
     uint64_t ret = 0;
-    ret |= zp_random_u32();
+    ret |= z_random_u32();
     ret = ret << 32;
-    ret |= zp_random_u32();
+    ret |= z_random_u32();
 
     return ret;
 }
 
-void zp_random_fill(void* buf, size_t len) {
+void z_random_fill(void* buf, size_t len) {
     for (size_t i = 0; i < len; i++) {
-        ((uint8_t*)buf)[i] = zp_random_u8();
+        ((uint8_t*)buf)[i] = z_random_u8();
     }
 }
 
 /*------------------ Memory ------------------*/
-void* zp_malloc(size_t size) {
+void* z_malloc(size_t size) {
     if (!size) {
         return NULL;
     }
     return malloc(size);
 }
 
-void* zp_realloc(void* ptr, size_t size) {
+void* z_realloc(void* ptr, size_t size) {
     if (!size) {
         free(ptr);
         return NULL;
@@ -58,11 +58,11 @@ void* zp_realloc(void* ptr, size_t size) {
     return realloc(ptr, size);
 }
 
-void zp_free(void* ptr) { return free(ptr); }
+void z_free(void* ptr) { return free(ptr); }
 
 /*------------------ Task ------------------*/
 
-int8_t zp_task_init(zp_task_t* task, zp_task_attr_t* attr, void* (*fun)(void*), void* arg) {
+int8_t z_task_init(z_task_t* task, z_task_attr_t* attr, void* (*fun)(void*), void* arg) {
     if (task == NULL) {
         return -1;
     }
@@ -80,16 +80,16 @@ int8_t zp_task_init(zp_task_t* task, zp_task_attr_t* attr, void* (*fun)(void*), 
     return _Z_RES_OK;
 }
 
-int8_t zp_task_join(zp_task_t* task) {
+int8_t z_task_join(z_task_t* task) {
     if (task == NULL) {
         return -1;
     }
     return furi_thread_join(*task);
 }
 
-int8_t zp_task_cancel(zp_task_t* task) { return -1; }
+int8_t zp_task_cancel(z_task_t* task) { return -1; }
 
-void zp_task_free(zp_task_t** task) {
+void z_task_free(z_task_t** task) {
     if (task == NULL || *task == NULL) {
         return;
     }
@@ -98,7 +98,7 @@ void zp_task_free(zp_task_t** task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t zp_mutex_init(zp_mutex_t* m) {
+int8_t z_mutex_init(z_mutex_t* m) {
     if (m == NULL) {
         return -1;
     }
@@ -106,7 +106,7 @@ int8_t zp_mutex_init(zp_mutex_t* m) {
     return (*m != 0) ? _Z_RES_OK : _Z_ERR_SYSTEM_TASK_FAILED;
 }
 
-int8_t zp_mutex_free(zp_mutex_t* m) {
+int8_t z_mutex_free(z_mutex_t* m) {
     if (m == NULL) {
         return -1;
     }
@@ -118,7 +118,7 @@ int8_t zp_mutex_free(zp_mutex_t* m) {
     return 0;
 }
 
-int8_t zp_mutex_lock(zp_mutex_t* m) {
+int8_t z_mutex_lock(z_mutex_t* m) {
     if (m == NULL) {
         return -1;
     }
@@ -128,9 +128,9 @@ int8_t zp_mutex_lock(zp_mutex_t* m) {
     return furi_mutex_acquire(*m, FuriWaitForever);
 }
 
-int8_t zp_mutex_trylock(zp_mutex_t* m) { return -1; }
+int8_t z_mutex_trylock(z_mutex_t* m) { return -1; }
 
-int8_t zp_mutex_unlock(zp_mutex_t* m) {
+int8_t z_mutex_unlock(z_mutex_t* m) {
     if (m == NULL) {
         return -1;
     }
@@ -141,108 +141,108 @@ int8_t zp_mutex_unlock(zp_mutex_t* m) {
 }
 
 /*------------------ Condvar ------------------*/
-int8_t zp_condvar_init(zp_condvar_t* cv) { return -1; }
+int8_t z_condvar_init(z_condvar_t* cv) { return -1; }
 
-int8_t zp_condvar_free(zp_condvar_t* cv) { return -1; }
+int8_t z_condvar_free(z_condvar_t* cv) { return -1; }
 
-int8_t zp_condvar_signal(zp_condvar_t* cv) { return -1; }
+int8_t z_condvar_signal(z_condvar_t* cv) { return -1; }
 
-int8_t zp_condvar_wait(zp_condvar_t* cv, zp_mutex_t* m) { return -1; }
+int8_t z_condvar_wait(z_condvar_t* cv, z_mutex_t* m) { return -1; }
 
 /*------------------ Sleep ------------------*/
-int zp_sleep_us(size_t time) {
+int z_sleep_us(size_t time) {
     furi_delay_us(time);
     return 0;
 }
 
-int zp_sleep_ms(size_t time) {
+int z_sleep_ms(size_t time) {
     furi_delay_ms(time);
     return 0;
 }
 
-int zp_sleep_s(size_t time) {
-    zp_time_t start = zp_time_now();
+int z_sleep_s(size_t time) {
+    z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
-    while (zp_time_elapsed_s(&start) < time) {
-        zp_sleep_ms(1000);
+    while (z_time_elapsed_s(&start) < time) {
+        z_sleep_ms(1000);
     }
 
     return 0;
 }
 
 /*------------------ Instant ------------------*/
-void __zp_clock_gettime(zp_clock_t* ts) {
+void __z_clock_gettime(z_clock_t* ts) {
     uint64_t m = millis();
     ts->tv_sec = m / (uint64_t)1000000;
     ts->tv_nsec = (m % (uint64_t)1000000) * (uint64_t)1000;
 }
 
-zp_clock_t zp_clock_now(void) {
-    zp_clock_t now;
-    __zp_clock_gettime(&now);
+z_clock_t z_clock_now(void) {
+    z_clock_t now;
+    __z_clock_gettime(&now);
     return now;
 }
 
-unsigned long zp_clock_elapsed_us(zp_clock_t* instant) {
-    zp_clock_t now;
-    __zp_clock_gettime(&now);
+unsigned long z_clock_elapsed_us(z_clock_t* instant) {
+    z_clock_t now;
+    __z_clock_gettime(&now);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-unsigned long zp_clock_elapsed_ms(zp_clock_t* instant) {
-    zp_clock_t now;
-    __zp_clock_gettime(&now);
+unsigned long z_clock_elapsed_ms(z_clock_t* instant) {
+    z_clock_t now;
+    __z_clock_gettime(&now);
 
     unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
-unsigned long zp_clock_elapsed_s(zp_clock_t* instant) {
-    zp_clock_t now;
-    __zp_clock_gettime(&now);
+unsigned long z_clock_elapsed_s(z_clock_t* instant) {
+    z_clock_t now;
+    __z_clock_gettime(&now);
 
     unsigned long elapsed = now.tv_sec - instant->tv_sec;
     return elapsed;
 }
 
 /*------------------ Time ------------------*/
-zp_time_t zp_time_now(void) {
-    zp_time_t now;
+z_time_t z_time_now(void) {
+    z_time_t now;
     gettimeofday(&now, NULL);
     return now;
 }
 
-const char* zp_time_now_as_str(char* const buf, unsigned long buflen) {
-    zp_time_t tv = zp_time_now();
+const char* z_time_now_as_str(char* const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
     struct tm ts;
     ts = *localtime(&tv.tv_sec);
     strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
     return buf;
 }
 
-unsigned long zp_time_elapsed_us(zp_time_t* time) {
-    zp_time_t now;
+unsigned long z_time_elapsed_us(z_time_t* time) {
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
-unsigned long zp_time_elapsed_ms(zp_time_t* time) {
-    zp_time_t now;
+unsigned long z_time_elapsed_ms(z_time_t* time) {
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
-unsigned long zp_time_elapsed_s(zp_time_t* time) {
-    zp_time_t now;
+unsigned long z_time_elapsed_s(z_time_t* time) {
+    z_time_t now;
     gettimeofday(&now, NULL);
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;

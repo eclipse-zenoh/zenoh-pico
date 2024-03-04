@@ -133,27 +133,27 @@ void print_scouting_message_type(uint8_t header) {
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-_Bool gen_bool(void) { return zp_random_u8() % 2; }
+_Bool gen_bool(void) { return z_random_u8() % 2; }
 
-uint8_t gen_uint8(void) { return zp_random_u8(); }
+uint8_t gen_uint8(void) { return z_random_u8(); }
 
-uint16_t gen_uint16(void) { return zp_random_u16(); }
+uint16_t gen_uint16(void) { return z_random_u16(); }
 
 uint64_t gen_uint64(void) {
     uint64_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
 unsigned int gen_uint(void) {
     unsigned int ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
 _z_zint_t gen_zint(void) {
     _z_zint_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
@@ -172,8 +172,8 @@ _z_bytes_t gen_payload(size_t len) {
     _z_bytes_t pld;
     pld._is_alloc = true;
     pld.len = len;
-    pld.start = (uint8_t *)zp_malloc(len);
-    zp_random_fill((uint8_t *)pld.start, pld.len);
+    pld.start = (uint8_t *)z_malloc(len);
+    z_random_fill((uint8_t *)pld.start, pld.len);
 
     return pld;
 }
@@ -185,7 +185,7 @@ _z_bytes_t gen_bytes(size_t len) {
     arr.start = NULL;
     if (len == 0) return arr;
 
-    arr.start = (uint8_t *)zp_malloc(sizeof(uint8_t) * len);
+    arr.start = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
     for (_z_zint_t i = 0; i < len; i++) {
         ((uint8_t *)arr.start)[i] = gen_uint8() & 0x7f;  // 0b01111111
     }
@@ -208,9 +208,9 @@ _z_id_t gen_zid(void) {
 
 char *gen_str(size_t size) {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    char *str = (char *)zp_malloc(size + 1);
+    char *str = (char *)z_malloc(size + 1);
     for (_z_zint_t i = 0; i < size; i++) {
-        uint32_t key = zp_random_u32() % (sizeof(charset) - 1);
+        uint32_t key = z_random_u32() % (sizeof(charset) - 1);
         str[i] = charset[key];
     }
     str[size] = '\0';
@@ -328,8 +328,8 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         printf("%s:%s", ls, rs);
         if (i < left->_len - 1) printf(" ");
 
-        zp_free(ls);
-        zp_free(rs);
+        z_free(ls);
+        z_free(rs);
 
         assert(_z_locator_eq(l, r) == true);
     }
@@ -1660,7 +1660,7 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
 _z_network_message_vec_t gen_net_msgs(size_t n) {
     _z_network_message_vec_t ret = _z_network_message_vec_make(n);
     for (size_t i = 0; i < n; i++) {
-        _z_network_message_t *msg = (_z_network_message_t *)zp_malloc(sizeof(_z_network_message_t));
+        _z_network_message_t *msg = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
         *msg = gen_net_msg();
         _z_network_message_vec_append(&ret, msg);
     }

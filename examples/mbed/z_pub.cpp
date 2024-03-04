@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     char buf[256];
     for (int idx = 0; 1; ++idx) {
-        zp_sleep_s(1);
+        z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
         z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
