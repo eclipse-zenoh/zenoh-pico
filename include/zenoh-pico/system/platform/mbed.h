@@ -27,7 +27,7 @@ typedef void *z_task_t;       // Workaround as MBED is a C++ library
 typedef void *z_task_attr_t;  // Workaround as MBED is a C++ library
 typedef void *z_mutex_t;      // Workaround as MBED is a C++ library
 typedef void *z_condvar_t;    // Workaround as MBED is a C++ library
-#endif                         // Z_FEATURE_MULTI_THREAD == 1
+#endif                        // Z_FEATURE_MULTI_THREAD == 1
 
 typedef void *z_clock_t;  // Not defined
 typedef struct timeval z_time_t;

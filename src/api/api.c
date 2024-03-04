@@ -348,7 +348,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
-        ret._value = (type *)z_malloc(sizeof(type));                            \
+        ret._value = (type *)z_malloc(sizeof(type));                             \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value);                                     \
         }                                                                        \
@@ -369,7 +369,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
 #define OWNED_FUNCTIONS_PTR_CLONE(type, ownedtype, name, f_copy) \
     ownedtype z_##name##_clone(ownedtype *val) {                 \
         ownedtype ret;                                           \
-        ret._value = (_##type *)z_malloc(sizeof(_##type));      \
+        ret._value = (_##type *)z_malloc(sizeof(_##type));       \
         if (ret._value != NULL) {                                \
             f_copy(ret._value, val->_value);                     \
         }                                                        \
@@ -391,7 +391,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
         size_t size = _z_str_size(val->_value);                                  \
-        ret._value = (_##type)z_malloc(size);                                   \
+        ret._value = (_##type)z_malloc(size);                                    \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value, size);                               \
         }                                                                        \
