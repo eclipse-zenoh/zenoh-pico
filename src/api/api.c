@@ -23,6 +23,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/primitives.h"
@@ -694,14 +695,28 @@ z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, con
             key = _z_rid_with_suffix(id, NULL);
         }
     }
-
+    // Set options
     z_publisher_options_t opt = z_publisher_options_default();
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-
-    return (z_owned_publisher_t){._value = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority)};
+    // Set publisher
+    _z_publisher_t *pub = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority);
+    if (pub == NULL) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(&zs._val.in->val, key._id);
+        }
+        return (z_owned_publisher_t){._value = NULL};
+    }
+    // Create write filter
+    if (_z_write_filter_create(pub) != _Z_RES_OK) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(&zs._val.in->val, key._id);
+        }
+        return (z_owned_publisher_t){._value = NULL};
+    }
+    return (z_owned_publisher_t){._value = pub};
 }
 
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
@@ -728,8 +743,8 @@ z_publisher_delete_options_t z_publisher_delete_options_default(void) {
 
 int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
-    int8_t ret = _Z_RES_OK;
-
+    int8_t ret = 0;
+    // Build options
     z_publisher_put_options_t opt = z_publisher_put_options_default();
     if (options != NULL) {
         opt.encoding = options->encoding;
@@ -737,15 +752,17 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
         opt.attachment = options->attachment;
 #endif
     }
-
-    ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                   pub._val->_congestion_control, pub._val->_priority
+    // Check if write filter is active before writing
+    if (!_z_write_filter_active(pub._val)) {
+        // Write value
+        ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+                       pub._val->_congestion_control, pub._val->_priority
 #if Z_FEATURE_ATTACHMENT == 1
-                   ,
-                   opt.attachment
+                       ,
+                       opt.attachment
 #endif
-    );
-
+        );
+    }
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len
 #if Z_FEATURE_ATTACHMENT == 1
@@ -753,7 +770,6 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
                                    opt.attachment
 #endif
     );
-
     return ret;
 }
 

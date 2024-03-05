@@ -241,4 +241,10 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 );
 #endif
 
+#if Z_FEATURE_INTEREST == 1
+uint32_t _z_declare_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
+                             void *arg);
+int8_t _z_undeclare_interest(_z_session_t *zn, uint32_t interest_id);
+#endif
+
 #endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */

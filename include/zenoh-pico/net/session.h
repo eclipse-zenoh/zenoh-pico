@@ -62,6 +62,11 @@ typedef struct _z_session_t {
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;
 #endif
+
+    // Session interests
+#if Z_FEATURE_INTEREST == 1
+    _z_session_interest_rc_list_t *_local_interests;
+#endif
 } _z_session_t;
 
 extern void _z_session_clear(_z_session_t *zn);  // Forward type declaration to avoid cyclical include

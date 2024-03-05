@@ -20,12 +20,14 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -119,6 +121,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Clear publisher
+    _z_write_filter_destroy(pub);
     _z_undeclare_resource(&pub->_zn.in->val, pub->_key._id);
     _z_session_rc_drop(&pub->_zn);
     return _Z_RES_OK;
@@ -421,5 +424,51 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     }
 
     return ret;
+}
+#endif
+
+#if Z_FEATURE_INTEREST == 1
+/*------------------ Interest Declaration ------------------*/
+uint32_t _z_declare_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
+                             void *arg) {
+    _z_session_interest_t intr;
+    intr._id = _z_get_entity_id(zn);
+    intr._key = _z_get_expanded_key_from_key(zn, &keyexpr);
+    intr._flags = flags;
+    intr._callback = callback;
+    intr._arg = arg;
+
+    // Create interest entry, stored at session-level, do not drop it by the end of this function.
+    _z_session_interest_rc_t *sintr = _z_register_interest(zn, &intr);
+    if (sintr == NULL) {
+        return 0;
+    }
+    // Build the declare message to send on the wire
+    _z_declaration_t declaration = _z_make_decl_interest(&keyexpr, intr._id, intr._flags);
+    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+    if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        _z_unregister_interest(zn, sintr);
+        return 0;
+    }
+    _z_n_msg_clear(&n_msg);
+    return intr._id;
+}
+
+int8_t _z_undeclare_interest(_z_session_t *zn, uint32_t interest_id) {
+    // Find interest entry
+    _z_session_interest_rc_t *sintr = _z_get_interest_by_id(zn, interest_id);
+    if (sintr == NULL) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+    // Build the declare message to send on the wire
+    _z_declaration_t declaration = _z_make_undecl_interest(sintr->in->val._id, &sintr->in->val._key);
+    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
+    if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    _z_n_msg_clear(&n_msg);
+    // Only if message is successfully send, session interest can be removed
+    _z_unregister_interest(zn, sintr);
+    return _Z_RES_OK;
 }
 #endif

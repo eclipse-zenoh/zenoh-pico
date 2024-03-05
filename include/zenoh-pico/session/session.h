@@ -77,9 +77,10 @@ typedef struct {
 
 _Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
 void _z_resource_clear(_z_resource_t *res);
+void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
 
-_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 /**
@@ -102,7 +103,7 @@ void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_subscription_rc_copy)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
@@ -186,5 +187,42 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
 typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
+
+typedef enum {
+    _Z_INTEREST_MSG_TYPE_FINAL = 0,
+    _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER,
+    _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE,
+    _Z_INTEREST_MSG_TYPE_DECL_TOKEN,
+    _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER,
+    _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE,
+    _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN,
+} _z_interest_msg_type_t;
+
+typedef struct _z_interest_msg_t {
+    uint8_t type;
+    uint32_t id;
+} _z_interest_msg_t;
+
+/**
+ * The callback signature of the functions handling interest messages.
+ */
+typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, void *arg);
+
+typedef struct {
+    _z_keyexpr_t _key;
+    uint32_t _id;
+    _z_interest_handler_t _callback;
+    void *_arg;
+    uint8_t _flags;
+} _z_session_interest_t;
+
+_Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
+void _z_session_interest_clear(_z_session_interest_t *res);
+
+_Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
+_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
+               _z_noop_copy)
+_Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

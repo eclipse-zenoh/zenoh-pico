@@ -29,6 +29,12 @@ _Bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { r
 
 void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
 
+void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src) {
+    _z_keyexpr_copy(&dst->_key, &src->_key);
+    dst->_id = src->_id;
+    dst->_refcount = src->_refcount;
+}
+
 void _z_resource_free(_z_resource_t **res) {
     _z_resource_t *ptr = *res;
 
