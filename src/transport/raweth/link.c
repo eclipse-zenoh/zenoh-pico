@@ -29,7 +29,7 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 #define RAWETH_CFG_TUPLE_SEPARATOR '#'
-#define RAWETH_CFG_LIST_SEPARATOR ','
+#define RAWETH_CFG_LIST_SEPARATOR ","
 
 #define RAWETH_CONFIG_ARGC 4
 
@@ -120,7 +120,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     size_t size = 0;
     strcpy(s_mapping, cfg_str);
     // Parse list
-    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
+    const char *delim = RAWETH_CFG_LIST_SEPARATOR;
     char *entry = strtok(s_mapping, delim);
     while (entry != NULL) {
         // Check entry
@@ -128,7 +128,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
             zp_free(s_mapping);
             return 0;
         }
-        size += 1;
+        size++;
         entry = strtok(NULL, delim);
     }
     // Clean up
@@ -155,14 +155,14 @@ static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_
     }
     size_t idx = 0;
     // Parse list
-    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
+    const char *delim = RAWETH_CFG_LIST_SEPARATOR;
     char *entry = strtok(s_mapping, delim);
     while ((entry != NULL) && (idx < _zp_raweth_mapping_array_len(array))) {
         // Copy data into array
         _Z_CLEAN_RETURN_IF_ERR(_z_get_mapping_entry(entry, _zp_raweth_mapping_array_get(array, idx)),
                                zp_free(s_mapping));
         // Next iteration
-        idx += 1;
+        idx++;
         entry = strtok(NULL, delim);
     }
     // Clean up
@@ -184,7 +184,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
     strcpy(s_whitelist, cfg_str);
     // Parse list
     size_t size = 0;
-    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
+    const char *delim = RAWETH_CFG_LIST_SEPARATOR;
     char *entry = strtok(s_whitelist, delim);
     while (entry != NULL) {
         // Check entry
@@ -192,7 +192,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
             zp_free(s_whitelist);
             return 0;
         }
-        size += 1;
+        size++;
         entry = strtok(NULL, delim);
     }
     // Parse last entry
@@ -221,7 +221,7 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
     }
     size_t idx = 0;
     // Parse list
-    char delim[] = {RAWETH_CFG_LIST_SEPARATOR};
+    const char *delim = RAWETH_CFG_LIST_SEPARATOR;
     char *entry = strtok(s_whitelist, delim);
     while ((entry != NULL) && (idx < _zp_raweth_whitelist_array_len(array))) {
         // Convert address from string to int array
@@ -234,7 +234,7 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
         memcpy(elem->_mac, addr, _ZP_MAC_ADDR_LENGTH);
         zp_free(addr);
         // Next iteration
-        idx += 1;
+        idx++;
         entry = strtok(NULL, delim);
     }
     // Clean up
@@ -244,12 +244,12 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
 
 static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *storage) {
     size_t len = strlen(entry);
-    const char *entry_end = entry + (len - 1);
+    const char *entry_end = &entry[len - (size_t)1];
 
     // Get first tuple member (keyexpr)
     char *p_start = &entry[0];
     char *p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
-    size_t ke_len = p_end - p_start;
+    size_t ke_len = (uintptr_t)p_end - (uintptr_t)p_start;
     char *ke_suffix = (char *)zp_malloc(ke_len);
     if (ke_suffix == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -258,7 +258,8 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     storage->_keyexpr = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, ke_suffix);
 
     // Check second entry (address)
-    p_start = p_end + 1;
+    p_start = p_end;
+    p_start++;
     p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
     *p_end = '\0';
     uint8_t *addr = _z_parse_address_raweth(p_start);
@@ -267,7 +268,8 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     *p_end = RAWETH_CFG_TUPLE_SEPARATOR;
 
     // Check optional third entry (vlan id)
-    p_start = p_end + 1;
+    p_start = p_end;
+    p_start++;
     if (p_start >= entry_end) {  // No entry
         storage->_has_vlan = false;
     } else {
@@ -278,7 +280,8 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
 }
 static _Bool _z_valid_mapping_entry(char *entry) {
     size_t len = strlen(entry);
-    const char *entry_end = entry + (len - 1);
+    const char *entry_end = &entry[len - (size_t)1];
+
     // Check first tuple member (keyexpr)
     char *p_start = &entry[0];
     char *p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
@@ -286,7 +289,8 @@ static _Bool _z_valid_mapping_entry(char *entry) {
         return false;
     }
     // Check second entry (address)
-    p_start = p_end + 1;
+    p_start = p_end;
+    p_start++;
     if (p_start > entry_end) {
         return false;
     }
@@ -374,7 +378,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     }
     // Init socket mapping
     size_t size = _z_valid_mapping_raweth(&self->_endpoint._config);
-    if (size != 0) {
+    if (size != (size_t)0) {
         _Z_RETURN_IF_ERR(_z_get_mapping_raweth(&self->_endpoint._config, &self->_socket._raweth._mapping, size));
     } else {
         _Z_DEBUG("Invalid locator mapping, using default value.");
@@ -387,7 +391,7 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     }
     // Init socket whitelist
     size = _z_valid_whitelist_raweth(&self->_endpoint._config);
-    if (size != 0) {
+    if (size != (size_t)0) {
         _Z_RETURN_IF_ERR(_z_get_whitelist_raweth(&self->_endpoint._config, &self->_socket._raweth._whitelist, size));
     } else {
         _Z_DEBUG("Invalid locator whitelist, filtering deactivated.");

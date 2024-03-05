@@ -103,7 +103,7 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     // Address filtering (only if there is a whitelist)
     if (_zp_raweth_whitelist_array_len(whitelist) > 0) {
         is_valid = false;
-        _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+        const _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
         for (size_t i = 0; i < _zp_raweth_whitelist_array_len(whitelist); i++) {
             const _zp_raweth_whitelist_entry_t *entry = _zp_raweth_whitelist_array_get(whitelist, i);
             if (memcmp(&header->smac, entry->_mac, _ZP_MAC_ADDR_LENGTH) == 0) {

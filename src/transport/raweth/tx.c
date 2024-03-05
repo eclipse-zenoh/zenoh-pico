@@ -39,7 +39,7 @@ static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _ZP_UNUS
 static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
     for (int i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
-        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
         if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, entry->_keyexpr._suffix) != _Z_RES_OK) {
             continue;
         }
@@ -56,7 +56,7 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
     }
     if (keyexpr == NULL) {
         // Store default value into socket
-        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, 0);
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, 0);
         memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
         uint16_t vlan = entry->_vlan;
         sock->_has_vlan = entry->_has_vlan;
@@ -72,7 +72,7 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
             _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
         }
         // Store data into socket
-        _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, idx);
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, idx);
         memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
         uint16_t vlan = entry->_vlan;
         sock->_has_vlan = entry->_has_vlan;
