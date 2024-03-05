@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/system/deprecated.h"
+#include "zenoh-pico/deprecated/platform.h"
 #include "zenoh-pico/system/platform-common.h"
 
 #endif /* ZENOH_PICO_SYSTEM_PLATFORM_H */

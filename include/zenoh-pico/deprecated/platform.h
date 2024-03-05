@@ -10,8 +10,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_PLATFORM_DEPRECATED_H
-#define ZENOH_PICO_PLATFORM_DEPRECATED_H
+#ifndef ZENOH_PICO_DEPRECATED_PLATFORM_H
+#define ZENOH_PICO_DEPRECATED_PLATFORM_H
 
 #include <stdint.h>
 

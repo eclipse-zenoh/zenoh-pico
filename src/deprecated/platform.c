@@ -12,7 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/system/deprecated.h"
+#include "zenoh-pico/deprecated/platform.h"
+
 #include "zenoh-pico/system/platform-common.h"
 
 uint8_t zp_random_u8(void) { return z_random_u8(); };
