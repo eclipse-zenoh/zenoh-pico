@@ -133,34 +133,34 @@ int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
     // Set header
     uint8_t header = _Z_DECL_INTEREST_MID;
     if (_Z_HAS_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_CURRENT)) {
-        _Z_SET_FLAG(header, _Z_INTEREST_FLAG_CURRENT);
+        header |= _Z_INTEREST_FLAG_CURRENT;
     }
     if (_Z_HAS_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_FUTURE)) {
-        _Z_SET_FLAG(header, _Z_INTEREST_FLAG_FUTURE);
+        header |= _Z_INTEREST_FLAG_FUTURE;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Set id
     _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
     // Copy flags but clear double use ones.
     uint8_t interest_flags = decl->interest_flags;
-    _Z_CLEAR_FLAG(interest_flags, _Z_INTEREST_FLAG_CURRENT);
-    _Z_CLEAR_FLAG(interest_flags, _Z_INTEREST_FLAG_FUTURE);
+    interest_flags &= ~_Z_DECL_SUBSCRIBER_FLAG_N;
+    interest_flags &= ~_Z_DECL_SUBSCRIBER_FLAG_M;
     // Process restricted flag
     if (_Z_HAS_FLAG(interest_flags, _Z_INTEREST_FLAG_RESTRICTED)) {
         // Set Named & Mapping flags
         _Bool has_kesuffix = _z_keyexpr_has_suffix(decl->_keyexpr);
         if (has_kesuffix) {
-            _Z_SET_FLAG(interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N);
+            interest_flags |= _Z_DECL_SUBSCRIBER_FLAG_N;
         }
         if (_z_keyexpr_is_local(&decl->_keyexpr)) {
-            _Z_SET_FLAG(interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M);
+            interest_flags |= _Z_DECL_SUBSCRIBER_FLAG_M;
         }
         // Set decl flags & keyexpr
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, decl->interest_flags));
         _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &decl->_keyexpr));
     } else {
         // Set decl flags
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, decl->interest_flags));
     }
     return _Z_RES_OK;
 }
@@ -398,13 +398,13 @@ int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t
         }
     }
     // Replace named & mapping by current & future flags
-    _Z_CLEAR_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M);
-    _Z_CLEAR_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N);
+    decl->interest_flags &= ~_Z_DECL_SUBSCRIBER_FLAG_M;
+    decl->interest_flags &= ~_Z_DECL_SUBSCRIBER_FLAG_N;
     if (_Z_HAS_FLAG(header, _Z_INTEREST_FLAG_CURRENT)) {
-        _Z_SET_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_CURRENT);
+        decl->interest_flags |= _Z_INTEREST_FLAG_CURRENT;
     }
     if (_Z_HAS_FLAG(header, _Z_INTEREST_FLAG_FUTURE)) {
-        _Z_SET_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_FUTURE);
+        decl->interest_flags |= _Z_INTEREST_FLAG_FUTURE;
     }
     // Decode extention
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
