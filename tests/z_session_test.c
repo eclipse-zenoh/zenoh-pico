@@ -40,7 +40,7 @@ int main(void) {
     }
 
     // Commented out wait for 1 second. Stopping should work without it.
-    // zp_sleep_ms(1000);
+    // z_sleep_ms(1000);
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));

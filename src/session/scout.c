@@ -55,8 +55,8 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                 // The receiving buffer
                 _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);
 
-                zp_clock_t start = zp_clock_now();
-                while (zp_clock_elapsed_ms(&start) < period) {
+                z_clock_t start = z_clock_now();
+                while (z_clock_elapsed_ms(&start) < period) {
                     // Eventually read hello messages
                     _z_zbuf_reset(&zbf);
 
@@ -76,7 +76,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                     switch (_Z_MID(s_msg._header)) {
                         case _Z_MID_HELLO: {
                             _Z_INFO("Received _Z_HELLO message");
-                            _z_hello_t *hello = (_z_hello_t *)zp_malloc(sizeof(_z_hello_t));
+                            _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
                                 hello->version = s_msg._body._hello._version;
                                 hello->whatami = s_msg._body._hello._whatami;

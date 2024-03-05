@@ -371,7 +371,7 @@ typedef struct {
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_attr_t *task_attributes;
+    z_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif
@@ -383,7 +383,7 @@ typedef struct {
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_attr_t *task_attributes;
+    z_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif

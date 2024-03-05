@@ -218,7 +218,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
-                ke->_suffix = zp_malloc(len + 1);
+                ke->_suffix = z_malloc(len + 1);
                 if (!ke->_suffix) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
@@ -255,7 +255,7 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (_z_zbuf_len(zbf) < len) {
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-        ke->_suffix = zp_malloc(len + 1);
+        ke->_suffix = z_malloc(len + 1);
         if (ke->_suffix == NULL) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }

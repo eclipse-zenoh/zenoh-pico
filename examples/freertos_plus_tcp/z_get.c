@@ -76,7 +76,7 @@ void app_main(void) {
     }
 
     while (1) {
-        zp_sleep_s(5);
+        z_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts = z_get_options_default();
         if (strcmp(VALUE, "") != 0) {
