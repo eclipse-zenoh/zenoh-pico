@@ -21,8 +21,4 @@
 #include "zenoh-pico/system/deprecated.h"
 #include "zenoh-pico/system/platform-common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #endif /* ZENOH_PICO_SYSTEM_PLATFORM_H */
