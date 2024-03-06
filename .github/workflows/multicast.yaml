@@ -40,7 +40,7 @@ jobs:
           BUILD_TESTING: OFF
           BUILD_MULTICAST: ON
           BUILD_INTEGRATION: OFF
-          ZENOH_BRANCH: main
+          ZENOH_BRANCH: protocol_changes
 
       - name: Test debug
         run: make test
