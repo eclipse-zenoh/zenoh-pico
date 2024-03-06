@@ -53,7 +53,7 @@ void _z_string_reset(_z_string_t *str) {
 }
 
 void _z_string_clear(_z_string_t *str) {
-    zp_free(str->val);
+    z_free(str->val);
     _z_string_reset(str);
 }
 
@@ -62,7 +62,7 @@ void _z_string_free(_z_string_t **str) {
     if (ptr != NULL) {
         _z_string_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *str = NULL;
     }
 }
@@ -70,7 +70,7 @@ void _z_string_free(_z_string_t **str) {
 _z_string_t _z_string_from_bytes(const _z_bytes_t *bs) {
     _z_string_t s;
     size_t len = bs->len * (size_t)2;
-    char *s_val = (char *)zp_malloc((len + (size_t)1) * sizeof(char));
+    char *s_val = (char *)z_malloc((len + (size_t)1) * sizeof(char));
 
     if (s_val != NULL) {
         const char c[] = "0123456789ABCDEF";
@@ -92,7 +92,7 @@ _z_string_t _z_string_from_bytes(const _z_bytes_t *bs) {
 /*-------- str --------*/
 size_t _z_str_size(const char *src) { return strlen(src) + (size_t)1; }
 
-void _z_str_clear(char *src) { zp_free(src); }
+void _z_str_clear(char *src) { z_free(src); }
 
 void _z_str_free(char **src) {
     char *ptr = *src;
@@ -116,7 +116,7 @@ void _z_str_n_copy(char *dst, const char *src, size_t size) {
 
 char *_z_str_clone(const char *src) {
     size_t len = _z_str_size(src);
-    char *dst = (char *)zp_malloc(len);
+    char *dst = (char *)z_malloc(len);
     if (dst != NULL) {
         _z_str_n_copy(dst, src, len);
     }
@@ -129,7 +129,7 @@ _Bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right
 /*-------- str_array --------*/
 void _z_str_array_init(_z_str_array_t *sa, size_t len) {
     char **val = (char **)&sa->val;
-    *val = (char *)zp_malloc(len * sizeof(char *));
+    *val = (char *)z_malloc(len * sizeof(char *));
     if (*val != NULL) {
         sa->len = len;
     }
@@ -151,9 +151,9 @@ _Bool _z_str_array_is_empty(const _z_str_array_t *sa) { return sa->len == 0; }
 
 void _z_str_array_clear(_z_str_array_t *sa) {
     for (size_t i = 0; i < sa->len; i++) {
-        zp_free(sa->val[i]);
+        z_free(sa->val[i]);
     }
-    zp_free(sa->val);
+    z_free(sa->val);
 }
 
 void _z_str_array_free(_z_str_array_t **sa) {
@@ -161,7 +161,7 @@ void _z_str_array_free(_z_str_array_t **sa) {
     if (ptr != NULL) {
         _z_str_array_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *sa = NULL;
     }
 }

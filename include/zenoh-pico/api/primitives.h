@@ -120,7 +120,7 @@ _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_session_t`.
- * The user is responsible of dropping the returned string using ``zp_free``.
+ * The user is responsible of dropping the returned string using ``z_free``.
  *
  * Parameters:
  *   zs: A loaned instance of the the :c:type:`z_session_t` to resolve the keyexpr.

@@ -44,7 +44,7 @@ void _z_sample_free(_z_sample_t **sample) {
     if (ptr != NULL) {
         _z_sample_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *sample = NULL;
     }
 }
@@ -61,7 +61,7 @@ void _z_hello_free(_z_hello_t **hello) {
     if (ptr != NULL) {
         _z_hello_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *hello = NULL;
     }
 }
@@ -77,7 +77,7 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
     if (ptr != NULL) {
         _z_reply_data_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *reply_data = NULL;
     }
 }
@@ -93,7 +93,7 @@ void _z_value_free(_z_value_t **value) {
     if (ptr != NULL) {
         _z_value_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *value = NULL;
     }
 }

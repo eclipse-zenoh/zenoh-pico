@@ -56,7 +56,7 @@ void _z_locator_free(_z_locator_t **lc) {
     if (ptr != NULL) {
         _z_locator_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *lc = NULL;
     }
 }
@@ -91,7 +91,7 @@ char *_z_locator_protocol_from_str(const char *str) {
         const char *p_end = strchr(p_start, LOCATOR_PROTOCOL_SEPARATOR);
         if ((p_end != NULL) && (p_start != p_end)) {
             size_t p_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-            ret = (char *)zp_malloc(p_len);
+            ret = (char *)z_malloc(p_len);
             if (ret != NULL) {
                 _z_str_n_copy(ret, p_start, p_len);
             }
@@ -118,7 +118,7 @@ char *_z_locator_address_from_str(const char *str) {
 
         if (p_start != p_end) {
             size_t a_len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-            ret = (char *)zp_malloc(a_len);
+            ret = (char *)z_malloc(a_len);
             if (ret != NULL) {
                 _z_str_n_copy(ret, p_start, a_len);
             }
@@ -256,7 +256,7 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
  */
 char *_z_locator_to_str(const _z_locator_t *l) {
     size_t len = _z_locator_strlen(l) + (size_t)1;
-    char *dst = (char *)zp_malloc(len);
+    char *dst = (char *)z_malloc(len);
     if (dst != NULL) {
         __z_locator_onto_str(dst, len, l);
     }
@@ -281,7 +281,7 @@ void _z_endpoint_free(_z_endpoint_t **ep) {
         _z_locator_clear(&ptr->_locator);
         _z_str_intmap_clear(&ptr->_config);
 
-        zp_free(ptr);
+        z_free(ptr);
         *ep = NULL;
     }
 }
@@ -430,7 +430,7 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
         }
 
         // Reconstruct the endpoint as a string
-        ret = (char *)zp_malloc(len);
+        ret = (char *)z_malloc(len);
         if (ret != NULL) {
             ret[0] = '\0';
             len = len - (size_t)1;

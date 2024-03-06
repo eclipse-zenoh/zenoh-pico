@@ -362,8 +362,8 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
     _z_zint_t len = 0;
     ret |= _z_zint_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
-        if (_z_zbuf_len(zbf) >= len) {                       // Check if we have enough bytes to read
-            char *tmp = (char *)zp_malloc(len + (size_t)1);  // Allocate space for the string terminator
+        if (_z_zbuf_len(zbf) >= len) {                      // Check if we have enough bytes to read
+            char *tmp = (char *)z_malloc(len + (size_t)1);  // Allocate space for the string terminator
             if (tmp != NULL) {
                 tmp[len] = '\0';
                 _z_zbuf_read_bytes(zbf, (uint8_t *)tmp, 0, len);

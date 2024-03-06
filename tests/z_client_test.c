@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
     zp_start_read_task(z_loan(s1), NULL);
     zp_start_lease_task(z_loan(s1), NULL);
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     config = z_config_default();
     zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     zp_start_read_task(z_loan(s2), NULL);
     zp_start_lease_task(z_loan(s2), NULL);
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Declare resources on both sessions
     char *s1_res = (char *)malloc(64);
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
         rids1[i] = expr;
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
@@ -165,12 +165,12 @@ int main(int argc, char **argv) {
         rids2[i] = expr;
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Declare subscribers and queryabales on second session
     for (unsigned int i = 0; i < SET; i++) {
         z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
-        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)zp_malloc(sizeof(z_owned_subscriber_t));
+        z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         *sub = z_declare_subscriber(z_loan(s2), z_loan(rids2[i]), &callback, NULL);
         assert(z_check(*sub));
         printf("Declared subscription on session 2: %ju %u %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id,
@@ -178,12 +178,12 @@ int main(int argc, char **argv) {
         subs2 = _z_list_push(subs2, sub);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_owned_closure_query_t callback = z_closure(query_handler, NULL, &idx[i]);
-        z_owned_queryable_t *qle = (z_owned_queryable_t *)zp_malloc(sizeof(z_owned_queryable_t));
+        z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         *qle = z_declare_queryable(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
         assert(z_check(*qle));
         printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_value->_entity_id, (z_zint_t)0,
@@ -191,21 +191,21 @@ int main(int argc, char **argv) {
         qles2 = _z_list_push(qles2, qle);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Declare publisher on first session
     for (unsigned int i = 0; i < SET; i++) {
-        z_owned_publisher_t *pub = (z_owned_publisher_t *)zp_malloc(sizeof(z_owned_publisher_t));
+        z_owned_publisher_t *pub = (z_owned_publisher_t *)z_malloc(sizeof(z_owned_publisher_t));
         *pub = z_declare_publisher(z_loan(s1), z_loan(rids1[i]), NULL);
         if (!z_check(*pub)) printf("Declared publisher on session 1: %zu\n", z_loan(*pub)._val->_id);
         pubs1 = _z_list_push(pubs1, pub);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Write data from first session
     size_t len = MSG_LEN;
-    uint8_t *payload = (uint8_t *)zp_malloc(len);
+    uint8_t *payload = (uint8_t *)z_malloc(len);
     memset(payload, 1, MSG_LEN);
 
     total = MSG * SET;
@@ -220,12 +220,12 @@ int main(int argc, char **argv) {
     }
 
     // Wait to receive all the data
-    zp_clock_t now = zp_clock_now();
+    z_clock_t now = z_clock_now();
     unsigned int expected = is_reliable ? total : 1;
     while (datas < expected) {
-        assert(zp_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for datas... %u/%u\n", datas, expected);
-        zp_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     if (is_reliable == true)
         assert(datas == expected);
@@ -233,13 +233,13 @@ int main(int argc, char **argv) {
         assert(datas >= expected);
     datas = 0;
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Write fragment data from first session
     if (is_reliable) {
-        zp_free((uint8_t *)payload);
+        z_free((uint8_t *)payload);
         len = FRAGMENT_MSG_LEN;
-        payload = (uint8_t *)zp_malloc(len);
+        payload = (uint8_t *)z_malloc(len);
         memset(payload, 1, FRAGMENT_MSG_LEN);
 
         total = FRAGMENT_MSG_NB * SET;
@@ -253,17 +253,17 @@ int main(int argc, char **argv) {
             }
         }
         // Wait to receive all the data
-        now = zp_clock_now();
+        now = z_clock_now();
         while (datas < total) {
-            assert(zp_clock_elapsed_s(&now) < TIMEOUT);
+            assert(z_clock_elapsed_s(&now) < TIMEOUT);
             printf("Waiting for fragment datas... %u/%u\n", datas, total);
-            zp_sleep_s(SLEEP);
+            z_sleep_s(SLEEP);
         }
         if (is_reliable == true) {
             assert(datas == total);
         }
         datas = 0;
-        zp_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
 
     // Query data from first session
@@ -278,12 +278,12 @@ int main(int argc, char **argv) {
     }
 
     // Wait to receive all the expected queries
-    now = zp_clock_now();
+    now = z_clock_now();
     expected = is_reliable ? total : 1;
     while (queries < expected) {
-        assert(zp_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for queries... %u/%u\n", queries, expected);
-        zp_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     if (is_reliable == true)
         assert(queries == expected);
@@ -292,11 +292,11 @@ int main(int argc, char **argv) {
     queries = 0;
 
     // Wait to receive all the expected replies
-    now = zp_clock_now();
+    now = z_clock_now();
     while (replies < expected) {
-        assert(zp_clock_elapsed_s(&now) < TIMEOUT);
+        assert(z_clock_elapsed_s(&now) < TIMEOUT);
         printf("Waiting for replies... %u/%u\n", replies, expected);
-        zp_sleep_s(SLEEP);
+        z_sleep_s(SLEEP);
     }
     if (is_reliable == true)
         assert(replies == expected);
@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
         assert(replies >= expected);
     replies = 0;
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Undeclare publishers on first session
     while (pubs1) {
@@ -314,7 +314,7 @@ int main(int argc, char **argv) {
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free, NULL);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Undeclare subscribers and queryables on second session
     while (subs2) {
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
         qles2 = _z_list_pop(qles2, _z_noop_elem_free, NULL);
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
@@ -341,14 +341,14 @@ int main(int argc, char **argv) {
         z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])._id);
         z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
@@ -363,12 +363,12 @@ int main(int argc, char **argv) {
     printf("Closing session 1\n");
     z_close(z_move(s1));
 
-    zp_sleep_s(SLEEP);
+    z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
     z_close(z_move(s2));
 
-    zp_free((uint8_t *)payload);
+    z_free((uint8_t *)payload);
     payload = NULL;
 
     free(s1_res);

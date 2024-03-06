@@ -23,11 +23,11 @@
 
 #if Z_FEATURE_PUBLICATION == 1
 int send_packets(unsigned long pkt_len, z_owned_publisher_t *pub, uint8_t *value) {
-    zp_clock_t test_start = zp_clock_now();
+    z_clock_t test_start = z_clock_now();
     unsigned long elapsed_us = 0;
     while (elapsed_us < TEST_DURATION_US) {
         z_publisher_put(z_loan(*pub), (const uint8_t *)value, pkt_len, NULL);
-        elapsed_us = zp_clock_elapsed_us(&test_start);
+        elapsed_us = z_clock_elapsed_us(&test_start);
     }
     return 0;
 }
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     // Wait for joins
     if (strcmp(mode, "peer") == 0) {
         printf("Waiting for JOIN messages\n");
-        zp_sleep_s(3);
+        z_sleep_s(3);
     }
     // Send packets
     for (size_t i = 0; i < ARRAY_SIZE(len_array); i++) {

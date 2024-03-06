@@ -94,7 +94,7 @@
     } name##_rc_t;                                                                        \
     static inline name##_rc_t name##_rc_new(void) {                                       \
         name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
         if (p.in != NULL) {                                                               \
             memset(&p.in->val, 0, sizeof(type##_t));                                      \
             _ZP_RC_OP_INIT_CNT                                                            \
@@ -103,7 +103,7 @@
     }                                                                                     \
     static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
         name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
         if (p.in != NULL) {                                                               \
             p.in->val = val;                                                              \
             _ZP_RC_OP_INIT_CNT                                                            \
@@ -117,7 +117,7 @@
         return c;                                                                         \
     }                                                                                     \
     static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
-        name##_rc_t *c = (name##_rc_t *)zp_malloc(sizeof(name##_rc_t));                   \
+        name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                    \
         if (c != NULL) {                                                                  \
             c->in = p->in;                                                                \
             _ZP_RC_OP_INCR_CNT                                                            \
@@ -136,7 +136,7 @@
         }                                                                                 \
         _ZP_RC_OP_SYNC                                                                    \
         type##_clear(&p->in->val);                                                        \
-        zp_free(p->in);                                                                   \
+        z_free(p->in);                                                                    \
         return true;                                                                      \
     }
 

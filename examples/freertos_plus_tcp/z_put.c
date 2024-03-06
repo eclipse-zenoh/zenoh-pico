@@ -68,7 +68,7 @@ void app_main(void) {
     }
 
     while (1) {
-        zp_sleep_s(1);
+        z_sleep_s(1);
     }
 
     // Clean up

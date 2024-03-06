@@ -27,14 +27,14 @@
 #define FLIPPER_SERIAL_TIMEOUT_MS 200
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef FuriThread* zp_task_t;
-typedef uint32_t zp_task_attr_t;
-typedef FuriMutex* zp_mutex_t;
-typedef void* zp_condvar_t;
+typedef FuriThread* z_task_t;
+typedef uint32_t z_task_attr_t;
+typedef FuriMutex* z_mutex_t;
+typedef void* z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timespec zp_clock_t;
-typedef struct timeval zp_time_t;
+typedef struct timespec z_clock_t;
+typedef struct timeval z_time_t;
 
 typedef struct {
 #if Z_FEATURE_LINK_SERIAL == 1
