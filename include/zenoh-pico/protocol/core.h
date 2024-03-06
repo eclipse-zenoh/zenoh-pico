@@ -239,20 +239,20 @@ typedef struct {
  *   _z_encoding_t encoding: The encoding for the value of this data sample.
  */
 typedef struct {
-    // tags{c._z_sample_t.key}
+    // tags{c.z_sample_t.key}
     _z_keyexpr_t keyexpr;
-    // tags{c._z_sample_t.value}
+    // tags{c.z_sample_t.value}
     _z_bytes_t payload;
-    // tags{c._z_sample_t.encoding}
+    // tags{c.z_sample_t.encoding}
     _z_timestamp_t timestamp;
-    // tags{c._z_sample_t.encoding}
+    // tags{c.z_sample_t.encoding}
     _z_encoding_t encoding;
-    // tags{c._z_sample_t.kind}
+    // tags{c.z_sample_t.kind}
     z_sample_kind_t kind;
-    // tags{c._z_sample_t.qos}
+    // tags{c.z_sample_t.qos}
     _z_qos_t qos;
 #if Z_FEATURE_ATTACHMENT == 1
-    // tags{c._z_sample_t.attachment}
+    // tags{c.z_sample_t.attachment}
     z_attachment_t attachment;
 #endif
 } _z_sample_t;
@@ -265,9 +265,9 @@ typedef struct {
  *   _z_bytes_t payload: The payload of this zenoh value.
  */
 typedef struct {
-    // tags{c._z_value_t.payload}
+    // tags{c.z_value_t.payload}
     _z_bytes_t payload;
-    // tags{c._z_value_t.encoding}
+    // tags{c.z_value_t.encoding}
     _z_encoding_t encoding;
 } _z_value_t;
 _z_value_t _z_value_null(void);
@@ -285,13 +285,13 @@ void _z_value_free(_z_value_t **hello);
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    // tags{c._z_hello_t.zid}
+    // tags{c.z_hello_t.zid}
     _z_id_t zid;
-    // tags{c._z_hello_t.locators}
+    // tags{c.z_hello_t.locators}
     _z_str_array_t locators;
-    // tags{c._z_hello_t.whatami}
+    // tags{c.z_hello_t.whatami}
     z_whatami_t whatami;
-    // tags{c._z_hello_t.version}
+    // tags{c.z_hello_t.version}
     uint8_t version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
