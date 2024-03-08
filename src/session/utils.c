@@ -22,6 +22,7 @@
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
