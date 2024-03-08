@@ -56,12 +56,11 @@ static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_sessi
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if ((intr->in->val._flags & flags) == 0) {
-            continue;
-        }
-        if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
-                                  strlen(key._suffix)) == true) {
-            ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
+        if ((intr->in->val._flags & flags) != 0) {
+            if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
+                                      strlen(key._suffix)) == true) {
+                ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
+            }
         }
         xs = _z_session_interest_rc_list_tail(xs);
     }
