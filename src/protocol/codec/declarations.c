@@ -156,11 +156,11 @@ int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
             _Z_SET_FLAG(interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M);
         }
         // Set decl flags & keyexpr
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, decl->interest_flags));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
         _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &decl->_keyexpr));
     } else {
         // Set decl flags
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, decl->interest_flags));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
     }
     return _Z_RES_OK;
 }
