@@ -18,14 +18,27 @@
 #include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+#include <freertos/event_groups.h>
 
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
 #include <pthread.h>
 
-typedef TaskHandle_t zp_task_t;
-typedef void *zp_task_attr_t;  // Not used in ESP32
+typedef struct {
+    const char *name;
+    UBaseType_t priority;
+    size_t stack_depth;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    _Bool static_allocation;
+    StackType_t *stack_buffer;
+    StaticTask_t *task_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} zp_task_attr_t;
+typedef struct {
+    TaskHandle_t handle;
+    EventGroupHandle_t join_event;
+} zp_task_t;
 typedef pthread_mutex_t zp_mutex_t;
 typedef pthread_cond_t zp_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1

@@ -279,8 +279,10 @@ template<> inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_pub
 template<> inline void z_drop(z_owned_keyexpr_t* v) { z_keyexpr_drop(v); }
 template<> inline void z_drop(z_owned_config_t* v) { z_config_drop(v); }
 template<> inline void z_drop(z_owned_scouting_config_t* v) { z_scouting_config_drop(v); }
+#if Z_FEATURE_SUBSCRIPTION==1
 template<> inline int8_t z_drop(z_owned_pull_subscriber_t* v) { return z_undeclare_pull_subscriber(v); }
 template<> inline int8_t z_drop(z_owned_subscriber_t* v) { return z_undeclare_subscriber(v); }
+#endif
 template<> inline int8_t z_drop(z_owned_queryable_t* v) { return z_undeclare_queryable(v); }
 template<> inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
 template<> inline void z_drop(z_owned_hello_t* v) { z_hello_drop(v); }

@@ -92,7 +92,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         }
         // Wrap the main buffer for to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_zbuf, to_read);
-
+        
         // Mark the session that we have received data
         ztu->_received = true;
 

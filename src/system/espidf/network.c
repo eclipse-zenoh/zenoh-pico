@@ -592,7 +592,7 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
 
     const int uart_buffer_size = (1024 * 2);
     QueueHandle_t uart_queue;
-    uart_driver_install(sock->_serial, uart_buffer_size, 0, 100, &uart_queue, 0);
+    uart_driver_install(sock->_serial, uart_buffer_size, 0, 100, NULL, 0);
     uart_flush_input(sock->_serial);
 
     return ret;
@@ -634,23 +634,19 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) 
 
     uint8_t *before_cobs = (uint8_t *)zp_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
-    uint8_t timeout_count = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
-        int r = uart_read_bytes(sock._serial, &before_cobs[i], 1, 100);
+        int r = uart_read_bytes(sock._serial, &before_cobs[i], 1, 1000);
         if (r == 0) {
-            timeout_count++;
-            if (timeout_count > 10) {
                 _Z_DEBUG("Timeout reading from serial");
                 zp_free(before_cobs);
                 return 0;
-            }
         } else if (r == 1) {
             rb = rb + (size_t)1;
             if (before_cobs[i] == (uint8_t)0x00) {
                 break;
             }
         } else {
-            _Z_DEBUG("Error reading from serial");
+            _Z_ERROR("Error reading from serial");
             zp_free(before_cobs);
             return _Z_ERR_GENERIC;
         }
@@ -681,17 +677,16 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) 
 
         uint32_t c_crc = _z_crc32(ptr, payload_len);
         if (c_crc != crc) {
-            _Z_DEBUG("CRC mismatch: %d != %d ", c_crc, crc);
+            _Z_ERROR("CRC mismatch: %d != %d ", c_crc, crc);
             ret = _Z_ERR_GENERIC;
         }
     } else {
-        _Z_DEBUG("length mismatch => %d <> %d ", trb, payload_len + (uint16_t)6);
+        _Z_ERROR("length mismatch => %d <> %d ", trb, payload_len + (uint16_t)6);
         ret = _Z_ERR_GENERIC;
     }
 
     zp_free(before_cobs);
     zp_free(after_cobs);
-    _Z_DEBUG("payload_len = %d ", payload_len);
     rb = payload_len;
     if (ret != _Z_RES_OK) {
         rb = SIZE_MAX;
