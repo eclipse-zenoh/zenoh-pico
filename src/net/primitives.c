@@ -237,7 +237,12 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->in->val._key);
+    _z_declaration_t declaration;
+    if (sub->_zn.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
+    } else {
+        declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->in->val._key);
+    }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
     if (_z_send_n_msg(&sub->_zn.in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -318,7 +323,12 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_undecl_queryable(qle->_entity_id, &q->in->val._key);
+    _z_declaration_t declaration;
+    if (qle->_zn.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
+    } else {
+        declaration = _z_make_undecl_queryable(qle->_entity_id, &q->in->val._key);
+    }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
     if (_z_send_n_msg(&qle->_zn.in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -461,7 +471,12 @@ int8_t _z_undeclare_interest(_z_session_t *zn, uint32_t interest_id) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_undecl_interest(sintr->in->val._id, &sintr->in->val._key);
+    _z_declaration_t declaration;
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        declaration = _z_make_undecl_interest(sintr->in->val._id, NULL);
+    } else {
+        declaration = _z_make_undecl_interest(sintr->in->val._id, &sintr->in->val._key);
+    }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
     if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
