@@ -17,8 +17,8 @@
 
 #include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include <freertos/event_groups.h>
+#include <freertos/task.h>
 
 #include "zenoh-pico/config.h"
 
@@ -52,7 +52,11 @@ typedef struct {
         int _fd;
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        uart_port_t _serial;
+        struct {
+            uart_port_t _serial;
+            uint8_t *before_cobs;
+            uint8_t *after_cobs;
+        };
 #endif
     };
 } _z_sys_net_socket_t;
