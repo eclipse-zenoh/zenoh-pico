@@ -166,20 +166,21 @@ void _z_msg_put_clear(_z_msg_put_t *);
 /*------------------ Query Message ------------------*/
 //   7 6 5 4 3 2 1 0
 //  +-+-+-+-+-+-+-+-+
-//  |Z|C|P|  QUERY  |
+//  |Z|P|C|  QUERY  |
 //  +-+-+-+---------+
-//  ~ params        ~  if P==1 -- <utf8;z32>
-//  +---------------+
 //  ~ consolidation ~  if C==1 -- u8
+//  +---------------+
+//  ~ params        ~  if P==1 -- <utf8;z16>
 //  +---------------+
 //  ~ [qry_exts]    ~  if Z==1
 //  +---------------+
-#define _Z_FLAG_Z_Q_P 0x20  // 1 << 6 | Period            if P==1 then a period is present
+#define _Z_FLAG_Z_Q_C 0x20  // 1 << 5 | Consolidation if C==1 then consolidation is present
+#define _Z_FLAG_Z_Q_P 0x40  // 1 << 6 | Params        if P==1 then parameters are present
 typedef struct {
     _z_bytes_t _parameters;
     _z_source_info_t _ext_info;
     _z_value_t _ext_value;
-    z_consolidation_mode_t _ext_consolidation;
+    z_consolidation_mode_t _consolidation;
 #if Z_FEATURE_ATTACHMENT == 1
     _z_owned_encoded_attachment_t _ext_attachment;
 #endif
@@ -187,7 +188,6 @@ typedef struct {
 typedef struct {
     _Bool info;
     _Bool body;
-    _Bool consolidation;
     _Bool attachment;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);

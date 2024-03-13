@@ -1132,7 +1132,7 @@ void pull_message(void) {
 
 _z_msg_query_t gen_query(void) {
     return (_z_msg_query_t){
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
+        ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
         ._parameters = gen_bytes(16),
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
@@ -1140,7 +1140,7 @@ _z_msg_query_t gen_query(void) {
 }
 
 void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
-    assert(left->_ext_consolidation == right->_ext_consolidation);
+    assert(left->_consolidation == right->_consolidation);
     assert_eq_source_info(&left->_ext_info, &right->_ext_info);
     assert_eq_bytes(&left->_parameters, &right->_parameters);
     assert_eq_value(&left->_ext_value, &right->_ext_value);

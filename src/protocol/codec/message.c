@@ -414,21 +414,26 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
 
     _Bool has_params = z_bytes_check(&msg->_parameters);
     if (has_params) {
-        header |= _Z_FLAG_Z_P;
+        _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
+    }
+    _Bool has_consolidation = (msg->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT);
+    if (has_consolidation) {
+        _Z_SET_FLAG(header, _Z_FLAG_Z_Q_C);
     }
     _z_msg_query_reqexts_t required_exts = _z_msg_query_required_extensions(msg);
-    if (required_exts.body || required_exts.consolidation || required_exts.info || required_exts.attachment) {
+    if (required_exts.body || required_exts.info || required_exts.attachment) {
         header |= _Z_FLAG_Z_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-
+    if (has_consolidation) {
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_consolidation));
+    }
     if (has_params) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_parameters));
     }
-
     if (required_exts.body) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03;
-        if (required_exts.consolidation || required_exts.info || required_exts.attachment) {
+        if (required_exts.info || required_exts.attachment) {
             extheader |= _Z_FLAG_Z_Z;
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
@@ -438,14 +443,6 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         _Z_RETURN_IF_ERR(_z_encoding_prefix_encode(wbf, msg->_ext_value.encoding.prefix));
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_value.encoding.suffix));
         _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &msg->_ext_value.payload));
-    }
-    if (required_exts.consolidation) {
-        uint8_t extheader = _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M | 0x02;
-        if (required_exts.info || required_exts.attachment) {
-            extheader |= _Z_FLAG_Z_Z;
-        }
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_consolidation));
     }
     if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
@@ -473,10 +470,6 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {  // Source Info
             _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
             ret = _z_source_info_decode(&msg->_ext_info, &zbf);
-            break;
-        }
-        case _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M | 0x02: {  // Consolidation
-            msg->_ext_consolidation = extension->_body._zint._val;
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Payload
@@ -507,18 +500,21 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_QUERY");
     *msg = (_z_msg_query_t){0};
-    msg->_ext_consolidation = Z_CONSOLIDATION_MODE_AUTO;
     int8_t ret = _Z_RES_OK;
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_P)) {
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q_C)) {
+        _Z_RETURN_IF_ERR(_z_uint8_decode((uint8_t *)&msg->_consolidation, zbf));
+    } else {
+        msg->_consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
+    }
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q_P)) {
         _Z_RETURN_IF_ERR(_z_bytes_decode(&msg->_parameters, zbf));
     } else {
         _z_bytes_clear(&msg->_parameters);
     }
-
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_query_decode_extensions, msg));
     }
-
     return ret;
 }
 

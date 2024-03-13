@@ -182,7 +182,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                 ._key = _z_keyexpr_steal(key),
                 ._tag = _Z_REQUEST_QUERY,
                 ._body._query = {._parameters = _z_bytes_steal(parameters),
-                                 ._ext_consolidation = consolidation,
+                                 ._consolidation = consolidation,
                                  ._ext_value = _z_value_steal(value),
                                  ._ext_info = _z_source_info_null(),
 #if Z_FEATURE_ATTACHMENT == 1
