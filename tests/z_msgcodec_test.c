@@ -518,8 +518,9 @@ void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
     ts.time = gen_uint64();
-    _z_bytes_t id = gen_bytes(16);
-    memcpy(ts.id.id, id.start, id.len);
+    for (size_t i = 0; i < 16; i++) {
+        ts.id.id[i] = gen_uint8() & 0x7f;  // 0b01111111
+    }
     return ts;
 }
 
