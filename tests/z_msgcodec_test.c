@@ -1661,6 +1661,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
     _z_network_message_vec_t ret = _z_network_message_vec_make(n);
     for (size_t i = 0; i < n; i++) {
         _z_network_message_t *msg = (_z_network_message_t *)zp_malloc(sizeof(_z_network_message_t));
+        memset(msg, 0, sizeof(_z_network_message_t));
         *msg = gen_net_msg();
         _z_network_message_vec_append(&ret, msg);
     }
@@ -1833,7 +1834,7 @@ void scouting_message(void) {
 int main(void) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
-    for (unsigned int i = 0; i < RUNS; i++) {
+    for (unsigned int i = 0; i < 1; i++) {
         printf("\n\n== RUN %u", i);
 
         // Message fields
