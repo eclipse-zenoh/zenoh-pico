@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_QUERY == 1
+#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
 z_condvar_t cond;
 z_mutex_t mutex;
 
