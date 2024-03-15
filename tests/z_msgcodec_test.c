@@ -1384,7 +1384,7 @@ _z_n_msg_response_t gen_response(void) {
             ret._body._err = gen_err();
         } break;
         case 2: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
+            ret._tag = _Z_RESPONSE_BODY_REPLY;
             ret._body._reply = gen_reply();
         } break;
         default: {
@@ -1835,7 +1835,7 @@ void scouting_message(void) {
 int main(void) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
-    for (unsigned int i = 0; i < 1; i++) {
+    for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
 
         // Message fields
