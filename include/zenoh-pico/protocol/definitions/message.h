@@ -49,36 +49,6 @@
 
 // Flags:
 // - T: Timestamp      If T==1 then the timestamp if present
-// - E: Encoding       If E==1 then the encoding is present
-// - Z: Extension      If Z==1 then at least one extension is present
-//
-//   7 6 5 4 3 2 1 0
-//  +-+-+-+-+-+-+-+-+
-//  |Z|E|T|  REPLY  |
-//  +-+-+-+---------+
-//  ~ ts: <u8;z16>  ~  if T==1
-//  +---------------+
-//  ~   encoding    ~  if E==1
-//  +---------------+
-//  ~  [repl_exts]  ~  if Z==1
-//  +---------------+
-//  ~ pl: <u8;z32>  ~  -- Payload
-//  +---------------+
-typedef struct {
-    _z_timestamp_t _timestamp;
-    _z_value_t _value;
-    _z_source_info_t _ext_source_info;
-    z_consolidation_mode_t _ext_consolidation;
-#if Z_FEATURE_ATTACHMENT == 1
-    _z_owned_encoded_attachment_t _ext_attachment;
-#endif
-} _z_msg_reply_t;
-void _z_msg_reply_clear(_z_msg_reply_t *msg);
-#define _Z_FLAG_Z_R_T 0x20
-#define _Z_FLAG_Z_R_E 0x40
-
-// Flags:
-// - T: Timestamp      If T==1 then the timestamp if present
 // - I: Infrastructure If I==1 then the error is related to the infrastructure else to the user
 // - Z: Extension      If Z==1 then at least one extension is present
 //
@@ -192,5 +162,34 @@ typedef struct {
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
 void _z_msg_query_clear(_z_msg_query_t *msg);
+
+typedef struct {
+    _Bool _is_put;
+    union {
+        _z_msg_del_t _del;
+        _z_msg_put_t _put;
+    } _body;
+} _z_reply_body_t;
+// Flags:
+// - C: Consolidation  If C==1 then consolidation is present
+// - X: Reserved
+// - Z: Extension      If Z==1 then at least one extension is present
+//
+//   7 6 5 4 3 2 1 0
+//  +-+-+-+-+-+-+-+-+
+//  |Z|X|C|  REPLY  |
+//  +-+-+-+---------+
+//  ~ consolidation ~  if C==1
+//  +---------------+
+//  ~  [repl_exts]  ~  if Z==1
+//  +---------------+
+//  ~  ReplyBody    ~  -- Payload
+//  +---------------+
+typedef struct {
+    z_consolidation_mode_t _consolidation;
+    _z_reply_body_t _body;
+} _z_msg_reply_t;
+void _z_msg_reply_clear(_z_msg_reply_t *msg);
+#define _Z_FLAG_Z_R_C 0x20
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H */

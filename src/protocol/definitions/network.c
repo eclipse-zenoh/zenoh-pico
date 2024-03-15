@@ -220,7 +220,7 @@ _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_pu
         ._body._push = {._key = _z_keyexpr_steal(key), ._body = _z_push_body_steal(body)},
     };
 }
-_z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_value_t) value) {
+_z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body) {
     return (_z_network_message_t){
         ._tag = _Z_N_RESPONSE,
         ._body._response =
@@ -230,10 +230,8 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
                 ._request_id = rid,
                 ._body._reply =
                     {
-                        ._timestamp = _z_timestamp_null(),
-                        ._value = _z_value_steal(value),
-                        ._ext_source_info = _z_source_info_null(),
-                        ._ext_consolidation = Z_CONSOLIDATION_MODE_AUTO,
+                        ._consolidation = Z_CONSOLIDATION_MODE_AUTO,
+                        ._body = _z_push_body_steal(body),
                     },
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_timestamp = _z_timestamp_null(),

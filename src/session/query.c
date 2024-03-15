@@ -133,8 +133,7 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
 }
 
 int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
-                                      const _z_bytes_t payload, const _z_encoding_t encoding, const _z_zint_t kind,
-                                      const _z_timestamp_t timestamp) {
+                                      const _z_msg_put_t *msg) {
     int8_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
@@ -156,11 +155,11 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     reply._tag = Z_REPLY_TAG_DATA;
     reply.data.replier_id = zn->_local_zid;
     reply.data.sample.keyexpr = expanded_ke;
-    _z_bytes_copy(&reply.data.sample.payload, &payload);
-    reply.data.sample.encoding.prefix = encoding.prefix;
-    _z_bytes_copy(&reply.data.sample.encoding.suffix, &encoding.suffix);
-    reply.data.sample.kind = kind;
-    reply.data.sample.timestamp = _z_timestamp_duplicate(&timestamp);
+    _z_bytes_copy(&reply.data.sample.payload, &msg->_payload);
+    reply.data.sample.encoding.prefix = msg->_encoding.prefix;
+    _z_bytes_copy(&reply.data.sample.encoding.suffix, &msg->_encoding.suffix);
+    reply.data.sample.kind = Z_SAMPLE_KIND_PUT;
+    reply.data.sample.timestamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
 
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
@@ -173,7 +172,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 
             // Check if this is the same resource key
             if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
-                if (timestamp.time <= pen_rep->_tstamp.time) {
+                if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
                     pen_qry->_pending_replies =
@@ -199,7 +198,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode
                 }
-                pen_rep->_tstamp = _z_timestamp_duplicate(&timestamp);
+                pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
                 pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
             } else {
                 ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;

@@ -18,8 +18,9 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 
-void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_value_clear(&msg->_value); }
+void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
     _z_bytes_clear(&msg->_encoding.suffix);

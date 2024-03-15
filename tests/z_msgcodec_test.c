@@ -1226,18 +1226,14 @@ void ack_message(void) {
 
 _z_msg_reply_t gen_reply(void) {
     return (_z_msg_reply_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
-        ._value = gen_value(),
+        ._consolidation = (gen_uint8() % 4) - 1,
+        ._body = gen_push_body(),
     };
 }
 
 void assert_eq_reply(const _z_msg_reply_t *left, const _z_msg_reply_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert(left->_ext_consolidation == right->_ext_consolidation);
-    assert_eq_value(&left->_value, &right->_value);
+    assert(left->_consolidation == right->_consolidation);
+    assert_eq_push_body(&left->_body, &right->_body);
 }
 
 void reply_message(void) {
