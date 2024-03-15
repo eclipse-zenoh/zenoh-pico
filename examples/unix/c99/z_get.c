@@ -12,6 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <ctype.h>
+#include <errno.h>
+#include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,9 +21,21 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_QUERY == 1
+#define QUERY_TIMEOUT 10  // query timeout in seconds
+#define handle_error_en(en, msg) \
+    do {                         \
+        errno = en;              \
+        perror(msg);             \
+        exit(EXIT_FAILURE);      \
+    } while (0)
+pthread_cond_t cond;
+pthread_mutex_t mutex;
+
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
+    pthread_cond_signal(&cond);
+    pthread_cond_destroy(&cond);
 }
 
 void reply_handler(z_owned_reply_t *reply, void *ctx) {
@@ -73,6 +87,9 @@ int main(int argc, char **argv) {
         }
     }
 
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond, NULL);
+
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (clocator != NULL) {
@@ -102,6 +119,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    pthread_mutex_lock(&mutex);
     printf("Sending Query '%s'...\n", keyexpr);
     z_get_options_t opts = z_get_options_default();
     if (value != NULL) {
@@ -112,6 +130,14 @@ int main(int argc, char **argv) {
         printf("Unable to send query.\n");
         return -1;
     }
+    struct timespec query_timeout;
+    clock_gettime(CLOCK_REALTIME, &query_timeout);
+    query_timeout.tv_sec += QUERY_TIMEOUT;
+    int err = pthread_cond_timedwait(&cond, &mutex, &query_timeout);
+    if (err != 0) {
+        handle_error_en(err, "pthread_cond_timedwait");
+    }
+    pthread_mutex_unlock(&mutex);
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
