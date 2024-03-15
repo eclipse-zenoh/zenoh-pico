@@ -99,7 +99,9 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY or Z_FEATURE_MULTI_THREAD but this example requires "
+        "them.\n");
     return -2;
 }
 #endif
