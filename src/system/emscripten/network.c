@@ -116,9 +116,8 @@ size_t _z_read_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
         z_sleep_ms(WS_LINK_SLEEP);  // WARNING: workaround need to give the hand to the emscripten threads
         rb = recv(sock._ws._fd, ptr, len, 0);
     }
-    // WARNING: workaround as the recv returns -1 not only in case of errors
     if (rb < 0) {
-        rb = 0;
+        rb = SIZE_MAX;
     }
     return rb;
 }
