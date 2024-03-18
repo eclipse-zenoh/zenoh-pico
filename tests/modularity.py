@@ -154,7 +154,7 @@ Sending Query 'demo/example/**'...
     else :
         z_query_expected_status = 254
         z_query_expected_output = ("ERROR: Zenoh pico was compiled without "
-            "Z_FEATURE_QUERY but this example requires it.")
+            "Z_FEATURE_QUERY or Z_FEATURE_MULTI_THREAD but this example requires them.")
 
     # Expected z_queryable output & status
     if args.queryable == 1:
