@@ -56,12 +56,11 @@ static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_sessi
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if ((intr->in->val._flags & flags) == 0) {
-            continue;
-        }
-        if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
-                                  strlen(key._suffix)) == true) {
-            ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
+        if ((intr->in->val._flags & flags) != 0) {
+            if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
+                                      strlen(key._suffix)) == true) {
+                ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
+            }
         }
         xs = _z_session_interest_rc_list_tail(xs);
     }
@@ -291,6 +290,7 @@ int8_t _z_interest_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
 }
 
 int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
+    // TODO process restricted flag & key
     _ZP_UNUSED(key);
     _ZP_UNUSED(id);
     // Check transport type
@@ -298,21 +298,21 @@ int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, 
         return _Z_RES_OK;  // Nothing to do on unicast
     }
     // Current flags process
-    if ((flags & _Z_INTEREST_FLAG_CURRENT) != 0) {
+    if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT)) {
         // Send all declare
-        if ((flags & _Z_INTEREST_FLAG_KEYEXPRS) != 0) {
+        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_KEYEXPRS)) {
             _Z_DEBUG("Sending declare resources");
             _Z_RETURN_IF_ERR(_z_send_resource_interest(zn));
         }
-        if ((flags & _Z_INTEREST_FLAG_SUBSCRIBERS) != 0) {
+        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_SUBSCRIBERS)) {
             _Z_DEBUG("Sending declare subscribers");
             _Z_RETURN_IF_ERR(_z_send_subscriber_interest(zn));
         }
-        if ((flags & _Z_INTEREST_FLAG_QUERYABLES) != 0) {
+        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_QUERYABLES)) {
             _Z_DEBUG("Sending declare queryables");
             _Z_RETURN_IF_ERR(_z_send_queryable_interest(zn));
         }
-        if ((flags & _Z_INTEREST_FLAG_TOKENS) != 0) {
+        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
             // Zenoh pico doesn't support liveliness token for now
         }
         // Send final declare

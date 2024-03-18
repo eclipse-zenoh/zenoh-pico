@@ -75,9 +75,11 @@ _z_undecl_token_t _z_undecl_token_null(void);
 #define _Z_INTEREST_FLAG_SUBSCRIBERS (1 << 1)
 #define _Z_INTEREST_FLAG_QUERYABLES (1 << 2)
 #define _Z_INTEREST_FLAG_TOKENS (1 << 3)
+#define _Z_INTEREST_FLAG_RESTRICTED (1 << 4)
 #define _Z_INTEREST_FLAG_CURRENT (1 << 5)
 #define _Z_INTEREST_FLAG_FUTURE (1 << 6)
 #define _Z_INTEREST_FLAG_AGGREGATE (1 << 7)
+
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
