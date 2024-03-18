@@ -156,8 +156,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     // @TODO: expose zenoh errors to the user
                     _z_msg_err_t error = response._body._err;
                     _z_bytes_t payload = error._payload;
-                    _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id,
-                             (int)payload.len, payload.start);
+                    _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
+                             payload.start);
                 } break;
                 case _Z_RESPONSE_BODY_ACK: {
                     // @TODO: implement ACKs for puts/dels

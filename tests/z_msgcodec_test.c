@@ -1169,7 +1169,7 @@ _z_msg_err_t gen_err(void) {
     return (_z_msg_err_t){
         .encoding = gen_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._payload = gen_payload(len), // Hangs if 0
+        ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
