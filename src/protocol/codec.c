@@ -202,38 +202,54 @@ int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *zbf) {
 }
 
 /*------------------ z_zint ------------------*/
-uint8_t _z_zint_len(_z_zint_t v) {
-    uint8_t len = 1;
-    while (v > 0x7f) {
-        v >>= 7;
-        len++;
-    }
-    return len;
-}
-int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
-    _z_zint_t lv = v;
+#define VLE_LEN 9
 
-    while (lv > 0x7f) {
-        uint8_t c = (lv & 0x7f) | 0x80;
-        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
-        lv = lv >> (_z_zint_t)7;
+uint8_t _z_zint_len(uint64_t v) {
+    if ((v & (UINT64_MAX << (7 * 1))) == 0) {
+        return 1;
+    } else if ((v & (UINT64_MAX << (7 * 2))) == 0) {
+        return 2;
+    } else if ((v & (UINT64_MAX << (7 * 3))) == 0) {
+        return 3;
+    } else if ((v & (UINT64_MAX << (7 * 4))) == 0) {
+        return 4;
+    } else if ((v & (UINT64_MAX << (7 * 5))) == 0) {
+        return 5;
+    } else if ((v & (UINT64_MAX << (7 * 6))) == 0) {
+        return 6;
+    } else if ((v & (UINT64_MAX << (7 * 7))) == 0) {
+        return 7;
+    } else if ((v & (UINT64_MAX << (7 * 8))) == 0) {
+        return 8;
+    } else {
+        return 9;
     }
-
-    uint8_t c = lv & 0xff;
-    return _z_wbuf_write(wbf, c);
 }
+
 int8_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
     uint64_t lv = v;
-
-    while (lv > 0x7f) {
+    uint8_t len = 0;
+    while ((lv & ~0x7f) != 0) {
         uint8_t c = (lv & 0x7f) | 0x80;
         _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
+        len++;
         lv = lv >> (uint64_t)7;
     }
+    if (len != VLE_LEN) {
+        uint8_t c = (lv & 0x7f);
+        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
+    }
 
-    uint8_t c = lv & 0xff;
-    return _z_wbuf_write(wbf, c);
+    return _Z_RES_OK;
 }
+
+int8_t _z_zint_encode(_z_wbuf_t *wbf, _z_zint_t v) {
+    if (v > UINT64_MAX) {
+        return _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+    }
+    return _z_zint64_encode(wbf, (uint64_t)v);
+}
+
 int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     _z_zint_t buf;
@@ -245,6 +261,7 @@ int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
     }
     return ret;
 }
+
 int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     _z_zint_t buf;
@@ -256,39 +273,34 @@ int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
     }
     return ret;
 }
+
 int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
-    *zint = 0;
-
-    uint8_t i = 0;
-    uint8_t u8 = 0;
-    do {
-        if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
-            *zint = *zint | (((_z_zint_t)u8 & 0x7f) << i);
-            i = i + (uint8_t)7;
-        } else {
-            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-        }
-    } while (u8 > (uint8_t)0x7f);
-
+    _z_zint_t buf;
+    _Z_RETURN_IF_ERR(_z_zint_decode(&buf, zbf));
+    if (buf <= UINT64_MAX) {
+        *zint = (_z_zint_t)buf;
+    } else {
+        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
     return ret;
 }
+
 int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
     *zint = 0;
 
-    uint8_t i = 0;
-    uint8_t u8 = 0;
-    do {
-        if (_z_uint8_decode(&u8, zbf) == _Z_RES_OK) {
-            *zint = *zint | (((uint64_t)u8 & 0x7f) << i);
-            i = i + (uint8_t)7;
-        } else {
-            ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-        }
-    } while (u8 > (uint8_t)0x7f);
+    uint8_t b = 0;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
 
-    return ret;
+    uint8_t i = 0;
+    while (((b & 0x80) != 0) && (i != 7 * (VLE_LEN - 1))) {
+        *zint = *zint | ((uint64_t)(b & 0x7f)) << i;
+        _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+        i = i + (uint8_t)7;
+    }
+    *zint = *zint | ((uint64_t)b << i);
+
+    return _Z_RES_OK;
 }
 
 /*------------------ uint8_array ------------------*/
