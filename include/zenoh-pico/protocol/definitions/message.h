@@ -48,28 +48,25 @@
 #define _Z_FRAG_BUFF_BASE_SIZE 128  // Arbitrary base size of the buffer to encode a fragment message header
 
 // Flags:
-// - T: Timestamp      If T==1 then the timestamp if present
-// - I: Infrastructure If I==1 then the error is related to the infrastructure else to the user
+// - X: Reserved
+// - E: Encoding       If E==1 then the encoding is present
 // - Z: Extension      If Z==1 then at least one extension is present
 //
 //   7 6 5 4 3 2 1 0
 //  +-+-+-+-+-+-+-+-+
-//  |Z|I|T|   ERR   |
+//  |Z|E|X|   ERR   |
 //  +-+-+-+---------+
-//  %   code:z16    %
-//  +---------------+
-//  ~ ts: <u8;z16>  ~  if T==1
+//  %   encoding    %
 //  +---------------+
 //  ~  [err_exts]   ~  if Z==1
 //  +---------------+
-#define _Z_FLAG_Z_E_T 0x20
-#define _Z_FLAG_Z_E_I 0x40
+///  ~ pl: <u8;z32>  ~ Payload
+///  +---------------+
+#define _Z_FLAG_Z_E_E 0x40
 typedef struct {
-    uint16_t _code;
-    _Bool _is_infrastructure;
-    _z_timestamp_t _timestamp;
+    _z_encoding_t encoding;
     _z_source_info_t _ext_source_info;
-    _z_value_t _ext_value;
+    _z_bytes_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
 

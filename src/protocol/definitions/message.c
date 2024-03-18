@@ -49,6 +49,6 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
-    _z_timestamp_clear(&err->_timestamp);
-    _z_value_clear(&err->_ext_value);
+    _z_bytes_clear(&err->encoding.suffix);
+    _z_bytes_clear(&err->_payload);
 }
