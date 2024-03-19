@@ -33,7 +33,7 @@ size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
 void _z_str_n_copy(char *dst, const char *src, size_t size);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
-// _Z_ARRAY_DEFINE(_z_str, char *)
+
 // This is here for reference on why
 // the _z_str_array_t was not defined using this macro
 // but instead manually as find below
@@ -73,6 +73,8 @@ typedef struct {
 } _z_string_t;
 
 _z_string_t _z_string_make(const char *value);
+
+size_t _z_string_size(const _z_string_t *s);
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 void _z_string_move_str(_z_string_t *dst, char *src);
@@ -80,6 +82,8 @@ void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
+
+_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)
 
 /*-------- str_array --------*/
 /**

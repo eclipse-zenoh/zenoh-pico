@@ -1,0 +1,96 @@
+//
+// Copyright (c) 2022 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
+#include "zenoh-pico/collections/ring.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <string.h>
+
+/*-------- ring --------*/
+_z_ring_t _z_ring_make(size_t capacity) {
+    // We need one more element to differentiate wether the ring is empty or full
+    capacity += 1;
+
+    _z_ring_t v = {._capacity = capacity, ._r_idx = 0, ._w_idx = 0, ._val = NULL};
+    if (capacity != 0) {
+        v._val = (void **)zp_malloc(sizeof(void *) * capacity);
+    }
+    if (v._val != NULL) {
+        memset(v._val, 0, capacity);
+        v._capacity = capacity;
+    }
+    return v;
+}
+
+size_t _z_ring_capacity(const _z_ring_t *r) { return r->_capacity - 1; }
+
+size_t _z_ring_len(const _z_ring_t *r) {
+    if (r->_w_idx >= r->_r_idx) {
+        return r->_w_idx - r->_r_idx;
+    } else {
+        return r->_w_idx + (r->_capacity - r->_r_idx);
+    }
+}
+
+_Bool _z_ring_is_empty(const _z_ring_t *r) { return r->_w_idx == r->_r_idx; }
+
+_Bool _z_ring_is_full(const _z_ring_t *r) { return _z_ring_len(r) == _z_ring_capacity(r); }
+
+void *_z_ring_push(_z_ring_t *r, void *e) {
+    void *ret = e;
+    if (!_z_ring_is_full(r)) {
+        r->_val[r->_w_idx] = e;
+        r->_w_idx = (r->_w_idx + 1) % r->_capacity;
+        ret = NULL;
+    }
+    return ret;
+}
+
+void *_z_ring_push_force(_z_ring_t *r, void *e) {
+    void *ret = _z_ring_push(r, e);
+    if (ret != NULL) {
+        ret = _z_ring_pull(r);
+        _z_ring_push(r, e);
+    }
+    return ret;
+}
+
+void *_z_ring_pull(_z_ring_t *r) {
+    void *ret = NULL;
+    if (!_z_ring_is_empty(r)) {
+        ret = r->_val[r->_r_idx];
+        r->_val[r->_r_idx] = NULL;
+        r->_r_idx = (r->_r_idx + 1) % r->_capacity;
+    }
+    return ret;
+}
+
+void _z_ring_clear(_z_ring_t *r, z_element_free_f free_f) {
+    void *e = _z_ring_pull(r);
+    while (e != NULL) {
+        free_f(e);
+        e = _z_ring_pull(r);
+    }
+    r->_r_idx = 0;
+    r->_w_idx = 0;
+}
+
+void _z_ring_free(_z_ring_t **r, z_element_free_f free_f) {
+    _z_ring_t *ptr = (_z_ring_t *)*r;
+    if (ptr != NULL) {
+        _z_ring_clear(ptr, free_f);
+        zp_free(ptr);
+        *r = NULL;
+    }
+}
