@@ -28,8 +28,6 @@ typedef struct {
     _z_session_rc_t _zn;
 } _z_subscriber_t;
 
-typedef _z_subscriber_t _z_pull_subscriber_t;
-
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
  * Create a default subscription info for a push subscriber.
@@ -37,15 +35,7 @@ typedef _z_subscriber_t _z_pull_subscriber_t;
  * Returns:
  *     A :c:type:`_z_subinfo_t` containing the created subscription info.
  */
-_z_subinfo_t _z_subinfo_push_default(void);
-
-/**
- * Create a default subscription info for a pull subscriber.
- *
- * Returns:
- *     A :c:type:`_z_subinfo_t` containing the created subscription info.
- */
-_z_subinfo_t _z_subinfo_pull_default(void);
+_z_subinfo_t _z_subinfo_default(void);
 
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);

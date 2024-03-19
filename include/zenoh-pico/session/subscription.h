@@ -39,9 +39,6 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
 );
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
-
-/*------------------ Pull ------------------*/
-_z_zint_t _z_get_pull_id(_z_session_t *zn);
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H */

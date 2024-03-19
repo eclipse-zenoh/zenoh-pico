@@ -57,7 +57,6 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     zn->_entity_id = 1;
     zn->_resource_id = 1;
     zn->_query_id = 1;
-    zn->_pull_id = 1;
 
     // Initialize the data structs
     zn->_local_resources = NULL;

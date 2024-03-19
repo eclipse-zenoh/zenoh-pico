@@ -150,20 +150,6 @@ typedef struct {
 _OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
 
 /**
- * Represents a Zenoh Pull Subscriber entity.
- *
- * Operations over :c:type:`z_pull_subscriber_t` must be done using the provided functions:
- *
- *   - :c:func:`z_declare_pull_subscriber`
- *   - :c:func:`z_undeclare_pull_subscriber`
- *   - :c:func:`z_subscriber_pull`
- */
-typedef struct {
-    _z_pull_subscriber_t *_val;
-} z_pull_subscriber_t;
-_OWNED_TYPE_PTR(_z_pull_subscriber_t, pull_subscriber)
-
-/**
  * Represents a Zenoh Publisher entity.
  *
  * Operations over :c:type:`z_publisher_t` must be done using the provided functions:
@@ -232,17 +218,6 @@ typedef _z_value_t z_value_t;
 typedef struct {
     z_reliability_t reliability;
 } z_subscriber_options_t;
-
-/**
- * Represents the set of options that can be applied to a pull subscriber,
- * upon its declaration via :c:func:`z_declare_pull_subscriber`.
- *
- * Members:
- *   z_reliability_t reliability: The subscription reliability.
- */
-typedef struct {
-    z_reliability_t reliability;
-} z_pull_subscriber_options_t;
 
 /**
  * Represents the replies consolidation to apply on replies to a :c:func:`z_get`.

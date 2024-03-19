@@ -20,38 +20,6 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
-/*------------------ period ------------------*/
-int8_t _z_period_encode(_z_wbuf_t *buf, const _z_period_t *tp) {
-    _Z_RETURN_IF_ERR(_z_uint_encode(buf, tp->origin))
-    _Z_RETURN_IF_ERR(_z_uint_encode(buf, tp->period))
-    return _z_uint_encode(buf, tp->duration);
-}
-
-int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *buf) {
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_uint_decode(&p->origin, buf);
-    if (ret == _Z_RES_OK) {
-        ret |= _z_uint_decode(&p->period, buf);
-    } else {
-        p->origin = 0;
-    }
-
-    if (ret == _Z_RES_OK) {
-        ret |= _z_uint_decode(&p->duration, buf);
-    } else {
-        p->period = 0;
-    }
-
-    if (ret != _Z_RES_OK) {
-        p->duration = 0;
-    }
-
-    return ret;
-}
-
-int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *buf) { return _z_period_decode_na(p, buf); }
-
 /*------------------ uint8 -------------------*/
 int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en) { return _z_zint_encode(wbf, en); }
 

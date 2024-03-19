@@ -325,14 +325,6 @@ int main(int argc, char **argv) {
     _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
     assert_eq(_ret_int8, 0);
 
-    printf("Declaring Pull Subscriber...");
-    z_owned_closure_sample_t _ret_closure_sample2 = z_closure(data_handler, NULL, &ls1);
-    z_pull_subscriber_options_t _ret_psub_opt = z_pull_subscriber_options_default();
-    z_owned_pull_subscriber_t _ret_psub =
-        z_declare_pull_subscriber(z_loan(s2), z_keyexpr(keyexpr_str), z_move(_ret_closure_sample2), &_ret_psub_opt);
-    assert(z_check(_ret_psub));
-    printf("Ok\n");
-
     printf("Declaring Publisher...");
     z_publisher_options_t _ret_pub_opt = z_publisher_options_default();
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
@@ -350,11 +342,6 @@ int main(int argc, char **argv) {
 
     sleep(SLEEP);
 
-    printf("Pull Subscriber Pulling data...");
-    _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
-    assert_eq(_ret_int8, 0);
-    printf("Ok\n");
-
     sleep(SLEEP);
     assert_eq(datas, 3);
 
@@ -366,11 +353,6 @@ int main(int argc, char **argv) {
 
     sleep(SLEEP);
 
-    printf("Pull Subscriber Pulling data...");
-    _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
-    assert_eq(_ret_int8, 0);
-    printf("Ok\n");
-
     sleep(SLEEP);
     assert_eq(datas, 4);
 
@@ -378,11 +360,6 @@ int main(int argc, char **argv) {
     _ret_int8 = z_undeclare_publisher(z_move(_ret_pub));
     assert_eq(_ret_int8, 0);
     assert(!z_check(_ret_pub));
-    printf("Ok\n");
-
-    printf("Undeclaring Pull Subscriber...");
-    _ret_int8 = z_undeclare_pull_subscriber(z_move(_ret_psub));
-    assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
     sleep(SLEEP);

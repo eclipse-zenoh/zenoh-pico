@@ -162,9 +162,6 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         case _Z_REQUEST_DEL: {
             _Z_RETURN_IF_ERR(_z_del_encode(wbf, &msg->_body._del));
         } break;
-        case _Z_REQUEST_PULL: {
-            _Z_RETURN_IF_ERR(_z_pull_encode(wbf, &msg->_body._pull));
-        } break;
     }
     return ret;
 }
@@ -232,10 +229,6 @@ int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t 
         case _Z_MID_Z_DEL: {
             msg->_tag = _Z_REQUEST_DEL;
             _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body._del, zbf, zheader));
-        } break;
-        case _Z_MID_Z_PULL: {
-            msg->_tag = _Z_REQUEST_PULL;
-            _Z_RETURN_IF_ERR(_z_pull_decode(&msg->_body._pull, zbf, zheader));
         } break;
         default:
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;

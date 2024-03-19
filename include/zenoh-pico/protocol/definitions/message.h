@@ -36,7 +36,6 @@
 #define _Z_FLAG_Z_I 0x40  // 1 << 6 | DataInfo          if I==1 then DataInfo is present
 #define _Z_FLAG_Z_K 0x80  // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
 #define _Z_FLAG_Z_N 0x40  // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
-#define _Z_FLAG_Z_P 0x20  // 1 << 7 | Period            if P==1 then a period is present
 #define _Z_FLAG_Z_Q 0x40  // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
 #define _Z_FLAG_Z_R \
     0x20  // 1 << 5 | Reliable          if R==1 then it concerns the reliable channel, best-effort otherwise
@@ -68,22 +67,6 @@ typedef struct {
     _z_bytes_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
-
-/// Flags:
-/// - T: Timestamp      If T==1 then the timestamp if present
-/// - X: Reserved
-/// - Z: Extension      If Z==1 then at least one extension is present
-///
-///   7 6 5 4 3 2 1 0
-///  +-+-+-+-+-+-+-+-+
-///  |Z|X|X|  PULL   |
-///  +---------------+
-///  ~  [pull_exts]  ~  if Z==1
-///  +---------------+
-typedef struct {
-    _z_source_info_t _ext_source_info;
-} _z_msg_pull_t;
-static inline void _z_msg_pull_clear(_z_msg_pull_t *pull) { (void)pull; }
 
 typedef struct {
     _z_timestamp_t _timestamp;

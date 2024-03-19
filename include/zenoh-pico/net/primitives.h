@@ -156,17 +156,6 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
  *    0 if success, or a negative value identifying the error.
  */
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
-
-/**
- * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
- * by calling the **callback** function provided to the :c:func:`_z_declare_subscriber` function.
- *
- * Parameters:
- *     sub: The :c:type:`_z_subscriber_t` to pull from.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1

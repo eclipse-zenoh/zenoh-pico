@@ -135,9 +135,6 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
                 } break;
-                case _Z_REQUEST_PULL: {
-                    // @TODO: define behaviour
-                } break;
             }
         } break;
         case _Z_N_RESPONSE: {

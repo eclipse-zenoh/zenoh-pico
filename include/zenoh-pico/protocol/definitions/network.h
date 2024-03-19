@@ -99,12 +99,15 @@ typedef struct {
     z_query_target_t _ext_target;
     uint32_t _ext_budget;
     uint32_t _ext_timeout_ms;
-    enum { _Z_REQUEST_QUERY, _Z_REQUEST_PUT, _Z_REQUEST_DEL, _Z_REQUEST_PULL } _tag;
+    enum {
+        _Z_REQUEST_QUERY,
+        _Z_REQUEST_PUT,
+        _Z_REQUEST_DEL,
+    } _tag;
     union {
         _z_msg_query_t _query;
         _z_msg_put_t _put;
         _z_msg_del_t _del;
-        _z_msg_pull_t _pull;
     } _body;
 } _z_n_msg_request_t;
 typedef struct {
@@ -220,7 +223,6 @@ _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_
 _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
-_z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value
 #if Z_FEATURE_ATTACHMENT == 1

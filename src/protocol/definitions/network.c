@@ -56,9 +56,6 @@ void _z_n_msg_request_clear(_z_n_msg_request_t *msg) {
         case _Z_REQUEST_DEL: {
             _z_msg_del_clear(&msg->_body._del);
         } break;
-        case _Z_REQUEST_PULL: {
-            _z_msg_pull_clear(&msg->_body._pull);
-        } break;
     }
 }
 
@@ -140,30 +137,7 @@ void _z_n_msg_free(_z_network_message_t **msg) {
         *msg = NULL;
     }
 }
-_z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id) {
-    _z_network_message_t ret = {
-        ._tag = _Z_N_REQUEST,
-        ._body =
-            {
-                ._request =
-                    {
-                        ._rid = pull_id,
-                        ._key = key,
-                        ._tag = _Z_REQUEST_PULL,
-                        ._body =
-                            {
-                                ._pull = {._ext_source_info = _z_source_info_null()},
-                            },
-                        ._ext_budget = 0,
-                        ._ext_qos = _Z_N_QOS_DEFAULT,
-                        ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
-                        ._ext_timestamp = _z_timestamp_null(),
-                        ._ext_timeout_ms = 0,
-                    },
-            },
-    };
-    return ret;
-}
+
 _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value
 #if Z_FEATURE_ATTACHMENT == 1

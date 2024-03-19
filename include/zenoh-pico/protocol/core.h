@@ -273,32 +273,14 @@ typedef struct {
 } _z_target_complete_body_t;
 
 /**
- * The subscription period.
- *
- * Members:
- *     unsigned int origin:
- *     unsigned int period:
- *     unsigned int duration:
- */
-typedef struct {
-    unsigned int origin;
-    unsigned int period;
-    unsigned int duration;
-} _z_period_t;
-
-/**
  * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created
  * :c:type:`_z_subscription_rc_t`.
  *
  * Members:
- *     _z_period_t *period: The subscription period.
  *     z_reliability_t reliability: The subscription reliability.
- *     _z_submode_t mode: The subscription mode.
  */
 typedef struct {
-    _z_period_t period;
     z_reliability_t reliability;
-    z_submode_t mode;
 } _z_subinfo_t;
 
 typedef struct {
