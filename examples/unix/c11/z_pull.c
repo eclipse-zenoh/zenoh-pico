@@ -19,13 +19,14 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-void data_handler(const z_sample_t *sample, void *ctx) {
-    (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
-           sample->payload.start);
-    z_drop(z_move(keystr));
-}
+// @TODO
+// void data_handler(const z_sample_t *sample, void *ctx) {
+//     (void)(ctx);
+//     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+//     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
+//            sample->payload.start);
+//     z_drop(z_move(keystr));
+// }
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
@@ -71,7 +72,8 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    z_owned_closure_sample_t callback = z_closure(data_handler);
+    // @TODO
+    // z_owned_closure_sample_t callback = z_closure(data_handler);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
 
     // @TODO
