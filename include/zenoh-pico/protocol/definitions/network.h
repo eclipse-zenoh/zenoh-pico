@@ -118,13 +118,7 @@ typedef struct {
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg);
 void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
-typedef struct {
-    _Bool _is_put;
-    union {
-        _z_msg_del_t _del;
-        _z_msg_put_t _put;
-    } _body;
-} _z_push_body_t;
+typedef _z_reply_body_t _z_push_body_t;
 _z_push_body_t _z_push_body_null(void);
 _z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
 void _z_push_body_clear(_z_push_body_t *msg);
@@ -236,7 +230,7 @@ _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_byt
                                        z_attachment_t attachment
 #endif
 );
-_z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_value_t) value);
+_z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration);

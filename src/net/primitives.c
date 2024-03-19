@@ -340,7 +340,8 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return _Z_RES_OK;
 }
 
-int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload) {
+int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload,
+                     const z_sample_kind_t kind) {
     int8_t ret = _Z_RES_OK;
 
     _z_keyexpr_t q_ke;
@@ -359,23 +360,30 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
         // Build the reply context decorator. This is NOT the final reply.
         _z_id_t zid = ((_z_session_t *)query->_zn)->_local_zid;
         _z_keyexpr_t ke = _z_keyexpr_alias(keyexpr);
-        _z_zenoh_message_t z_msg = {
-            ._tag = _Z_N_RESPONSE,
-            ._body._response =
-                {
-                    ._request_id = query->_request_id,
-                    ._key = ke,
-                    ._ext_responder = {._zid = zid, ._eid = 0},
-                    ._ext_qos = _Z_N_QOS_DEFAULT,
-                    ._ext_timestamp = _z_timestamp_null(),
-                    ._tag = _Z_RESPONSE_BODY_REPLY,
-                    ._body._reply = {._value = payload,
-                                     ._timestamp = _z_timestamp_null(),
-                                     ._ext_consolidation = Z_CONSOLIDATION_MODE_AUTO,
-                                     ._ext_source_info = _z_source_info_null()},
-                },
-        };
-
+        _z_zenoh_message_t z_msg;
+        switch (kind) {
+            default:
+                return _Z_ERR_GENERIC;
+                break;
+            case Z_SAMPLE_KIND_PUT:
+                z_msg._tag = _Z_N_RESPONSE;
+                z_msg._body._response._request_id = query->_request_id;
+                z_msg._body._response._key = ke;
+                z_msg._body._response._ext_responder._zid = zid;
+                z_msg._body._response._ext_responder._eid = 0;
+                z_msg._body._response._ext_qos = _Z_N_QOS_DEFAULT;
+                z_msg._body._response._ext_timestamp = _z_timestamp_null();
+                z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
+                z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
+                z_msg._body._response._body._reply._body._is_put = true;
+                z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
+                z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
+                z_msg._body._response._body._reply._body._body._put._attachment.body.decoded = z_attachment_null();
+                z_msg._body._response._body._reply._body._body._put._attachment.is_encoded = false;
+                z_msg._body._response._body._reply._body._body._put._commons._timestamp = _z_timestamp_null();
+                z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();
+                break;
+        }
         if (_z_send_n_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }

@@ -211,7 +211,8 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
  */
-int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
+int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
+                     const z_sample_kind_t kind);
 #endif
 
 #if Z_FEATURE_QUERY == 1
