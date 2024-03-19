@@ -337,6 +337,33 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
 }
 
 /*=============================*/
+/*      Zenoh Core Fields      */
+/*=============================*/
+void zint(void) {
+    printf("\n>> ZINT\n");
+    _z_wbuf_t wbf = gen_wbuf(9);
+
+    // Initialize
+    _z_zint_t e_z = gen_zint();
+
+    // Encode
+    int8_t res = _z_zsize_encode(&wbf, e_z);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zint_t d_z;
+    res = _z_zsize_decode(&d_z, &zbf);
+    assert(res == _Z_RES_OK);
+    assert(e_z == d_z);
+
+    // Free
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*=============================*/
 /*  Zenoh Messages Extensions  */
 /*=============================*/
 /*------------------ UNIT extension ------------------*/
@@ -1830,6 +1857,9 @@ int main(void) {
 
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
+
+        // Core
+        zint();
 
         // Message fields
         payload_field();

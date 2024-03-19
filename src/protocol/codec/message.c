@@ -87,13 +87,13 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _TIMESTAMP");
 
-    _Z_RETURN_IF_ERR(_z_uint64_encode(wbf, ts->time))
+    _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, ts->time))
     ret |= _z_id_encode_as_zbytes(wbf, &ts->id);
 
     return ret;
 }
 int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, _z_zint_len(ts->time) + 1 + _z_id_len(ts->id)));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(ts->time) + (uint8_t)1 + _z_id_len(ts->id)));
     return _z_timestamp_encode(wbf, ts);
 }
 
@@ -101,7 +101,7 @@ int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _TIMESTAMP");
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_uint64_decode(&ts->time, zbf);
+    ret |= _z_zint64_decode(&ts->time, zbf);
     ret |= _z_id_decode_as_zbytes(&ts->id, zbf);
 
     return ret;
@@ -112,7 +112,7 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *f
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _RESKEY");
 
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, fld->_id))
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, fld->_id))
     if (has_suffix == true) {
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, fld->_suffix))
     }
@@ -146,7 +146,7 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
 int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _LOCATORS");
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, la->_len))
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
         char *s = _z_locator_to_str(&la->_val[i]);
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, s))
@@ -161,7 +161,7 @@ int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t len = 0;  // Number of elements in the array
-    ret |= _z_zint_decode(&len, zbf);
+    ret |= _z_zsize_decode(&len, zbf);
     if (ret == _Z_RES_OK) {
         *a_loc = _z_locator_array_make(len);
 
@@ -203,7 +203,7 @@ int8_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
         }
     }
     if (ret == _Z_RES_OK) {
-        ret = _z_zint_decode(&intbuf, zbf);
+        ret = _z_zsize_decode(&intbuf, zbf);
         if (intbuf <= UINT32_MAX) {
             info->_entity_id = (uint32_t)intbuf;
         } else {
@@ -211,7 +211,7 @@ int8_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
         }
     }
     if (ret == _Z_RES_OK) {
-        ret = _z_zint_decode(&intbuf, zbf);
+        ret = _z_zsize_decode(&intbuf, zbf);
         if (intbuf <= UINT32_MAX) {
             info->_source_sn = (uint32_t)intbuf;
         } else {
@@ -226,20 +226,20 @@ int8_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     ret |= _z_uint8_encode(wbf, zidlen << 4);
     _z_bytes_t zid = _z_bytes_wrap(info->_id.id, zidlen);
     ret |= _z_bytes_val_encode(wbf, &zid);
-    ret |= _z_zint_encode(wbf, info->_entity_id);
-    ret |= _z_zint_encode(wbf, info->_source_sn);
+    ret |= _z_zsize_encode(wbf, info->_entity_id);
+    ret |= _z_zsize_encode(wbf, info->_source_sn);
     return ret;
 }
 int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     int8_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_id);
     uint16_t len = 1 + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, len));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
     _z_bytes_t zid = _z_bytes_wrap(info->_id.id, zidlen);
     _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &zid));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, info->_entity_id));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, info->_source_sn));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_entity_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_sn));
     return ret;
 }
 #if Z_FEATURE_ATTACHMENT == 1
@@ -251,7 +251,7 @@ int8_t _z_attachment_encode_ext_kv(_z_bytes_t key, _z_bytes_t value, void *ctx) 
 }
 int8_t _z_attachment_encode_ext(_z_wbuf_t *wbf, z_attachment_t att) {
     size_t len = _z_attachment_estimate_length(att);
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, len));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len));
     _Z_RETURN_IF_ERR(z_attachment_iterate(att, _z_attachment_encode_ext_kv, wbf));
     return 0;
 }
@@ -437,9 +437,9 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
             extheader |= _Z_FLAG_Z_Z;
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, _z_zint_len(msg->_ext_value.encoding.prefix) +
-                                                 _z_bytes_encode_len(&msg->_ext_value.encoding.suffix) +
-                                                 msg->_ext_value.payload.len));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(msg->_ext_value.encoding.prefix) +
+                                                  _z_bytes_encode_len(&msg->_ext_value.encoding.suffix) +
+                                                  msg->_ext_value.payload.len));
         _Z_RETURN_IF_ERR(_z_encoding_prefix_encode(wbf, msg->_ext_value.encoding.prefix));
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_value.encoding.suffix));
         _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &msg->_ext_value.payload));
@@ -745,7 +745,7 @@ int8_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     msg->_what = cbyte & 0x07;
     msg->_zid = _z_id_empty();
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
-        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
         _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
@@ -782,7 +782,7 @@ int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
-    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
 
     if (ret == _Z_RES_OK) {
         msg->_zid = _z_id_empty();
