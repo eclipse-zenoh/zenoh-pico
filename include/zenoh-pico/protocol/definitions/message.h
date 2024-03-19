@@ -24,23 +24,13 @@
 #define _Z_MID_Z_QUERY 0x03
 #define _Z_MID_Z_REPLY 0x04
 #define _Z_MID_Z_ERR 0x05
-#define _Z_MID_Z_PULL 0x07
-#define _Z_MID_Z_LINK_STATE_LIST 0x10
 
 /* Zenoh message flags */
 #define _Z_FLAG_Z_Z 0x80
-#define _Z_FLAG_Z_B 0x40  // 1 << 6 | QueryPayload      if B==1 then QueryPayload is present
 #define _Z_FLAG_Z_D 0x20  // 1 << 5 | Dropping          if D==1 then the message can be dropped
-#define _Z_FLAG_Z_F \
-    0x20  // 1 << 5 | Final             if F==1 then this is the final message (e.g., ReplyContext, Pull)
-#define _Z_FLAG_Z_I 0x40  // 1 << 6 | DataInfo          if I==1 then DataInfo is present
 #define _Z_FLAG_Z_K 0x80  // 1 << 7 | ResourceKey       if K==1 then keyexpr is string
-#define _Z_FLAG_Z_N 0x40  // 1 << 6 | MaxSamples        if N==1 then the MaxSamples is indicated
-#define _Z_FLAG_Z_Q 0x40  // 1 << 6 | QueryableKind     if Q==1 then the queryable kind is present
 #define _Z_FLAG_Z_R \
     0x20  // 1 << 5 | Reliable          if R==1 then it concerns the reliable channel, best-effort otherwise
-#define _Z_FLAG_Z_S 0x40  // 1 << 6 | SubMode           if S==1 then the declaration SubMode is indicated
-#define _Z_FLAG_Z_T 0x20  // 1 << 5 | QueryTarget       if T==1 then the query target is present
 #define _Z_FLAG_Z_X 0x00  // Unused flags are set to zero
 
 #define _Z_FRAG_BUFF_BASE_SIZE 128  // Arbitrary base size of the buffer to encode a fragment message header
