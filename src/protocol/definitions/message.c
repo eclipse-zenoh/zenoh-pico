@@ -18,8 +18,9 @@
 
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 
-void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_value_clear(&msg->_value); }
+void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
     _z_bytes_clear(&msg->_encoding.suffix);
@@ -35,7 +36,6 @@ _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *ms
         .body = msg->_ext_value.payload.start != NULL || msg->_ext_value.encoding.prefix != 0 ||
                 !_z_bytes_is_empty(&msg->_ext_value.encoding.suffix),
         .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
-        .consolidation = msg->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO,
 #if Z_FEATURE_ATTACHMENT == 1
         .attachment = z_attachment_check(&att)
 #else
@@ -49,6 +49,6 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
-    _z_timestamp_clear(&err->_timestamp);
-    _z_value_clear(&err->_ext_value);
+    _z_bytes_clear(&err->encoding.suffix);
+    _z_bytes_clear(&err->_payload);
 }

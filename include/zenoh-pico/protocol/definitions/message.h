@@ -48,58 +48,25 @@
 #define _Z_FRAG_BUFF_BASE_SIZE 128  // Arbitrary base size of the buffer to encode a fragment message header
 
 // Flags:
-// - T: Timestamp      If T==1 then the timestamp if present
+// - X: Reserved
 // - E: Encoding       If E==1 then the encoding is present
 // - Z: Extension      If Z==1 then at least one extension is present
 //
 //   7 6 5 4 3 2 1 0
 //  +-+-+-+-+-+-+-+-+
-//  |Z|E|T|  REPLY  |
+//  |Z|E|X|   ERR   |
 //  +-+-+-+---------+
-//  ~ ts: <u8;z16>  ~  if T==1
-//  +---------------+
-//  ~   encoding    ~  if E==1
-//  +---------------+
-//  ~  [repl_exts]  ~  if Z==1
-//  +---------------+
-//  ~ pl: <u8;z32>  ~  -- Payload
-//  +---------------+
-typedef struct {
-    _z_timestamp_t _timestamp;
-    _z_value_t _value;
-    _z_source_info_t _ext_source_info;
-    z_consolidation_mode_t _ext_consolidation;
-#if Z_FEATURE_ATTACHMENT == 1
-    _z_owned_encoded_attachment_t _ext_attachment;
-#endif
-} _z_msg_reply_t;
-void _z_msg_reply_clear(_z_msg_reply_t *msg);
-#define _Z_FLAG_Z_R_T 0x20
-#define _Z_FLAG_Z_R_E 0x40
-
-// Flags:
-// - T: Timestamp      If T==1 then the timestamp if present
-// - I: Infrastructure If I==1 then the error is related to the infrastructure else to the user
-// - Z: Extension      If Z==1 then at least one extension is present
-//
-//   7 6 5 4 3 2 1 0
-//  +-+-+-+-+-+-+-+-+
-//  |Z|I|T|   ERR   |
-//  +-+-+-+---------+
-//  %   code:z16    %
-//  +---------------+
-//  ~ ts: <u8;z16>  ~  if T==1
+//  %   encoding    %
 //  +---------------+
 //  ~  [err_exts]   ~  if Z==1
 //  +---------------+
-#define _Z_FLAG_Z_E_T 0x20
-#define _Z_FLAG_Z_E_I 0x40
+///  ~ pl: <u8;z32>  ~ Payload
+///  +---------------+
+#define _Z_FLAG_Z_E_E 0x40
 typedef struct {
-    uint16_t _code;
-    _Bool _is_infrastructure;
-    _z_timestamp_t _timestamp;
+    _z_encoding_t encoding;
     _z_source_info_t _ext_source_info;
-    _z_value_t _ext_value;
+    _z_bytes_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
 
@@ -166,20 +133,21 @@ void _z_msg_put_clear(_z_msg_put_t *);
 /*------------------ Query Message ------------------*/
 //   7 6 5 4 3 2 1 0
 //  +-+-+-+-+-+-+-+-+
-//  |Z|C|P|  QUERY  |
+//  |Z|P|C|  QUERY  |
 //  +-+-+-+---------+
-//  ~ params        ~  if P==1 -- <utf8;z32>
-//  +---------------+
 //  ~ consolidation ~  if C==1 -- u8
+//  +---------------+
+//  ~ params        ~  if P==1 -- <utf8;z16>
 //  +---------------+
 //  ~ [qry_exts]    ~  if Z==1
 //  +---------------+
-#define _Z_FLAG_Z_Q_P 0x20  // 1 << 6 | Period            if P==1 then a period is present
+#define _Z_FLAG_Z_Q_C 0x20  // 1 << 5 | Consolidation if C==1 then consolidation is present
+#define _Z_FLAG_Z_Q_P 0x40  // 1 << 6 | Params        if P==1 then parameters are present
 typedef struct {
     _z_bytes_t _parameters;
     _z_source_info_t _ext_info;
     _z_value_t _ext_value;
-    z_consolidation_mode_t _ext_consolidation;
+    z_consolidation_mode_t _consolidation;
 #if Z_FEATURE_ATTACHMENT == 1
     _z_owned_encoded_attachment_t _ext_attachment;
 #endif
@@ -187,10 +155,38 @@ typedef struct {
 typedef struct {
     _Bool info;
     _Bool body;
-    _Bool consolidation;
     _Bool attachment;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
 void _z_msg_query_clear(_z_msg_query_t *msg);
+
+typedef struct {
+    _Bool _is_put;
+    union {
+        _z_msg_del_t _del;
+        _z_msg_put_t _put;
+    } _body;
+} _z_reply_body_t;
+// Flags:
+// - C: Consolidation  If C==1 then consolidation is present
+// - X: Reserved
+// - Z: Extension      If Z==1 then at least one extension is present
+//
+//   7 6 5 4 3 2 1 0
+//  +-+-+-+-+-+-+-+-+
+//  |Z|X|C|  REPLY  |
+//  +-+-+-+---------+
+//  ~ consolidation ~  if C==1
+//  +---------------+
+//  ~  [repl_exts]  ~  if Z==1
+//  +---------------+
+//  ~  ReplyBody    ~  -- Payload
+//  +---------------+
+typedef struct {
+    z_consolidation_mode_t _consolidation;
+    _z_reply_body_t _body;
+} _z_msg_reply_t;
+void _z_msg_reply_clear(_z_msg_reply_t *msg);
+#define _Z_FLAG_Z_R_C 0x20
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H */

@@ -934,7 +934,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 .len = payload_len,
                             },
                         .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
-    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value);
+    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT);
     return _Z_ERR_GENERIC;
 }
 #endif

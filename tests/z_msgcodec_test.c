@@ -545,8 +545,9 @@ void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
     ts.time = gen_uint64();
-    _z_bytes_t id = gen_bytes(16);
-    memcpy(ts.id.id, id.start, id.len);
+    for (size_t i = 0; i < 16; i++) {
+        ts.id.id[i] = gen_uint8() & 0x7f;  // 0b01111111
+    }
     return ts;
 }
 
@@ -1159,7 +1160,7 @@ void pull_message(void) {
 
 _z_msg_query_t gen_query(void) {
     return (_z_msg_query_t){
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
+        ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
         ._parameters = gen_bytes(16),
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
@@ -1167,7 +1168,7 @@ _z_msg_query_t gen_query(void) {
 }
 
 void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
-    assert(left->_ext_consolidation == right->_ext_consolidation);
+    assert(left->_consolidation == right->_consolidation);
     assert_eq_source_info(&left->_ext_info, &right->_ext_info);
     assert_eq_bytes(&left->_parameters, &right->_parameters);
     assert_eq_value(&left->_ext_value, &right->_ext_value);
@@ -1191,21 +1192,18 @@ void query_message(void) {
 }
 
 _z_msg_err_t gen_err(void) {
+    size_t len = 1 + gen_uint8();
     return (_z_msg_err_t){
-        ._code = gen_uint16(),
-        ._is_infrastructure = gen_bool(),
-        ._timestamp = gen_timestamp(),
+        .encoding = gen_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
+        ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
-    assert(left->_code == right->_code);
-    assert(left->_is_infrastructure == right->_is_infrastructure);
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
+    assert_eq_encoding(&left->encoding, &right->encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert_eq_value(&left->_ext_value, &right->_ext_value);
+    assert_eq_bytes(&left->_payload, &right->_payload);
 }
 
 void err_message(void) {
@@ -1252,18 +1250,14 @@ void ack_message(void) {
 
 _z_msg_reply_t gen_reply(void) {
     return (_z_msg_reply_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
-        ._value = gen_value(),
+        ._consolidation = (gen_uint8() % 4) - 1,
+        ._body = gen_push_body(),
     };
 }
 
 void assert_eq_reply(const _z_msg_reply_t *left, const _z_msg_reply_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert(left->_ext_consolidation == right->_ext_consolidation);
-    assert_eq_value(&left->_value, &right->_value);
+    assert(left->_consolidation == right->_consolidation);
+    assert_eq_push_body(&left->_body, &right->_body);
 }
 
 void reply_message(void) {
@@ -1692,6 +1686,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
     _z_network_message_vec_t ret = _z_network_message_vec_make(n);
     for (size_t i = 0; i < n; i++) {
         _z_network_message_t *msg = (_z_network_message_t *)zp_malloc(sizeof(_z_network_message_t));
+        memset(msg, 0, sizeof(_z_network_message_t));
         *msg = gen_net_msg();
         _z_network_message_vec_append(&ret, msg);
     }
