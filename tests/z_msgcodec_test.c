@@ -1283,25 +1283,15 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 3) {
+    switch (gen_uint() % 2) {
         case 0: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
         } break;
-        case 1: {
+        case 1:
+        default: {
             ret._tag = _Z_RESPONSE_BODY_REPLY;
             ret._body._reply = gen_reply();
-        } break;
-        case 2:
-        default: {
-            _z_push_body_t body = gen_push_body();
-            if (body._is_put) {
-                ret._tag = _Z_RESPONSE_BODY_PUT;
-                ret._body._put = body._body._put;
-            } else {
-                ret._tag = _Z_RESPONSE_BODY_DEL;
-                ret._body._del = body._body._del;
-            }
         } break;
     }
     return ret;
@@ -1321,14 +1311,7 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
         } break;
         case _Z_RESPONSE_BODY_ERR: {
             assert_eq_err(&left->_body._err, &right->_body._err);
-        } break;
-        case _Z_RESPONSE_BODY_PUT: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = true, ._body._put = left->_body._put},
-                                &(_z_push_body_t){._is_put = true, ._body._put = right->_body._put});
-        } break;
-        case _Z_RESPONSE_BODY_DEL: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = false, ._body._del = left->_body._del},
-                                &(_z_push_body_t){._is_put = false, ._body._del = right->_body._del});
+
         } break;
     }
 }

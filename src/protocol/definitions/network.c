@@ -97,13 +97,6 @@ void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
             _z_msg_err_clear(&msg->_body._err);
             break;
         }
-        case _Z_RESPONSE_BODY_PUT: {
-            _z_msg_put_clear(&msg->_body._put);
-            break;
-        }
-        case _Z_RESPONSE_BODY_DEL: {
-            break;
-        }
     }
 }
 

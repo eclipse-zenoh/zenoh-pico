@@ -183,14 +183,10 @@ typedef struct {
     enum {
         _Z_RESPONSE_BODY_REPLY,
         _Z_RESPONSE_BODY_ERR,
-        _Z_RESPONSE_BODY_PUT,
-        _Z_RESPONSE_BODY_DEL,
     } _tag;
     union {
         _z_msg_reply_t _reply;
         _z_msg_err_t _err;
-        _z_msg_put_t _put;
-        _z_msg_del_t _del;
     } _body;
 } _z_n_msg_response_t;
 void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
