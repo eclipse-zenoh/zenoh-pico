@@ -1195,32 +1195,6 @@ void err_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-_z_msg_ack_t gen_ack(void) {
-    return (_z_msg_ack_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-    };
-}
-
-void assert_eq_ack(const _z_msg_ack_t *left, const _z_msg_ack_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-}
-
-void ack_message(void) {
-    printf("\n>> Ack message\n");
-    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
-    _z_msg_ack_t expected = gen_ack();
-    assert(_z_ack_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_ack_t decoded;
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_ack_decode(&decoded, &zbf, header));
-    assert_eq_ack(&expected, &decoded);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 _z_msg_reply_t gen_reply(void) {
     return (_z_msg_reply_t){
         ._consolidation = (gen_uint8() % 4) - 1,
@@ -1367,19 +1341,16 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 5) {
+    switch (gen_uint() % 3) {
         case 0: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
-            ret._body._ack = gen_ack();
-        } break;
-        case 1: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
         } break;
-        case 2: {
+        case 1: {
             ret._tag = _Z_RESPONSE_BODY_REPLY;
             ret._body._reply = gen_reply();
         } break;
+        case 2:
         default: {
             _z_push_body_t body = gen_push_body();
             if (body._is_put) {
@@ -1408,9 +1379,6 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
         } break;
         case _Z_RESPONSE_BODY_ERR: {
             assert_eq_err(&left->_body._err, &right->_body._err);
-        } break;
-        case _Z_RESPONSE_BODY_ACK: {
-            assert_eq_ack(&left->_body._ack, &right->_body._ack);
         } break;
         case _Z_RESPONSE_BODY_PUT: {
             assert_eq_push_body(&(_z_push_body_t){._is_put = true, ._body._put = left->_body._put},
@@ -1850,7 +1818,6 @@ int main(void) {
         pull_message();
         query_message();
         err_message();
-        ack_message();
         reply_message();
 
         // Network messages

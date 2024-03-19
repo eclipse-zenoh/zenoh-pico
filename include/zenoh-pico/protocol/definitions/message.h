@@ -24,7 +24,6 @@
 #define _Z_MID_Z_QUERY 0x03
 #define _Z_MID_Z_REPLY 0x04
 #define _Z_MID_Z_ERR 0x05
-#define _Z_MID_Z_ACK 0x06
 #define _Z_MID_Z_PULL 0x07
 #define _Z_MID_Z_LINK_STATE_LIST 0x10
 
@@ -69,25 +68,6 @@ typedef struct {
     _z_bytes_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
-
-/// Flags:
-/// - T: Timestamp      If T==1 then the timestamp if present
-/// - X: Reserved
-/// - Z: Extension      If Z==1 then at least one extension is present
-///
-///   7 6 5 4 3 2 1 0
-///  +-+-+-+-+-+-+-+-+
-///  |Z|X|T|   ACK   |
-///  +-+-+-+---------+
-///  ~ ts: <u8;z16>  ~  if T==1
-///  +---------------+
-///  ~  [err_exts]   ~  if Z==1
-///  +---------------+
-typedef struct {
-    _z_timestamp_t _timestamp;
-    _z_source_info_t _ext_source_info;
-} _z_msg_ack_t;
-#define _Z_FLAG_Z_A_T 0x20
 
 /// Flags:
 /// - T: Timestamp      If T==1 then the timestamp if present

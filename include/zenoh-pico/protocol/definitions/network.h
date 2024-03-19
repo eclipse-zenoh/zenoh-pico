@@ -180,14 +180,12 @@ typedef struct {
     enum {
         _Z_RESPONSE_BODY_REPLY,
         _Z_RESPONSE_BODY_ERR,
-        _Z_RESPONSE_BODY_ACK,
         _Z_RESPONSE_BODY_PUT,
         _Z_RESPONSE_BODY_DEL,
     } _tag;
     union {
         _z_msg_reply_t _reply;
         _z_msg_err_t _err;
-        _z_msg_ack_t _ack;
         _z_msg_put_t _put;
         _z_msg_del_t _del;
     } _body;
@@ -231,7 +229,6 @@ _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_byt
 #endif
 );
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
-_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);

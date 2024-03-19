@@ -100,9 +100,6 @@ void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
             _z_msg_err_clear(&msg->_body._err);
             break;
         }
-        case _Z_RESPONSE_BODY_ACK: {
-            break;
-        }
         case _Z_RESPONSE_BODY_PUT: {
             _z_msg_put_clear(&msg->_body._put);
             break;
@@ -244,18 +241,7 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
 
     };
 }
-_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key) {
-    return (_z_network_message_t){
-        ._tag = _Z_N_RESPONSE,
-        ._body._response =
-            {
-                ._tag = _Z_RESPONSE_BODY_ACK,
-                ._request_id = rid,
-                ._key = _z_keyexpr_steal(key),
-                ._body._ack = {._timestamp = _z_timestamp_null(), ._ext_source_info = _z_source_info_null()},
-            },
-    };
-}
+
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
     switch (msg->_tag) {
         case _Z_N_DECLARE: {

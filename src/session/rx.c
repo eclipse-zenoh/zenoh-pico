@@ -115,8 +115,6 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     );
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
-                        ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                         _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
@@ -133,8 +131,6 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     );
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
-                        ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                         _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
@@ -158,9 +154,6 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_bytes_t payload = error._payload;
                     _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
                              payload.start);
-                } break;
-                case _Z_RESPONSE_BODY_ACK: {
-                    // @TODO: implement ACKs for puts/dels
                 } break;
                 case _Z_RESPONSE_BODY_PUT: {
                     _z_msg_put_t put = response._body._put;
