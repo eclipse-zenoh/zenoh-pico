@@ -1642,20 +1642,16 @@ _z_network_message_t gen_net_msg(void) {
             return gen_declare_message();
         } break;
         case 1: {
-            printf("Gen Push\n");
             return (_z_network_message_t){._tag = _Z_N_PUSH, ._body._push = gen_push()};
         } break;
         case 2: {
-            printf("Gen Request\n");
             return (_z_network_message_t){._tag = _Z_N_REQUEST, ._body._request = gen_request()};
         } break;
         case 3: {
-            printf("Gen Response\n");
             return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
         } break;
         case 4:
         default: {
-            printf("Gen ResponseFinal\n");
             return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
         } break;
     }
