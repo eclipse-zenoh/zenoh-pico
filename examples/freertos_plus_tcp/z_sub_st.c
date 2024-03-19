@@ -27,7 +27,7 @@
 #endif
 
 #define KEYEXPR "demo/example/**"
-#define N 10
+#define N 2147483647  // max int value by default
 
 int msg_nb = 0;
 

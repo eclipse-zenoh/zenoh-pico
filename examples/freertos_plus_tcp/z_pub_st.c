@@ -30,7 +30,7 @@
 
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
-#define N 10
+#define N 2147483647  // max int value by default
 
 void app_main(void) {
     z_owned_config_t config = z_config_default();
