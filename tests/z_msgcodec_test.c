@@ -337,6 +337,33 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
 }
 
 /*=============================*/
+/*      Zenoh Core Fields      */
+/*=============================*/
+void zint(void) {
+    printf("\n>> ZINT\n");
+    _z_wbuf_t wbf = gen_wbuf(9);
+
+    // Initialize
+    _z_zint_t e_z = gen_zint();
+
+    // Encode
+    int8_t res = _z_zsize_encode(&wbf, e_z);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zint_t d_z;
+    res = _z_zsize_decode(&d_z, &zbf);
+    assert(res == _Z_RES_OK);
+    assert(e_z == d_z);
+
+    // Free
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*=============================*/
 /*  Zenoh Messages Extensions  */
 /*=============================*/
 /*------------------ UNIT extension ------------------*/
@@ -1383,7 +1410,7 @@ _z_n_msg_response_t gen_response(void) {
             ret._body._err = gen_err();
         } break;
         case 2: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
+            ret._tag = _Z_RESPONSE_BODY_REPLY;
             ret._body._reply = gen_reply();
         } break;
         default: {
@@ -1621,16 +1648,20 @@ _z_network_message_t gen_net_msg(void) {
             return gen_declare_message();
         } break;
         case 1: {
+            printf("Gen Push\n");
             return (_z_network_message_t){._tag = _Z_N_PUSH, ._body._push = gen_push()};
         } break;
         case 2: {
+            printf("Gen Request\n");
             return (_z_network_message_t){._tag = _Z_N_REQUEST, ._body._request = gen_request()};
         } break;
         case 3: {
+            printf("Gen Response\n");
             return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
         } break;
         case 4:
         default: {
+            printf("Gen ResponseFinal\n");
             return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
         } break;
     }
@@ -1835,6 +1866,9 @@ int main(void) {
 
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
+
+        // Core
+        zint();
 
         // Message fields
         payload_field();

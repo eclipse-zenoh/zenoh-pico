@@ -50,25 +50,19 @@ int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf);
 int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en);
 int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf);
 
-int8_t _z_uint_encode(_z_wbuf_t *buf, unsigned int v);
-int8_t _z_uint_decode(unsigned int *u, _z_zbuf_t *buf);
-
 int8_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
 int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *buf);
 
 int8_t _z_uint16_encode(_z_wbuf_t *buf, uint16_t v);
 int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *buf);
 
-int8_t _z_uint64_encode(_z_wbuf_t *buf, uint64_t v);
-int8_t _z_uint64_decode(uint64_t *u64, _z_zbuf_t *buf);
-
 uint8_t _z_zint_len(uint64_t v);
-int8_t _z_zint_encode(_z_wbuf_t *buf, _z_zint_t v);
+int8_t _z_zsize_encode(_z_wbuf_t *buf, _z_zint_t v);
 int8_t _z_zint64_encode(_z_wbuf_t *buf, uint64_t v);
 int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *buf);
-int8_t _z_zint_decode(_z_zint_t *zint, _z_zbuf_t *buf);
+int8_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
 int8_t _z_bytes_val_encode(_z_wbuf_t *buf, const _z_bytes_t *bs);
 int8_t _z_bytes_val_decode(_z_bytes_t *bs, _z_zbuf_t *buf);

@@ -38,9 +38,9 @@ int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_nex
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(ke) ? strlen(ke._suffix) : 0);
     header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, ke._id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ke._id));
     if (kelen) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)ke._suffix, 0, kelen))
     }
@@ -54,7 +54,7 @@ int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
         header |= _Z_DECL_KEXPR_FLAG_N;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &decl->_keyexpr))
 
     return _Z_RES_OK;
@@ -72,7 +72,7 @@ int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensio
         header |= _Z_DECL_SUBSCRIBER_FLAG_M;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, id));
     return _z_keyexpr_encode(wbf, has_kesuffix, &keyexpr);
 }
 int8_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *decl) {
@@ -89,7 +89,7 @@ int8_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *dec
 }
 int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_UNDECL_KEXPR));
-    return _z_zint_encode(wbf, decl->_id);
+    return _z_zsize_encode(wbf, decl->_id);
 }
 int8_t _z_undecl_encode(_z_wbuf_t *wbf, uint8_t header, _z_zint_t decl_id, _z_keyexpr_t ke) {
     _Bool has_keyexpr_ext = _z_keyexpr_check(ke);
@@ -97,7 +97,7 @@ int8_t _z_undecl_encode(_z_wbuf_t *wbf, uint8_t header, _z_zint_t decl_id, _z_ke
         header |= _Z_FLAG_Z_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl_id));
     if (has_keyexpr_ext) {
         _Z_RETURN_IF_ERR(_z_decl_ext_keyexpr_encode(wbf, ke, false));
     }
@@ -140,7 +140,7 @@ int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Set id
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
     // Copy flags but clear double use ones.
     uint8_t interest_flags = decl->interest_flags;
     _Z_CLEAR_FLAG(interest_flags, _Z_INTEREST_FLAG_CURRENT);
@@ -168,7 +168,7 @@ int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
 int8_t _z_final_interest_encode(_z_wbuf_t *wbf, const _z_final_interest_t *decl) {
     uint8_t header = _Z_FINAL_INTEREST_MID;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
     return _Z_RES_OK;
 }
 
@@ -280,7 +280,7 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
     _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
     if (_Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_N)) {
         _z_zint_t len;
-        _Z_RETURN_IF_ERR(_z_zint_decode(&len, zbf));
+        _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
         if (_z_zbuf_len(zbf) < len) {
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
@@ -381,7 +381,7 @@ int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t
         // Decode ke suffix
         if (_Z_HAS_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N)) {
             _z_zint_t len;
-            _Z_RETURN_IF_ERR(_z_zint_decode(&len, zbf));
+            _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
             if (_z_zbuf_len(zbf) < len) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }

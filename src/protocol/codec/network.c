@@ -118,14 +118,14 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
     }
     _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header | (exts.n != 0 ? _Z_FLAG_Z_Z : 0)));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_rid));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_rid));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 
     if (exts.ext_qos) {
         exts.n -= 1;
         uint8_t extheader = 0x01 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_qos._val));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_qos._val));
     }
     if (exts.ext_tstamp) {
         exts.n -= 1;
@@ -137,19 +137,19 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         exts.n -= 1;
         uint8_t extheader = 0x04 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0) | _Z_MSG_EXT_FLAG_M;
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_target));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_target));
     }
     if (exts.ext_budget) {
         exts.n -= 1;
         uint8_t extheader = 0x05 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_budget));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_budget));
     }
     if (exts.ext_timeout_ms) {
         exts.n -= 1;
         uint8_t extheader = 0x06 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_timeout_ms));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_timeout_ms));
     }
 
     switch (msg->_tag) {
@@ -211,7 +211,7 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header) {
     *msg = (_z_n_msg_request_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
-    _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_rid, zbf));
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
                                                                                 : _Z_KEYEXPR_MAPPING_LOCAL);
@@ -264,8 +264,8 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     }
 
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_request_id));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_key._id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_request_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_key._id));
     if (has_suffix) {
         _Z_RETURN_IF_ERR(_z_str_encode(wbf, msg->_key._suffix))
     }
@@ -276,7 +276,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
             extheader |= _Z_FLAG_Z_Z;
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_qos._val));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_qos._val));
     }
     if (has_ts_ext) {
         n_ext -= 1;
@@ -290,10 +290,10 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         uint8_t zidlen = _z_id_len(msg->_ext_responder._zid);
         extheader = (zidlen - 1) << 4;
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, zidlen + 1 + _z_zint_len(msg->_ext_responder._eid)));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, zidlen + 1 + _z_zint_len(msg->_ext_responder._eid)));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_ext_responder._zid.id, 0, zidlen));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_ext_responder._eid));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_responder._eid));
     }
 
     switch (msg->_tag) {
@@ -359,7 +359,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
     int8_t ret = _Z_RES_OK;
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
                                                                                  : _Z_KEYEXPR_MAPPING_LOCAL);
-    _Z_RETURN_IF_ERR(_z_zint_decode(&msg->_request_id, zbf));
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_request_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N)));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_response_decode_extension, msg));
@@ -408,7 +408,7 @@ int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t 
     _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
     uint8_t header = _Z_MID_N_RESPONSE_FINAL;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, msg->_request_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_request_id));
 
     return ret;
 }
@@ -418,7 +418,7 @@ int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, 
 
     *msg = (_z_n_msg_response_final_t){0};
     int8_t ret = _Z_RES_OK;
-    ret |= _z_zint_decode(&msg->_request_id, zbf);
+    ret |= _z_zsize_decode(&msg->_request_id, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x1a));
     }
@@ -437,7 +437,7 @@ int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
     if (has_qos_ext) {
         n -= 1;
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, 0x01 | _Z_MSG_EXT_ENC_ZINT | (n != 0 ? _Z_FLAG_Z_Z : 0)));
-        _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_ext_qos._val));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_ext_qos._val));
     }
     if (has_timestamp_ext) {
         n -= 1;
