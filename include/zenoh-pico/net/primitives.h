@@ -233,7 +233,7 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const 
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                 ,
                 z_attachment_t attachment

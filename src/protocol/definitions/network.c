@@ -168,7 +168,8 @@ _z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id) {
     return ret;
 }
 _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
-                                     z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value
+                                     z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
+                                     uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                                      ,
                                      z_attachment_t attachment
@@ -192,7 +193,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                 ._ext_budget = 0,
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
-                ._ext_timeout_ms = 0,
+                ._ext_timeout_ms = timeout_ms,
                 ._ext_timestamp = _z_timestamp_null(),
             },
     };
