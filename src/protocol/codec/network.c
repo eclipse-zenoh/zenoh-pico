@@ -290,7 +290,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         uint8_t zidlen = _z_id_len(msg->_ext_responder._zid);
         extheader = (zidlen - 1) << 4;
-        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, zidlen + 1 + _z_zint_len(msg->_ext_responder._eid)));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, zidlen + (uint8_t)1 + _z_zint_len(msg->_ext_responder._eid)));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_ext_responder._zid.id, 0, zidlen));
         _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_responder._eid));
@@ -339,7 +339,7 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-            uint8_t zidlen = (header >> 4) + 1;
+            uint8_t zidlen = (header >> 4) + (uint8_t)1;
             _Z_RETURN_IF_ERR(_z_zbuf_read_exact(zbf, msg->_ext_responder._zid.id, zidlen));
             _Z_RETURN_IF_ERR(_z_zint32_decode(&msg->_ext_responder._eid, zbf));
             break;

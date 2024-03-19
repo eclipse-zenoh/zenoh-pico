@@ -93,7 +93,7 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     return ret;
 }
 int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(ts->time) + 1 + _z_id_len(ts->id)));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(ts->time) + (uint8_t)1 + _z_id_len(ts->id)));
     return _z_timestamp_encode(wbf, ts);
 }
 
@@ -745,7 +745,7 @@ int8_t _z_scout_decode(_z_s_msg_scout_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     msg->_what = cbyte & 0x07;
     msg->_zid = _z_id_empty();
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(cbyte, _Z_FLAG_T_SCOUT_I) == true)) {
-        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
         _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
     }
 
@@ -782,7 +782,7 @@ int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
-    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
 
     if (ret == _Z_RES_OK) {
         msg->_zid = _z_id_empty();

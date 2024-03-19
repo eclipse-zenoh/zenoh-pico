@@ -105,7 +105,7 @@ int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     ret |= _z_uint8_decode(&cbyte, zbf);
     msg->_whatami = cbyte & 0x03;
 
-    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+    uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
     msg->_zid = _z_id_empty();
     if (ret == _Z_RES_OK) {
         if (_z_zbuf_len(zbf) >= zidlen) {
@@ -187,7 +187,7 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
     if (ret == _Z_RES_OK) {
         msg->_whatami = cbyte & 0x03;
-        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + 1;
+        uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
