@@ -788,7 +788,7 @@ z_get_options_t z_get_options_default(void) {
 #if Z_FEATURE_ATTACHMENT == 1
         // TODO:ATT.attachment = z_attachment_null()
 #endif
-        .timeout_ms = 0
+        .timeout_ms = Z_GET_TIMEOUT_DEFAULT
     };
 }
 
