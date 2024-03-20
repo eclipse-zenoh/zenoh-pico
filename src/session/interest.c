@@ -29,6 +29,12 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_INTEREST == 1
+void _z_declare_data_clear(_z_declare_data_t *data) { _z_keyexpr_clear(&data->_key); }
+
+_Bool _z_declare_data_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
+    return ((left->_id == right->_id) && (left->_type == right->_type));
+}
+
 _Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two) {
     return one->_id == two->_id;
 }
@@ -58,7 +64,7 @@ static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_sessi
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
         if ((intr->in->val._flags & flags) != 0) {
             if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
-                                      strlen(key._suffix)) == true) {
+                                      strlen(key._suffix))) {
                 ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
             }
         }
@@ -199,46 +205,126 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
     return ret;
 }
 
+static int8_t _unsafe_z_register_declare(_z_session_t *zn, const _z_keyexpr_t *key, uint32_t id, uint8_t type) {
+    _z_declare_data_t *decl = NULL;
+    decl = (_z_declare_data_t *)zp_malloc(sizeof(_z_declare_data_t));
+    if (decl == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_keyexpr_copy(&decl->_key, key);
+    decl->_id = id;
+    decl->_type = type;
+    zn->_remote_declares = _z_declare_data_list_push(zn->_remote_declares, decl);
+    return _Z_RES_OK;
+}
+
+static _z_keyexpr_t _unsafe_z_get_key_from_declare(_z_session_t *zn, uint32_t id, uint8_t type) {
+    _z_declare_data_list_t *xs = zn->_remote_declares;
+    _z_declare_data_t comp = {
+        ._key = _z_keyexpr_null(),
+        ._id = id,
+        ._type = type,
+    };
+    while (xs != NULL) {
+        _z_declare_data_t *decl = _z_declare_data_list_head(xs);
+        if (_z_declare_data_eq(&comp, decl)) {
+            return _z_keyexpr_duplicate(decl->_key);
+        }
+        xs = _z_declare_data_list_tail(xs);
+    }
+    return _z_keyexpr_null();
+}
+
+static int8_t _unsafe_z_unregister_declare(_z_session_t *zn, uint32_t id, uint8_t type) {
+    _z_declare_data_t decl = {
+        ._key = _z_keyexpr_null(),
+        ._id = id,
+        ._type = type,
+    };
+    zn->_remote_declares = _z_declare_data_list_drop_filter(zn->_remote_declares, _z_declare_data_eq, &decl);
+    return _Z_RES_OK;
+}
+
 int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {
     const _z_keyexpr_t *decl_key = NULL;
     _z_interest_msg_t msg;
     uint8_t flags = 0;
+    uint8_t decl_type = 0;
     switch (decl->_tag) {
         case _Z_DECL_SUBSCRIBER:
             msg.type = _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER;
             msg.id = decl->_body._decl_subscriber._id;
             decl_key = &decl->_body._decl_subscriber._keyexpr;
+            decl_type = _Z_DECLARE_TYPE_SUBSCRIBER;
             flags = _Z_INTEREST_FLAG_SUBSCRIBERS;
             break;
         case _Z_DECL_QUERYABLE:
             msg.type = _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE;
             msg.id = decl->_body._decl_queryable._id;
             decl_key = &decl->_body._decl_queryable._keyexpr;
+            decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
+        default:
+            return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
+    }
+    // Retrieve key
+    _zp_session_lock_mutex(zn);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
+    if (key._suffix == NULL) {
+        _zp_session_unlock_mutex(zn);
+        return _Z_ERR_KEYEXPR_UNKNOWN;
+    }
+    // Register declare
+    _unsafe_z_register_declare(zn, &key, msg.id, decl_type);
+    // Retrieve interests
+    _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key_and_flags(zn, flags, key);
+    _zp_session_unlock_mutex(zn);
+    // Parse session_interest list
+    _z_session_interest_rc_list_t *xs = intrs;
+    while (xs != NULL) {
+        _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
+        if (intr->in->val._callback != NULL) {
+            intr->in->val._callback(&msg, intr->in->val._arg);
+        }
+        xs = _z_session_interest_rc_list_tail(xs);
+    }
+    // Clean up
+    _z_keyexpr_clear(&key);
+    _z_session_interest_rc_list_free(&intrs);
+    return _Z_RES_OK;
+}
+
+int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl) {
+    _z_interest_msg_t msg;
+    uint8_t flags = 0;
+    uint8_t decl_type = 0;
+    switch (decl->_tag) {
         case _Z_UNDECL_SUBSCRIBER:
             msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER;
             msg.id = decl->_body._undecl_subscriber._id;
-            decl_key = &decl->_body._undecl_subscriber._ext_keyexpr;
+            decl_type = _Z_DECLARE_TYPE_SUBSCRIBER;
             flags = _Z_INTEREST_FLAG_SUBSCRIBERS;
             break;
         case _Z_UNDECL_QUERYABLE:
             msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE;
             msg.id = decl->_body._undecl_queryable._id;
-            decl_key = &decl->_body._undecl_queryable._ext_keyexpr;
+            decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
     }
     _zp_session_lock_mutex(zn);
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
+    // Retrieve declare data
+    _z_keyexpr_t key = _unsafe_z_get_key_from_declare(zn, msg.id, decl_type);
     if (key._suffix == NULL) {
-        _z_keyexpr_clear(&key);
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
     _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key_and_flags(zn, flags, key);
+    // Remove declare
+    _unsafe_z_unregister_declare(zn, msg.id, decl_type);
     _zp_session_unlock_mutex(zn);
 
     // Parse session_interest list

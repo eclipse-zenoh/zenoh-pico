@@ -70,10 +70,10 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_interest_process_declares(zn, &decl._decl);
                 } break;
                 case _Z_UNDECL_SUBSCRIBER: {
-                    _z_interest_process_declares(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl._decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
-                    _z_interest_process_declares(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl._decl);
                 } break;
                 case _Z_DECL_TOKEN: {
                     // TODO: add support or explicitly discard
