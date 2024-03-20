@@ -308,6 +308,7 @@ int main(int argc, char **argv) {
 
     printf("Session delete...");
     z_delete_options_t _ret_delete_opt = z_delete_options_default();
+    _ret_delete_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     _ret_int8 = z_delete(z_loan(s1), z_loan(_ret_expr), &_ret_delete_opt);
     assert_eq(_ret_int8, 0);
     printf("Ok\n");
@@ -320,17 +321,6 @@ int main(int argc, char **argv) {
     printf(" %02x\n", _ret_int8);
     assert_eq(_ret_int8, 0);
     assert(!z_check(_ret_expr));
-    printf("Ok\n");
-
-    _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
-    assert_eq(_ret_int8, 0);
-
-    printf("Declaring Pull Subscriber...");
-    z_owned_closure_sample_t _ret_closure_sample2 = z_closure(data_handler, NULL, &ls1);
-    z_pull_subscriber_options_t _ret_psub_opt = z_pull_subscriber_options_default();
-    z_owned_pull_subscriber_t _ret_psub =
-        z_declare_pull_subscriber(z_loan(s2), z_keyexpr(keyexpr_str), z_move(_ret_closure_sample2), &_ret_psub_opt);
-    assert(z_check(_ret_psub));
     printf("Ok\n");
 
     printf("Declaring Publisher...");
@@ -349,25 +339,11 @@ int main(int argc, char **argv) {
     printf("Ok\n");
 
     sleep(SLEEP);
-
-    printf("Pull Subscriber Pulling data...");
-    _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
-    assert_eq(_ret_int8, 0);
-    printf("Ok\n");
-
-    sleep(SLEEP);
     assert_eq(datas, 3);
 
     printf("Publisher Delete...");
     z_publisher_delete_options_t _ret_pdelete_opt = z_publisher_delete_options_default();
     _ret_int8 = z_publisher_delete(z_loan(_ret_pub), &_ret_pdelete_opt);
-    assert_eq(_ret_int8, 0);
-    printf("Ok\n");
-
-    sleep(SLEEP);
-
-    printf("Pull Subscriber Pulling data...");
-    _ret_int8 = z_subscriber_pull(z_loan(_ret_psub));
     assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
@@ -380,9 +356,12 @@ int main(int argc, char **argv) {
     assert(!z_check(_ret_pub));
     printf("Ok\n");
 
-    printf("Undeclaring Pull Subscriber...");
-    _ret_int8 = z_undeclare_pull_subscriber(z_move(_ret_psub));
+    sleep(SLEEP);
+
+    printf("Undeclaring Subscriber...");
+    _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
     assert_eq(_ret_int8, 0);
+    assert(!z_check(_ret_sub));
     printf("Ok\n");
 
     sleep(SLEEP);

@@ -81,15 +81,10 @@ int main(void) {
     assert(!z_check(publisher_null_2));
 #endif
 #if Z_FEATURE_SUBSCRIPTION == 1
-    z_owned_pull_subscriber_t pull_subscriber_null_1 = z_pull_subscriber_null();
     z_owned_subscriber_t subscriber_null_1 = z_subscriber_null();
-    assert(!z_check(pull_subscriber_null_1));
     assert(!z_check(subscriber_null_1));
-    z_owned_pull_subscriber_t pull_subscriber_null_2;
     z_owned_subscriber_t subscriber_null_2;
-    z_null(&pull_subscriber_null_2);
     z_null(&subscriber_null_2);
-    assert(!z_check(pull_subscriber_null_2));
     assert(!z_check(subscriber_null_2));
 #endif
 #if Z_FEATURE_QUERYABLE == 1
@@ -150,9 +145,7 @@ int main(void) {
         z_drop(z_move(publisher_null_2));
 #endif
 #if Z_FEATURE_SUBSCRIPTION == 1
-        z_drop(z_move(pull_subscriber_null_1));
         z_drop(z_move(subscriber_null_1));
-        z_drop(z_move(pull_subscriber_null_2));
         z_drop(z_move(subscriber_null_2));
 #endif
 #if Z_FEATURE_QUERYABLE == 1

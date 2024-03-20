@@ -76,10 +76,6 @@ int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
 int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
 
-int8_t _z_period_encode(_z_wbuf_t *wbf, const _z_period_t *m);
-int8_t _z_period_decode(_z_period_t *p, _z_zbuf_t *zbf);
-int8_t _z_period_decode_na(_z_period_t *p, _z_zbuf_t *zbf);
-
 int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *ke);
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);
 

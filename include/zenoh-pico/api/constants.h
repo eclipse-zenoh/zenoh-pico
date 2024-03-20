@@ -215,16 +215,6 @@ typedef enum {
 #define Z_PRIORITY_DEFAULT Z_PRIORITY_DATA
 
 /**
- * Subscription mode values.
- *
- * Enumerators:
- *     Z_SUBMODE_PUSH: Defines the subscription with a push paradigm.
- *     Z_SUBMODE_PULL: Defines the subscription with a pull paradigm.
- */
-typedef enum { Z_SUBMODE_PUSH = 0, Z_SUBMODE_PULL = 1 } z_submode_t;
-#define Z_SUBMODE_DEFAULT Z_SUBMODE_PUSH
-
-/**
  * Query target values.
  *
  * Enumerators:

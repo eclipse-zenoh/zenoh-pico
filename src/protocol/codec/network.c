@@ -162,9 +162,6 @@ int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         case _Z_REQUEST_DEL: {
             _Z_RETURN_IF_ERR(_z_del_encode(wbf, &msg->_body._del));
         } break;
-        case _Z_REQUEST_PULL: {
-            _Z_RETURN_IF_ERR(_z_pull_encode(wbf, &msg->_body._pull));
-        } break;
     }
     return ret;
 }
@@ -232,10 +229,6 @@ int8_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t 
         case _Z_MID_Z_DEL: {
             msg->_tag = _Z_REQUEST_DEL;
             _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body._del, zbf, zheader));
-        } break;
-        case _Z_MID_Z_PULL: {
-            msg->_tag = _Z_REQUEST_PULL;
-            _Z_RETURN_IF_ERR(_z_pull_decode(&msg->_body._pull, zbf, zheader));
         } break;
         default:
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -305,18 +298,6 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
             _Z_RETURN_IF_ERR(_z_err_encode(wbf, &msg->_body._err));
             break;
         }
-        case _Z_RESPONSE_BODY_ACK: {
-            _Z_RETURN_IF_ERR(_z_ack_encode(wbf, &msg->_body._ack));
-            break;
-        }
-        case _Z_RESPONSE_BODY_PUT: {
-            _Z_RETURN_IF_ERR(_z_put_encode(wbf, &msg->_body._put));
-            break;
-        }
-        case _Z_RESPONSE_BODY_DEL: {
-            _Z_RETURN_IF_ERR(_z_del_encode(wbf, &msg->_body._del));
-            break;
-        }
     }
 
     return ret;
@@ -377,21 +358,6 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
         case _Z_MID_Z_ERR: {
             msg->_tag = _Z_RESPONSE_BODY_ERR;
             ret = _z_err_decode(&msg->_body._err, zbf, inner_header);
-            break;
-        }
-        case _Z_MID_Z_ACK: {
-            msg->_tag = _Z_RESPONSE_BODY_ACK;
-            ret = _z_ack_decode(&msg->_body._ack, zbf, inner_header);
-            break;
-        }
-        case _Z_MID_Z_PUT: {
-            msg->_tag = _Z_RESPONSE_BODY_PUT;
-            ret = _z_put_decode(&msg->_body._put, zbf, inner_header);
-            break;
-        }
-        case _Z_MID_Z_DEL: {
-            msg->_tag = _Z_RESPONSE_BODY_DEL;
-            ret = _z_del_decode(&msg->_body._del, zbf, inner_header);
             break;
         }
         default: {

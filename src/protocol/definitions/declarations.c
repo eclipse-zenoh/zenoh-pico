@@ -69,12 +69,11 @@ _z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key) {
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id) {
     return (_z_declaration_t){._tag = _Z_UNDECL_KEXPR, ._body = {._undecl_kexpr = {._id = id}}};
 }
-_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable, _Bool pull_mode) {
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable) {
     return (_z_declaration_t){
         ._tag = _Z_DECL_SUBSCRIBER,
-        ._body = {._decl_subscriber = {._id = id,
-                                       ._keyexpr = _z_keyexpr_steal(key),
-                                       ._ext_subinfo = {._pull_mode = pull_mode, ._reliable = reliable}}}};
+        ._body = {._decl_subscriber = {
+                      ._id = id, ._keyexpr = _z_keyexpr_steal(key), ._ext_subinfo = {._reliable = reliable}}}};
 }
 
 _z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t *key) {

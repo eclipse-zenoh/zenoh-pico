@@ -30,12 +30,13 @@
 
 #define KEYEXPR "demo/example/**"
 
-void data_handler(const z_sample_t *sample, void *arg) {
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample->payload.len,
-           sample->payload.start);
-    z_str_drop(z_str_move(&keystr));
-}
+// @TODO
+// void data_handler(const z_sample_t *sample, void *arg) {
+//     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+//     printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample->payload.len,
+//            sample->payload.start);
+//     z_str_drop(z_str_move(&keystr));
+// }
 
 int main(int argc, char **argv) {
     randLIB_seed_random();
@@ -64,24 +65,27 @@ int main(int argc, char **argv) {
     zp_start_read_task(z_session_loan(&s), NULL);
     zp_start_lease_task(z_session_loan(&s), NULL);
 
+    // @TODO
+    // z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
-    z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
-    z_owned_pull_subscriber_t sub =
-        z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
-    if (!z_pull_subscriber_check(&sub)) {
-        printf("Unable to declare subscriber.\n");
-        exit(-1);
-    }
-    printf("OK!\n");
+    // @TODO
+    // z_owned_pull_subscriber_t sub =
+    //     z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
+    // if (!z_pull_subscriber_check(&sub)) {
+    //     printf("Unable to declare subscriber.\n");
+    //     exit(-1);
+    // }
+    // printf("OK!\n");
 
-    while (1) {
-        zp_sleep_s(5);
-        printf("Pulling data from '%s'...\n", KEYEXPR);
-        z_subscriber_pull(z_pull_subscriber_loan(&sub));
-    }
+    // while (1) {
+    //     zp_sleep_s(5);
+    //     printf("Pulling data from '%s'...\n", KEYEXPR);
+    //     z_subscriber_pull(z_pull_subscriber_loan(&sub));
+    // }
 
-    printf("Closing Zenoh Session...");
-    z_undeclare_pull_subscriber(z_pull_subscriber_move(&sub));
+    // printf("Closing Zenoh Session...");
+    // z_undeclare_pull_subscriber(z_pull_subscriber_move(&sub));
+    printf("Pull Subscriber not supported... exiting\n");
 
     // Stop the receive and the session lease loop for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));

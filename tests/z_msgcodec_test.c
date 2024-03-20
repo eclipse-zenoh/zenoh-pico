@@ -600,37 +600,15 @@ void timestamp_field(void) {
 /*------------------ SubInfo field ------------------*/
 _z_subinfo_t gen_subinfo(void) {
     _z_subinfo_t sm;
-    sm.mode = gen_bool() ? Z_SUBMODE_PUSH : Z_SUBMODE_PULL;
     sm.reliability = gen_bool() ? Z_RELIABILITY_RELIABLE : Z_RELIABILITY_BEST_EFFORT;
-    if (gen_bool()) {
-        sm.period.origin = gen_uint();
-        sm.period.period = gen_uint();
-        sm.period.duration = gen_uint();
-    } else {
-        sm.period.origin = 0;
-        sm.period.period = 0;
-        sm.period.duration = 0;
-    }
 
     return sm;
 }
 
 void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right) {
     printf("SubInfo -> ");
-    printf("Mode (%u:%u), ", left->mode, right->mode);
-    assert(left->mode == right->mode);
-
     printf("Reliable (%u:%u), ", left->reliability, right->reliability);
     assert(left->reliability == right->reliability);
-
-    printf("Period (");
-    printf("<%u:%u,%u>", left->period.origin, left->period.period, left->period.duration);
-    printf(":");
-    printf("<%u:%u,%u>", right->period.origin, right->period.period, right->period.duration);
-    printf(")");
-    assert(left->period.origin == right->period.origin);
-    assert(left->period.period == right->period.period);
-    assert(left->period.duration == right->period.duration);
 }
 
 /*------------------ ResKey field ------------------*/
@@ -745,15 +723,13 @@ _z_decl_subscriber_t gen_subscriber_declaration(void) {
     _z_subinfo_t subinfo = gen_subinfo();
     _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(),
                                  ._id = (uint32_t)gen_uint64(),
-                                 ._ext_subinfo = {._pull_mode = subinfo.mode == Z_SUBMODE_PULL,
-                                                  ._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
+                                 ._ext_subinfo = {._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
     return e_sd;
 }
 
 void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z_decl_subscriber_t *right) {
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
     assert(left->_id == right->_id);
-    assert(left->_ext_subinfo._pull_mode == right->_ext_subinfo._pull_mode);
     assert(left->_ext_subinfo._reliable == right->_ext_subinfo._reliable);
 }
 
@@ -1131,33 +1107,6 @@ void push_body_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-/*------------------ Pull message ------------------*/
-_z_msg_pull_t gen_pull_message(void) { return (_z_msg_pull_t){._ext_source_info = _z_source_info_null()}; }
-
-void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right) {
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-}
-
-void pull_message(void) {
-    printf("\n>> Pull message\n");
-    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
-    _z_msg_pull_t e_pull_msg = gen_pull_message();
-
-    assert(_z_pull_encode(&wbf, &e_pull_msg) == _Z_RES_OK);
-
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-
-    _z_msg_pull_t d_pull_msg;
-    assert(_z_pull_decode(&d_pull_msg, &zbf, header) == _Z_RES_OK);
-    assert_eq_pull_message(&e_pull_msg, &d_pull_msg);
-
-    _z_msg_pull_clear(&e_pull_msg);
-    _z_msg_pull_clear(&d_pull_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 _z_msg_query_t gen_query(void) {
     return (_z_msg_query_t){
         ._consolidation = (gen_uint8() % 4) - 1,
@@ -1218,32 +1167,6 @@ void err_message(void) {
     assert_eq_err(&expected, &decoded);
     _z_msg_err_clear(&decoded);
     _z_msg_err_clear(&expected);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
-_z_msg_ack_t gen_ack(void) {
-    return (_z_msg_ack_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-    };
-}
-
-void assert_eq_ack(const _z_msg_ack_t *left, const _z_msg_ack_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-}
-
-void ack_message(void) {
-    printf("\n>> Ack message\n");
-    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
-    _z_msg_ack_t expected = gen_ack();
-    assert(_z_ack_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_ack_t decoded;
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_ack_decode(&decoded, &zbf, header));
-    assert_eq_ack(&expected, &decoded);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1318,16 +1241,12 @@ _z_n_msg_request_t gen_request(void) {
         ._ext_budget = gen_bool() ? (uint32_t)gen_uint64() : 0,
         ._ext_timeout_ms = gen_bool() ? (uint32_t)gen_uint64() : 0,
     };
-    switch (gen_uint8() % 4) {
+    switch (gen_uint8() % 2) {
         case 0: {
             request._tag = _Z_REQUEST_QUERY;
             request._body._query = gen_query();
         } break;
-        case 1: {
-            request._tag = _Z_REQUEST_PULL;
-            request._body._pull =
-                (_z_msg_pull_t){._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null()};
-        } break;
+        case 1:
         default: {
             _z_push_body_t body = gen_push_body();
             if (body._is_put) {
@@ -1363,9 +1282,6 @@ void assert_eq_request(const _z_n_msg_request_t *left, const _z_n_msg_request_t 
             assert_eq_push_body(&(_z_push_body_t){._is_put = false, ._body._del = left->_body._del},
                                 &(_z_push_body_t){._is_put = false, ._body._del = right->_body._del});
         } break;
-        case _Z_REQUEST_PULL: {
-            assert_eq_source_info(&left->_body._pull._ext_source_info, &right->_body._pull._ext_source_info);
-        } break;
     }
 }
 
@@ -1394,28 +1310,15 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 5) {
+    switch (gen_uint() % 2) {
         case 0: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
-            ret._body._ack = gen_ack();
-        } break;
-        case 1: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
         } break;
-        case 2: {
+        case 1:
+        default: {
             ret._tag = _Z_RESPONSE_BODY_REPLY;
             ret._body._reply = gen_reply();
-        } break;
-        default: {
-            _z_push_body_t body = gen_push_body();
-            if (body._is_put) {
-                ret._tag = _Z_RESPONSE_BODY_PUT;
-                ret._body._put = body._body._put;
-            } else {
-                ret._tag = _Z_RESPONSE_BODY_DEL;
-                ret._body._del = body._body._del;
-            }
         } break;
     }
     return ret;
@@ -1435,17 +1338,7 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
         } break;
         case _Z_RESPONSE_BODY_ERR: {
             assert_eq_err(&left->_body._err, &right->_body._err);
-        } break;
-        case _Z_RESPONSE_BODY_ACK: {
-            assert_eq_ack(&left->_body._ack, &right->_body._ack);
-        } break;
-        case _Z_RESPONSE_BODY_PUT: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = true, ._body._put = left->_body._put},
-                                &(_z_push_body_t){._is_put = true, ._body._put = right->_body._put});
-        } break;
-        case _Z_RESPONSE_BODY_DEL: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = false, ._body._del = left->_body._del},
-                                &(_z_push_body_t){._is_put = false, ._body._del = right->_body._del});
+
         } break;
     }
 }
@@ -1877,10 +1770,8 @@ int main(void) {
         // Zenoh messages
         declare_message();
         push_body_message();
-        pull_message();
         query_message();
         err_message();
-        ack_message();
         reply_message();
 
         // Network messages

@@ -212,8 +212,8 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
         return NULL;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_decl_subscriber(
-        &keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE, sub_info.mode == Z_SUBMODE_PULL);
+    _z_declaration_t declaration =
+        _z_make_decl_subscriber(&keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
     if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_subscription(&zn->in->val, _Z_RESOURCE_IS_LOCAL, sp_s);
@@ -253,24 +253,6 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     _z_unregister_subscription(&sub->_zn.in->val, _Z_RESOURCE_IS_LOCAL, s);
     _z_session_rc_drop(&sub->_zn);
     return _Z_RES_OK;
-}
-
-/*------------------ Pull ------------------*/
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(&sub->_zn.in->val, _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
-    if (s != NULL) {
-        _z_zint_t pull_id = _z_get_pull_id(&sub->_zn.in->val);
-        _z_zenoh_message_t z_msg = _z_msg_make_pull(_z_keyexpr_alias(s->in->val._key), pull_id);
-        if (_z_send_n_msg(&sub->_zn.in->val, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-            ret = _Z_ERR_TRANSPORT_TX_FAILED;
-        }
-    } else {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
-    }
-
-    return ret;
 }
 #endif
 

@@ -34,20 +34,22 @@
 
 #define KEYEXPR "demo/example/**"
 
-z_owned_pull_subscriber_t sub;
+// @TODO
+// z_owned_pull_subscriber_t sub;
 
-void data_handler(const z_sample_t *sample, void *arg) {
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    std::string val((const char *)sample->payload.start, sample->payload.len);
+// @TODO
+// void data_handler(const z_sample_t *sample, void *arg) {
+//     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+//     std::string val((const char *)sample->payload.start, sample->payload.len);
 
-    Serial.print(" >> [Subscription listener] Received (");
-    Serial.print(z_str_loan(&keystr));
-    Serial.print(", ");
-    Serial.print(val.c_str());
-    Serial.println(")");
+//     Serial.print(" >> [Subscription listener] Received (");
+//     Serial.print(z_str_loan(&keystr));
+//     Serial.print(", ");
+//     Serial.print(val.c_str());
+//     Serial.println(")");
 
-    z_str_drop(z_str_move(&keystr));
-}
+//     z_str_drop(z_str_move(&keystr));
+// }
 
 void setup() {
     // Initialize Serial for debug
@@ -91,23 +93,26 @@ void setup() {
     Serial.print("Declaring Subscriber on ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
-    z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
-    sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
-    if (!z_pull_subscriber_check(&sub)) {
-        Serial.println("Unable to declare subscriber.");
-        while (1) {
-            ;
-        }
-    }
-    Serial.println("OK");
-    Serial.println("Zenoh setup finished!");
+    // @TODO
+    // z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
+    // @TODO
+    // sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
+    // if (!z_pull_subscriber_check(&sub)) {
+    //     Serial.println("Unable to declare subscriber.");
+    //     while (1) {
+    //         ;
+    //     }
+    // }
+    // Serial.println("OK");
+    // Serial.println("Zenoh setup finished!");
+    Serial.println("Pull Subscriber not supported... exiting");
 
     delay(300);
 }
 
 void loop() {
     delay(5000);
-    z_subscriber_pull(z_pull_subscriber_loan(&sub));
+    // z_subscriber_pull(z_pull_subscriber_loan(&sub));
 }
 #else
 void setup() {

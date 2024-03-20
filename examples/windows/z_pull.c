@@ -18,13 +18,14 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-void data_handler(const z_sample_t *sample, void *ctx) {
-    (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
-           sample->payload.start);
-    z_drop(z_move(keystr));
-}
+// @TODO
+// void data_handler(const z_sample_t *sample, void *ctx) {
+//     (void)(ctx);
+//     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+//     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
+//            sample->payload.start);
+//     z_drop(z_move(keystr));
+// }
 
 int main(int argc, char **argv) {
     (void)(argc);
@@ -51,26 +52,29 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    z_owned_closure_sample_t callback = z_closure(data_handler);
+    // @TODO
+    // z_owned_closure_sample_t callback = z_closure(data_handler);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
-    if (!z_check(sub)) {
-        printf("Unable to declare subscriber.\n");
-        return -1;
-    }
+    // @TODO
+    // z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
+    // if (!z_check(sub)) {
+    //     printf("Unable to declare subscriber.\n");
+    //     return -1;
+    // }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = '\0';
-    while (1) {
-        fflush(stdin);
-        scanf("%c", &c);
-        if (c == 'q') {
-            break;
-        }
-        z_subscriber_pull(z_loan(sub));
-    }
+    // printf("Enter any key to pull data or 'q' to quit...\n");
+    // char c = '\0';
+    // while (1) {
+    //     fflush(stdin);
+    //     scanf("%c", &c);
+    //     if (c == 'q') {
+    //         break;
+    //     }
+    //     z_subscriber_pull(z_loan(sub));
+    // }
 
-    z_undeclare_pull_subscriber(z_move(sub));
+    // z_undeclare_pull_subscriber(z_move(sub));
+    printf("Pull Subscriber not supported... exiting\n");
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));

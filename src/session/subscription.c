@@ -37,9 +37,6 @@ void _z_subscription_clear(_z_subscription_t *sub) {
     _z_keyexpr_clear(&sub->_key);
 }
 
-/*------------------ Pull ------------------*/
-_z_zint_t _z_get_pull_id(_z_session_t *zn) { return zn->_pull_id++; }
-
 _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs, const _z_zint_t id) {
     _z_subscription_rc_t *ret = NULL;
 

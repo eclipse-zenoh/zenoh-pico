@@ -976,16 +976,8 @@ OWNED_FUNCTIONS_PTR_COMMON(z_subscriber_t, z_owned_subscriber_t, subscriber)
 OWNED_FUNCTIONS_PTR_CLONE(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_copy)
 void z_subscriber_drop(z_owned_subscriber_t *val) { z_undeclare_subscriber(val); }
 
-OWNED_FUNCTIONS_PTR_COMMON(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber)
-OWNED_FUNCTIONS_PTR_CLONE(z_pull_subscriber_t, z_owned_pull_subscriber_t, pull_subscriber, _z_owner_noop_copy)
-void z_pull_subscriber_drop(z_owned_pull_subscriber_t *val) { z_undeclare_pull_subscriber(val); }
-
 z_subscriber_options_t z_subscriber_options_default(void) {
     return (z_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
-}
-
-z_pull_subscriber_options_t z_pull_subscriber_options_default(void) {
-    return (z_pull_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
 }
 
 z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,
@@ -1023,7 +1015,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
         }
     }
 
-    _z_subinfo_t subinfo = _z_subinfo_push_default();
+    _z_subinfo_t subinfo = _z_subinfo_default();
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
@@ -1035,30 +1027,6 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     return (z_owned_subscriber_t){._value = sub};
 }
 
-z_owned_pull_subscriber_t z_declare_pull_subscriber(z_session_t zs, z_keyexpr_t keyexpr,
-                                                    z_owned_closure_sample_t *callback,
-                                                    const z_pull_subscriber_options_t *options) {
-    (void)(options);
-
-    void *ctx = callback->context;
-    callback->context = NULL;
-
-    z_keyexpr_t key = keyexpr;
-    _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
-    if (r == NULL) {
-        uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
-        key = _z_rid_with_suffix(id, NULL);
-    }
-
-    _z_subinfo_t subinfo = _z_subinfo_pull_default();
-    if (options != NULL) {
-        subinfo.reliability = options->reliability;
-    }
-
-    return (z_owned_pull_subscriber_t){
-        ._value = _z_declare_subscriber(&zs._val, key, subinfo, callback->call, callback->drop, ctx)};
-}
-
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) {
     int8_t ret = _Z_RES_OK;
 
@@ -1067,17 +1035,6 @@ int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) {
 
     return ret;
 }
-
-int8_t z_undeclare_pull_subscriber(z_owned_pull_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_undeclare_subscriber(sub->_value);
-    _z_subscriber_free(&sub->_value);
-
-    return ret;
-}
-
-int8_t z_subscriber_pull(const z_pull_subscriber_t sub) { return _z_subscriber_pull(sub._val); }
 
 z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
     z_owned_keyexpr_t ret = z_keyexpr_null();

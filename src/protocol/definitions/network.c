@@ -56,9 +56,6 @@ void _z_n_msg_request_clear(_z_n_msg_request_t *msg) {
         case _Z_REQUEST_DEL: {
             _z_msg_del_clear(&msg->_body._del);
         } break;
-        case _Z_REQUEST_PULL: {
-            _z_msg_pull_clear(&msg->_body._pull);
-        } break;
     }
 }
 
@@ -100,16 +97,6 @@ void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
             _z_msg_err_clear(&msg->_body._err);
             break;
         }
-        case _Z_RESPONSE_BODY_ACK: {
-            break;
-        }
-        case _Z_RESPONSE_BODY_PUT: {
-            _z_msg_put_clear(&msg->_body._put);
-            break;
-        }
-        case _Z_RESPONSE_BODY_DEL: {
-            break;
-        }
     }
 }
 
@@ -143,30 +130,7 @@ void _z_n_msg_free(_z_network_message_t **msg) {
         *msg = NULL;
     }
 }
-_z_network_message_t _z_msg_make_pull(_z_keyexpr_t key, _z_zint_t pull_id) {
-    _z_network_message_t ret = {
-        ._tag = _Z_N_REQUEST,
-        ._body =
-            {
-                ._request =
-                    {
-                        ._rid = pull_id,
-                        ._key = key,
-                        ._tag = _Z_REQUEST_PULL,
-                        ._body =
-                            {
-                                ._pull = {._ext_source_info = _z_source_info_null()},
-                            },
-                        ._ext_budget = 0,
-                        ._ext_qos = _Z_N_QOS_DEFAULT,
-                        ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
-                        ._ext_timestamp = _z_timestamp_null(),
-                        ._ext_timeout_ms = 0,
-                    },
-            },
-    };
-    return ret;
-}
+
 _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value
 #if Z_FEATURE_ATTACHMENT == 1
@@ -244,18 +208,7 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
 
     };
 }
-_z_network_message_t _z_n_msg_make_ack(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key) {
-    return (_z_network_message_t){
-        ._tag = _Z_N_RESPONSE,
-        ._body._response =
-            {
-                ._tag = _Z_RESPONSE_BODY_ACK,
-                ._request_id = rid,
-                ._key = _z_keyexpr_steal(key),
-                ._body._ack = {._timestamp = _z_timestamp_null(), ._ext_source_info = _z_source_info_null()},
-            },
-    };
-}
+
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
     switch (msg->_tag) {
         case _Z_N_DECLARE: {

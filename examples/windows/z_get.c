@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
+    printf("Enter any key to get data or 'q' to quit...\n");
     char c = '\0';
     while (1) {
         fflush(stdin);

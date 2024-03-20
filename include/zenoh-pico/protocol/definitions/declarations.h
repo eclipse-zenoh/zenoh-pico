@@ -34,7 +34,6 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     struct {
-        _Bool _pull_mode;
         _Bool _reliable;
     } _ext_subinfo;
 } _z_decl_subscriber_t;
@@ -130,7 +129,7 @@ void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping);
 _z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 
-_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable, _Bool pull_mode);
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable);
 _z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
 _z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete);
