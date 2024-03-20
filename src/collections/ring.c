@@ -20,10 +20,10 @@
 /*-------- ring --------*/
 _z_ring_t _z_ring_make(size_t capacity) {
     // We need one more element to differentiate wether the ring is empty or full
-    capacity += 1;
+    capacity++;
 
-    _z_ring_t v = {._capacity = capacity, ._r_idx = 0, ._w_idx = 0, ._val = NULL};
-    if (capacity != 0) {
+    _z_ring_t v = {._capacity = capacity, ._r_idx = (size_t)0, ._w_idx = (size_t)0, ._val = NULL};
+    if (capacity != (size_t)0) {
         v._val = (void **)zp_malloc(sizeof(void *) * capacity);
     }
     if (v._val != NULL) {
@@ -33,7 +33,7 @@ _z_ring_t _z_ring_make(size_t capacity) {
     return v;
 }
 
-size_t _z_ring_capacity(const _z_ring_t *r) { return r->_capacity - 1; }
+size_t _z_ring_capacity(const _z_ring_t *r) { return r->_capacity - (size_t)1; }
 
 size_t _z_ring_len(const _z_ring_t *r) {
     if (r->_w_idx >= r->_r_idx) {
@@ -51,7 +51,7 @@ void *_z_ring_push(_z_ring_t *r, void *e) {
     void *ret = e;
     if (!_z_ring_is_full(r)) {
         r->_val[r->_w_idx] = e;
-        r->_w_idx = (r->_w_idx + 1) % r->_capacity;
+        r->_w_idx = (r->_w_idx + (size_t)1) % r->_capacity;
         ret = NULL;
     }
     return ret;
@@ -66,12 +66,19 @@ void *_z_ring_push_force(_z_ring_t *r, void *e) {
     return ret;
 }
 
+void _z_ring_push_force_drop(_z_ring_t *r, void *e, z_element_free_f free_f) {
+    void *ret = _z_ring_push_force(r, e);
+    if (ret != NULL) {
+        free_f(&ret);
+    }
+}
+
 void *_z_ring_pull(_z_ring_t *r) {
     void *ret = NULL;
     if (!_z_ring_is_empty(r)) {
         ret = r->_val[r->_r_idx];
         r->_val[r->_r_idx] = NULL;
-        r->_r_idx = (r->_r_idx + 1) % r->_capacity;
+        r->_r_idx = (r->_r_idx + (size_t)1) % r->_capacity;
     }
     return ret;
 }
@@ -79,11 +86,16 @@ void *_z_ring_pull(_z_ring_t *r) {
 void _z_ring_clear(_z_ring_t *r, z_element_free_f free_f) {
     void *e = _z_ring_pull(r);
     while (e != NULL) {
-        free_f(e);
+        free_f(&e);
         e = _z_ring_pull(r);
     }
-    r->_r_idx = 0;
-    r->_w_idx = 0;
+    zp_free(r->_val);
+
+    r->_val = NULL;
+    r->_capacity = (size_t)0;
+    r->_len = (size_t)0;
+    r->_r_idx = (size_t)0;
+    r->_w_idx = (size_t)0;
 }
 
 void _z_ring_free(_z_ring_t **r, z_element_free_f free_f) {

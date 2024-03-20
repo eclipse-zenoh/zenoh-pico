@@ -17,7 +17,7 @@
 
 #define ZENOH_PICO "0.11.0.0"
 #define ZENOH_PICO_MAJOR 0
-#define ZENOH_PICO_MINOR 10
+#define ZENOH_PICO_MINOR 11
 #define ZENOH_PICO_PATCH 0
 #define ZENOH_PICO_TWEAK 0
 
@@ -25,5 +25,6 @@
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/api/utils.h"
 
 #endif /* ZENOH_PICO_H */

@@ -19,14 +19,7 @@
 
 #include "zenoh-pico/collections/element.h"
 
-/*-------- Ring Queue --------*/
-/**
- * A ring queue implemented with a single-linked list.
- *
- *  Members:
- *   struct _z_ring_t *_head: the head of the single-linked list
- *   size_t _capacity: The capacity of the ring queue
- */
+/*-------- Ring Buffer --------*/
 typedef struct {
     size_t _capacity;
     size_t _len;
@@ -37,16 +30,17 @@ typedef struct {
 
 _z_ring_t _z_ring_make(size_t capacity);
 
-void *_z_ring_push(_z_ring_t *r, void *e);
-void *_z_ring_push_force(_z_ring_t *r, void *e);
-void *_z_ring_pull(_z_ring_t *r);
-
 size_t _z_ring_capacity(const _z_ring_t *r);
 size_t _z_ring_len(const _z_ring_t *r);
 _Bool _z_ring_is_empty(const _z_ring_t *r);
 _Bool _z_ring_is_full(const _z_ring_t *r);
 
-// _z_ring_t *_z_ring_clone(const _z_ring_t *xs, z_element_clone_f d_f);
+void *_z_ring_push(_z_ring_t *r, void *e);
+void *_z_ring_push_force(_z_ring_t *r, void *e);
+void _z_ring_push_force_drop(_z_ring_t *r, void *e, z_element_free_f f);
+void *_z_ring_pull(_z_ring_t *r);
+
+_z_ring_t *_z_ring_clone(const _z_ring_t *xs, z_element_clone_f d_f);
 
 void _z_ring_clear(_z_ring_t *v, z_element_free_f f);
 void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
@@ -61,13 +55,10 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
     static inline type *name##_ring_push(name##_ring_t *r, type *e) { return _z_ring_push(r, (void *)e); }             \
     static inline type *name##_ring_push_force(name##_ring_t *r, type *e) { return _z_ring_push_force(r, (void *)e); } \
     static inline void name##_ring_push_force_drop(name##_ring_t *r, type *e) {                                        \
-        void *x = _z_ring_push_force(r, (void *)e);                                                                    \
-        if (x != NULL) {                                                                                               \
-            name##_elem_free(&x);                                                                                      \
-        }                                                                                                              \
+        return _z_ring_push_force_drop(r, (void *)e, name##_elem_free);                                                \
     }                                                                                                                  \
     static inline type *name##_ring_pull(name##_ring_t *r) { return (type *)_z_ring_pull(r); }                         \
-    static inline void name##_ring_clear(name##_ring_t *r) { return _z_ring_clear(r, name##_elem_free); }              \
+    static inline void name##_ring_clear(name##_ring_t *r) { _z_ring_clear(r, name##_elem_free); }                     \
     static inline void name##_ring_free(name##_ring_t **r) { _z_ring_free(r, name##_elem_free); }
 
 #endif /* ZENOH_PICO_COLLECTIONS_RING_H */
