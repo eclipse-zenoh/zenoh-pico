@@ -74,9 +74,10 @@ int main(int argc, char **argv) {
     }
     printf("OK!\n");
 
+    int idx = 0;
     while (1) {
-        z_sleep_s(5);
-        printf("Pulling data from '%s'...\n", KEYEXPR);
+        z_sleep_s(1);
+        printf("[%4d] Pulling...\n", idx++);
         z_subscriber_pull(z_pull_subscriber_loan(&sub));
     }
 

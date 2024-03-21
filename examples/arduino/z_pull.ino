@@ -35,6 +35,7 @@
 #define KEYEXPR "demo/example/**"
 
 z_owned_pull_subscriber_t sub;
+int idx = 0;
 
 void data_handler(const z_sample_t *sample, void *arg) {
     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
@@ -106,7 +107,10 @@ void setup() {
 }
 
 void loop() {
-    delay(5000);
+    delay(1000);
+    char buf[256];
+    sprintf(buf, "[%4d] Pulling...", idx++);
+    Serial.println(buf);
     z_subscriber_pull(z_pull_subscriber_loan(&sub));
 }
 #else

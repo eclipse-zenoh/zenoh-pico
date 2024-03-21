@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    printf("Press CTRL-C to quit...\n");
     char *buf = (char *)malloc(256);
     for (int idx = 0; 1; ++idx) {
         Sleep(1);

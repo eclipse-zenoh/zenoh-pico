@@ -79,15 +79,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Enter any key to pull data or 'q' to quit...\n");
-    char c = '\0';
+    printf("Press CTRL-C to quit...\n");
+    int idx = 0;
     while (1) {
-        fflush(stdin);
-        int ret = scanf("%c", &c);
-        (void)ret;  // Remove unused result warning
-        if (c == 'q') {
-            break;
-        }
+        sleep(1);
+        printf("[%4d] Pulling...\n", idx++);
         z_subscriber_pull(z_loan(sub));
     }
 

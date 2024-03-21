@@ -153,9 +153,10 @@ void app_main() {
     }
     printf("OK!\n");
 
+    int idx = 0;
     while (1) {
-        sleep(5);
-        printf("Pulling data from '%s'...\n", KEYEXPR);
+        sleep(1);
+        printf("[%4d] Pulling...\n", idx++);
         z_subscriber_pull(z_loan(sub));
     }
 

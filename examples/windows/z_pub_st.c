@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
+#define N 2147483647  // max int value by default
+
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     (void)(argc);
@@ -47,9 +49,10 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    printf("Press CTRL-C to quit...\n");
     char *buf = (char *)malloc(256);
     z_clock_t now = z_clock_now();
-    for (int idx = 0; 1;) {
+    for (int idx = 0; idx < N;) {
         if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);

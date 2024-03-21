@@ -30,6 +30,7 @@
 
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
+#define N 2147483647  // max int value by default
 
 void app_main(void) {
     z_owned_config_t config = z_config_default();
@@ -54,7 +55,7 @@ void app_main(void) {
 
     char *buf = (char *)pvPortMalloc(256);
     z_clock_t now = z_clock_now();
-    for (int idx = 0; 1;) {
+    for (int idx = 0; idx < N;) {
         if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, VALUE);
             printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
