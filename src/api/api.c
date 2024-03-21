@@ -788,6 +788,7 @@ z_get_options_t z_get_options_default(void) {
 #if Z_FEATURE_ATTACHMENT == 1
         // TODO:ATT.attachment = z_attachment_null()
 #endif
+        .timeout_ms = Z_GET_TIMEOUT_DEFAULT
     };
 }
 
@@ -836,7 +837,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     }
 
     ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   __z_reply_handler, wrapped_ctx, callback->drop, ctx
+                   __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    z_attachment_null()
