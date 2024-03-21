@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/collections/fifo.h"
 #include "zenoh-pico/collections/lifo.h"
 #include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/collections/string.h"
@@ -191,77 +192,78 @@ void lifo_test(void) {
     assert(_z_str_lifo_is_empty(&r));
 }
 
-// // FIFO
-// _Z_FIFO_DEFINE(_z_str, char)
+// FIFO
+_Z_FIFO_DEFINE(_z_str, char)
 
-// void print_fifo(_z_fifo_t *r) { printf("Fifo { capacity: %zu, len: %zu }\n", _z_fifo_capacity(r), _z_fifo_len(r)); }
+void print_fifo(_z_fifo_t *r) { printf("Fifo { capacity: %zu, len: %zu }\n", _z_fifo_capacity(r), _z_fifo_len(r)); }
 
-// void fifo_test(void) {
-//     _z_str_fifo_t r = _z_str_fifo_make(3);
-//     print_fifo(&r);
-//     assert(_z_str_fifo_is_empty(&r));
+void fifo_test(void) {
+    _z_str_fifo_t r = _z_str_fifo_make(3);
+    print_fifo(&r);
+    assert(_z_str_fifo_is_empty(&r));
 
-//     // One
-//     char *s = _z_str_fifo_push(&r, a);
-//     print_fifo(&r);
-//     assert(s == NULL);
-//     assert(_z_str_fifo_len(&r) == 1);
+    // One
+    char *s = _z_str_fifo_push(&r, a);
+    print_fifo(&r);
+    assert(s == NULL);
+    assert(_z_str_fifo_len(&r) == 1);
 
-//     s = _z_str_fifo_pull(&r);
-//     print_fifo(&r);
-//     printf("%s == %s\n", a, s);
-//     assert(strcmp(a, s) == 0);
-//     assert(_z_str_fifo_is_empty(&r));
+    s = _z_str_fifo_pull(&r);
+    print_fifo(&r);
+    printf("%s == %s\n", a, s);
+    assert(strcmp(a, s) == 0);
+    assert(_z_str_fifo_is_empty(&r));
 
-//     s = _z_str_fifo_pull(&r);
-//     print_fifo(&r);
-//     assert(s == NULL);
-//     assert(_z_str_fifo_is_empty(&r));
+    s = _z_str_fifo_pull(&r);
+    print_fifo(&r);
+    assert(s == NULL);
+    assert(_z_str_fifo_is_empty(&r));
 
-//     // Two
-//     s = _z_str_fifo_push(&r, a);
-//     print_fifo(&r);
-//     assert(s == NULL);
-//     assert(_z_str_fifo_len(&r) == 1);
+    // Two
+    s = _z_str_fifo_push(&r, a);
+    print_fifo(&r);
+    assert(s == NULL);
+    assert(_z_str_fifo_len(&r) == 1);
 
-//     s = _z_str_fifo_push(&r, b);
-//     print_fifo(&r);
-//     assert(s == NULL);
-//     assert(_z_str_fifo_len(&r) == 2);
+    s = _z_str_fifo_push(&r, b);
+    print_fifo(&r);
+    assert(s == NULL);
+    assert(_z_str_fifo_len(&r) == 2);
 
-//     s = _z_str_fifo_push(&r, c);
-//     print_fifo(&r);
-//     assert(s == NULL);
-//     assert(_z_str_fifo_len(&r) == 3);
-//     assert(_z_str_fifo_is_full(&r));
+    s = _z_str_fifo_push(&r, c);
+    print_fifo(&r);
+    assert(s == NULL);
+    assert(_z_str_fifo_len(&r) == 3);
+    assert(_z_str_fifo_is_full(&r));
 
-//     s = _z_str_fifo_push(&r, d);
-//     print_fifo(&r);
-//     printf("%s == %s\n", d, s);
-//     assert(strcmp(d, s) == 0);
-//     assert(_z_str_fifo_len(&r) == 3);
-//     assert(_z_str_fifo_is_full(&r));
+    s = _z_str_fifo_push(&r, d);
+    print_fifo(&r);
+    printf("%s == %s\n", d, s);
+    assert(strcmp(d, s) == 0);
+    assert(_z_str_fifo_len(&r) == 3);
+    assert(_z_str_fifo_is_full(&r));
 
-//     s = _z_str_fifo_pull(&r);
-//     print_fifo(&r);
-//     printf("%s == %s\n", c, s);
-//     assert(strcmp(c, s) == 0);
-//     assert(_z_str_fifo_len(&r) == 2);
+    s = _z_str_fifo_pull(&r);
+    print_fifo(&r);
+    printf("%s == %s\n", a, s);
+    assert(strcmp(a, s) == 0);
+    assert(_z_str_fifo_len(&r) == 2);
 
-//     s = _z_str_fifo_pull(&r);
-//     print_fifo(&r);
-//     printf("%s == %s\n", b, s);
-//     assert(strcmp(b, s) == 0);
-//     assert(_z_str_fifo_len(&r) == 1);
+    s = _z_str_fifo_pull(&r);
+    print_fifo(&r);
+    printf("%s == %s\n", b, s);
+    assert(strcmp(b, s) == 0);
+    assert(_z_str_fifo_len(&r) == 1);
 
-//     s = _z_str_fifo_pull(&r);
-//     print_fifo(&r);
-//     printf("%s == %s\n", a, s);
-//     assert(strcmp(a, s) == 0);
-//     assert(_z_str_fifo_is_empty(&r));
-// }
+    s = _z_str_fifo_pull(&r);
+    print_fifo(&r);
+    printf("%s == %s\n", c, s);
+    assert(strcmp(c, s) == 0);
+    assert(_z_str_fifo_is_empty(&r));
+}
 
 int main(void) {
     ring_test();
     lifo_test();
+    fifo_test();
 }
