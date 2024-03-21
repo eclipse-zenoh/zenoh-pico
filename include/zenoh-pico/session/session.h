@@ -237,7 +237,7 @@ typedef struct {
     uint8_t _type;
 } _z_declare_data_t;
 
-void _z_declare_data_clear(_z_declare_data_t * data);
+void _z_declare_data_clear(_z_declare_data_t *data);
 _Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
