@@ -23,7 +23,6 @@ int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
     capacity++;
 
     memset(r, 0, sizeof(_z_ring_t));
-    // r = {._capacity = capacity, ._r_idx = (size_t)0, ._w_idx = (size_t)0, ._val = NULL};
     if (capacity != (size_t)0) {
         r->_val = (void **)zp_malloc(sizeof(void *) * capacity);
     }
@@ -35,17 +34,8 @@ int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
 }
 
 _z_ring_t _z_ring_make(size_t capacity) {
-    // We need one more element to differentiate wether the ring is empty or full
-    capacity++;
-
-    _z_ring_t v = {._capacity = capacity, ._r_idx = (size_t)0, ._w_idx = (size_t)0, ._val = NULL};
-    if (capacity != (size_t)0) {
-        v._val = (void **)zp_malloc(sizeof(void *) * capacity);
-    }
-    if (v._val != NULL) {
-        memset(v._val, 0, capacity);
-        v._capacity = capacity;
-    }
+    _z_ring_t v;
+    _z_ring_init(&v, capacity);
     return v;
 }
 
@@ -59,9 +49,9 @@ size_t _z_ring_len(const _z_ring_t *r) {
     }
 }
 
-_Bool _z_ring_is_empty(const _z_ring_t *r) { return r->_w_idx == r->_r_idx; }
+bool _z_ring_is_empty(const _z_ring_t *r) { return r->_w_idx == r->_r_idx; }
 
-_Bool _z_ring_is_full(const _z_ring_t *r) { return _z_ring_len(r) == _z_ring_capacity(r); }
+bool _z_ring_is_full(const _z_ring_t *r) { return _z_ring_len(r) == _z_ring_capacity(r); }
 
 void *_z_ring_push(_z_ring_t *r, void *e) {
     void *ret = e;

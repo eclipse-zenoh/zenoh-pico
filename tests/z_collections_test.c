@@ -16,14 +16,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "zenoh-pico/collections/string.h"
-// aa
+#include "zenoh-pico/collections/lifo.h"
 #include "zenoh-pico/collections/ring.h"
-
-_Z_RING_DEFINE(_z_str, char)
+#include "zenoh-pico/collections/string.h"
 
 #undef NDEBUG
 #include <assert.h>
+
+char *a = "a";
+char *b = "b";
+char *c = "c";
+char *d = "d";
+
+// RING
+_Z_RING_DEFINE(_z_str, char)
 
 void print_ring(_z_ring_t *r) {
     printf("Ring { capacity: %zu, r_idx: %zu, w_idx: %zu, len: %zu }\n", _z_ring_capacity(r), r->_r_idx, r->_w_idx,
@@ -31,21 +37,17 @@ void print_ring(_z_ring_t *r) {
 }
 
 void ring_test(void) {
-    char *a = "a";
-    char *b = "b";
-    char *c = "c";
-    char *d = "d";
-
     _z_str_ring_t r = _z_str_ring_make(3);
     print_ring(&r);
     assert(_z_str_ring_is_empty(&r));
 
     // One
-    _z_str_ring_push(&r, a);
+    char *s = _z_str_ring_push(&r, a);
     print_ring(&r);
+    assert(s == NULL);
     assert(_z_str_ring_len(&r) == 1);
 
-    char *s = _z_str_ring_pull(&r);
+    s = _z_str_ring_pull(&r);
     print_ring(&r);
     assert(strcmp(a, s) == 0);
     assert(_z_str_ring_is_empty(&r));
@@ -74,42 +76,192 @@ void ring_test(void) {
 
     s = _z_str_ring_push(&r, d);
     print_ring(&r);
+    printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_len(&r) == 3);
     assert(_z_str_ring_is_full(&r));
 
     s = _z_str_ring_push_force(&r, d);
     print_ring(&r);
+    printf("%s == %s\n", a, s);
     assert(strcmp(a, s) == 0);
     assert(_z_str_ring_len(&r) == 3);
     assert(_z_str_ring_is_full(&r));
 
     s = _z_str_ring_push_force(&r, d);
     print_ring(&r);
+    printf("%s == %s\n", b, s);
     assert(strcmp(b, s) == 0);
     assert(_z_str_ring_len(&r) == 3);
     assert(_z_str_ring_is_full(&r));
 
     s = _z_str_ring_push_force(&r, d);
     print_ring(&r);
+    printf("%s == %s\n", c, s);
     assert(strcmp(c, s) == 0);
     assert(_z_str_ring_len(&r) == 3);
     assert(_z_str_ring_is_full(&r));
 
     s = _z_str_ring_pull(&r);
     print_ring(&r);
+    printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_len(&r) == 2);
 
     s = _z_str_ring_pull(&r);
     print_ring(&r);
+    printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_len(&r) == 1);
 
     s = _z_str_ring_pull(&r);
     print_ring(&r);
+    printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_is_empty(&r));
 }
 
-int main(void) { ring_test(); }
+// LIFO
+_Z_LIFO_DEFINE(_z_str, char)
+
+void print_lifo(_z_lifo_t *r) { printf("Lifo { capacity: %zu, len: %zu }\n", _z_lifo_capacity(r), _z_lifo_len(r)); }
+
+void lifo_test(void) {
+    _z_str_lifo_t r = _z_str_lifo_make(3);
+    print_lifo(&r);
+    assert(_z_str_lifo_is_empty(&r));
+
+    // One
+    char *s = _z_str_lifo_push(&r, a);
+    print_lifo(&r);
+    assert(s == NULL);
+    assert(_z_str_lifo_len(&r) == 1);
+
+    s = _z_str_lifo_pull(&r);
+    print_lifo(&r);
+    printf("%s == %s\n", a, s);
+    assert(strcmp(a, s) == 0);
+    assert(_z_str_lifo_is_empty(&r));
+
+    s = _z_str_lifo_pull(&r);
+    print_lifo(&r);
+    assert(s == NULL);
+    assert(_z_str_lifo_is_empty(&r));
+
+    // Two
+    s = _z_str_lifo_push(&r, a);
+    print_lifo(&r);
+    assert(s == NULL);
+    assert(_z_str_lifo_len(&r) == 1);
+
+    s = _z_str_lifo_push(&r, b);
+    print_lifo(&r);
+    assert(s == NULL);
+    assert(_z_str_lifo_len(&r) == 2);
+
+    s = _z_str_lifo_push(&r, c);
+    print_lifo(&r);
+    assert(s == NULL);
+    assert(_z_str_lifo_len(&r) == 3);
+    assert(_z_str_lifo_is_full(&r));
+
+    s = _z_str_lifo_push(&r, d);
+    print_lifo(&r);
+    printf("%s == %s\n", d, s);
+    assert(strcmp(d, s) == 0);
+    assert(_z_str_lifo_len(&r) == 3);
+    assert(_z_str_lifo_is_full(&r));
+
+    s = _z_str_lifo_pull(&r);
+    print_lifo(&r);
+    printf("%s == %s\n", c, s);
+    assert(strcmp(c, s) == 0);
+    assert(_z_str_lifo_len(&r) == 2);
+
+    s = _z_str_lifo_pull(&r);
+    print_lifo(&r);
+    printf("%s == %s\n", b, s);
+    assert(strcmp(b, s) == 0);
+    assert(_z_str_lifo_len(&r) == 1);
+
+    s = _z_str_lifo_pull(&r);
+    print_lifo(&r);
+    printf("%s == %s\n", a, s);
+    assert(strcmp(a, s) == 0);
+    assert(_z_str_lifo_is_empty(&r));
+}
+
+// // FIFO
+// _Z_FIFO_DEFINE(_z_str, char)
+
+// void print_fifo(_z_fifo_t *r) { printf("Fifo { capacity: %zu, len: %zu }\n", _z_fifo_capacity(r), _z_fifo_len(r)); }
+
+// void fifo_test(void) {
+//     _z_str_fifo_t r = _z_str_fifo_make(3);
+//     print_fifo(&r);
+//     assert(_z_str_fifo_is_empty(&r));
+
+//     // One
+//     char *s = _z_str_fifo_push(&r, a);
+//     print_fifo(&r);
+//     assert(s == NULL);
+//     assert(_z_str_fifo_len(&r) == 1);
+
+//     s = _z_str_fifo_pull(&r);
+//     print_fifo(&r);
+//     printf("%s == %s\n", a, s);
+//     assert(strcmp(a, s) == 0);
+//     assert(_z_str_fifo_is_empty(&r));
+
+//     s = _z_str_fifo_pull(&r);
+//     print_fifo(&r);
+//     assert(s == NULL);
+//     assert(_z_str_fifo_is_empty(&r));
+
+//     // Two
+//     s = _z_str_fifo_push(&r, a);
+//     print_fifo(&r);
+//     assert(s == NULL);
+//     assert(_z_str_fifo_len(&r) == 1);
+
+//     s = _z_str_fifo_push(&r, b);
+//     print_fifo(&r);
+//     assert(s == NULL);
+//     assert(_z_str_fifo_len(&r) == 2);
+
+//     s = _z_str_fifo_push(&r, c);
+//     print_fifo(&r);
+//     assert(s == NULL);
+//     assert(_z_str_fifo_len(&r) == 3);
+//     assert(_z_str_fifo_is_full(&r));
+
+//     s = _z_str_fifo_push(&r, d);
+//     print_fifo(&r);
+//     printf("%s == %s\n", d, s);
+//     assert(strcmp(d, s) == 0);
+//     assert(_z_str_fifo_len(&r) == 3);
+//     assert(_z_str_fifo_is_full(&r));
+
+//     s = _z_str_fifo_pull(&r);
+//     print_fifo(&r);
+//     printf("%s == %s\n", c, s);
+//     assert(strcmp(c, s) == 0);
+//     assert(_z_str_fifo_len(&r) == 2);
+
+//     s = _z_str_fifo_pull(&r);
+//     print_fifo(&r);
+//     printf("%s == %s\n", b, s);
+//     assert(strcmp(b, s) == 0);
+//     assert(_z_str_fifo_len(&r) == 1);
+
+//     s = _z_str_fifo_pull(&r);
+//     print_fifo(&r);
+//     printf("%s == %s\n", a, s);
+//     assert(strcmp(a, s) == 0);
+//     assert(_z_str_fifo_is_empty(&r));
+// }
+
+int main(void) {
+    ring_test();
+    lifo_test();
+}

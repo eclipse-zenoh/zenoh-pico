@@ -33,8 +33,8 @@ _z_ring_t _z_ring_make(size_t capacity);
 
 size_t _z_ring_capacity(const _z_ring_t *r);
 size_t _z_ring_len(const _z_ring_t *r);
-_Bool _z_ring_is_empty(const _z_ring_t *r);
-_Bool _z_ring_is_full(const _z_ring_t *r);
+bool _z_ring_is_empty(const _z_ring_t *r);
+bool _z_ring_is_full(const _z_ring_t *r);
 
 void *_z_ring_push(_z_ring_t *r, void *e);
 void *_z_ring_push_force(_z_ring_t *r, void *e);
@@ -54,8 +54,8 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
     static inline name##_ring_t name##_ring_make(size_t capacity) { return _z_ring_make(capacity); }                   \
     static inline size_t name##_ring_capacity(const name##_ring_t *r) { return _z_ring_capacity(r); }                  \
     static inline size_t name##_ring_len(const name##_ring_t *r) { return _z_ring_len(r); }                            \
-    static inline _Bool name##_ring_is_empty(const name##_ring_t *r) { return _z_ring_is_empty(r); }                   \
-    static inline _Bool name##_ring_is_full(const name##_ring_t *r) { return _z_ring_is_full(r); }                     \
+    static inline bool name##_ring_is_empty(const name##_ring_t *r) { return _z_ring_is_empty(r); }                    \
+    static inline bool name##_ring_is_full(const name##_ring_t *r) { return _z_ring_is_full(r); }                      \
     static inline type *name##_ring_push(name##_ring_t *r, type *e) { return _z_ring_push(r, (void *)e); }             \
     static inline type *name##_ring_push_force(name##_ring_t *r, type *e) { return _z_ring_push_force(r, (void *)e); } \
     static inline void name##_ring_push_force_drop(name##_ring_t *r, type *e) {                                        \

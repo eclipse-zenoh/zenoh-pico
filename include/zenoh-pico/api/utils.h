@@ -106,7 +106,7 @@ typedef struct {
 #endif
 } z_owned_sample_ring_t;
 
-static inline void z_owned_sample_ring_push(const z_sample_t *src, void *context) {
+static inline void z_sample_channel_ring_push(const z_sample_t *src, void *context) {
     if (src == NULL || context == NULL) {
         return;
     }
@@ -127,7 +127,7 @@ static inline void z_owned_sample_ring_push(const z_sample_t *src, void *context
 #endif
 }
 
-static inline int8_t z_owned_sample_ring_pull(z_owned_sample_t *dst, void *context) {
+static inline int8_t z_sample_channel_ring_pull(z_owned_sample_t *dst, void *context) {
     int8_t ret = _Z_RES_OK;
 
     z_owned_sample_ring_t *r = (z_owned_sample_ring_t *)context;
@@ -148,16 +148,16 @@ static inline int8_t z_owned_sample_ring_pull(z_owned_sample_t *dst, void *conte
     return ret;
 }
 
-static inline z_owned_sample_channel_t z_sample_ring_new(size_t capacity) {
+static inline z_owned_sample_channel_t z_sample_channel_ring_new(size_t capacity) {
     z_owned_sample_channel_t ch = z_owned_sample_channel_null();
 
     z_owned_sample_ring_t *ring = (z_owned_sample_ring_t *)zp_malloc(sizeof(z_owned_sample_ring_t));
     if (ring != NULL) {
         int8_t res = _z_owned_sample_ring_init(&ring->_ring, capacity);
         if (res == _Z_RES_OK) {
-            z_owned_closure_sample_t send = z_closure(z_owned_sample_ring_push, NULL, ring);
+            z_owned_closure_sample_t send = z_closure(z_sample_channel_ring_push, NULL, ring);
             ch.send = send;
-            z_owned_closure_owned_sample_t recv = z_closure(z_owned_sample_ring_pull, NULL, ring);
+            z_owned_closure_owned_sample_t recv = z_closure(z_sample_channel_ring_pull, NULL, ring);
             ch.recv = recv;
         } else {
             zp_free(ring);

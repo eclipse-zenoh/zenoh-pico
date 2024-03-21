@@ -17,7 +17,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
-// z_owned_sample_ring_t z_sample_ring_new(size_t capacity) {
+// z_owned_sample_ring_t z_sample_channel_ring_new(size_t capacity) {
 //     z_owned_sample_ring_t ring;
 //     ring._ring = _z_sample_ring_new(capacity);
 
@@ -39,7 +39,7 @@
 // #endif
 // }
 
-// void z_owned_sample_ring_push(z_owned_sample_ring_t *r, const z_sample_t *s) {
+// void z_sample_channel_ring_push(z_owned_sample_ring_t *r, const z_sample_t *s) {
 //     z_owned_sample_t *os = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
 //     memcpy(&os->keyexpr, &s->keyexpr, sizeof(_z_keyexpr_t));
 //     memcpy(&os->payload, &s->payload, sizeof(z_bytes_t));
@@ -52,7 +52,7 @@
 // #endif
 // }
 
-// z_owned_sample_t *z_owned_sample_ring_pull(z_owned_sample_ring_t *r) {
+// z_owned_sample_t *z_sample_channel_ring_pull(z_owned_sample_ring_t *r) {
 // #if Z_FEATURE_MULTI_THREAD == 1
 //     zp_mutex_lock(&r->_mutex);
 // #endif
