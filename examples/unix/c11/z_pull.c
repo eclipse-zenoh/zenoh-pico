@@ -19,12 +19,6 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-// The handler simply insert the received sample in the ringbuffer.
-void data_handler(const z_sample_t *sample, void *ctx) {
-    z_sample_ring_t *r = (z_sample_ring_t *)ctx;
-    z_sample_ring_push(r, (z_sample_t *)sample);
-}
-
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     char *locator = NULL;
@@ -70,10 +64,8 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_sample_ring_t ring = z_sample_ring_make(3);
-    z_owned_closure_sample_t callback = z_closure(data_handler, NULL, (void *)&ring);
-
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
+    z_owned_sample_channel_t channel = z_owned_sample_ring_make(3);
+    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber.\n");
         return -1;
@@ -81,6 +73,7 @@ int main(int argc, char **argv) {
 
     printf("Enter any key to pull data or 'q' to quit...\n");
     char c = '\0';
+    z_owned_sample_t sample = z_owned_sample_null();
     while (1) {
         fflush(stdin);
         int ret = scanf("%c", &c);
@@ -89,19 +82,19 @@ int main(int argc, char **argv) {
             break;
         }
 
-        z_owned_sample_t *sample = z_sample_ring_pull(&ring);
-        if (sample != NULL) {
-            z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
-                   sample->payload.start);
+        z_owned_sample_channel_recv_call(&channel.recv, &sample);
+        if (z_sample_check(&sample)) {
+            z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample.keyexpr));
+            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)sample.payload.len,
+                   sample.payload.start);
             z_drop(z_move(keystr));
         } else {
             printf(">> [Subscriber] Nothing to pull...\n");
         }
+        z_owned_sample_drop(&sample);
     }
 
     z_undeclare_subscriber(z_move(sub));
-    z_sample_ring_clear(&ring);
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));

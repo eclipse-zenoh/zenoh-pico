@@ -21,13 +21,14 @@
 
 /*-------- Ring Buffer --------*/
 typedef struct {
+    void **_val;
     size_t _capacity;
     size_t _len;
     size_t _r_idx;
     size_t _w_idx;
-    void **_val;
 } _z_ring_t;
 
+int8_t _z_ring_init(_z_ring_t *ring, size_t capacity);
 _z_ring_t _z_ring_make(size_t capacity);
 
 size_t _z_ring_capacity(const _z_ring_t *r);
@@ -47,6 +48,9 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
 
 #define _Z_RING_DEFINE(name, type)                                                                                     \
     typedef _z_ring_t name##_ring_t;                                                                                   \
+    static inline int8_t name##_ring_init(name##_ring_t *ring, size_t capacity) {                                      \
+        return _z_ring_init(ring, capacity);                                                                           \
+    }                                                                                                                  \
     static inline name##_ring_t name##_ring_make(size_t capacity) { return _z_ring_make(capacity); }                   \
     static inline size_t name##_ring_capacity(const name##_ring_t *r) { return _z_ring_capacity(r); }                  \
     static inline size_t name##_ring_len(const name##_ring_t *r) { return _z_ring_len(r); }                            \

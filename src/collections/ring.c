@@ -18,6 +18,22 @@
 #include <string.h>
 
 /*-------- ring --------*/
+int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
+    // We need one more element to differentiate wether the ring is empty or full
+    capacity++;
+
+    memset(r, 0, sizeof(_z_ring_t));
+    // r = {._capacity = capacity, ._r_idx = (size_t)0, ._w_idx = (size_t)0, ._val = NULL};
+    if (capacity != (size_t)0) {
+        r->_val = (void **)zp_malloc(sizeof(void *) * capacity);
+    }
+    if (r->_val != NULL) {
+        memset(r->_val, 0, capacity);
+        r->_capacity = capacity;
+    }
+    return 0;
+}
+
 _z_ring_t _z_ring_make(size_t capacity) {
     // We need one more element to differentiate wether the ring is empty or full
     capacity++;
