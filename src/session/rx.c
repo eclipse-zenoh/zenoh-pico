@@ -153,6 +153,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     // @TODO: expose errors to the user
                     _z_msg_err_t error = response._body._err;
                     _z_bytes_t payload = error._ext_value.payload;
+                    _ZP_UNUSED(payload);  // Unused when logs are deactivated
                     _Z_ERROR("Received Err for query %zu: code=%d, message=%.*s", response._request_id, error._code,
                              (int)payload.len, payload.start);
                 } break;

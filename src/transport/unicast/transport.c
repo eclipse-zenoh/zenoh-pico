@@ -122,7 +122,10 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
             _z_zbuf_clear(&zt->_transport._unicast._zbuf);
         }
-#endif
+#else
+        _ZP_UNUSED(dbuf_size);
+        _ZP_UNUSED(expandable);
+#endif  // Z_FEATURE_FRAGMENTATION == 1
     }
 
     if (ret == _Z_RES_OK) {
