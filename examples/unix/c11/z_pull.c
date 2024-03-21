@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_sample_channel_t channel = z_owned_sample_ring_make(3);
+    z_owned_sample_channel_t channel = z_sample_ring_new(3);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber.\n");
@@ -73,17 +73,12 @@ int main(int argc, char **argv) {
 
     printf("Enter any key to pull data or 'q' to quit...\n");
     char c = '\0';
-    z_owned_sample_t sample = z_owned_sample_null();
-    while (1) {
-        fflush(stdin);
-        int ret = scanf("%c", &c);
-        (void)ret;  // Remove unused result warning
-        if (c == 'q') {
-            break;
-        }
-
-        z_owned_sample_channel_recv_call(&channel.recv, &sample);
-        if (z_sample_check(&sample)) {
+    for (int ret = scanf("%c", &c); c != 'q'; ret = scanf("%c", &c)) {
+        // Try to receive one sample from the ring channel
+        z_owned_sample_t sample = z_sample_null();
+        z_call(channel.recv, &sample);
+        // Check if we actually received something
+        if (z_check(sample)) {
             z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample.keyexpr));
             printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)sample.payload.len,
                    sample.payload.start);
@@ -91,7 +86,7 @@ int main(int argc, char **argv) {
         } else {
             printf(">> [Subscriber] Nothing to pull...\n");
         }
-        z_owned_sample_drop(&sample);
+        z_drop(z_move(sample));
     }
 
     z_undeclare_subscriber(z_move(sub));

@@ -29,19 +29,22 @@ typedef struct {
     // @TODO: implement the rest of the fields
 } z_owned_sample_t;
 
-static inline z_owned_sample_t z_owned_sample_null() {
+static inline z_owned_sample_t z_sample_null(void) {
     z_owned_sample_t sample;
     sample.keyexpr = z_keyexpr_null();
     sample.payload = z_bytes_null();
     return sample;
 }
 
+static inline z_owned_sample_t *z_sample_move(z_owned_sample_t *sample) { return sample; }
+static inline z_owned_sample_t *z_sample_loan(z_owned_sample_t *sample) { return sample; }
+
 static inline bool z_sample_check(const z_owned_sample_t *sample) {
     return z_keyexpr_check(&sample->keyexpr) && z_bytes_check(&sample->payload);
 }
 
 static inline z_owned_sample_t z_sample_to_owned(const z_sample_t *src) {
-    z_owned_sample_t dst = z_owned_sample_null();
+    z_owned_sample_t dst = z_sample_null();
 
     if (src == NULL) {
         return dst;
@@ -58,7 +61,7 @@ static inline z_owned_sample_t z_sample_to_owned(const z_sample_t *src) {
     return dst;
 }
 
-static inline void z_owned_sample_drop(z_owned_sample_t *s) {
+static inline void z_sample_drop(z_owned_sample_t *s) {
     if (s != NULL) {
         z_keyexpr_drop(&s->keyexpr);
         _z_bytes_clear(&s->payload);
@@ -66,18 +69,17 @@ static inline void z_owned_sample_drop(z_owned_sample_t *s) {
 }
 
 // -- Channel
-typedef z_owned_closure_sample_t z_owned_closure_sample_send_t;
 typedef int8_t (*_z_owned_sample_handler_t)(z_owned_sample_t *dst, void *context);
 
 typedef struct {
     void *context;
     _z_owned_sample_handler_t call;
     _z_dropper_handler_t drop;
-} z_owned_closure_sample_recv_t;
+} z_owned_closure_owned_sample_t;
 
 typedef struct {
-    z_owned_closure_sample_send_t send;
-    z_owned_closure_sample_recv_t recv;
+    z_owned_closure_sample_t send;
+    z_owned_closure_owned_sample_t recv;
 } z_owned_sample_channel_t;
 
 static inline z_owned_sample_channel_t z_owned_sample_channel_null() {
@@ -85,7 +87,7 @@ static inline z_owned_sample_channel_t z_owned_sample_channel_null() {
     return ch;
 }
 
-static inline int8_t z_owned_sample_channel_recv_call(z_owned_closure_sample_recv_t *recv, z_owned_sample_t *dst) {
+static inline int8_t z_closure_owned_sample_call(z_owned_closure_owned_sample_t *recv, z_owned_sample_t *dst) {
     int8_t res = _Z_ERR_GENERIC;
     if (recv != NULL) {
         res = (recv->call)(dst, recv->context);
@@ -139,23 +141,23 @@ static inline int8_t z_owned_sample_ring_pull(z_owned_sample_t *dst, void *conte
 #endif
 
     if (src == NULL) {
-        *dst = z_owned_sample_null();
+        *dst = z_sample_null();
     } else {
         memcpy(dst, src, sizeof(z_owned_sample_t));
     }
     return ret;
 }
 
-static inline z_owned_sample_channel_t z_owned_sample_ring_make(size_t capacity) {
+static inline z_owned_sample_channel_t z_sample_ring_new(size_t capacity) {
     z_owned_sample_channel_t ch = z_owned_sample_channel_null();
 
     z_owned_sample_ring_t *ring = (z_owned_sample_ring_t *)zp_malloc(sizeof(z_owned_sample_ring_t));
     if (ring != NULL) {
         int8_t res = _z_owned_sample_ring_init(&ring->_ring, capacity);
         if (res == _Z_RES_OK) {
-            z_owned_closure_sample_send_t send = z_closure(z_owned_sample_ring_push, NULL, ring);
+            z_owned_closure_sample_t send = z_closure(z_owned_sample_ring_push, NULL, ring);
             ch.send = send;
-            z_owned_closure_sample_recv_t recv = z_closure(z_owned_sample_ring_pull, NULL, ring);
+            z_owned_closure_owned_sample_t recv = z_closure(z_owned_sample_ring_pull, NULL, ring);
             ch.recv = recv;
         } else {
             zp_free(ring);

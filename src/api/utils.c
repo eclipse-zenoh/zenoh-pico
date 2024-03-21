@@ -17,9 +17,9 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
-// z_owned_sample_ring_t z_owned_sample_ring_make(size_t capacity) {
+// z_owned_sample_ring_t z_sample_ring_new(size_t capacity) {
 //     z_owned_sample_ring_t ring;
-//     ring._ring = _z_owned_sample_ring_make(capacity);
+//     ring._ring = _z_sample_ring_new(capacity);
 
 // #if Z_FEATURE_MULTI_THREAD == 1
 //     zp_mutex_init(&ring._mutex);

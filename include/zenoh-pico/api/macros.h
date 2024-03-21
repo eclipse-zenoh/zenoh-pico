@@ -42,7 +42,8 @@
                   z_owned_reply_t : z_reply_loan,                     \
                   z_owned_hello_t : z_hello_loan,                     \
                   z_owned_str_t : z_str_loan,                         \
-                  z_owned_str_array_t : z_str_array_loan              \
+                  z_owned_str_array_t : z_str_array_loan,             \
+                  z_owned_sample_t : z_sample_loan                    \
             )(&x)
 /**
  * Defines a generic function for dropping any of the ``z_owned_X_t`` types.
@@ -62,6 +63,7 @@
                   z_owned_hello_t * : z_hello_drop,                                 \
                   z_owned_str_t * : z_str_drop,                                     \
                   z_owned_str_array_t * : z_str_array_drop,                         \
+                  z_owned_sample_t * : z_sample_drop,                               \
                   z_owned_closure_sample_t * : z_closure_sample_drop,               \
                   z_owned_closure_query_t * : z_closure_query_drop,                 \
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
@@ -69,29 +71,6 @@
                   z_owned_closure_zid_t * : z_closure_zid_drop                      \
             )(x)
 
-/**
- * Defines a generic function for making null object of any of the ``z_owned_X_t`` types.
- *
- * Returns:
- *   Returns the uninitialized instance of `x`.
- */
-#define z_null(x) (*x = _Generic((x), \
-                  z_owned_session_t * : z_session_null,                             \
-                  z_owned_publisher_t * : z_publisher_null,                         \
-                  z_owned_keyexpr_t * : z_keyexpr_null,                             \
-                  z_owned_config_t * : z_config_null,                               \
-                  z_owned_scouting_config_t * : z_scouting_config_null,             \
-                  z_owned_subscriber_t * : z_subscriber_null,                       \
-                  z_owned_queryable_t * : z_queryable_null,                         \
-                  z_owned_reply_t * : z_reply_null,                                 \
-                  z_owned_hello_t * : z_hello_null,                                 \
-                  z_owned_str_t * : z_str_null,                                     \
-                  z_owned_closure_sample_t * : z_closure_sample_null,               \
-                  z_owned_closure_query_t * : z_closure_query_null,                 \
-                  z_owned_closure_reply_t * : z_closure_reply_null,                 \
-                  z_owned_closure_hello_t * : z_closure_hello_null,                 \
-                  z_owned_closure_zid_t * : z_closure_zid_null                      \
-            )())
 /**
  * Defines a generic function for checking the validity of any of the ``z_owned_X_t`` types.
  *
@@ -116,7 +95,8 @@
                   z_owned_hello_t : z_hello_check,                     \
                   z_owned_str_t : z_str_check,                         \
                   z_owned_str_array_t : z_str_array_check,             \
-                  z_bytes_t : z_bytes_check                            \
+                  z_bytes_t : z_bytes_check,                           \
+                  z_owned_sample_t : z_sample_check                    \
             )(&x)
 
 /**
@@ -126,11 +106,12 @@
  *   x: The closure to call
  */
 #define z_call(x, ...) \
-    _Generic((x), z_owned_closure_sample_t : z_closure_sample_call, \
-                  z_owned_closure_query_t : z_closure_query_call,   \
-                  z_owned_closure_reply_t : z_closure_reply_call,   \
-                  z_owned_closure_hello_t : z_closure_hello_call,   \
-                  z_owned_closure_zid_t : z_closure_zid_call        \
+    _Generic((x), z_owned_closure_sample_t : z_closure_sample_call,                 \
+                  z_owned_closure_query_t : z_closure_query_call,                   \
+                  z_owned_closure_reply_t : z_closure_reply_call,                   \
+                  z_owned_closure_hello_t : z_closure_hello_call,                   \
+                  z_owned_closure_zid_t : z_closure_zid_call,                       \
+                  z_owned_closure_owned_sample_t : z_closure_owned_sample_call      \
             ) (&x, __VA_ARGS__)
 
 /**
@@ -158,7 +139,8 @@
                   z_owned_closure_query_t : z_closure_query_move,     \
                   z_owned_closure_reply_t : z_closure_reply_move,     \
                   z_owned_closure_hello_t : z_closure_hello_move,     \
-                  z_owned_closure_zid_t  : z_closure_zid_move         \
+                  z_owned_closure_zid_t  : z_closure_zid_move,        \
+                  z_owned_sample_t : z_sample_move                    \
             )(&x)
 
 /**
@@ -204,7 +186,8 @@
                   z_owned_closure_query_t * : z_closure_query_null,                 \
                   z_owned_closure_reply_t * : z_closure_reply_null,                 \
                   z_owned_closure_hello_t * : z_closure_hello_null,                 \
-                  z_owned_closure_zid_t * : z_closure_zid_null                      \
+                  z_owned_closure_zid_t * : z_closure_zid_null,                     \
+                  z_owned_sample_t * : z_sample_null                                \
             )())
 
 // clang-format on
