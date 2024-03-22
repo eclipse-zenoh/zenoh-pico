@@ -141,9 +141,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
     if (key._suffix != NULL) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+        _zp_session_unlock_mutex(zn);
 
         // Build the z_query
         z_query_t query = {._val = {._rc = _z_query_rc_new()}};
@@ -160,10 +158,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
         _z_keyexpr_clear(&key);
         _z_session_queryable_rc_list_free(&qles);
     } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+        _zp_session_unlock_mutex(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 

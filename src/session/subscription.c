@@ -170,9 +170,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
     if (key._suffix != NULL) {
         _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+        _zp_session_unlock_mutex(zn);
 
         // Build the sample
         _z_sample_t s;
@@ -195,9 +193,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _z_keyexpr_clear(&key);
         _z_subscription_rc_list_free(&subs);
     } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        zp_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+        _zp_session_unlock_mutex(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
