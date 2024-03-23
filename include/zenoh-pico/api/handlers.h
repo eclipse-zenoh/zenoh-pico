@@ -87,7 +87,7 @@ typedef struct {
     z_owned_closure_owned_sample_t recv;
 } z_owned_sample_channel_t;
 
-z_owned_sample_channel_t z_owned_sample_channel_null();
+z_owned_sample_channel_t z_owned_sample_channel_null(void);
 int8_t z_closure_owned_sample_call(z_owned_closure_owned_sample_t *recv, z_owned_sample_t *dst);
 
 // -- Ring
