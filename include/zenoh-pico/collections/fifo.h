@@ -54,7 +54,7 @@ void _z_fifo_free(_z_fifo_t **xs, z_element_free_f f_f);
     static inline _Bool name##_fifo_is_full(const name##_fifo_t *r) { return _z_fifo_is_full(r); }         \
     static inline type *name##_fifo_push(name##_fifo_t *r, type *e) { return _z_fifo_push(r, (void *)e); } \
     static inline void name##_fifo_push_drop(name##_fifo_t *r, type *e) {                                  \
-        return _z_fifo_push_drop(r, (void *)e, name##_elem_free);                                          \
+        _z_fifo_push_drop(r, (void *)e, name##_elem_free);                                                 \
     }                                                                                                      \
     static inline type *name##_fifo_pull(name##_fifo_t *r) { return (type *)_z_fifo_pull(r); }             \
     static inline void name##_fifo_clear(name##_fifo_t *r) { _z_fifo_clear(r, name##_elem_free); }         \

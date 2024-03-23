@@ -59,7 +59,7 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
     static inline type *name##_ring_push(name##_ring_t *r, type *e) { return _z_ring_push(r, (void *)e); }             \
     static inline type *name##_ring_push_force(name##_ring_t *r, type *e) { return _z_ring_push_force(r, (void *)e); } \
     static inline void name##_ring_push_force_drop(name##_ring_t *r, type *e) {                                        \
-        return _z_ring_push_force_drop(r, (void *)e, name##_elem_free);                                                \
+        _z_ring_push_force_drop(r, (void *)e, name##_elem_free);                                                       \
     }                                                                                                                  \
     static inline type *name##_ring_pull(name##_ring_t *r) { return (type *)_z_ring_pull(r); }                         \
     static inline void name##_ring_clear(name##_ring_t *r) { _z_ring_clear(r, name##_elem_free); }                     \

@@ -55,7 +55,7 @@ void _z_lifo_free(_z_lifo_t **xs, z_element_free_f f_f);
     static inline _Bool name##_lifo_is_full(const name##_lifo_t *r) { return _z_lifo_is_full(r); }         \
     static inline type *name##_lifo_push(name##_lifo_t *r, type *e) { return _z_lifo_push(r, (void *)e); } \
     static inline void name##_lifo_push_drop(name##_lifo_t *r, type *e) {                                  \
-        return _z_lifo_push_drop(r, (void *)e, name##_elem_free);                                          \
+        _z_lifo_push_drop(r, (void *)e, name##_elem_free);                                                 \
     }                                                                                                      \
     static inline type *name##_lifo_pull(name##_lifo_t *r) { return (type *)_z_lifo_pull(r); }             \
     static inline void name##_lifo_clear(name##_lifo_t *r) { _z_lifo_clear(r, name##_elem_free); }         \
