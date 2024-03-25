@@ -30,14 +30,14 @@
 #define UDP_CONFIG_JOIN_STR "join"
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-#define UDP_CONFIG_MAPPING_BUILD               \
-    _z_str_intmapping_t args[UDP_CONFIG_ARGC]; \
-    args[0]._key = UDP_CONFIG_IFACE_KEY;       \
-    args[0]._str = UDP_CONFIG_IFACE_STR;       \
-    args[1]._key = UDP_CONFIG_TOUT_KEY;        \
-    args[1]._str = UDP_CONFIG_TOUT_STR;        \
-    args[2]._key = UDP_CONFIG_JOIN_KEY;        \
-    args[2]._str = UDP_CONFIG_JOIN_STR;
+#define UDP_CONFIG_MAPPING_BUILD                 \
+    _z_str_intmapping_t args[UDP_CONFIG_ARGC];   \
+    args[0]._key = UDP_CONFIG_IFACE_KEY;         \
+    args[0]._str = (char *)UDP_CONFIG_IFACE_STR; \
+    args[1]._key = UDP_CONFIG_TOUT_KEY;          \
+    args[1]._str = (char *)UDP_CONFIG_TOUT_STR;  \
+    args[2]._key = UDP_CONFIG_JOIN_KEY;          \
+    args[2]._str = (char *)UDP_CONFIG_JOIN_STR;
 
 size_t _z_udp_config_strlen(const _z_str_intmap_t *s);
 
