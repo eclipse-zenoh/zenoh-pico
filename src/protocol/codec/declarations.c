@@ -107,12 +107,16 @@ int8_t _z_undecl_subscriber_encode(_z_wbuf_t *wbf, const _z_undecl_subscriber_t 
 }
 int8_t _z_decl_queryable_encode(_z_wbuf_t *wbf, const _z_decl_queryable_t *decl) {
     uint8_t header = _Z_DECL_QUERYABLE_MID;
-    _Bool has_info_ext = (decl->_ext_queryable_info._complete != 0) || (decl->_ext_queryable_info._distance != 0);
+    _Bool has_info_ext = decl->_ext_queryable_info._complete || (decl->_ext_queryable_info._distance != 0);
     _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, has_info_ext, decl->_id, decl->_keyexpr));
     if (has_info_ext) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01));
-        _Z_RETURN_IF_ERR(_z_zint64_encode(
-            wbf, ((uint64_t)decl->_ext_queryable_info._distance << 8) | decl->_ext_queryable_info._complete));
+        uint8_t flags = 0;
+        if (decl->_ext_queryable_info._complete) {
+            flags |= 0x01;
+        }
+        uint64_t value = (uint64_t)flags | (uint64_t)decl->_ext_queryable_info._distance << 8;
+        _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, value));
     }
     return _Z_RES_OK;
 }
@@ -328,8 +332,8 @@ int8_t _z_decl_queryable_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     switch (extension->_header) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
             uint64_t val = extension->_body._zint._val;
-            decl->_ext_queryable_info._complete = val & 0xff;
-            decl->_ext_queryable_info._distance = (uint32_t)(val >> 8);
+            decl->_ext_queryable_info._complete = _Z_HAS_FLAG(val, 0x01);
+            decl->_ext_queryable_info._distance = (uint16_t)(val >> 8);
         } break;
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
