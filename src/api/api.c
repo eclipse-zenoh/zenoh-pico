@@ -502,19 +502,19 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 
         char *opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
         }
         z_what_t what = strtol(opt_as_str, NULL, 10);
 
         opt_as_str = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
         char *mcast_locator = opt_as_str;
 
         opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
