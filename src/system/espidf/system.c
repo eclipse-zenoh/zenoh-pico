@@ -74,7 +74,8 @@ static z_task_attr_t z_default_task_attr = {
 };
 
 /*------------------ Thread ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t z_task_init(z_task_t *task, z_task_attr_t *arg_attr, void *(*fun)(void *), void *arg) {
+    z_task_attr_t *attr = arg_attr;
     z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
     if (z_arg == NULL) {
         return -1;
@@ -82,7 +83,8 @@ int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), vo
 
     z_arg->fun = fun;
     z_arg->arg = arg;
-    z_arg->join_event = task->join_event = xEventGroupCreate();
+    task->join_event = xEventGroupCreate();
+    z_arg->join_event = task->join_event;
 
     if (attr == NULL) {
         attr = &z_default_task_attr;
@@ -154,7 +156,6 @@ int z_sleep_ms(size_t time) {
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
     while (z_time_elapsed_ms(&start) < time) {
-        // z_sleep_us(1000);
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 
