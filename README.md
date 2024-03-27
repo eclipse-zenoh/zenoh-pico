@@ -336,15 +336,15 @@ The simplest way to run some of the example is to get a Docker image of the **ze
 ### 3.1. Starting the Zenoh Router
 Assuming you've pulled the Docker image of the **zenoh** router on a Linux host (to leverage UDP multicast scouting as explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 ```bash
-$ docker run --init --net host eclipse/zenoh:master
+$ docker run --init --net host eclipse/zenoh:main
 ```
 
 To see the zenoh manual page, simply do:
 ```bash
-$ docker run --init --net host eclipse/zenoh:master --help
+$ docker run --init --net host eclipse/zenoh:main --help
 ```
 
-:warning: **Please notice that the `--net host` option in Docker is restricted to Linux only.**  
+:warning: **Please notice that the `--net host` option in Docker is restricted to Linux only.**
 The cause is that Docker doesn't support UDP multicast between a container and its host (see cases [moby/moby#23659](https://github.com/moby/moby/issues/23659), [moby/libnetwork#2397](https://github.com/moby/libnetwork/issues/2397) or [moby/libnetwork#552](https://github.com/moby/libnetwork/issues/552)). The only known way to make it work is to use the `--net host` option that is [only supported on Linux hosts](https://docs.docker.com/network/host/).
 
 ### 3.2. Basic Pub/Sub Example
@@ -385,7 +385,7 @@ where `lo0` is the network interface you want to use for multicast communication
 ### 3.4. Basic Pub/Sub Example - Mixing Client and P2P communication
 To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, as well as with any other Zenoh client/peer, you need to start a Zenoh Router that listens on both multicast and unicast: 
 ```bash
-$ docker run --init --net host eclipse/zenoh:master -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
+$ docker run --init --net host eclipse/zenoh:main -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
 ```
 
 Assuming that (1) you are running the **zenoh** router as indicated above, and (2) you are under the build directory, do:
