@@ -613,11 +613,11 @@ OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owne
 void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
 
 z_put_options_t z_put_options_default(void) {
-    return (z_put_options_t) {
-        .encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
-        .priority = Z_PRIORITY_DEFAULT,
+    return (z_put_options_t){.encoding = z_encoding_default(),
+                             .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
+                             .priority = Z_PRIORITY_DEFAULT,
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null()
+                             .attachment = z_attachment_null()
 #endif
     };
 }
@@ -715,10 +715,9 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
 }
 
 z_publisher_put_options_t z_publisher_put_options_default(void) {
-    return (z_publisher_put_options_t) {
-        .encoding = z_encoding_default(),
+    return (z_publisher_put_options_t){.encoding = z_encoding_default(),
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null()
+                                       .attachment = z_attachment_null()
 #endif
     };
 }
@@ -782,14 +781,13 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
 OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
 
 z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t) {
-        .target = z_query_target_default(), .consolidation = z_query_consolidation_default(),
-        .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
+    return (z_get_options_t){.target = z_query_target_default(),
+                             .consolidation = z_query_consolidation_default(),
+                             .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
 #if Z_FEATURE_ATTACHMENT == 1
-        // TODO:ATT.attachment = z_attachment_null()
+    // TODO:ATT.attachment = z_attachment_null()
 #endif
-        .timeout_ms = Z_GET_TIMEOUT_DEFAULT
-    };
+                             .timeout_ms = Z_GET_TIMEOUT_DEFAULT};
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -1090,7 +1088,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
 
 /**************** Tasks ****************/
 zp_task_read_options_t zp_task_read_options_default(void) {
-    return (zp_task_read_options_t) {
+    return (zp_task_read_options_t){
 #if Z_FEATURE_MULTI_THREAD == 1
         .task_attributes = NULL
 #else
@@ -1123,7 +1121,7 @@ int8_t zp_stop_read_task(z_session_t zs) {
 }
 
 zp_task_lease_options_t zp_task_lease_options_default(void) {
-    return (zp_task_lease_options_t) {
+    return (zp_task_lease_options_t){
 #if Z_FEATURE_MULTI_THREAD == 1
         .task_attributes = NULL
 #else

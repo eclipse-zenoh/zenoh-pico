@@ -624,13 +624,13 @@ int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t 
     return ret;
 }
 
-void _z_close_serial(_z_sys_net_socket_t *sock) {  
+void _z_close_serial(_z_sys_net_socket_t *sock) {
     uart_wait_tx_done(sock->_serial, 1000);
     uart_flush(sock->_serial);
     uart_driver_delete(sock->_serial);
     zp_free(sock->after_cobs);
     zp_free(sock->before_cobs);
-    }
+}
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     int8_t ret = _Z_RES_OK;

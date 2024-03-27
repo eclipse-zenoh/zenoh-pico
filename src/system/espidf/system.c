@@ -154,8 +154,8 @@ int z_sleep_ms(size_t time) {
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
     while (z_time_elapsed_ms(&start) < time) {
-        //z_sleep_us(1000);
-        vTaskDelay(1/portTICK_PERIOD_MS);
+        // z_sleep_us(1000);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 
     return 0;
