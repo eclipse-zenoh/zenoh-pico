@@ -231,6 +231,9 @@ typedef struct {
     z_attachment_t attachment;
 #endif
 } _z_sample_t;
+static inline bool _z_sample_check(const _z_sample_t *sample) {
+    return _z_keyexpr_check(sample->keyexpr) && _z_bytes_check(sample->payload);
+}
 
 /**
  * Represents a Zenoh value.

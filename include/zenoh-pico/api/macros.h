@@ -246,6 +246,7 @@ template<> struct zenoh_drop_type<z_owned_closure_query_t> { typedef void type; 
 template<> struct zenoh_drop_type<z_owned_closure_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_hello_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_zid_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_sample_t> { typedef void type; };
 
 template<> inline int8_t z_drop(z_owned_session_t* v) { return z_close(v); }
 template<> inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_publisher(v); }
@@ -262,6 +263,7 @@ template<> inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop
 template<> inline void z_drop(z_owned_closure_reply_t* v) { z_closure_reply_drop(v); }
 template<> inline void z_drop(z_owned_closure_hello_t* v) { z_closure_hello_drop(v); }
 template<> inline void z_drop(z_owned_closure_zid_t* v) { z_closure_zid_drop(v); }
+template<> inline void z_drop(z_owned_sample_t* v) { z_closure_sample_drop(v); }
 
 inline void z_null(z_owned_session_t& v) { v = z_session_null(); }
 inline void z_null(z_owned_publisher_t& v) { v = z_publisher_null(); }
@@ -278,6 +280,7 @@ inline void z_null(z_owned_closure_query_t& v) { v = z_closure_query_null(); }
 inline void z_null(z_owned_closure_reply_t& v) { v = z_closure_reply_null(); }
 inline void z_null(z_owned_closure_hello_t& v) { v = z_closure_hello_null(); }
 inline void z_null(z_owned_closure_zid_t& v) { v = z_closure_zid_null(); }
+inline void z_null(z_owned_sample_t& v) { v = z_closure_sample_null(); }
 
 inline bool z_check(const z_owned_session_t& v) { return z_session_check(&v); }
 inline bool z_check(const z_owned_publisher_t& v) { return z_publisher_check(&v); }
@@ -291,6 +294,7 @@ inline bool z_check(const z_owned_queryable_t& v) { return z_queryable_check(&v)
 inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }
 inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
 inline bool z_check(const z_owned_str_t& v) { return z_str_check(&v); }
+inline bool z_check(const z_owned_str_t& v) { return z_sample_check(&v); }
 
 inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }

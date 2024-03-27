@@ -24,28 +24,7 @@
 #include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/system/platform.h"
 
-// -- Owned sample
-// @TODO: define it via dedicated macros and move it to the appropriate place in types.
-typedef struct {
-    z_owned_keyexpr_t keyexpr;
-    z_bytes_t payload;
-    // @TODO: implement the rest of the fields
-} z_owned_sample_t;
-
-static inline z_owned_sample_t z_sample_null(void) {
-    z_owned_sample_t sample;
-    sample.keyexpr = z_keyexpr_null();
-    sample.payload = z_bytes_null();
-    return sample;
-}
-
-static inline z_owned_sample_t *z_sample_move(z_owned_sample_t *sample) { return sample; }
-static inline z_owned_sample_t *z_sample_loan(z_owned_sample_t *sample) { return sample; }
-
-static inline bool z_sample_check(const z_owned_sample_t *sample) {
-    return z_keyexpr_check(&sample->keyexpr) && z_bytes_check(&sample->payload);
-}
-
+// TODO(sashacmc): move/rename?
 static inline z_owned_sample_t z_sample_to_owned(const z_sample_t *src) {
     z_owned_sample_t dst = z_sample_null();
 
@@ -57,18 +36,11 @@ static inline z_owned_sample_t z_sample_to_owned(const z_sample_t *src) {
     if (ke == NULL) {
         return dst;
     }
-    *ke = _z_keyexpr_duplicate(src->keyexpr);
-    dst.keyexpr._value = ke;
-    dst.payload = _z_bytes_duplicate(&src->payload);
+
+    dst._value->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
+    dst._value->payload = _z_bytes_duplicate(&src->payload);
 
     return dst;
-}
-
-static inline void z_sample_drop(z_owned_sample_t *s) {
-    if (s != NULL) {
-        z_keyexpr_drop(&s->keyexpr);
-        _z_bytes_clear(&s->payload);
-    }
 }
 
 _Z_ELEM_DEFINE(_z_owned_sample, z_owned_sample_t, _z_noop_size, z_sample_drop, _z_noop_copy)
