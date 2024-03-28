@@ -12,10 +12,21 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 #include "zenoh-pico/api/handlers.h"
-
 #include "zenoh-pico/api/macros.h"
+#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
+
+z_owned_sample_t z_sample_to_owned(const _z_sample_t *src) {
+    z_owned_sample_t dst = z_sample_null();
+
+    if (src) {
+        dst._value = (_z_sample_t *)zp_malloc(sizeof(_z_sample_t));
+        _z_sample_copy(dst._value, src);
+    }
+
+    return dst;
+}
 
 // -- Channel
 z_owned_sample_channel_t z_owned_sample_channel_null() {

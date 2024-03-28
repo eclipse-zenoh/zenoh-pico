@@ -24,25 +24,6 @@
 #include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/system/platform.h"
 
-// TODO(sashacmc): move/rename?
-static inline z_owned_sample_t z_sample_to_owned(const z_sample_t *src) {
-    z_owned_sample_t dst = z_sample_null();
-
-    if (src == NULL) {
-        return dst;
-    }
-
-    _z_keyexpr_t *ke = (_z_keyexpr_t *)zp_malloc(sizeof(_z_keyexpr_t));
-    if (ke == NULL) {
-        return dst;
-    }
-
-    dst._value->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
-    dst._value->payload = _z_bytes_duplicate(&src->payload);
-
-    return dst;
-}
-
 _Z_ELEM_DEFINE(_z_owned_sample, z_owned_sample_t, _z_noop_size, z_sample_drop, _z_noop_copy)
 
 // -- Channel
