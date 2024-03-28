@@ -401,6 +401,7 @@ typedef struct {
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  */
 typedef _z_sample_t z_sample_t;
+_OWNED_TYPE_PTR(z_sample_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.

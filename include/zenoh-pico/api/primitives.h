@@ -692,6 +692,7 @@ _OWNED_FUNCTIONS(z_queryable_t, z_owned_queryable_t, queryable)
 _OWNED_FUNCTIONS(z_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_str_array_t, z_owned_str_array_t, str_array)
+_OWNED_FUNCTIONS(z_sample_t, z_owned_sample_t, sample)
 
 #define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
     _Bool z_##name##_check(const ownedtype *val); \

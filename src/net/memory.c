@@ -11,10 +11,10 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/net/memory.h"
-
 #include <stddef.h>
 
+#include "zenoh-pico/api/types.h"
+#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
@@ -47,6 +47,25 @@ void _z_sample_free(_z_sample_t **sample) {
         zp_free(ptr);
         *sample = NULL;
     }
+}
+
+void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
+    dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
+    dst->payload = _z_bytes_duplicate(&src->payload);
+    dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
+    // TODO(sashacmc):
+    // _z_encoding_copy(dst->encoding, src->encoding);
+    dst->kind = src->kind;
+#if Z_FEATURE_ATTACHMENT == 1
+    // TODO(sashacmc):
+    // z_attachment_t attachment;
+#endif
+}
+
+_z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
+    _z_sample_t dst;
+    _z_sample_copy(&dst, src);
+    return dst;
 }
 
 void _z_hello_clear(_z_hello_t *hello) {

@@ -83,9 +83,9 @@ int main(int argc, char **argv) {
     z_owned_sample_t sample = z_sample_null();
     while (true) {
         for (z_call(channel.recv, &sample); z_check(sample); z_call(channel.recv, &sample)) {
-            z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample.keyexpr));
-            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)sample.payload.len,
-                   sample.payload.start);
+            z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample).keyexpr);
+            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)z_loan(sample).payload.len,
+                   z_loan(sample).payload.start);
             z_drop(z_move(keystr));
             z_drop(z_move(sample));
         }
