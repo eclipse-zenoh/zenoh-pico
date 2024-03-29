@@ -124,23 +124,24 @@
  *   Returns the instance associated with `x`.
  */
 #define z_move(x) _Generic((x), \
-                  z_owned_keyexpr_t : z_keyexpr_move,                 \
-                  z_owned_config_t : z_config_move,                   \
-                  z_owned_scouting_config_t : z_scouting_config_move, \
-                  z_owned_session_t : z_session_move,                 \
-                  z_owned_subscriber_t : z_subscriber_move,           \
-                  z_owned_publisher_t : z_publisher_move,             \
-                  z_owned_queryable_t : z_queryable_move,             \
-                  z_owned_reply_t : z_reply_move,                     \
-                  z_owned_hello_t : z_hello_move,                     \
-                  z_owned_str_t : z_str_move,                         \
-                  z_owned_str_array_t : z_str_array_move,             \
-                  z_owned_closure_sample_t : z_closure_sample_move,   \
-                  z_owned_closure_query_t : z_closure_query_move,     \
-                  z_owned_closure_reply_t : z_closure_reply_move,     \
-                  z_owned_closure_hello_t : z_closure_hello_move,     \
-                  z_owned_closure_zid_t  : z_closure_zid_move,        \
-                  z_owned_sample_t : z_sample_move                    \
+                  z_owned_keyexpr_t : z_keyexpr_move,                             \
+                  z_owned_config_t : z_config_move,                               \
+                  z_owned_scouting_config_t : z_scouting_config_move,             \
+                  z_owned_session_t : z_session_move,                             \
+                  z_owned_subscriber_t : z_subscriber_move,                       \
+                  z_owned_publisher_t : z_publisher_move,                         \
+                  z_owned_queryable_t : z_queryable_move,                         \
+                  z_owned_reply_t : z_reply_move,                                 \
+                  z_owned_hello_t : z_hello_move,                                 \
+                  z_owned_str_t : z_str_move,                                     \
+                  z_owned_str_array_t : z_str_array_move,                         \
+                  z_owned_closure_sample_t : z_closure_sample_move,               \
+                  z_owned_closure_owned_sample_t : z_closure_owned_sample_move,   \
+                  z_owned_closure_query_t : z_closure_query_move,                 \
+                  z_owned_closure_reply_t : z_closure_reply_move,                 \
+                  z_owned_closure_hello_t : z_closure_hello_move,                 \
+                  z_owned_closure_zid_t  : z_closure_zid_move,                    \
+                  z_owned_sample_t : z_sample_move                                \
             )(&x)
 
 /**
@@ -183,6 +184,7 @@
                   z_owned_hello_t * : z_hello_null,                                 \
                   z_owned_str_t * : z_str_null,                                     \
                   z_owned_closure_sample_t * : z_closure_sample_null,               \
+                  z_owned_closure_owned_sample_t * : z_closure_owned_sample_null,   \
                   z_owned_closure_query_t * : z_closure_query_null,                 \
                   z_owned_closure_reply_t * : z_closure_reply_null,                 \
                   z_owned_closure_hello_t * : z_closure_hello_null,                 \

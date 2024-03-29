@@ -563,6 +563,9 @@ z_keyexpr_t z_query_keyexpr(const z_query_t *query);
  *   Returns a new sample closure.
  */
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context);
+// TODO(sashacmc): comment, correct place
+z_owned_closure_owned_sample_t z_closure_owned_sample(_z_owned_sample_handler_t call, _z_dropper_handler_t drop,
+                                                      void *context);
 
 /**
  * Return a new query closure.
@@ -702,6 +705,7 @@ _OWNED_FUNCTIONS(z_sample_t, z_owned_sample_t, sample)
 
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)

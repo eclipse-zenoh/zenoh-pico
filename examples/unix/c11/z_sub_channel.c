@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-
-#if Z_FEATURE_SUBSCRIPTION == 1
+#ifdef TODO_SASHACMC 
+//#if Z_FEATURE_SUBSCRIPTION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     char *locator = NULL;

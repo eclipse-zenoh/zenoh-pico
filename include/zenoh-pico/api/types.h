@@ -449,6 +449,7 @@ _Bool z_str_array_is_empty(const z_str_array_t *a);
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
+typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
 
 /**
  * Represents the sample closure.
@@ -467,6 +468,15 @@ typedef struct {
 } z_owned_closure_sample_t;
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
+
+// TODO(sashacmc): comment, correct place
+typedef struct {
+    void *context;
+    _z_owned_sample_handler_t call;
+    _z_dropper_handler_t drop;
+} z_owned_closure_owned_sample_t;
+
+void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample);
 
 /**
  * Represents the query callback closure.
