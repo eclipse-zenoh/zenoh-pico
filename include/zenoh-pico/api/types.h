@@ -131,6 +131,7 @@ _OWNED_TYPE_PTR(_z_config_t, config)
 typedef struct {
     _z_scouting_config_t *_val;
 } z_scouting_config_t;
+// tags{c.z_owned_scouting_config_t}
 _OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
 
 /**
@@ -201,6 +202,7 @@ _OWNED_TYPE_PTR(_z_publisher_t, publisher)
 typedef struct {
     _z_queryable_t *_val;
 } z_queryable_t;
+// tags{c.z_owned_queryable_t}
 _OWNED_TYPE_PTR(_z_queryable_t, queryable)
 
 /**
@@ -542,6 +544,7 @@ typedef _z_reply_data_t z_reply_data_t;
  */
 // tags{c.z_reply_t}
 typedef _z_reply_t z_reply_t;
+// tags{c.z_owned_reply_t}
 _OWNED_TYPE_PTR(z_reply_t, reply)
 
 /**
@@ -559,6 +562,7 @@ typedef _z_str_array_t z_str_array_t;
 z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
 size_t z_str_array_len(const z_str_array_t *a);
 _Bool z_str_array_is_empty(const z_str_array_t *a);
+// tags{c.z_owned_str_t}
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
