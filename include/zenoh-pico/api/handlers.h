@@ -27,7 +27,7 @@
 #include "zenoh-pico/system/platform.h"
 
 // -- Channel
-// TODO(sashacmc): clenup
+// TODO(sashacmc): cleanup
 #define _Z_CHANNEL_DEFINE(name, storage_type, send_closure_name, recv_closure_name, send_type, recv_type,           \
                           channel_push_f, channel_pull_f, storage_init_f, elem_copy_f, elem_convert_f, elem_free_f) \
     typedef struct {                                                                                                \
@@ -40,7 +40,7 @@
         *elem = NULL;                                                                                               \
     }                                                                                                               \
     static inline void z_##name##_channel_elem_copy(void *dst, const void *src) {                                   \
-        elem_copy_f((recv_type *)src, (const recv_type *)dst);                                                      \
+        elem_copy_f((recv_type *)dst, (const recv_type *)src);                                                      \
     }                                                                                                               \
     static inline void z_##name##_channel_push(const send_type *elem, void *context) {                              \
         void *internal_elem = elem_convert_f(elem);                                                                 \
@@ -97,7 +97,10 @@ int8_t z_sample_channel_fifo_pull(z_owned_sample_t *dst, void *context);
 static inline size_t _z_owned_sample_size(z_owned_sample_t *s) { return sizeof(*s); }
 
 static inline void _z_owned_sample_copy(z_owned_sample_t *dst, const z_owned_sample_t *src) {
-    _z_sample_copy(dst->_value, src->_value);
+    memcpy(dst, src, sizeof(z_owned_sample_t));
+    // TODO(sashacmc): is it ok?
+    //  Why not malloc +
+    //  _z_sample_copy(dst->_value, src->_value);
 }
 
 static inline z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {

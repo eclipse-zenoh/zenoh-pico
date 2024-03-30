@@ -83,7 +83,7 @@ _z_channel_ring_t *_z_channel_ring(size_t capacity) {
 }
 
 /*
-// TODO(sashacmc): implement 
+// TODO(sashacmc): implement
 // -- Fifo
 void z_sample_channel_fifo_push(const z_sample_t *src, void *context) {
     if (src == NULL || context == NULL) {
