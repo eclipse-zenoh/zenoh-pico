@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 
-#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
 

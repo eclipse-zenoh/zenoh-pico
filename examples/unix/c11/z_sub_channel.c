@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-#ifdef TODO_SASHACMC 
-//#if Z_FEATURE_SUBSCRIPTION == 1
+
+#if Z_FEATURE_SUBSCRIPTION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     char *locator = NULL;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_sample_channel_t channel = z_sample_channel_fifo_new(3);
+    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel(3);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber.\n");

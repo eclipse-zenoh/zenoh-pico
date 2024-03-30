@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2024 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -26,8 +26,53 @@
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/system/platform.h"
 
+// -- Ring
+typedef struct {
+    _z_ring_t _ring;
+#if Z_FEATURE_MULTI_THREAD == 1
+    zp_mutex_t _mutex;
+#endif
+} _z_channel_ring_t;  // TODO(sashacmc): rename to sync_ring?
+
+_z_channel_ring_t *_z_channel_ring(size_t capacity);
+void _z_channel_ring_push(const void *src, void *context, z_element_free_f element_free);
+int8_t _z_channel_ring_pull(void *dst, void *context, z_element_copy_f element_copy);
+
+// -- Fifo
+typedef struct {
+    _z_fifo_t _fifo;
+#if Z_FEATURE_MULTI_THREAD == 1
+    zp_mutex_t _mutex;
+    zp_condvar_t _cv_not_full;
+    zp_condvar_t _cv_not_empty;
+#endif
+} _z_channel_fifo_t;
+
+_z_channel_fifo_t *_z_channel_fifo(size_t capacity);
+void _z_channel_fifo_push(const void *src, void *context, z_element_free_f element_free);
+int8_t _z_channel_fifo_pull(void *dst, void *context, z_element_copy_f element_copy);
+
+// -- Samples handler
+static inline size_t _z_owned_sample_size(z_owned_sample_t *s) { return sizeof(*s); }
+
+static inline void _z_owned_sample_copy(z_owned_sample_t *dst, const z_owned_sample_t *src) {
+    memcpy(dst, src, sizeof(z_owned_sample_t));
+    // TODO(sashacmc): is it ok?
+    //  Why not malloc +
+    //  _z_sample_copy(dst->_value, src->_value);
+}
+
+static inline z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
+    z_owned_sample_t *dst = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
+    if (dst && src) {
+        dst->_value = (_z_sample_t *)zp_malloc(sizeof(_z_sample_t));
+        _z_sample_copy(dst->_value, src);
+    }
+    return dst;
+}
+
 // -- Channel
-// TODO(sashacmc): cleanup
+// TODO(sashacmc): add cleanup methods
 #define _Z_CHANNEL_DEFINE(name, storage_type, send_closure_name, recv_closure_name, send_type, recv_type,           \
                           channel_push_f, channel_pull_f, storage_init_f, elem_copy_f, elem_convert_f, elem_free_f) \
     typedef struct {                                                                                                \
@@ -62,60 +107,14 @@
         return ch;                                                                                                  \
     }
 
-// -- Ring channel
-typedef struct {
-    _z_ring_t _ring;
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_t _mutex;
-#endif
-} _z_channel_ring_t;  // TODO(sashacmc): rename to sync_ring?
-
-_z_channel_ring_t *_z_channel_ring(size_t capacity);
-void _z_channel_ring_push(const void *src, void *context, z_element_free_f element_free);
-int8_t _z_channel_ring_pull(void *dst, void *context, z_element_copy_f element_copy);
-/*
-TODO(sashacmc): implement
-// -- Fifo
-_Z_FIFO_DEFINE(_z_owned_sample, z_owned_sample_t)
-
-typedef struct {
-    _z_owned_sample_fifo_t _fifo;
-#if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_t _mutex;
-    zp_condvar_t _cv_not_full;
-    zp_condvar_t _cv_not_empty;
-#endif
-} z_owned_sample_fifo_t;
-
-z_owned_sample_channel_t z_sample_channel_fifo_new(size_t capacity);
-void z_sample_channel_fifo_push(const z_sample_t *src, void *context);
-int8_t z_sample_channel_fifo_pull(z_owned_sample_t *dst, void *context);
-*/
-
-// -- Samples handler
-// _Z_RING_DEFINE(_z_owned_sample, z_owned_sample_t)
-static inline size_t _z_owned_sample_size(z_owned_sample_t *s) { return sizeof(*s); }
-
-static inline void _z_owned_sample_copy(z_owned_sample_t *dst, const z_owned_sample_t *src) {
-    memcpy(dst, src, sizeof(z_owned_sample_t));
-    // TODO(sashacmc): is it ok?
-    //  Why not malloc +
-    //  _z_sample_copy(dst->_value, src->_value);
-}
-
-static inline z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
-    z_owned_sample_t *dst = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
-    if (dst && src) {
-        dst->_value = (_z_sample_t *)zp_malloc(sizeof(_z_sample_t));
-        _z_sample_copy(dst->_value, src);
-    }
-    return dst;
-}
-
-_Z_ELEM_DEFINE(_z_owned_sample, z_owned_sample_t, _z_owned_sample_size, z_sample_drop, _z_owned_sample_copy)
-
+// z_owned_sample_ring_channel_t
 _Z_CHANNEL_DEFINE(sample_ring, _z_channel_ring_t, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t,
                   _z_channel_ring_push, _z_channel_ring_pull, _z_channel_ring, _z_owned_sample_copy,
+                  _z_sample_to_owned_ptr, z_sample_drop)
+
+// z_owned_sample_fifo_channel_t
+_Z_CHANNEL_DEFINE(sample_fifo, _z_channel_fifo_t, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t,
+                  _z_channel_fifo_push, _z_channel_fifo_pull, _z_channel_fifo, _z_owned_sample_copy,
                   _z_sample_to_owned_ptr, z_sample_drop)
 
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H
