@@ -65,7 +65,7 @@ jobs:
         uses: eclipse-zenoh/ci/build-crates-standalone@main
         with:
           repo: eclipse-zenoh/zenoh
-          branch: main
+          branch: protocol_changes
           artifact-patterns: |
             ^zenohd$
             ^libzenoh_plugin_rest.so$
