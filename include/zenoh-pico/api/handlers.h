@@ -37,6 +37,7 @@ typedef struct {
 _z_channel_ring_t *_z_channel_ring(size_t capacity);
 void _z_channel_ring_push(const void *src, void *context, z_element_free_f element_free);
 int8_t _z_channel_ring_pull(void *dst, void *context, z_element_copy_f element_copy);
+void _z_channel_ring_clear(_z_channel_ring_t *ring, z_element_free_f free_f);
 
 // -- Fifo
 typedef struct {
@@ -51,6 +52,7 @@ typedef struct {
 _z_channel_fifo_t *_z_channel_fifo(size_t capacity);
 void _z_channel_fifo_push(const void *src, void *context, z_element_free_f element_free);
 int8_t _z_channel_fifo_pull(void *dst, void *context, z_element_copy_f element_copy);
+void _z_channel_fifo_clear(_z_channel_fifo_t *fifo, z_element_free_f free_f);
 
 // -- Samples handler
 static inline size_t _z_owned_sample_size(z_owned_sample_t *s) { return sizeof(*s); }
@@ -72,49 +74,52 @@ static inline z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
 }
 
 // -- Channel
-// TODO(sashacmc): add cleanup methods
-#define _Z_CHANNEL_DEFINE(name, storage_type, send_closure_name, recv_closure_name, send_type, recv_type,           \
-                          channel_push_f, channel_pull_f, storage_init_f, elem_copy_f, elem_convert_f, elem_free_f) \
-    typedef struct {                                                                                                \
-        z_owned_##send_closure_name##_t send;                                                                       \
-        z_owned_##recv_closure_name##_t recv;                                                                       \
-        storage_type *storage;                                                                                      \
-    } z_owned_##name##_channel_t;                                                                                   \
-    static inline void z_##name##_channel_elem_free(void **elem) {                                                  \
-        elem_free_f((recv_type *)*elem);                                                                            \
-        *elem = NULL;                                                                                               \
-    }                                                                                                               \
-    static inline void z_##name##_channel_elem_copy(void *dst, const void *src) {                                   \
-        elem_copy_f((recv_type *)dst, (const recv_type *)src);                                                      \
-    }                                                                                                               \
-    static inline void z_##name##_channel_push(const send_type *elem, void *context) {                              \
-        void *internal_elem = elem_convert_f(elem);                                                                 \
-        if (internal_elem == NULL) {                                                                                \
-            return;                                                                                                 \
-        }                                                                                                           \
-        channel_push_f(internal_elem, context, z_##name##_channel_elem_free);                                       \
-    }                                                                                                               \
-    static inline void z_##name##_channel_pull(recv_type *elem, void *context) {                                    \
-        channel_pull_f(elem, context, z_##name##_channel_elem_copy);                                                \
-    }                                                                                                               \
-    static inline z_owned_##name##_channel_t z_##name##_channel(size_t capacity) {                                  \
-        z_owned_##name##_channel_t ch;                                                                              \
-        ch.storage = storage_init_f(capacity);                                                                      \
-        z_owned_##send_closure_name##_t send = z_##send_closure_name(z_##name##_channel_push, NULL, ch.storage);    \
-        ch.send = send;                                                                                             \
-        z_owned_##recv_closure_name##_t recv = z_##recv_closure_name(z_##name##_channel_pull, NULL, ch.storage);    \
-        ch.recv = recv;                                                                                             \
-        return ch;                                                                                                  \
+#define _Z_CHANNEL_DEFINE(name, storage_type, send_closure_name, recv_closure_name, send_type, recv_type,              \
+                          channel_push_f, channel_pull_f, storage_init_f, storage_free_f, elem_copy_f, elem_convert_f, \
+                          elem_free_f)                                                                                 \
+    typedef struct {                                                                                                   \
+        z_owned_##send_closure_name##_t send;                                                                          \
+        z_owned_##recv_closure_name##_t recv;                                                                          \
+        storage_type *storage;                                                                                         \
+    } z_owned_##name##_t;                                                                                              \
+    static inline void z_##name##_elem_free(void **elem) {                                                             \
+        elem_free_f((recv_type *)*elem);                                                                               \
+        *elem = NULL;                                                                                                  \
+    }                                                                                                                  \
+    static inline void z_##name##_elem_copy(void *dst, const void *src) {                                              \
+        elem_copy_f((recv_type *)dst, (const recv_type *)src);                                                         \
+    }                                                                                                                  \
+    static inline void z_##name##_push(const send_type *elem, void *context) {                                         \
+        void *internal_elem = elem_convert_f(elem);                                                                    \
+        if (internal_elem == NULL) {                                                                                   \
+            return;                                                                                                    \
+        }                                                                                                              \
+        channel_push_f(internal_elem, context, z_##name##_elem_free);                                                  \
+    }                                                                                                                  \
+    static inline void z_##name##_pull(recv_type *elem, void *context) {                                               \
+        channel_pull_f(elem, context, z_##name##_elem_copy);                                                           \
+    }                                                                                                                  \
+    static inline z_owned_##name##_t z_##name(size_t capacity) {                                                       \
+        z_owned_##name##_t channel;                                                                                    \
+        channel.storage = storage_init_f(capacity);                                                                    \
+        channel.send = z_##send_closure_name(z_##name##_push, NULL, channel.storage);                                  \
+        channel.recv = z_##recv_closure_name(z_##name##_pull, NULL, channel.storage);                                  \
+        return channel;                                                                                                \
+    }                                                                                                                  \
+    static inline void z_##name##_drop(z_owned_##name##_t *channel) {                                                  \
+        storage_free_f(channel->storage, z_##name##_elem_free);                                                        \
+        z_##send_closure_name##_drop(&channel->send);                                                                  \
+        z_##recv_closure_name##_drop(&channel->recv);                                                                  \
     }
 
 // z_owned_sample_ring_channel_t
-_Z_CHANNEL_DEFINE(sample_ring, _z_channel_ring_t, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t,
-                  _z_channel_ring_push, _z_channel_ring_pull, _z_channel_ring, _z_owned_sample_copy,
-                  _z_sample_to_owned_ptr, z_sample_drop)
+_Z_CHANNEL_DEFINE(sample_ring_channel, _z_channel_ring_t, closure_sample, closure_owned_sample, z_sample_t,
+                  z_owned_sample_t, _z_channel_ring_push, _z_channel_ring_pull, _z_channel_ring, _z_channel_ring_clear,
+                  _z_owned_sample_copy, _z_sample_to_owned_ptr, z_sample_drop)
 
 // z_owned_sample_fifo_channel_t
-_Z_CHANNEL_DEFINE(sample_fifo, _z_channel_fifo_t, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t,
-                  _z_channel_fifo_push, _z_channel_fifo_pull, _z_channel_fifo, _z_owned_sample_copy,
-                  _z_sample_to_owned_ptr, z_sample_drop)
+_Z_CHANNEL_DEFINE(sample_fifo_channel, _z_channel_fifo_t, closure_sample, closure_owned_sample, z_sample_t,
+                  z_owned_sample_t, _z_channel_fifo_push, _z_channel_fifo_pull, _z_channel_fifo, _z_channel_fifo_clear,
+                  _z_owned_sample_copy, _z_sample_to_owned_ptr, z_sample_drop)
 
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H

@@ -65,10 +65,13 @@
                   z_owned_str_array_t * : z_str_array_drop,                         \
                   z_owned_sample_t * : z_sample_drop,                               \
                   z_owned_closure_sample_t * : z_closure_sample_drop,               \
+                  z_owned_closure_owned_sample_t * : z_closure_owned_sample_drop,   \
                   z_owned_closure_query_t * : z_closure_query_drop,                 \
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
                   z_owned_closure_hello_t * : z_closure_hello_drop,                 \
-                  z_owned_closure_zid_t * : z_closure_zid_drop                      \
+                  z_owned_closure_zid_t * : z_closure_zid_drop,                     \
+                  z_owned_sample_ring_channel_t * : z_sample_ring_channel_drop,     \
+                  z_owned_sample_fifo_channel_t * : z_sample_fifo_channel_drop      \
             )(x)
 
 /**
@@ -244,11 +247,13 @@ template<> struct zenoh_drop_type<z_owned_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_hello_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_str_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_sample_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_clusure_owned_sample_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_query_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_hello_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_zid_t> { typedef void type; };
-template<> struct zenoh_drop_type<z_owned_sample_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_sample_ring_channel_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_sample_fifo_channel_t> { typedef void type; };
 
 template<> inline int8_t z_drop(z_owned_session_t* v) { return z_close(v); }
 template<> inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_publisher(v); }
@@ -261,11 +266,13 @@ template<> inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
 template<> inline void z_drop(z_owned_hello_t* v) { z_hello_drop(v); }
 template<> inline void z_drop(z_owned_str_t* v) { z_str_drop(v); }
 template<> inline void z_drop(z_owned_closure_sample_t* v) { z_closure_sample_drop(v); }
+template<> inline void z_drop(z_owned_closure_owned_sample_t* v) { z_closure_owned_sample_drop(v); }
 template<> inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }
 template<> inline void z_drop(z_owned_closure_reply_t* v) { z_closure_reply_drop(v); }
 template<> inline void z_drop(z_owned_closure_hello_t* v) { z_closure_hello_drop(v); }
 template<> inline void z_drop(z_owned_closure_zid_t* v) { z_closure_zid_drop(v); }
-template<> inline void z_drop(z_owned_sample_t* v) { z_closure_sample_drop(v); }
+template<> inline void z_drop(z_owned_sample_ring_channel_t* v) { z_owned_sample_ring_channel_drop(v); }
+template<> inline void z_drop(z_owned_sample_fifo_channel_t* v) { z_owned_sample_fifo_channel_drop(v); }
 
 inline void z_null(z_owned_session_t& v) { v = z_session_null(); }
 inline void z_null(z_owned_publisher_t& v) { v = z_publisher_null(); }
@@ -278,11 +285,11 @@ inline void z_null(z_owned_reply_t& v) { v = z_reply_null(); }
 inline void z_null(z_owned_hello_t& v) { v = z_hello_null(); }
 inline void z_null(z_owned_str_t& v) { v = z_str_null(); }
 inline void z_null(z_owned_closure_sample_t& v) { v = z_closure_sample_null(); }
+inline void z_null(z_owned_clusure_owned_sample_t& v) { v = z_closure_owned_sample_null(); }
 inline void z_null(z_owned_closure_query_t& v) { v = z_closure_query_null(); }
 inline void z_null(z_owned_closure_reply_t& v) { v = z_closure_reply_null(); }
 inline void z_null(z_owned_closure_hello_t& v) { v = z_closure_hello_null(); }
 inline void z_null(z_owned_closure_zid_t& v) { v = z_closure_zid_null(); }
-inline void z_null(z_owned_sample_t& v) { v = z_closure_sample_null(); }
 
 inline bool z_check(const z_owned_session_t& v) { return z_session_check(&v); }
 inline bool z_check(const z_owned_publisher_t& v) { return z_publisher_check(&v); }
@@ -300,6 +307,8 @@ inline bool z_check(const z_owned_str_t& v) { return z_sample_check(&v); }
 
 inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }
+inline void z_call(const z_owned_closure_owned_sample_t &closure, const z_sample_t *sample) 
+    { z_closure_owned_sample_call(&closure, sample); }
 inline void z_call(const z_owned_closure_query_t &closure, const z_query_t *query)
     { z_closure_query_call(&closure, query); }
 inline void z_call(const z_owned_closure_reply_t &closure, z_owned_reply_t *sample)

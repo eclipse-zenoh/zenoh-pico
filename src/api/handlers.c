@@ -11,7 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
+
 #include "zenoh-pico/api/handlers.h"
+
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/protocol/core.h"
@@ -27,6 +29,7 @@ void _z_channel_ring_push(const void *elem, void *context, z_element_free_f elem
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_lock(&r->_mutex);
 #endif
+
     _z_ring_push_force_drop(&r->_ring, (void *)elem, element_free);
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_unlock(&r->_mutex);
@@ -41,6 +44,7 @@ int8_t _z_channel_ring_pull(void *dst, void *context, z_element_copy_f element_c
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_lock(&r->_mutex);
 #endif
+
     void *src = _z_ring_pull(&r->_ring);
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_unlock(&r->_mutex);
@@ -78,6 +82,19 @@ _z_channel_ring_t *_z_channel_ring(size_t capacity) {
     return ring;
 }
 
+void _z_channel_ring_clear(_z_channel_ring_t *ring, z_element_free_f free_f) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    int8_t res = zp_mutex_free(&ring->_mutex);
+    if (res != _Z_RES_OK) {
+        // TODO(sashacmc): add logging
+        return;
+    }
+#endif
+
+    _z_ring_clear(&ring->_ring, free_f);
+    zp_free(ring);
+}
+
 // -- Fifo
 void _z_channel_fifo_push(const void *elem, void *context, z_element_free_f element_free) {
     if (elem == NULL || context == NULL) {
@@ -87,7 +104,6 @@ void _z_channel_fifo_push(const void *elem, void *context, z_element_free_f elem
     _z_channel_fifo_t *f = (_z_channel_fifo_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-
     zp_mutex_lock(&f->_mutex);
     while (elem != NULL) {
         elem = _z_fifo_push(&f->_fifo, (void *)elem);
@@ -98,11 +114,8 @@ void _z_channel_fifo_push(const void *elem, void *context, z_element_free_f elem
         }
     }
     zp_mutex_unlock(&f->_mutex);
-
-#elif  // Z_FEATURE_MULTI_THREAD == 1
-
+#elif   // Z_FEATURE_MULTI_THREAD == 1
     _z_fifo_push_drop(&f->_fifo, elem, element_free);
-
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
@@ -112,7 +125,6 @@ int8_t _z_channel_fifo_pull(void *dst, void *context, z_element_copy_f element_c
     _z_channel_fifo_t *f = (_z_channel_fifo_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-
     void *src = NULL;
     zp_mutex_lock(&f->_mutex);
     while (src == NULL) {
@@ -125,14 +137,11 @@ int8_t _z_channel_fifo_pull(void *dst, void *context, z_element_copy_f element_c
     }
     zp_mutex_unlock(&f->_mutex);
     element_copy(dst, src);
-
-#elif  // Z_FEATURE_MULTI_THREAD == 1
-
+#elif   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);
     if (src != NULL) {
         element_copy(dst, src);
     }
-
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -158,4 +167,16 @@ _z_channel_fifo_t *_z_channel_fifo(size_t capacity) {
 #endif
 
     return fifo;
+}
+
+void _z_channel_fifo_clear(_z_channel_fifo_t *fifo, z_element_free_f free_f) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    // TODO(sashacmc): result error check
+    int8_t res = zp_mutex_free(&fifo->_mutex);
+    res = zp_condvar_free(&fifo->_cv_not_full);
+    res = zp_condvar_free(&fifo->_cv_not_empty);
+#endif
+
+    _z_fifo_clear(&fifo->_fifo, free_f);
+    zp_free(fifo);
 }

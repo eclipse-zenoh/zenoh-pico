@@ -11,11 +11,12 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
+
+#include "zenoh-pico/collections/ring.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
-
-#include "zenoh-pico/collections/ring.h"
 
 /*-------- ring --------*/
 int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
