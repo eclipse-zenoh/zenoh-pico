@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "zenoh-pico.h"
 
@@ -24,8 +25,8 @@
 typedef struct {
     volatile unsigned long count;
     volatile unsigned long finished_rounds;
-    zp_clock_t start;
-    zp_clock_t first_start;
+    z_clock_t start;
+    z_clock_t first_start;
 } z_stats_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -44,23 +45,22 @@ void on_sample(const z_sample_t *sample, void *context) {
     stats->count++;
     // Start set measurement
     if (stats->count == 1) {
-        stats->start = zp_clock_now();
+        stats->start = z_clock_now();
         if (stats->first_start.tv_nsec == 0) {
             stats->first_start = stats->start;
         }
     } else if (stats->count >= PACKET_NB) {
         // Stop set measurement
         stats->finished_rounds++;
-        unsigned long elapsed_ms = zp_clock_elapsed_ms(&stats->start);
-        printf("Received %d msg in %lu ms (%.1f msg/s)\n", PACKET_NB, elapsed_ms,
-               (double)(PACKET_NB * 1000) / (double)elapsed_ms);
+        unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->start);
+        printf("%f msg/s\n", (double)(PACKET_NB * 1000) / (double)elapsed_ms);
         stats->count = 0;
     }
 }
 
 void drop_stats(void *context) {
     z_stats_t *stats = (z_stats_t *)context;
-    unsigned long elapsed_ms = zp_clock_elapsed_ms(&stats->first_start);
+    unsigned long elapsed_ms = z_clock_elapsed_ms(&stats->first_start);
     const unsigned long sent_messages = PACKET_NB * stats->finished_rounds + stats->count;
     printf("Stats after unsubscribing: received %ld messages over %lu miliseconds (%.1f msg/s)\n", sent_messages,
            elapsed_ms, (double)(sent_messages * 1000) / (double)elapsed_ms);
@@ -99,14 +99,11 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     // Listen until stopped
-    printf("Start listening.\n");
-    char c = 0;
-    while (c != 'q') {
-        c = (char)fgetc(stdin);
+    printf("Press CTRL-C to quit...\n");
+    while (1) {
+        sleep(1);
     }
-    // Wait for everything to settle
-    printf("End of test\n");
-    zp_sleep_s(1);
+
     // Clean up
     z_undeclare_subscriber(z_move(sub));
     zp_stop_read_task(z_loan(s));

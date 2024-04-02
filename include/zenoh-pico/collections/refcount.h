@@ -43,9 +43,10 @@
 
 // c11 atomic variant
 #define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_CNT _z_atomic_store_explicit(&p.in->_cnt, 1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_CNT _z_atomic_fetch_add_explicit(&p->in->_cnt, 1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_DECR_AND_CMP _z_atomic_fetch_sub_explicit(&p->in->_cnt, 1, _z_memory_order_release) > 1
+#define _ZP_RC_OP_INIT_CNT _z_atomic_store_explicit(&p.in->_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INCR_CNT _z_atomic_fetch_add_explicit(&p->in->_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_DECR_AND_CMP \
+    _z_atomic_fetch_sub_explicit(&p->in->_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 
 #else  // ZENOH_C_STANDARD == 99
@@ -53,11 +54,11 @@
 
 // c99 gcc sync builtin variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT                \
-    __sync_fetch_and_and(&p.in->_cnt, 0); \
-    __sync_fetch_and_add(&p.in->_cnt, 1);
-#define _ZP_RC_OP_INCR_CNT __sync_fetch_and_add(&p->in->_cnt, 1);
-#define _ZP_RC_OP_DECR_AND_CMP __sync_fetch_and_sub(&p->in->_cnt, 1) > 1
+#define _ZP_RC_OP_INIT_CNT                              \
+    __sync_fetch_and_and(&p.in->_cnt, (unsigned int)0); \
+    __sync_fetch_and_add(&p.in->_cnt, (unsigned int)1);
+#define _ZP_RC_OP_INCR_CNT __sync_fetch_and_add(&p->in->_cnt, (unsigned int)1);
+#define _ZP_RC_OP_DECR_AND_CMP __sync_fetch_and_sub(&p->in->_cnt, (unsigned int)1) > (unsigned int)1
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 
 #else  // !ZENOH_COMPILER_GCC
@@ -76,9 +77,9 @@
 
 // Single thread variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT p.in->_cnt = 1;
-#define _ZP_RC_OP_INCR_CNT p->in->_cnt += 1;
-#define _ZP_RC_OP_DECR_AND_CMP p->in->_cnt-- > 1
+#define _ZP_RC_OP_INIT_CNT p.in->_cnt = (unsigned int)1;
+#define _ZP_RC_OP_INCR_CNT p->in->_cnt += (unsigned int)1;
+#define _ZP_RC_OP_DECR_AND_CMP p->in->_cnt-- > (unsigned int)1
 #define _ZP_RC_OP_SYNC
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -94,7 +95,7 @@
     } name##_rc_t;                                                                        \
     static inline name##_rc_t name##_rc_new(void) {                                       \
         name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
         if (p.in != NULL) {                                                               \
             memset(&p.in->val, 0, sizeof(type##_t));                                      \
             _ZP_RC_OP_INIT_CNT                                                            \
@@ -103,7 +104,7 @@
     }                                                                                     \
     static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
         name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)zp_malloc(sizeof(name##_inner_rc_t));                 \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
         if (p.in != NULL) {                                                               \
             p.in->val = val;                                                              \
             _ZP_RC_OP_INIT_CNT                                                            \
@@ -117,7 +118,7 @@
         return c;                                                                         \
     }                                                                                     \
     static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
-        name##_rc_t *c = (name##_rc_t *)zp_malloc(sizeof(name##_rc_t));                   \
+        name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                    \
         if (c != NULL) {                                                                  \
             c->in = p->in;                                                                \
             _ZP_RC_OP_INCR_CNT                                                            \
@@ -140,7 +141,7 @@
         }                                                                                 \
         _ZP_RC_OP_SYNC                                                                    \
         type##_clear(&p->in->val);                                                        \
-        zp_free(p->in);                                                                   \
+        z_free(p->in);                                                                    \
         return true;                                                                      \
     }
 

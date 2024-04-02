@@ -107,7 +107,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
 #endif
                     ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp
+                                                   put._commons._timestamp, req._ext_qos
 #if Z_FEATURE_ATTACHMENT == 1
                                                    ,
                                                    att
@@ -123,7 +123,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
                     ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp
+                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos
 #if Z_FEATURE_ATTACHMENT == 1
                                                    ,
                                                    z_attachment_null()
@@ -149,6 +149,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     // @TODO: expose zenoh errors to the user
                     _z_msg_err_t error = response._body._err;
                     _z_bytes_t payload = error._payload;
+                    _ZP_UNUSED(payload);  // Unused when logs are deactivated
                     _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
                              payload.start);
                 } break;

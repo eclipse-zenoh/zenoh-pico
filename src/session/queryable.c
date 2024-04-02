@@ -121,7 +121,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
 
     _zp_session_lock_mutex(zn);
 
-    ret = (_z_session_queryable_rc_t *)zp_malloc(sizeof(_z_session_queryable_rc_t));
+    ret = (_z_session_queryable_rc_t *)z_malloc(sizeof(_z_session_queryable_rc_t));
     if (ret != NULL) {
         *ret = _z_session_queryable_rc_new_from_val(*q);
         zn->_local_queryable = _z_session_queryable_rc_list_push(zn->_local_queryable, ret);

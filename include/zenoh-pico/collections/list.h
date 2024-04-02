@@ -42,6 +42,7 @@ void *_z_list_head(const _z_list_t *xs);
 _z_list_t *_z_list_tail(const _z_list_t *xs);
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
+_z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x);
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f f_f, void *e);

@@ -29,7 +29,7 @@
 #define TCP_CONFIG_MAPPING_BUILD               \
     _z_str_intmapping_t args[TCP_CONFIG_ARGC]; \
     args[0]._key = TCP_CONFIG_TOUT_KEY;        \
-    args[0]._str = TCP_CONFIG_TOUT_STR;
+    args[0]._str = (char *)TCP_CONFIG_TOUT_STR;
 
 size_t _z_tcp_config_strlen(const _z_str_intmap_t *s);
 

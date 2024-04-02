@@ -108,12 +108,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Enter 'q' to quit...\n");
-    char c = '\0';
-    while (c != 'q') {
-        fflush(stdin);
-        int ret = scanf("%c", &c);
-        (void)ret;  // Remove unused result warning
+    printf("Press CTRL-C to quit...\n");
+    while (1) {
+        sleep(1);
     }
 
     z_undeclare_subscriber(z_move(sub));

@@ -24,7 +24,7 @@ void _z_query_clear(_z_query_t *q) {
     }
     // Clean up memory
     _z_msg_clear(&z_msg);
-    zp_free(q->_parameters);
+    z_free(q->_parameters);
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
     // Ideally free session rc if you have one
@@ -36,7 +36,7 @@ _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, con
     _z_query_t q;
     q._request_id = request_id;
     q._zn = zn;  // Ideally would have been an rc
-    q._parameters = (char *)zp_malloc(parameters->len + 1);
+    q._parameters = (char *)z_malloc(parameters->len + 1);
     memcpy(q._parameters, parameters->start, parameters->len);
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
@@ -56,7 +56,7 @@ void _z_queryable_free(_z_queryable_t **qbl) {
     if (ptr != NULL) {
         _z_queryable_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *qbl = NULL;
     }
 }

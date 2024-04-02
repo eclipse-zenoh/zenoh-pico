@@ -26,9 +26,10 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 2147483647;  // max int value by default
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -45,8 +46,12 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -80,16 +85,17 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    printf("Press CTRL-C to quit...\n");
     char *buf = (char *)malloc(256);
-    zp_clock_t now = zp_clock_now();
-    for (int idx = 0; 1;) {
-        if (zp_clock_elapsed_ms(&now) > 1000) {
+    z_clock_t now = z_clock_now();
+    for (int idx = 0; idx < n;) {
+        if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
             z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
             ++idx;
 
-            now = zp_clock_now();
+            now = z_clock_now();
         }
 
         zp_read(z_session_loan(&s), NULL);
@@ -98,9 +104,7 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_publisher(z_publisher_move(&pub));
-
     z_close(z_session_move(&s));
-
     free(buf);
     return 0;
 }

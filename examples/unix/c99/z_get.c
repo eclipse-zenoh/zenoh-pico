@@ -18,10 +18,15 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_QUERY == 1
+#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
+z_condvar_t cond;
+z_mutex_t mutex;
+
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
+    z_condvar_signal(&cond);
+    z_condvar_free(&cond);
 }
 
 void reply_handler(z_owned_reply_t *reply, void *ctx) {
@@ -73,6 +78,9 @@ int main(int argc, char **argv) {
         }
     }
 
+    z_mutex_init(&mutex);
+    z_condvar_init(&cond);
+
     z_owned_config_t config = z_config_default();
     zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
     if (clocator != NULL) {
@@ -102,27 +110,19 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Enter any key to get data or 'q' to quit...\n");
-    char c = '\0';
-    while (1) {
-        fflush(stdin);
-        int ret = scanf("%c", &c);
-        (void)ret;  // Clear unused result warning
-        if (c == 'q') {
-            break;
-        }
-
-        printf("Sending Query '%s'...\n", keyexpr);
-        z_get_options_t opts = z_get_options_default();
-        if (value != NULL) {
-            opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
-        }
-        z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-        if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {
-            printf("Unable to send query.\n");
-            return -1;
-        }
+    z_mutex_lock(&mutex);
+    printf("Sending Query '%s'...\n", keyexpr);
+    z_get_options_t opts = z_get_options_default();
+    if (value != NULL) {
+        opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
     }
+    z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
+    if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {
+        printf("Unable to send query.\n");
+        return -1;
+    }
+    z_condvar_wait(&cond, &mutex);
+    z_mutex_unlock(&mutex);
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_session_loan(&s));
@@ -134,7 +134,9 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY or Z_FEATURE_MULTI_THREAD but this example requires "
+        "them.\n");
     return -2;
 }
 #endif

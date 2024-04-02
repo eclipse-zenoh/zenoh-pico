@@ -31,8 +31,9 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform/unix.h"
-#include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
@@ -42,6 +43,8 @@
 #error "Raweth transport only supported on linux systems"
 #else
 #include <linux/if_packet.h>
+
+void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry) { _z_keyexpr_clear(&entry->_keyexpr); }
 
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     int8_t ret = _Z_RES_OK;
@@ -89,19 +92,24 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
     return (size_t)wb;
 }
 
-size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr) {
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr,
+                         const _zp_raweth_whitelist_array_t *whitelist) {
     // Read from socket
     ssize_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
     if ((bytesRead < 0) || (bytesRead < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;
     }
-    // Address filtering
-    _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
-    _Bool is_valid = false;
-    for (size_t i = 0; i < _ZP_RAWETH_CFG_WHITELIST_SIZE; i++) {
-        if (memcmp(&header->smac, _ZP_RAWETH_CFG_WHITELIST[i]._mac, _ZP_MAC_ADDR_LENGTH) == 0) {  // Test byte ordering
-            is_valid = true;
-            break;
+    _Bool is_valid = true;
+    // Address filtering (only if there is a whitelist)
+    if (_zp_raweth_whitelist_array_len(whitelist) > 0) {
+        is_valid = false;
+        const _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+        for (size_t i = 0; i < _zp_raweth_whitelist_array_len(whitelist); i++) {
+            const _zp_raweth_whitelist_entry_t *entry = _zp_raweth_whitelist_array_get(whitelist, i);
+            if (memcmp(&header->smac, entry->_mac, _ZP_MAC_ADDR_LENGTH) == 0) {
+                is_valid = true;
+                break;
+            }
         }
     }
     // Ignore packet from unknown sources

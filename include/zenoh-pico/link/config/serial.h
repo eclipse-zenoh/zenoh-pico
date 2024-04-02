@@ -45,7 +45,7 @@
 #define SERIAL_CONFIG_MAPPING_BUILD               \
     _z_str_intmapping_t args[SERIAL_CONFIG_ARGC]; \
     args[0]._key = SERIAL_CONFIG_BAUDRATE_KEY;    \
-    args[0]._str = SERIAL_CONFIG_BAUDRATE_STR;
+    args[0]._str = (char *)SERIAL_CONFIG_BAUDRATE_STR;
 // args[1]._key = SERIAL_CONFIG_DATABITS_KEY;
 // args[1]._str = SERIAL_CONFIG_DATABITS_STR;
 // args[2]._key = SERIAL_CONFIG_FLOWCONTROL_KEY;

@@ -130,7 +130,7 @@ void _z_link_free(_z_link_t **l) {
     if (ptr != NULL) {
         _z_link_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *l = NULL;
     }
 }

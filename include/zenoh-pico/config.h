@@ -337,4 +337,11 @@
 #define ZP_ASM_NOP __asm__("nop")
 #endif
 
+/**
+ * Default get timeout in milliseconds.
+ */
+#ifndef Z_GET_TIMEOUT_DEFAULT
+#define Z_GET_TIMEOUT_DEFAULT 10000
+#endif
+
 #endif /* INCLUDE_ZENOH_PICO_CONFIG_H */

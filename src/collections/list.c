@@ -18,7 +18,7 @@
 
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x) {
-    _z_list_t *xs = (_z_list_t *)zp_malloc(sizeof(_z_list_t));
+    _z_list_t *xs = (_z_list_t *)z_malloc(sizeof(_z_list_t));
     if (xs != NULL) {
         xs->_val = x;
         xs->_tail = NULL;
@@ -30,6 +30,20 @@ _z_list_t *_z_list_push(_z_list_t *xs, void *x) {
     _z_list_t *lst = _z_list_of(x);
     lst->_tail = xs;
     return lst;
+}
+
+_z_list_t *_z_list_push_back(_z_list_t *xs, void *x) {
+    _z_list_t *l = (_z_list_t *)xs;
+    while (l != NULL && l->_tail != NULL) {
+        l = l->_tail;
+    }
+    if (l == NULL) {
+        l = _z_list_of(x);
+        return l;
+    } else {
+        l->_tail = _z_list_of(x);
+        return xs;
+    }
 }
 
 void *_z_list_head(const _z_list_t *xs) { return xs->_val; }
@@ -57,7 +71,7 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x) {
     } else {
         f_f(&head->_val);
     }
-    zp_free(head);
+    z_free(head);
 
     return l;
 }
@@ -99,7 +113,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             }
 
             f_f(&this_->_val);
-            zp_free(this_);
+            z_free(this_);
             break;
         } else {
             previous = current;

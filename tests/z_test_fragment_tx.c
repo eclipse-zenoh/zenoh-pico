@@ -60,6 +60,8 @@ int main(int argc, char **argv) {
     // Put data
     z_put_options_t options = z_put_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    options.priority = Z_PRIORITY_DATA_HIGH;
+    options.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     for (int i = 0; i < 5; i++) {
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
         if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, &options) < 0) {

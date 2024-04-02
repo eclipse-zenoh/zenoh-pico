@@ -35,7 +35,7 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    zp_mutex_lock(&ztm->_mutex_rx);
+    z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -82,7 +82,7 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&ztm->_mutex_rx);
+    z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -125,7 +125,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
-    zp_mutex_lock(&ztm->_mutex_peer);
+    z_mutex_lock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Mark the session that we have received data from this peer
@@ -257,7 +257,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
             if (entry == NULL)  // New peer
             {
-                entry = (_z_transport_peer_entry_t *)zp_malloc(sizeof(_z_transport_peer_entry_t));
+                entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
                 if (entry != NULL) {
                     entry->_sn_res = _z_sn_max(t_msg->_body._join._seq_num_res);
 
@@ -296,7 +296,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                         ztm->_peers = _z_transport_peer_entry_list_insert(ztm->_peers, entry);
                     } else {
-                        zp_free(entry);
+                        z_free(entry);
                     }
                 } else {
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -341,7 +341,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&ztm->_mutex_peer);
+    z_mutex_unlock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

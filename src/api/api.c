@@ -60,7 +60,7 @@ z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
         size_t ke_len = _z_str_size(keyexpr._suffix);
 
-        ret._value = (char *)zp_malloc(ke_len);
+        ret._value = (char *)z_malloc(ke_len);
         if (ret._value != NULL) {
             _z_str_n_copy(ret._value, keyexpr._suffix, ke_len);
         }
@@ -349,7 +349,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
-        ret._value = (type *)zp_malloc(sizeof(type));                            \
+        ret._value = (type *)z_malloc(sizeof(type));                             \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value);                                     \
         }                                                                        \
@@ -370,7 +370,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
 #define OWNED_FUNCTIONS_PTR_CLONE(type, ownedtype, name, f_copy) \
     ownedtype z_##name##_clone(ownedtype *val) {                 \
         ownedtype ret;                                           \
-        ret._value = (_##type *)zp_malloc(sizeof(_##type));      \
+        ret._value = (_##type *)z_malloc(sizeof(_##type));       \
         if (ret._value != NULL) {                                \
             f_copy(ret._value, val->_value);                     \
         }                                                        \
@@ -392,7 +392,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     ownedtype z_##name##_clone(ownedtype *val) {                                 \
         ownedtype ret;                                                           \
         size_t size = _z_str_size(val->_value);                                  \
-        ret._value = (_##type)zp_malloc(size);                                   \
+        ret._value = (_##type)z_malloc(size);                                    \
         if (ret._value != NULL) {                                                \
             f_copy(ret._value, val->_value, size);                               \
         }                                                                        \
@@ -496,26 +496,26 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_hello_handler_wrapper_t *wrapped_ctx =
-        (__z_hello_handler_wrapper_t *)zp_malloc(sizeof(__z_hello_handler_wrapper_t));
+        (__z_hello_handler_wrapper_t *)z_malloc(sizeof(__z_hello_handler_wrapper_t));
     if (wrapped_ctx != NULL) {
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
 
         char *opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
         }
         z_what_t what = strtol(opt_as_str, NULL, 10);
 
         opt_as_str = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
         char *mcast_locator = opt_as_str;
 
         opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (opt_as_str == NULL) {
-            opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
@@ -527,7 +527,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
 
         _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
-        zp_free(wrapped_ctx);
+        z_free(wrapped_ctx);
         z_scouting_config_drop(config);
     } else {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -649,9 +649,10 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len
+    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len,
+                                   _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority)
 #if Z_FEATURE_ATTACHMENT == 1
-                                   ,
+                                       ,
                                    opt.attachment
 #endif
     );
@@ -764,7 +765,7 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
         );
     }
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len
+    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len, _Z_N_QOS_DEFAULT
 #if Z_FEATURE_ATTACHMENT == 1
                                    ,
                                    opt.attachment
@@ -785,7 +786,7 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
-    z_owned_keyexpr_t ret = {._value = zp_malloc(sizeof(_z_keyexpr_t))};
+    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
     if (ret._value != NULL && publisher._val != NULL) {
         *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
     }
@@ -803,6 +804,7 @@ z_get_options_t z_get_options_default(void) {
 #if Z_FEATURE_ATTACHMENT == 1
         // TODO:ATT.attachment = z_attachment_null()
 #endif
+        .timeout_ms = Z_GET_TIMEOUT_DEFAULT
     };
 }
 
@@ -844,14 +846,14 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_reply_handler_wrapper_t *wrapped_ctx =
-        (__z_reply_handler_wrapper_t *)zp_malloc(sizeof(__z_reply_handler_wrapper_t));
+        (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
     if (wrapped_ctx != NULL) {
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
     }
 
     ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   __z_reply_handler, wrapped_ctx, callback->drop, ctx
+                   __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    z_attachment_null()
@@ -942,7 +944,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
 z_owned_keyexpr_t z_keyexpr_new(const char *name) {
     z_owned_keyexpr_t key;
 
-    key._value = name ? (z_keyexpr_t *)zp_malloc(sizeof(z_keyexpr_t)) : NULL;
+    key._value = name ? (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t)) : NULL;
     if (key._value != NULL) {
         *key._value = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     }
@@ -953,7 +955,7 @@ z_owned_keyexpr_t z_keyexpr_new(const char *name) {
 z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
     z_owned_keyexpr_t key;
 
-    key._value = (z_keyexpr_t *)zp_malloc(sizeof(z_keyexpr_t));
+    key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
     if (key._value != NULL) {
         uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
         *key._value = _z_rid_with_suffix(id, NULL);
@@ -998,7 +1000,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
             if (wild != NULL && wild != keyexpr._suffix) {
                 wild -= 1;
                 size_t len = wild - keyexpr._suffix;
-                suffix = zp_malloc(len + 1);
+                suffix = z_malloc(len + 1);
                 if (suffix != NULL) {
                     memcpy(suffix, keyexpr._suffix, len);
                     suffix[len] = 0;
@@ -1021,7 +1023,7 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     }
     _z_subscriber_t *sub = _z_declare_subscriber(&zs._val, key, subinfo, callback->call, callback->drop, ctx);
     if (suffix != NULL) {
-        zp_free(suffix);
+        z_free(suffix);
     }
 
     return (z_owned_subscriber_t){._value = sub};
@@ -1045,7 +1047,7 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
             _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
             if (head->in->val._id == lookup) {
                 _z_keyexpr_t key = _z_keyexpr_duplicate(head->in->val._key);
-                ret = (z_owned_keyexpr_t){._value = zp_malloc(sizeof(_z_keyexpr_t))};
+                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
                 if (ret._value != NULL) {
                     *ret._value = key;
                 } else {
@@ -1211,7 +1213,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
         _z_bytes_clear(&head->value);
         head->value = _z_bytes_wrap(value.start, value.len);
     } else {
-        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
+        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         insert->key = _z_bytes_wrap(key.start, key.len);
         insert->value = _z_bytes_wrap(value.start, value.len);
@@ -1235,7 +1237,7 @@ void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key,
             _z_bytes_copy(&head->key, &key);
         }
     } else {
-        struct _z_bytes_pair_t *insert = zp_malloc(sizeof(struct _z_bytes_pair_t));
+        struct _z_bytes_pair_t *insert = z_malloc(sizeof(struct _z_bytes_pair_t));
         memset(insert, 0, sizeof(struct _z_bytes_pair_t));
         _z_bytes_copy(&insert->key, &key);
         _z_bytes_copy(&insert->value, &value);

@@ -17,6 +17,7 @@
 
 #include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
 #include <freertos/task.h>
 
 #include "zenoh-pico/config.h"
@@ -24,14 +25,26 @@
 #if Z_FEATURE_MULTI_THREAD == 1
 #include <pthread.h>
 
-typedef TaskHandle_t zp_task_t;
-typedef void *zp_task_attr_t;  // Not used in ESP32
-typedef pthread_mutex_t zp_mutex_t;
-typedef pthread_cond_t zp_condvar_t;
+typedef struct {
+    const char *name;
+    UBaseType_t priority;
+    size_t stack_depth;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    _Bool static_allocation;
+    StackType_t *stack_buffer;
+    StaticTask_t *task_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} z_task_attr_t;
+typedef struct {
+    TaskHandle_t handle;
+    EventGroupHandle_t join_event;
+} z_task_t;
+typedef pthread_mutex_t z_mutex_t;
+typedef pthread_cond_t z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-typedef struct timespec zp_clock_t;
-typedef struct timeval zp_time_t;
+typedef struct timespec z_clock_t;
+typedef struct timeval z_time_t;
 
 typedef struct {
     union {
@@ -39,7 +52,11 @@ typedef struct {
         int _fd;
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        uart_port_t _serial;
+        struct {
+            uart_port_t _serial;
+            uint8_t *before_cobs;
+            uint8_t *after_cobs;
+        };
 #endif
     };
 } _z_sys_net_socket_t;
