@@ -429,10 +429,6 @@ int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uin
 int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INTEREST_ID)) {
-        return _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
-    }
-
     int8_t ret;
     switch (_Z_MID(header)) {
         case _Z_DECL_KEXPR_MID: {

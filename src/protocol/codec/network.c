@@ -436,6 +436,10 @@ int8_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t heade
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_declare_decode_extensions, decl))
     }
+    // FIXME: For now, zenoh pico should not receive this (answer from interests with current=1, future=0)
+    if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
+        return _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
+    }
     return _z_declaration_decode(&decl->_decl, zbf);
 }
 

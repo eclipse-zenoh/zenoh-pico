@@ -37,6 +37,12 @@
 /*=============================*/
 #define _Z_FLAG_N_Z 0x80  // 1 << 7
 
+// DECLARE message flags:
+// - I: Interest       If I==1 then the declare is in a response to an Interest with future==false
+// - X: Reserved
+// - Z: Extension      If Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_DECLARE_I 0x20  // 1 << 5
+
 // PUSH message flags:
 //      N Named            if N==1 then the key expr has name/suffix
 //      M Mapping          if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
