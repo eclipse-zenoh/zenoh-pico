@@ -114,7 +114,7 @@ void _z_channel_fifo_push(const void *elem, void *context, z_element_free_f elem
         }
     }
     zp_mutex_unlock(&f->_mutex);
-#elif   // Z_FEATURE_MULTI_THREAD == 1
+#else   // Z_FEATURE_MULTI_THREAD == 1
     _z_fifo_push_drop(&f->_fifo, elem, element_free);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
@@ -137,7 +137,7 @@ int8_t _z_channel_fifo_pull(void *dst, void *context, z_element_copy_f element_c
     }
     zp_mutex_unlock(&f->_mutex);
     element_copy(dst, src);
-#elif   // Z_FEATURE_MULTI_THREAD == 1
+#else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);
     if (src != NULL) {
         element_copy(dst, src);
