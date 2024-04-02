@@ -361,6 +361,9 @@ int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id) {
     _zp_session_lock_mutex(zn);
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
     _zp_session_unlock_mutex(zn);
+    if (intr == NULL) {
+        return _Z_RES_OK;
+    }
     // Trigger callback
     if (intr->in->val._callback != NULL) {
         intr->in->val._callback(&msg, intr->in->val._arg);
