@@ -22,6 +22,8 @@
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 
+static int msg_nb = 0;
+
 #if Z_FEATURE_ATTACHMENT == 1
 int8_t attachment_handler(z_bytes_t key, z_bytes_t value, void *ctx) {
     (void)ctx;
@@ -42,6 +44,7 @@ void data_handler(const z_sample_t *sample, void *ctx) {
     }
 #endif
     z_drop(z_move(keystr));
+    msg_nb++;
 }
 
 int main(int argc, char **argv) {
@@ -49,9 +52,10 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -65,8 +69,11 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -110,6 +117,9 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (1) {
+        if ((n != 0) && (msg_nb >= n)) {
+            break;
+        }
         sleep(1);
     }
 
