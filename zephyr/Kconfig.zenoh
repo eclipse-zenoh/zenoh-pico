@@ -1,0 +1,69 @@
+config ZENOH_PICO
+	bool "Zenoh PICO library"
+	help
+	  Enable Zenoh pico support
+
+if ZENOH_PICO
+
+config ZENOH_PICO_LINK_SERIAL
+	bool "Serial Link"
+	help
+	  Use serial link
+
+config ZENOH_PICO_MULTI_THREAD
+	bool "Multithreading support"
+	help
+	  Multithreading support
+
+config ZENOH_PICO_PUBLICATION
+	bool "Publication Support"
+	help
+	  Publication support
+
+config ZENOH_PICO_SUBSCRIPTION
+	bool "Subscription Support"
+	help
+	  Subscription Support
+
+config ZENOH_PICO_QUERY
+	bool "Query Support"
+	help
+	  Query Support
+
+config ZENOH_PICO_QUERYABLE
+	bool "Queryable Support"
+	help
+	  Queryable Support
+
+config ZENOH_PICO_RAWETH_TRANSPORT
+	bool "Raw Ethernet Support"
+	help
+	  Raw Ethernet Support
+
+config ZENOH_PICO_LINK_TCP
+	bool "TCP Link"
+	help
+	  TCP Link
+
+config ZENOH_PICO_LINK_UDP_UNICAST
+	bool "UDP Unicast"
+	help
+	  UDP Unicast
+
+config ZENOH_PICO_LINK_UDP_MULTICAST
+	bool "UDP Multicast"
+	help
+	  UDP Multicast
+
+config ZENOH_PICO_SCOUTING_UDP
+	bool "Scouting UDP"
+	help
+	  Scouting UDP
+
+config ZENOH_PICO_LINK_WS
+	bool "WS Link"
+	help
+	  WS Link
+
+endif
+
