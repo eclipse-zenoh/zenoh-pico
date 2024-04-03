@@ -95,7 +95,11 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
-
+    // Wait for joins in peer mode
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for joins...\n");
+        sleep(3);
+    }
     printf("Press CTRL-C to quit...\n");
     char buf[256];
     for (int idx = 0; idx < n; ++idx) {
