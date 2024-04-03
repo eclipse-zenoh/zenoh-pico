@@ -36,6 +36,7 @@ int8_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         _z_t_msg_clear(&t_msg);
     }
+    _z_bytes_clear(&addr);
     return ret;
 }
 #else
@@ -63,18 +64,21 @@ void *_zp_raweth_read_task(void *ztm_arg) {
                 break;
             case _Z_ERR_TRANSPORT_RX_FAILED:
                 // Drop message
+                _z_bytes_clear(&addr);
                 continue;
                 break;
             default:
                 // Drop message & stop task
                 _Z_ERROR("Connection closed due to malformed message");
                 ztm->_read_task_running = false;
+                _z_bytes_clear(&addr);
                 continue;
                 break;
         }
         // Process message
         if (_z_multicast_handle_transport_message(ztm, &t_msg, &addr) != _Z_RES_OK) {
             ztm->_read_task_running = false;
+            _z_bytes_clear(&addr);
             continue;
         }
         _z_t_msg_clear(&t_msg);

@@ -402,7 +402,15 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
 
 static int8_t _z_f_link_listen_raweth(_z_link_t *self) { return _z_f_link_open_raweth(self); }
 
-static void _z_f_link_close_raweth(_z_link_t *self) { _z_close_raweth(&self->_socket._raweth._sock); }
+static void _z_f_link_close_raweth(_z_link_t *self) {
+    // Close connection
+    _z_close_raweth(&self->_socket._raweth._sock);
+    // Clear config
+    _zp_raweth_mapping_array_clear(&self->_socket._raweth._mapping);
+    if (_zp_raweth_whitelist_array_len(&self->_socket._raweth._whitelist) != 0) {
+        _zp_raweth_whitelist_array_clear(&self->_socket._raweth._whitelist);
+    }
+}
 
 static void _z_f_link_free_raweth(_z_link_t *self) { _ZP_UNUSED(self); }
 
