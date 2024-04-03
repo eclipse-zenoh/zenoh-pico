@@ -29,28 +29,35 @@ void data_handler(const z_sample_t *sample, void *ctx) {
             break;
         }
     }
-    printf("[rx]: Received packet on %s, len: %d, validity: %d, qos {priority: %d, cong_ctrl: %d}\n", z_loan(keystr),
-           (int)sample->payload.len, is_valid, z_qos_get_priority(sample->qos),
-           z_qos_get_congestion_control(sample->qos));
+    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_loan(keystr), (int)sample->payload.len, is_valid);
     z_drop(z_move(keystr));
 }
 
 int main(int argc, char **argv) {
     const char *keyexpr = "test/zenoh-pico-fragment";
-    const char *mode = "client";
+    const char *mode = NULL;
     char *llocator = NULL;
+    char *clocator = NULL;
     (void)argv;
 
     // Check if peer mode
     if (argc > 1) {
         mode = "peer";
         llocator = "udp/224.0.0.224:7447#iface=lo";
+    } else {
+        mode = "client";
+        clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    if (mode != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    }
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+    }
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
