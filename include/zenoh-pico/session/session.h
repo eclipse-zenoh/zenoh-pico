@@ -102,7 +102,8 @@ void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_subscription_rc_copy)
+_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_subscription_rc_size, _z_subscription_rc_drop,
+               _z_subscription_rc_copy)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {

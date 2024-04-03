@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "zenoh-pico/utils/result.h"
+
 #if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
 
@@ -143,6 +145,10 @@
         type##_clear(&p->in->val);                                                        \
         z_free(p->in);                                                                    \
         return true;                                                                      \
+    }                                                                                     \
+    static inline size_t name##_rc_size(name##_rc_t *p) {                                 \
+        _ZP_UNUSED(p);                                                                    \
+        return sizeof(name##_rc_t);                                                       \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_REFCOUNT_H */
