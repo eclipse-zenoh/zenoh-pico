@@ -111,7 +111,7 @@ int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element
     return _Z_RES_OK;
 }
 
-int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_copy_f element_copy) {
+int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) {
     _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -138,11 +138,11 @@ int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_copy_f element_copy) 
     if (res) {
         return res;
     }
-    element_copy(dst, src);
+    element_move(dst, src);
 #else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);
-    if (src != NULL) {
-        element_copy(dst, src);
+    if (src) {
+        element_move(dst, src);
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

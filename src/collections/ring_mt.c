@@ -88,7 +88,7 @@ int8_t _z_ring_mt_push(const void *elem, void *context, z_element_free_f element
     return _Z_RES_OK;
 }
 
-int8_t _z_ring_mt_pull(void *dst, void *context, z_element_copy_f element_copy) {
+int8_t _z_ring_mt_pull(void *dst, void *context, z_element_move_f element_move) {
     _z_ring_mt_t *r = (_z_ring_mt_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -107,10 +107,8 @@ int8_t _z_ring_mt_pull(void *dst, void *context, z_element_copy_f element_copy) 
     }
 #endif
 
-    if (src == NULL) {
-        dst = NULL;
-    } else {
-        element_copy(dst, src);
+    if (src) {
+        element_move(dst, src);
     }
     return _Z_RES_OK;
 }

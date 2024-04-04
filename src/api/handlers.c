@@ -18,11 +18,8 @@
 #include "zenoh-pico/system/platform.h"
 
 // -- Sample
-void _z_owned_sample_copy(z_owned_sample_t *dst, const z_owned_sample_t *src) {
+void _z_owned_sample_move(z_owned_sample_t *dst, const z_owned_sample_t *src) {
     memcpy(dst, src, sizeof(z_owned_sample_t));
-    // TODO(sashacmc): is it ok?
-    //  Why not malloc +
-    //  _z_sample_copy(dst->_value, src->_value);
 }
 
 z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
