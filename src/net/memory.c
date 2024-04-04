@@ -53,12 +53,11 @@ void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
     dst->payload = _z_bytes_duplicate(&src->payload);
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
-    // TODO(sashacmc):
+    // TODO(sashacmc): should be implemented after encoding rework
     // _z_encoding_copy(dst->encoding, src->encoding);
     dst->kind = src->kind;
 #if Z_FEATURE_ATTACHMENT == 1
-    // TODO(sashacmc):
-    // z_attachment_t attachment;
+    dst->attachment = src->attachment;
 #endif
 }
 
