@@ -44,7 +44,7 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
     static inline void _z_##name##_elem_move(void *dst, const void *src) {                                        \
         elem_move_f((recv_type *)dst, (const recv_type *)src);                                                    \
     }                                                                                                             \
-    static inline void _z_##name##_push(const send_type *elem, void *context) {                                   \
+    static inline void _z_##name##_send(const send_type *elem, void *context) {                                   \
         void *internal_elem = elem_convert_f(elem);                                                               \
         if (internal_elem == NULL) {                                                                              \
             return;                                                                                               \
@@ -54,7 +54,7 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
             _Z_ERROR("%s failed: %i", #collection_push_f, res);                                                   \
         }                                                                                                         \
     }                                                                                                             \
-    static inline void _z_##name##_pull(recv_type *elem, void *context) {                                         \
+    static inline void _z_##name##_recv(recv_type *elem, void *context) {                                         \
         int8_t res = collection_pull_f(elem, context, _z_##name##_elem_move);                                     \
         if (res) {                                                                                                \
             _Z_ERROR("%s failed: %i", #collection_pull_f, res);                                                   \
@@ -64,8 +64,8 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
     static inline z_owned_##name##_t z_##name(size_t capacity) {                                                  \
         z_owned_##name##_t channel;                                                                               \
         channel.collection = collection_new_f(capacity);                                                          \
-        channel.send = z_##send_closure_name(_z_##name##_push, NULL, channel.collection);                         \
-        channel.recv = z_##recv_closure_name(_z_##name##_pull, NULL, channel.collection);                         \
+        channel.send = z_##send_closure_name(_z_##name##_send, NULL, channel.collection);                         \
+        channel.recv = z_##recv_closure_name(_z_##name##_recv, NULL, channel.collection);                         \
         return channel;                                                                                           \
     }                                                                                                             \
     static inline z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                    \
