@@ -469,7 +469,17 @@ typedef struct {
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
 
-// TODO(sashacmc): comment, correct place
+/**
+ * Represents the owned sample closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
+ *   _z_owned_sample_handler_t call: `void *call(const struct z_owned_sample_t*, const void *context)` is the callback
+ *   function.
+ * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
+ *   pointer to an arbitrary state.
+ */
 typedef struct {
     void *context;
     _z_owned_sample_handler_t call;

@@ -144,7 +144,9 @@
                   z_owned_closure_reply_t : z_closure_reply_move,                 \
                   z_owned_closure_hello_t : z_closure_hello_move,                 \
                   z_owned_closure_zid_t  : z_closure_zid_move,                    \
-                  z_owned_sample_t : z_sample_move                                \
+                  z_owned_sample_t : z_sample_move,                               \
+                  z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
+                  z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move      \
             )(&x)
 
 /**

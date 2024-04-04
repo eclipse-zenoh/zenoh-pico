@@ -563,7 +563,28 @@ z_keyexpr_t z_query_keyexpr(const z_query_t *query);
  *   Returns a new sample closure.
  */
 z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context);
-// TODO(sashacmc): comment, correct place
+
+/**
+ * Return a new sample closure.
+ * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
+ *
+ * To check if ``val`` is still valid, you may use ``z_closure_owned_sample_check(&val)`` or ``z_check(val)`` if your
+ * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ *
+ * Parameters:
+ *   call: the typical callback function. ``context`` will be passed as its last argument.
+ *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
+ *   context: a pointer to an arbitrary state.
+ *
+ * Returns:
+ *   Returns a new sample closure.
+ */
 z_owned_closure_owned_sample_t z_closure_owned_sample(_z_owned_sample_handler_t call, _z_dropper_handler_t drop,
                                                       void *context);
 

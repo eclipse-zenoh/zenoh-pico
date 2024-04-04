@@ -94,6 +94,7 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(channel));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan(s));
