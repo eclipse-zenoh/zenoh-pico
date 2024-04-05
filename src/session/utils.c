@@ -134,8 +134,8 @@ int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-void _zp_session_lock_mutex(_z_session_t *zn) { (void)zp_mutex_lock(&zn->_mutex_inner); }
-void _zp_session_unlock_mutex(_z_session_t *zn) { (void)zp_mutex_unlock(&zn->_mutex_inner); }
+void _zp_session_lock_mutex(_z_session_t *zn) { (void)z_mutex_lock(&zn->_mutex_inner); }
+void _zp_session_unlock_mutex(_z_session_t *zn) { (void)z_mutex_unlock(&zn->_mutex_inner); }
 #else
 void _zp_session_lock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
 void _zp_session_unlock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }

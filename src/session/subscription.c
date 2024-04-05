@@ -121,7 +121,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 
     _zp_session_lock_mutex(zn);
 
-    ret = (_z_subscription_rc_t *)zp_malloc(sizeof(_z_subscription_rc_t));
+    ret = (_z_subscription_rc_t *)z_malloc(sizeof(_z_subscription_rc_t));
     if (ret != NULL) {
         *ret = _z_subscription_rc_new_from_val(*s);
         if (is_local == _Z_RESOURCE_IS_LOCAL) {

@@ -594,8 +594,8 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     QueueHandle_t uart_queue;
     uart_driver_install(sock->_serial, uart_buffer_size, 0, 100, &uart_queue, 0);
     uart_flush_input(sock->_serial);
-    sock->after_cobs = (uint8_t *)zp_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->before_cobs = (uint8_t *)zp_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    sock->after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    sock->before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     return ret;
 }
 
@@ -628,8 +628,8 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
     uart_wait_tx_done(sock->_serial, 1000);
     uart_flush(sock->_serial);
     uart_driver_delete(sock->_serial);
-    zp_free(sock->after_cobs);
-    zp_free(sock->before_cobs);
+    z_free(sock->after_cobs);
+    z_free(sock->before_cobs);
 }
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {

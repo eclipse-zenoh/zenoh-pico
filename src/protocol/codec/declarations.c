@@ -387,7 +387,7 @@ int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t
             if (_z_zbuf_len(zbf) < len) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
-            decl->_keyexpr._suffix = zp_malloc(len + 1);
+            decl->_keyexpr._suffix = z_malloc(len + 1);
             if (decl->_keyexpr._suffix == NULL) {
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }

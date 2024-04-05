@@ -75,7 +75,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
 int8_t _z_write_filter_create(_z_publisher_t *pub) {
     uint8_t flags = _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_SUBSCRIBERS | _Z_INTEREST_FLAG_RESTRICTED |
                     _Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE | _Z_INTEREST_FLAG_AGGREGATE;
-    _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)zp_malloc(sizeof(_z_writer_filter_ctx_t));
+    _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
 
     if (ctx == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -87,7 +87,7 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
     pub->_filter._interest_id = _z_declare_interest(&pub->_zn.in->val, _z_keyexpr_alias(pub->_key),
                                                     _z_write_filter_callback, flags, (void *)ctx);
     if (pub->_filter._interest_id == 0) {
-        zp_free(ctx);
+        z_free(ctx);
         return _Z_ERR_GENERIC;
     }
     return _Z_RES_OK;
@@ -95,7 +95,7 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
 
 int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
     _Z_RETURN_IF_ERR(_z_undeclare_interest(&pub->_zn.in->val, pub->_filter._interest_id));
-    zp_free(pub->_filter.ctx);
+    z_free(pub->_filter.ctx);
     return _Z_RES_OK;
 }
 

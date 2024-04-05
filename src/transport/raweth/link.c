@@ -113,7 +113,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     if (cfg_str == NULL) {
         return 0;
     }
-    char *s_mapping = zp_malloc(strlen(cfg_str));
+    char *s_mapping = z_malloc(strlen(cfg_str));
     if (s_mapping == NULL) {
         return 0;
     }
@@ -125,14 +125,14 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     while (entry != NULL) {
         // Check entry
         if (!_z_valid_mapping_entry(entry)) {
-            zp_free(s_mapping);
+            z_free(s_mapping);
             return 0;
         }
         size++;
         entry = strtok(NULL, delim);
     }
     // Clean up
-    zp_free(s_mapping);
+    z_free(s_mapping);
     return size;
 }
 
@@ -143,7 +143,7 @@ static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_
         return _Z_ERR_GENERIC;
     }
     // Copy data
-    char *s_mapping = zp_malloc(strlen(cfg_str));
+    char *s_mapping = z_malloc(strlen(cfg_str));
     if (s_mapping == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -160,13 +160,13 @@ static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_
     while ((entry != NULL) && (idx < _zp_raweth_mapping_array_len(array))) {
         // Copy data into array
         _Z_CLEAN_RETURN_IF_ERR(_z_get_mapping_entry(entry, _zp_raweth_mapping_array_get(array, idx)),
-                               zp_free(s_mapping));
+                               z_free(s_mapping));
         // Next iteration
         idx++;
         entry = strtok(NULL, delim);
     }
     // Clean up
-    zp_free(s_mapping);
+    z_free(s_mapping);
     return _Z_RES_OK;
 }
 
@@ -177,7 +177,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
         return 0;
     }
     // Copy data
-    char *s_whitelist = zp_malloc(strlen(cfg_str));
+    char *s_whitelist = z_malloc(strlen(cfg_str));
     if (s_whitelist == NULL) {
         return 0;
     }
@@ -189,7 +189,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
     while (entry != NULL) {
         // Check entry
         if (!_z_valid_address_raweth(entry)) {
-            zp_free(s_whitelist);
+            z_free(s_whitelist);
             return 0;
         }
         size++;
@@ -198,7 +198,7 @@ static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
     // Parse last entry
 
     // Clean up
-    zp_free(s_whitelist);
+    z_free(s_whitelist);
     return size;
 }
 
@@ -209,7 +209,7 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
         return _Z_ERR_GENERIC;
     }
     // Copy data
-    char *s_whitelist = zp_malloc(strlen(cfg_str));
+    char *s_whitelist = z_malloc(strlen(cfg_str));
     if (s_whitelist == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -232,13 +232,13 @@ static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitel
         // Copy address to entry
         _zp_raweth_whitelist_entry_t *elem = _zp_raweth_whitelist_array_get(array, idx);
         memcpy(elem->_mac, addr, _ZP_MAC_ADDR_LENGTH);
-        zp_free(addr);
+        z_free(addr);
         // Next iteration
         idx++;
         entry = strtok(NULL, delim);
     }
     // Clean up
-    zp_free(s_whitelist);
+    z_free(s_whitelist);
     return _Z_RES_OK;
 }
 
@@ -250,7 +250,7 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     char *p_start = &entry[0];
     char *p_end = strchr(p_start, RAWETH_CFG_TUPLE_SEPARATOR);
     size_t ke_len = (uintptr_t)p_end - (uintptr_t)p_start;
-    char *ke_suffix = (char *)zp_malloc(ke_len);
+    char *ke_suffix = (char *)z_malloc(ke_len);
     if (ke_suffix == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -264,7 +264,7 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     *p_end = '\0';
     uint8_t *addr = _z_parse_address_raweth(p_start);
     memcpy(storage->_dmac, addr, _ZP_MAC_ADDR_LENGTH);
-    zp_free(addr);
+    z_free(addr);
     *p_end = RAWETH_CFG_TUPLE_SEPARATOR;
 
     // Check optional third entry (vlan id)
