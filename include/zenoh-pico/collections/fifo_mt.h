@@ -39,5 +39,6 @@ void _z_fifo_mt_free(_z_fifo_mt_t *fifo, z_element_free_f free_f);
 int8_t _z_fifo_mt_push(const void *src, void *context, z_element_free_f element_free);
 
 int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move);
+int8_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_move);
 
 #endif  // ZENOH_PICO_COLLECTIONS_FIFO_MT_H

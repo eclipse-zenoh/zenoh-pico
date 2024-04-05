@@ -90,7 +90,7 @@ int8_t _z_ring_mt_pull(void *dst, void *context, z_element_move_f element_move) 
     _Z_RETURN_IF_ERR(zp_mutex_unlock(&r->_mutex))
 #endif
 
-    if (src) {
+    if (src != NULL) {
         element_move(dst, src);
     }
     return _Z_RES_OK;
