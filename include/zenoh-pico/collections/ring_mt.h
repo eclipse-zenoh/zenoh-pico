@@ -29,7 +29,7 @@ typedef struct {
 } _z_ring_mt_t;
 
 int8_t _z_ring_mt_init(_z_ring_mt_t *ring, size_t capacity);
-_z_ring_mt_t *_z_ring_mt(size_t capacity);
+_z_ring_mt_t *_z_ring_mt_new(size_t capacity);
 
 void _z_ring_mt_clear(_z_ring_mt_t *ring, z_element_free_f free_f);
 void _z_ring_mt_free(_z_ring_mt_t *ring, z_element_free_f free_f);

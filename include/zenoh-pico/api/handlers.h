@@ -49,19 +49,19 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
         if (internal_elem == NULL) {                                                                              \
             return;                                                                                               \
         }                                                                                                         \
-        int8_t res = collection_push_f(internal_elem, context, _z_##name##_elem_free);                            \
-        if (res) {                                                                                                \
-            _Z_ERROR("%s failed: %i", #collection_push_f, res);                                                   \
+        int8_t ret = collection_push_f(internal_elem, context, _z_##name##_elem_free);                            \
+        if (ret != _Z_RES_OK) {                                                                                   \
+            _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                   \
         }                                                                                                         \
     }                                                                                                             \
     static inline void _z_##name##_recv(recv_type *elem, void *context) {                                         \
-        int8_t res = collection_pull_f(elem, context, _z_##name##_elem_move);                                     \
-        if (res) {                                                                                                \
-            _Z_ERROR("%s failed: %i", #collection_pull_f, res);                                                   \
+        int8_t ret = collection_pull_f(elem, context, _z_##name##_elem_move);                                     \
+        if (ret != _Z_RES_OK) {                                                                                   \
+            _Z_ERROR("%s failed: %i", #collection_pull_f, ret);                                                   \
         }                                                                                                         \
     }                                                                                                             \
                                                                                                                   \
-    static inline z_owned_##name##_t z_##name(size_t capacity) {                                                  \
+    static inline z_owned_##name##_t z_##name##_new(size_t capacity) {                                            \
         z_owned_##name##_t channel;                                                                               \
         channel.collection = collection_new_f(capacity);                                                          \
         channel.send = z_##send_closure_name(_z_##name##_send, NULL, channel.collection);                         \
@@ -77,12 +77,12 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
 
 // z_owned_sample_ring_channel_t
 _Z_CHANNEL_DEFINE(sample_ring_channel, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t, _z_ring_mt_t,
-                  _z_ring_mt, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_owned_sample_move,
+                  _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_owned_sample_move,
                   _z_sample_to_owned_ptr, z_sample_drop)
 
 // z_owned_sample_fifo_channel_t
 _Z_CHANNEL_DEFINE(sample_fifo_channel, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t, _z_fifo_mt_t,
-                  _z_fifo_mt, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_owned_sample_move,
+                  _z_fifo_mt_new, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_owned_sample_move,
                   _z_sample_to_owned_ptr, z_sample_drop)
 
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H

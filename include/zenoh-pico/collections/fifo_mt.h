@@ -31,7 +31,7 @@ typedef struct {
 } _z_fifo_mt_t;
 
 int8_t _z_fifo_mti_init(size_t capacity);
-_z_fifo_mt_t *_z_fifo_mt(size_t capacity);
+_z_fifo_mt_t *_z_fifo_mt_new(size_t capacity);
 
 void _z_fifo_mt_clear(_z_fifo_mt_t *fifo, z_element_free_f free_f);
 void _z_fifo_mt_free(_z_fifo_mt_t *fifo, z_element_free_f free_f);

@@ -14,44 +14,33 @@
 
 #include "zenoh-pico/collections/fifo_mt.h"
 
+#include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*-------- Fifo Buffer Multithreaded --------*/
 int8_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity) {
-    int8_t res = _z_fifo_init(&fifo->_fifo, capacity);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(_z_fifo_init(&fifo->_fifo, capacity))
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    res = zp_mutex_init(&fifo->_mutex);
-    if (res) {
-        return res;
-    }
-    res = zp_condvar_init(&fifo->_cv_not_full);
-    if (res) {
-        return res;
-    }
-    res = zp_condvar_init(&fifo->_cv_not_empty);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(zp_mutex_init(&fifo->_mutex))
+    _Z_RETURN_IF_ERR(zp_condvar_init(&fifo->_cv_not_full))
+    _Z_RETURN_IF_ERR(zp_condvar_init(&fifo->_cv_not_empty))
 #endif
 
     return _Z_RES_OK;
 }
 
-_z_fifo_mt_t *_z_fifo_mt(size_t capacity) {
+_z_fifo_mt_t *_z_fifo_mt_new(size_t capacity) {
     _z_fifo_mt_t *fifo = (_z_fifo_mt_t *)zp_malloc(sizeof(_z_fifo_mt_t));
     if (fifo == NULL) {
         _Z_ERROR("zp_malloc failed");
         return NULL;
     }
 
-    int8_t res = _z_fifo_mt_init(fifo, capacity);
-    if (res) {
-        _Z_ERROR("_z_fifo_mt_init failed: %i", res);
+    int8_t ret = _z_fifo_mt_init(fifo, capacity);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR("_z_fifo_mt_init failed: %i", ret);
         zp_free(fifo);
         return NULL;
     }
@@ -82,28 +71,16 @@ int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element
     _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    int res = zp_mutex_lock(&f->_mutex);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(zp_mutex_lock(&f->_mutex))
     while (elem != NULL) {
         elem = _z_fifo_push(&f->_fifo, (void *)elem);
         if (elem != NULL) {
-            res = zp_condvar_wait(&f->_cv_not_full, &f->_mutex);
-            if (res) {
-                return res;
-            }
+            _Z_RETURN_IF_ERR(zp_condvar_wait(&f->_cv_not_full, &f->_mutex))
         } else {
-            res = zp_condvar_signal(&f->_cv_not_empty);
-            if (res) {
-                return res;
-            }
+            _Z_RETURN_IF_ERR(zp_condvar_signal(&f->_cv_not_empty))
         }
     }
-    res = zp_mutex_unlock(&f->_mutex);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(zp_mutex_unlock(&f->_mutex))
 #else   // Z_FEATURE_MULTI_THREAD == 1
     _z_fifo_push_drop(&f->_fifo, elem, element_free);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -116,28 +93,16 @@ int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) 
 
 #if Z_FEATURE_MULTI_THREAD == 1
     void *src = NULL;
-    int res = zp_mutex_lock(&f->_mutex);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(zp_mutex_lock(&f->_mutex))
     while (src == NULL) {
         src = _z_fifo_pull(&f->_fifo);
         if (src == NULL) {
-            res = zp_condvar_wait(&f->_cv_not_empty, &f->_mutex);
-            if (res) {
-                return res;
-            }
+            _Z_RETURN_IF_ERR(zp_condvar_wait(&f->_cv_not_empty, &f->_mutex))
         } else {
-            res = zp_condvar_signal(&f->_cv_not_full);
-            if (res) {
-                return res;
-            }
+            _Z_RETURN_IF_ERR(zp_condvar_signal(&f->_cv_not_full))
         }
     }
-    res = zp_mutex_unlock(&f->_mutex);
-    if (res) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(zp_mutex_unlock(&f->_mutex))
     element_move(dst, src);
 #else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);

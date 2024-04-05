@@ -312,37 +312,37 @@ _Bool z_value_is_initialized(z_value_t *value) {
 }
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
 }
 
 void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
 }
 
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
 }
 
 void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(hello, closure->context);
     }
 }
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(id, closure->context);
     }
 }

@@ -24,9 +24,14 @@ void _z_owned_sample_move(z_owned_sample_t *dst, const z_owned_sample_t *src) {
 
 z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
     z_owned_sample_t *dst = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
-    if (dst && src) {
+    if (dst == NULL) {
+        return NULL;
+    }
+    if (src != NULL) {
         dst->_value = (_z_sample_t *)zp_malloc(sizeof(_z_sample_t));
         _z_sample_copy(dst->_value, src);
+    } else {
+        dst->_value = NULL;
     }
     return dst;
 }

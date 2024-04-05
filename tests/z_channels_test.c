@@ -44,68 +44,68 @@
     } while (0);
 
 void sample_fifo_channel_test(void) {
-    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel(10);
+    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel_new(10);
 
-    SEND(channel, "v1");
-    SEND(channel, "v22");
-    SEND(channel, "v333");
-    SEND(channel, "v4444");
+    SEND(channel, "v1")
+    SEND(channel, "v22")
+    SEND(channel, "v333")
+    SEND(channel, "v4444")
 
     char buf[100];
 
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v1") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v4444") == 0);
 
     z_drop(z_move(channel));
 }
 
 void sample_ring_channel_test_in_size(void) {
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel(10);
+    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(10);
 
-    SEND(channel, "v1");
-    SEND(channel, "v22");
-    SEND(channel, "v333");
-    SEND(channel, "v4444");
+    SEND(channel, "v1")
+    SEND(channel, "v22")
+    SEND(channel, "v333")
+    SEND(channel, "v4444")
 
     char buf[100];
 
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v1") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v4444") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     z_drop(z_move(channel));
 }
 
 void sample_ring_channel_test_over_size(void) {
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel(3);
+    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(3);
 
-    SEND(channel, "v1");
-    SEND(channel, "v22");
-    SEND(channel, "v333");
-    SEND(channel, "v4444");
+    SEND(channel, "v1")
+    SEND(channel, "v22")
+    SEND(channel, "v333")
+    SEND(channel, "v4444")
 
     char buf[100];
 
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "v4444") == 0);
-    RECV(channel, buf);
+    RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     z_drop(z_move(channel));
