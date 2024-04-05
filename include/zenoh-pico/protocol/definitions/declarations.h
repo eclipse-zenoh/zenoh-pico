@@ -48,8 +48,8 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     struct {
-        uint8_t _complete;
-        uint32_t _distance;
+        _Bool _complete;
+        uint16_t _distance;
     } _ext_queryable_info;
 } _z_decl_queryable_t;
 _z_decl_queryable_t _z_decl_queryable_null(void);
@@ -95,6 +95,8 @@ typedef struct {
 } _z_undecl_interest_t;
 _z_undecl_interest_t _z_undecl_interest_null(void);
 
+#define _Z_FLAG_INTEREST_ID (1 << 5)
+
 typedef struct {
     enum {
         _Z_DECL_KEXPR,
@@ -132,7 +134,7 @@ _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 _z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable);
 _z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
-_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete);
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint16_t distance, _Bool complete);
 _z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
 _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);

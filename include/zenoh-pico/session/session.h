@@ -190,12 +190,12 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
 typedef enum {
     _Z_INTEREST_MSG_TYPE_FINAL = 0,
-    _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER,
-    _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE,
-    _Z_INTEREST_MSG_TYPE_DECL_TOKEN,
-    _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER,
-    _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE,
-    _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN,
+    _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER = 1,
+    _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE = 2,
+    _Z_INTEREST_MSG_TYPE_DECL_TOKEN = 3,
+    _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER = 4,
+    _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE = 5,
+    _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN = 6,
 } _z_interest_msg_type_t;
 
 typedef struct _z_interest_msg_t {
@@ -224,5 +224,21 @@ _Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_sess
 _Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
                _z_noop_copy)
 _Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
+
+typedef enum {
+    _Z_DECLARE_TYPE_SUBSCRIBER = 0,
+    _Z_DECLARE_TYPE_QUERYABLE = 1,
+    _Z_DECLARE_TYPE_TOKEN = 2,
+} _z_declare_type_t;
+
+typedef struct {
+    _z_keyexpr_t _key;
+    uint32_t _id;
+    uint8_t _type;
+} _z_declare_data_t;
+
+void _z_declare_data_clear(_z_declare_data_t *data);
+_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

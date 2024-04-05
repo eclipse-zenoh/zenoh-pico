@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -115,6 +116,7 @@ void _z_session_clear(_z_session_t *zn) {
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
 #endif
+    _z_flush_interest(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
     zp_mutex_free(&zn->_mutex_inner);
