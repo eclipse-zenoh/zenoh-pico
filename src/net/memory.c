@@ -53,8 +53,11 @@ void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
     dst->payload = _z_bytes_duplicate(&src->payload);
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
-    // TODO(sashacmc): should be implemented after encoding rework
-    // _z_encoding_copy(dst->encoding, src->encoding);
+
+    // TODO(sashacmc): should be changed after encoding rework
+    dst->encoding.prefix = src->encoding.prefix;
+    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
+
     dst->kind = src->kind;
 #if Z_FEATURE_ATTACHMENT == 1
     dst->attachment = src->attachment;
