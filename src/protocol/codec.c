@@ -21,18 +21,6 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ uint8 -------------------*/
-int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en) { return _z_zsize_encode(wbf, en); }
-
-int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
-
-    _z_zint_t tmp;
-    ret |= _z_zsize_decode(&tmp, zbf);
-    *en = tmp;
-
-    return ret;
-}
-
 int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en) { return _z_zsize_encode(wbf, en); }
 
 int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf) {
@@ -297,4 +285,34 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
     }
 
     return ret;
+}
+
+/*------------------ encoding ------------------*/
+#define _Z_ENCODING_FLAG_S 0x01
+
+int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
+    _Bool has_suffix = _z_bytes_check(en->suffix);
+    uint32_t id = (uint32_t)(en->prefix) << 1;
+    if (has_suffix) {
+        id |= _Z_ENCODING_FLAG_S;
+    }
+    _Z_RETURN_IF_ERR(_z_zint32_encode(wbf, id));
+    if (has_suffix) {
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &en->suffix));
+    }
+    return _Z_RES_OK;
+}
+
+int8_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
+    uint32_t id = 0;
+    _Bool has_suffix = false;
+    _Z_RETURN_IF_ERR(_z_zint32_decode(&id, zbf));
+    if ((id & _Z_ENCODING_FLAG_S) != 0) {
+        has_suffix = true;
+    }
+    en->prefix = (z_encoding_prefix_t)(id >> 1);
+    if (has_suffix) {
+        _Z_RETURN_IF_ERR(_z_bytes_decode(&en->suffix, zbf));
+    }
+    return _Z_RES_OK;
 }
