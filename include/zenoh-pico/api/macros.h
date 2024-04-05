@@ -65,10 +65,13 @@
                   z_owned_str_array_t * : z_str_array_drop,                         \
                   z_owned_sample_t * : z_sample_drop,                               \
                   z_owned_closure_sample_t * : z_closure_sample_drop,               \
+                  z_owned_closure_owned_sample_t * : z_closure_owned_sample_drop,   \
                   z_owned_closure_query_t * : z_closure_query_drop,                 \
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
                   z_owned_closure_hello_t * : z_closure_hello_drop,                 \
-                  z_owned_closure_zid_t * : z_closure_zid_drop                      \
+                  z_owned_closure_zid_t * : z_closure_zid_drop,                     \
+                  z_owned_sample_ring_channel_t * : z_sample_ring_channel_drop,     \
+                  z_owned_sample_fifo_channel_t * : z_sample_fifo_channel_drop      \
             )(x)
 
 /**
@@ -124,23 +127,26 @@
  *   Returns the instance associated with `x`.
  */
 #define z_move(x) _Generic((x), \
-                  z_owned_keyexpr_t : z_keyexpr_move,                 \
-                  z_owned_config_t : z_config_move,                   \
-                  z_owned_scouting_config_t : z_scouting_config_move, \
-                  z_owned_session_t : z_session_move,                 \
-                  z_owned_subscriber_t : z_subscriber_move,           \
-                  z_owned_publisher_t : z_publisher_move,             \
-                  z_owned_queryable_t : z_queryable_move,             \
-                  z_owned_reply_t : z_reply_move,                     \
-                  z_owned_hello_t : z_hello_move,                     \
-                  z_owned_str_t : z_str_move,                         \
-                  z_owned_str_array_t : z_str_array_move,             \
-                  z_owned_closure_sample_t : z_closure_sample_move,   \
-                  z_owned_closure_query_t : z_closure_query_move,     \
-                  z_owned_closure_reply_t : z_closure_reply_move,     \
-                  z_owned_closure_hello_t : z_closure_hello_move,     \
-                  z_owned_closure_zid_t  : z_closure_zid_move,        \
-                  z_owned_sample_t : z_sample_move                    \
+                  z_owned_keyexpr_t : z_keyexpr_move,                             \
+                  z_owned_config_t : z_config_move,                               \
+                  z_owned_scouting_config_t : z_scouting_config_move,             \
+                  z_owned_session_t : z_session_move,                             \
+                  z_owned_subscriber_t : z_subscriber_move,                       \
+                  z_owned_publisher_t : z_publisher_move,                         \
+                  z_owned_queryable_t : z_queryable_move,                         \
+                  z_owned_reply_t : z_reply_move,                                 \
+                  z_owned_hello_t : z_hello_move,                                 \
+                  z_owned_str_t : z_str_move,                                     \
+                  z_owned_str_array_t : z_str_array_move,                         \
+                  z_owned_closure_sample_t : z_closure_sample_move,               \
+                  z_owned_closure_owned_sample_t : z_closure_owned_sample_move,   \
+                  z_owned_closure_query_t : z_closure_query_move,                 \
+                  z_owned_closure_reply_t : z_closure_reply_move,                 \
+                  z_owned_closure_hello_t : z_closure_hello_move,                 \
+                  z_owned_closure_zid_t  : z_closure_zid_move,                    \
+                  z_owned_sample_t : z_sample_move,                               \
+                  z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
+                  z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move      \
             )(&x)
 
 /**
@@ -183,6 +189,7 @@
                   z_owned_hello_t * : z_hello_null,                                 \
                   z_owned_str_t * : z_str_null,                                     \
                   z_owned_closure_sample_t * : z_closure_sample_null,               \
+                  z_owned_closure_owned_sample_t * : z_closure_owned_sample_null,   \
                   z_owned_closure_query_t * : z_closure_query_null,                 \
                   z_owned_closure_reply_t * : z_closure_reply_null,                 \
                   z_owned_closure_hello_t * : z_closure_hello_null,                 \
@@ -242,10 +249,13 @@ template<> struct zenoh_drop_type<z_owned_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_hello_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_str_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_sample_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_clusure_owned_sample_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_query_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_hello_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_zid_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_sample_ring_channel_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_sample_fifo_channel_t> { typedef void type; };
 
 template<> inline int8_t z_drop(z_owned_session_t* v) { return z_close(v); }
 template<> inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_publisher(v); }
@@ -258,10 +268,13 @@ template<> inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
 template<> inline void z_drop(z_owned_hello_t* v) { z_hello_drop(v); }
 template<> inline void z_drop(z_owned_str_t* v) { z_str_drop(v); }
 template<> inline void z_drop(z_owned_closure_sample_t* v) { z_closure_sample_drop(v); }
+template<> inline void z_drop(z_owned_closure_owned_sample_t* v) { z_closure_owned_sample_drop(v); }
 template<> inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }
 template<> inline void z_drop(z_owned_closure_reply_t* v) { z_closure_reply_drop(v); }
 template<> inline void z_drop(z_owned_closure_hello_t* v) { z_closure_hello_drop(v); }
 template<> inline void z_drop(z_owned_closure_zid_t* v) { z_closure_zid_drop(v); }
+template<> inline void z_drop(z_owned_sample_ring_channel_t* v) { z_owned_sample_ring_channel_drop(v); }
+template<> inline void z_drop(z_owned_sample_fifo_channel_t* v) { z_owned_sample_fifo_channel_drop(v); }
 
 inline void z_null(z_owned_session_t& v) { v = z_session_null(); }
 inline void z_null(z_owned_publisher_t& v) { v = z_publisher_null(); }
@@ -274,6 +287,7 @@ inline void z_null(z_owned_reply_t& v) { v = z_reply_null(); }
 inline void z_null(z_owned_hello_t& v) { v = z_hello_null(); }
 inline void z_null(z_owned_str_t& v) { v = z_str_null(); }
 inline void z_null(z_owned_closure_sample_t& v) { v = z_closure_sample_null(); }
+inline void z_null(z_owned_clusure_owned_sample_t& v) { v = z_closure_owned_sample_null(); }
 inline void z_null(z_owned_closure_query_t& v) { v = z_closure_query_null(); }
 inline void z_null(z_owned_closure_reply_t& v) { v = z_closure_reply_null(); }
 inline void z_null(z_owned_closure_hello_t& v) { v = z_closure_hello_null(); }
@@ -291,9 +305,12 @@ inline bool z_check(const z_owned_queryable_t& v) { return z_queryable_check(&v)
 inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }
 inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
 inline bool z_check(const z_owned_str_t& v) { return z_str_check(&v); }
+inline bool z_check(const z_owned_str_t& v) { return z_sample_check(&v); }
 
 inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }
+inline void z_call(const z_owned_closure_owned_sample_t &closure, const z_sample_t *sample) 
+    { z_closure_owned_sample_call(&closure, sample); }
 inline void z_call(const z_owned_closure_query_t &closure, const z_query_t *query)
     { z_closure_query_call(&closure, query); }
 inline void z_call(const z_owned_closure_reply_t &closure, z_owned_reply_t *sample)

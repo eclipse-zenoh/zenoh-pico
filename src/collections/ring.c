@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
+
 #include "zenoh-pico/collections/ring.h"
 
 #include <assert.h>

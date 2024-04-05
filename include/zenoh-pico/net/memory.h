@@ -26,5 +26,7 @@
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 void _z_sample_clear(_z_sample_t *sample);
 void _z_sample_free(_z_sample_t **sample);
+void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
+_z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
 #endif /* ZENOH_PICO_MEMORY_NETAPI_H */
