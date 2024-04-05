@@ -20,12 +20,16 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
+
+static int msg_nb = 0;
+
 void data_handler(const z_sample_t *sample, void *arg) {
     (void)(arg);
     z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample->payload.len,
            sample->payload.start);
     z_str_drop(z_str_move(&keystr));
+    msg_nb++;
 }
 
 int main(int argc, char **argv) {
@@ -33,9 +37,10 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 2147483647;  // max int value by default
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -49,8 +54,11 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -86,16 +94,14 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    while (1) {
+    printf("Press CTRL-C to quit...\n");
+    while (msg_nb < n) {
         zp_read(z_session_loan(&s), NULL);
         zp_send_keep_alive(z_session_loan(&s), NULL);
         zp_send_join(z_session_loan(&s), NULL);
     }
-
     z_undeclare_subscriber(z_subscriber_move(&sub));
-
     z_close(z_session_move(&s));
-
     return 0;
 }
 #else

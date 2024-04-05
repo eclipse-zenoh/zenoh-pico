@@ -22,7 +22,7 @@
 _z_vec_t _z_vec_make(size_t capacity) {
     _z_vec_t v = {._capacity = capacity, ._len = 0, ._val = NULL};
     if (capacity != 0) {
-        v._val = (void **)zp_malloc(sizeof(void *) * capacity);
+        v._val = (void **)z_malloc(sizeof(void *) * capacity);
     }
     if (v._val != NULL) {
         v._capacity = capacity;
@@ -33,7 +33,7 @@ _z_vec_t _z_vec_make(size_t capacity) {
 void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f) {
     dst->_capacity = src->_capacity;
     dst->_len = src->_len;
-    dst->_val = (void **)zp_malloc(sizeof(void *) * src->_capacity);
+    dst->_val = (void **)z_malloc(sizeof(void *) * src->_capacity);
     if (dst->_val != NULL) {
         for (size_t i = 0; i < src->_len; i++) {
             _z_vec_append(dst, d_f(src->_val[i]));
@@ -54,7 +54,7 @@ void _z_vec_clear(_z_vec_t *v, z_element_free_f free_f) {
         free_f(&v->_val[i]);
     }
 
-    zp_free(v->_val);
+    z_free(v->_val);
     v->_val = NULL;
 
     v->_capacity = 0;
@@ -67,7 +67,7 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f free_f) {
     if (ptr != NULL) {
         _z_vec_clear(ptr, free_f);
 
-        zp_free(ptr);
+        z_free(ptr);
         *v = NULL;
     }
 }
@@ -80,12 +80,12 @@ void _z_vec_append(_z_vec_t *v, void *e) {
     if (v->_len == v->_capacity) {
         // Allocate a new vector
         size_t _capacity = (v->_capacity << 1) | 0x01;
-        void **_val = (void **)zp_malloc(_capacity * sizeof(void *));
+        void **_val = (void **)z_malloc(_capacity * sizeof(void *));
         if (_val != NULL) {
             (void)memcpy(_val, v->_val, v->_capacity * sizeof(void *));
 
             // Free the old vector
-            zp_free(v->_val);
+            z_free(v->_val);
 
             // Update the current vector
             v->_val = _val;

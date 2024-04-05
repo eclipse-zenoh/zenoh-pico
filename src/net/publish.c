@@ -25,7 +25,7 @@ void _z_publisher_free(_z_publisher_t **pub) {
     if (ptr != NULL) {
         _z_publisher_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *pub = NULL;
     }
 }

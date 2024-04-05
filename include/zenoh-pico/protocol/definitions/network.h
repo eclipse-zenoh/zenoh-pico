@@ -37,6 +37,12 @@
 /*=============================*/
 #define _Z_FLAG_N_Z 0x80  // 1 << 7
 
+// DECLARE message flags:
+// - I: Interest       If I==1 then the declare is in a response to an Interest with future==false
+// - X: Reserved
+// - Z: Extension      If Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_DECLARE_I 0x20  // 1 << 5
+
 // PUSH message flags:
 //      N Named            if N==1 then the key expr has name/suffix
 //      M Mapping          if M==1 then keyexpr mapping is the one declared by the sender, otherwise by the receiver
@@ -58,12 +64,25 @@
 #define _Z_FLAG_N_RESPONSE_N 0x20  // 1 << 5
 #define _Z_FLAG_N_RESPONSE_M 0x40  // 1 << 6
 
-typedef struct {
-    uint8_t _val;
-} _z_n_qos_t;
+typedef _z_qos_t _z_n_qos_t;
 
-#define _z_n_qos_make(express, nodrop, priority) \
-    (_z_n_qos_t) { ._val = (((express) << 4) | ((nodrop) << 3) | (priority)) }
+static inline _z_qos_t _z_n_qos_create(_Bool express, z_congestion_control_t congestion_control,
+                                       z_priority_t priority) {
+    _z_n_qos_t ret;
+    _Bool nodrop = congestion_control == Z_CONGESTION_CONTROL_DROP ? 0 : 1;
+    ret._val = (uint8_t)((express << 4) | (nodrop << 3) | priority);
+    return ret;
+}
+static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
+    return (z_priority_t)(n_qos._val & 0x07 /* 0b111 */);
+}
+static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t n_qos) {
+    return (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
+}
+static inline _Bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (_Bool)(n_qos._val & 0x10 /* 0b10000 */); }
+#define _z_n_qos_make(express, nodrop, priority)                                                     \
+    _z_n_qos_create((_Bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
+                    (z_priority_t)priority)
 #define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
 
 // RESPONSE FINAL message flags:
@@ -220,7 +239,8 @@ _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
-                                       z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value
+                                       z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
+                                       uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                                        ,
                                        z_attachment_t attachment

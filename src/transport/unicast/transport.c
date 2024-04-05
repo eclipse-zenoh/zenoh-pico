@@ -38,11 +38,11 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = zp_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = z_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = zp_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = z_mutex_init(&zt->_transport._unicast._mutex_rx);
         if (ret != _Z_RES_OK) {
-            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
+            z_mutex_free(&zt->_transport._unicast._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -86,8 +86,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
-            zp_mutex_free(&zt->_transport._unicast._mutex_rx);
+            z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            z_mutex_free(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -115,14 +115,17 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            zp_mutex_free(&zt->_transport._unicast._mutex_tx);
-            zp_mutex_free(&zt->_transport._unicast._mutex_rx);
+            z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            z_mutex_free(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
             _z_zbuf_clear(&zt->_transport._unicast._zbuf);
         }
-#endif
+#else
+        _ZP_UNUSED(dbuf_size);
+        _ZP_UNUSED(expandable);
+#endif  // Z_FEATURE_FRAGMENTATION == 1
     }
 
     if (ret == _Z_RES_OK) {
@@ -212,7 +215,7 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     param->_req_id_res = 0x08 << param->_req_id_res;
 
                     // The initial SN at TX side
-                    zp_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+                    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
                     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
                     // Initialize the Local and Remote Peer IDs
@@ -287,17 +290,17 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL) {
-        zp_task_join(ztu->_read_task);
-        zp_task_free(&ztu->_read_task);
+        z_task_join(ztu->_read_task);
+        z_task_free(&ztu->_read_task);
     }
     if (ztu->_lease_task != NULL) {
-        zp_task_join(ztu->_lease_task);
-        zp_task_free(&ztu->_lease_task);
+        z_task_join(ztu->_lease_task);
+        z_task_free(&ztu->_lease_task);
     }
 
     // Clean up the mutexes
-    zp_mutex_free(&ztu->_mutex_tx);
-    zp_mutex_free(&ztu->_mutex_rx);
+    z_mutex_free(&ztu->_mutex_tx);
+    z_mutex_free(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

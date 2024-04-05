@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
@@ -30,6 +31,27 @@
 
 // Max frame size
 #define _ZP_MAX_ETH_FRAME_SIZE 1514
+
+// Endpoing config types
+typedef struct {
+    _z_keyexpr_t _keyexpr;
+    uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
+    uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
+    _Bool _has_vlan;
+} _zp_raweth_mapping_entry_t;
+
+void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry);
+
+_Z_ELEM_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t, _z_noop_size, _z_raweth_clear_mapping_entry,
+               _z_noop_copy)
+_Z_ARRAY_DEFINE(_zp_raweth_mapping, _zp_raweth_mapping_entry_t)
+
+typedef struct {
+    uint8_t _mac[_ZP_MAC_ADDR_LENGTH];
+} _zp_raweth_whitelist_entry_t;
+
+_Z_ELEM_DEFINE(_zp_raweth_whitelist, _zp_raweth_whitelist_entry_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+_Z_ARRAY_DEFINE(_zp_raweth_whitelist, _zp_raweth_whitelist_entry_t)
 
 // Ethernet header structure type
 typedef struct {
@@ -51,8 +73,10 @@ typedef struct {
 typedef struct {
     const char *_interface;
     _z_sys_net_socket_t _sock;
+    _zp_raweth_mapping_array_t _mapping;
+    _zp_raweth_whitelist_array_t _whitelist;
     uint16_t _vlan;
-    uint16_t ethtype;
+    uint16_t _ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     uint8_t _smac[_ZP_MAC_ADDR_LENGTH];
     _Bool _has_vlan;
@@ -60,7 +84,8 @@ typedef struct {
 
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len);
-size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr);
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr,
+                         const _zp_raweth_whitelist_array_t *whitelist);
 int8_t _z_close_raweth(_z_sys_net_socket_t *sock);
 size_t _z_raweth_ntohs(size_t val);
 size_t _z_raweth_htons(size_t val);

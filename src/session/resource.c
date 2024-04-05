@@ -42,7 +42,7 @@ void _z_resource_free(_z_resource_t **res) {
     if (ptr != NULL) {
         _z_resource_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *res = NULL;
     }
 }
@@ -126,7 +126,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
 
     if (len != (size_t)0) {
         char *rname = NULL;
-        rname = (char *)zp_malloc(len);
+        rname = (char *)z_malloc(len);
         if (rname != NULL) {
             rname[0] = '\0';  // NULL terminator must be set (required to strcat)
             len = len - (size_t)1;
@@ -231,7 +231,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
     }
     ret = key._id;
     if ((key._suffix != NULL)) {
-        _z_resource_t *res = zp_malloc(sizeof(_z_resource_t));
+        _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;
         } else {

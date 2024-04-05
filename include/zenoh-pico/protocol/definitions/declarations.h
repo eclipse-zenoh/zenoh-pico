@@ -95,8 +95,6 @@ typedef struct {
 } _z_undecl_interest_t;
 _z_undecl_interest_t _z_undecl_interest_null(void);
 
-#define _Z_FLAG_INTEREST_ID (1 << 5)
-
 typedef struct {
     enum {
         _Z_DECL_KEXPR,

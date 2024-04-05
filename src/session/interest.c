@@ -195,7 +195,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
     _z_session_interest_rc_t *ret = NULL;
 
     _zp_session_lock_mutex(zn);
-    ret = (_z_session_interest_rc_t *)zp_malloc(sizeof(_z_session_interest_rc_t));
+    ret = (_z_session_interest_rc_t *)z_malloc(sizeof(_z_session_interest_rc_t));
     if (ret != NULL) {
         *ret = _z_session_interest_rc_new_from_val(*intr);
         zn->_local_interests = _z_session_interest_rc_list_push(zn->_local_interests, ret);
@@ -206,7 +206,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
 
 static int8_t _unsafe_z_register_declare(_z_session_t *zn, const _z_keyexpr_t *key, uint32_t id, uint8_t type) {
     _z_declare_data_t *decl = NULL;
-    decl = (_z_declare_data_t *)zp_malloc(sizeof(_z_declare_data_t));
+    decl = (_z_declare_data_t *)z_malloc(sizeof(_z_declare_data_t));
     if (decl == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -361,6 +361,9 @@ int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id) {
     _zp_session_lock_mutex(zn);
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
     _zp_session_unlock_mutex(zn);
+    if (intr == NULL) {
+        return _Z_RES_OK;
+    }
     // Trigger callback
     if (intr->in->val._callback != NULL) {
         intr->in->val._callback(&msg, intr->in->val._arg);

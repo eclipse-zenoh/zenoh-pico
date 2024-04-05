@@ -51,7 +51,6 @@ void _z_reply_data_clear(_z_reply_data_t *rd);
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
-_Z_ARRAY_DEFINE(_z_reply_data, _z_reply_data_t)
 
 /**
  * An reply to a :c:func:`z_query`.
@@ -103,7 +102,8 @@ void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_subscription_rc_copy)
+_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_subscription_rc_size, _z_subscription_rc_drop,
+               _z_subscription_rc_copy)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
@@ -174,8 +174,8 @@ _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_t _mutex;
-    zp_condvar_t _cond_var;
+    z_mutex_t _mutex;
+    z_condvar_t _cond_var;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;

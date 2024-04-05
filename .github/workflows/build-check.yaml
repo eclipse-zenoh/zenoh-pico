@@ -54,7 +54,25 @@ jobs:
           sudo apt install -y ninja-build
           FORCE_C99=ON CMAKE_GENERATOR=Ninja make
 
+  zenoh_build:
+    name: Build Zenoh from source
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.main.outputs.artifact-name }}
+    steps:
+      - id: main
+        name: Build Zenoh
+        uses: eclipse-zenoh/ci/build-crates-standalone@main
+        with:
+          repo: eclipse-zenoh/zenoh
+          branch: interests
+          artifact-patterns: |
+            ^zenohd$
+            ^libzenoh_plugin_rest.so$
+            ^libzenoh_plugin_storage_manager.so$
+
   modular_build:
+    needs: zenoh_build
     name: Modular build on ubuntu-latest
     runs-on: ubuntu-latest
     strategy:
@@ -67,8 +85,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run docker image
-        run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
       - name: Build project
         run: |
@@ -82,11 +111,9 @@ jobs:
           Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
           Z_FEATURE_QUERY: ${{ matrix.feature_query }}
 
-      - name: Stop docker image
+      - name: Kill Zenoh router
         if: always()
-        run: |
-          docker stop zenoh_router
-          docker rm zenoh_router
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
   raweth_build:
     name: Build and test raweth transport on ubuntu-latest
@@ -108,14 +135,26 @@ jobs:
           Z_FEATURE_RAWETH_TRANSPORT: ${{ matrix.feature_reth }}
 
   st_build:
+    needs: zenoh_build
     name: Build and test in single thread on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run docker image
-        run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
       - name: Build project and run test
         run: |
@@ -126,21 +165,31 @@ jobs:
         env:
           Z_FEATURE_MULTI_THREAD: 0
 
-      - name: Stop docker image
+      - name: Kill Zenoh router
         if: always()
-        run: |
-          docker stop zenoh_router
-          docker rm zenoh_router
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
   fragment_test:
+    needs: zenoh_build
     name: Test multicast and unicast fragmentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run docker image
-        run: docker run --name zenoh_router --init --net host -d eclipse/zenoh:latest
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
       - name: Build project and run test
         run: |
@@ -150,8 +199,6 @@ jobs:
           python3 ./build/tests/fragment.py
         timeout-minutes: 5
 
-      - name: Stop docker image
+      - name: Kill Zenoh router
         if: always()
-        run: |
-          docker stop zenoh_router
-          docker rm zenoh_router
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}

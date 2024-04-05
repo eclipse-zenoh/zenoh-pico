@@ -31,7 +31,6 @@ Enums
 .. autocenum:: constants.h::z_reply_tag_t
 .. autocenum:: constants.h::z_congestion_control_t
 .. autocenum:: constants.h::z_priority_t
-.. autocenum:: constants.h::z_submode_t
 .. autocenum:: constants.h::z_query_target_t
 
 Data Structures
@@ -45,13 +44,11 @@ Data Structures
 .. autoctype:: types.h::z_config_t
 .. autoctype:: types.h::z_session_t
 .. autoctype:: types.h::z_subscriber_t
-.. autoctype:: types.h::z_pull_subscriber_t
 .. autoctype:: types.h::z_publisher_t
 .. autoctype:: types.h::z_queryable_t
 .. autoctype:: types.h::z_encoding_t
 .. autoctype:: types.h::z_value_t
 .. autoctype:: types.h::z_subscriber_options_t
-.. autoctype:: types.h::z_pull_subscriber_options_t
 .. autoctype:: types.h::z_query_consolidation_t
 .. autoctype:: types.h::z_publisher_options_t
 .. autoctype:: types.h::z_queryable_options_t
@@ -117,10 +114,6 @@ To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check
 .. c:type:: z_owned_subscriber_t
 
   A zenoh-allocated :c:type:`z_subscriber_t`.
-
-.. c:type:: z_owned_pull_subscriber_t
-
-  A zenoh-allocated :c:type:`z_pull_subscriber_t`.
 
 .. c:type:: z_owned_publisher_t
 
@@ -239,10 +232,6 @@ Primitives
 .. autocfunction:: primitives.h::z_subscriber_options_default
 .. autocfunction:: primitives.h::z_declare_subscriber
 .. autocfunction:: primitives.h::z_undeclare_subscriber
-.. autocfunction:: primitives.h::z_pull_subscriber_options_default
-.. autocfunction:: primitives.h::z_declare_pull_subscriber
-.. autocfunction:: primitives.h::z_undeclare_pull_subscriber
-.. autocfunction:: primitives.h::z_subscriber_pull
 .. autocfunction:: primitives.h::z_queryable_options_default
 .. autocfunction:: primitives.h::z_declare_queryable
 .. autocfunction:: primitives.h::z_undeclare_queryable

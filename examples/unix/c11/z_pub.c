@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
-    int n = 10;
+    int n = 2147483647;  // max int value by default
 
     int opt;
     while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
@@ -95,15 +95,21 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
-
+    // Wait for joins in peer mode
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for joins...\n");
+        sleep(3);
+    }
+    printf("Press CTRL-C to quit...\n");
+    char buf[256];
     for (int idx = 0; idx < n; ++idx) {
         sleep(1);
-        (void)idx;
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+        sprintf(buf, "[%4d] %s", idx, value);
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_loan(pub), (const uint8_t *)value, strlen(value), &options);
+        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 
     z_undeclare_publisher(z_move(pub));

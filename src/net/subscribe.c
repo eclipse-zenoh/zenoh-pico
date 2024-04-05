@@ -31,7 +31,7 @@ void _z_subscriber_free(_z_subscriber_t **sub) {
     if (ptr != NULL) {
         _z_subscriber_clear(ptr);
 
-        zp_free(ptr);
+        z_free(ptr);
         *sub = NULL;
     }
 }

@@ -71,19 +71,19 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
         if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
             if (opt_as_str == NULL) {
-                opt_as_str = Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+                opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
             }
             z_what_t what = strtol(opt_as_str, NULL, 10);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
             if (opt_as_str == NULL) {
-                opt_as_str = Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+                opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
             }
             char *mcast_locator = opt_as_str;
 
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
             if (opt_as_str == NULL) {
-                opt_as_str = Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+                opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
             }
             uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
@@ -150,7 +150,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
 void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
 
 _z_config_t *_z_info(const _z_session_t *zn) {
-    _z_config_t *ps = (_z_config_t *)zp_malloc(sizeof(_z_config_t));
+    _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
         _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
@@ -179,10 +179,10 @@ int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_t
 int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-int8_t _zp_start_read_task(_z_session_t *zn, zp_task_attr_t *attr) {
+int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    zp_task_t *task = (zp_task_t *)zp_malloc(sizeof(zp_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -203,15 +203,15 @@ int8_t _zp_start_read_task(_z_session_t *zn, zp_task_attr_t *attr) {
     }
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
-        zp_free(task);
+        z_free(task);
     }
     return ret;
 }
 
-int8_t _zp_start_lease_task(_z_session_t *zn, zp_task_attr_t *attr) {
+int8_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    zp_task_t *task = (zp_task_t *)zp_malloc(sizeof(zp_task_t));
+    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -232,7 +232,7 @@ int8_t _zp_start_lease_task(_z_session_t *zn, zp_task_attr_t *attr) {
     }
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
-        zp_free(task);
+        z_free(task);
     }
     return ret;
 }

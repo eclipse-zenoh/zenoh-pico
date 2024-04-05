@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     printf("Zenoh setup finished!\n");
 
     while (1) {
-        sleep(5);
+        sleep(1);
     }
 
     printf("Closing Zenoh Session...");

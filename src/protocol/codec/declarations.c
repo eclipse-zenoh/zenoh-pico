@@ -250,7 +250,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
-                ke->_suffix = zp_malloc(len + 1);
+                ke->_suffix = z_malloc(len + 1);
                 if (!ke->_suffix) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
@@ -287,7 +287,7 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (_z_zbuf_len(zbf) < len) {
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-        ke->_suffix = zp_malloc(len + 1);
+        ke->_suffix = z_malloc(len + 1);
         if (ke->_suffix == NULL) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
@@ -387,7 +387,7 @@ int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t
             if (_z_zbuf_len(zbf) < len) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
-            decl->_keyexpr._suffix = zp_malloc(len + 1);
+            decl->_keyexpr._suffix = z_malloc(len + 1);
             if (decl->_keyexpr._suffix == NULL) {
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
@@ -429,10 +429,6 @@ int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uin
 int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-    if (_Z_HAS_FLAG(header, _Z_FLAG_INTEREST_ID)) {
-        return _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
-    }
-
     int8_t ret;
     switch (_Z_MID(header)) {
         case _Z_DECL_KEXPR_MID: {

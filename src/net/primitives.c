@@ -103,7 +103,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 _z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority) {
     // Allocate publisher
-    _z_publisher_t *ret = (_z_publisher_t *)zp_malloc(sizeof(_z_publisher_t));
+    _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
     if (ret == NULL) {
         return NULL;
     }
@@ -200,7 +200,7 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
     s._arg = arg;
 
     // Allocate subscriber
-    _z_subscriber_t *ret = (_z_subscriber_t *)zp_malloc(sizeof(_z_subscriber_t));
+    _z_subscriber_t *ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
     if (ret == NULL) {
         _z_subscription_clear(&s);
         return NULL;
@@ -269,7 +269,7 @@ _z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, 
     q._arg = arg;
 
     // Allocate queryable
-    _z_queryable_t *ret = (_z_queryable_t *)zp_malloc(sizeof(_z_queryable_t));
+    _z_queryable_t *ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
     if (ret == NULL) {
         _z_session_queryable_clear(&q);
         return NULL;
@@ -381,7 +381,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop
+                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                 ,
                 z_attachment_t attachment
@@ -390,7 +390,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)zp_malloc(sizeof(_z_pending_query_t));
+    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
     if (pq != NULL) {
         pq->_id = _z_get_query_id(zn);
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
@@ -407,12 +407,13 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
             _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
-            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value
+            _z_zenoh_message_t z_msg =
+                _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value, timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
-                                                         ,
-                                                         attachment
+                                  ,
+                                  attachment
 #endif
-            );
+                );
 
             if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);

@@ -23,44 +23,44 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/
-uint8_t zp_random_u8(void) {
+uint8_t z_random_u8(void) {
     uint8_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
-uint16_t zp_random_u16(void) {
+uint16_t z_random_u16(void) {
     uint16_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
-uint32_t zp_random_u32(void) {
+uint32_t z_random_u32(void) {
     uint32_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
-uint64_t zp_random_u64(void) {
+uint64_t z_random_u64(void) {
     uint64_t ret = 0;
-    zp_random_fill(&ret, sizeof(ret));
+    z_random_fill(&ret, sizeof(ret));
     return ret;
 }
 
-void zp_random_fill(void *buf, size_t len) { RtlGenRandom(buf, (unsigned long)len); }
+void z_random_fill(void *buf, size_t len) { RtlGenRandom(buf, (unsigned long)len); }
 
 /*------------------ Memory ------------------*/
 // #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 // #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
-void *zp_malloc(size_t size) { return malloc(size); }
+void *z_malloc(size_t size) { return malloc(size); }
 
-void *zp_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
+void *z_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 
-void zp_free(void *ptr) { free(ptr); }
+void z_free(void *ptr) { free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     (void)(attr);
     int8_t ret = _Z_RES_OK;
     *task = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, arg, 0, NULL);
@@ -70,45 +70,45 @@ int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *),
     return ret;
 }
 
-int8_t zp_task_join(zp_task_t *task) {
+int8_t z_task_join(z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     WaitForSingleObject(*task, INFINITE);
     return ret;
 }
 
-int8_t zp_task_cancel(zp_task_t *task) {
+int8_t zp_task_cancel(z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     TerminateThread(*task, 0);
     return ret;
 }
 
-void zp_task_free(zp_task_t **task) {
-    zp_task_t *ptr = *task;
+void z_task_free(z_task_t **task) {
+    z_task_t *ptr = *task;
     CloseHandle(*ptr);
-    zp_free(ptr);
+    z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int8_t zp_mutex_init(zp_mutex_t *m) {
+int8_t z_mutex_init(z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     InitializeSRWLock(m);
     return ret;
 }
 
-int8_t zp_mutex_free(zp_mutex_t *m) {
+int8_t z_mutex_free(z_mutex_t *m) {
     (void)(m);
     int8_t ret = _Z_RES_OK;
     return ret;
 }
 
-int8_t zp_mutex_lock(zp_mutex_t *m) {
+int8_t z_mutex_lock(z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     AcquireSRWLockExclusive(m);
     return ret;
 }
 
-int8_t zp_mutex_trylock(zp_mutex_t *m) {
+int8_t z_mutex_trylock(z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     if (TryAcquireSRWLockExclusive(m) == 0) {
         ret = _Z_ERR_GENERIC;
@@ -116,32 +116,32 @@ int8_t zp_mutex_trylock(zp_mutex_t *m) {
     return ret;
 }
 
-int8_t zp_mutex_unlock(zp_mutex_t *m) {
+int8_t z_mutex_unlock(z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     ReleaseSRWLockExclusive(m);
     return ret;
 }
 
 /*------------------ Condvar ------------------*/
-int8_t zp_condvar_init(zp_condvar_t *cv) {
+int8_t z_condvar_init(z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
     InitializeConditionVariable(cv);
     return ret;
 }
 
-int8_t zp_condvar_free(zp_condvar_t *cv) {
+int8_t z_condvar_free(z_condvar_t *cv) {
     (void)(cv);
     int8_t ret = _Z_RES_OK;
     return ret;
 }
 
-int8_t zp_condvar_signal(zp_condvar_t *cv) {
+int8_t z_condvar_signal(z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
     WakeConditionVariable(cv);
     return ret;
 }
 
-int8_t zp_condvar_wait(zp_condvar_t *cv, zp_mutex_t *m) {
+int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     SleepConditionVariableSRW(cv, m, INFINITE, 0);
     return ret;
@@ -149,9 +149,9 @@ int8_t zp_condvar_wait(zp_condvar_t *cv, zp_mutex_t *m) {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int zp_sleep_us(size_t time) { return zp_sleep_ms((time / 1000) + (time % 1000 == 0 ? 0 : 1)); }
+int z_sleep_us(size_t time) { return z_sleep_ms((time / 1000) + (time % 1000 == 0 ? 0 : 1)); }
 
-int zp_sleep_ms(size_t time) {
+int z_sleep_ms(size_t time) {
     // Guarantees that size_t is split into DWORD segments for Sleep
     uint8_t ratio = sizeof(size_t) / sizeof(DWORD);
     DWORD ratio_time = (DWORD)((time / ratio) + (time % ratio == 0 ? 0 : 1));
@@ -161,28 +161,28 @@ int zp_sleep_ms(size_t time) {
     return 0;
 }
 
-int zp_sleep_s(size_t time) {
-    zp_time_t start = zp_time_now();
+int z_sleep_s(size_t time) {
+    z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
-    while (zp_time_elapsed_s(&start) < time) {
-        zp_sleep_ms(1000);
+    while (z_time_elapsed_s(&start) < time) {
+        z_sleep_ms(1000);
     }
 
     return 0;
 }
 
 /*------------------ Instant ------------------*/
-zp_clock_t zp_clock_now(void) {
-    zp_clock_t now;
+z_clock_t z_clock_now(void) {
+    z_clock_t now;
     QueryPerformanceCounter(&now);
     return now;
 }
 
-unsigned long zp_clock_elapsed_us(zp_clock_t *instant) {
-    zp_clock_t now;
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
+    z_clock_t now;
     LARGE_INTEGER frequency;
     QueryPerformanceCounter(&now);
     QueryPerformanceFrequency(&frequency);  // ticks per second
@@ -196,8 +196,8 @@ unsigned long zp_clock_elapsed_us(zp_clock_t *instant) {
     return (unsigned long)elapsed;
 }
 
-unsigned long zp_clock_elapsed_ms(zp_clock_t *instant) {
-    zp_clock_t now;
+unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
+    z_clock_t now;
     LARGE_INTEGER frequency;
     QueryPerformanceCounter(&now);
     QueryPerformanceFrequency(&frequency);  // ticks per second
@@ -211,8 +211,8 @@ unsigned long zp_clock_elapsed_ms(zp_clock_t *instant) {
     return (unsigned long)elapsed;
 }
 
-unsigned long zp_clock_elapsed_s(zp_clock_t *instant) {
-    zp_clock_t now;
+unsigned long z_clock_elapsed_s(z_clock_t *instant) {
+    z_clock_t now;
     LARGE_INTEGER frequency;
     QueryPerformanceCounter(&now);
     QueryPerformanceFrequency(&frequency);  // ticks per second
@@ -226,32 +226,32 @@ unsigned long zp_clock_elapsed_s(zp_clock_t *instant) {
 }
 
 /*------------------ Time ------------------*/
-zp_time_t zp_time_now(void) {
-    zp_time_t now;
+z_time_t z_time_now(void) {
+    z_time_t now;
     ftime(&now);
     return now;
 }
 
-const char *zp_time_now_as_str(char *const buf, unsigned long buflen) {
-    zp_time_t tv = zp_time_now();
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
     struct tm ts;
     ts = *localtime(&tv.time);
     strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
     return buf;
 }
 
-unsigned long zp_time_elapsed_us(zp_time_t *time) { return zp_time_elapsed_ms(time) * 1000; }
+unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
 
-unsigned long zp_time_elapsed_ms(zp_time_t *time) {
-    zp_time_t now;
+unsigned long z_time_elapsed_ms(z_time_t *time) {
+    z_time_t now;
     ftime(&now);
 
     unsigned long elapsed = ((unsigned long)(now.time - time->time) * 1000) + (now.millitm - time->millitm);
     return elapsed;
 }
 
-unsigned long zp_time_elapsed_s(zp_time_t *time) {
-    zp_time_t now;
+unsigned long z_time_elapsed_s(z_time_t *time) {
+    z_time_t now;
     ftime(&now);
 
     unsigned long elapsed = (unsigned long)(now.time - time->time);

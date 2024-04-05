@@ -15,22 +15,20 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <zenoh-pico.h>
+#include <string.h>
+
+#include "zenoh-pico.h"
 
 #if Z_FEATURE_PUBLICATION == 1
 int main(int argc, char **argv) {
     const char *keyexpr = "test/zenoh-pico-fragment";
-    const char *mode = "client";
+    const char *mode = NULL;
     char *llocator = NULL;
+    char *clocator = NULL;
     uint8_t *value = NULL;
     size_t size = 10000;
     (void)argv;
 
-    // Check if peer mode
-    if (argc > 1) {
-        mode = "peer";
-        llocator = "udp/224.0.0.224:7447#iface=lo";
-    }
     // Init value
     value = malloc(size);
     if (value == NULL) {
@@ -39,11 +37,24 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < size; i++) {
         value[i] = (uint8_t)i;
     }
+    // Check if peer or client mode
+    if (argc > 1) {
+        mode = "peer";
+        llocator = "udp/224.0.0.224:7447#iface=lo";
+    } else {
+        mode = "client";
+        clocator = "tcp/127.0.0.1:7447";
+    }
     // Set config
     z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    if (mode != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    }
     if (llocator != NULL) {
         zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+    }
+    if (clocator != NULL) {
+        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
     }
     // Open session
     z_owned_session_t s = z_open(z_move(config));
@@ -57,14 +68,17 @@ int main(int argc, char **argv) {
         z_close(z_session_move(&s));
         return -1;
     }
+    // Wait for joins
+    if (strcmp(mode, "peer") == 0) {
+        z_sleep_s(3);
+    }
     // Put data
-    z_put_options_t options = z_put_options_default();
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     for (int i = 0; i < 5; i++) {
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
-        if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, &options) < 0) {
+        if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, NULL) < 0) {
             printf("Oh no! Put has failed...\n");
         }
+        z_sleep_s(1);
     }
     // Clean up
     zp_stop_read_task(z_loan(s));

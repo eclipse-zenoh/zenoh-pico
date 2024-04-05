@@ -33,7 +33,7 @@
     }                                                                                               \
     static inline name##_array_t name##_array_make(size_t capacity) {                               \
         name##_array_t a;                                                                           \
-        a._val = (type *)zp_malloc(capacity * sizeof(type));                                        \
+        a._val = (type *)z_malloc(capacity * sizeof(type));                                         \
         if (a._val != NULL) {                                                                       \
             a._len = capacity;                                                                      \
         } else {                                                                                    \
@@ -58,7 +58,7 @@
         for (size_t i = 0; i < a->_len; i++) {                                                      \
             name##_elem_clear(&a->_val[i]);                                                         \
         }                                                                                           \
-        zp_free(a->_val);                                                                           \
+        z_free(a->_val);                                                                            \
         a->_len = 0;                                                                                \
         a->_val = NULL;                                                                             \
     }                                                                                               \
@@ -66,7 +66,7 @@
         name##_array_t *ptr = *a;                                                                   \
         if (ptr != NULL) {                                                                          \
             name##_array_clear(ptr);                                                                \
-            zp_free(ptr);                                                                           \
+            z_free(ptr);                                                                            \
             *a = NULL;                                                                              \
         }                                                                                           \
     }

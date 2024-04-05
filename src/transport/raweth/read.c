@@ -36,6 +36,7 @@ int8_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         _z_t_msg_clear(&t_msg);
     }
+    _z_bytes_clear(&addr);
     return ret;
 }
 #else
@@ -63,18 +64,21 @@ void *_zp_raweth_read_task(void *ztm_arg) {
                 break;
             case _Z_ERR_TRANSPORT_RX_FAILED:
                 // Drop message
+                _z_bytes_clear(&addr);
                 continue;
                 break;
             default:
                 // Drop message & stop task
                 _Z_ERROR("Connection closed due to malformed message");
                 ztm->_read_task_running = false;
+                _z_bytes_clear(&addr);
                 continue;
                 break;
         }
         // Process message
         if (_z_multicast_handle_transport_message(ztm, &t_msg, &addr) != _Z_RES_OK) {
             ztm->_read_task_running = false;
+            _z_bytes_clear(&addr);
             continue;
         }
         _z_t_msg_clear(&t_msg);
@@ -83,11 +87,11 @@ void *_zp_raweth_read_task(void *ztm_arg) {
     return NULL;
 }
 
-int8_t _zp_raweth_start_read_task(_z_transport_t *zt, zp_task_attr_t *attr, zp_task_t *task) {
+int8_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(zp_task_t));
+    (void)memset(task, 0, sizeof(z_task_t));
     // Init task
-    if (zp_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
+    if (z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

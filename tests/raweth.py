@@ -1,4 +1,6 @@
 import argparse
+import os
+from signal import SIGINT
 import subprocess
 import sys
 import time
@@ -15,16 +17,18 @@ def pub_and_sub(args):
         z_pub_expected_status = 0
         z_pub_expected_output = '''Opening session...
 Declaring publisher for 'demo/example/zenoh-pico-pub'...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...
-Putting Data ('demo/example/zenoh-pico-pub': 'Pub from Pico!')...'''
+Waiting for joins...
+Press CTRL-C to quit...
+Putting Data ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   5] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   6] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   7] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')...
+Putting Data ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')...'''
     else :
         z_pub_expected_status = 255
         z_pub_expected_output = '''Opening session...
@@ -35,17 +39,17 @@ Unable to open session!'''
         z_sub_expected_status = 0
         z_sub_expected_output = '''Opening session...
 Declaring Subscriber on 'demo/example/**'...
-Enter 'q' to quit...
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')
->> [Subscriber] Received ('demo/example/zenoh-pico-pub': 'Pub from Pico!')'''
+Press CTRL-C to quit...
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   5] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   6] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   7] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')
+>> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')'''
     else :
         z_sub_expected_status = 255
         z_sub_expected_output = '''Opening session...
@@ -53,19 +57,20 @@ Unable to open session!'''
 
     print("Start subscriber")
     # Start z_sub in the background
-    z_sub_command = f"sudo ./{DIR_EXAMPLES}/z_sub -m \"peer\" -l \"reth/0\"s"
+    z_sub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub -n 10 -m \"peer\" -l \"reth/0\"s"
     z_sub_process = subprocess.Popen(z_sub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE, text=True)
+                                    stderr=subprocess.PIPE,
+                                    text=True)
 
     # Introduce a delay to ensure z_sub starts
     time.sleep(2)
 
     print("Start publisher")
     # Start z_pub
-    z_pub_command = f"sudo ./{DIR_EXAMPLES}/z_pub -m \"peer\" -l \"reth/0\"s"
+    z_pub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_pub -n 10 -m \"peer\" -l \"reth/0\"s"
     z_pub_process = subprocess.Popen(z_pub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,
@@ -77,10 +82,11 @@ Unable to open session!'''
     z_pub_process.wait()
 
     print("Stop subscriber")
+    time.sleep(2)
     if z_sub_process.poll() is None:
-        # Send "q" command to z_sub to stop it
-        z_sub_process.stdin.write("q\n")
-        z_sub_process.stdin.flush()
+        # send SIGINT to group
+        z_sub_process_gid = os.getpgid(z_sub_process.pid)
+        os.killpg(z_sub_process_gid, SIGINT)
 
     # Wait for z_sub to finish
     z_sub_process.wait()

@@ -27,17 +27,17 @@
 #define DEFAULT_PING_NB 100
 #define DEFAULT_WARMUP_MS 1000
 
-static zp_condvar_t cond;
-static zp_mutex_t mutex;
+static z_condvar_t cond;
+static z_mutex_t mutex;
 
 void callback(const z_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
-    zp_condvar_signal(&cond);
+    z_condvar_signal(&cond);
 }
 void drop(void* context) {
     (void)context;
-    zp_condvar_free(&cond);
+    z_condvar_free(&cond);
 }
 
 struct args_t {
@@ -61,8 +61,8 @@ int main(int argc, char** argv) {
             DEFAULT_PKT_SIZE, DEFAULT_PING_NB, DEFAULT_WARMUP_MS);
         return 1;
     }
-    zp_mutex_init(&mutex);
-    zp_condvar_init(&cond);
+    z_mutex_init(&mutex);
+    z_condvar_init(&cond);
     z_owned_config_t config = z_config_default();
     z_owned_session_t session = z_open(z_move(config));
     if (!z_check(session)) {
@@ -92,34 +92,34 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    uint8_t* data = zp_malloc(args.size);
+    uint8_t* data = z_malloc(args.size);
     for (unsigned int i = 0; i < args.size; i++) {
         data[i] = (uint8_t)(i % 10);
     }
-    zp_mutex_lock(&mutex);
+    z_mutex_lock(&mutex);
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
-        zp_clock_t warmup_start = zp_clock_now();
+        z_clock_t warmup_start = z_clock_now();
         unsigned long elapsed_us = 0;
         while (elapsed_us < args.warmup_ms * 1000) {
             z_publisher_put(z_loan(pub), data, args.size, NULL);
-            zp_condvar_wait(&cond, &mutex);
-            elapsed_us = zp_clock_elapsed_us(&warmup_start);
+            z_condvar_wait(&cond, &mutex);
+            elapsed_us = z_clock_elapsed_us(&warmup_start);
         }
     }
-    unsigned long* results = zp_malloc(sizeof(unsigned long) * args.number_of_pings);
+    unsigned long* results = z_malloc(sizeof(unsigned long) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
-        zp_clock_t measure_start = zp_clock_now();
+        z_clock_t measure_start = z_clock_now();
         z_publisher_put(z_loan(pub), data, args.size, NULL);
-        zp_condvar_wait(&cond, &mutex);
-        results[i] = zp_clock_elapsed_us(&measure_start);
+        z_condvar_wait(&cond, &mutex);
+        results[i] = z_clock_elapsed_us(&measure_start);
     }
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
         printf("%d bytes: seq=%d rtt=%luµs, lat=%luµs\n", args.size, i, results[i], results[i] / 2);
     }
-    zp_mutex_unlock(&mutex);
-    zp_free(results);
-    zp_free(data);
+    z_mutex_unlock(&mutex);
+    z_free(results);
+    z_free(data);
     z_drop(z_move(pub));
     z_drop(z_move(sub));
 

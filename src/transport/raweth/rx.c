@@ -29,7 +29,8 @@
 
 static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
-    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr);
+    size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr,
+                                  &link->_socket._raweth._whitelist);
     // Check validity
     if ((rb == SIZE_MAX) || (rb < sizeof(_zp_eth_header_t))) {
         return SIZE_MAX;
@@ -78,7 +79,7 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    zp_mutex_lock(&ztm->_mutex_rx);
+    z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer
@@ -106,7 +107,7 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&ztm->_mutex_rx);
+    z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

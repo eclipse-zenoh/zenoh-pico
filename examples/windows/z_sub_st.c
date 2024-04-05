@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
+#define N 2147483647  // max int value by default
+int msg_nb = 0;
+
 #if Z_FEATURE_SUBSCRIPTION == 1
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
@@ -25,6 +28,8 @@ void data_handler(const z_sample_t *sample, void *ctx) {
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
            sample->payload.start);
     z_drop(z_move(keystr));
+
+    msg_nb++;
 }
 
 int main(int argc, char **argv) {
@@ -55,7 +60,8 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    while (1) {
+    printf("Press CTRL-C to quit...\n");
+    while (msg_nb < N) {
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);
         zp_send_join(z_loan(s), NULL);

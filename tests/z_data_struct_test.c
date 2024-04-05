@@ -27,7 +27,7 @@
 void entry_list_test(void) {
     _z_transport_peer_entry_list_t *root = _z_transport_peer_entry_list_new();
     for (int i = 0; i < 10; i++) {
-        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)zp_malloc(sizeof(_z_transport_peer_entry_t));
+        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
         root = _z_transport_peer_entry_list_insert(root, entry);
     }
     _z_transport_peer_entry_list_t *list = root;
@@ -37,7 +37,7 @@ void entry_list_test(void) {
     _z_transport_peer_entry_list_head(root)->_peer_id = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1;
 
     for (int i = 0; i < 11; i++) {
-        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)zp_malloc(sizeof(_z_transport_peer_entry_t));
+        _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
         root = _z_transport_peer_entry_list_insert(root, entry);
     }
     assert(_z_transport_peer_entry_list_head(root)->_peer_id == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1);

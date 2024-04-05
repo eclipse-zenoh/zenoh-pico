@@ -24,7 +24,6 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/link/raweth.h"
-#include "zenoh-pico/transport/raweth/config.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -32,16 +31,16 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { zp_mutex_unlock(&ztm->_mutex_tx); }
+static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { z_mutex_unlock(&ztm->_mutex_tx); }
 #else
 static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif
 
 static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
-    for (int i = 1; i < _ZP_RAWETH_CFG_SIZE; i++) {
+    for (int i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
-        if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, _ZP_RAWETH_CFG_ARRAY[i]._keyexpr._suffix) !=
-            _Z_RES_OK) {
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
+        if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, entry->_keyexpr._suffix) != _Z_RES_OK) {
             continue;
         }
         return i;
@@ -52,14 +51,15 @@ static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_sock
 static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
     int8_t ret = _Z_RES_OK;
 
-    if (_ZP_RAWETH_CFG_SIZE < 1) {
+    if (_zp_raweth_mapping_array_len(&sock->_mapping) < 1) {
         return _Z_ERR_GENERIC;
     }
     if (keyexpr == NULL) {
         // Store default value into socket
-        memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[0]._dmac, _ZP_MAC_ADDR_LENGTH);
-        uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[0]._vlan;
-        sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[0]._has_vlan;
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, 0);
+        memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
+        uint16_t vlan = entry->_vlan;
+        sock->_has_vlan = entry->_has_vlan;
         if (sock->_has_vlan) {
             memcpy(&sock->_vlan, &vlan, sizeof(vlan));
         }
@@ -72,9 +72,10 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
             _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
         }
         // Store data into socket
-        memcpy(&sock->_dmac, &_ZP_RAWETH_CFG_ARRAY[idx]._dmac, _ZP_MAC_ADDR_LENGTH);
-        uint16_t vlan = _ZP_RAWETH_CFG_ARRAY[idx]._vlan;
-        sock->_has_vlan = _ZP_RAWETH_CFG_ARRAY[idx]._has_vlan;
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, idx);
+        memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
+        uint16_t vlan = entry->_vlan;
+        sock->_has_vlan = entry->_has_vlan;
         if (sock->_has_vlan) {
             memcpy(&sock->_vlan, &vlan, sizeof(vlan));
         }
@@ -128,7 +129,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
         header.vlan_type = _ZP_ETH_TYPE_VLAN;
         header.tag = resocket->_vlan;
-        header.ethtype = _ZP_RAWETH_CFG_ETHTYPE;
+        header.ethtype = resocket->_ethtype;
         header.data_length = _z_raweth_htons(wpos - sizeof(header));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
@@ -137,7 +138,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         // Set header
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
-        header.ethtype = _ZP_RAWETH_CFG_ETHTYPE;
+        header.ethtype = resocket->_ethtype;
         header.data_length = _z_raweth_htons(wpos - sizeof(header));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
@@ -195,7 +196,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_lock(&ztm->_mutex_tx);
+    z_mutex_lock(&ztm->_mutex_tx);
 #endif
     // Reset wbuf
     _z_wbuf_reset(&ztm->_wbuf);
@@ -213,7 +214,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     ztm->_transmitted = true;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&ztm->_mutex_tx);
+    z_mutex_unlock(&ztm->_mutex_tx);
 #endif
 
     return ret;
@@ -228,9 +229,9 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     // Acquire the lock and drop the message if needed
 #if Z_FEATURE_MULTI_THREAD == 1
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
-        zp_mutex_lock(&ztm->_mutex_tx);
+        z_mutex_lock(&ztm->_mutex_tx);
     } else {
-        if (zp_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
+        if (z_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;
@@ -313,7 +314,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 #endif
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_unlock(&ztm->_mutex_tx);
+    z_mutex_unlock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     return ret;
 }

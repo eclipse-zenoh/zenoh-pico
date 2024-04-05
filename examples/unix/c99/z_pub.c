@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
-    int n = 10;
+    int n = 2147483647;  // max int value by default
 
     int opt;
     while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
@@ -92,14 +92,16 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    printf("Press CTRL-C to quit...\n");
+    char *buf = (char *)malloc(256);
     for (int idx = 0; idx < n; ++idx) {
         sleep(1);
-        (void)idx;
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
+        snprintf(buf, 256, "[%4d] %s", idx, value);
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
         z_publisher_put_options_t options = z_publisher_put_options_default();
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)value, strlen(value), &options);
+        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), &options);
     }
     // Clean up
     z_undeclare_publisher(z_publisher_move(&pub));

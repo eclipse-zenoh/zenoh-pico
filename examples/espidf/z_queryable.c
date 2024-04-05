@@ -159,7 +159,7 @@ void app_main() {
     printf("Zenoh setup finished!\n");
 
     while (1) {
-        sleep(5);
+        sleep(1);
     }
 
     printf("Closing Zenoh Session...");

@@ -335,6 +335,7 @@ typedef struct {
     z_value_t value;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
+    uint32_t timeout_ms;
 #if Z_FEATURE_ATTACHMENT == 1
 // TODO:ATT z_attachment_t attachment;
 #endif
@@ -346,7 +347,7 @@ typedef struct {
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_attr_t *task_attributes;
+    z_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif
@@ -358,7 +359,7 @@ typedef struct {
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_attr_t *task_attributes;
+    z_task_attr_t *task_attributes;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 #endif
@@ -389,6 +390,32 @@ typedef struct {
 } zp_send_join_options_t;
 
 /**
+ * QoS settings of zenoh message.
+ */
+typedef _z_qos_t z_qos_t;
+/**
+ * Returns message priority.
+ */
+static inline z_priority_t z_qos_get_priority(z_qos_t qos) {
+    z_priority_t ret = _z_n_qos_get_priority(qos);
+    return ret == _Z_PRIORITY_CONTROL ? Z_PRIORITY_DEFAULT : ret;
+}
+/**
+ * Returns message congestion control.
+ */
+static inline z_congestion_control_t z_qos_get_congestion_control(z_qos_t qos) {
+    return _z_n_qos_get_congestion_control(qos);
+}
+/**
+ * Returns message express flag. If set to true, the message is not batched to reduce the latency.
+ */
+static inline _Bool z_qos_get_express(z_qos_t qos) { return _z_n_qos_get_express(qos); }
+/**
+ * Returns default qos settings.
+ */
+static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
+
+/**
  * Represents a data sample.
  *
  * A sample is the value associated to a given :c:type:`z_keyexpr_t` at a given point in time.
@@ -399,6 +426,7 @@ typedef struct {
  *   z_encoding_t encoding: The encoding of the value of this data sample.
  *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
  *   z_timestamp_t timestamp: The timestamp of this data sample.
+ *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
 typedef _z_sample_t z_sample_t;
 
