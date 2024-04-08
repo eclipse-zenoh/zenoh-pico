@@ -145,7 +145,7 @@ uint64_t gen_uint64(void) {
     return ret;
 }
 
-unsigned int gen_uint(void) {
+uint32_t gen_uint32(void) {
     unsigned int ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
@@ -1310,7 +1310,7 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 2) {
+    switch (gen_uint32() % 2) {
         case 0: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
@@ -1463,9 +1463,9 @@ void init_message(void) {
 
 _z_transport_message_t gen_open(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_open_syn(gen_uint(), gen_uint(), gen_bytes(16));
+        return _z_t_msg_make_open_syn(gen_uint32(), gen_uint32(), gen_bytes(16));
     } else {
-        return _z_t_msg_make_open_ack(gen_uint(), gen_uint());
+        return _z_t_msg_make_open_ack(gen_uint32(), gen_uint32());
     }
 }
 void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
@@ -1583,7 +1583,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
 }
 
 _z_transport_message_t gen_frame(void) {
-    return _z_t_msg_make_frame(gen_uint(), gen_net_msgs(gen_uint8() % 16), gen_bool());
+    return _z_t_msg_make_frame(gen_uint32(), gen_net_msgs(gen_uint8() % 16), gen_bool());
 }
 void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right) {
     assert(left->_sn == right->_sn);
@@ -1609,7 +1609,7 @@ void frame_message(void) {
 }
 
 _z_transport_message_t gen_fragment(void) {
-    return _z_t_msg_make_fragment(gen_uint(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);
