@@ -22,11 +22,9 @@
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
     char *locator = NULL;
-    size_t interval = 5000;
-    size_t size = 3;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:i:s:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -34,14 +32,8 @@ int main(int argc, char **argv) {
             case 'e':
                 locator = optarg;
                 break;
-            case 'i':
-                interval = (size_t)atoi(optarg);
-                break;
-            case 's':
-                size = (size_t)atoi(optarg);
-                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'i' || optopt == 's') {
+                if (optopt == 'k' || optopt == 'e') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -72,25 +64,21 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(size);
+    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel_new(3);
     z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL);
     if (!z_check(sub)) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
 
-    printf("Pulling data every %zu ms... Ring size: %zd\n", interval, size);
     z_owned_sample_t sample = z_sample_null();
-    while (true) {
-        for (z_call(channel.recv, &sample); z_check(sample); z_call(channel.recv, &sample)) {
-            z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample).keyexpr);
-            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)z_loan(sample).payload.len,
-                   z_loan(sample).payload.start);
-            z_drop(z_move(keystr));
-            z_drop(z_move(sample));
-        }
-        printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", interval);
-        zp_sleep_ms(interval);
+    for (z_call(channel.recv, &sample); z_check(sample); z_call(channel.recv, &sample)) {
+        z_owned_str_t keystr = z_keyexpr_to_string(z_loan(sample).keyexpr);
+        printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)z_loan(sample).payload.len,
+               z_loan(sample).payload.start);
+        z_drop(z_move(keystr));
+        z_drop(z_move(sample));
+        sample = z_sample_null();
     }
 
     z_undeclare_subscriber(z_move(sub));

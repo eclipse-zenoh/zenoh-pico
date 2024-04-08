@@ -312,31 +312,37 @@ _Bool z_value_is_initialized(z_value_t *value) {
 }
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample) {
-    if (closure->call) {
+    if (closure->call != NULL) {
+        (closure->call)(sample, closure->context);
+    }
+}
+
+void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample) {
+    if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
 }
 
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
 }
 
 void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(hello, closure->context);
     }
 }
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) {
-    if (closure->call) {
+    if (closure->call != NULL) {
         (closure->call)(id, closure->context);
     }
 }
@@ -422,6 +428,7 @@ OWNED_FUNCTIONS_PTR_DROP(z_scouting_config_t, z_owned_scouting_config_t, scoutin
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR_INTERNAL(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_sample_copy)
 
 _Bool z_session_check(const z_owned_session_t *val) { return val->_value.in != NULL; }
 z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
@@ -454,6 +461,11 @@ z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_han
     return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};
 }
 
+z_owned_closure_owned_sample_t z_closure_owned_sample(_z_owned_sample_handler_t call, _z_dropper_handler_t drop,
+                                                      void *context) {
+    return (z_owned_closure_owned_sample_t){.call = call, .drop = drop, .context = context};
+}
+
 z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_query_t){.call = call, .drop = drop, .context = context};
 }
@@ -471,6 +483,7 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
 }
 
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)

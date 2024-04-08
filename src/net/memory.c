@@ -49,6 +49,27 @@ void _z_sample_free(_z_sample_t **sample) {
     }
 }
 
+void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
+    dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
+    dst->payload = _z_bytes_duplicate(&src->payload);
+    dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
+
+    // TODO(sashacmc): should be changed after encoding rework
+    dst->encoding.prefix = src->encoding.prefix;
+    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
+
+    dst->kind = src->kind;
+#if Z_FEATURE_ATTACHMENT == 1
+    dst->attachment = src->attachment;
+#endif
+}
+
+_z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
+    _z_sample_t dst;
+    _z_sample_copy(&dst, src);
+    return dst;
+}
+
 void _z_hello_clear(_z_hello_t *hello) {
     if (hello->locators.len > 0) {
         _z_str_array_clear(&hello->locators);

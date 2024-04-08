@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //   Błażej Sowa, <blazej@fictionlab.pl>
-
+//
 #ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
@@ -429,6 +429,7 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
 typedef _z_sample_t z_sample_t;
+_OWNED_TYPE_PTR(z_sample_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
@@ -476,6 +477,7 @@ _Bool z_str_array_is_empty(const z_str_array_t *a);
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
+typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
 
 /**
  * Represents the sample closure.
@@ -494,6 +496,25 @@ typedef struct {
 } z_owned_closure_sample_t;
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
+
+/**
+ * Represents the owned sample closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
+ *   _z_owned_sample_handler_t call: `void *call(const struct z_owned_sample_t*, const void *context)` is the callback
+ *   function.
+ * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
+ *   pointer to an arbitrary state.
+ */
+typedef struct {
+    void *context;
+    _z_owned_sample_handler_t call;
+    _z_dropper_handler_t drop;
+} z_owned_closure_owned_sample_t;
+
+void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample);
 
 /**
  * Represents the query callback closure.
