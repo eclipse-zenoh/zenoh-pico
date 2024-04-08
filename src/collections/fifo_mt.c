@@ -106,10 +106,32 @@ int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) 
     element_move(dst, src);
 #else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);
-    if (src) {
+    if (src != NULL) {
         element_move(dst, src);
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    return _Z_RES_OK;
+}
+
+int8_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_move) {
+    _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    void *src = NULL;
+    _Z_RETURN_IF_ERR(zp_mutex_lock(&f->_mutex))
+    src = _z_fifo_pull(&f->_fifo);
+    if (src != NULL) {
+        _Z_RETURN_IF_ERR(zp_condvar_signal(&f->_cv_not_full))
+    }
+    _Z_RETURN_IF_ERR(zp_mutex_unlock(&f->_mutex))
+#else   // Z_FEATURE_MULTI_THREAD == 1
+    void *src = _z_fifo_pull(&f->_fifo);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    if (src != NULL) {
+        element_move(dst, src);
+    }
 
     return _Z_RES_OK;
 }
