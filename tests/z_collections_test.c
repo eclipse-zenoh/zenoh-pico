@@ -32,9 +32,9 @@ char *d = "d";
 // RING
 _Z_RING_DEFINE(_z_str, char)
 
-void print_ring(_z_ring_t *r) {
-    printf("Ring { capacity: %zu, r_idx: %zu, w_idx: %zu, len: %zu }\n", _z_ring_capacity(r), r->_r_idx, r->_w_idx,
-           _z_ring_len(r));
+void print_ring(_z_str_ring_t *r) {
+    printf("Ring { capacity: %zu, r_idx: %zu, w_idx: %zu, len: %zu }\n", _z_str_ring_capacity(r), r->_r_idx, r->_w_idx,
+           _z_str_ring_len(r));
 }
 
 void ring_test(void) {
@@ -120,12 +120,28 @@ void ring_test(void) {
     printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_is_empty(&r));
+
+    _z_str_ring_clear(&r);
+}
+
+void ring_test_init_free(void) {
+    _z_str_ring_t *r = (_z_str_ring_t *)malloc(sizeof(_z_str_ring_t));
+    _z_str_ring_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_ring_push_force_drop(r, str);
+
+    _z_str_ring_free(&r);
+    assert(r == NULL);
 }
 
 // LIFO
 _Z_LIFO_DEFINE(_z_str, char)
 
-void print_lifo(_z_lifo_t *r) { printf("Lifo { capacity: %zu, len: %zu }\n", _z_lifo_capacity(r), _z_lifo_len(r)); }
+void print_lifo(_z_str_lifo_t *r) {
+    printf("Lifo { capacity: %zu, len: %zu }\n", _z_str_lifo_capacity(r), _z_str_lifo_len(r));
+}
 
 void lifo_test(void) {
     _z_str_lifo_t r = _z_str_lifo_make(3);
@@ -190,12 +206,28 @@ void lifo_test(void) {
     printf("%s == %s\n", a, s);
     assert(strcmp(a, s) == 0);
     assert(_z_str_lifo_is_empty(&r));
+
+    _z_str_lifo_clear(&r);
+}
+
+void lifo_test_init_free(void) {
+    _z_str_lifo_t *r = (_z_str_lifo_t *)malloc(sizeof(_z_str_lifo_t));
+    _z_str_lifo_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_lifo_push_drop(r, str);
+
+    _z_str_lifo_free(&r);
+    assert(r == NULL);
 }
 
 // FIFO
 _Z_FIFO_DEFINE(_z_str, char)
 
-void print_fifo(_z_fifo_t *r) { printf("Fifo { capacity: %zu, len: %zu }\n", _z_fifo_capacity(r), _z_fifo_len(r)); }
+void print_fifo(_z_str_fifo_t *r) {
+    printf("Fifo { capacity: %zu, len: %zu }\n", _z_str_fifo_capacity(r), _z_str_fifo_len(r));
+}
 
 void fifo_test(void) {
     _z_str_fifo_t r = _z_str_fifo_make(3);
@@ -260,10 +292,27 @@ void fifo_test(void) {
     printf("%s == %s\n", c, s);
     assert(strcmp(c, s) == 0);
     assert(_z_str_fifo_is_empty(&r));
+
+    _z_str_fifo_clear(&r);
+}
+
+void fifo_test_init_free(void) {
+    _z_str_fifo_t *r = (_z_str_fifo_t *)malloc(sizeof(_z_str_fifo_t));
+    _z_str_fifo_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_fifo_push_drop(r, str);
+
+    _z_str_fifo_free(&r);
+    assert(r == NULL);
 }
 
 int main(void) {
     ring_test();
+    ring_test_init_free();
     lifo_test();
+    lifo_test_init_free();
     fifo_test();
+    fifo_test_init_free();
 }
