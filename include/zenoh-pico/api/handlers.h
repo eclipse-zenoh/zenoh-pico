@@ -85,7 +85,7 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
 
 // z_owned_sample_ring_channel_t
 _Z_CHANNEL_DEFINE(sample_ring_channel, closure_sample, closure_owned_sample, z_sample_t, z_owned_sample_t, _z_ring_mt_t,
-                  _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_pull,
+                  _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_try_pull,
                   _z_owned_sample_move, _z_sample_to_owned_ptr, z_sample_drop)
 
 // z_owned_sample_fifo_channel_t

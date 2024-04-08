@@ -100,7 +100,7 @@ void sample_ring_channel_test_in_size(void) {
 
     char buf[100];
 
-    RECV(channel, buf)
+    TRY_RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     SEND(channel, "v1")
@@ -116,7 +116,7 @@ void sample_ring_channel_test_in_size(void) {
     assert(strcmp(buf, "v333") == 0);
     RECV(channel, buf)
     assert(strcmp(buf, "v4444") == 0);
-    RECV(channel, buf)
+    TRY_RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     z_drop(z_move(channel));
@@ -126,7 +126,7 @@ void sample_ring_channel_test_over_size(void) {
     z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(3);
 
     char buf[100];
-    RECV(channel, buf)
+    TRY_RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     SEND(channel, "v1")
@@ -140,7 +140,7 @@ void sample_ring_channel_test_over_size(void) {
     assert(strcmp(buf, "v333") == 0);
     RECV(channel, buf)
     assert(strcmp(buf, "v4444") == 0);
-    RECV(channel, buf)
+    TRY_RECV(channel, buf)
     assert(strcmp(buf, "") == 0);
 
     z_drop(z_move(channel));
