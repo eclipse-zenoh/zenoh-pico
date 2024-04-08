@@ -290,6 +290,14 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
 /*------------------ encoding ------------------*/
 #define _Z_ENCODING_FLAG_S 0x01
 
+size_t _z_encoding_len(const _z_encoding_t *en) {
+    size_t en_len = _z_zint_len((uint32_t)(en->prefix) << 1);
+    if (_z_bytes_check(en->suffix)) {
+        en_len += _z_bytes_encode_len(&en->suffix);
+    }
+    return en_len;
+}
+
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
     _Bool has_suffix = _z_bytes_check(en->suffix);
     uint32_t id = (uint32_t)(en->prefix) << 1;
