@@ -82,7 +82,7 @@ int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element
     }
     _Z_RETURN_IF_ERR(zp_mutex_unlock(&f->_mutex))
 #else   // Z_FEATURE_MULTI_THREAD == 1
-    _z_fifo_push_drop(&f->_fifo, elem, element_free);
+    _z_fifo_push_drop(&f->_fifo, (void *)elem, element_free);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return _Z_RES_OK;
