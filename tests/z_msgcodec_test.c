@@ -236,15 +236,20 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
+_z_encoding_t gen_encoding(void) {
+    _z_encoding_t en;
+    en.prefix = gen_uint32() & 0x7fffffff;
+    if (gen_bool()) {
+        en.suffix = gen_bytes(16);
+    } else {
+        en.suffix = _z_bytes_empty();
+    }
+    return en;
+}
+
 _z_value_t gen_value(void) {
     _z_value_t val;
-    val.encoding.prefix = gen_zint();
-    if (gen_bool()) {
-        val.encoding.suffix = gen_bytes(8);
-    } else {
-        val.encoding.suffix = _z_bytes_empty();
-    }
-
+    val.encoding = gen_encoding();
     if (gen_bool()) {
         val.payload = _z_bytes_empty();
     } else {
@@ -532,7 +537,6 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
     assert(left->_entity_id == right->_entity_id);
     assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
 }
-_z_encoding_t gen_encoding(void) { return (_z_encoding_t){.prefix = gen_uint64(), .suffix = gen_bytes(16)}; }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->prefix == right->prefix);
     assert_eq_bytes(&left->suffix, &right->suffix);
