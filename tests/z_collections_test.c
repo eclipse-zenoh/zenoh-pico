@@ -120,6 +120,20 @@ void ring_test(void) {
     printf("%s == %s\n", d, s);
     assert(strcmp(d, s) == 0);
     assert(_z_str_ring_is_empty(&r));
+
+    _z_str_ring_clear(&r);
+}
+
+void ring_test_init_free(void) {
+    _z_str_ring_t *r = (_z_str_ring_t *)malloc(sizeof(_z_str_ring_t));
+    _z_str_ring_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_ring_push_force_drop(r, str);
+
+    _z_str_ring_free(&r);
+    assert(r == NULL);
 }
 
 // LIFO
@@ -192,6 +206,20 @@ void lifo_test(void) {
     printf("%s == %s\n", a, s);
     assert(strcmp(a, s) == 0);
     assert(_z_str_lifo_is_empty(&r));
+
+    _z_str_lifo_clear(&r);
+}
+
+void lifo_test_init_free(void) {
+    _z_str_lifo_t *r = (_z_str_lifo_t *)malloc(sizeof(_z_str_lifo_t));
+    _z_str_lifo_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_lifo_push_drop(r, str);
+
+    _z_str_lifo_free(&r);
+    assert(r == NULL);
 }
 
 // FIFO
@@ -264,10 +292,27 @@ void fifo_test(void) {
     printf("%s == %s\n", c, s);
     assert(strcmp(c, s) == 0);
     assert(_z_str_fifo_is_empty(&r));
+
+    _z_str_fifo_clear(&r);
+}
+
+void fifo_test_init_free(void) {
+    _z_str_fifo_t *r = (_z_str_fifo_t *)malloc(sizeof(_z_str_fifo_t));
+    _z_str_fifo_init(r, 1);
+    assert(r != NULL);
+
+    char *str = (char *)calloc(1, sizeof(char));
+    _z_str_fifo_push_drop(r, str);
+
+    _z_str_fifo_free(&r);
+    assert(r == NULL);
 }
 
 int main(void) {
     ring_test();
+    ring_test_init_free();
     lifo_test();
+    lifo_test_init_free();
     fifo_test();
+    fifo_test_init_free();
 }
