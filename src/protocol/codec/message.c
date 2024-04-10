@@ -528,7 +528,6 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
 }
 int8_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     int8_t ret = _Z_RES_OK;
-    _z_msg_reply_t *reply = (_z_msg_reply_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         default:
             ret = _z_msg_ext_unknown_error(extension, 0x0a);
