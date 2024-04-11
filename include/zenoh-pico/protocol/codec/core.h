@@ -41,8 +41,6 @@
     }
 
 /*------------------ Internal Zenoh-net Macros ------------------*/
-int8_t _z_encoding_prefix_encode(_z_wbuf_t *wbf, z_encoding_prefix_t en);
-int8_t _z_encoding_prefix_decode(z_encoding_prefix_t *en, _z_zbuf_t *zbf);
 int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
 int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf);
 int8_t _z_query_target_encode(_z_wbuf_t *wbf, z_query_target_t en);
@@ -75,6 +73,10 @@ int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
 int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
+
+size_t _z_encoding_len(const _z_encoding_t *en);
+int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en);
+int8_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf);
 
 int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *ke);
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);

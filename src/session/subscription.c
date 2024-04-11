@@ -143,7 +143,7 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
                                     z_attachment_t att
 #endif
 ) {
-    _z_encoding_t encoding = {.prefix = Z_ENCODING_PREFIX_DEFAULT, .suffix = _z_bytes_wrap(NULL, 0)};
+    _z_encoding_t encoding = {.id = Z_ENCODING_PREFIX_DEFAULT, .schema = _z_bytes_wrap(NULL, 0)};
     int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
                                           _z_timestamp_null(), qos
 #if Z_FEATURE_ATTACHMENT == 1

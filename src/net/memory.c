@@ -24,8 +24,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 
     _z_bytes_move(&dst->payload, &src->payload);
 
-    dst->encoding.prefix = src->encoding.prefix;                  // FIXME: call the z_encoding_move
-    _z_bytes_move(&dst->encoding.suffix, &src->encoding.suffix);  // FIXME: call the z_encoding_move
+    dst->encoding.id = src->encoding.id;                          // FIXME: call the z_encoding_move
+    _z_bytes_move(&dst->encoding.schema, &src->encoding.schema);  // FIXME: call the z_encoding_move
 
     dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
     dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
@@ -34,7 +34,7 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
     _z_bytes_clear(&sample->payload);
-    _z_bytes_clear(&sample->encoding.suffix);  // FIXME: call the z_encoding_clear
+    _z_bytes_clear(&sample->encoding.schema);  // FIXME: call the z_encoding_clear
     _z_timestamp_clear(&sample->timestamp);
 }
 
@@ -55,8 +55,8 @@ void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
 
     // TODO(sashacmc): should be changed after encoding rework
-    dst->encoding.prefix = src->encoding.prefix;
-    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
+    dst->encoding.id = src->encoding.id;
+    _z_bytes_copy(&dst->encoding.schema, &src->encoding.schema);
 
     dst->kind = src->kind;
 #if Z_FEATURE_ATTACHMENT == 1
@@ -104,7 +104,7 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 }
 
 void _z_value_clear(_z_value_t *value) {
-    _z_bytes_clear(&value->encoding.suffix);
+    _z_bytes_clear(&value->encoding.schema);
     _z_bytes_clear(&value->payload);
 }
 

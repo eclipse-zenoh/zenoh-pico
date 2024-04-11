@@ -145,7 +145,7 @@ uint64_t gen_uint64(void) {
     return ret;
 }
 
-unsigned int gen_uint(void) {
+uint32_t gen_uint32(void) {
     unsigned int ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
@@ -236,15 +236,20 @@ _z_locator_array_t gen_locator_array(size_t size) {
     return la;
 }
 
+_z_encoding_t gen_encoding(void) {
+    _z_encoding_t en;
+    en.id = gen_uint16();
+    if (gen_bool()) {
+        en.schema = gen_bytes(16);
+    } else {
+        en.schema = _z_bytes_empty();
+    }
+    return en;
+}
+
 _z_value_t gen_value(void) {
     _z_value_t val;
-    val.encoding.prefix = gen_zint();
-    if (gen_bool()) {
-        val.encoding.suffix = gen_bytes(8);
-    } else {
-        val.encoding.suffix = _z_bytes_empty();
-    }
-
+    val.encoding = gen_encoding();
     if (gen_bool()) {
         val.payload = _z_bytes_empty();
     } else {
@@ -532,10 +537,9 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
     assert(left->_entity_id == right->_entity_id);
     assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
 }
-_z_encoding_t gen_encoding(void) { return (_z_encoding_t){.prefix = gen_uint64(), .suffix = gen_bytes(16)}; }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
-    assert(left->prefix == right->prefix);
-    assert_eq_bytes(&left->suffix, &right->suffix);
+    assert(left->id == right->id);
+    assert_eq_bytes(&left->schema, &right->schema);
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
@@ -1310,7 +1314,7 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 2) {
+    switch (gen_uint32() % 2) {
         case 0: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
@@ -1463,9 +1467,9 @@ void init_message(void) {
 
 _z_transport_message_t gen_open(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_open_syn(gen_uint(), gen_uint(), gen_bytes(16));
+        return _z_t_msg_make_open_syn(gen_uint32(), gen_uint32(), gen_bytes(16));
     } else {
-        return _z_t_msg_make_open_ack(gen_uint(), gen_uint());
+        return _z_t_msg_make_open_ack(gen_uint32(), gen_uint32());
     }
 }
 void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
@@ -1583,7 +1587,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
 }
 
 _z_transport_message_t gen_frame(void) {
-    return _z_t_msg_make_frame(gen_uint(), gen_net_msgs(gen_uint8() % 16), gen_bool());
+    return _z_t_msg_make_frame(gen_uint32(), gen_net_msgs(gen_uint8() % 16), gen_bool());
 }
 void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right) {
     assert(left->_sn == right->_sn);
@@ -1609,7 +1613,7 @@ void frame_message(void) {
 }
 
 _z_transport_message_t gen_fragment(void) {
-    return _z_t_msg_make_fragment(gen_uint(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);

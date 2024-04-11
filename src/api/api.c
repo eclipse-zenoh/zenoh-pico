@@ -259,8 +259,7 @@ int8_t zp_scouting_config_insert(z_scouting_config_t sc, uint8_t key, z_string_t
 
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
     return (_z_encoding_t){
-        .prefix = prefix,
-        .suffix = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
+        .id = prefix, .schema = _z_bytes_wrap((const uint8_t *)suffix, (suffix == NULL) ? (size_t)0 : strlen(suffix))};
 }
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
@@ -948,7 +947,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 ._is_alloc = false,
                                 .len = payload_len,
                             },
-                        .encoding = {.prefix = opts.encoding.prefix, .suffix = opts.encoding.suffix}};
+                        .encoding = {.id = opts.encoding.id, .schema = opts.encoding.schema}};
     return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT);
     return _Z_ERR_GENERIC;
 }

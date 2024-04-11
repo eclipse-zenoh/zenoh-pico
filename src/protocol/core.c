@@ -73,8 +73,8 @@ _z_value_t _z_value_steal(_z_value_t *value) {
     return ret;
 }
 void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
-    dst->encoding.prefix = src->encoding.prefix;
-    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
+    dst->encoding.id = src->encoding.id;
+    _z_bytes_copy(&dst->encoding.schema, &src->encoding.schema);
     _z_bytes_copy(&dst->payload, &src->payload);
 }
 
