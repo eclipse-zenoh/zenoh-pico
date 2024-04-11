@@ -13,7 +13,21 @@
 #
 cmake_minimum_required(VERSION 3.13)
 
-project(zenohpico VERSION 0.11.0.0 LANGUAGES C)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
+
+project(zenohpico VERSION ${version} LANGUAGES C)
+
+# Configure header file to define the project version
+set(ZENOH_PICO ${PROJECT_VERSION})
+set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
+set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
+set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
+set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  @ONLY
+)
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
