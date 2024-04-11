@@ -27,6 +27,8 @@
         sample.payload.start = (const uint8_t *)v; \
         sample.payload.len = strlen(v);            \
         sample.keyexpr = _z_rname("key");          \
+        sample.timestamp = _z_timestamp_null();    \
+        sample.encoding = z_encoding_default();    \
         z_call(channel.send, &sample);             \
     } while (0);
 

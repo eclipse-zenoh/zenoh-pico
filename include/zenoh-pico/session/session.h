@@ -48,6 +48,7 @@ typedef struct {
 } _z_reply_data_t;
 
 void _z_reply_data_clear(_z_reply_data_t *rd);
+void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src);
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
@@ -67,6 +68,7 @@ typedef struct {
 } _z_reply_t;
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
+void _z_reply_copy(_z_reply_t *dst, _z_reply_t *src);
 
 typedef struct {
     _z_keyexpr_t _key;
