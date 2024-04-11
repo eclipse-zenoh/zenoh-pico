@@ -238,11 +238,11 @@ _z_locator_array_t gen_locator_array(size_t size) {
 
 _z_encoding_t gen_encoding(void) {
     _z_encoding_t en;
-    en.prefix = gen_uint32() & 0x7fffffff;
+    en.id = gen_uint16();
     if (gen_bool()) {
-        en.suffix = gen_bytes(16);
+        en.schema = gen_bytes(16);
     } else {
-        en.suffix = _z_bytes_empty();
+        en.schema = _z_bytes_empty();
     }
     return en;
 }
@@ -538,8 +538,8 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
     assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
 }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
-    assert(left->prefix == right->prefix);
-    assert_eq_bytes(&left->suffix, &right->suffix);
+    assert(left->id == right->id);
+    assert_eq_bytes(&left->schema, &right->schema);
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);

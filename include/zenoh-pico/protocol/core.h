@@ -59,8 +59,8 @@ _z_id_t _z_id_empty(void);
  * A zenoh encoding.
  */
 typedef struct {
-    _z_bytes_t suffix;
-    z_encoding_prefix_t prefix;
+    _z_bytes_t schema;
+    uint16_t id;
 } _z_encoding_t;
 
 /**
