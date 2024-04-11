@@ -25,7 +25,7 @@ typedef size_t (*z_element_size_f)(void *e);
 typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
-typedef void (*z_element_move_f)(void *dst, const void *src);
+typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
 typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
 

@@ -535,6 +535,27 @@ typedef struct {
 
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
 
+typedef void (*_z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
+
+/**
+ * Represents the owned query closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
+ *   _z_owned_query_handler_t call: `void *call(const struct z_owned_query_t*, const void *context)` is the callback
+ *   function.
+ * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
+ *   pointer to an arbitrary state.
+ */
+typedef struct {
+    void *context;
+    _z_owned_query_handler_t call;
+    _z_dropper_handler_t drop;
+} z_owned_closure_owned_query_t;
+
+void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_owned_query_t *query);
+
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
 
 /**
@@ -543,8 +564,8 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(z_owned_reply_t reply, void *arg)` is the callback
- * function.
+ *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(const z_owned_reply_t *reply, void *arg)` is the
+ * callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */

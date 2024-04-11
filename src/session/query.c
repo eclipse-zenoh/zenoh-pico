@@ -46,6 +46,11 @@ void _z_reply_free(_z_reply_t **reply) {
     }
 }
 
+void _z_reply_copy(_z_reply_t *dst, _z_reply_t *src) {
+    _z_reply_data_copy(&dst->data, &src->data);
+    dst->_tag = src->_tag;
+}
+
 _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
     return one->_tstamp.time == two->_tstamp.time;
 }

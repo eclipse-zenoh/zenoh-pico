@@ -328,6 +328,12 @@ void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_
     }
 }
 
+void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_owned_query_t *query) {
+    if (closure->call != NULL) {
+        (closure->call)(query, closure->context);
+    }
+}
+
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
@@ -409,6 +415,14 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         }                                                                        \
     }
 
+#define OWNED_FUNCTIONS_PTR_RC(type, ownedtype, name)                                                          \
+    _Bool z_##name##_check(const ownedtype *val) { return val->_rc.in != NULL; }                               \
+    type z_##name##_loan(const ownedtype *val) { return (type){._val = (ownedtype){._rc.in = val->_rc.in}}; }  \
+    ownedtype z_##name##_null(void) { return (ownedtype){._rc.in = NULL}; }                                    \
+    ownedtype *z_##name##_move(ownedtype *val) { return val; }                                                 \
+    ownedtype z_##name##_clone(ownedtype *val) { return (ownedtype){._rc = _z_##name##_rc_clone(&val->_rc)}; } \
+    void z_##name##_drop(ownedtype *val) { _z_##name##_rc_drop(&val->_rc); }
+
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
     (void)(src);
@@ -469,6 +483,11 @@ z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_
     return (z_owned_closure_query_t){.call = call, .drop = drop, .context = context};
 }
 
+z_owned_closure_owned_query_t z_closure_owned_query(_z_owned_query_handler_t call, _z_dropper_handler_t drop,
+                                                    void *context) {
+    return (z_owned_closure_owned_query_t){.call = call, .drop = drop, .context = context};
+}
+
 z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper_handler_t drop, void *context) {
     return (z_owned_closure_reply_t){.call = call, .drop = drop, .context = context};
 }
@@ -484,6 +503,7 @@ z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t dr
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
@@ -891,6 +911,7 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
+OWNED_FUNCTIONS_PTR_RC(z_query_t, z_owned_query_t, query)
 OWNED_FUNCTIONS_PTR_COMMON(z_queryable_t, z_owned_queryable_t, queryable)
 OWNED_FUNCTIONS_PTR_CLONE(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_copy)
 void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }

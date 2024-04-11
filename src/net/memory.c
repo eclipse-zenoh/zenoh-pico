@@ -103,6 +103,11 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
     }
 }
 
+void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src) {
+    _z_sample_copy(&dst->sample, &src->sample);
+    dst->replier_id = src->replier_id;
+}
+
 void _z_value_clear(_z_value_t *value) {
     _z_bytes_clear(&value->encoding.schema);
     _z_bytes_clear(&value->payload);
