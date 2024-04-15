@@ -103,7 +103,7 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
+          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY --attachment 1
         timeout-minutes: 5
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
