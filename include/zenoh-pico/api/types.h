@@ -264,9 +264,7 @@ typedef struct {
  */
 typedef struct {
     z_encoding_t encoding;
-#if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment;
-#endif
 } z_query_reply_options_t;
 
 /**

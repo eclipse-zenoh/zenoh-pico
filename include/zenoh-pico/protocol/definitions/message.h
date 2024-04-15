@@ -101,9 +101,7 @@ typedef struct {
     _z_source_info_t _ext_info;
     _z_value_t _ext_value;
     z_consolidation_mode_t _consolidation;
-#if Z_FEATURE_ATTACHMENT == 1
     _z_owned_encoded_attachment_t _ext_attachment;
-#endif
 } _z_msg_query_t;
 typedef struct {
     _Bool info;
