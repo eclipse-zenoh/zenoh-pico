@@ -78,6 +78,8 @@ void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     _z_bytes_copy(&dst->payload, &src->payload);
 }
 
+z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
+
 #if Z_FEATURE_ATTACHMENT == 1
 struct _z_seeker_t {
     _z_bytes_t key;
@@ -130,14 +132,27 @@ z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att
         return att->body.decoded;
     }
 }
-void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att) {
-    if (att->is_encoded) {
-        _z_bytes_clear(&att->body.encoded);
-    }
-}
+
 _Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
+
 int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx) {
     return this_.iteration_driver(this_.data, body, ctx);
 }
-z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
+
+void _z_attachment_copy(z_attachment_t *dst, const z_attachment_t *src) {
+    dst->iteration_driver = src->iteration_driver;
+    // _z_bytes_copy(&dst->data, &src->data);
+}
+
+void z_attachment_drop(z_attachment_t *att) {
+    if (att->iteration_driver == _z_encoded_attachment_iteration_driver) {
+        _z_bytes_clear((z_bytes_t *)att->data);
+    }
+}
+
+#else  // Z_FEATURE_ATTACHMENT == 1
+z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att) {
+    _ZP_UNUSED(att);
+    return z_attachment_null();
+}
 #endif
