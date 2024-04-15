@@ -971,7 +971,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 .len = payload_len,
                             },
                         .encoding = {.id = opts.encoding.id, .schema = opts.encoding.schema}};
-    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT);
+    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
     return _Z_ERR_GENERIC;
 }
 #endif

@@ -199,9 +199,11 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     query: The query to reply to. The caller keeps its ownership.
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
+ *     kind: The type of operation.
+ *     att: The optional attachment to the sample.
  */
 int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind);
+                     const z_sample_kind_t kind, z_attachment_t att);
 #endif
 
 #if Z_FEATURE_QUERY == 1
