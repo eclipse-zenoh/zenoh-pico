@@ -50,9 +50,21 @@ void query_handler(const z_query_t *query, void *ctx) {
 
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+
+#if Z_FEATURE_ATTACHMENT == 1
+    // Add attachment
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hello", 5), _z_bytes_wrap((uint8_t *)"world", 5));
+    options.attachment = z_bytes_map_as_attachment(&map);
+#endif
+
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
     z_drop(z_move(keystr));
     msg_nb++;
+
+#if Z_FEATURE_ATTACHMENT == 1
+    z_bytes_map_drop(&map);
+#endif
 }
 
 int main(int argc, char **argv) {

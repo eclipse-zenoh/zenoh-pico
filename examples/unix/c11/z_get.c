@@ -29,12 +29,27 @@ void reply_dropper(void *ctx) {
     z_condvar_free(&cond);
 }
 
+#if Z_FEATURE_ATTACHMENT == 1
+int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
+    (void)ctx;
+    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)att_value.len, att_value.start);
+    return 0;
+}
+#endif
+
 void reply_handler(z_owned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         z_sample_t sample = z_reply_ok(reply);
         z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
         printf(">> Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample.payload.len, sample.payload.start);
+#if Z_FEATURE_ATTACHMENT == 1
+        if (z_attachment_check(&sample.attachment)) {
+            printf("Attachement found\n");
+            z_attachment_iterate(sample.attachment, attachment_handler, NULL);
+        }
+        z_attachment_drop(&sample.attachment);
+#endif
         z_drop(z_move(keystr));
     } else {
         printf(">> Received an error\n");
@@ -134,6 +149,10 @@ int main(int argc, char **argv) {
     zp_stop_lease_task(z_loan(s));
 
     z_close(z_move(s));
+
+#if Z_FEATURE_ATTACHMENT == 1
+    z_bytes_map_drop(&map);
+#endif
 
     return 0;
 }
