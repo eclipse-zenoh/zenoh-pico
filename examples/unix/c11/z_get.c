@@ -116,6 +116,11 @@ int main(int argc, char **argv) {
     if (value != NULL) {
         opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
     }
+#if Z_FEATURE_ATTACHMENT == 1
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hi", 2), _z_bytes_wrap((uint8_t *)"there", 5));
+    opts.attachment = z_bytes_map_as_attachment(&map);
+#endif
     z_owned_closure_reply_t callback = z_closure(reply_handler, reply_dropper);
     if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
         printf("Unable to send query.\n");

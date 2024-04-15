@@ -23,6 +23,14 @@ const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
 static int msg_nb = 0;
 
+#if Z_FEATURE_ATTACHMENT == 1
+int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
+    (void)ctx;
+    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)att_value.len, att_value.start);
+    return 0;
+}
+#endif
+
 void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
@@ -32,6 +40,14 @@ void query_handler(const z_query_t *query, void *ctx) {
     if (payload_value.payload.len > 0) {
         printf("     with value '%.*s'\n", (int)payload_value.payload.len, payload_value.payload.start);
     }
+#if Z_FEATURE_ATTACHMENT == 1
+    if (z_attachment_check(&query->_val._rc.in->val.attachment)) {
+        printf("Attachement found\n");
+        z_attachment_iterate(query->_val._rc.in->val.attachment, attachment_handler, NULL);
+    }
+    z_attachment_drop(&((z_query_t *)query)->_val._rc.in->val.attachment);
+#endif
+
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
