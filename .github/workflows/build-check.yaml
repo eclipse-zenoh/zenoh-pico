@@ -202,3 +202,38 @@ jobs:
       - name: Kill Zenoh router
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  no_attachment_test:
+    needs: zenoh_build
+    name: Build and test without attachment on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
+
+      - name: Build project and run test
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/modularity.py --pub 1 --sub 1 --queryable 1 --query 1 --attachment 0
+        timeout-minutes: 5
+        env:
+          Z_FEATURE_ATTACHMENT: 0
+
+      - name: Kill Zenoh router
+        if: always()
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}

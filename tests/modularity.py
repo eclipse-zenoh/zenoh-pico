@@ -4,9 +4,19 @@ from signal import SIGINT
 import subprocess
 import sys
 import time
+import difflib
 
 # Specify the directory for the binaries
 DIR_EXAMPLES = "build/examples"
+
+def print_string_diff(str_a, str_b):
+    for i,s in enumerate(difflib.ndiff(str_a, str_b)):
+        if s[0]==' ': continue
+        elif s[0]=='-':
+            print(u'Delete "{}" from position {}'.format(s[-1],i))
+        elif s[0]=='+':
+            print(u'Add "{}" to position {}'.format(s[-1],i))    
+    print() 
 
 def pub_and_sub(args):
     print("*** Pub & sub test ***")
@@ -172,14 +182,16 @@ Sending Query 'demo/example/**'...
                 z_queryable_expected_output = '''Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
->> [Queryable handler] Received Query 'demo/example/**?
+>> [Queryable handler] Received Query 'demo/example/**?'
 Attachement found
->>> hi: there'''
+>>> hi: there
+'''
             else:
                 z_queryable_expected_output = '''Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
->> [Queryable handler] Received Query 'demo/example/**?'''
+>> [Queryable handler] Received Query 'demo/example/**?'
+'''
         else:
             z_queryable_expected_output = '''Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
@@ -263,6 +275,7 @@ Press CTRL-C to quit...'''
         print("z_queryable output invalid:")
         print(f"Expected: \"{z_queryable_expected_output}\"")
         print(f"Received: \"{z_queryable_output}\"")
+        print_string_diff(z_queryable_expected_output, z_queryable_output)
         test_status = 1
     # Return status
     return test_status
