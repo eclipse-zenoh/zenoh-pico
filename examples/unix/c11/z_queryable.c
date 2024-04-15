@@ -21,6 +21,7 @@
 #if Z_FEATURE_QUERYABLE == 1
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
+static int msg_nb = 0;
 
 void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
@@ -35,15 +36,17 @@ void query_handler(const z_query_t *query, void *ctx) {
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
     z_drop(z_move(keystr));
+    msg_nb++;
 }
 
 int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -60,8 +63,12 @@ int main(int argc, char **argv) {
             case 'v':
                 value = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -111,6 +118,9 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (1) {
+        if ((n != 0) && (msg_nb >= n)) {
+            break;
+        }
         sleep(1);
     }
 
