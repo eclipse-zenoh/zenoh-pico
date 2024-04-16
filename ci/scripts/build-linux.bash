@@ -28,7 +28,7 @@ zip "$archive_deb" ./*.deb
 zip "$archive_rpm" ./*.rpm
 cd -
 
-cd crossbuilds/"$archive_examples"/examples
+cd crossbuilds/"$target"/examples
 zip "$archive_examples" ./*
 cd -
 
