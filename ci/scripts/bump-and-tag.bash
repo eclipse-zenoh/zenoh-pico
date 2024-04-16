@@ -21,5 +21,5 @@ git commit version.txt -m "chore: Bump version to $version"
 git tag --force "$version" -m "v$version"
 git log -10
 git show-ref --tags
-git push origin
+git push --force origin
 git push --force origin "$version"
