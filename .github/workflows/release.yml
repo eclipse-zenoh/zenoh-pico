@@ -71,7 +71,7 @@ jobs:
           ref: ${{ needs.tag.outputs.branch }}
 
       - id: pre-build
-        run: bash ci/scrips/pre-build.bash
+        run: bash ci/scripts/pre-build.bash
 
   build-macos:
     name: Build for macOS (x64)
