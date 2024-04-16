@@ -75,7 +75,7 @@ jobs:
 
   build-macos:
     name: Build for macOS (x64)
-    needs: tag
+    needs: [tag, pre-build]
     runs-on: macos-latest
     steps:
       - name: Clone this repository
