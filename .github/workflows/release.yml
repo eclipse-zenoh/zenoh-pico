@@ -169,7 +169,5 @@ jobs:
           live-run: ${{ inputs.live-run || false }}
           version: ${{ needs.tag.outputs.version }}
           branch: ${{ needs.tag.outputs.branch }}
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
           github-token: ${{ secrets.BOT_TOKEN_WORKFLOW }}
           archive-patterns: '.*\.zip'
