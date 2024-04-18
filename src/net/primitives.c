@@ -447,7 +447,7 @@ uint32_t _z_declare_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest
         return 0;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_decl_interest(&keyexpr, intr._id, intr._flags);
+    _z_declaration_t declaration = _z_make_interest(&keyexpr, intr._id, intr._flags);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration);
     if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_interest(zn, sintr);

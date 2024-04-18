@@ -132,52 +132,6 @@ int8_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl) {
     return _z_undecl_encode(wbf, _Z_UNDECL_TOKEN_MID, decl->_id, decl->_ext_keyexpr);
 }
 
-int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
-    // Set header
-    uint8_t header = _Z_DECL_INTEREST_MID;
-    if (_Z_HAS_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_CURRENT)) {
-        _Z_SET_FLAG(header, _Z_INTEREST_FLAG_CURRENT);
-    }
-    if (_Z_HAS_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_FUTURE)) {
-        _Z_SET_FLAG(header, _Z_INTEREST_FLAG_FUTURE);
-    }
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    // Set id
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
-    // Copy flags but clear double use ones.
-    uint8_t interest_flags = decl->interest_flags;
-    _Z_CLEAR_FLAG(interest_flags, _Z_INTEREST_FLAG_CURRENT);
-    _Z_CLEAR_FLAG(interest_flags, _Z_INTEREST_FLAG_FUTURE);
-    // Process restricted flag
-    if (_Z_HAS_FLAG(interest_flags, _Z_INTEREST_FLAG_RESTRICTED)) {
-        // Set Named & Mapping flags
-        _Bool has_kesuffix = _z_keyexpr_has_suffix(decl->_keyexpr);
-        if (has_kesuffix) {
-            _Z_SET_FLAG(interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N);
-        }
-        if (_z_keyexpr_is_local(&decl->_keyexpr)) {
-            _Z_SET_FLAG(interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M);
-        }
-        // Set decl flags & keyexpr
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
-        _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &decl->_keyexpr));
-    } else {
-        // Set decl flags
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, interest_flags));
-    }
-    return _Z_RES_OK;
-}
-
-int8_t _z_final_interest_encode(_z_wbuf_t *wbf, const _z_final_interest_t *decl) {
-    uint8_t header = _Z_FINAL_INTEREST_MID;
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
-    return _Z_RES_OK;
-}
-
-int8_t _z_undecl_interest_encode(_z_wbuf_t *wbf, const _z_undecl_interest_t *decl) {
-    return _z_undecl_encode(wbf, _Z_UNDECL_INTEREST_MID, decl->_id, decl->_ext_keyexpr);
-}
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
     int8_t ret = _Z_RES_OK;
     switch (decl->_tag) {
@@ -205,15 +159,9 @@ int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         case _Z_UNDECL_TOKEN: {
             ret = _z_undecl_token_encode(wbf, &decl->_body._undecl_token);
         } break;
-        case _Z_DECL_INTEREST: {
-            ret = _z_decl_interest_encode(wbf, &decl->_body._decl_interest);
+        case _Z_DECL_FINAL: {
         } break;
-        case _Z_FINAL_INTEREST: {
-            ret = _z_final_interest_encode(wbf, &decl->_body._final_interest);
-        } break;
-        case _Z_UNDECL_INTEREST: {
-            ret = _z_undecl_interest_encode(wbf, &decl->_body._undecl_interest);
-        } break;
+            ;
     }
     return ret;
 }
@@ -367,65 +315,14 @@ int8_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t heade
 int8_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header) {
     return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
 }
-int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = _z_decl_interest_null();
-    // Decode id
-    _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_id, zbf));
-    // Decode interest flags
-    _Z_RETURN_IF_ERR(_z_uint8_decode(&decl->interest_flags, zbf));
-    // Process restricted flag
-    if (_Z_HAS_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_RESTRICTED)) {
-        uint16_t mapping = _Z_HAS_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M)
-                               ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
-                               : _Z_KEYEXPR_MAPPING_LOCAL;
-        // Decode ke id
-        _Z_RETURN_IF_ERR(_z_zint16_decode(&decl->_keyexpr._id, zbf));
-        // Decode ke suffix
-        if (_Z_HAS_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N)) {
-            _z_zint_t len;
-            _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
-            if (_z_zbuf_len(zbf) < len) {
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-            }
-            decl->_keyexpr._suffix = z_malloc(len + 1);
-            if (decl->_keyexpr._suffix == NULL) {
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
-            decl->_keyexpr._mapping = _z_keyexpr_mapping(mapping, true);
-            _z_zbuf_read_bytes(zbf, (uint8_t *)decl->_keyexpr._suffix, 0, len);
-            decl->_keyexpr._suffix[len] = 0;
-        } else {
-            decl->_keyexpr._suffix = NULL;
-            decl->_keyexpr._mapping = _z_keyexpr_mapping(mapping, false);
-        }
-    }
-    // Replace named & mapping by current & future flags
-    _Z_CLEAR_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_M);
-    _Z_CLEAR_FLAG(decl->interest_flags, _Z_DECL_SUBSCRIBER_FLAG_N);
-    if (_Z_HAS_FLAG(header, _Z_INTEREST_FLAG_CURRENT)) {
-        _Z_SET_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_CURRENT);
-    }
-    if (_Z_HAS_FLAG(header, _Z_INTEREST_FLAG_FUTURE)) {
-        _Z_SET_FLAG(decl->interest_flags, _Z_INTEREST_FLAG_FUTURE);
-    }
-    // Decode extention
+
+int8_t _z_decl_final_decode(_z_decl_final_t *decl, _z_zbuf_t *zbf, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x13));
     }
     return _Z_RES_OK;
 }
-int8_t _z_final_interest_decode(_z_final_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = _z_final_interest_null();
-    _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_id, zbf));
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
-        _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x10));
-    }
-    return _Z_RES_OK;
-}
-int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = _z_undecl_interest_null();
-    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
-}
+
 int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
@@ -463,17 +360,9 @@ int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
             decl->_tag = _Z_UNDECL_TOKEN;
             ret = _z_undecl_token_decode(&decl->_body._undecl_token, zbf, header);
         } break;
-        case _Z_DECL_INTEREST_MID: {
-            decl->_tag = _Z_DECL_INTEREST;
-            ret = _z_decl_interest_decode(&decl->_body._decl_interest, zbf, header);
-        } break;
-        case _Z_FINAL_INTEREST_MID: {
-            decl->_tag = _Z_FINAL_INTEREST;
-            ret = _z_final_interest_decode(&decl->_body._final_interest, zbf, header);
-        } break;
-        case _Z_UNDECL_INTEREST_MID: {
-            decl->_tag = _Z_UNDECL_INTEREST;
-            ret = _z_undecl_interest_decode(&decl->_body._undecl_interest, zbf, header);
+        case _Z_DECL_FINAL_MID: {
+            decl->_tag = _Z_DECL_FINAL;
+            ret = _z_decl_final_decode(&decl->_body._decl_final, zbf, header);
         } break;
         default: {
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;

@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -31,6 +32,7 @@
 #define _Z_MID_N_REQUEST 0x1c
 #define _Z_MID_N_RESPONSE 0x1b
 #define _Z_MID_N_RESPONSE_FINAL 0x1a
+#define _Z_MID_N_INTEREST 0x19
 
 /*=============================*/
 /*        Network flags        */
@@ -42,6 +44,13 @@
 // - X: Reserved
 // - Z: Extension      If Z==1 then Zenoh extensions are present
 #define _Z_FLAG_N_DECLARE_I 0x20  // 1 << 5
+
+// INTEREST message flags:
+// - C: Current       If C==1 then interest concerns current declarations
+// - F: Future        If F==1 then interest concerns future declarations
+// - Z: Extension     If Z==1 then Zenoh extensions are present
+#define _Z_FLAG_N_INTEREST_CURRENT 0x20  // 1 << 5
+#define _Z_FLAG_N_INTEREST_FUTURE 0x40   // 1 << 6
 
 // PUSH message flags:
 //      N Named            if N==1 then the key expr has name/suffix
@@ -210,12 +219,55 @@ typedef struct {
 } _z_n_msg_response_t;
 void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
 
+/*------------------ Declare Message ------------------*/
+
 typedef struct {
     _z_declaration_t _decl;
     _z_timestamp_t _ext_timestamp;
     _z_n_qos_t _ext_qos;
+    uint32_t _interest_id;
+    _Bool has_interest_id;
 } _z_n_msg_declare_t;
 static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
+
+/*------------------ Interest Message ------------------*/
+
+/// Flags:
+/// - C: Current       If C==1 then interest concerns current declarations
+/// - F: Future        If F==1 then interest concerns future declarations
+/// - Z: Extension     If Z==1 then Zenoh extensions are present
+/// If C==0 and F==0, then interest is final
+///
+/// 7 6 5 4 3 2 1 0
+/// +-+-+-+-+-+-+-+-+
+/// |Z|CF|INTEREST |
+/// +-+-+-+---------+
+/// ~    id:z32     ~
+/// +---------------+
+/// |A|M|N|R|T|Q|S|K|  (*) if interest is not final
+/// +---------------+
+/// ~ key_scope:z16 ~  if interest is not final && R==1
+/// +---------------+
+/// ~  key_suffix   ~  if interest is not final && R==1 && N==1 -- <u8;z16>
+/// +---------------+
+/// ~  [int_exts]   ~  if Z==1
+/// +---------------+
+///
+/// (*) - if K==1 then the interest refers to key expressions
+///     - if S==1 then the interest refers to subscribers
+///     - if Q==1 then the interest refers to queryables
+///     - if T==1 then the interest refers to tokens
+///     - if R==1 then the interest is restricted to the matching key expression, else it is for all key expressions.
+///     - if N==1 then the key expr has name/suffix. If R==0 then N should be set to 0.
+///     - if M==1 then key expr mapping is the one declared by the sender, else it is the one declared by the receiver.
+///               If R==0 then M should be set to 0.
+///     - if A==1 then the replies SHOULD be aggregated
+/// ```
+
+typedef struct {
+    _z_interest_t _interest;
+} _z_n_msg_interest_t;
+static inline void _z_n_msg_interest_clear(_z_n_msg_interest_t *msg) { _z_interest_clear(&msg->_interest); }
 
 /*------------------ Zenoh Message ------------------*/
 typedef union {
@@ -224,9 +276,10 @@ typedef union {
     _z_n_msg_request_t _request;
     _z_n_msg_response_t _response;
     _z_n_msg_response_final_t _response_final;
+    _z_n_msg_interest_t _interest;
 } _z_network_body_t;
 typedef struct {
-    enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL } _tag;
+    enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL, _Z_N_INTEREST } _tag;
     _z_network_body_t _body;
 } _z_network_message_t;
 typedef _z_network_message_t _z_zenoh_message_t;
@@ -250,5 +303,6 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
+_z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */

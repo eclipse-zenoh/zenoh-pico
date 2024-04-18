@@ -173,8 +173,8 @@ static int8_t _z_send_queryable_interest(_z_session_t *zn) {
 }
 #endif
 
-static int8_t _z_interest_send_final_interest(_z_session_t *zn, uint32_t id) {
-    _z_declaration_t decl = _z_make_final_interest(id);
+static int8_t _z_interest_send_interest_final(_z_session_t *zn, uint32_t id) {
+    _z_declaration_t decl = _z_make_interest_final(id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(decl);
     if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -355,7 +355,7 @@ void _z_flush_interest(_z_session_t *zn) {
     _zp_session_unlock_mutex(zn);
 }
 
-int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id) {
+int8_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id) {
     _z_interest_msg_t msg = {.type = _Z_INTEREST_MSG_TYPE_FINAL, .id = id};
     // Retrieve interest
     _zp_session_lock_mutex(zn);
@@ -371,14 +371,14 @@ int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id) {
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
+int8_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
     // Update future masks
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
+int8_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
     // TODO process restricted flag & key
     _ZP_UNUSED(key);
     _ZP_UNUSED(id);
@@ -405,7 +405,7 @@ int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, 
             // Zenoh pico doesn't support liveliness token for now
         }
         // Send final declare
-        _Z_RETURN_IF_ERR(_z_interest_send_final_interest(zn, id));
+        _Z_RETURN_IF_ERR(_z_interest_send_interest_final(zn, id));
     }
     return _Z_RES_OK;
 }
@@ -425,19 +425,19 @@ int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id) {
+int8_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_process_undeclare_interest(_z_session_t *zn, uint32_t id) {
+int8_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
+int8_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(key);
     _ZP_UNUSED(id);

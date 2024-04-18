@@ -52,17 +52,6 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_UNDECL_KEXPR: {
                     _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
                 } break;
-                case _Z_DECL_INTEREST: {
-                    _z_interest_process_declare_interest(zn, decl._decl._body._decl_interest._keyexpr,
-                                                         decl._decl._body._decl_interest._id,
-                                                         decl._decl._body._decl_interest.interest_flags);
-                } break;
-                case _Z_UNDECL_INTEREST: {
-                    _z_interest_process_undeclare_interest(zn, decl._decl._body._undecl_interest._id);
-                } break;
-                case _Z_FINAL_INTEREST: {
-                    _z_interest_process_final_interest(zn, decl._decl._body._final_interest._id);
-                } break;
                 case _Z_DECL_SUBSCRIBER: {
                     _z_interest_process_declares(zn, &decl._decl);
                 } break;
@@ -80,6 +69,13 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 } break;
                 case _Z_UNDECL_TOKEN: {
                     // TODO: add support or explicitly discard
+                } break;
+                case _Z_DECL_FINAL: {
+                    // Check that interest id is valid
+                    if (!decl.has_interest_id) {
+                        return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
+                    }
+                    _z_interest_process_declare_final(zn, decl._interest_id);
                 } break;
             }
         } break;
@@ -160,6 +156,19 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL");
             ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
         } break;
+
+        case _Z_N_INTEREST: {
+            _Z_DEBUG("Handling _Z_N_INTEREST");
+            _z_n_msg_interest_t *interest = &msg->_body._interest;
+
+            _Bool is_final = ((interest->_interest.flags & _Z_INTEREST_IS_FINAL_MASK) != 0);
+            if (is_final) {
+                _z_interest_process_interest_final(zn, interest->_interest._id);
+            } else {
+                _z_interest_process_interest(zn, interest->_interest._keyexpr, interest->_interest._id,
+                                             interest->_interest.flags);
+            }
+        }
     }
     _z_msg_clear(msg);
     return ret;
