@@ -34,7 +34,7 @@ typedef struct {
 /**
  * Return type when declaring a queryable.
  */
-typedef struct _z_interest_t {
+typedef struct _z_write_filter_t {
     uint32_t _interest_id;
     _z_writer_filter_ctx_t *ctx;
 } _z_write_filter_t;
