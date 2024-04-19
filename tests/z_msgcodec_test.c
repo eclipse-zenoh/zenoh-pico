@@ -31,9 +31,11 @@
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/declarations.h"
 #include "zenoh-pico/protocol/codec/ext.h"
+#include "zenoh-pico/protocol/codec/interest.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -381,7 +383,7 @@ void assert_eq_unit_extension(_z_msg_ext_unit_t *left, _z_msg_ext_unit_t *right)
 
 void unit_extension(void) {
     printf("\n>> UNIT Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_unit_extension();
@@ -422,7 +424,7 @@ void assert_eq_zint_extension(_z_msg_ext_zint_t *left, _z_msg_ext_zint_t *right)
 
 void zint_extension(void) {
     printf("\n>> ZINT Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_zint_extension();
@@ -464,7 +466,7 @@ void assert_eq_zbuf_extension(_z_msg_ext_zbuf_t *left, _z_msg_ext_zbuf_t *right)
 
 void zbuf_extension(void) {
     printf("\n>> ZBUF Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_zbuf_extension();
@@ -500,7 +502,7 @@ void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) { assert_e
 
 void payload_field(void) {
     printf("\n>> Payload field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_bytes_t e_pld = gen_payload(64);
@@ -571,7 +573,7 @@ void assert_eq_timestamp(const _z_timestamp_t *left, const _z_timestamp_t *right
 
 void timestamp_field(void) {
     printf("\n>> Timestamp field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_timestamp_t e_ts = gen_timestamp();
@@ -649,7 +651,7 @@ void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
 
 void keyexpr_field(void) {
     printf("\n>> ResKey field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_keyexpr_t e_rk = gen_keyexpr();
@@ -693,7 +695,7 @@ void assert_eq_resource_declaration(const _z_decl_kexpr_t *left, const _z_decl_k
 
 void resource_declaration(void) {
     printf("\n>> Resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_kexpr_t e_rd = gen_resource_declaration();
@@ -739,7 +741,7 @@ void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z
 
 void subscriber_declaration(void) {
     printf("\n>> Subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_subscriber_t e_sd = gen_subscriber_declaration();
@@ -787,7 +789,7 @@ void assert_eq_queryable_declaration(const _z_decl_queryable_t *left, const _z_d
 
 void queryable_declaration(void) {
     printf("\n>> Queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_queryable_t e_qd = gen_queryable_declaration();
@@ -832,7 +834,7 @@ void assert_eq_forget_resource_declaration(const _z_undecl_kexpr_t *left, const 
 
 void forget_resource_declaration(void) {
     printf("\n>> Forget resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_kexpr_t e_frd = gen_forget_resource_declaration();
@@ -873,7 +875,7 @@ void assert_eq_forget_subscriber_declaration(const _z_undecl_subscriber_t *left,
 
 void forget_subscriber_declaration(void) {
     printf("\n>> Forget subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_subscriber_t e_fsd = gen_forget_subscriber_declaration();
@@ -915,7 +917,7 @@ void assert_eq_forget_queryable_declaration(const _z_undecl_queryable_t *left, c
 
 void forget_queryable_declaration(void) {
     printf("\n>> Forget queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_queryable_t e_fqd = gen_forget_queryable_declaration();
@@ -1024,7 +1026,7 @@ void assert_eq_declare_message(_z_n_msg_declare_t *left, _z_n_msg_declare_t *rig
 
 void declare_message(void) {
     printf("\n>> Declare message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_network_message_t n_msg = gen_declare_message();
@@ -1045,6 +1047,72 @@ void declare_message(void) {
     // Free
     _z_n_msg_clear(&d_dcl);
     _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Interest ------------------*/
+#define _Z_MSGCODEC_INTEREST_MASK 0x9f  // Used to remove C & F flags
+
+_z_interest_t gen_interest(void) {
+    _z_interest_t i = {0};
+    uint8_t type = gen_uint8() % 10;  // 1/9 interest final to interest ratio
+    uint8_t base_flags = gen_uint8() & _Z_MSGCODEC_INTEREST_MASK;
+    // Generate interest final base
+    i.flags = base_flags;
+    printf("Gen interest: %d\n", type);
+    // Generate regular interest
+    if (type != 0) {
+        uint8_t cf_type = gen_uint8() % 3;  // c, f, or cf flags
+        switch (cf_type) {
+            default:
+            case 0:
+                i.flags |= _Z_INTEREST_FLAG_CURRENT;
+                break;
+            case 1:
+                i.flags |= _Z_INTEREST_FLAG_FUTURE;
+                break;
+            case 2:
+                i.flags |= _Z_INTEREST_IS_FINAL_MASK;
+                break;
+        }
+        i._id = gen_uint32();
+        i._keyexpr = gen_keyexpr();
+    };
+    return i;
+}
+
+_z_network_message_t gen_interest_message(void) {
+    _z_interest_t interest = gen_interest();
+    return _z_n_msg_make_interest(interest);
+}
+
+void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
+    printf("Interest: 0x%x, 0x%x, %u, %u\n", left->flags, right->flags, left->_id, right->_id);
+    printf("Interest ke: %d, %d, %d, %d, %s, %s\n", left->_keyexpr._id, right->_keyexpr._id,
+           left->_keyexpr._mapping._val, right->_keyexpr._mapping._val, left->_keyexpr._suffix,
+           right->_keyexpr._suffix);
+    assert(left->flags == right->flags);
+    assert(left->_id == right->_id);
+    assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
+}
+void interest_message(void) {
+    printf("\n>> Interest message\n");
+    // Init
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_network_message_t expected = gen_interest_message();
+    // Encode
+    assert(_z_n_interest_encode(&wbf, &expected._body._interest) == _Z_RES_OK);
+    // Decode
+    _z_n_msg_interest_t decoded;
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
+    assert(_z_n_interest_decode(&decoded, &zbf, header) == _Z_RES_OK);
+    // Check
+    assert_eq_interest(&expected._body._interest._interest, &decoded._interest);
+    // Clean-up
+    _z_n_msg_interest_clear(&decoded);
+    _z_n_msg_interest_clear(&expected._body._interest);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1085,7 +1153,7 @@ void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right
 
 void push_body_message(void) {
     printf("\n>> Put/Del message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_push_body_t e_da = gen_push_body();
@@ -1534,7 +1602,8 @@ void keep_alive_message(void) {
     _z_wbuf_clear(&wbf);
 }
 _z_network_message_t gen_net_msg(void) {
-    switch (gen_uint8() % 5) {
+    switch (gen_uint8() % 6) {
+        default:
         case 0: {
             return gen_declare_message();
         } break;
@@ -1547,9 +1616,11 @@ _z_network_message_t gen_net_msg(void) {
         case 3: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
         } break;
-        case 4:
-        default: {
+        case 4: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
+        } break;
+        case 5: {
+            return (_z_network_message_t){._tag = _Z_N_INTEREST, ._body._interest._interest = gen_interest()};
         } break;
     }
 }
@@ -1573,6 +1644,12 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
         case _Z_N_RESPONSE_FINAL: {
             assert_eq_response_final(&left->_body._response_final, &right->_body._response_final);
         } break;
+        case _Z_N_INTEREST: {
+            assert_eq_interest(&left->_body._interest._interest, &right->_body._interest._interest);
+        } break;
+        default:
+            assert(false);
+            break;
     }
 }
 _z_network_message_vec_t gen_net_msgs(size_t n) {
@@ -1777,6 +1854,7 @@ int main(void) {
         query_message();
         err_message();
         reply_message();
+        interest_message();
 
         // Network messages
         push_message();
