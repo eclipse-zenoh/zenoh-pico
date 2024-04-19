@@ -78,27 +78,11 @@ int8_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, _Bool is_fina
         _Z_RETURN_IF_ERR(_z_uint8_decode(&flags, zbf));
         // Process restricted flag
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
-            uint16_t mapping = _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
-                                                                            : _Z_KEYEXPR_MAPPING_LOCAL;
-            // Decode ke id
-            _Z_RETURN_IF_ERR(_z_zint16_decode(&interest->_keyexpr._id, zbf));
-            // Decode ke suffix
-            if (_Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N)) {
-                _z_zint_t len;
-                _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
-                if (_z_zbuf_len(zbf) < len) {
-                    return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-                }
-                interest->_keyexpr._suffix = z_malloc(len + 1);
-                if (interest->_keyexpr._suffix == NULL) {
-                    return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-                }
-                interest->_keyexpr._mapping = _z_keyexpr_mapping(mapping, true);
-                _z_zbuf_read_bytes(zbf, (uint8_t *)interest->_keyexpr._suffix, 0, len);
-                interest->_keyexpr._suffix[len] = 0;
-            } else {
-                interest->_keyexpr._suffix = NULL;
-                interest->_keyexpr._mapping = _z_keyexpr_mapping(mapping, false);
+            // Decode ke
+            _Z_RETURN_IF_ERR(_z_keyexpr_decode(&interest->_keyexpr, zbf, _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N)));
+            // Set mapping
+            if (_Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M)) {
+                _z_keyexpr_set_mapping(&interest->_keyexpr, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
             }
         }
         // Store interest flags (current and future already processed)

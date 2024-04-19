@@ -1052,18 +1052,21 @@ void declare_message(void) {
 }
 
 /*------------------ Interest ------------------*/
-#define _Z_MSGCODEC_INTEREST_MASK 0x9f  // Used to remove C & F flags
+#define _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK 0x8f  // Used to remove R, C & F flags
 
 _z_interest_t gen_interest(void) {
     _z_interest_t i = {0};
-    uint8_t type = gen_uint8() % 10;  // 1/9 interest final to interest ratio
-    uint8_t base_flags = gen_uint8() & _Z_MSGCODEC_INTEREST_MASK;
-    // Generate interest final base
-    i.flags = base_flags;
-    printf("Gen interest: %d\n", type);
-    // Generate regular interest
-    if (type != 0) {
-        uint8_t cf_type = gen_uint8() % 3;  // c, f, or cf flags
+    _Bool is_final = gen_bool();  // To determine if interest is final or not
+    // Generate interest id
+    i._id = gen_uint32();
+    printf("Gen interest %d\n", is_final);
+    // Add regular interest data
+    if (!is_final) {
+        // Generate base flags
+        i.flags = gen_uint8() & _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK;
+        // Generate test cases
+        _Bool is_restricted = gen_bool();
+        uint8_t cf_type = gen_uint8() % 3;  // Flags must be c, f or cf
         switch (cf_type) {
             default:
             case 0:
@@ -1076,8 +1079,11 @@ _z_interest_t gen_interest(void) {
                 i.flags |= _Z_INTEREST_IS_FINAL_MASK;
                 break;
         }
-        i._id = gen_uint32();
-        i._keyexpr = gen_keyexpr();
+        if (is_restricted) {
+            i.flags |= _Z_INTEREST_FLAG_RESTRICTED;
+            // Generate ke
+            i._keyexpr = gen_keyexpr();
+        }
     };
     return i;
 }
