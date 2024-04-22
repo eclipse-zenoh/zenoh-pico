@@ -84,8 +84,8 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
     ctx->decl_id = 0;
 
     pub->_filter.ctx = ctx;
-    pub->_filter._interest_id = _z_declare_interest(&pub->_zn.in->val, _z_keyexpr_alias(pub->_key),
-                                                    _z_write_filter_callback, flags, (void *)ctx);
+    pub->_filter._interest_id =
+        _z_add_interest(&pub->_zn.in->val, _z_keyexpr_alias(pub->_key), _z_write_filter_callback, flags, (void *)ctx);
     if (pub->_filter._interest_id == 0) {
         z_free(ctx);
         return _Z_ERR_GENERIC;
@@ -94,7 +94,7 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
 }
 
 int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
-    _Z_RETURN_IF_ERR(_z_undeclare_interest(&pub->_zn.in->val, pub->_filter._interest_id));
+    _Z_RETURN_IF_ERR(_z_remove_interest(&pub->_zn.in->val, pub->_filter._interest_id));
     z_free(pub->_filter.ctx);
     return _Z_RES_OK;
 }
