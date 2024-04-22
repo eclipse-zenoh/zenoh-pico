@@ -131,6 +131,11 @@ int8_t _z_decl_token_encode(_z_wbuf_t *wbf, const _z_decl_token_t *decl) {
 int8_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl) {
     return _z_undecl_encode(wbf, _Z_UNDECL_TOKEN_MID, decl->_id, decl->_ext_keyexpr);
 }
+int8_t _z_decl_final_encode(_z_wbuf_t *wbf) {
+    uint8_t header = _Z_DECL_FINAL_MID;
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    return _Z_RES_OK;
+}
 
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
     int8_t ret = _Z_RES_OK;
@@ -160,6 +165,7 @@ int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
             ret = _z_undecl_token_encode(wbf, &decl->_body._undecl_token);
         } break;
         case _Z_DECL_FINAL: {
+            ret = _z_decl_final_encode(wbf);
         } break;
             ;
     }
