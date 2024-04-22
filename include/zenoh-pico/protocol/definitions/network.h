@@ -301,7 +301,7 @@ _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_byt
 );
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
-_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interestè_id, uint32_t interest_id);
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
 
