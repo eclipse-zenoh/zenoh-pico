@@ -173,11 +173,13 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
         ._body = {._response_final = {._request_id = rid}},
     };
 }
-_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration) {
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id) {
     return (_z_network_message_t){
         ._tag = _Z_N_DECLARE,
         ._body._declare =
             {
+                .has_interest_id = has_interest_id,
+                ._interest_id = interest_id,
                 ._decl = declaration,
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_timestamp = _z_timestamp_null(),
