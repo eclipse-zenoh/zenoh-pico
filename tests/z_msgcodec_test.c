@@ -1081,7 +1081,7 @@ _z_interest_t gen_interest(void) {
                 i.flags |= _Z_INTEREST_FLAG_FUTURE;
                 break;
             case 2:
-                i.flags |= _Z_INTEREST_IS_FINAL_MASK;
+                i.flags |= (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE);
                 break;
         }
         if (is_restricted) {

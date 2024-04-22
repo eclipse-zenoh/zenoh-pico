@@ -161,12 +161,12 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _Z_DEBUG("Handling _Z_N_INTEREST");
             _z_n_msg_interest_t *interest = &msg->_body._interest;
 
-            _Bool is_final = ((interest->_interest.flags & _Z_INTEREST_IS_FINAL_MASK) != 0);
-            if (is_final) {
-                _z_interest_process_interest_final(zn, interest->_interest._id);
-            } else {
+            _Bool not_final = ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0);
+            if (not_final) {
                 _z_interest_process_interest(zn, interest->_interest._keyexpr, interest->_interest._id,
                                              interest->_interest.flags);
+            } else {
+                _z_interest_process_interest_final(zn, interest->_interest._id);
             }
         }
     }
