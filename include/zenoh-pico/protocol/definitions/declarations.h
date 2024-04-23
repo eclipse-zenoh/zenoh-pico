@@ -71,7 +71,7 @@ typedef struct {
 _z_undecl_token_t _z_undecl_token_null(void);
 
 typedef struct {
-    _Bool foo;
+    _Bool _placeholder;  // In case we add extensions
 } _z_decl_final_t;
 _z_decl_final_t _z_decl_final_null(void);
 
