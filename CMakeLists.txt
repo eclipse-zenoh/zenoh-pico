@@ -133,7 +133,7 @@ set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
 set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
 set(Z_FEATURE_ATTACHMENT 1 CACHE STRING "Toggle attachment feature")
-set(Z_FEATURE_INTEREST 0 CACHE STRING "Toggle interest feature") # Toggle to 1 when protocol changes are merged
+set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interest feature") # Toggle to 1 when protocol changes are merged
 add_definition(Z_FEATURE_MULTI_THREAD=${Z_FEATURE_MULTI_THREAD})
 add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
 add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
