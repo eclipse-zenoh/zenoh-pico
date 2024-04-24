@@ -48,7 +48,6 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
             printf("Attachement found\n");
             z_attachment_iterate(sample.attachment, attachment_handler, NULL);
         }
-        z_attachment_drop(&sample.attachment);
 #endif
         z_drop(z_move(keystr));
     } else {

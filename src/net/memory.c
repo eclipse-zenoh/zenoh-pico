@@ -36,6 +36,9 @@ void _z_sample_clear(_z_sample_t *sample) {
     _z_bytes_clear(&sample->payload);
     _z_bytes_clear(&sample->encoding.schema);  // FIXME: call the z_encoding_clear
     _z_timestamp_clear(&sample->timestamp);
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_drop(&sample->attachment);
+#endif
 }
 
 void _z_sample_free(_z_sample_t **sample) {
