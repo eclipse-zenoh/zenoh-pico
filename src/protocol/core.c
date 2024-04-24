@@ -127,7 +127,13 @@ int8_t _z_encoded_attachment_iteration_driver(const void *this_, z_attachment_it
 
 z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att) {
     if (att->is_encoded) {
-        return (z_attachment_t){.data = &att->body.encoded, .iteration_driver = _z_encoded_attachment_iteration_driver};
+        // Recopy z_bytes data in allocated memory to avoid it going out of scope
+        z_bytes_t *att_data = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+        if (att_data == NULL) {
+            return att->body.decoded;
+        }
+        *att_data = att->body.encoded;
+        return (z_attachment_t){.data = att_data, .iteration_driver = _z_encoded_attachment_iteration_driver};
     } else {
         return att->body.decoded;
     }
@@ -147,6 +153,7 @@ void _z_attachment_copy(z_attachment_t *dst, const z_attachment_t *src) {
 void z_attachment_drop(z_attachment_t *att) {
     if (att->iteration_driver == _z_encoded_attachment_iteration_driver) {
         _z_bytes_clear((z_bytes_t *)att->data);
+        z_free((z_bytes_t *)att->data);
     }
 }
 
