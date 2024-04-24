@@ -94,7 +94,7 @@ void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
 }
 
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
-    _z_bytes_t dst;
+    _z_bytes_t dst = _z_bytes_empty();
     _z_bytes_copy(&dst, src);
     return dst;
 }
