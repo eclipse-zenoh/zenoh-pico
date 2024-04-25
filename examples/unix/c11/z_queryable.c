@@ -41,11 +41,12 @@ void query_handler(const z_query_t *query, void *ctx) {
         printf("     with value '%.*s'\n", (int)payload_value.payload.len, payload_value.payload.start);
     }
 #if Z_FEATURE_ATTACHMENT == 1
-    if (z_attachment_check(&query->_val._rc.in->val.attachment)) {
+    z_attachment_t attachment = z_query_attachment(query);
+    if (z_attachment_check(&attachment)) {
         printf("Attachement found\n");
-        z_attachment_iterate(query->_val._rc.in->val.attachment, attachment_handler, NULL);
+        z_attachment_iterate(attachment, attachment_handler, NULL);
     }
-    z_attachment_drop(&((z_query_t *)query)->_val._rc.in->val.attachment);
+    z_attachment_drop(&attachment);
 #endif
 
     z_query_reply_options_t options = z_query_reply_options_default();
