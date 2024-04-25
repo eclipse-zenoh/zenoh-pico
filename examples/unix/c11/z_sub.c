@@ -42,7 +42,6 @@ void data_handler(const z_sample_t *sample, void *ctx) {
         printf("Attachement found\n");
         z_attachment_iterate(sample->attachment, attachment_handler, NULL);
     }
-    z_attachment_drop(&((z_sample_t *)sample)->attachment);
 #endif
     z_drop(z_move(keystr));
     msg_nb++;
