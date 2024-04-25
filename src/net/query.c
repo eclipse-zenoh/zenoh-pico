@@ -28,7 +28,7 @@ void _z_query_clear(_z_query_t *q) {
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
 #if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_drop(&q->attachment);
+    _z_attachment_drop(&q->attachment);
 #endif
 }
 

@@ -134,7 +134,7 @@ size_t _z_attachment_estimate_length(z_attachment_t att);
 /**
  * Drop an attachment that was decoded from a received message
  */
-void z_attachment_drop(z_attachment_t *att);
+void _z_attachment_drop(z_attachment_t *att);
 #endif
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
