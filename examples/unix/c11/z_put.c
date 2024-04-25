@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
 #if Z_FEATURE_ATTACHMENT == 1
     z_owned_bytes_map_t map = z_bytes_map_new();
-    z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hi", 2), _z_bytes_wrap((uint8_t *)"there", 5));
+    z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hi"), z_bytes_from_str("there"));
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
     if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {

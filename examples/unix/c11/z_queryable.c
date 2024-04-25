@@ -54,7 +54,7 @@ void query_handler(const z_query_t *query, void *ctx) {
 #if Z_FEATURE_ATTACHMENT == 1
     // Add attachment
     z_owned_bytes_map_t map = z_bytes_map_new();
-    z_bytes_map_insert_by_alias(&map, _z_bytes_wrap((uint8_t *)"hello", 5), _z_bytes_wrap((uint8_t *)"world", 5));
+    z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hello"), z_bytes_from_str("world"));
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
 
