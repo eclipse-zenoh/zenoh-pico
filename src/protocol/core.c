@@ -145,11 +145,6 @@ int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body,
     return this_.iteration_driver(this_.data, body, ctx);
 }
 
-void _z_attachment_copy(z_attachment_t *dst, const z_attachment_t *src) {
-    dst->iteration_driver = src->iteration_driver;
-    // _z_bytes_copy(&dst->data, &src->data);
-}
-
 void z_attachment_drop(z_attachment_t *att) {
     if (att->iteration_driver == _z_encoded_attachment_iteration_driver) {
         _z_bytes_clear((z_bytes_t *)att->data);
