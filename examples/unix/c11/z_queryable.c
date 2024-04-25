@@ -46,7 +46,6 @@ void query_handler(const z_query_t *query, void *ctx) {
         printf("Attachement found\n");
         z_attachment_iterate(attachment, attachment_handler, NULL);
     }
-    z_attachment_drop(&attachment);
 #endif
 
     z_query_reply_options_t options = z_query_reply_options_default();

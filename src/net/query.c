@@ -27,7 +27,9 @@ void _z_query_clear(_z_query_t *q) {
     z_free(q->_parameters);
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
-    // Ideally free session rc if you have one
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_drop(&q->attachment);
+#endif
 }
 
 #if Z_FEATURE_QUERYABLE == 1
