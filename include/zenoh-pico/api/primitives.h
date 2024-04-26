@@ -526,6 +526,7 @@ z_bytes_t z_query_parameters(const z_query_t *query);
  */
 z_value_t z_query_value(const z_query_t *query);
 
+#if Z_FEATURE_ATTACHMENT == 1
 /**
  * Get a query's attachment value by aliasing it.
  * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
@@ -537,6 +538,7 @@ z_value_t z_query_value(const z_query_t *query);
  *   Returns the attachment wrapped as a :c:type:`z_attachment_t`, since attachment is a user-defined representation.
  */
 z_attachment_t z_query_attachment(const z_query_t *query);
+#endif
 
 /**
  * Get a query's key by aliasing it.

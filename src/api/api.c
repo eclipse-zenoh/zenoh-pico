@@ -298,7 +298,9 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
 
 z_value_t z_query_value(const z_query_t *query) { return query->_val._rc.in->val._value; }
 
+#if Z_FEATURE_ATTACHMENT == 1
 z_attachment_t z_query_attachment(const z_query_t *query) { return query->_val._rc.in->val.attachment; }
+#endif
 
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_val._rc.in->val._key; }
 
