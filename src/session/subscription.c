@@ -192,7 +192,9 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
             sub->in->val._callback(&s, sub->in->val._arg);
             xs = _z_subscription_rc_list_tail(xs);
         }
-
+#if Z_FEEATURE_ATTACHMENT == 1
+        _z_attachment_drop(&s.attachment);
+#endif
         _z_keyexpr_clear(&key);
         _z_subscription_rc_list_free(&subs);
     } else {

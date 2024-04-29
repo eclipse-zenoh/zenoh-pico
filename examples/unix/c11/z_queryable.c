@@ -21,29 +21,60 @@
 #if Z_FEATURE_QUERYABLE == 1
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
+static int msg_nb = 0;
+
+#if Z_FEATURE_ATTACHMENT == 1
+int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
+    (void)ctx;
+    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)att_value.len, att_value.start);
+    return 0;
+}
+#endif
 
 void query_handler(const z_query_t *query, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
     z_bytes_t pred = z_query_parameters(query);
     z_value_t payload_value = z_query_value(query);
-    printf(" >> [Queryable handler] Received Query '%s?%.*s'\n", z_loan(keystr), (int)pred.len, pred.start);
+    printf(">> [Queryable handler] Received Query '%s?%.*s'\n", z_loan(keystr), (int)pred.len, pred.start);
     if (payload_value.payload.len > 0) {
         printf("     with value '%.*s'\n", (int)payload_value.payload.len, payload_value.payload.start);
     }
+#if Z_FEATURE_ATTACHMENT == 1
+    z_attachment_t attachment = z_query_attachment(query);
+    if (z_attachment_check(&attachment)) {
+        printf("Attachement found\n");
+        z_attachment_iterate(attachment, attachment_handler, NULL);
+    }
+#endif
+
     z_query_reply_options_t options = z_query_reply_options_default();
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+
+#if Z_FEATURE_ATTACHMENT == 1
+    // Add attachment
+    z_owned_bytes_map_t map = z_bytes_map_new();
+    z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hello"), z_bytes_from_str("world"));
+    options.attachment = z_bytes_map_as_attachment(&map);
+#endif
+
     z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
     z_drop(z_move(keystr));
+    msg_nb++;
+
+#if Z_FEATURE_ATTACHMENT == 1
+    z_bytes_map_drop(&map);
+#endif
 }
 
 int main(int argc, char **argv) {
     const char *mode = "client";
     char *clocator = NULL;
     char *llocator = NULL;
+    int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -60,8 +91,12 @@ int main(int argc, char **argv) {
             case 'v':
                 value = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
+                    optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -111,6 +146,9 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (1) {
+        if ((n != 0) && (msg_nb >= n)) {
+            break;
+        }
         sleep(1);
     }
 

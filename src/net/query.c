@@ -27,12 +27,14 @@ void _z_query_clear(_z_query_t *q) {
     z_free(q->_parameters);
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
-    // Ideally free session rc if you have one
+#if Z_FEATURE_ATTACHMENT == 1
+    _z_attachment_drop(&q->attachment);
+#endif
 }
 
 #if Z_FEATURE_QUERYABLE == 1
 _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_bytes_t *parameters,
-                           _z_session_t *zn, uint32_t request_id) {
+                           _z_session_t *zn, uint32_t request_id, z_attachment_t att) {
     _z_query_t q;
     q._request_id = request_id;
     q._zn = zn;  // Ideally would have been an rc
@@ -40,6 +42,11 @@ _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, con
     memcpy(q._parameters, parameters->start, parameters->len);
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+#if Z_FEATURE_ATTACHMENT == 1
+    q.attachment = att;
+#else
+    _ZP_UNUSED(att);
+#endif
     _z_keyexpr_copy(&q._key, key);
     _z_value_copy(&q._value, value);
     return q;

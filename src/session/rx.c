@@ -95,7 +95,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req._body._query;
-                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid);
+                    z_attachment_t att = _z_encoded_as_attachment(&req._body._query._ext_attachment);
+                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid, att);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif

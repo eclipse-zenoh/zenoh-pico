@@ -165,6 +165,9 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     _z_bytes_copy(&reply.data.sample.encoding.schema, &msg->_encoding.schema);
     reply.data.sample.kind = Z_SAMPLE_KIND_PUT;
     reply.data.sample.timestamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+#if Z_FEATURE_ATTACHMENT == 1
+    reply.data.sample.attachment = _z_encoded_as_attachment(&msg->_attachment);
+#endif
 
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||

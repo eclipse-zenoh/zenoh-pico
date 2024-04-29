@@ -264,9 +264,7 @@ typedef struct {
  */
 typedef struct {
     z_encoding_t encoding;
-#if Z_FEATURE_ATTACHMENT == 1
-    // TODO:ATT z_attachment_t attachment;
-#endif
+    z_attachment_t attachment;
 } z_query_reply_options_t;
 
 /**
@@ -337,7 +335,7 @@ typedef struct {
     z_query_target_t target;
     uint32_t timeout_ms;
 #if Z_FEATURE_ATTACHMENT == 1
-// TODO:ATT z_attachment_t attachment;
+    z_attachment_t attachment;
 #endif
 } z_get_options_t;
 

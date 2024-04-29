@@ -298,6 +298,10 @@ z_bytes_t z_query_parameters(const z_query_t *query) {
 
 z_value_t z_query_value(const z_query_t *query) { return query->_val._rc.in->val._value; }
 
+#if Z_FEATURE_ATTACHMENT == 1
+z_attachment_t z_query_attachment(const z_query_t *query) { return query->_val._rc.in->val.attachment; }
+#endif
+
 z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_val._rc.in->val._key; }
 
 _Bool z_value_is_initialized(z_value_t *value) {
@@ -834,7 +838,7 @@ z_get_options_t z_get_options_default(void) {
         .target = z_query_target_default(), .consolidation = z_query_consolidation_default(),
         .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
 #if Z_FEATURE_ATTACHMENT == 1
-        // TODO:ATT.attachment = z_attachment_null()
+        .attachment = z_attachment_null(),
 #endif
         .timeout_ms = Z_GET_TIMEOUT_DEFAULT
     };
@@ -864,6 +868,9 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
         opt.consolidation = options->consolidation;
         opt.target = options->target;
         opt.value = options->value;
+#if Z_FEATURE_ATTACHMENT == 1
+        opt.attachment = options->attachment;
+#endif
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -888,8 +895,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
                    __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
-                   z_attachment_null()
-    // TODO:ATT opt.attachment
+                   opt.attachment
 #endif
     );
     return ret;
@@ -969,7 +975,7 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 .len = payload_len,
                             },
                         .encoding = {.id = opts.encoding.id, .schema = opts.encoding.schema}};
-    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT);
+    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
     return _Z_ERR_GENERIC;
 }
 #endif

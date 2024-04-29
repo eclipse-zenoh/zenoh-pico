@@ -71,7 +71,6 @@ typedef struct {
     uint64_t time;
 } _z_timestamp_t;
 
-#if Z_FEATURE_ATTACHMENT == 1
 /**
  * The body of a loop over an attachment's key-value pairs.
  *
@@ -110,11 +109,6 @@ typedef struct z_attachment_t {
     z_attachment_iter_driver_t iteration_driver;
 } z_attachment_t;
 
-z_attachment_t z_attachment_null(void);
-_Bool z_attachment_check(const z_attachment_t *attachment);
-int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
-_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
-
 typedef struct {
     union {
         z_attachment_t decoded;
@@ -122,12 +116,25 @@ typedef struct {
     } body;
     _Bool is_encoded;
 } _z_owned_encoded_attachment_t;
+
+z_attachment_t z_attachment_null(void);
+z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
+
+#if Z_FEATURE_ATTACHMENT == 1
+
+_Bool z_attachment_check(const z_attachment_t *attachment);
+int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
+_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
+
 /**
  * Estimate the length of an attachment once encoded.
  */
 size_t _z_attachment_estimate_length(z_attachment_t att);
-z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
-void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att);
+
+/**
+ * Drop an attachment that was decoded from a received message
+ */
+void _z_attachment_drop(z_attachment_t *att);
 #endif
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
