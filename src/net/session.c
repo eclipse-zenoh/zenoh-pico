@@ -21,7 +21,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/lease.h"

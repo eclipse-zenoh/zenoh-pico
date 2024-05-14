@@ -20,6 +20,8 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/net/reply.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"

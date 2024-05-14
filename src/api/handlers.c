@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/api/handlers.h"
 
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/system/platform.h"
 
 // -- Sample

@@ -17,52 +17,14 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/reply.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_QUERY == 1
-_z_reply_t *_z_reply_alloc_and_move(_z_reply_t *_reply) {
-    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
-    if (reply != NULL) {
-        *reply = *_reply;
-        (void)memset(_reply, 0, sizeof(_z_reply_t));
-    }
-    return reply;
-}
-
-void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }
-
-void _z_reply_free(_z_reply_t **reply) {
-    _z_reply_t *ptr = *reply;
-
-    if (*reply != NULL) {
-        _z_reply_clear(ptr);
-
-        z_free(ptr);
-        *reply = NULL;
-    }
-}
-
-void _z_reply_copy(_z_reply_t *dst, _z_reply_t *src) {
-    _z_reply_data_copy(&dst->data, &src->data);
-    dst->_tag = src->_tag;
-}
-
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
-    return one->_tstamp.time == two->_tstamp.time;
-}
-
-void _z_pending_reply_clear(_z_pending_reply_t *pr) {
-    // Free reply
-    _z_reply_clear(&pr->_reply);
-
-    // Free the timestamp
-    _z_timestamp_clear(&pr->_tstamp);
-}
-
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     if (pen_qry->_dropper != NULL) {
         pen_qry->_dropper(pen_qry->_drop_arg);
