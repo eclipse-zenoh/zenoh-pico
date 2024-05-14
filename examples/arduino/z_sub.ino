@@ -35,8 +35,10 @@
 #define KEYEXPR "demo/example/**"
 
 void data_handler(const z_sample_t *sample, void *arg) {
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    std::string val((const char *)sample->payload.start, sample->payload.len);
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_bytes_t payload = z_sample_payload(sample);
+    z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
+    std::string val((const char *)payload.start, payload.len);
 
     Serial.print(" >> [Subscription listener] Received (");
     Serial.print(z_str_loan(&keystr));
