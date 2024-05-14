@@ -34,9 +34,10 @@ int8_t attachment_handler(z_bytes_t key, z_bytes_t value, void *ctx) {
 
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
-           sample->payload.start);
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_bytes_t payload = z_sample_payload(sample);
+    z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
+    printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)payload.len, payload.start);
 #if Z_FEATURE_ATTACHMENT == 1
     if (z_attachment_check(&sample->attachment)) {
         printf("Attachement found\n");

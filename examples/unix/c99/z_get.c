@@ -32,7 +32,7 @@ void reply_dropper(void *ctx) {
 void reply_handler(z_owned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
-        z_sample_t sample = z_reply_ok(reply);
+        z_loaned_sample_t sample = z_reply_ok(reply);
         z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
         printf(">> Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample.payload.len, sample.payload.start);
         z_str_drop(z_str_move(&keystr));
