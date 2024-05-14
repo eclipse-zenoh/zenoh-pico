@@ -240,7 +240,7 @@ static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declarat
 ///
 /// 7 6 5 4 3 2 1 0
 /// +-+-+-+-+-+-+-+-+
-/// |Z|CF|INTEREST |
+/// |Z|F|C|INTEREST |
 /// +-+-+-+---------+
 /// ~    id:z32     ~
 /// +---------------+
