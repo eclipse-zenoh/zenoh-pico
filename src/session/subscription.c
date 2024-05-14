@@ -162,26 +162,18 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _zp_session_unlock_mutex(zn);
 
         // Build the sample
-        _z_sample_t s;
-        s.keyexpr = key;
-        s.payload = payload;
-        s.encoding = encoding;
-        s.kind = kind;
-        s.timestamp = timestamp;
-        s.qos = qos;
-#if Z_FEATURE_ATTACHMENT == 1
-        s.attachment = att;
-#endif
+        z_sample_t sample = {._rc = _z_sample_rc_new()};
+        sample._rc.in->val = _z_sample_create(&key, &payload, timestamp, encoding, kind, qos, att);
+        // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
         while (xs != NULL) {
             _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-            sub->in->val._callback(&s, sub->in->val._arg);
+            sub->in->val._callback(&sample, sub->in->val._arg);
             xs = _z_subscription_rc_list_tail(xs);
         }
-#if Z_FEEATURE_ATTACHMENT == 1
-        _z_attachment_drop(&s.attachment);
-#endif
+        // Clean up
+        _z_sample_rc_drop(&sample._rc);
         _z_keyexpr_clear(&key);
         _z_subscription_rc_list_free(&subs);
     } else {

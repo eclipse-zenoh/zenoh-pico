@@ -445,7 +445,26 @@ OWNED_FUNCTIONS_PTR_DROP(z_scouting_config_t, z_owned_scouting_config_t, scoutin
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_sample_copy)
+
+// Owned sample functions
+_Bool z_sample_check(const z_owned_sample_t *val) { return val->_value != ((void *)0); }
+z_sample_t z_sample_loan(const z_owned_sample_t *val) { return *val->_value; }
+z_owned_sample_t z_sample_null(void) { return (z_owned_sample_t){._value = ((void *)0)}; }
+z_owned_sample_t *z_sample_move(z_owned_sample_t *val) { return val; }
+z_owned_sample_t z_sample_clone(z_owned_sample_t *val) {
+    z_owned_sample_t ret;
+    ret._value = (z_sample_t *)z_malloc(sizeof(z_sample_t));
+    if (ret._value != ((void *)0)) {
+        ret._value->_rc = _z_sample_rc_clone(&val->_value->_rc);
+    }
+    return ret;
+}
+void z_sample_drop(z_owned_sample_t *val) {
+    if (val->_value != ((void *)0)) {
+        _z_sample_rc_drop(&val->_value->_rc);
+        z_free(val->_value);
+    }
+}
 
 _Bool z_session_check(const z_owned_session_t *val) { return val->_value.in != NULL; }
 z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
@@ -912,7 +931,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply) {
     return true;
 }
 
-z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
+z_loaned_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);

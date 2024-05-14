@@ -1051,9 +1051,9 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply);
  *   reply: Pointer to the received query reply.
  *
  * Returns:
- *   Returns the :c:type:`z_sample_t` wrapped in the query reply.
+ *   Returns the :c:type:`z_loaned_sample_t` wrapped in the query reply.
  */
-z_sample_t z_reply_ok(const z_owned_reply_t *reply);
+z_loaned_sample_t z_reply_ok(const z_owned_reply_t *reply);
 
 /**
  * Yields the contents of the reply by asserting it indicates a failure.
