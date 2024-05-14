@@ -24,7 +24,7 @@ _z_sample_t _z_sample_null(void) {
                      .schema = _z_bytes_wrap(NULL, (size_t)0)},  // FIXME: call _z_encoding_null
         .timestamp = _z_timestamp_null(),
         .kind = 0,
-        .qos = 0,
+        .qos = {0},
 #if Z_FEATURE_ATTACHMENT == 1
         .attachment = z_attachment_null(),
 #endif
