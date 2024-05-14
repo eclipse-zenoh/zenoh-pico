@@ -71,7 +71,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
     char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(reply)) {
-        z_sample_t sample = z_reply_ok(reply);
+        z_loaned_sample_t sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
         z_owned_str_t k_str = z_keyexpr_to_string(sample.keyexpr);
@@ -93,8 +93,10 @@ void data_handler(const z_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
-    assert((sample->payload.len == MSG_LEN) || (sample->payload.len == FRAGMENT_MSG_LEN));
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_bytes_t payload = z_sample_payload(sample);
+    z_owned_str_t k_str = z_keyexpr_to_string(keyexpr);
+    assert((payload.len == MSG_LEN) || (payload.len == FRAGMENT_MSG_LEN));
     assert(_z_str_eq(z_loan(k_str), res) == true);
 
     datas++;

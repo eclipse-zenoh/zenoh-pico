@@ -88,7 +88,7 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
     replies++;
 
     if (z_reply_is_ok(reply)) {
-        z_sample_t sample = z_reply_ok(reply);
+        z_loaned_sample_t sample = z_reply_ok(reply);
 
         z_owned_str_t k_str = z_keyexpr_to_string(sample.keyexpr);
 #ifdef ZENOH_PICO
@@ -111,10 +111,11 @@ void data_handler(const z_sample_t *sample, void *arg) {
     printf("%s\n", __func__);
     datas++;
 
-    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_owned_str_t k_str = z_keyexpr_to_string(keyexpr);
 #ifdef ZENOH_PICO
     if (z_check(k_str) == false) {
-        k_str = zp_keyexpr_resolve(*(z_session_t *)arg, sample->keyexpr);
+        k_str = zp_keyexpr_resolve(*(z_session_t *)arg, keyexpr);
     }
 #endif
     z_drop(z_move(k_str));
