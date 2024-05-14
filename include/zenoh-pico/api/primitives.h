@@ -864,6 +864,91 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
  */
 z_id_t z_info_zid(const z_session_t zs);
 
+/**
+ * Get a sample's keyexpr value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the keyexpr from.
+ *
+ * Returns:
+ *   Returns the keyexpr wrapped as a :c:type:`z_keyexpr_t`.
+ */
+z_keyexpr_t z_sample_keyexpr(const z_sample_t *sample);
+
+/**
+ * Get a sample's payload value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the payload from.
+ *
+ * Returns:
+ *   Returns the payload wrapped as a :c:type:`z_bytes_t`.
+ */
+z_bytes_t z_sample_payload(const z_sample_t *sample);
+
+/**
+ * Get a sample's timestamp value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the timestamp from.
+ *
+ * Returns:
+ *   Returns the timestamp wrapped as a :c:type:`z_timestamp_t`.
+ */
+z_timestamp_t z_sample_timestamp(const z_sample_t *sample);
+
+/**
+ * Get a sample's encoding value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the encoding from.
+ *
+ * Returns:
+ *   Returns the encoding wrapped as a :c:type:`z_encoding_t`.
+ */
+z_encoding_t z_sample_encoding(const z_sample_t *sample);
+
+/**
+ * Get a sample's kind by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the sample kind from.
+ *
+ * Returns:
+ *   Returns the sample kind wrapped as a :c:type:`z_sample_kind_t`.
+ */
+z_sample_kind_t z_sample_kind(const z_sample_t *sample);
+
+/**
+ * Get a sample's qos value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the qos from.
+ *
+ * Returns:
+ *   Returns the qos wrapped as a :c:type:`z_qos_t`.
+ */
+z_qos_t z_sample_qos(const z_sample_t *sample);
+
+#if Z_FEATURE_ATTACHMENT == 1
+/**
+ * Get a sample's attachment value by aliasing it.
+ * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ *
+ * Parameters:
+ *   sample: Pointer to the sample to get the attachment from.
+ *
+ * Returns:
+ *   Returns the attachment wrapped as a :c:type:`z_attachment_t`.
+ */
+z_attachment_t z_sample_attachment(const z_sample_t *sample);
+#endif
 #if Z_FEATURE_PUBLICATION == 1
 /**
  * Constructs the default values for the put operation.

@@ -663,6 +663,16 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) { return zs._val.in->val._local_zid; }
 
+z_keyexpr_t z_sample_keyexpr(const z_sample_t *sample) { return sample->_rc.in->val.keyexpr; }
+z_bytes_t z_sample_payload(const z_sample_t *sample) { return sample->_rc.in->val.payload; }
+z_timestamp_t z_sample_timestamp(const z_sample_t *sample) { return sample->_rc.in->val.timestamp; }
+z_encoding_t z_sample_encoding(const z_sample_t *sample) { return sample->_rc.in->val.encoding; }
+z_sample_kind_t z_sample_kind(const z_sample_t *sample) { return sample->_rc.in->val.kind; }
+z_qos_t z_sample_qos(const z_sample_t *sample) { return sample->_rc.in->val.qos; }
+#if Z_FEATURE_ATTACHMENT == 1
+z_attachment_t z_sample_attachment(const z_sample_t *sample) { return sample->_rc.in->val.attachment; }
+#endif
+
 #if Z_FEATURE_PUBLICATION == 1
 OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
 OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
