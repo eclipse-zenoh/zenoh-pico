@@ -29,6 +29,8 @@ int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t 
 int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl);
 int8_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header);
+int8_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest);
+int8_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header);
 
 int8_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg);
 int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf);

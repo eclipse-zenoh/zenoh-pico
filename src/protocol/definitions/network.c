@@ -117,6 +117,11 @@ void _z_n_msg_clear(_z_network_message_t *msg) {
         case _Z_N_DECLARE:
             _z_n_msg_declare_clear(&msg->_body._declare);
             break;
+        case _Z_N_INTEREST:
+            _z_n_msg_interest_clear(&msg->_body._interest);
+            break;
+        default:
+            break;
     }
 }
 
@@ -168,11 +173,13 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
         ._body = {._response_final = {._request_id = rid}},
     };
 }
-_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration) {
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id) {
     return (_z_network_message_t){
         ._tag = _Z_N_DECLARE,
         ._body._declare =
             {
+                .has_interest_id = has_interest_id,
+                ._interest_id = interest_id,
                 ._decl = declaration,
                 ._ext_qos = _Z_N_QOS_DEFAULT,
                 ._ext_timestamp = _z_timestamp_null(),
@@ -210,6 +217,16 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
     };
 }
 
+_z_network_message_t _z_n_msg_make_interest(_z_interest_t interest) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_INTEREST,
+        ._body._interest =
+            {
+                ._interest = interest,
+            },
+    };
+}
+
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
@@ -223,6 +240,9 @@ void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {
         } break;
         case _Z_N_RESPONSE: {
             _z_keyexpr_fix_mapping(&msg->_body._response._key, mapping);
+        } break;
+        case _Z_N_INTEREST: {
+            _z_keyexpr_fix_mapping(&msg->_body._interest._interest._keyexpr, mapping);
         } break;
         default:
             break;

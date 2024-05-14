@@ -16,8 +16,8 @@ def pub_and_sub(args):
     if args.reth == 1:
         z_pub_expected_status = 0
         z_pub_expected_output = '''Opening session...
-Declaring publisher for 'demo/example/zenoh-pico-pub'...
 Waiting for joins...
+Declaring publisher for 'demo/example/zenoh-pico-pub'...
 Press CTRL-C to quit...
 Putting Data ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')...
 Putting Data ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')...
@@ -57,7 +57,9 @@ Unable to open session!'''
 
     print("Start subscriber")
     # Start z_sub in the background
-    z_sub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub -n 10 -m \"peer\" -l \"reth/0\"s"
+    z_sub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub -n 10 -m \"peer\" -l \
+                    \"reth/30:03:8c:c8:00:a2#iface=lo;whitelist=30:03:8c:c8:00:a1,\"s"  
+
     z_sub_process = subprocess.Popen(z_sub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,
@@ -70,7 +72,8 @@ Unable to open session!'''
 
     print("Start publisher")
     # Start z_pub
-    z_pub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_pub -n 10 -m \"peer\" -l \"reth/0\"s"
+    z_pub_command = f"sudo stdbuf -oL -eL ./{DIR_EXAMPLES}/z_pub -n 10 -m \"peer\" -l \
+                    \"reth/30:03:8c:c8:00:a1#iface=lo;whitelist=30:03:8c:c8:00:a2,\"s"
     z_pub_process = subprocess.Popen(z_pub_command,
                                     shell=True,
                                     stdin=subprocess.PIPE,

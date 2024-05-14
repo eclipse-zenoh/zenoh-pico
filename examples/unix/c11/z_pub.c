@@ -88,17 +88,16 @@ int main(int argc, char **argv) {
         z_close(z_session_move(&s));
         return -1;
     }
-
+    // Wait for joins in peer mode
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for joins...\n");
+        sleep(3);
+    }
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
     if (!z_check(pub)) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
-    }
-    // Wait for joins in peer mode
-    if (strcmp(mode, "peer") == 0) {
-        printf("Waiting for joins...\n");
-        sleep(3);
     }
     printf("Press CTRL-C to quit...\n");
     char buf[256];

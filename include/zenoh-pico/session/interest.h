@@ -28,8 +28,8 @@ void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 void _z_flush_interest(_z_session_t *zn);
 int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
 int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
-int8_t _z_interest_process_final_interest(_z_session_t *zn, uint32_t id);
-int8_t _z_interest_process_undeclare_interest(_z_session_t *zn, uint32_t id);
-int8_t _z_interest_process_declare_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
+int8_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id);
+int8_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
+int8_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
 
 #endif /* ZENOH_PICO_SESSION_INTEREST_H */

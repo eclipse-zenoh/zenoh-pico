@@ -25,9 +25,11 @@
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/declarations.h"
 #include "zenoh-pico/protocol/codec/ext.h"
+#include "zenoh-pico/protocol/codec/interest.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -399,7 +401,16 @@ int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
     if (n != 0) {
         header |= _Z_FLAG_N_Z;
     }
+    if (decl->has_interest_id) {
+        header |= _Z_FLAG_N_DECLARE_I;
+    }
+    // Encode header
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    // Encode interest id
+    if (decl->has_interest_id) {
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_interest_id));
+    }
+    // Encode extensions
     if (has_qos_ext) {
         n -= 1;
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, 0x01 | _Z_MSG_EXT_ENC_ZINT | (n != 0 ? _Z_FLAG_Z_Z : 0)));
@@ -410,6 +421,7 @@ int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, 0x02 | _Z_MSG_EXT_ENC_ZBUF | (n != 0 ? _Z_FLAG_Z_Z : 0)));
         _Z_RETURN_IF_ERR(_z_timestamp_encode_ext(wbf, &decl->_ext_timestamp));
     }
+    // Encode declaration
     return _z_declaration_encode(wbf, &decl->_decl);
 }
 int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
@@ -433,14 +445,53 @@ int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 int8_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header) {
     *decl = (_z_n_msg_declare_t){0};
     decl->_ext_qos = _Z_N_QOS_DEFAULT;
+    // Retrieve interest id
+    if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
+        _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_interest_id, zbf));
+        decl->has_interest_id = true;
+    }
+    // Decode extensions
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_declare_decode_extensions, decl))
     }
-    // FIXME: For now, zenoh pico should not receive this (answer from interests with current=1, future=0)
-    if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
-        return _Z_ERR_MESSAGE_FLAG_UNEXPECTED;
-    }
+    // Decode declaration
     return _z_declaration_decode(&decl->_decl, zbf);
+}
+
+int8_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest) {
+    // Set header
+    uint8_t header = _Z_MID_N_INTEREST;
+    _Bool is_final = true;
+    if (_Z_HAS_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_CURRENT)) {
+        is_final = false;
+        _Z_SET_FLAG(header, _Z_FLAG_N_INTEREST_CURRENT);
+    }
+    if (_Z_HAS_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_FUTURE)) {
+        is_final = false;
+        _Z_SET_FLAG(header, _Z_FLAG_N_INTEREST_FUTURE);
+    }
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    return _z_interest_encode(wbf, &interest->_interest, is_final);
+}
+
+int8_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header) {
+    interest->_interest = _z_interest_null();
+    _Bool is_final = true;
+    _Bool has_ext = false;
+
+    if (_Z_HAS_FLAG(header, _Z_FLAG_N_INTEREST_CURRENT)) {
+        _Z_SET_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_CURRENT);
+        is_final = false;
+    }
+    if (_Z_HAS_FLAG(header, _Z_FLAG_N_INTEREST_FUTURE)) {
+        _Z_SET_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_FUTURE);
+        is_final = false;
+    }
+    // Decode extention
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+        has_ext = true;
+    }
+    return _z_interest_decode(&interest->_interest, zbf, is_final, has_ext);
 }
 
 int8_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg) {
@@ -460,8 +511,12 @@ int8_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg
         case _Z_N_RESPONSE_FINAL: {
             return _z_response_final_encode(wbf, &msg->_body._response_final);
         } break;
+        case _Z_N_INTEREST: {
+            return _z_n_interest_encode(wbf, &msg->_body._interest);
+        } break;
+        default:
+            return _Z_ERR_GENERIC;
     }
-    return _Z_ERR_GENERIC;
 }
 int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
     uint8_t header;
@@ -486,6 +541,10 @@ int8_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
         case _Z_MID_N_RESPONSE_FINAL: {
             msg->_tag = _Z_N_RESPONSE_FINAL;
             return _z_response_final_decode(&msg->_body._response_final, zbf, header);
+        } break;
+        case _Z_MID_N_INTEREST: {
+            msg->_tag = _Z_N_INTEREST;
+            return _z_n_interest_decode(&msg->_body._interest, zbf, header);
         } break;
         default:
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
