@@ -39,9 +39,10 @@ void data_handler(const z_sample_t *sample, void *ctx) {
     z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)payload.len, payload.start);
 #if Z_FEATURE_ATTACHMENT == 1
-    if (z_attachment_check(&sample->attachment)) {
+    z_attachment_t attachment = z_sample_attachment(sample);
+    if (z_attachment_check(&attachment)) {
         printf("Attachement found\n");
-        z_attachment_iterate(sample->attachment, attachment_handler, NULL);
+        z_attachment_iterate(attachment, attachment_handler, NULL);
     }
 #endif
     z_drop(z_move(keystr));
