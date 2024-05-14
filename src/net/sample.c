@@ -20,7 +20,8 @@ _z_sample_t _z_sample_null(void) {
     _z_sample_t s = {
         .keyexpr = _z_keyexpr_null(),
         .payload = _z_bytes_empty(),
-        .encoding = z_encoding_default(),
+        .encoding = {.id = Z_ENCODING_PREFIX_DEFAULT,
+                     .schema = _z_bytes_wrap(NULL, (size_t)0)},  // FIXME: call _z_encoding_null
         .timestamp = _z_timestamp_null(),
         .kind = 0,
         .qos = 0,
