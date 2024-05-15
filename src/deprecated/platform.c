@@ -20,11 +20,11 @@ uint8_t zp_random_u8(void) { return z_random_u8(); };
 uint16_t zp_random_u16(void) { return z_random_u16(); };
 uint32_t zp_random_u32(void) { return z_random_u32(); };
 uint64_t zp_random_u64(void) { return z_random_u64(); };
-void zp_random_fill(void *buf, size_t len) { return z_random_fill(buf, len); };
+void zp_random_fill(void *buf, size_t len) { z_random_fill(buf, len); };
 
 void *zp_malloc(size_t size) { return z_malloc(size); };
 void *zp_realloc(void *ptr, size_t size) { return z_realloc(ptr, size); };
-void zp_free(void *ptr) { return z_free(ptr); };
+void zp_free(void *ptr) { z_free(ptr); };
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
@@ -32,7 +32,7 @@ int8_t zp_task_init(zp_task_t *task, zp_task_attr_t *attr, void *(*fun)(void *),
     return z_task_init(task, attr, fun, arg);
 };
 int8_t zp_task_join(zp_task_t *task) { return z_task_join(task); };
-void zp_task_free(zp_task_t **task) { return z_task_free(task); };
+void zp_task_free(zp_task_t **task) { z_task_free(task); };
 
 int8_t zp_mutex_init(zp_mutex_t *m) { return z_mutex_init(m); };
 int8_t zp_mutex_free(zp_mutex_t *m) { return z_mutex_free(m); };
