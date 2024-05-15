@@ -22,7 +22,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"

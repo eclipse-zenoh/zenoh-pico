@@ -17,7 +17,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -137,31 +139,16 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 }
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len, _z_n_qos_t qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                    ,
-                                    z_attachment_t att
-#endif
-) {
+                                    _z_zint_t payload_len, const _z_n_qos_t qos, const z_attachment_t att) {
     _z_encoding_t encoding = {.id = Z_ENCODING_PREFIX_DEFAULT, .schema = _z_bytes_wrap(NULL, 0)};
     int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
-                                          _z_timestamp_null(), qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                          ,
-                                          att
-#endif
-    );
+                                          _z_timestamp_null(), qos, att);
     (void)ret;
 }
 
 int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
                                 const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
-                                const _z_n_qos_t qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                ,
-                                z_attachment_t att
-#endif
-) {
+                                const _z_n_qos_t qos, const z_attachment_t att) {
     int8_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
@@ -175,26 +162,18 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _zp_session_unlock_mutex(zn);
 
         // Build the sample
-        _z_sample_t s;
-        s.keyexpr = key;
-        s.payload = payload;
-        s.encoding = encoding;
-        s.kind = kind;
-        s.timestamp = timestamp;
-        s.qos = qos;
-#if Z_FEATURE_ATTACHMENT == 1
-        s.attachment = att;
-#endif
+        z_sample_t sample = {._rc = _z_sample_rc_new()};
+        sample._rc.in->val = _z_sample_create(&key, &payload, timestamp, encoding, kind, qos, att);
+        // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
         while (xs != NULL) {
             _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-            sub->in->val._callback(&s, sub->in->val._arg);
+            sub->in->val._callback(&sample, sub->in->val._arg);
             xs = _z_subscription_rc_list_tail(xs);
         }
-#if Z_FEEATURE_ATTACHMENT == 1
-        _z_attachment_drop(&s.attachment);
-#endif
+        // Clean up
+        _z_sample_rc_drop(&sample._rc);
         _z_keyexpr_clear(&key);
         _z_subscription_rc_list_free(&subs);
     } else {

@@ -17,32 +17,36 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/handlers.h"
+#include "zenoh-pico/net/sample.h"
 
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(channel, v)                           \
-    do {                                           \
-        z_sample_t sample;                         \
-        sample.payload.start = (const uint8_t *)v; \
-        sample.payload.len = strlen(v);            \
-        sample.keyexpr = _z_rname("key");          \
-        sample.timestamp = _z_timestamp_null();    \
-        sample.encoding = z_encoding_default();    \
-        z_call(channel.send, &sample);             \
+#define SEND(channel, v)                                                             \
+    do {                                                                             \
+        _z_sample_t s = {.keyexpr = _z_rname("key"),                                 \
+                         .payload = {.start = (const uint8_t *)v, .len = strlen(v)}, \
+                         .timestamp = _z_timestamp_null(),                           \
+                         .encoding = z_encoding_default(),                           \
+                         .kind = 0,                                                  \
+                         .qos = {0}};                                                \
+        z_sample_t sample = {._rc = _z_sample_rc_new_from_val(s)};                   \
+        z_call(channel.send, &sample);                                               \
     } while (0);
 
-#define _RECV(channel, method, buf)                                                                       \
-    do {                                                                                                  \
-        z_owned_sample_t sample = z_sample_null();                                                        \
-        z_call(channel.method, &sample);                                                                  \
-        if (z_check(sample)) {                                                                            \
-            strncpy(buf, (const char *)z_loan(sample).payload.start, (size_t)z_loan(sample).payload.len); \
-            buf[z_loan(sample).payload.len] = '\0';                                                       \
-            z_drop(z_move(sample));                                                                       \
-        } else {                                                                                          \
-            buf[0] = '\0';                                                                                \
-        }                                                                                                 \
+#define _RECV(channel, method, buf)                                         \
+    do {                                                                    \
+        z_owned_sample_t sample = z_sample_null();                          \
+        z_call(channel.method, &sample);                                    \
+        if (z_check(sample)) {                                              \
+            z_sample_t loaned_sample = z_loan(sample);                      \
+            z_bytes_t payload = z_sample_payload(&loaned_sample);           \
+            strncpy(buf, (const char *)payload.start, (size_t)payload.len); \
+            buf[payload.len] = '\0';                                        \
+            z_drop(z_move(sample));                                         \
+        } else {                                                            \
+            buf[0] = '\0';                                                  \
+        }                                                                   \
     } while (0);
 
 #define RECV(channel, buf) _RECV(channel, recv, buf)

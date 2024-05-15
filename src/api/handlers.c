@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/api/handlers.h"
 
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/system/platform.h"
 
 // -- Sample
@@ -23,14 +23,17 @@ void _z_owned_sample_move(z_owned_sample_t *dst, z_owned_sample_t *src) {
     zp_free(src);
 }
 
-z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src) {
+z_owned_sample_t *_z_sample_to_owned_ptr(const z_sample_t *src) {
     z_owned_sample_t *dst = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
     if (dst == NULL) {
         return NULL;
     }
     if (src != NULL) {
-        dst->_value = (_z_sample_t *)zp_malloc(sizeof(_z_sample_t));
-        _z_sample_copy(dst->_value, src);
+        dst->_value = (z_sample_t *)zp_malloc(sizeof(z_sample_t));
+        if (dst->_value == NULL) {
+            return NULL;
+        }
+        _z_sample_rc_copy(&dst->_value->_rc, &src->_rc);
     } else {
         dst->_value = NULL;
     }

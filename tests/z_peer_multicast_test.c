@@ -46,8 +46,10 @@ void data_handler(const z_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_str_t k_str = z_keyexpr_to_string(sample->keyexpr);
-    assert(sample->payload.len == MSG_LEN);
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_bytes_t payload = z_sample_payload(sample);
+    z_owned_str_t k_str = z_keyexpr_to_string(keyexpr);
+    assert(payload.len == MSG_LEN);
     assert(strlen(z_loan(k_str)) == strlen(res));
     assert(strncmp(res, z_loan(k_str), strlen(res)) == 0);
     (void)(sample);

@@ -34,42 +34,6 @@ typedef void (*_z_drop_handler_t)(void *arg);
 #define _Z_RESOURCE_IS_REMOTE 0
 #define _Z_RESOURCE_IS_LOCAL 1
 
-/**
- * An reply to a :c:func:`z_query`.
- *
- * Members:
- *   _z_sample_t data: a :c:type:`_z_sample_t` containing the key and value of the reply.
- *   _z_bytes_t replier_id: The id of the replier that sent this reply.
- *
- */
-typedef struct {
-    _z_sample_t sample;
-    _z_id_t replier_id;
-} _z_reply_data_t;
-
-void _z_reply_data_clear(_z_reply_data_t *rd);
-void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src);
-
-_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
-
-/**
- * An reply to a :c:func:`z_query`.
- *
- * Members:
- *   _z_reply_t_Tag tag: Indicates if the reply contains data or if it's a FINAL reply.
- *   _z_reply_data_t data: The reply data if :c:member:`_z_reply_t.tag` equals
- * :c:member:`_z_reply_t_Tag.Z_REPLY_TAG_DATA`.
- *
- */
-typedef struct {
-    _z_reply_data_t data;
-    z_reply_tag_t _tag;
-} _z_reply_t;
-void _z_reply_clear(_z_reply_t *src);
-void _z_reply_free(_z_reply_t **hello);
-void _z_reply_copy(_z_reply_t *dst, _z_reply_t *src);
-
 typedef struct {
     _z_keyexpr_t _key;
     uint16_t _id;
@@ -84,10 +48,13 @@ void _z_resource_free(_z_resource_t **res);
 _Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
+// Forward declaration to avoid cyclical include
+typedef struct z_sample_t z_sample_t;
+
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
+typedef void (*_z_data_handler_t)(const z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -137,18 +104,11 @@ _Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size,
                _z_noop_copy)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
-typedef struct {
-    _z_reply_t _reply;
-    _z_timestamp_t _tstamp;
-} _z_pending_reply_t;
-
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
-void _z_pending_reply_clear(_z_pending_reply_t *res);
-
-_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
-
-struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_reply_handler_t
+// Forward declaration to avoid cyclical includes
+typedef struct _z_reply_t _z_reply_t;
+typedef _z_list_t _z_reply_data_list_t;
+typedef _z_list_t _z_pending_reply_list_t;
+struct __z_reply_handler_wrapper_t;
 /**
  * The callback signature of the functions handling query replies.
  */

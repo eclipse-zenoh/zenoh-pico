@@ -22,6 +22,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
@@ -224,31 +225,6 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
 typedef struct {
     uint8_t _val;
 } _z_qos_t;
-
-/**
- * A zenoh-net data sample.
- *
- * A sample is the value associated to a given resource at a given point in time.
- *
- * Members:
- *   _z_keyexpr_t key: The resource key of this data sample.
- *   _z_bytes_t value: The value of this data sample.
- *   _z_encoding_t encoding: The encoding for the value of this data sample.
- */
-typedef struct {
-    _z_keyexpr_t keyexpr;
-    _z_bytes_t payload;
-    _z_timestamp_t timestamp;
-    _z_encoding_t encoding;
-    z_sample_kind_t kind;
-    _z_qos_t qos;
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment;
-#endif
-} _z_sample_t;
-static inline bool _z_sample_check(const _z_sample_t *sample) {
-    return _z_keyexpr_check(sample->keyexpr) && _z_bytes_check(sample->payload);
-}
 
 /**
  * Represents a Zenoh value.

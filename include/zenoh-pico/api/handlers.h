@@ -25,7 +25,7 @@
 
 // -- Samples handler
 void _z_owned_sample_move(z_owned_sample_t *dst, z_owned_sample_t *src);
-z_owned_sample_t *_z_sample_to_owned_ptr(const _z_sample_t *src);
+z_owned_sample_t *_z_sample_to_owned_ptr(const z_sample_t *src);
 
 // -- Queries handler
 void _z_owned_query_move(z_owned_query_t *dst, z_owned_query_t *src);

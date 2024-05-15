@@ -20,6 +20,8 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/net/reply.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
@@ -426,8 +428,11 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-typedef _z_sample_t z_sample_t;
+typedef struct z_sample_t {
+    _z_sample_rc_t _rc;
+} z_sample_t;
 _OWNED_TYPE_PTR(z_sample_t, sample)
+typedef _z_sample_t z_loaned_sample_t;
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.

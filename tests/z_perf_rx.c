@@ -41,13 +41,14 @@ void z_stats_stop(z_stats_t *stats) {
 
 void on_sample(const z_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
+    z_bytes_t payload = z_sample_payload(sample);
 
-    if (stats->curr_len != sample->payload.len) {
+    if (stats->curr_len != payload.len) {
         // End previous measurement
         z_stats_stop(stats);
         // Check for end packet
-        stats->curr_len = (unsigned long)sample->payload.len;
-        if (sample->payload.len == 1) {
+        stats->curr_len = (unsigned long)payload.len;
+        if (payload.len == 1) {
             test_end = true;
             return;
         }

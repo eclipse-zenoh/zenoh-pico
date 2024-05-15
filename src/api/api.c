@@ -25,8 +25,8 @@
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
-#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/primitives.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -445,7 +445,26 @@ OWNED_FUNCTIONS_PTR_DROP(z_scouting_config_t, z_owned_scouting_config_t, scoutin
 OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
 OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_sample_t, z_owned_sample_t, sample, _z_sample_free, _z_sample_copy)
+
+// Owned sample functions
+_Bool z_sample_check(const z_owned_sample_t *val) { return val->_value != ((void *)0); }
+z_sample_t z_sample_loan(const z_owned_sample_t *val) { return *val->_value; }
+z_owned_sample_t z_sample_null(void) { return (z_owned_sample_t){._value = ((void *)0)}; }
+z_owned_sample_t *z_sample_move(z_owned_sample_t *val) { return val; }
+z_owned_sample_t z_sample_clone(z_owned_sample_t *val) {
+    z_owned_sample_t ret;
+    ret._value = (z_sample_t *)z_malloc(sizeof(z_sample_t));
+    if (ret._value != ((void *)0)) {
+        ret._value->_rc = _z_sample_rc_clone(&val->_value->_rc);
+    }
+    return ret;
+}
+void z_sample_drop(z_owned_sample_t *val) {
+    if (val->_value != ((void *)0)) {
+        _z_sample_rc_drop(&val->_value->_rc);
+        z_free(val->_value);
+    }
+}
 
 _Bool z_session_check(const z_owned_session_t *val) { return val->_value.in != NULL; }
 z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
@@ -644,6 +663,16 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
 
 z_id_t z_info_zid(const z_session_t zs) { return zs._val.in->val._local_zid; }
 
+z_keyexpr_t z_sample_keyexpr(const z_sample_t *sample) { return sample->_rc.in->val.keyexpr; }
+z_bytes_t z_sample_payload(const z_sample_t *sample) { return sample->_rc.in->val.payload; }
+z_timestamp_t z_sample_timestamp(const z_sample_t *sample) { return sample->_rc.in->val.timestamp; }
+z_encoding_t z_sample_encoding(const z_sample_t *sample) { return sample->_rc.in->val.encoding; }
+z_sample_kind_t z_sample_kind(const z_sample_t *sample) { return sample->_rc.in->val.kind; }
+z_qos_t z_sample_qos(const z_sample_t *sample) { return sample->_rc.in->val.qos; }
+#if Z_FEATURE_ATTACHMENT == 1
+z_attachment_t z_sample_attachment(const z_sample_t *sample) { return sample->_rc.in->val.attachment; }
+#endif
+
 #if Z_FEATURE_PUBLICATION == 1
 OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
 OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
@@ -685,12 +714,15 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     );
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len,
-                                   _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority)
 #if Z_FEATURE_ATTACHMENT == 1
-                                       ,
-                                   opt.attachment
+    z_attachment_t att = opt.attachment;
+#else
+    z_attachment_t att = z_attachment_null();
 #endif
+    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len,
+                                   _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
+                                   att
+
     );
 
     return ret;
@@ -800,13 +832,14 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 #endif
         );
     }
-    // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len, _Z_N_QOS_DEFAULT
 #if Z_FEATURE_ATTACHMENT == 1
-                                   ,
-                                   opt.attachment
+    z_attachment_t att = opt.attachment;
+#else
+    z_attachment_t att = z_attachment_null();
 #endif
-    );
+
+    // Trigger local subscriptions
+    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len, _Z_N_QOS_DEFAULT, att);
     return ret;
 }
 
@@ -908,7 +941,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply) {
     return true;
 }
 
-z_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
+z_loaned_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);

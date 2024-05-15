@@ -20,16 +20,18 @@
 #if Z_FEATURE_SUBSCRIPTION == 1
 void data_handler(const z_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
+    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
+    z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
     bool is_valid = true;
-    const uint8_t *data = sample->payload.start;
-    for (size_t i = 0; i < sample->payload.len; i++) {
+    z_bytes_t payload = z_sample_payload(sample);
+    const uint8_t *data = payload.start;
+    for (size_t i = 0; i < payload.len; i++) {
         if (data[i] != (uint8_t)i) {
             is_valid = false;
             break;
         }
     }
-    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_loan(keystr), (int)sample->payload.len, is_valid);
+    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_loan(keystr), (int)payload.len, is_valid);
     z_drop(z_move(keystr));
 }
 
