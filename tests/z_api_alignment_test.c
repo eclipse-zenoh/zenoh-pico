@@ -88,7 +88,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(z_owned_reply_t *reply, void *arg) {
+void reply_handler(const z_loaned_reply_t *reply, void *arg) {
     printf("%s\n", __func__);
     replies++;
 
@@ -107,9 +107,6 @@ void reply_handler(z_owned_reply_t *reply, void *arg) {
         z_value_t _ret_zvalue = z_reply_err(reply);
         (void)(_ret_zvalue);
     }
-
-    z_null(reply);
-    z_drop(reply);  // validate double-drop safety: caller drops reply if it's not dropped by the handler
 }
 
 volatile unsigned int datas = 0;

@@ -69,7 +69,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 }
 
 volatile unsigned int replies = 0;
-void reply_handler(z_owned_reply_t *reply, void *arg) {
+void reply_handler(const z_loaned_reply_t *reply, void *arg) {
     char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     if (z_reply_is_ok(reply)) {
