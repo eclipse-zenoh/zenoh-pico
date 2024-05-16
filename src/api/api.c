@@ -844,7 +844,7 @@ int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const ch
 }
 
 _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
-    (void)(reply);
+    _ZP_UNUSED(reply);
     // For the moment always return TRUE.
     // The support for reply errors will come in the next release.
     return true;
@@ -852,8 +852,8 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
-z_value_t z_reply_err(const z_owned_reply_t *reply) {
-    (void)(reply);
+z_value_t z_reply_err(const z_loaned_reply_t *reply) {
+    _ZP_UNUSED(reply);
     return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 #endif

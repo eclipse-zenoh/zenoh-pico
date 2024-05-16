@@ -1214,7 +1214,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_value_t` wrapped in the query reply.
  */
-z_value_t z_reply_err(const z_owned_reply_t *reply);
+z_value_t z_reply_err(const z_loaned_reply_t *reply);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
