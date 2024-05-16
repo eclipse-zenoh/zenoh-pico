@@ -336,7 +336,13 @@ void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_
     }
 }
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
+    if (closure->call != NULL) {
+        (closure->call)(reply, closure->context);
+    }
+}
+
+void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
@@ -443,7 +449,9 @@ OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, _z
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, _z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, _z_owned_query_handler_t,
                         _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, z_owned_reply_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
+                        _z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, _z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, _z_dropper_handler_t)
 
@@ -786,7 +794,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
-OWNED_FUNCTIONS_PTR(_z_reply_t, reply, _z_owner_noop_copy, _z_reply_free)
+OWNED_FUNCTIONS_RC(reply)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
@@ -835,14 +843,14 @@ int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const ch
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_owned_reply_t *reply) {
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
     (void)(reply);
     // For the moment always return TRUE.
     // The support for reply errors will come in the next release.
     return true;
 }
 
-const z_loaned_sample_t *z_reply_ok(const z_owned_reply_t *reply) { return &reply->_val->data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);

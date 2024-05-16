@@ -110,10 +110,12 @@ _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 typedef struct _z_reply_t _z_reply_t;
 typedef _z_list_t _z_reply_data_list_t;
 typedef _z_list_t _z_pending_reply_list_t;
+typedef struct _z_reply_rc_t _z_reply_rc_t;
+typedef _z_reply_rc_t z_loaned_reply_t;
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg);
+typedef void (*_z_reply_handler_t)(const z_loaned_reply_t *reply, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

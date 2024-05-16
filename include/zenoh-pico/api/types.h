@@ -181,7 +181,6 @@ _LOANED_TYPE(_z_queryable_t, queryable)
  * Represents a Zenoh query entity, received by Zenoh Queryable entities.
  *
  */
-
 _OWNED_TYPE_RC(_z_query_rc_t, query)
 _LOANED_TYPE(_z_query_rc_t, query)
 
@@ -459,8 +458,8 @@ typedef _z_reply_data_t z_reply_data_t;
  * Members:
  *   z_reply_data_t data: the content of the reply.
  */
-_OWNED_TYPE_PTR(_z_reply_t, reply)
-_LOANED_TYPE(_z_reply_t, reply)
+_OWNED_TYPE_RC(_z_reply_rc_t, reply)
+_LOANED_TYPE(_z_reply_rc_t, reply)
 
 /**
  * Represents an array of ``z_str_t``.
@@ -573,6 +572,26 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
+ *   _z_reply_handler_t call: `void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg)` is the
+ * callback function.
+ *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
+ */
+// TODO(sashacmc):
+typedef struct {
+    void *context;
+    _z_reply_handler_t call;
+    _z_dropper_handler_t drop;
+} z_owned_closure_reply_t;
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply);
+
+/**
+ * Represents the owned query reply callback closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
  *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(const z_owned_reply_t *reply, void *arg)` is the
  * callback function.
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
@@ -583,9 +602,9 @@ typedef struct {
     void *context;
     z_owned_reply_handler_t call;
     _z_dropper_handler_t drop;
-} z_owned_closure_reply_t;
+} z_owned_closure_owned_reply_t;
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
+void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply);
 
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 

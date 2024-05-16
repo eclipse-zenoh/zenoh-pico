@@ -45,6 +45,9 @@ void _z_owned_query_move(z_owned_query_t *dst, z_owned_query_t *src) {
 
 z_owned_query_t *_z_query_to_owned_ptr(const z_loaned_query_t *src) {
     z_owned_query_t *dst = (z_owned_query_t *)zp_malloc(sizeof(z_owned_query_t));
+    if (dst == NULL) {
+        return NULL;
+    }
     _z_query_rc_copy(&dst->_rc, src);
     return dst;
 }
@@ -57,17 +60,12 @@ void _z_owned_reply_move(z_owned_reply_t *dst, z_owned_reply_t *src) {
     zp_free(src);
 }
 
-z_owned_reply_t *_z_reply_clone(const z_owned_reply_t *src) {
+z_owned_reply_t *_z_reply_to_owned_ptr(const z_loaned_reply_t *src) {
     z_owned_reply_t *dst = (z_owned_reply_t *)zp_malloc(sizeof(z_owned_reply_t));
     if (dst == NULL) {
         return NULL;
     }
-    if (src != NULL && src->_val) {
-        dst->_val = (_z_reply_t *)zp_malloc(sizeof(_z_reply_t));
-        _z_reply_copy(dst->_val, src->_val);
-    } else {
-        dst->_val = NULL;
-    }
+    _z_reply_rc_copy(&dst->_rc, src);
     return dst;
 }
 #endif  // Z_FEATURE_QUERY
