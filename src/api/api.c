@@ -799,19 +799,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
 }
 
-typedef struct __z_reply_handler_wrapper_t {
-    z_owned_reply_handler_t user_call;
-    void *ctx;
-} __z_reply_handler_wrapper_t;
-
-void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
-    z_owned_reply_t oreply = {._val = reply};
-
-    wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
-    z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._val to NULL
-}
-
-int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
+int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const char *parameters,
              z_owned_closure_reply_t *callback, const z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
@@ -837,18 +825,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
         }
     }
-
-    // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
-    //                to enclose the z_reply_t into a z_owned_reply_t.
-    __z_reply_handler_wrapper_t *wrapped_ctx =
-        (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
-    if (wrapped_ctx != NULL) {
-        wrapped_ctx->user_call = callback->call;
-        wrapped_ctx->ctx = ctx;
-    }
-
     ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
+                   callback->call, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    opt.attachment

@@ -27,14 +27,10 @@
 #if Z_FEATURE_QUERY == 1
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     if (pen_qry->_dropper != NULL) {
-        pen_qry->_dropper(pen_qry->_drop_arg);
+        pen_qry->_dropper(pen_qry->_arg);
     }
-
-    z_free(pen_qry->_call_arg);
-
     _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_parameters);
-
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
 }
 
@@ -181,7 +177,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
-        pen_qry->_callback(_z_reply_alloc_and_move(&reply), pen_qry->_call_arg);
+        pen_qry->_callback(_z_reply_alloc_and_move(&reply), pen_qry->_arg);
     }
 
     if (ret != _Z_RES_OK) {
@@ -208,7 +204,7 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            pen_qry->_callback(_z_reply_alloc_and_move(&pen_rep->_reply), pen_qry->_call_arg);
+            pen_qry->_callback(_z_reply_alloc_and_move(&pen_rep->_reply), pen_qry->_arg);
             pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
         }
     }

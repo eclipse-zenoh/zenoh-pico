@@ -383,7 +383,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                 ,
                 z_attachment_t attachment
@@ -403,8 +403,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
-        pq->_call_arg = arg_call;
-        pq->_drop_arg = arg_drop;
+        pq->_arg = arg;
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
