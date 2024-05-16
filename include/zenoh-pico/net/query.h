@@ -39,13 +39,6 @@ void _z_query_clear(_z_query_t *q);
 _Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
- * Container for an owned query rc
- */
-typedef struct {
-    _z_query_rc_t _rc;
-} z_owned_query_t;
-
-/**
  * Return type when declaring a queryable.
  */
 typedef struct {

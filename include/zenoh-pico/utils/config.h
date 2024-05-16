@@ -46,7 +46,7 @@ int8_t _z_config_init(_z_config_t *ps);
  *   key: The key of the property to add.
  *   value: The value of the property to add.
  */
-int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, _z_string_t value);
+int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value);
 
 /**
  * Get the property with the given key from a properties map.

@@ -99,7 +99,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             if (listen != NULL) {
                 if (connect == NULL) {
                     key = Z_CONFIG_LISTEN_KEY;
-                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, _z_string_make(Z_CONFIG_MODE_PEER));
+                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
                 } else {
                     return _Z_ERR_GENERIC;
                 }
@@ -154,7 +154,9 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     if (ps != NULL) {
         _z_config_init(ps);
         _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&local_zid));
+        // TODO(sasahcmc): is it zero terminated???
+        // rework it!!!
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&local_zid).val);
 
         switch (zn->_tp._type) {
             case _Z_TRANSPORT_UNICAST_TYPE:

@@ -39,16 +39,16 @@ void z_stats_stop(z_stats_t *stats) {
     stats->count = 0;
 }
 
-void on_sample(const z_sample_t *sample, void *context) {
+void on_sample(const z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
-    z_bytes_t payload = z_sample_payload(sample);
+    const z_loaned_bytes_t *payload = z_sample_payload(sample);
 
-    if (stats->curr_len != payload.len) {
+    if (stats->curr_len != payload->len) {
         // End previous measurement
         z_stats_stop(stats);
         // Check for end packet
-        stats->curr_len = (unsigned long)payload.len;
-        if (payload.len == 1) {
+        stats->curr_len = (unsigned long)payload->len;
+        if (payload->len == 1) {
             test_end = true;
             return;
         }
@@ -75,32 +75,34 @@ int main(int argc, char **argv) {
         clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
     if (mode != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
     }
     if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     // Open session
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         exit(-1);
     }
     // Declare Subscriber/resource
-    z_owned_closure_sample_t callback = z_closure(on_sample, NULL, (void *)&test_stats);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
-    if (!z_check(sub)) {
+    z_owned_closure_sample_t callback;
+    z_closure(&callback, on_sample, NULL, (void *)&test_stats);
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }
@@ -113,8 +115,8 @@ int main(int argc, char **argv) {
     z_sleep_s(1);
     // Clean up
     z_undeclare_subscriber(z_move(sub));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     exit(0);
 }

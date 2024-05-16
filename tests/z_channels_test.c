@@ -30,30 +30,31 @@
                          .encoding = z_encoding_default(),                           \
                          .kind = 0,                                                  \
                          .qos = {0}};                                                \
-        z_sample_t sample = {._rc = _z_sample_rc_new_from_val(s)};                   \
+        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                     \
         z_call(channel.send, &sample);                                               \
     } while (0);
 
-#define _RECV(channel, method, buf)                                         \
-    do {                                                                    \
-        z_owned_sample_t sample = z_sample_null();                          \
-        z_call(channel.method, &sample);                                    \
-        if (z_check(sample)) {                                              \
-            z_sample_t loaned_sample = z_loan(sample);                      \
-            z_bytes_t payload = z_sample_payload(&loaned_sample);           \
-            strncpy(buf, (const char *)payload.start, (size_t)payload.len); \
-            buf[payload.len] = '\0';                                        \
-            z_drop(z_move(sample));                                         \
-        } else {                                                            \
-            buf[0] = '\0';                                                  \
-        }                                                                   \
+#define _RECV(channel, method, buf)                                             \
+    do {                                                                        \
+        z_owned_sample_t sample;                                                \
+        z_sample_null(&sample);                                                 \
+        z_call(channel.method, &sample);                                        \
+        if (z_check(sample)) {                                                  \
+            const z_loaned_bytes_t *payload = z_sample_payload(z_loan(sample)); \
+            strncpy(buf, (const char *)payload->start, (size_t)payload->len);   \
+            buf[payload->len] = '\0';                                           \
+            z_drop(z_move(sample));                                             \
+        } else {                                                                \
+            buf[0] = '\0';                                                      \
+        }                                                                       \
     } while (0);
 
 #define RECV(channel, buf) _RECV(channel, recv, buf)
 #define TRY_RECV(channel, buf) _RECV(channel, try_recv, buf)
 
 void sample_fifo_channel_test(void) {
-    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel_new(10);
+    z_owned_sample_fifo_channel_t channel;
+    z_sample_fifo_channel_new(&channel, 10);
 
     SEND(channel, "v1")
     SEND(channel, "v22")
@@ -75,7 +76,8 @@ void sample_fifo_channel_test(void) {
 }
 
 void sample_fifo_channel_test_try_recv(void) {
-    z_owned_sample_fifo_channel_t channel = z_sample_fifo_channel_new(10);
+    z_owned_sample_fifo_channel_t channel;
+    z_sample_fifo_channel_new(&channel, 10);
 
     char buf[100];
 
@@ -102,7 +104,8 @@ void sample_fifo_channel_test_try_recv(void) {
 }
 
 void sample_ring_channel_test_in_size(void) {
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(10);
+    z_owned_sample_ring_channel_t channel;
+    z_sample_ring_channel_new(&channel, 10);
 
     char buf[100];
 
@@ -129,7 +132,8 @@ void sample_ring_channel_test_in_size(void) {
 }
 
 void sample_ring_channel_test_over_size(void) {
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(3);
+    z_owned_sample_ring_channel_t channel;
+    z_sample_ring_channel_new(&channel, 3);
 
     char buf[100];
     TRY_RECV(channel, buf)

@@ -49,12 +49,12 @@ _Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_r
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 // Forward declaration to avoid cyclical include
-typedef struct z_sample_t z_sample_t;
+typedef struct _z_sample_rc_t z_loaned_sample_t;
 
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_data_handler_t)(const z_sample_t *sample, void *arg);
+typedef void (*_z_data_handler_t)(const z_loaned_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -80,11 +80,13 @@ typedef struct {
     uint32_t _id;
 } _z_publication_t;
 
-typedef struct z_query_t z_query_t;  // Forward type declaration to avoid cyclical include
+// TODO(sashacmc): make in proper way
+typedef struct _z_query_rc_t _z_query_rc_t;
+typedef _z_query_rc_t z_loaned_query_t;  // Forward type declaration to avoid cyclical include
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_queryable_handler_t)(const z_query_t *query, void *arg);
+typedef void (*_z_queryable_handler_t)(const z_loaned_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

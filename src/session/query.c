@@ -121,14 +121,14 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     _z_reply_t reply;
     reply._tag = Z_REPLY_TAG_DATA;
     reply.data.replier_id = zn->_local_zid;
-    reply.data.sample.keyexpr = expanded_ke;
-    _z_bytes_copy(&reply.data.sample.payload, &msg->_payload);
-    reply.data.sample.encoding.id = msg->_encoding.id;
-    _z_bytes_copy(&reply.data.sample.encoding.schema, &msg->_encoding.schema);
-    reply.data.sample.kind = Z_SAMPLE_KIND_PUT;
-    reply.data.sample.timestamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+    reply.data.sample.in->val.keyexpr = expanded_ke;
+    _z_bytes_copy(&reply.data.sample.in->val.payload, &msg->_payload);
+    reply.data.sample.in->val.encoding.id = msg->_encoding.id;
+    _z_bytes_copy(&reply.data.sample.in->val.encoding.schema, &msg->_encoding.schema);
+    reply.data.sample.in->val.kind = Z_SAMPLE_KIND_PUT;
+    reply.data.sample.in->val.timestamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
 #if Z_FEATURE_ATTACHMENT == 1
-    reply.data.sample.attachment = _z_encoded_as_attachment(&msg->_attachment);
+    reply.data.sample.in->val.attachment = _z_encoded_as_attachment(&msg->_attachment);
 #endif
 
     // Verify if this is a newer reply, free the old one in case it is
@@ -141,7 +141,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
+            if (_z_str_eq(pen_rep->_reply.data.sample.in->val.keyexpr._suffix,
+                          reply.data.sample.in->val.keyexpr._suffix) == true) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -163,7 +164,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                     _z_reply_t partial_reply;
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialized values on the reply
-                    partial_reply.data.sample.keyexpr = _z_keyexpr_duplicate(reply.data.sample.keyexpr);
+                    partial_reply.data.sample.in->val.keyexpr = _z_keyexpr_duplicate(reply.data.sample.in->val.keyexpr);
                     pen_rep->_reply = partial_reply;
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode

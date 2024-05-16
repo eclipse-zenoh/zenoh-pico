@@ -31,7 +31,7 @@
  *
  */
 typedef struct _z_reply_data_t {
-    _z_sample_t sample;
+    _z_sample_rc_t sample;
     _z_id_t replier_id;
 } _z_reply_data_t;
 

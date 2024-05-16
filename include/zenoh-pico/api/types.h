@@ -30,16 +30,26 @@
 extern "C" {
 #endif
 
-/* Owned types */
+/* Owned/Loaned types */
+
+// For pointer types
 #define _OWNED_TYPE_PTR(type, name) \
     typedef struct {                \
-        type *_value;               \
+        type *_val;                 \
     } z_owned_##name##_t;
 
-#define _OWNED_TYPE_STR(type, name) \
-    typedef struct {                \
-        type _value;                \
+// For refcounted types
+#define _OWNED_TYPE_RC(type, name) \
+    typedef struct {               \
+        type _rc;                  \
     } z_owned_##name##_t;
+
+#define _LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
+
+#define _VIEW_TYPE(type, name) \
+    typedef struct {           \
+        type _val;             \
+    } z_view_##name##_t;
 
 /**
  * Represents a variable-length encoding unsigned integer.
@@ -55,8 +65,9 @@ typedef _z_zint_t z_zint_t;
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
  */
-typedef _z_bytes_t z_bytes_t;
-_Bool z_bytes_check(const z_bytes_t *v);
+
+_OWNED_TYPE_PTR(_z_bytes_t, bytes)
+_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
  * Represents a Zenoh ID.
@@ -75,10 +86,10 @@ typedef _z_id_t z_id_t;
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
  */
-typedef _z_string_t z_string_t;
 
-typedef _z_str_t z_str_t;
-_OWNED_TYPE_STR(z_str_t, str)
+_OWNED_TYPE_PTR(_z_string_t, str)
+_LOANED_TYPE(_z_string_t, str)
+_VIEW_TYPE(_z_string_t, str)
 
 /**
  * Represents a key expression in Zenoh.
@@ -90,8 +101,9 @@ _OWNED_TYPE_STR(z_str_t, str)
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
  */
-typedef _z_keyexpr_t z_keyexpr_t;
-_OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
+_OWNED_TYPE_PTR(_z_keyexpr_t, keyexpr)
+_LOANED_TYPE(_z_keyexpr_t, keyexpr)
+_VIEW_TYPE(_z_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration.
@@ -105,10 +117,8 @@ _OWNED_TYPE_PTR(z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
-typedef struct {
-    _z_config_t *_val;
-} z_config_t;
 _OWNED_TYPE_PTR(_z_config_t, config)
+_LOANED_TYPE(_z_config_t, config)
 
 /**
  * Represents a scouting configuration.
@@ -122,21 +132,15 @@ _OWNED_TYPE_PTR(_z_config_t, config)
  *   - :c:func:`zp_scouting_config_get`
  *   - :c:func:`zp_scouting_config_insert`
  */
-typedef struct {
-    _z_scouting_config_t *_val;
-} z_scouting_config_t;
 _OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
+_LOANED_TYPE(_z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh session.
  */
-typedef struct {
-    _z_session_rc_t _val;
-} z_session_t;
 
-typedef struct {
-    _z_session_rc_t _value;
-} z_owned_session_t;
+_OWNED_TYPE_RC(_z_session_rc_t, session)
+_LOANED_TYPE(_z_session_rc_t, session)
 
 /**
  * Represents a Zenoh (push) Subscriber entity.
@@ -146,10 +150,8 @@ typedef struct {
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
-typedef struct {
-    _z_subscriber_t *_val;
-} z_subscriber_t;
 _OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
+_LOANED_TYPE(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -161,10 +163,8 @@ _OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
-typedef struct {
-    _z_publisher_t *_val;
-} z_publisher_t;
 _OWNED_TYPE_PTR(_z_publisher_t, publisher)
+_LOANED_TYPE(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -174,31 +174,31 @@ _OWNED_TYPE_PTR(_z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
-typedef struct {
-    _z_queryable_t *_val;
-} z_queryable_t;
 _OWNED_TYPE_PTR(_z_queryable_t, queryable)
+_LOANED_TYPE(_z_queryable_t, queryable)
 
 /**
  * Represents a Zenoh query entity, received by Zenoh Queryable entities.
  *
  */
-typedef struct z_query_t {
-    z_owned_query_t _val;
-} z_query_t;
+
+_OWNED_TYPE_RC(_z_query_rc_t, query)
+_LOANED_TYPE(_z_query_rc_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
  *
  * Members:
  *   z_encoding_prefix_t prefix: The integer prefix of this encoding.
- *   z_bytes_t suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
+ *   z_loaned_bytes_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
+// TODO(sashacmc):
 typedef _z_encoding_t z_encoding_t;
 
 /*
  * Represents timestamp value in Zenoh
  */
+// TODO(sashacmc):
 typedef _z_timestamp_t z_timestamp_t;
 
 /**
@@ -206,8 +206,9 @@ typedef _z_timestamp_t z_timestamp_t;
  *
  * Members:
  *   z_encoding_t encoding: The encoding of the `payload`.
- *   z_bytes_t payload: The payload of this zenoh value.
+ *   z_loaned_bytes_t* payload: The payload of this zenoh value.
  */
+// TODO(sashacmc):
 typedef _z_value_t z_value_t;
 
 /**
@@ -422,36 +423,34 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *
  * Members:
  *   z_keyexpr_t keyexpr: The keyexpr of this data sample.
- *   z_bytes_t payload: The value of this data sample.
+ *   z_loaned_bytes_t* payload: The value of this data sample.
  *   z_encoding_t encoding: The encoding of the value of this data sample.
  *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-typedef struct z_sample_t {
-    _z_sample_rc_t _rc;
-} z_sample_t;
-_OWNED_TYPE_PTR(z_sample_t, sample)
-typedef _z_sample_t z_loaned_sample_t;
+_OWNED_TYPE_RC(_z_sample_rc_t, sample)
+_LOANED_TYPE(_z_sample_rc_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
  *
  * Members:
  *   z_whatami_t whatami: The kind of zenoh entity.
- *   z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
+ *   z_loaned_bytes_t* zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_str_array_t locators: The locators of the scouted entity.
  */
-typedef _z_hello_t z_hello_t;
-_OWNED_TYPE_PTR(z_hello_t, hello)
+_OWNED_TYPE_PTR(_z_hello_t, hello)
+_LOANED_TYPE(_z_hello_t, hello)
 
 /**
  * Represents the content of a reply to a query.
  *
  * Members:
  *   z_sample_t sample: The :c:type:`_z_sample_t` containing the key and value of the reply.
- *   z_bytes_t replier_id: The id of the replier that sent this reply.
+ *   z_loaned_bytes_t* replier_id: The id of the replier that sent this reply.
  */
+// TODO(sashacmc):
 typedef _z_reply_data_t z_reply_data_t;
 
 /**
@@ -460,8 +459,8 @@ typedef _z_reply_data_t z_reply_data_t;
  * Members:
  *   z_reply_data_t data: the content of the reply.
  */
-typedef _z_reply_t z_reply_t;
-_OWNED_TYPE_PTR(z_reply_t, reply)
+_OWNED_TYPE_PTR(_z_reply_t, reply)
+_LOANED_TYPE(_z_reply_t, reply)
 
 /**
  * Represents an array of ``z_str_t``.
@@ -472,12 +471,15 @@ _OWNED_TYPE_PTR(z_reply_t, reply)
  *   - ``size_t z_str_array_len(z_str_array_t *a);``
  *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
  */
+// TODO(sashacmc):
 typedef _z_str_array_t z_str_array_t;
 
-z_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
+z_owned_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
 size_t z_str_array_len(const z_str_array_t *a);
 _Bool z_str_array_is_empty(const z_str_array_t *a);
+
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
+_LOANED_TYPE(z_str_array_t, str_array)
 
 typedef void (*_z_dropper_handler_t)(void *arg);
 typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
@@ -492,13 +494,14 @@ typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     _z_data_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_sample_t;
 
-void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample);
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample);
 
 /**
  * Represents the owned sample closure.
@@ -511,6 +514,7 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_samp
  * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     _z_owned_sample_handler_t call;
@@ -530,13 +534,14 @@ void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, 
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     _z_queryable_handler_t call;
     _z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
-void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query);
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query);
 
 typedef void (*_z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
 
@@ -551,6 +556,7 @@ typedef void (*_z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
  * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     _z_owned_query_handler_t call;
@@ -572,6 +578,7 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_reply_handler_t call;
@@ -593,6 +600,7 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_hello_handler_t call;
@@ -613,6 +621,7 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
+// TODO(sashacmc):
 typedef struct {
     void *context;
     z_id_handler_t call;
@@ -622,8 +631,8 @@ typedef struct {
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 #if Z_FEATURE_ATTACHMENT == 1
 struct _z_bytes_pair_t {
-    _z_bytes_t key;
-    _z_bytes_t value;
+    _z_bytes_t *key;
+    _z_bytes_t *value;
 };
 
 void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_);
@@ -634,6 +643,7 @@ _Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
  */
+// TODO(sashacmc):
 typedef struct z_owned_bytes_map_t {
     _z_bytes_pair_list_t *_inner;
 } z_owned_bytes_map_t;
@@ -671,7 +681,7 @@ z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_);
  * - `this` has no value associated to `key`
  */
 
-z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key);
+z_loaned_bytes_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key);
 /**
  * Associates `value` to `key` in the map, aliasing them.
  *
@@ -681,7 +691,7 @@ z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key);
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
 
-void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value);
 /**
  * Associates `value` to `key` in the map, copying them to obtain ownership: `key` and `value` are not aliased past the
  * function's return.
@@ -689,7 +699,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
 
-void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value);
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value);
 /**
  * Iterates over the key-value pairs in the map.
  *
@@ -707,10 +717,12 @@ int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body
 /**
  * Constructs a new map.
  */
+// TODO(sashacmc):
 z_owned_bytes_map_t z_bytes_map_new(void);
 /**
  * Constructs the gravestone value for `z_owned_bytes_map_t`
  */
+// TODO(sashacmc):
 z_owned_bytes_map_t z_bytes_map_null(void);
 #endif
 
@@ -719,11 +731,7 @@ z_owned_bytes_map_t z_bytes_map_null(void);
  *
  * `str == NULL` will cause this to return `z_bytes_null()`
  */
-z_bytes_t z_bytes_from_str(const char *str);
-/**
- * Returns the gravestone value for `z_bytes_t`
- */
-z_bytes_t z_bytes_null(void);
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, const char *str);
 
 #ifdef __cplusplus
 }

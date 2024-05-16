@@ -41,17 +41,17 @@ _z_list_t *subs2 = NULL;
 volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
-void data_handler(const z_sample_t *sample, void *arg) {
+void data_handler(const z_loaned_sample_t *sample, void *arg) {
     char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
-    z_bytes_t payload = z_sample_payload(sample);
-    z_owned_str_t k_str = z_keyexpr_to_string(keyexpr);
-    assert(payload.len == MSG_LEN);
-    assert(strlen(z_loan(k_str)) == strlen(res));
-    assert(strncmp(res, z_loan(k_str), strlen(res)) == 0);
+    z_owned_str_t k_str;
+    z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    assert(payload->len == MSG_LEN);
+    assert(z_loan(k_str)->len == strlen(res));
+    assert(strncmp(res, z_loan(k_str)->val, strlen(res)) == 0);
     (void)(sample);
 
     datas++;
@@ -67,40 +67,43 @@ int main(int argc, char **argv) {
 
     _Bool is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(argv[1]));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, argv[1]);
 
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
-    z_owned_session_t s1 = z_open(z_move(config));
+    z_owned_session_t s1;
+    z_open(&s1, z_move(config));
     assert(z_check(s1));
     _z_bytes_t id_as_bytes =
-        _z_bytes_wrap(z_loan(s1)._val.in->val._local_zid.id, _z_id_len(z_loan(s1)._val.in->val._local_zid));
-    z_string_t zid1 = _z_string_from_bytes(&id_as_bytes);
+        _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s1))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))._local_zid));
+    _z_string_t zid1 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
-    zp_start_read_task(z_loan(s1), NULL);
-    zp_start_lease_task(z_loan(s1), NULL);
+    zp_start_read_task(z_loan_mut(s1), NULL);
+    zp_start_lease_task(z_loan_mut(s1), NULL);
 
     z_sleep_s(SLEEP);
 
-    config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make("peer"));
-    zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1]));
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]);
 
-    z_owned_session_t s2 = z_open(z_move(config));
+    z_owned_session_t s2;
+    z_open(&s2, z_move(config));
     assert(z_check(s2));
-    id_as_bytes = _z_bytes_wrap(z_loan(s2)._val.in->val._local_zid.id, _z_id_len(z_loan(s2)._val.in->val._local_zid));
-    z_string_t zid2 = _z_string_from_bytes(&id_as_bytes);
+    id_as_bytes = _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s2))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))._local_zid));
+    _z_string_t zid2 = _z_string_from_bytes(&id_as_bytes);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops
-    zp_start_read_task(z_loan(s2), NULL);
-    zp_start_lease_task(z_loan(s2), NULL);
+    zp_start_read_task(z_loan_mut(s2), NULL);
+    zp_start_lease_task(z_loan_mut(s2), NULL);
 
     z_sleep_s(SLEEP * 5);
 
@@ -109,11 +112,12 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         memset(s1_res, 0, 64);
         snprintf(s1_res, 64, "%s%u", uri, i);
-        z_owned_closure_sample_t callback = z_closure(data_handler, NULL, &idx[i]);
+        z_owned_closure_sample_t callback;
+        z_closure(&callback, data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
-        *sub = z_declare_subscriber(z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
-        assert(z_check(*sub));
-        printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id,
+        int8_t res = z_declare_subscriber(sub, z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
+        assert(res == _Z_RES_OK);
+        printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
                (z_zint_t)0, s1_res);
         subs2 = _z_list_push(subs2, sub);
     }
@@ -128,7 +132,8 @@ int main(int argc, char **argv) {
         for (unsigned int i = 0; i < SET; i++) {
             memset(s1_res, 0, 64);
             snprintf(s1_res, 64, "%s%u", uri, i);
-            z_put_options_t opt = z_put_options_default();
+            z_put_options_t opt;
+            z_put_options_default(&opt);
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
@@ -155,7 +160,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)._val->_entity_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
@@ -164,12 +169,12 @@ int main(int argc, char **argv) {
 
     // Stop both sessions
     printf("Stopping threads on session 1\n");
-    zp_stop_read_task(z_loan(s1));
-    zp_stop_lease_task(z_loan(s1));
+    zp_stop_read_task(z_loan_mut(s1));
+    zp_stop_lease_task(z_loan_mut(s1));
 
     printf("Stopping threads on session 2\n");
-    zp_stop_read_task(z_loan(s2));
-    zp_stop_lease_task(z_loan(s2));
+    zp_stop_read_task(z_loan_mut(s2));
+    zp_stop_lease_task(z_loan_mut(s2));
 
     // Close both sessions
     printf("Closing session 1\n");

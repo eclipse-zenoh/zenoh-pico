@@ -25,11 +25,11 @@
 
 // -- Samples handler
 void _z_owned_sample_move(z_owned_sample_t *dst, z_owned_sample_t *src);
-z_owned_sample_t *_z_sample_to_owned_ptr(const z_sample_t *src);
+z_owned_sample_t *_z_sample_to_owned_ptr(const z_loaned_sample_t *src);
 
 // -- Queries handler
 void _z_owned_query_move(z_owned_query_t *dst, z_owned_query_t *src);
-z_owned_query_t *_z_query_to_owned_ptr(const z_query_t *src);
+z_owned_query_t *_z_query_to_owned_ptr(const z_loaned_query_t *src);
 
 // -- Reply handler
 void _z_owned_reply_move(z_owned_reply_t *dst, z_owned_reply_t *src);
@@ -77,13 +77,12 @@ z_owned_reply_t *_z_reply_clone(const z_owned_reply_t *src);
         }                                                                                                    \
     }                                                                                                        \
                                                                                                              \
-    static inline z_owned_##name##_t z_##name##_new(size_t capacity) {                                       \
-        z_owned_##name##_t channel;                                                                          \
-        channel.collection = collection_new_f(capacity);                                                     \
-        channel.send = z_##send_closure_name(_z_##name##_send, NULL, channel.collection);                    \
-        channel.recv = z_##recv_closure_name(_z_##name##_recv, NULL, channel.collection);                    \
-        channel.try_recv = z_##recv_closure_name(_z_##name##_try_recv, NULL, channel.collection);            \
-        return channel;                                                                                      \
+    static inline int8_t z_##name##_new(z_owned_##name##_t *channel, size_t capacity) {                      \
+        channel->collection = collection_new_f(capacity);                                                    \
+        z_##send_closure_name(&channel->send, _z_##name##_send, NULL, channel->collection);                  \
+        z_##recv_closure_name(&channel->recv, _z_##name##_recv, NULL, channel->collection);                  \
+        z_##recv_closure_name(&channel->try_recv, _z_##name##_try_recv, NULL, channel->collection);          \
+        return _Z_RES_OK;                                                                                    \
     }                                                                                                        \
     static inline z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }               \
     static inline void z_##name##_drop(z_owned_##name##_t *channel) {                                        \
@@ -93,22 +92,22 @@ z_owned_reply_t *_z_reply_clone(const z_owned_reply_t *src);
     }
 
 // z_owned_sample_ring_channel_t
-_Z_CHANNEL_DEFINE(sample_ring_channel, closure_sample, closure_owned_sample, const z_sample_t, z_owned_sample_t,
+_Z_CHANNEL_DEFINE(sample_ring_channel, closure_sample, closure_owned_sample, const z_loaned_sample_t, z_owned_sample_t,
                   _z_ring_mt_t, _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_try_pull,
                   _z_owned_sample_move, _z_sample_to_owned_ptr, z_sample_drop)
 
 // z_owned_sample_fifo_channel_t
-_Z_CHANNEL_DEFINE(sample_fifo_channel, closure_sample, closure_owned_sample, const z_sample_t, z_owned_sample_t,
+_Z_CHANNEL_DEFINE(sample_fifo_channel, closure_sample, closure_owned_sample, const z_loaned_sample_t, z_owned_sample_t,
                   _z_fifo_mt_t, _z_fifo_mt_new, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_fifo_mt_try_pull,
                   _z_owned_sample_move, _z_sample_to_owned_ptr, z_sample_drop)
 
 // z_owned_query_ring_channel_t
-_Z_CHANNEL_DEFINE(query_ring_channel, closure_query, closure_owned_query, const z_query_t, z_owned_query_t,
+_Z_CHANNEL_DEFINE(query_ring_channel, closure_query, closure_owned_query, const z_loaned_query_t, z_owned_query_t,
                   _z_ring_mt_t, _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_try_pull,
                   _z_owned_query_move, _z_query_to_owned_ptr, z_query_drop)
 
 // z_owned_query_fifo_channel_t
-_Z_CHANNEL_DEFINE(query_fifo_channel, closure_query, closure_owned_query, const z_query_t, z_owned_query_t,
+_Z_CHANNEL_DEFINE(query_fifo_channel, closure_query, closure_owned_query, const z_loaned_query_t, z_owned_query_t,
                   _z_fifo_mt_t, _z_fifo_mt_new, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_fifo_mt_try_pull,
                   _z_owned_query_move, _z_query_to_owned_ptr, z_query_drop)
 

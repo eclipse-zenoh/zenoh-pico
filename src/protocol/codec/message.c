@@ -410,7 +410,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    _Bool has_params = z_bytes_check(&msg->_parameters);
+    _Bool has_params = _z_bytes_check(msg->_parameters);
     if (has_params) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }

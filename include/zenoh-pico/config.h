@@ -236,7 +236,7 @@
  * Enable attachments.
  */
 #ifndef Z_FEATURE_ATTACHMENT
-#define Z_FEATURE_ATTACHMENT 1
+#define Z_FEATURE_ATTACHMENT 0
 #endif
 
 /**

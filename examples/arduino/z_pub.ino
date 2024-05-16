@@ -55,16 +55,17 @@ void setup() {
     Serial.println("OK");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;
@@ -73,15 +74,14 @@ void setup() {
     Serial.println("OK");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     // Declare Zenoh publisher
     Serial.print("Declaring publisher for ");
     Serial.print(KEYEXPR);
     Serial.println("...");
-    pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(KEYEXPR), NULL);
-    if (!z_publisher_check(&pub)) {
+    if (z_declare_publisher(&pub, z_session_loan(&s), z_keyexpr(KEYEXPR), NULL) < 0) {
         Serial.println("Unable to declare publisher for key expression!");
         while (1) {
             ;

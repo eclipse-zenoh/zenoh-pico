@@ -86,7 +86,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+_z_publisher_t *_z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority);
 
 /**
@@ -143,7 +143,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  * Returns:
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
-_z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+_z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
@@ -173,7 +173,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-_z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+_z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**

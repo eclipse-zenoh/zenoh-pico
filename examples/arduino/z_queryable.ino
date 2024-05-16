@@ -35,8 +35,9 @@
 #define KEYEXPR "demo/example/zenoh-pico-queryable"
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
-void query_handler(const z_query_t *query, void *arg) {
-    z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
+void query_handler(const z_loaned_query_t *query, void *arg) {
+    z_owned_str_t keystr;
+    z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
 
     Serial.print(" >> [Queryable handler] Replying Data ('");
     Serial.print(z_str_loan(&keystr));
@@ -66,16 +67,17 @@ void setup() {
     Serial.println("OK");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;
@@ -84,17 +86,18 @@ void setup() {
     Serial.println("OK");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     // Declare Zenoh queryable
     Serial.print("Declaring Queryable on ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
-    z_owned_closure_query_t callback = z_closure_query(query_handler, NULL, NULL);
-    z_owned_queryable_t qable =
-        z_declare_queryable(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_query_move(&callback), NULL);
-    if (!z_queryable_check(&qable)) {
+    z_owned_closure_query_t callback;
+    z_closure_query(&callback, query_handler, NULL, NULL);
+    z_owned_queryable_t qable;
+    if (z_declare_queryable(&qable, z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_query_move(&callback), NULL) <
+        0) {
         Serial.println("Unable to declare queryable.");
         while (1) {
             ;

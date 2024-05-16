@@ -18,7 +18,7 @@
 
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
-    _z_sample_clear(&reply_data->sample);
+    _z_sample_rc_drop(&reply_data->sample);
     reply_data->replier_id = _z_id_empty();
 }
 
@@ -34,7 +34,7 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 }
 
 void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src) {
-    _z_sample_copy(&dst->sample, &src->sample);
+    _z_sample_rc_copy(&dst->sample, &src->sample);
     dst->replier_id = src->replier_id;
 }
 

@@ -25,11 +25,11 @@ int8_t _z_config_init(_z_config_t *ps) {
     return 0;
 }
 
-int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, _z_string_t value) {
+int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
     int8_t ret = _Z_RES_OK;
 
-    char *res = _z_str_intmap_insert(ps, key, value.val);
-    if (res != value.val) {
+    char *res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
+    if (res != value) {
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
 

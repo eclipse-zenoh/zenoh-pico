@@ -41,41 +41,51 @@
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
-/********* Data Types Handlers *********/
-_Bool z_bytes_check(const z_bytes_t *v) { return v->start != NULL; }
-
-z_string_t z_string_make(const char *value) { return _z_string_make(value); }
-
-z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
-size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
-_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
-
-z_keyexpr_t z_keyexpr(const char *name) { return _z_rname(name); }
-
-z_keyexpr_t z_keyexpr_unchecked(const char *name) { return _z_rname(name); }
-
-z_owned_str_t z_keyexpr_to_string(z_keyexpr_t keyexpr) {
-    z_owned_str_t ret = {._value = NULL};
-
-    if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        size_t ke_len = _z_str_size(keyexpr._suffix);
-
-        ret._value = (char *)z_malloc(ke_len);
-        if (ret._value != NULL) {
-            _z_str_n_copy(ret._value, keyexpr._suffix, ke_len);
-        }
-    }
-
-    return ret;
+// TODO(sashacmc): remove this VERY BAD workaround (it is only to allow compilaton)!!!
+z_loaned_keyexpr_t *z_keyexpr(const char *name) {
+    static z_view_keyexpr_t keyexpr;
+    z_view_keyexpr_new(&keyexpr, name);
+    return (z_loaned_keyexpr_t *)z_view_keyexpr_loan(&keyexpr);
 }
 
-z_bytes_t z_keyexpr_as_bytes(z_keyexpr_t keyexpr) {
+/********* Data Types Handlers *********/
+
+int8_t z_view_str_wrap(z_view_str_t *str, const char *value) {
+    str->_val = _z_string_make(value);
+    return _Z_RES_OK;
+}
+
+// TODO(sashacmc): to z_slice_array_t ???
+// z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
+// size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
+//_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
+
+int8_t z_view_keyexpr_new(z_view_keyexpr_t *keyexpr, const char *name) {
+    keyexpr->_val = _z_rname(name);
+    return _Z_RES_OK;
+}
+
+int8_t z_view_keyexpr_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
+    keyexpr->_val = _z_rname(name);
+    return _Z_RES_OK;
+}
+
+void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *s) {
+    if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
+        s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
+        if (s->_val != NULL) {
+            s->_val->val = _z_str_clone(keyexpr->_suffix);
+            s->_val->len = strlen(keyexpr->_suffix);
+        }
+    }
+}
+
+/*
+TODO(sashacmc)
+z_loaned_bytes_t* z_keyexpr_as_bytes(z_loaned_keyexpr_t *keyexpr) {
     if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        z_bytes_t ret = {.start = (const uint8_t *)keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc = false};
-        return ret;
-    } else {
-        z_bytes_t ret = {.start = NULL, .len = 0, ._is_alloc = false};
-        return ret;
+        z_loaned_bytes_t* ret = {.start = (const uint8_t *)keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc =
+false}; return ret; } else { z_loaned_bytes_t* ret = {.start = NULL, .len = 0, ._is_alloc = false}; return ret;
     }
 }
 
@@ -86,18 +96,16 @@ _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
     }
     return ret;
 }
-
-z_owned_str_t zp_keyexpr_resolve(z_session_t zs, z_keyexpr_t keyexpr) {
-    z_owned_str_t ret = {._value = NULL};
-
-    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&zs._val.in->val, &keyexpr);
-    ret._value = (char *)ekey._suffix;  // ekey will be out of scope so
-                                        //  - suffix can be safely casted as non-const
-                                        //  - suffix does not need to be copied
-    return ret;
+*/
+int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *str) {
+    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&_Z_RC_IN_VAL(zs), keyexpr);
+    *str->_val = _z_string_make((char *)ekey._suffix);  // ekey will be out of scope so
+                                                        //  - suffix can be safely casted as non-const
+                                                        //  - suffix does not need to be copied
+    return _Z_RES_OK;
 }
 
-_Bool z_keyexpr_is_initialized(const z_keyexpr_t *keyexpr) {
+_Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr) {
     _Bool ret = false;
 
     if ((keyexpr->_id != Z_RESOURCE_ID_NONE) || (keyexpr->_suffix != NULL)) {
@@ -126,11 +134,11 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start) {
     return ret;
 }
 
-int8_t z_keyexpr_includes(z_keyexpr_t l, z_keyexpr_t r) {
+int8_t z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     int8_t ret = 0;
 
-    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_includes_null_terminated(l._suffix, r._suffix);
+    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
     } else {
         ret = _Z_ERR_GENERIC;
     }
@@ -150,11 +158,11 @@ int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
     return ret;
 }
 
-int8_t z_keyexpr_intersects(z_keyexpr_t l, z_keyexpr_t r) {
+int8_t z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     int8_t ret = 0;
 
-    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_intersect_null_terminated(l._suffix, r._suffix);
+    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
     } else {
         ret = _Z_ERR_GENERIC;
     }
@@ -174,11 +182,11 @@ int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
     return ret;
 }
 
-int8_t z_keyexpr_equals(z_keyexpr_t l, z_keyexpr_t r) {
+int8_t z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     int8_t ret = 0;
 
-    if ((l._id == Z_RESOURCE_ID_NONE) && (r._id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_equals_null_terminated(l._suffix, r._suffix);
+    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
+        ret = zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
     } else {
         ret = _Z_ERR_GENERIC;
     }
@@ -203,58 +211,56 @@ int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
     return ret;
 }
 
-z_owned_config_t z_config_new(void) { return (z_owned_config_t){._value = _z_config_empty()}; }
+void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); }
 
-z_owned_config_t z_config_default(void) { return (z_owned_config_t){._value = _z_config_default()}; }
+void z_config_default(z_owned_config_t *config) { config->_val = _z_config_default(); }
 
-const char *zp_config_get(z_config_t config, uint8_t key) { return _z_config_get(config._val, key); }
+const char *zp_config_get(const z_loaned_config_t *config, uint8_t key) { return _z_config_get(config, key); }
 
-int8_t zp_config_insert(z_config_t config, uint8_t key, z_string_t value) {
-    return _zp_config_insert(config._val, key, value);
+int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value) {
+    return _zp_config_insert(config, key, value);
 }
 
-z_owned_scouting_config_t z_scouting_config_default(void) {
-    _z_scouting_config_t *sc = _z_config_empty();
+void z_scouting_config_default(z_owned_scouting_config_t *sc) {
+    sc->_val = _z_config_empty();
 
-    _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
-    _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
-
-    return (z_owned_scouting_config_t){._value = sc};
+    _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, Z_CONFIG_MULTICAST_LOCATOR_DEFAULT);
+    _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT);
+    _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, Z_CONFIG_SCOUTING_WHAT_DEFAULT);
 }
 
-z_owned_scouting_config_t z_scouting_config_from(z_config_t c) {
-    _z_scouting_config_t *sc = _z_config_empty();
+int8_t z_scouting_config_from(z_owned_scouting_config_t *sc, const z_loaned_config_t *c) {
+    sc->_val = _z_config_empty();
 
     char *opt;
-    opt = _z_config_get(c._val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+    opt = _z_config_get(c, Z_CONFIG_MULTICAST_LOCATOR_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(Z_CONFIG_MULTICAST_LOCATOR_DEFAULT));
+        _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, Z_CONFIG_MULTICAST_LOCATOR_DEFAULT);
     } else {
-        _zp_config_insert(sc, Z_CONFIG_MULTICAST_LOCATOR_KEY, _z_string_make(opt));
+        _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, opt);
     }
 
-    opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+    opt = _z_config_get(c, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT));
+        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT);
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_TIMEOUT_KEY, _z_string_make(opt));
+        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, opt);
     }
 
-    opt = _z_config_get(c._val, Z_CONFIG_SCOUTING_WHAT_KEY);
+    opt = _z_config_get(c, Z_CONFIG_SCOUTING_WHAT_KEY);
     if (opt == NULL) {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(Z_CONFIG_SCOUTING_WHAT_DEFAULT));
+        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, Z_CONFIG_SCOUTING_WHAT_DEFAULT);
     } else {
-        _zp_config_insert(sc, Z_CONFIG_SCOUTING_WHAT_KEY, _z_string_make(opt));
+        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, opt);
     }
 
-    return (z_owned_scouting_config_t){._value = sc};
+    return _Z_RES_OK;
 }
 
-const char *zp_scouting_config_get(z_scouting_config_t sc, uint8_t key) { return _z_config_get(sc._val, key); }
+const char *zp_scouting_config_get(const z_loaned_scouting_config_t *sc, uint8_t key) { return _z_config_get(sc, key); }
 
-int8_t zp_scouting_config_insert(z_scouting_config_t sc, uint8_t key, z_string_t value) {
-    return _zp_config_insert(sc._val, key, value);
+int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *sc, uint8_t key, const char *value) {
+    return _zp_config_insert(sc, key, value);
 }
 
 z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
@@ -290,19 +296,18 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
-z_bytes_t z_query_parameters(const z_query_t *query) {
-    z_bytes_t parameters =
-        _z_bytes_wrap((uint8_t *)query->_val._rc.in->val._parameters, strlen(query->_val._rc.in->val._parameters));
-    return parameters;
+void z_query_parameters(const z_loaned_query_t *query, z_view_str_t *parameters) {
+    // TODO(sashacmc)
+    //  *parameters = _z_bytes_wrap((uint8_t *)query->in->val._parameters, strlen(query->in->val._parameters));
 }
 
-z_value_t z_query_value(const z_query_t *query) { return query->_val._rc.in->val._value; }
+z_value_t z_query_value(const z_loaned_query_t *query) { return query->in->val._value; }
 
 #if Z_FEATURE_ATTACHMENT == 1
-z_attachment_t z_query_attachment(const z_query_t *query) { return query->_val._rc.in->val.attachment; }
+z_attachment_t z_query_attachment(const z_loaned_query_t *query) { return query->in->val.attachment; }
 #endif
 
-z_keyexpr_t z_query_keyexpr(const z_query_t *query) { return query->_val._rc.in->val._key; }
+const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
 
 _Bool z_value_is_initialized(z_value_t *value) {
     _Bool ret = false;
@@ -314,7 +319,7 @@ _Bool z_value_is_initialized(z_value_t *value) {
     return ret;
 }
 
-void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_sample_t *sample) {
+void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
@@ -326,7 +331,7 @@ void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, 
     }
 }
 
-void z_closure_query_call(const z_owned_closure_query_t *closure, const z_query_t *query) {
+void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query) {
     if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
@@ -356,180 +361,98 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     }
 }
 
-/**************** Loans ****************/
-#define OWNED_FUNCTIONS_PTR_INTERNAL(type, ownedtype, name, f_free, f_copy)      \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
-    type z_##name##_loan(const ownedtype *val) { return *val->_value; }          \
-    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; }      \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
-    ownedtype z_##name##_clone(ownedtype *val) {                                 \
-        ownedtype ret;                                                           \
-        ret._value = (type *)z_malloc(sizeof(type));                             \
-        if (ret._value != NULL) {                                                \
-            f_copy(ret._value, val->_value);                                     \
-        }                                                                        \
-        return ret;                                                              \
-    }                                                                            \
-    void z_##name##_drop(ownedtype *val) {                                       \
-        if (val->_value != NULL) {                                               \
-            f_free(&val->_value);                                                \
-        }                                                                        \
+// TODO(sashacmc): return value for drop? (queryable, etc)
+#define OWNED_FUNCTIONS_PTR(type, name, f_copy, f_free)                                             \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
+    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                             \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                    \
+    void z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
+        obj->_val = (type *)z_malloc(sizeof(type));                                                 \
+        if (obj->_val != NULL) {                                                                    \
+            f_copy(obj->_val, src);                                                                 \
+        }                                                                                           \
+    }                                                                                               \
+    void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
+        if (obj->_val != NULL) {                                                                    \
+            f_free(&obj->_val);                                                                     \
+        }                                                                                           \
     }
 
-#define OWNED_FUNCTIONS_PTR_COMMON(type, ownedtype, name)                              \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; }       \
-    type z_##name##_loan(const ownedtype *val) { return (type){._val = val->_value}; } \
-    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; }            \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }
+// TODO(sashacmc): Sould drop clean pinter to allow double call ?
+#define OWNED_FUNCTIONS_RC(name)                                                                    \
+    _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }         \
+    void z_##name##_null(z_owned_##name##_t *val) { val->_rc.in = NULL; }                           \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                    \
+    void z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
+        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
+    }                                                                                               \
+    void z_##name##_drop(z_owned_##name##_t *val) { _z_##name##_rc_drop(&val->_rc); }
 
-#define OWNED_FUNCTIONS_PTR_CLONE(type, ownedtype, name, f_copy) \
-    ownedtype z_##name##_clone(ownedtype *val) {                 \
-        ownedtype ret;                                           \
-        ret._value = (_##type *)z_malloc(sizeof(_##type));       \
-        if (ret._value != NULL) {                                \
-            f_copy(ret._value, val->_value);                     \
-        }                                                        \
-        return ret;                                              \
-    }
-
-#define OWNED_FUNCTIONS_PTR_DROP(type, ownedtype, name, f_free) \
-    void z_##name##_drop(ownedtype *val) {                      \
-        if (val->_value != NULL) {                              \
-            f_free(&val->_value);                               \
-        }                                                       \
-    }
-
-#define OWNED_FUNCTIONS_STR(type, ownedtype, name, f_free, f_copy)               \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_value != NULL; } \
-    type z_##name##_loan(const ownedtype *val) { return val->_value; }           \
-    ownedtype z_##name##_null(void) { return (ownedtype){._value = NULL}; };     \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                   \
-    ownedtype z_##name##_clone(ownedtype *val) {                                 \
-        ownedtype ret;                                                           \
-        size_t size = _z_str_size(val->_value);                                  \
-        ret._value = (_##type)z_malloc(size);                                    \
-        if (ret._value != NULL) {                                                \
-            f_copy(ret._value, val->_value, size);                               \
-        }                                                                        \
-        return ret;                                                              \
-    }                                                                            \
-    void z_##name##_drop(ownedtype *val) {                                       \
-        if (val->_value != NULL) {                                               \
-            f_free(&val->_value);                                                \
-        }                                                                        \
-    }
-
-#define OWNED_FUNCTIONS_PTR_RC(type, ownedtype, name)                                                          \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_rc.in != NULL; }                               \
-    type z_##name##_loan(const ownedtype *val) { return (type){._val = (ownedtype){._rc.in = val->_rc.in}}; }  \
-    ownedtype z_##name##_null(void) { return (ownedtype){._rc.in = NULL}; }                                    \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                                                 \
-    ownedtype z_##name##_clone(ownedtype *val) { return (ownedtype){._rc = _z_##name##_rc_clone(&val->_rc)}; } \
-    void z_##name##_drop(ownedtype *val) { _z_##name##_rc_drop(&val->_rc); }
+#define VIEW_FUNCTIONS_PTR(type, name)                                                                   \
+    const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
+    z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
 
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
     (void)(src);
 }
 
-OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_n_copy)
+// TODO(sashacmc): remove
+// OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_n_copy)
 
-OWNED_FUNCTIONS_PTR_COMMON(z_config_t, z_owned_config_t, config)
-OWNED_FUNCTIONS_PTR_CLONE(z_config_t, z_owned_config_t, config, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_DROP(z_config_t, z_owned_config_t, config, _z_config_free)
+OWNED_FUNCTIONS_PTR(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
+OWNED_FUNCTIONS_PTR(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
+OWNED_FUNCTIONS_PTR(_z_string_t, str, _z_string_copy, _z_string_free)
 
-OWNED_FUNCTIONS_PTR_COMMON(z_scouting_config_t, z_owned_scouting_config_t, scouting_config)
-OWNED_FUNCTIONS_PTR_CLONE(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_DROP(z_scouting_config_t, z_owned_scouting_config_t, scouting_config, _z_scouting_config_free)
+OWNED_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
+VIEW_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr)
+VIEW_FUNCTIONS_PTR(_z_string_t, str)
 
-OWNED_FUNCTIONS_PTR_INTERNAL(z_keyexpr_t, z_owned_keyexpr_t, keyexpr, _z_keyexpr_free, _z_keyexpr_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_hello_t, z_owned_hello_t, hello, _z_hello_free, _z_owner_noop_copy)
-OWNED_FUNCTIONS_PTR_INTERNAL(z_str_array_t, z_owned_str_array_t, str_array, _z_str_array_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
+OWNED_FUNCTIONS_PTR(_z_str_array_t, str_array, _z_owner_noop_copy, _z_str_array_free)
+OWNED_FUNCTIONS_PTR(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
-// Owned sample functions
-_Bool z_sample_check(const z_owned_sample_t *val) { return val->_value != ((void *)0); }
-z_sample_t z_sample_loan(const z_owned_sample_t *val) { return *val->_value; }
-z_owned_sample_t z_sample_null(void) { return (z_owned_sample_t){._value = ((void *)0)}; }
-z_owned_sample_t *z_sample_move(z_owned_sample_t *val) { return val; }
-z_owned_sample_t z_sample_clone(z_owned_sample_t *val) {
-    z_owned_sample_t ret;
-    ret._value = (z_sample_t *)z_malloc(sizeof(z_sample_t));
-    if (ret._value != ((void *)0)) {
-        ret._value->_rc = _z_sample_rc_clone(&val->_value->_rc);
-    }
-    return ret;
-}
-void z_sample_drop(z_owned_sample_t *val) {
-    if (val->_value != ((void *)0)) {
-        _z_sample_rc_drop(&val->_value->_rc);
-        z_free(val->_value);
-    }
-}
+OWNED_FUNCTIONS_RC(sample)
+// TODO(sashacmc): drop != close
+OWNED_FUNCTIONS_RC(session)
 
-_Bool z_session_check(const z_owned_session_t *val) { return val->_value.in != NULL; }
-z_session_t z_session_loan(const z_owned_session_t *val) { return (z_session_t){._val = val->_value}; }
-z_owned_session_t z_session_null(void) { return (z_owned_session_t){._value = {.in = NULL}}; }
-z_owned_session_t *z_session_move(z_owned_session_t *val) { return val; }
-z_owned_session_t z_session_clone(z_owned_session_t *val) {
-    z_owned_session_t ret;
-    ret._value = _z_session_rc_clone(&val->_value);
-    return ret;
-}
-void z_session_drop(z_owned_session_t *val) { z_close(val); }
-
-#define OWNED_FUNCTIONS_CLOSURE(ownedtype, name)                               \
-    _Bool z_##name##_check(const ownedtype *val) { return val->call != NULL; } \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                 \
-    void z_##name##_drop(ownedtype *val) {                                     \
-        if (val->drop != NULL) {                                               \
-            (val->drop)(val->context);                                         \
-            val->drop = NULL;                                                  \
-        }                                                                      \
-        val->call = NULL;                                                      \
-        val->context = NULL;                                                   \
-    }                                                                          \
-    ownedtype z_##name##_null(void) {                                          \
-        ownedtype v = {.call = NULL, .drop = NULL, .context = NULL};           \
-        return v;                                                              \
+#define OWNED_FUNCTIONS_CLOSURE(ownedtype, name, f_call, f_drop)                   \
+    _Bool z_##name##_check(const ownedtype *val) { return val->call != NULL; }     \
+    ownedtype *z_##name##_move(ownedtype *val) { return val; }                     \
+    void z_##name##_drop(ownedtype *val) {                                         \
+        if (val->drop != NULL) {                                                   \
+            (val->drop)(val->context);                                             \
+            val->drop = NULL;                                                      \
+        }                                                                          \
+        val->call = NULL;                                                          \
+        val->context = NULL;                                                       \
+    }                                                                              \
+    void z_##name##_null(ownedtype *val) {                                         \
+        val->call = NULL;                                                          \
+        val->drop = NULL;                                                          \
+        val->context = NULL;                                                       \
+    }                                                                              \
+    int8_t z_##name(ownedtype *closure, f_call call, f_drop drop, void *context) { \
+        closure->call = call;                                                      \
+        closure->drop = drop;                                                      \
+        closure->context = context;                                                \
+                                                                                   \
+        return _Z_RES_OK;                                                          \
     }
 
-z_owned_closure_sample_t z_closure_sample(_z_data_handler_t call, _z_dropper_handler_t drop, void *context) {
-    return (z_owned_closure_sample_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_owned_sample_t z_closure_owned_sample(_z_owned_sample_handler_t call, _z_dropper_handler_t drop,
-                                                      void *context) {
-    return (z_owned_closure_owned_sample_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_query_t z_closure_query(_z_queryable_handler_t call, _z_dropper_handler_t drop, void *context) {
-    return (z_owned_closure_query_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_owned_query_t z_closure_owned_query(_z_owned_query_handler_t call, _z_dropper_handler_t drop,
-                                                    void *context) {
-    return (z_owned_closure_owned_query_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_reply_t z_closure_reply(z_owned_reply_handler_t call, _z_dropper_handler_t drop, void *context) {
-    return (z_owned_closure_reply_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_hello_t z_closure_hello(z_owned_hello_handler_t call, _z_dropper_handler_t drop, void *context) {
-    return (z_owned_closure_hello_t){.call = call, .drop = drop, .context = context};
-}
-
-z_owned_closure_zid_t z_closure_zid(z_id_handler_t call, _z_dropper_handler_t drop, void *context) {
-    return (z_owned_closure_zid_t){.call = call, .drop = drop, .context = context};
-}
-
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, _z_owned_sample_handler_t,
+                        _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, _z_owned_query_handler_t,
+                        _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, z_owned_reply_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, _z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -538,7 +461,7 @@ typedef struct __z_hello_handler_wrapper_t {
 } __z_hello_handler_wrapper_t;
 
 void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_ctx) {
-    z_owned_hello_t ohello = {._value = hello};
+    z_owned_hello_t ohello = {._val = hello};
     wrapped_ctx->user_call(&ohello, wrapped_ctx->ctx);
 }
 
@@ -556,26 +479,26 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
 
-        char *opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_WHAT_KEY);
+        char *opt_as_str = _z_config_get(config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
         }
         z_what_t what = strtol(opt_as_str, NULL, 10);
 
-        opt_as_str = _z_config_get(config->_value, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        opt_as_str = _z_config_get(config->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
         char *mcast_locator = opt_as_str;
 
-        opt_as_str = _z_config_get(config->_value, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        opt_as_str = _z_config_get(config->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
         uint32_t timeout = strtoul(opt_as_str, NULL, 10);
 
         _z_id_t zid = _z_id_empty();
-        char *zid_str = _z_config_get(config->_value, Z_CONFIG_SESSION_ZID_KEY);
+        char *zid_str = _z_config_get(config->_val, Z_CONFIG_SESSION_ZID_KEY);
         if (zid_str != NULL) {
             _z_uuid_to_bytes(zid.id, zid_str);
         }
@@ -591,43 +514,43 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
     return ret;
 }
 
-z_owned_session_t z_open(z_owned_config_t *config) {
-    z_owned_session_t zs = {._value = {.in = NULL}};
+int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config) {
+    z_session_null(zs);
 
     // Create rc
     _z_session_rc_t zsrc = _z_session_rc_new();
     if (zsrc.in == NULL) {
         z_config_drop(config);
-        return zs;
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Open session
-    if (_z_open(&zsrc.in->val, config->_value) != _Z_RES_OK) {
+    int8_t ret = _z_open(&zsrc.in->val, config->_val);
+    if (ret != _Z_RES_OK) {
         _z_session_rc_drop(&zsrc);
         z_config_drop(config);
-        return zs;
+        return ret;
     }
     // Store rc in session
-    zs._value = zsrc;
+    zs->_rc = zsrc;
     z_config_drop(config);
-    return zs;
-}
-
-int8_t z_close(z_owned_session_t *zs) {
-    if ((zs == NULL) || (zs->_value.in == NULL)) {
-        return _Z_RES_OK;
-    }
-    _z_close(&zs->_value.in->val);
-    _z_session_rc_drop(&zs->_value);
-    zs->_value.in = NULL;
     return _Z_RES_OK;
 }
 
-int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+int8_t z_close(z_owned_session_t *zs) {
+    if (zs == NULL || !z_session_check(zs)) {
+        return _Z_RES_OK;
+    }
+    _z_close(&_Z_OWNED_RC_IN_VAL(zs));
+    z_session_drop(zs);
+    return _Z_RES_OK;
+}
+
+int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *callback) {
     // Call transport function
-    switch (zs._val.in->val._tp._type) {
+    switch (_Z_RC_IN_VAL(zs)._tp._type) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _zp_multicast_fetch_zid(&zs._val.in->val._tp, callback);
+            _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), callback);
             break;
         default:
             break;
@@ -642,11 +565,11 @@ int8_t z_info_peers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
     return 0;
 }
 
-int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback) {
+int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *callback) {
     // Call transport function
-    switch (zs._val.in->val._tp._type) {
+    switch (_Z_RC_IN_VAL(zs)._tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _zp_unicast_fetch_zid(&zs._val.in->val._tp, callback);
+            _zp_unicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), callback);
             break;
         default:
             break;
@@ -661,42 +584,51 @@ int8_t z_info_routers_zid(const z_session_t zs, z_owned_closure_zid_t *callback)
     return 0;
 }
 
-z_id_t z_info_zid(const z_session_t zs) { return zs._val.in->val._local_zid; }
+z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)._local_zid; }
 
-z_keyexpr_t z_sample_keyexpr(const z_sample_t *sample) { return sample->_rc.in->val.keyexpr; }
-z_bytes_t z_sample_payload(const z_sample_t *sample) { return sample->_rc.in->val.payload; }
-z_timestamp_t z_sample_timestamp(const z_sample_t *sample) { return sample->_rc.in->val.timestamp; }
-z_encoding_t z_sample_encoding(const z_sample_t *sample) { return sample->_rc.in->val.encoding; }
-z_sample_kind_t z_sample_kind(const z_sample_t *sample) { return sample->_rc.in->val.kind; }
-z_qos_t z_sample_qos(const z_sample_t *sample) { return sample->_rc.in->val.qos; }
+const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).keyexpr; }
+z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).kind; }
+const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).payload; }
+z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).timestamp; }
+z_encoding_t z_sample_encoding(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).encoding; }
+z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).qos; }
 #if Z_FEATURE_ATTACHMENT == 1
-z_attachment_t z_sample_attachment(const z_sample_t *sample) { return sample->_rc.in->val.attachment; }
+z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).attachment; }
 #endif
+
+const char *z_str_data(const z_loaned_str_t *str) { return str->val; }
 
 #if Z_FEATURE_PUBLICATION == 1
-OWNED_FUNCTIONS_PTR_COMMON(z_publisher_t, z_owned_publisher_t, publisher)
-OWNED_FUNCTIONS_PTR_CLONE(z_publisher_t, z_owned_publisher_t, publisher, _z_owner_noop_copy)
-void z_publisher_drop(z_owned_publisher_t *val) { z_undeclare_publisher(val); }
+int8_t _z_publisher_drop(_z_publisher_t **pub) {
+    int8_t ret = _Z_RES_OK;
 
-z_put_options_t z_put_options_default(void) {
-    return (z_put_options_t) {
-        .encoding = z_encoding_default(), .congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
-        .priority = Z_PRIORITY_DEFAULT,
+    ret = _z_undeclare_publisher(*pub);
+    _z_publisher_free(pub);
+
+    return ret;
+}
+
+OWNED_FUNCTIONS_PTR(_z_publisher_t, publisher, _z_owner_noop_copy, _z_publisher_drop)
+
+void z_put_options_default(z_put_options_t *options) {
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null()
+    options->attachment = z_attachment_null();
 #endif
-    };
 }
 
-z_delete_options_t z_delete_options_default(void) {
-    return (z_delete_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
+void z_delete_options_default(z_delete_options_t *options) {
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
 }
 
-int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint_t payload_len,
-             const z_put_options_t *options) {
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
+             z_zint_t payload_len, const z_put_options_t *options) {
     int8_t ret = 0;
 
-    z_put_options_t opt = z_put_options_default();
+    z_put_options_t opt;
+    z_put_options_default(&opt);
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.encoding = options->encoding;
@@ -705,7 +637,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
         opt.attachment = options->attachment;
 #endif
     }
-    ret = _z_write(&zs._val.in->val, keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, (const uint8_t *)payload, payload_len, opt.encoding, Z_SAMPLE_KIND_PUT,
                    opt.congestion_control, opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -719,7 +651,7 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
 #else
     z_attachment_t att = z_attachment_null();
 #endif
-    _z_trigger_local_subscriptions(&zs._val.in->val, keyexpr, payload, payload_len,
+    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload, payload_len,
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    att
 
@@ -728,15 +660,16 @@ int8_t z_put(z_session_t zs, z_keyexpr_t keyexpr, const uint8_t *payload, z_zint
     return ret;
 }
 
-int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *options) {
+int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options) {
     int8_t ret = 0;
 
-    z_delete_options_t opt = z_delete_options_default();
+    z_delete_options_t opt;
+    z_delete_options_default(&opt);
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-    ret = _z_write(&zs._val.in->val, keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
                    opt.congestion_control, opt.priority
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -747,74 +680,70 @@ int8_t z_delete(z_session_t zs, z_keyexpr_t keyexpr, const z_delete_options_t *o
     return ret;
 }
 
-z_publisher_options_t z_publisher_options_default(void) {
-    return (z_publisher_options_t){.congestion_control = Z_CONGESTION_CONTROL_DEFAULT, .priority = Z_PRIORITY_DEFAULT};
+void z_publisher_options_default(z_publisher_options_t *options) {
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
 }
 
-z_owned_publisher_t z_declare_publisher(z_session_t zs, z_keyexpr_t keyexpr, const z_publisher_options_t *options) {
-    z_keyexpr_t key = keyexpr;
+int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                           const z_publisher_options_t *options) {
+    _z_keyexpr_t key = *keyexpr;
 
+    pub->_val = NULL;
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
+    if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
+            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
     // Set options
-    z_publisher_options_t opt = z_publisher_options_default();
+    z_publisher_options_t opt;
+    z_publisher_options_default(&opt);
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
     // Set publisher
-    _z_publisher_t *pub = _z_declare_publisher(&zs._val, key, opt.congestion_control, opt.priority);
-    if (pub == NULL) {
+    _z_publisher_t *int_pub = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority);
+    if (int_pub == NULL) {
         if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(&zs._val.in->val, key._id);
+            _z_undeclare_resource(&_Z_RC_IN_VAL(zs), key._id);
         }
-        return (z_owned_publisher_t){._value = NULL};
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Create write filter
-    if (_z_write_filter_create(pub) != _Z_RES_OK) {
+    int8_t res = _z_write_filter_create(int_pub);
+    if (res != _Z_RES_OK) {
         if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(&zs._val.in->val, key._id);
+            _z_undeclare_resource(&_Z_RC_IN_VAL(zs), key._id);
         }
-        return (z_owned_publisher_t){._value = NULL};
+        return res;
     }
-    return (z_owned_publisher_t){._value = pub};
+    pub->_val = int_pub;
+    return _Z_RES_OK;
 }
 
-int8_t z_undeclare_publisher(z_owned_publisher_t *pub) {
-    int8_t ret = _Z_RES_OK;
+int8_t z_undeclare_publisher(z_owned_publisher_t *pub) { return _z_publisher_drop(&pub->_val); }
 
-    ret = _z_undeclare_publisher(pub->_value);
-    _z_publisher_free(&pub->_value);
-
-    return ret;
-}
-
-z_publisher_put_options_t z_publisher_put_options_default(void) {
-    return (z_publisher_put_options_t) {
-        .encoding = z_encoding_default(),
+void z_publisher_put_options_default(z_publisher_put_options_t *options) {
+    options->encoding = z_encoding_default();
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null()
+    options->attachment = z_attachment_null();
 #endif
-    };
 }
 
-z_publisher_delete_options_t z_publisher_delete_options_default(void) {
-    return (z_publisher_delete_options_t){.__dummy = 0};
-}
+void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->__dummy = 0; }
 
-int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t len,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options) {
     int8_t ret = 0;
     // Build options
-    z_publisher_put_options_t opt = z_publisher_put_options_default();
+    z_publisher_put_options_t opt;
+    z_publisher_put_options_default(&opt);
     if (options != NULL) {
         opt.encoding = options->encoding;
 #if Z_FEATURE_ATTACHMENT == 1
@@ -822,31 +751,31 @@ int8_t z_publisher_put(const z_publisher_t pub, const uint8_t *payload, size_t l
 #endif
     }
     // Check if write filter is active before writing
-    if (!_z_write_filter_active(pub._val)) {
+    if (!_z_write_filter_active(pub)) {
         // Write value
-        ret = _z_write(&pub._val->_zn.in->val, pub._val->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
-                       pub._val->_congestion_control, pub._val->_priority
+        ret = _z_write(&pub->_zn.in->val, pub->_key, payload, len, opt.encoding, Z_SAMPLE_KIND_PUT,
+                       pub->_congestion_control, pub->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                        ,
                        opt.attachment
 #endif
         );
     }
+
 #if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t att = opt.attachment;
 #else
     z_attachment_t att = z_attachment_null();
 #endif
-
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub._val->_zn.in->val, pub._val->_key, payload, len, _Z_N_QOS_DEFAULT, att);
+    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT, att);
     return ret;
 }
 
-int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_options_t *options) {
+int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
     (void)(options);
-    return _z_write(&pub._val->_zn.in->val, pub._val->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
-                    pub._val->_congestion_control, pub._val->_priority
+    return _z_write(&pub->_zn.in->val, pub->_key, NULL, 0, z_encoding_default(), Z_SAMPLE_KIND_DELETE,
+                    pub->_congestion_control, pub->_priority
 #if Z_FEATURE_ATTACHMENT == 1
                     ,
                     z_attachment_null()
@@ -854,27 +783,27 @@ int8_t z_publisher_delete(const z_publisher_t pub, const z_publisher_delete_opti
     );
 }
 
-z_owned_keyexpr_t z_publisher_keyexpr(z_publisher_t publisher) {
-    z_owned_keyexpr_t ret = {._value = z_malloc(sizeof(_z_keyexpr_t))};
-    if (ret._value != NULL && publisher._val != NULL) {
-        *ret._value = _z_keyexpr_duplicate(publisher._val->_key);
+z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
+    z_owned_keyexpr_t ret = {._val = z_malloc(sizeof(_z_keyexpr_t))};
+    if (ret._val != NULL && publisher != NULL) {
+        *ret._val = _z_keyexpr_duplicate(publisher->_key);
     }
     return ret;
 }
 #endif
 
 #if Z_FEATURE_QUERY == 1
-OWNED_FUNCTIONS_PTR_INTERNAL(z_reply_t, z_owned_reply_t, reply, _z_reply_free, _z_owner_noop_copy)
+OWNED_FUNCTIONS_PTR(_z_reply_t, reply, _z_owner_noop_copy, _z_reply_free)
 
-z_get_options_t z_get_options_default(void) {
-    return (z_get_options_t) {
-        .target = z_query_target_default(), .consolidation = z_query_consolidation_default(),
-        .value = {.encoding = z_encoding_default(), .payload = _z_bytes_empty()},
+void z_get_options_default(z_get_options_t *options) {
+    options->target = z_query_target_default();
+    options->consolidation = z_query_consolidation_default();
+    options->value.encoding = z_encoding_default();
+    options->value.payload = _z_bytes_empty();
 #if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_null(),
+    options->attachment = z_attachment_null();
 #endif
-        .timeout_ms = Z_GET_TIMEOUT_DEFAULT
-    };
+    options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
 }
 
 typedef struct __z_reply_handler_wrapper_t {
@@ -883,20 +812,21 @@ typedef struct __z_reply_handler_wrapper_t {
 } __z_reply_handler_wrapper_t;
 
 void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
-    z_owned_reply_t oreply = {._value = reply};
+    z_owned_reply_t oreply = {._val = reply};
 
     wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
-    z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._value to NULL
+    z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._val to NULL
 }
 
-int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owned_closure_reply_t *callback,
-             const z_get_options_t *options) {
+int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const char *parameters,
+             z_owned_closure_reply_t *callback, const z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->context;
     callback->context = NULL;
 
-    z_get_options_t opt = z_get_options_default();
+    z_get_options_t opt;
+    z_get_options_default(&opt);
     if (options != NULL) {
         opt.consolidation = options->consolidation;
         opt.target = options->target;
@@ -924,7 +854,7 @@ int8_t z_get(z_session_t zs, z_keyexpr_t keyexpr, const char *parameters, z_owne
         wrapped_ctx->ctx = ctx;
     }
 
-    ret = _z_query(&zs._val.in->val, keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
+    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
                    __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
@@ -941,7 +871,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply) {
     return true;
 }
 
-z_loaned_sample_t z_reply_ok(const z_owned_reply_t *reply) { return reply->_value->data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_owned_reply_t *reply) { return &reply->_val->data.sample; }
 
 z_value_t z_reply_err(const z_owned_reply_t *reply) {
     (void)(reply);
@@ -950,57 +880,61 @@ z_value_t z_reply_err(const z_owned_reply_t *reply) {
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
-OWNED_FUNCTIONS_PTR_RC(z_query_t, z_owned_query_t, query)
-OWNED_FUNCTIONS_PTR_COMMON(z_queryable_t, z_owned_queryable_t, queryable)
-OWNED_FUNCTIONS_PTR_CLONE(z_queryable_t, z_owned_queryable_t, queryable, _z_owner_noop_copy)
-void z_queryable_drop(z_owned_queryable_t *val) { z_undeclare_queryable(val); }
+int8_t _z_queryable_drop(_z_queryable_t **queryable) {
+    int8_t ret = _Z_RES_OK;
 
-z_queryable_options_t z_queryable_options_default(void) {
-    return (z_queryable_options_t){.complete = _Z_QUERYABLE_COMPLETE_DEFAULT};
+    ret = _z_undeclare_queryable(*queryable);
+    _z_queryable_free(queryable);
+    return ret;
 }
 
-z_owned_queryable_t z_declare_queryable(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_query_t *callback,
-                                        const z_queryable_options_t *options) {
+OWNED_FUNCTIONS_RC(query)
+OWNED_FUNCTIONS_PTR(_z_queryable_t, queryable, _z_owner_noop_copy, _z_queryable_drop)
+
+void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
+
+int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+                           const z_loaned_keyexpr_t *keyexpr, z_owned_closure_query_t *callback,
+                           const z_queryable_options_t *options) {
     void *ctx = callback->context;
     callback->context = NULL;
 
-    z_keyexpr_t key = keyexpr;
+    _z_keyexpr_t key = *keyexpr;
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
+    if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
+            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
 
-    z_queryable_options_t opt = z_queryable_options_default();
+    z_queryable_options_t opt;
+    z_queryable_options_default(&opt);
     if (options != NULL) {
         opt.complete = options->complete;
     }
 
-    return (z_owned_queryable_t){
-        ._value = _z_declare_queryable(&zs._val, key, opt.complete, callback->call, callback->drop, ctx)};
+    queryable->_val = _z_declare_queryable(zs, key, opt.complete, callback->call, callback->drop, ctx);
+
+    return _Z_RES_OK;
 }
 
-int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
-    int8_t ret = _Z_RES_OK;
+int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) { return _z_queryable_drop(&queryable->_val); }
 
-    ret = _z_undeclare_queryable(queryable->_value);
-    _z_queryable_free(&queryable->_value);
-    return ret;
-}
+void z_query_reply_options_default(z_query_reply_options_t *options) { options->encoding = z_encoding_default(); }
 
-z_query_reply_options_t z_query_reply_options_default(void) {
-    return (z_query_reply_options_t){.encoding = z_encoding_default()};
-}
-
-int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const uint8_t *payload, size_t payload_len,
-                     const z_query_reply_options_t *options) {
-    z_query_reply_options_t opts = options == NULL ? z_query_reply_options_default() : *options;
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
+                     size_t payload_len, const z_query_reply_options_t *options) {
+    z_query_reply_options_t opts;
+    if (options == NULL) {
+        z_query_reply_options_default(&opts);
+    } else {
+        opts = *options;
+    }
     _z_value_t value = {.payload =
                             {
                                 .start = payload,
@@ -1008,82 +942,84 @@ int8_t z_query_reply(const z_query_t *query, const z_keyexpr_t keyexpr, const ui
                                 .len = payload_len,
                             },
                         .encoding = {.id = opts.encoding.id, .schema = opts.encoding.schema}};
-    return _z_send_reply(&query->_val._rc.in->val, keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
+    return _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
     return _Z_ERR_GENERIC;
 }
 #endif
 
-z_owned_keyexpr_t z_keyexpr_new(const char *name) {
-    z_owned_keyexpr_t key;
-
-    key._value = name ? (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t)) : NULL;
-    if (key._value != NULL) {
-        *key._value = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name) {
+    key->_val = name ? (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t)) : NULL;
+    if (key->_val != NULL) {
+        *key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     }
 
-    return key;
+    return _Z_RES_OK;
 }
 
-z_owned_keyexpr_t z_declare_keyexpr(z_session_t zs, z_keyexpr_t keyexpr) {
-    z_owned_keyexpr_t key;
-
-    key._value = (z_keyexpr_t *)z_malloc(sizeof(z_keyexpr_t));
-    if (key._value != NULL) {
-        uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
-        *key._value = _z_rid_with_suffix(id, NULL);
+int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
+    key->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
+    if (key->_val != NULL) {
+        uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+        *key->_val = _z_rid_with_suffix(id, NULL);
     }
 
-    return key;
+    return _Z_RES_OK;
 }
 
-int8_t z_undeclare_keyexpr(z_session_t zs, z_owned_keyexpr_t *keyexpr) {
+int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_undeclare_resource(&zs._val.in->val, keyexpr->_value->_id);
+    ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val->_id);
     z_keyexpr_drop(keyexpr);
 
     return ret;
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-OWNED_FUNCTIONS_PTR_COMMON(z_subscriber_t, z_owned_subscriber_t, subscriber)
-OWNED_FUNCTIONS_PTR_CLONE(z_subscriber_t, z_owned_subscriber_t, subscriber, _z_owner_noop_copy)
-void z_subscriber_drop(z_owned_subscriber_t *val) { z_undeclare_subscriber(val); }
+int8_t _z_subscriber_drop(_z_subscriber_t **sub) {
+    int8_t ret = _Z_RES_OK;
 
-z_subscriber_options_t z_subscriber_options_default(void) {
-    return (z_subscriber_options_t){.reliability = Z_RELIABILITY_DEFAULT};
+    ret = _z_undeclare_subscriber(*sub);
+    _z_subscriber_free(sub);
+
+    return ret;
 }
 
-z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z_owned_closure_sample_t *callback,
-                                          const z_subscriber_options_t *options) {
+OWNED_FUNCTIONS_PTR(_z_subscriber_t, subscriber, _z_owner_noop_copy, _z_subscriber_drop)
+
+void z_subscriber_options_default(z_subscriber_options_t *options) { options->reliability = Z_RELIABILITY_DEFAULT; }
+
+int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                            z_owned_closure_sample_t *callback, const z_subscriber_options_t *options) {
     void *ctx = callback->context;
     callback->context = NULL;
     char *suffix = NULL;
 
-    z_keyexpr_t key = keyexpr;
+    _z_keyexpr_t key = *keyexpr;
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
-    if (zs._val.in->val._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&zs._val.in->val, &keyexpr);
+    if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
         if (r == NULL) {
-            char *wild = strpbrk(keyexpr._suffix, "*$");
+            char *wild = strpbrk(keyexpr->_suffix, "*$");
             _Bool do_keydecl = true;
-            if (wild != NULL && wild != keyexpr._suffix) {
+            if (wild != NULL && wild != keyexpr->_suffix) {
                 wild -= 1;
-                size_t len = wild - keyexpr._suffix;
+                size_t len = wild - keyexpr->_suffix;
                 suffix = z_malloc(len + 1);
                 if (suffix != NULL) {
-                    memcpy(suffix, keyexpr._suffix, len);
+                    memcpy(suffix, keyexpr->_suffix, len);
                     suffix[len] = 0;
-                    keyexpr._suffix = suffix;
-                    _z_keyexpr_set_owns_suffix(&keyexpr, false);
+                    // TODO(sashacmc): Why we modify it? Rework to remove cast
+                    ((z_loaned_keyexpr_t *)keyexpr)->_suffix = suffix;
+                    _z_keyexpr_set_owns_suffix((z_loaned_keyexpr_t *)keyexpr, false);
                 } else {
                     do_keydecl = false;
                 }
             }
             if (do_keydecl) {
-                uint16_t id = _z_declare_resource(&zs._val.in->val, keyexpr);
+                uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
                 key = _z_rid_with_suffix(id, wild);
             }
         }
@@ -1093,35 +1029,35 @@ z_owned_subscriber_t z_declare_subscriber(z_session_t zs, z_keyexpr_t keyexpr, z
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
-    _z_subscriber_t *sub = _z_declare_subscriber(&zs._val, key, subinfo, callback->call, callback->drop, ctx);
+    _z_subscriber_t *int_sub = _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx);
     if (suffix != NULL) {
         z_free(suffix);
     }
 
-    return (z_owned_subscriber_t){._value = sub};
+    sub->_val = int_sub;
+
+    if (int_sub == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;  // TODO(sashacmc): shoud we introduce sperate error?
+    } else {
+        return _Z_RES_OK;
+    }
 }
 
-int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) {
-    int8_t ret = _Z_RES_OK;
+int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) { return _z_subscriber_drop(&sub->_val); }
 
-    _z_undeclare_subscriber(sub->_value);
-    _z_subscriber_free(&sub->_value);
-
-    return ret;
-}
-
-z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
-    z_owned_keyexpr_t ret = z_keyexpr_null();
-    uint32_t lookup = sub._val->_entity_id;
-    if (sub._val != NULL) {
-        _z_subscription_rc_list_t *tail = sub._val->_zn.in->val._local_subscriptions;
+z_owned_keyexpr_t z_subscriber_keyexpr(z_loaned_subscriber_t *sub) {
+    z_owned_keyexpr_t ret;
+    z_keyexpr_null(&ret);
+    if (sub != NULL) {
+        uint32_t lookup = sub->_entity_id;
+        _z_subscription_rc_list_t *tail = sub->_zn.in->val._local_subscriptions;
         while (tail != NULL && !z_keyexpr_check(&ret)) {
             _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
             if (head->in->val._id == lookup) {
                 _z_keyexpr_t key = _z_keyexpr_duplicate(head->in->val._key);
-                ret = (z_owned_keyexpr_t){._value = z_malloc(sizeof(_z_keyexpr_t))};
-                if (ret._value != NULL) {
-                    *ret._value = key;
+                ret = (z_owned_keyexpr_t){._val = z_malloc(sizeof(_z_keyexpr_t))};
+                if (ret._val != NULL) {
+                    *ret._val = key;
                 } else {
                     _z_keyexpr_clear(&key);
                 }
@@ -1134,93 +1070,89 @@ z_owned_keyexpr_t z_subscriber_keyexpr(z_subscriber_t sub) {
 #endif
 
 /**************** Tasks ****************/
-zp_task_read_options_t zp_task_read_options_default(void) {
-    return (zp_task_read_options_t) {
+void zp_task_read_options_default(zp_task_read_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1
-        .task_attributes = NULL
+    options->task_attributes = NULL;
 #else
-        .__dummy = 0
+    options->__dummy = 0;
 #endif
-    };
 }
 
-int8_t zp_start_read_task(z_session_t zs, const zp_task_read_options_t *options) {
+int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options) {
     (void)(options);
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_read_options_t opt = zp_task_read_options_default();
+    zp_task_read_options_t opt;
+    zp_task_read_options_default(&opt);
     if (options != NULL) {
         opt.task_attributes = options->task_attributes;
     }
-    return _zp_start_read_task(&zs._val.in->val, opt.task_attributes);
+    return _zp_start_read_task(&_Z_RC_IN_VAL(zs), opt.task_attributes);
 #else
     (void)(zs);
     return -1;
 #endif
 }
 
-int8_t zp_stop_read_task(z_session_t zs) {
+int8_t zp_stop_read_task(z_loaned_session_t *zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_read_task(&zs._val.in->val);
+    return _zp_stop_read_task(&_Z_RC_IN_VAL(zs));
 #else
     (void)(zs);
     return -1;
 #endif
 }
 
-zp_task_lease_options_t zp_task_lease_options_default(void) {
-    return (zp_task_lease_options_t) {
+void zp_task_lease_options_default(zp_task_lease_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1
-        .task_attributes = NULL
+    options->task_attributes = NULL;
 #else
-        .__dummy = 0
+    options->__dummy = 0;
 #endif
-    };
 }
 
-int8_t zp_start_lease_task(z_session_t zs, const zp_task_lease_options_t *options) {
+int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options) {
     (void)(options);
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_task_lease_options_t opt = zp_task_lease_options_default();
+    zp_task_lease_options_t opt;
+    zp_task_lease_options_default(&opt);
     if (options != NULL) {
         opt.task_attributes = options->task_attributes;
     }
-    return _zp_start_lease_task(&zs._val.in->val, opt.task_attributes);
+    return _zp_start_lease_task(&_Z_RC_IN_VAL(zs), opt.task_attributes);
 #else
     (void)(zs);
     return -1;
 #endif
 }
 
-int8_t zp_stop_lease_task(z_session_t zs) {
+int8_t zp_stop_lease_task(z_loaned_session_t *zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_lease_task(&zs._val.in->val);
+    return _zp_stop_lease_task(&_Z_RC_IN_VAL(zs));
 #else
     (void)(zs);
     return -1;
 #endif
 }
 
-zp_read_options_t zp_read_options_default(void) { return (zp_read_options_t){.__dummy = 0}; }
+void zp_read_options_default(zp_read_options_t *options) { options->__dummy = 0; }
 
-int8_t zp_read(z_session_t zs, const zp_read_options_t *options) {
+int8_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options) {
     (void)(options);
-    return _zp_read(&zs._val.in->val);
+    return _zp_read(&_Z_RC_IN_VAL(zs));
 }
 
-zp_send_keep_alive_options_t zp_send_keep_alive_options_default(void) {
-    return (zp_send_keep_alive_options_t){.__dummy = 0};
+void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options) { options->__dummy = 0; }
+
+int8_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options) {
+    (void)(options);
+    return _zp_send_keep_alive(&_Z_RC_IN_VAL(zs));
 }
 
-int8_t zp_send_keep_alive(z_session_t zs, const zp_send_keep_alive_options_t *options) {
-    (void)(options);
-    return _zp_send_keep_alive(&zs._val.in->val);
-}
+void zp_send_join_options_default(zp_send_join_options_t *options) { options->__dummy = 0; }
 
-zp_send_join_options_t zp_send_join_options_default(void) { return (zp_send_join_options_t){.__dummy = 0}; }
-
-int8_t zp_send_join(z_session_t zs, const zp_send_join_options_t *options) {
+int8_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options) {
     (void)(options);
-    return _zp_send_join(&zs._val.in->val);
+    return _zp_send_join(&_Z_RC_IN_VAL(zs));
 }
 #if Z_FEATURE_ATTACHMENT == 1
 void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_) {
@@ -1237,11 +1169,11 @@ z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_) {
 bool z_bytes_map_check(const z_owned_bytes_map_t *this_) { return this_->_inner != NULL; }
 void z_bytes_map_drop(z_owned_bytes_map_t *this_) { _z_bytes_pair_list_free(&this_->_inner); }
 
-int8_t _z_bytes_map_insert_by_alias(z_bytes_t key, z_bytes_t value, void *this_) {
+int8_t _z_bytes_map_insert_by_alias(z_loaned_bytes_t *key, z_loaned_bytes_t *value, void *this_) {
     z_bytes_map_insert_by_alias((z_owned_bytes_map_t *)this_, key, value);
     return 0;
 }
-int8_t _z_bytes_map_insert_by_copy(z_bytes_t key, z_bytes_t value, void *this_) {
+int8_t _z_bytes_map_insert_by_copy(z_loaned_bytes_t *key, z_loaned_bytes_t *value, void *this_) {
     z_bytes_map_insert_by_copy((z_owned_bytes_map_t *)this_, key, value);
     return 0;
 }
@@ -1261,7 +1193,7 @@ z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_) {
     z_attachment_iterate(this_, _z_bytes_map_insert_by_alias, &map);
     return map;
 }
-z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key) {
+z_loaned_bytes_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key) {
     _z_bytes_pair_list_t *current = this_->_inner;
     while (current) {
         struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
@@ -1271,7 +1203,7 @@ z_bytes_t z_bytes_map_get(const z_owned_bytes_map_t *this_, z_bytes_t key) {
     }
     return z_bytes_null();
 }
-void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value) {
     _z_bytes_pair_list_t *current = this_->_inner;
     while (current) {
         struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
@@ -1292,7 +1224,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_bytes_t key
         ((z_owned_bytes_map_t *)this_)->_inner = _z_bytes_pair_list_push(this_->_inner, insert);
     }
 }
-void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_bytes_t key, z_bytes_t value) {
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value) {
     _z_bytes_pair_list_t *current = this_->_inner;
     while (current) {
         struct _z_bytes_pair_t *head = _z_bytes_pair_list_head(current);
@@ -1330,6 +1262,11 @@ int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body
 }
 z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner = _z_bytes_pair_list_new()}; }
 z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
-z_bytes_t z_bytes_from_str(const char *str) { return z_bytes_wrap((const uint8_t *)str, strlen(str)); }
-z_bytes_t z_bytes_null(void) { return (z_bytes_t){.len = 0, ._is_alloc = false, .start = NULL}; }
+
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes const char *str) {
+    bytes->_val = z_bytes_wrap((const uint8_t *)str, strlen(str));
+    return _Z_RES_OK;
+}
+// TODO(sashacmc):
+// z_loaned_bytes_t *z_bytes_null(void) { return (z_loaned_bytes_t *){.len = 0, ._is_alloc = false, .start = NULL}; }
 #endif

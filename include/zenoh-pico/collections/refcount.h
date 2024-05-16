@@ -113,13 +113,13 @@
         }                                                                                 \
         return p;                                                                         \
     }                                                                                     \
-    static inline name##_rc_t name##_rc_clone(name##_rc_t *p) {                           \
+    static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                     \
         name##_rc_t c;                                                                    \
         c.in = p->in;                                                                     \
         _ZP_RC_OP_INCR_CNT                                                                \
         return c;                                                                         \
     }                                                                                     \
-    static inline name##_rc_t *name##_rc_clone_as_ptr(name##_rc_t *p) {                   \
+    static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {             \
         name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                    \
         if (c != NULL) {                                                                  \
             c->in = p->in;                                                                \

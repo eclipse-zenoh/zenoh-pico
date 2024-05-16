@@ -40,7 +40,8 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *call
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
     _z_id_t remote_zid = zt->_transport._unicast._remote_zid;
     _z_bytes_t remote_zidbytes = _z_bytes_wrap(remote_zid.id, _z_id_len(remote_zid));
-    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&remote_zidbytes));
+    // TODO(sashacmc): double check!
+    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&remote_zidbytes).val);
 }
 
 #else

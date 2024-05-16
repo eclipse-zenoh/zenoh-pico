@@ -39,28 +39,29 @@ int main(int argc, char **argv) {
     net.connect();
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     printf("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     printf("OK\n");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     printf("Declaring publisher for '%s'...", KEYEXPR);
-    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(KEYEXPR), NULL);
-    if (!z_publisher_check(&pub)) {
+    z_owned_publisher_t pub;
+    if (z_declare_publisher(&pub, z_session_loan(&s), z_keyexpr(KEYEXPR), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
@@ -78,8 +79,8 @@ int main(int argc, char **argv) {
     z_undeclare_publisher(z_publisher_move(&pub));
 
     // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    zp_stop_read_task(z_session_loan_mut(&s));
+    zp_stop_lease_task(z_session_loan_mut(&s));
 
     z_close(z_session_move(&s));
     printf("OK!\n");

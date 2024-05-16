@@ -39,7 +39,7 @@ z_stats_t *z_stats_make(void) {
     return stats;
 }
 
-void on_sample(const z_sample_t *sample, void *context) {
+void on_sample(const z_loaned_sample_t *sample, void *context) {
     (void)sample;
     z_stats_t *stats = (z_stats_t *)context;
     stats->count++;
@@ -69,32 +69,34 @@ void drop_stats(void *context) {
 
 int main(int argc, char **argv) {
     char *keyexpr = "test/thr";
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
 
     // Set config
     if (argc > 1) {
-        if (zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(argv[1])) < 0) {
+        if (zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]) < 0) {
             printf("Failed to insert locator in config: %s\n", argv[1]);
             exit(-1);
         }
     }
     // Open session
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         exit(-1);
     }
     // Declare Subscriber/resource
     z_stats_t *context = z_stats_make();
-    z_owned_closure_sample_t callback = z_closure(on_sample, drop_stats, (void *)context);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
-    if (!z_check(sub)) {
+    z_owned_closure_sample_t callback;
+    z_closure(&callback, on_sample, drop_stats, (void *)context);
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }
@@ -106,8 +108,8 @@ int main(int argc, char **argv) {
 
     // Clean up
     z_undeclare_subscriber(z_move(sub));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     exit(0);
 }

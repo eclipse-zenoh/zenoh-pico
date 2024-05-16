@@ -145,8 +145,8 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
         _zp_session_unlock_mutex(zn);
 
         // Build the z_query
-        z_query_t query = {._val = {._rc = _z_query_rc_new()}};
-        query._val._rc.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zn, qid, att);
+        _z_query_rc_t query = _z_query_rc_new();
+        query.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zn, qid, att);
         // Parse session_queryable list
         _z_session_queryable_rc_list_t *xs = qles;
         while (xs != NULL) {
@@ -155,7 +155,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
             xs = _z_session_queryable_rc_list_tail(xs);
         }
         // Clean up
-        _z_query_rc_drop(&query._val._rc);
+        _z_query_rc_drop(&query);
         _z_keyexpr_clear(&key);
         _z_session_queryable_rc_list_free(&qles);
     } else {

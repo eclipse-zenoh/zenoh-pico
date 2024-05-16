@@ -31,7 +31,7 @@
 static z_condvar_t cond;
 static z_mutex_t mutex;
 
-void callback(const z_sample_t* sample, void* context) {
+void callback(const z_loaned_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
     z_condvar_signal(&cond);
@@ -64,32 +64,37 @@ int main(int argc, char** argv) {
     }
     z_mutex_init(&mutex);
     z_condvar_init(&cond);
-    z_owned_config_t config = z_config_default();
-    z_owned_session_t session = z_open(z_config_move(&config));
+    z_owned_config_t config;
+    z_config_default(&config);
+    z_owned_session_t session;
+    z_open(&session, z_config_move(&config));
     if (!z_session_check(&session)) {
         printf("Unable to open session!\n");
         return -1;
     }
 
-    if (zp_start_read_task(z_session_loan(&session), NULL) < 0 ||
-        zp_start_lease_task(z_session_loan(&session), NULL) < 0) {
+    if (zp_start_read_task(z_session_loan_mut(&session), NULL) < 0 ||
+        zp_start_lease_task(z_session_loan_mut(&session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&session));
         return -1;
     }
 
-    z_keyexpr_t ping = z_keyexpr_unchecked("test/ping");
-    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&session), ping, NULL);
-    if (!z_publisher_check(&pub)) {
+    // TODO(sashacmc):
+    // z_keyexpr_t ping = z_keyexpr_unchecked("test/ping");
+    z_owned_publisher_t pub;
+    if (z_declare_publisher(&pub, z_session_loan(&session), z_keyexpr("test/ping"), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
 
-    z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
-    z_owned_closure_sample_t respond = z_closure_sample(callback, drop, NULL);
-    z_owned_subscriber_t sub =
-        z_declare_subscriber(z_session_loan(&session), pong, z_closure_sample_move(&respond), NULL);
-    if (!z_subscriber_check(&sub)) {
+    // TODO(sashacmc):
+    // z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
+    z_owned_closure_sample_t respond;
+    z_closure_sample(&respond, callback, drop, NULL);
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_session_loan(&session), z_keyexpr("test/pong"), z_closure_sample_move(&respond),
+                             NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }
@@ -125,8 +130,8 @@ int main(int argc, char** argv) {
     z_undeclare_subscriber(z_subscriber_move(&sub));
     z_undeclare_publisher(z_publisher_move(&pub));
 
-    zp_stop_read_task(z_session_loan(&session));
-    zp_stop_lease_task(z_session_loan(&session));
+    zp_stop_read_task(z_session_loan_mut(&session));
+    zp_stop_lease_task(z_session_loan_mut(&session));
 
     z_close(z_session_move(&session));
 }

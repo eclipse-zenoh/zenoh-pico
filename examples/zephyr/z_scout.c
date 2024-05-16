@@ -81,8 +81,10 @@ int main(void) {
 
     int *context = (int *)malloc(sizeof(int));
     *context = 0;
-    z_owned_scouting_config_t config = z_scouting_config_default();
-    z_owned_closure_hello_t closure = z_closure_hello(callback, drop, context);
+    z_owned_scouting_config_t config;
+    z_scouting_config_default(&config);
+    z_owned_closure_hello_t closure;
+    z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
     z_scout(z_scouting_config_move(&config), z_closure_hello_move(&closure));
 

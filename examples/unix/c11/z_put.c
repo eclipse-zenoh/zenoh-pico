@@ -61,41 +61,43 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return -1;
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
-    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
-    if (!z_check(ke)) {
+    z_owned_keyexpr_t ke;
+    if (z_declare_keyexpr(&ke, z_loan(s), z_keyexpr(keyexpr)) < 0) {
         printf("Unable to declare key expression!\n");
-        zp_stop_read_task(z_loan(s));
-        zp_stop_lease_task(z_loan(s));
+        zp_stop_read_task(z_loan_mut(s));
+        zp_stop_lease_task(z_loan_mut(s));
         z_close(z_move(s));
         return -1;
     }
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
-    z_put_options_t options = z_put_options_default();
+    z_put_options_t options;
+    z_put_options_default(&options);
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
 #if Z_FEATURE_ATTACHMENT == 1
     z_owned_bytes_map_t map = z_bytes_map_new();
@@ -112,8 +114,8 @@ int main(int argc, char **argv) {
 
     // Clean up
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     return 0;
 }

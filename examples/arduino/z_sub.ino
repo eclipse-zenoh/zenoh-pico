@@ -34,11 +34,10 @@
 
 #define KEYEXPR "demo/example/**"
 
-void data_handler(const z_sample_t *sample, void *arg) {
-    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
-    z_bytes_t payload = z_sample_payload(sample);
-    z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
-    std::string val((const char *)payload.start, payload.len);
+void data_handler(const z_loaned_sample_t *sample, void *arg) {
+    z_owned_str_t keystr;
+    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+    std::string val((const char *)z_sample_payload(sample)->start, z_sample_payload(sample)->len);
 
     Serial.print(" >> [Subscription listener] Received (");
     Serial.print(z_str_loan(&keystr));
@@ -66,16 +65,17 @@ void setup() {
     Serial.println("OK");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;
@@ -84,17 +84,18 @@ void setup() {
     Serial.println("OK");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     // Declare Zenoh subscriber
     Serial.print("Declaring Subscriber on ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
-    z_owned_closure_sample_t callback = z_closure_sample(data_handler, NULL, NULL);
-    z_owned_subscriber_t sub =
-        z_declare_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
-    if (!z_subscriber_check(&sub)) {
+    z_owned_closure_sample_t callback;
+    z_closure_sample(&callback, data_handler, NULL, NULL);
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL) <
+        0) {
         Serial.println("Unable to declare subscriber.");
         while (1) {
             ;

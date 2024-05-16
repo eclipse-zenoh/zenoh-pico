@@ -23,19 +23,15 @@ void _z_owned_sample_move(z_owned_sample_t *dst, z_owned_sample_t *src) {
     zp_free(src);
 }
 
-z_owned_sample_t *_z_sample_to_owned_ptr(const z_sample_t *src) {
+z_owned_sample_t *_z_sample_to_owned_ptr(const z_loaned_sample_t *src) {
     z_owned_sample_t *dst = (z_owned_sample_t *)zp_malloc(sizeof(z_owned_sample_t));
     if (dst == NULL) {
         return NULL;
     }
     if (src != NULL) {
-        dst->_value = (z_sample_t *)zp_malloc(sizeof(z_sample_t));
-        if (dst->_value == NULL) {
-            return NULL;
-        }
-        _z_sample_rc_copy(&dst->_value->_rc, &src->_rc);
+        dst->_rc = _z_sample_rc_clone(src);
     } else {
-        dst->_value = NULL;
+        dst->_rc.in = NULL;
     }
     return dst;
 }
@@ -47,9 +43,9 @@ void _z_owned_query_move(z_owned_query_t *dst, z_owned_query_t *src) {
     zp_free(src);
 }
 
-z_owned_query_t *_z_query_to_owned_ptr(const z_query_t *src) {
+z_owned_query_t *_z_query_to_owned_ptr(const z_loaned_query_t *src) {
     z_owned_query_t *dst = (z_owned_query_t *)zp_malloc(sizeof(z_owned_query_t));
-    _z_query_rc_copy(&dst->_rc, &src->_val._rc);
+    _z_query_rc_copy(&dst->_rc, src);
     return dst;
 }
 #endif  // Z_FEATURE_QUERYABLE
@@ -66,11 +62,11 @@ z_owned_reply_t *_z_reply_clone(const z_owned_reply_t *src) {
     if (dst == NULL) {
         return NULL;
     }
-    if (src != NULL && src->_value) {
-        dst->_value = (_z_reply_t *)zp_malloc(sizeof(_z_reply_t));
-        _z_reply_copy(dst->_value, src->_value);
+    if (src != NULL && src->_val) {
+        dst->_val = (_z_reply_t *)zp_malloc(sizeof(_z_reply_t));
+        _z_reply_copy(dst->_val, src->_val);
     } else {
-        dst->_value = NULL;
+        dst->_val = NULL;
     }
     return dst;
 }

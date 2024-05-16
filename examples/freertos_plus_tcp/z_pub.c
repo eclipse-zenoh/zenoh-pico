@@ -32,15 +32,16 @@
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
 
 void app_main(void) {
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return;
     }
@@ -74,15 +75,16 @@ void app_main(void) {
     zp_task_lease_options_t lease_task_opt = {.task_attributes = &lease_task_attr};
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), &read_task_opt) < 0 || zp_start_lease_task(z_loan(s), &lease_task_opt) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), &read_task_opt) < 0 ||
+        zp_start_lease_task(z_loan_mut(s), &lease_task_opt) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return;
     }
 
     printf("Declaring publisher for '%s'...\n", KEYEXPR);
-    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(KEYEXPR), NULL);
-    if (!z_check(pub)) {
+    z_owned_publisher_t pub;
+    if (z_declare_publisher(&pub, z_loan(s), z_keyexpr(KEYEXPR), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return;
     }
@@ -93,7 +95,8 @@ void app_main(void) {
         snprintf(buf, 256, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 
-        z_publisher_put_options_t options = z_publisher_put_options_default();
+        z_publisher_put_options_t options;
+        z_publisher_put_options_default(&options);
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
         z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
@@ -101,8 +104,8 @@ void app_main(void) {
     z_undeclare_publisher(z_move(pub));
 
     // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
 
     z_close(z_move(s));
 }

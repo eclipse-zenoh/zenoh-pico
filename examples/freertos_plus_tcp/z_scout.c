@@ -85,8 +85,10 @@ void drop(void *context) {
 void app_main(void) {
     int *context = (int *)pvPortMalloc(sizeof(int));
     *context = 0;
-    z_owned_scouting_config_t config = z_scouting_config_default();
-    z_owned_closure_hello_t closure = z_closure(callback, drop, context);
+    z_owned_scouting_config_t config;
+    z_scouting_config_default(&config);
+    z_owned_closure_hello_t closure;
+    z_closure(&closure, callback, drop, context);
     printf("Scouting...\n");
     z_scout(z_move(config), z_move(closure));
 }
