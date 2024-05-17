@@ -58,7 +58,7 @@ int8_t z_view_str_wrap(z_view_str_t *str, const char *value);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
-int8_t z_view_keyexpr_new(z_view_keyexpr_t *keyexpr, const char *name);
+int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
@@ -74,7 +74,7 @@ int8_t z_view_keyexpr_new(z_view_keyexpr_t *keyexpr, const char *name);
 // TODO(sashacmc):
 z_owned_keyexpr_t z_keyexpr_unchecked(const char *name);
 
-int8_t z_view_keyexpr_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
+int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
@@ -799,9 +799,6 @@ _VIEW_FUNCTIONS(z_loaned_str_t, z_view_str_t, str)
 // Gets internal value from refcountered owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
 
-// TODO(sashacmc): remove this VERY BAD workaround (it is only to allow compilaton)!!!
-z_loaned_keyexpr_t *z_keyexpr(const char *name);
-
 // TODO(sashacmc): comments, docs, etc.
 const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
 const char *z_str_data(const z_loaned_str_t *str);
@@ -1147,7 +1144,7 @@ void z_get_options_default(z_get_options_t *options);
  * Returns:
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const char *parameters,
+int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
              z_owned_closure_reply_t *callback, const z_get_options_t *options);
 /**
  * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.

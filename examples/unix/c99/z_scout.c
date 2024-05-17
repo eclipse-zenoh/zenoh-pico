@@ -43,7 +43,7 @@ void fprintwhatami(FILE *stream, unsigned int whatami) {
 void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "[");
     (void)locs;
-    // TODO(sashacmc):
+    // TODO(sashacmc): z_str_array_t
     // for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
     //    fprintf(stream, "\"");
     //    fprintf(stream, "%s", *z_str_array_get(locs, i));

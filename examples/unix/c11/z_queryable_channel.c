@@ -81,18 +81,17 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // TODO(sashacmc):
-    // z_keyexpr_t ke = z_keyexpr(keyexpr);
-    // if (!z_check(ke)) {
-    //     printf("%s is not a valid key expression", keyexpr);
-    //     return -1;
-    // }
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, keyexpr) < 0) {
+        printf("%s is not a valid key expression", keyexpr);
+        return -1;
+    }
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_query_ring_channel_t channel;
     z_query_ring_channel_new(&channel, 10);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL) < 0) {
+    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(channel.send), NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
     }
@@ -113,7 +112,7 @@ int main(int argc, char **argv) {
         z_query_reply_options_t options;
         z_query_reply_options_default(&options);
         options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_query_reply(q, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
+        z_query_reply(q, z_loan(ke), (const unsigned char *)value, strlen(value), &options);
         z_drop(z_move(keystr));
         z_drop(z_move(query));
     }

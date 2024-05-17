@@ -76,7 +76,9 @@ int main(int argc, char **argv) {
     z_owned_sample_ring_channel_t channel;
     z_sample_ring_channel_new(&channel, size);
     z_owned_subscriber_t sub;
-    if (z_declare_subscriber(&sub, z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL) < 0) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(channel.send), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }

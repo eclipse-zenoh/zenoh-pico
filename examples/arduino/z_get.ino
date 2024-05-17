@@ -51,7 +51,7 @@ void reply_handler(z_owned_reply_t *oreply, void *ctx) {
         std::string val((const char *)z_sample_payload(sample)->start, z_sample_payload(sample)->len);
 
         Serial.print(" >> [Get listener] Received (");
-        Serial.print(z_str_loan(&keystr));
+        Serial.print(z_str_data(z_str_loan(&keystr)));
         Serial.print(", ");
         Serial.print(val.c_str());
         Serial.println(")");
@@ -118,7 +118,9 @@ void loop() {
     }
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
-    if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
         Serial.println("Unable to send query.");
     }
 }

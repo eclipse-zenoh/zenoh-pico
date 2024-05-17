@@ -61,7 +61,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     assert(z_loan(pred)->len == strlen(""));
     assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
 
-    z_query_reply(query, z_keyexpr(res), (const uint8_t *)res, strlen(res), NULL);
+    z_query_reply(query, z_query_keyexpr(query), (const uint8_t *)res, strlen(res), NULL);
 
     queries++;
     z_drop(z_move(k_str));
@@ -160,8 +160,10 @@ int main(int argc, char **argv) {
     char *s1_res = (char *)malloc(64);
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s1), z_keyexpr(s1_res));
+        z_declare_keyexpr(&expr, z_loan(s1), z_loan(ke));
         printf("Declared resource on session 1: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
         rids1[i] = expr;
     }
@@ -170,8 +172,10 @@ int main(int argc, char **argv) {
 
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s2), z_keyexpr(s1_res));
+        z_declare_keyexpr(&expr, z_loan(s2), z_loan(ke));
         printf("Declared resource on session 2: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
         rids2[i] = expr;
     }
@@ -197,7 +201,9 @@ int main(int argc, char **argv) {
         z_owned_closure_query_t callback;
         z_closure(&callback, query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
-        assert(z_declare_queryable(qle, z_loan(s2), z_keyexpr(s1_res), &callback, NULL) == _Z_RES_OK);
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string(&ke, s1_res);
+        assert(z_declare_queryable(qle, z_loan(s2), z_loan(ke), &callback, NULL) == _Z_RES_OK);
         printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val->_entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
@@ -287,7 +293,9 @@ int main(int argc, char **argv) {
             snprintf(s1_res, 64, "%s%u", uri, i);
             z_owned_closure_reply_t callback;
             z_closure(&callback, reply_handler, NULL, &idx[i]);
-            z_get(z_loan(s1), z_keyexpr(s1_res), "", &callback, NULL);
+            z_view_keyexpr_t ke;
+            z_view_keyexpr_from_string(&ke, s1_res);
+            z_get(z_loan(s1), z_loan(ke), "", &callback, NULL);
             printf("Queried data from session 1: %zu %s\n", (z_zint_t)0, s1_res);
         }
     }

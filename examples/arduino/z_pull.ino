@@ -44,7 +44,7 @@
 //     std::string val((const char *)sample->payload.start, sample->payload.len);
 
 //     Serial.print(" >> [Subscription listener] Received (");
-//     Serial.print(z_str_loan(&keystr));
+//     Serial.print(z_str_data(z_str_loan(&keystr)));
 //     Serial.print(", ");
 //     Serial.print(val.c_str());
 //     Serial.println(")");
@@ -99,8 +99,10 @@ void setup() {
     // z_owned_closure_sample_t callback;
     // z_closure_sample(&callback, data_handler, NULL, NULL);
     // @TODO
-    // sub = z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_sample_move(&callback), NULL);
-    // if (!z_pull_subscriber_check(&sub)) {
+    // z_view_keyexpr_t ke;
+    // z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    // sub = z_declare_pull_subscriber(z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback),
+    // NULL); if (!z_pull_subscriber_check(&sub)) {
     //     Serial.println("Unable to declare subscriber.");
     //     while (1) {
     //         ;

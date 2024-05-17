@@ -53,24 +53,26 @@ void fprintwhatami(FILE *stream, unsigned int whatami) {
 
 void fprintlocators(FILE *stream, const z_str_array_t *locs) {
     fprintf(stream, "[");
-    for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
-        fprintf(stream, "\"");
-        fprintf(stream, "%s", *z_str_array_get(locs, i));
-        fprintf(stream, "\"");
-        if (i < z_str_array_len(locs) - 1) {
-            fprintf(stream, ", ");
-        }
-    }
+    (void)locs;
+    // TODO(sashacmc): z_str_array_t
+    // for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
+    //    fprintf(stream, "\"");
+    //    fprintf(stream, "%s", *z_str_array_get(locs, i));
+    //    fprintf(stream, "\"");
+    //    if (i < z_str_array_len(locs) - 1) {
+    //        fprintf(stream, ", ");
+    //    }
+    //}
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t hello) {
+void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, "Hello { zid: ");
-    fprintzid(stream, hello.zid);
+    fprintzid(stream, hello->zid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello.whatami);
+    fprintwhatami(stream, hello->whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello.locators);
+    fprintlocators(stream, &hello->locators);
     fprintf(stream, " }");
 }
 

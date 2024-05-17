@@ -35,6 +35,7 @@
 
 #define z_loan(x) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_loan,                 \
+                  z_view_keyexpr_t : z_view_keyexpr_loan,             \
                   z_owned_config_t : z_config_loan,                   \
                   z_owned_scouting_config_t : z_scouting_config_loan, \
                   z_owned_session_t : z_session_loan,                 \

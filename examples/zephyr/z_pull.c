@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // z_closure(&callback, data_handler);
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
     // @TODO
-    // z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_keyexpr(KEYEXPR), z_move(callback), NULL);
+    // z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL);
     // if (!z_check(sub)) {
     //     printf("Unable to declare subscriber.\n");
     //     exit(-1);

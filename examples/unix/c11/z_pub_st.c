@@ -82,7 +82,9 @@ int main(int argc, char **argv) {
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub;
-    if (z_declare_publisher(&pub, z_loan(s), z_keyexpr(keyexpr), NULL) < 0) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr);
+    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }

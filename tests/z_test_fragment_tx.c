@@ -74,9 +74,11 @@ int main(int argc, char **argv) {
         z_sleep_s(3);
     }
     // Put data
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr);
     for (int i = 0; i < 5; i++) {
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
-        if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, size, NULL) < 0) {
+        if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, size, NULL) < 0) {
             printf("Oh no! Put has failed...\n");
         }
         z_sleep_s(1);

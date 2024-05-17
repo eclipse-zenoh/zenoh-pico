@@ -72,10 +72,10 @@ void app_main(void) {
         return;
     }
 
-    z_keyexpr_t ke = z_keyexpr(KEYEXPR);
-    if (!z_check(ke)) {
-        printf("%s is not a valid key expression\n", KEYEXPR);
-        return;
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, KEYEXPR) < 0) {
+        printf("%s is not a valid key expression", KEYEXPR);
+        return -1;
     }
 
     while (1) {
@@ -88,7 +88,7 @@ void app_main(void) {
         }
         z_owned_closure_reply_t callback;
         z_closure(&callback, reply_handler, reply_dropper);
-        if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
+        if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
             printf("Unable to send query.\n");
             return;
         }

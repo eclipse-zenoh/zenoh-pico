@@ -241,7 +241,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     _ZP_UNUSED(cong_ctrl);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    const z_keyexpr_t *keyexpr = NULL;
+    const _z_keyexpr_t *keyexpr = NULL;
     switch (n_msg->_tag) {
         case _Z_N_PUSH:
             keyexpr = &n_msg->_body._push._key;

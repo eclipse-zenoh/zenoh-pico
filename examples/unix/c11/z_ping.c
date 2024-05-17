@@ -77,12 +77,13 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // TODO(sashacmc):
-    // z_keyexpr_t ping = z_keyexpr_unchecked("test/ping");
-    // z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
+    z_view_keyexpr_t ping;
+    z_view_keyexpr_from_string_unchecked(&ping, "test/ping");
+    z_view_keyexpr_t pong;
+    z_view_keyexpr_from_string_unchecked(&pong, "test/pong");
 
     z_owned_publisher_t pub;
-    if (z_declare_publisher(&pub, z_loan(session), z_keyexpr("test/ping"), NULL) < 0) {
+    if (z_declare_publisher(&pub, z_loan(session), z_loan(ping), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -90,7 +91,7 @@ int main(int argc, char** argv) {
     z_owned_closure_sample_t respond;
     z_closure(&respond, callback, drop, NULL);
     z_owned_subscriber_t sub;
-    if (z_declare_subscriber(&sub, z_loan(session), z_keyexpr("test/pong"), z_move(respond), NULL) < 0) {
+    if (z_declare_subscriber(&sub, z_loan(session), z_loan(pong), z_move(respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }

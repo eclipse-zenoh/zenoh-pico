@@ -41,13 +41,6 @@
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
-// TODO(sashacmc): remove this VERY BAD workaround (it is only to allow compilaton)!!!
-z_loaned_keyexpr_t *z_keyexpr(const char *name) {
-    static z_view_keyexpr_t keyexpr;
-    z_view_keyexpr_new(&keyexpr, name);
-    return (z_loaned_keyexpr_t *)z_view_keyexpr_loan(&keyexpr);
-}
-
 /********* Data Types Handlers *********/
 
 int8_t z_view_str_wrap(z_view_str_t *str, const char *value) {
@@ -60,12 +53,12 @@ int8_t z_view_str_wrap(z_view_str_t *str, const char *value) {
 // size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
 //_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
 
-int8_t z_view_keyexpr_new(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
 
-int8_t z_view_keyexpr_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -818,7 +811,7 @@ void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_c
     z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._val to NULL
 }
 
-int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const char *parameters,
+int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
              z_owned_closure_reply_t *callback, const z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 

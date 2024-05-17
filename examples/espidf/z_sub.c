@@ -103,7 +103,7 @@ void wifi_init_sta(void) {
 void data_handler(const z_loaned_sample_t* sample, void* arg) {
     z_owned_str_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-    const z_loaned_payload_t* payload = z_sample_payload(sample);
+    const z_loaned_bytes_t* payload = z_sample_payload(sample);
     printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_str_data(z_str_loan(&keystr)), (int)payload->len,
            payload->start);
     z_str_drop(z_str_move(&keystr));
@@ -151,7 +151,9 @@ void app_main() {
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler);
     z_owned_subscriber_t sub;
-    if (z_declare_subscriber(&sub, z_loan(s), z_keyexpr(KEYEXPR), z_move(callback), NULL) < 0) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         exit(-1);
     }

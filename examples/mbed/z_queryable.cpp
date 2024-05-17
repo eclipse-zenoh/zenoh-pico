@@ -39,7 +39,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_parameters(query, &pred);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_str_loan(&keystr)),
            (int)z_view_str_loan(&pred)->len, z_view_str_loan(&pred)->val);
-    z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)VALUE, strlen(VALUE), NULL);
     z_str_drop(z_str_move(&keystr));
 }
 
@@ -76,8 +76,10 @@ int main(int argc, char **argv) {
     z_owned_closure_query_t callback;
     z_closure_query(&callback, query_handler, NULL, NULL);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_query_move(&callback), NULL) <
-        0) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+                            NULL) < 0) {
         printf("Unable to declare queryable.\n");
         exit(-1);
     }

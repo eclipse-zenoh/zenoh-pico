@@ -33,7 +33,7 @@ void reply_handler(z_owned_reply_t *reply, void *ctx) {
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
         z_owned_str_t keystr;
-        z_keyexpr_to_string(sample.keyexpr, &keystr);
+        z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         const z_loaned_bytes_t *payload = z_sample_payload(sample);
         printf(">> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)payload->len, payload->start);
         z_drop(z_move(keystr));
@@ -72,8 +72,8 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_check(ke)) {
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, keyexpr) < 0) {
         printf("%s is not a valid key expression", keyexpr);
         return -1;
     }
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     }
     z_owned_closure_reply_t callback;
     z_closure(&callback, reply_handler, reply_dropper);
-    if (z_get(z_loan(s), ke, "", z_move(callback), &opts) < 0) {
+    if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;
     }

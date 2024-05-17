@@ -82,8 +82,10 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_string(&vke, keyexpr);
     z_owned_keyexpr_t ke;
-    if (z_declare_keyexpr(&ke, z_session_loan(&s), z_keyexpr(keyexpr)) < 0) {
+    if (z_declare_keyexpr(&ke, z_session_loan(&s), z_view_keyexpr_loan(&vke)) < 0) {
         printf("Unable to declare key expression!\n");
         zp_stop_read_task(z_session_loan_mut(&s));
         zp_stop_lease_task(z_session_loan_mut(&s));

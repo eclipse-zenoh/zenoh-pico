@@ -33,7 +33,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
+    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)value, strlen(value), &options);
     z_str_drop(z_str_move(&keystr));
 }
 
@@ -96,8 +96,8 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    const z_loaned_keyexpr_t *ke = z_keyexpr(keyexpr);
-    if (!z_keyexpr_is_initialized(ke)) {
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, keyexpr) < 0) {
         printf("%s is not a valid key expression", keyexpr);
         return -1;
     }
@@ -107,7 +107,8 @@ int main(int argc, char **argv) {
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_session_loan(&s), ke, z_closure_query_move(&callback), NULL) < 0) {
+    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+                            NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
     }

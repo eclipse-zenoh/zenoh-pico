@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     // @TODO
     // z_owned_pull_subscriber_t sub =
-    //     z_declare_pull_subscriber(z_session_loan(&s), z_keyexpr(keyexpr), z_closure_sample_move(&callback), NULL);
+    //     z_declare_pull_subscriber(z_session_loan(&s), z_loan(ke), z_closure_sample_move(&callback), NULL);
     // if (!z_pull_subscriber_check(&sub)) {
     //     printf("Unable to declare subscriber.\n");
     //     return -1;

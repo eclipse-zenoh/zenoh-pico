@@ -121,12 +121,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // TODO(sashacmc):
-    // z_keyexpr_t ke = z_keyexpr(keyexpr);
-    // if (!z_check(ke)) {
-    //     printf("%s is not a valid key expression", keyexpr);
-    //     return -1;
-    // }
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, keyexpr) < 0) {
+        printf("%s is not a valid key expression", keyexpr);
+        return -1;
+    }
 
     z_mutex_lock(&mutex);
     printf("Sending Query '%s'...\n", keyexpr);
@@ -143,7 +142,7 @@ int main(int argc, char **argv) {
 
     z_owned_closure_reply_t callback;
     z_closure(&callback, reply_handler, reply_dropper);
-    if (z_get(z_loan(s), z_keyexpr(keyexpr), "", z_move(callback), &opts) < 0) {
+    if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;
     }

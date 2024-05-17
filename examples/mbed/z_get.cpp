@@ -84,7 +84,9 @@ int main(int argc, char **argv) {
         }
         z_owned_closure_reply_t callback;
         z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
-        if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+        if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
             printf("Unable to send query.\n");
             exit(-1);
         }

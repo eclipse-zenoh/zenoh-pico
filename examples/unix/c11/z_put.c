@@ -86,8 +86,10 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_string(&vke, keyexpr);
     z_owned_keyexpr_t ke;
-    if (z_declare_keyexpr(&ke, z_loan(s), z_keyexpr(keyexpr)) < 0) {
+    if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
         zp_stop_read_task(z_loan_mut(s));
         zp_stop_lease_task(z_loan_mut(s));
@@ -104,7 +106,7 @@ int main(int argc, char **argv) {
     z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hi"), z_bytes_from_str("there"));
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
-    if (z_put(z_loan(s), z_keyexpr(keyexpr), (const uint8_t *)value, strlen(value), &options) < 0) {
+    if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 

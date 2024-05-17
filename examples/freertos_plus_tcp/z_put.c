@@ -53,7 +53,9 @@ void app_main(void) {
 
     printf("Declaring key expression '%s'...\n", KEYEXPR);
     z_owned_keyexpr_t ke;
-    if (z_declare_keyexpr(&ke, z_loan(s), z_keyexpr(KEYEXPR)) < 0) {
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_string_unchecked(&vke, KEYEXPR);
+    if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
         zp_stop_read_task(z_loan_mut(s));
         zp_stop_lease_task(z_loan_mut(s));

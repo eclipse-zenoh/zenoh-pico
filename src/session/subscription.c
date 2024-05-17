@@ -209,12 +209,7 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len, _z_n_qos_t qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                    ,
-                                    z_attachment_t att
-#endif
-) {
+                                    _z_zint_t payload_len, _z_n_qos_t qos, z_attachment_t att) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);

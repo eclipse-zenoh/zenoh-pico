@@ -56,25 +56,27 @@ void fprintwhatami(unsigned int whatami) {
 
 void fprintlocators(const z_str_array_t *locs) {
     Serial.print("[");
-    size_t len = z_str_array_len(locs);
-    for (unsigned int i = 0; i < len; i++) {
-        Serial.print("'");
-        Serial.print(*z_str_array_get(locs, i));
-        Serial.print("'");
-        if (i < len - 1) {
-            Serial.print(", ");
-        }
-    }
+    (void)locs;
+    // TODO(sashacmc): z_str_array_t
+    // size_t len = z_str_array_len(locs);
+    // for (unsigned int i = 0; i < len; i++) {
+    //    Serial.print("'");
+    //    Serial.print(*z_str_array_get(locs, i));
+    //    Serial.print("'");
+    //    if (i < len - 1) {
+    //        Serial.print(", ");
+    //    }
+    //}
     Serial.print("]");
 }
 
-void fprinthello(const z_hello_t hello) {
+void fprinthello(const z_loaned_hello_t *hello) {
     Serial.print(" >> Hello { zid: ");
-    fprintzid(hello.zid);
+    fprintzid(hello->zid);
     Serial.print(", whatami: ");
-    fprintwhatami(hello.whatami);
+    fprintwhatami(hello->whatami);
     Serial.print(", locators: ");
-    fprintlocators(&hello.locators);
+    fprintlocators(&hello->locators);
     Serial.println(" }");
 }
 

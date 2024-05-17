@@ -35,7 +35,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
     z_owned_str_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
-    // TODO(sashacmc):
+    // TODO(sashacmc): z_query_parameters
     // z_bytes_t pred = z_query_parameters(query);
     // z_value_t payload_value = z_query_value(query);
     // printf(">> [Queryable handler] Received Query '%s?%.*s'\n", z_str_data(z_loan(keystr)), (int)pred.len,
@@ -61,7 +61,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
 
-    z_query_reply(query, z_keyexpr(keyexpr), (const unsigned char *)value, strlen(value), &options);
+    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)value, strlen(value), &options);
     z_drop(z_move(keystr));
     msg_nb++;
 
@@ -134,18 +134,17 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // TODO(sashacmc):
-    // z_keyexpr_t ke = z_keyexpr(keyexpr);
-    // if (!z_check(ke)) {
-    //     printf("%s is not a valid key expression", keyexpr);
-    //     return -1;
-    // }
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_string(&ke, keyexpr) < 0) {
+        printf("%s is not a valid key expression", keyexpr);
+        return -1;
+    }
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_closure_query_t callback;
     z_closure(&callback, query_handler);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL) < 0) {
+    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
     }

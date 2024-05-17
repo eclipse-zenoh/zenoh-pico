@@ -19,6 +19,7 @@
 #undef NDEBUG
 #include <assert.h>
 
+#define URI "demo/example/**/*"
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
 #define sleep(x) Sleep(x * 1000)
@@ -65,8 +66,9 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     printf("%s\n", __func__);
     queries++;
 
+    const z_loaned_keyexpr_t *query_ke = z_query_keyexpr(query);
     z_owned_str_t k_str;
-    z_keyexpr_to_string(z_query_keyexpr(query), &k_str);
+    z_keyexpr_to_string(query_ke, &k_str);
 #ifdef ZENOH_PICO
     if (z_check(k_str) == false) {
         zp_keyexpr_resolve(*(const z_loaned_session_t **)arg, z_query_keyexpr(query), &k_str);
@@ -80,7 +82,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     (void)(payload_value);
     z_query_reply_options_t _ret_qreply_opt;
     z_query_reply_options_default(&_ret_qreply_opt);
-    z_query_reply(query, z_keyexpr(z_loan(k_str)->val), (const uint8_t *)value, strlen(value), &_ret_qreply_opt);
+    z_query_reply(query, query_ke, (const uint8_t *)value, strlen(value), &_ret_qreply_opt);
 
     z_drop(z_move(k_str));
 }
@@ -134,37 +136,37 @@ int main(int argc, char **argv) {
     zc_init_logger();
 #endif
 
-    printf("Testing Keyexpr...");
-    const z_loaned_keyexpr_t *key = z_keyexpr("demo/example");
-    _Bool _ret_bool = z_keyexpr_is_initialized(key);
-    assert_eq(_ret_bool, true);
+    z_view_keyexpr_t key_demo_example, key_demo_example_a, key_demo_example_starstar;
+    z_view_keyexpr_from_string(&key_demo_example, "demo/example");
+    z_view_keyexpr_from_string(&key_demo_example_a, "demo/example/a");
+    z_view_keyexpr_from_string(&key_demo_example_starstar, "demo/example/**");
 
-    int8_t _ret_int8 = z_keyexpr_includes(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert_eq(_ret_int8, 0);
+    _Bool _ret_bool = z_keyexpr_includes(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
+    assert(_ret_bool);
 #ifdef ZENOH_PICO
-    _ret_int8 = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
-    assert_eq(_ret_int8, 0);
+    _ret_bool = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
+    assert(_ret_bool);
 #endif
-    _ret_int8 = z_keyexpr_intersects(z_keyexpr("demo/example/**"), z_keyexpr("demo/example/a"));
-    assert_eq(_ret_int8, 0);
+    _ret_bool = z_keyexpr_intersects(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
+    assert(_ret_bool);
 #ifdef ZENOH_PICO
-    _ret_int8 = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
-    assert_eq(_ret_int8, 0);
+    _ret_bool = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
+    assert(_ret_bool);
 #endif
-    _ret_int8 = z_keyexpr_equals(z_keyexpr("demo/example/**"), z_keyexpr("demo/example"));
-    assert_eq(_ret_int8, -1);
+    _ret_bool = z_keyexpr_equals(z_loan(key_demo_example_starstar), z_loan(key_demo_example));
+    assert(!_ret_bool);
 #ifdef ZENOH_PICO
-    _ret_int8 = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
-    assert_eq(_ret_int8, -1);
+    _ret_bool = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
+    assert(!_ret_bool);
 #endif
 
     sleep(SLEEP);
 
-    size_t keyexpr_len = strlen("demo/example/**/*");
-    char *keyexpr_str = (char *)malloc(keyexpr_len + 1);
-    memcpy(keyexpr_str, "demo/example/**/*", keyexpr_len);
+    size_t keyexpr_len = strlen(URI);
+    char *keyexpr_str = (char *)z_malloc(keyexpr_len + 1);
+    memcpy(keyexpr_str, URI, keyexpr_len);
     keyexpr_str[keyexpr_len] = '\0';
-    _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
+    int8_t _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
     assert(_ret_int8 < 0);
 
 #ifdef ZENOH_PICO
@@ -173,11 +175,11 @@ int main(int argc, char **argv) {
 #endif
     _ret_int8 = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
     assert_eq(_ret_int8, 0);
-    assert_eq(strlen("demo/example/**/*"), keyexpr_len);
+    assert_eq(strlen(URI), keyexpr_len);
 #ifdef ZENOH_PICO
     _ret_int8 = zp_keyexpr_canonize_null_terminated(keyexpr_str);
     assert_eq(_ret_int8, 0);
-    assert_eq(strlen("demo/example/**/*"), keyexpr_len);
+    assert_eq(strlen(URI), keyexpr_len);
 #endif
 
     printf("Ok\n");
@@ -292,19 +294,22 @@ int main(int argc, char **argv) {
     z_closure(&_ret_closure_sample, data_handler, NULL, &ls1);
     z_subscriber_options_t _ret_sub_opt;
     z_subscriber_options_default(&_ret_sub_opt);
+
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr_str);
     z_owned_subscriber_t _ret_sub;
-    _ret_int8 =
-        z_declare_subscriber(&_ret_sub, z_loan(s2), z_keyexpr(keyexpr_str), z_move(_ret_closure_sample), &_ret_sub_opt);
+    _ret_int8 = z_declare_subscriber(&_ret_sub, z_loan(s2), z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
     assert(_ret_int8 == _Z_RES_OK);
     printf("Ok\n");
 
     sleep(SLEEP);
 
-    printf("Declaring Keyexpr...");
-    char *s1_res = (char *)malloc(64);
-    snprintf(s1_res, 64, "%s/chunk/%d", keyexpr_str, 1);
+    char s1_res[64];
+    sprintf(s1_res, "%s/chunk/%d", keyexpr_str, 1);
+    z_view_keyexpr_t s1_key;
+    z_view_keyexpr_from_string(&s1_key, s1_res);
     z_owned_keyexpr_t _ret_expr;
-    z_declare_keyexpr(&_ret_expr, z_loan(s1), z_keyexpr(s1_res));
+    z_declare_keyexpr(&_ret_expr, z_loan(s1), z_loan(s1_key));
     assert(z_check(_ret_expr));
     printf("Ok\n");
 
@@ -346,7 +351,7 @@ int main(int argc, char **argv) {
     z_publisher_options_default(&_ret_pub_opt);
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_owned_publisher_t _ret_pub;
-    _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_keyexpr(keyexpr_str), &_ret_pub_opt);
+    _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(ke), &_ret_pub_opt);
     assert(_ret_int8 == _Z_RES_OK);
     printf("Ok\n");
 
@@ -394,7 +399,7 @@ int main(int argc, char **argv) {
     z_queryable_options_t _ret_qle_opt;
     z_queryable_options_default(&_ret_qle_opt);
     z_owned_queryable_t qle;
-    assert(z_declare_queryable(&qle, z_loan(s1), z_keyexpr(s1_res), z_move(_ret_closure_query), &_ret_qle_opt) ==
+    assert(z_declare_queryable(&qle, z_loan(s1), z_loan(s1_key), z_move(_ret_closure_query), &_ret_qle_opt) ==
            _Z_RES_OK);
     printf("Ok\n");
 
@@ -420,7 +425,7 @@ int main(int argc, char **argv) {
     printf("Ok\n");
 
     printf("Testing Get...");
-    _ret_int8 = z_get(z_loan(s2), z_keyexpr(s1_res), "", z_move(_ret_closure_reply), &_ret_get_opt);
+    _ret_int8 = z_get(z_loan(s2), z_loan(s1_key), "", z_move(_ret_closure_reply), &_ret_get_opt);
     assert_eq(_ret_int8, 0);
     printf("Ok\n");
 
@@ -452,7 +457,6 @@ int main(int argc, char **argv) {
 
     sleep(SLEEP * 5);
 
-    free(s1_res);
     free(keyexpr_str);
 
     return 0;

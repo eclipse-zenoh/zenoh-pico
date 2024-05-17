@@ -115,7 +115,9 @@ int main(int argc, char **argv) {
         z_owned_closure_sample_t callback;
         z_closure(&callback, data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
-        int8_t res = z_declare_subscriber(sub, z_loan(s2), z_keyexpr(s1_res), &callback, NULL);
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string(&ke, s1_res);
+        int8_t res = z_declare_subscriber(sub, z_loan(s2), z_loan(ke), &callback, NULL);
         assert(res == _Z_RES_OK);
         printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
                (z_zint_t)0, s1_res);
@@ -135,7 +137,9 @@ int main(int argc, char **argv) {
             z_put_options_t opt;
             z_put_options_default(&opt);
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-            z_put(z_loan(s1), z_keyexpr(s1_res), (const uint8_t *)payload, len, &opt);
+            z_view_keyexpr_t ke;
+            z_view_keyexpr_from_string(&ke, s1_res);
+            z_put(z_loan(s1), z_loan(ke), (const uint8_t *)payload, len, &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
         }
     }
