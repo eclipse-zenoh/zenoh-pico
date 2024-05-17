@@ -28,10 +28,10 @@ z_owned_sample_t *_z_sample_to_owned_ptr(const z_loaned_sample_t *src) {
     if (dst == NULL) {
         return NULL;
     }
-    if (src != NULL) {
-        dst->_rc = _z_sample_rc_clone(src);
-    } else {
+    if (src == NULL) {
         dst->_rc.in = NULL;
+    } else {
+        _z_sample_rc_copy(&dst->_rc, src);
     }
     return dst;
 }
@@ -48,7 +48,11 @@ z_owned_query_t *_z_query_to_owned_ptr(const z_loaned_query_t *src) {
     if (dst == NULL) {
         return NULL;
     }
-    _z_query_rc_copy(&dst->_rc, src);
+    if (src == NULL) {
+        dst->_rc.in = NULL;
+    } else {
+        _z_query_rc_copy(&dst->_rc, src);
+    }
     return dst;
 }
 #endif  // Z_FEATURE_QUERYABLE
@@ -65,7 +69,11 @@ z_owned_reply_t *_z_reply_to_owned_ptr(const z_loaned_reply_t *src) {
     if (dst == NULL) {
         return NULL;
     }
-    _z_reply_rc_copy(&dst->_rc, src);
+    if (src == NULL) {
+        dst->_rc.in = NULL;
+    } else {
+        _z_reply_rc_copy(&dst->_rc, src);
+    }
     return dst;
 }
 #endif  // Z_FEATURE_QUERY
