@@ -46,7 +46,7 @@
                   z_view_str_t : z_view_str_loan,                     \
                   z_owned_str_array_t : z_str_array_loan,             \
                   z_owned_sample_t : z_sample_loan,                   \
-                  z_owned_query_t : z_query_loan                     \
+                  z_owned_query_t : z_query_loan                      \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
