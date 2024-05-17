@@ -107,9 +107,9 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     return reply;
 }
 #else
-_z_reply_t _z_reply_create(const _z_keyexpr_t *keyexpr, z_reply_tag_t tag, z_id_t id, const _z_bytes_t *payload,
-                           const _z_timestamp_t *timestamp, const _z_encoding_t encoding, const z_sample_kind_t kind,
-                           const z_attachment_t att) {
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
+                           z_attachment_t att) {
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(tag);
     _ZP_UNUSED(id);
