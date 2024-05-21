@@ -20,7 +20,7 @@
 _z_reply_t _z_reply_null(void) {
     _z_reply_t r = {._tag = Z_REPLY_TAG_DATA,
                     .data = {
-                        .replier_id = 0,
+                        .replier_id = {.id = {0}},
                         .sample = {.in = NULL},
                     }};
     return r;

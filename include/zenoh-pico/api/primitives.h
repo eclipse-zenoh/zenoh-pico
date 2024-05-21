@@ -584,7 +584,7 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Returns:
  *   Returns a new sample closure.
  */
-int8_t z_closure_sample(z_owned_closure_sample_t *closure, _z_data_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
                         void *context);
 
 /**
@@ -608,8 +608,8 @@ int8_t z_closure_sample(z_owned_closure_sample_t *closure, _z_data_handler_t cal
  * Returns:
  *   Returns a new sample closure.
  */
-int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, _z_owned_sample_handler_t call,
-                              _z_dropper_handler_t drop, void *context);
+int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, z_owned_sample_handler_t call,
+                              z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new query closure.
@@ -636,7 +636,7 @@ int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, _z_owned_
  * Returns:
  *   Returns a new query closure.
  */
-int8_t z_closure_query(z_owned_closure_query_t *closure, _z_queryable_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
@@ -660,8 +660,8 @@ int8_t z_closure_query(z_owned_closure_query_t *closure, _z_queryable_handler_t 
  * Returns:
  *   Returns a new query closure.
  */
-int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, _z_owned_query_handler_t call,
-                             _z_dropper_handler_t drop, void *context);
+int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, z_owned_query_handler_t call,
+                             z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new reply closure.
@@ -688,7 +688,7 @@ int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, _z_owned_qu
  * Returns:
  *   Returns a new reply closure.
  */
-int8_t z_closure_reply(z_owned_closure_reply_t *closure, _z_reply_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
@@ -717,7 +717,7 @@ int8_t z_closure_reply(z_owned_closure_reply_t *closure, _z_reply_handler_t call
  *   Returns a new reply closure.
  */
 int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_reply_handler_t call,
-                             _z_dropper_handler_t drop, void *context);
+                             z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new hello closure.
@@ -744,7 +744,7 @@ int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_rep
  * Returns:
  *   Returns a new hello closure.
  */
-int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
@@ -772,7 +772,7 @@ int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t
  * Returns:
  *   Returns a new zid closure.
  */
-int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, _z_dropper_handler_t drop, void *context);
+int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
 #define _OWNED_FUNCTIONS(loanedtype, ownedtype, name)             \

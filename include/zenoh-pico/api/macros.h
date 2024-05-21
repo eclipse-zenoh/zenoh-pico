@@ -351,15 +351,15 @@ inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
 inline bool z_check(const z_owned_str_t& v) { return z_str_check(&v); }
 inline bool z_check(const z_owned_str_t& v) { return z_sample_check(&v); }
 
-inline void z_call(const z_owned_closure_sample_t &closure, const z_sample_t *sample) 
+inline void z_call(const z_owned_closure_sample_t &closure, const z_loaned_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }
-inline void z_call(const z_owned_closure_owned_sample_t &closure, const z_sample_t *sample) 
+inline void z_call(const z_owned_closure_owned_sample_t &closure, const z_owned_sample_t *sample) 
     { z_closure_owned_sample_call(&closure, sample); }
-inline void z_call(const z_owned_closure_query_t &closure, const z_query_t *query)
+inline void z_call(const z_owned_closure_query_t &closure, const z_loaned_query_t *query)
     { z_closure_query_call(&closure, query); }
-inline void z_call(const z_owned_closure_owned_query_t &closure, const z_query_t *query) 
+inline void z_call(const z_owned_closure_owned_query_t &closure, const z_owned_query_t *query) 
     { z_closure_owned_query_call(&closure, query); }
-inline void z_call(const z_owned_closure_reply_t &closure, const z_reply_t *reply)
+inline void z_call(const z_owned_closure_reply_t &closure, const z_loaned_reply_t *reply)
     { z_closure_reply_call(&closure, reply); }
 inline void z_call(const z_owned_closure_owned_reply_t &closure, z_owned_reply_t *reply)
     { z_closure_owned_reply_call(&closure, reply); }

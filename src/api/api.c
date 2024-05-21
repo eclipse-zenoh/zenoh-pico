@@ -443,17 +443,17 @@ OWNED_FUNCTIONS_RC(session)
         return _Z_RES_OK;                                                          \
     }
 
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, _z_owned_sample_handler_t,
-                        _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, _z_owned_query_handler_t,
-                        _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
-                        _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, _z_dropper_handler_t)
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -807,7 +807,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
 }
 
-int8_t z_get(const z_loaned_session_t *zs, z_loaned_keyexpr_t *keyexpr, const char *parameters,
+int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
              z_owned_closure_reply_t *callback, const z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
