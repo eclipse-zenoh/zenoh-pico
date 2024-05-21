@@ -336,7 +336,13 @@ void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_
     }
 }
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply) {
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
+    if (closure->call != NULL) {
+        (closure->call)(reply, closure->context);
+    }
+}
+
+void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
@@ -437,15 +443,17 @@ OWNED_FUNCTIONS_RC(session)
         return _Z_RES_OK;                                                          \
     }
 
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, _z_owned_sample_handler_t,
-                        _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, _z_owned_query_handler_t,
-                        _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, z_owned_reply_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, _z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, _z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
+                        z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -786,7 +794,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
-OWNED_FUNCTIONS_PTR(_z_reply_t, reply, _z_owner_noop_copy, _z_reply_free)
+OWNED_FUNCTIONS_RC(reply)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
@@ -797,18 +805,6 @@ void z_get_options_default(z_get_options_t *options) {
     options->attachment = z_attachment_null();
 #endif
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
-}
-
-typedef struct __z_reply_handler_wrapper_t {
-    z_owned_reply_handler_t user_call;
-    void *ctx;
-} __z_reply_handler_wrapper_t;
-
-void __z_reply_handler(_z_reply_t *reply, __z_reply_handler_wrapper_t *wrapped_ctx) {
-    z_owned_reply_t oreply = {._val = reply};
-
-    wrapped_ctx->user_call(&oreply, wrapped_ctx->ctx);
-    z_reply_drop(&oreply);  // user_call is allowed to take ownership of the reply by setting oreply._val to NULL
 }
 
 int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
@@ -837,18 +833,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
         }
     }
-
-    // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
-    //                to enclose the z_reply_t into a z_owned_reply_t.
-    __z_reply_handler_wrapper_t *wrapped_ctx =
-        (__z_reply_handler_wrapper_t *)z_malloc(sizeof(__z_reply_handler_wrapper_t));
-    if (wrapped_ctx != NULL) {
-        wrapped_ctx->user_call = callback->call;
-        wrapped_ctx->ctx = ctx;
-    }
-
     ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   __z_reply_handler, wrapped_ctx, callback->drop, ctx, opt.timeout_ms
+                   callback->call, callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    opt.attachment
@@ -857,17 +843,17 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_owned_reply_t *reply) {
-    (void)(reply);
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
+    _ZP_UNUSED(reply);
     // For the moment always return TRUE.
     // The support for reply errors will come in the next release.
     return true;
 }
 
-const z_loaned_sample_t *z_reply_ok(const z_owned_reply_t *reply) { return &reply->_val->data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
-z_value_t z_reply_err(const z_owned_reply_t *reply) {
-    (void)(reply);
+z_value_t z_reply_err(const z_loaned_reply_t *reply) {
+    _ZP_UNUSED(reply);
     return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
 }
 #endif

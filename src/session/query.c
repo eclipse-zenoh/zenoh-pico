@@ -27,14 +27,10 @@
 #if Z_FEATURE_QUERY == 1
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     if (pen_qry->_dropper != NULL) {
-        pen_qry->_dropper(pen_qry->_drop_arg);
+        pen_qry->_dropper(pen_qry->_arg);
     }
-
-    z_free(pen_qry->_call_arg);
-
     _z_keyexpr_clear(&pen_qry->_key);
     _z_str_clear(pen_qry->_parameters);
-
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
 }
 
@@ -117,19 +113,15 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
         ret = _Z_ERR_QUERY_NOT_MATCH;
     }
 
-    // Build the reply
-    _z_reply_t reply;
-    reply._tag = Z_REPLY_TAG_DATA;
-    reply.data.replier_id = zn->_local_zid;
-    reply.data.sample.in->val.keyexpr = expanded_ke;
-    _z_bytes_copy(&reply.data.sample.in->val.payload, &msg->_payload);
-    reply.data.sample.in->val.encoding.id = msg->_encoding.id;
-    _z_bytes_copy(&reply.data.sample.in->val.encoding.schema, &msg->_encoding.schema);
-    reply.data.sample.in->val.kind = Z_SAMPLE_KIND_PUT;
-    reply.data.sample.in->val.timestamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+    // Retrieve attachment
 #if Z_FEATURE_ATTACHMENT == 1
-    reply.data.sample.in->val.attachment = _z_encoded_as_attachment(&msg->_attachment);
+    z_attachment_t att = _z_encoded_as_attachment(&msg->_attachment);
+#else
+    z_attachment_t att = z_attachment_null();
 #endif
+    // Build the reply
+    _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, &msg->_payload,
+                                       &msg->_commons._timestamp, msg->_encoding, Z_SAMPLE_KIND_PUT, att);
 
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
@@ -151,7 +143,6 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                 }
                 break;
             }
-
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
 
@@ -181,7 +172,10 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
-        pen_qry->_callback(_z_reply_alloc_and_move(&reply), pen_qry->_call_arg);
+        _z_reply_rc_t cb_reply = _z_reply_rc_new();
+        cb_reply.in->val = _z_reply_move(&reply);
+        pen_qry->_callback(&cb_reply, pen_qry->_arg);
+        _z_reply_rc_drop(&cb_reply);
     }
 
     if (ret != _Z_RES_OK) {
@@ -208,8 +202,11 @@ int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            pen_qry->_callback(_z_reply_alloc_and_move(&pen_rep->_reply), pen_qry->_call_arg);
+            _z_reply_rc_t cb_reply = _z_reply_rc_new();
+            cb_reply.in->val = _z_reply_move(&pen_rep->_reply);
+            pen_qry->_callback(&cb_reply, pen_qry->_arg);
             pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
+            _z_reply_rc_drop(&cb_reply);
         }
     }
 

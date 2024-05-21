@@ -13,8 +13,18 @@
 
 #include "zenoh-pico/net/reply.h"
 
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
+
+_z_reply_t _z_reply_null(void) {
+    _z_reply_t r = {._tag = Z_REPLY_TAG_DATA,
+                    .data = {
+                        .replier_id = {.id = {0}},
+                        .sample = {.in = NULL},
+                    }};
+    return r;
+}
 
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
@@ -38,12 +48,9 @@ void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src) {
     dst->replier_id = src->replier_id;
 }
 
-_z_reply_t *_z_reply_alloc_and_move(_z_reply_t *_reply) {
-    _z_reply_t *reply = (_z_reply_t *)z_malloc(sizeof(_z_reply_t));
-    if (reply != NULL) {
-        *reply = *_reply;
-        (void)memset(_reply, 0, sizeof(_z_reply_t));
-    }
+_z_reply_t _z_reply_move(_z_reply_t *src_reply) {
+    _z_reply_t reply = *src_reply;
+    *src_reply = _z_reply_null();
     return reply;
 }
 
@@ -75,5 +82,42 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
 
     // Free the timestamp
     _z_timestamp_clear(&pr->_tstamp);
+}
+
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
+                           z_attachment_t att) {
+    _z_reply_t reply = _z_reply_null();
+    reply._tag = tag;
+    if (tag == Z_REPLY_TAG_DATA) {
+        reply.data.replier_id = id;
+        // Create sample
+        _z_sample_t sample = _z_sample_null();
+        sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
+        sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
+        _z_bytes_copy(&sample.payload, payload);
+        sample.kind = kind;
+        sample.timestamp = _z_timestamp_duplicate(timestamp);
+#if Z_FEATURE_ATTACHMENT == 1
+        sample.attachment = att;  // FIXME: call z_attachment_move or copy
+#endif
+        // Create sample rc from value
+        reply.data.sample = _z_sample_rc_new_from_val(sample);
+    }
+    return reply;
+}
+#else
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
+                           z_attachment_t att) {
+    _ZP_UNUSED(keyexpr);
+    _ZP_UNUSED(tag);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(payload);
+    _ZP_UNUSED(timestamp);
+    _ZP_UNUSED(encoding);
+    _ZP_UNUSED(kind);
+    _ZP_UNUSED(att);
+    return _z_reply_null();
 }
 #endif

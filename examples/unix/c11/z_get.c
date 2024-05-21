@@ -37,7 +37,7 @@ int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
 }
 #endif
 
-void reply_handler(z_owned_reply_t *reply, void *ctx) {
+void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);

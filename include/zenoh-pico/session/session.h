@@ -110,19 +110,19 @@ _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 typedef struct _z_reply_t _z_reply_t;
 typedef _z_list_t _z_reply_data_list_t;
 typedef _z_list_t _z_pending_reply_list_t;
-struct __z_reply_handler_wrapper_t;
+typedef struct _z_reply_rc_t _z_reply_rc_t;
+typedef _z_reply_rc_t z_loaned_reply_t;
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t *reply, struct __z_reply_handler_wrapper_t *arg);
+typedef void (*_z_reply_handler_t)(const z_loaned_reply_t *reply, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _id;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
-    void *_call_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
-    void *_drop_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
+    void *_arg;
     char *_parameters;
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;

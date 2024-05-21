@@ -103,8 +103,8 @@ int main(int argc, char **argv) {
     z_owned_reply_t reply;
     z_null(&reply);
     for (z_call(channel.recv, &reply); z_check(reply); z_call(channel.recv, &reply)) {
-        if (z_reply_is_ok(&reply)) {
-            const z_loaned_sample_t *sample = z_reply_ok(&reply);
+        if (z_reply_is_ok(z_loan(reply))) {
+            const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
             z_owned_str_t keystr;
             z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
             printf(">> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)z_sample_payload(sample)->len,

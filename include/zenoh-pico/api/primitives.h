@@ -584,7 +584,7 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Returns:
  *   Returns a new sample closure.
  */
-int8_t z_closure_sample(z_owned_closure_sample_t *closure, _z_data_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
                         void *context);
 
 /**
@@ -608,8 +608,8 @@ int8_t z_closure_sample(z_owned_closure_sample_t *closure, _z_data_handler_t cal
  * Returns:
  *   Returns a new sample closure.
  */
-int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, _z_owned_sample_handler_t call,
-                              _z_dropper_handler_t drop, void *context);
+int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, z_owned_sample_handler_t call,
+                              z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new query closure.
@@ -636,7 +636,7 @@ int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, _z_owned_
  * Returns:
  *   Returns a new query closure.
  */
-int8_t z_closure_query(z_owned_closure_query_t *closure, _z_queryable_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
@@ -660,8 +660,8 @@ int8_t z_closure_query(z_owned_closure_query_t *closure, _z_queryable_handler_t 
  * Returns:
  *   Returns a new query closure.
  */
-int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, _z_owned_query_handler_t call,
-                             _z_dropper_handler_t drop, void *context);
+int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, z_owned_query_handler_t call,
+                             z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new reply closure.
@@ -688,8 +688,36 @@ int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, _z_owned_qu
  * Returns:
  *   Returns a new reply closure.
  */
-int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_owned_reply_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
                        void *context);
+
+/**
+ * Return a new reply closure.
+ * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_reply_t` by loaning it using
+ * ``z_closure_reply_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
+ * equivalent to writing ``z_closure_reply_loan(&val)``.
+ *
+ * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
+ * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
+ * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
+ * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
+ * is valid.
+ *
+ * To check if ``val`` is still valid, you may use ``z_closure_reply_check(&val)`` or ``z_check(val)`` if your compiler
+ * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ *
+ * Parameters:
+ *   call: the typical callback function. ``context`` will be passed as its last argument.
+ *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
+ *   context: a pointer to an arbitrary state.
+ *
+ * Returns:
+ *   Returns a new reply closure.
+ */
+int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_reply_handler_t call,
+                             z_dropper_handler_t drop, void *context);
 
 /**
  * Return a new hello closure.
@@ -716,7 +744,7 @@ int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_owned_reply_handler_t
  * Returns:
  *   Returns a new hello closure.
  */
-int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, _z_dropper_handler_t drop,
+int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
@@ -744,7 +772,7 @@ int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t
  * Returns:
  *   Returns a new zid closure.
  */
-int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, _z_dropper_handler_t drop, void *context);
+int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
 #define _OWNED_FUNCTIONS(loanedtype, ownedtype, name)             \
@@ -782,6 +810,7 @@ _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
+_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
 _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 
@@ -1159,7 +1188,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
  *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or
  * ``false`` otherwise.
  */
-_Bool z_reply_is_ok(const z_owned_reply_t *reply);
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply);
 
 /**
  * Yields the contents of the reply by asserting it indicates a success.
@@ -1172,7 +1201,7 @@ _Bool z_reply_is_ok(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_loaned_sample_t` wrapped in the query reply.
  */
-const z_loaned_sample_t *z_reply_ok(const z_owned_reply_t *reply);
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
 
 /**
  * Yields the contents of the reply by asserting it indicates a failure.
@@ -1185,7 +1214,7 @@ const z_loaned_sample_t *z_reply_ok(const z_owned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_value_t` wrapped in the query reply.
  */
-z_value_t z_reply_err(const z_owned_reply_t *reply);
+z_value_t z_reply_err(const z_loaned_reply_t *reply);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1

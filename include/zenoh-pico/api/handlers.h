@@ -33,7 +33,7 @@ z_owned_query_t *_z_query_to_owned_ptr(const z_loaned_query_t *src);
 
 // -- Reply handler
 void _z_owned_reply_move(z_owned_reply_t *dst, z_owned_reply_t *src);
-z_owned_reply_t *_z_reply_clone(const z_owned_reply_t *src);
+z_owned_reply_t *_z_reply_to_owned_ptr(const z_loaned_reply_t *src);
 
 // -- Channel
 #define _Z_CHANNEL_DEFINE(name, send_closure_name, recv_closure_name, send_type, recv_type, collection_type, \
@@ -112,13 +112,13 @@ _Z_CHANNEL_DEFINE(query_fifo_channel, closure_query, closure_owned_query, const 
                   _z_owned_query_move, _z_query_to_owned_ptr, z_query_drop)
 
 // z_owned_reply_ring_channel_t
-_Z_CHANNEL_DEFINE(reply_ring_channel, closure_reply, closure_reply, z_owned_reply_t, z_owned_reply_t, _z_ring_mt_t,
-                  _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_try_pull,
-                  _z_owned_reply_move, _z_reply_clone, z_reply_drop)
+_Z_CHANNEL_DEFINE(reply_ring_channel, closure_reply, closure_owned_reply, const z_loaned_reply_t, z_owned_reply_t,
+                  _z_ring_mt_t, _z_ring_mt_new, _z_ring_mt_free, _z_ring_mt_push, _z_ring_mt_pull, _z_ring_mt_try_pull,
+                  _z_owned_reply_move, _z_reply_to_owned_ptr, z_reply_drop)
 
 // z_owned_reply_fifo_channel_t
-_Z_CHANNEL_DEFINE(reply_fifo_channel, closure_reply, closure_reply, z_owned_reply_t, z_owned_reply_t, _z_fifo_mt_t,
-                  _z_fifo_mt_new, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_fifo_mt_try_pull,
-                  _z_owned_reply_move, _z_reply_clone, z_reply_drop)
+_Z_CHANNEL_DEFINE(reply_fifo_channel, closure_reply, closure_owned_reply, const z_loaned_reply_t, z_owned_reply_t,
+                  _z_fifo_mt_t, _z_fifo_mt_new, _z_fifo_mt_free, _z_fifo_mt_push, _z_fifo_mt_pull, _z_fifo_mt_try_pull,
+                  _z_owned_reply_move, _z_reply_to_owned_ptr, z_reply_drop)
 
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H

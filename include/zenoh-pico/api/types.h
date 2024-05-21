@@ -181,7 +181,6 @@ _LOANED_TYPE(_z_queryable_t, queryable)
  * Represents a Zenoh query entity, received by Zenoh Queryable entities.
  *
  */
-
 _OWNED_TYPE_RC(_z_query_rc_t, query)
 _LOANED_TYPE(_z_query_rc_t, query)
 
@@ -459,8 +458,8 @@ typedef _z_reply_data_t z_reply_data_t;
  * Members:
  *   z_reply_data_t data: the content of the reply.
  */
-_OWNED_TYPE_PTR(_z_reply_t, reply)
-_LOANED_TYPE(_z_reply_t, reply)
+_OWNED_TYPE_RC(_z_reply_rc_t, reply)
+_LOANED_TYPE(_z_reply_rc_t, reply)
 
 /**
  * Represents an array of ``z_str_t``.
@@ -481,8 +480,9 @@ _Bool z_str_array_is_empty(const z_str_array_t *a);
 _OWNED_TYPE_PTR(z_str_array_t, str_array)
 _LOANED_TYPE(z_str_array_t, str_array)
 
-typedef void (*_z_dropper_handler_t)(void *arg);
-typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
+typedef void (*z_dropper_handler_t)(void *arg);
+typedef void (*z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
+typedef _z_data_handler_t z_data_handler_t;
 
 /**
  * Represents the sample closure.
@@ -490,15 +490,15 @@ typedef void (*_z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   _z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
-    _z_data_handler_t call;
-    _z_dropper_handler_t drop;
+    z_data_handler_t call;
+    z_dropper_handler_t drop;
 } z_owned_closure_sample_t;
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample);
@@ -509,19 +509,21 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loan
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   _z_owned_sample_handler_t call: `void *call(const struct z_owned_sample_t*, const void *context)` is the callback
+ *   z_owned_sample_handler_t call: `void *call(const struct z_owned_sample_t*, const void *context)` is the callback
  *   function.
- * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
+ * 	 z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
-    _z_owned_sample_handler_t call;
-    _z_dropper_handler_t drop;
+    z_owned_sample_handler_t call;
+    z_dropper_handler_t drop;
 } z_owned_closure_owned_sample_t;
 
 void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample);
+
+typedef _z_queryable_handler_t z_queryable_handler_t;
 
 /**
  * Represents the query callback closure.
@@ -531,19 +533,19 @@ void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, 
  * Members:
  *   _z_queryable_handler_t call: `void (*_z_queryable_handler_t)(z_query_t *query, void *arg)` is the
  * callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
-    _z_queryable_handler_t call;
-    _z_dropper_handler_t drop;
+    z_queryable_handler_t call;
+    z_dropper_handler_t drop;
 } z_owned_closure_query_t;
 
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query);
 
-typedef void (*_z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
+typedef void (*z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
 
 /**
  * Represents the owned query closure.
@@ -551,21 +553,22 @@ typedef void (*_z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
- *   _z_owned_query_handler_t call: `void *call(const struct z_owned_query_t*, const void *context)` is the callback
+ *   z_owned_query_handler_t call: `void *call(const struct z_owned_query_t*, const void *context)` is the callback
  *   function.
- * 	 _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
+ * 	 z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
-    _z_owned_query_handler_t call;
-    _z_dropper_handler_t drop;
+    z_owned_query_handler_t call;
+    z_dropper_handler_t drop;
 } z_owned_closure_owned_query_t;
 
 void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_owned_query_t *query);
 
 typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
+typedef _z_reply_handler_t z_reply_handler_t;
 
 /**
  * Represents the query reply callback closure.
@@ -573,19 +576,39 @@ typedef void (*z_owned_reply_handler_t)(z_owned_reply_t *reply, void *arg);
  * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Members:
+ *   z_reply_handler_t call: `void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg)` is the
+ * callback function.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   void *context: a pointer to an arbitrary state.
+ */
+// TODO(sashacmc):
+typedef struct {
+    void *context;
+    z_reply_handler_t call;
+    z_dropper_handler_t drop;
+} z_owned_closure_reply_t;
+
+void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply);
+
+/**
+ * Represents the owned query reply callback closure.
+ *
+ * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Members:
  *   z_owned_reply_handler_t call: `void (*z_owned_reply_handler_t)(const z_owned_reply_t *reply, void *arg)` is the
  * callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_reply_handler_t call;
-    _z_dropper_handler_t drop;
-} z_owned_closure_reply_t;
+    z_dropper_handler_t drop;
+} z_owned_closure_owned_reply_t;
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, z_owned_reply_t *reply);
+void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply);
 
 typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
 
@@ -597,14 +620,14 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  * Members:
  *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the
  * callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_hello_handler_t call;
-    _z_dropper_handler_t drop;
+    z_dropper_handler_t drop;
 } z_owned_closure_hello_t;
 
 void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
@@ -618,14 +641,14 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *
  * Members:
  *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
- *   _z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
+ *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 // TODO(sashacmc):
 typedef struct {
     void *context;
     z_id_handler_t call;
-    _z_dropper_handler_t drop;
+    z_dropper_handler_t drop;
 } z_owned_closure_zid_t;
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);

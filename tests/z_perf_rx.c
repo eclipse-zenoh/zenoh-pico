@@ -124,6 +124,7 @@ int main(int argc, char **argv) {
 }
 #else
 int main(void) {
+    (void)test_stats;
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this test requires it.\n");
     return -2;
 }
