@@ -106,7 +106,7 @@ void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"
 void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
     if (z_reply_is_ok(oreply)) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
-        z_owned_str_t keystr;
+        z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
 
         printf(" >> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)z_sample_payload(sample)->len,
@@ -161,7 +161,8 @@ void app_main() {
         z_get_options_t opts;
         z_get_options_default(&opts);
         if (strcmp(VALUE, "") != 0) {
-            opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+            // TODO(sashacmc): encoding
+            // opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
         }
         z_owned_closure_reply_t callback;
         z_closure(&callback, reply_handler, reply_dropper);

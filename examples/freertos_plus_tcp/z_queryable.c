@@ -31,19 +31,21 @@
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
-    // TODO(sashacmc): z_query_parameters
-    // z_bytes_t pred = z_query_parameters(query);
-    // z_value_t payload_value = z_query_value(query);
-    // printf(" >> [Queryable handler] Received Query '%s?%.*s'\n", z_str_data(z_loan(keystr)), (int)pred.len,
-    // pred.start); if (payload_value.payload.len > 0) {
-    //     printf("     with value '%.*s'\n", (int)payload_value.payload.len, payload_value.payload.start);
-    // }
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_loan(keystr)), (int)z_loan(params)->len,
+           z_loan(params)->val);
+    const z_loaned_value_t *payload_value = z_query_value(query);
+    if (payload_value->payload.len > 0) {
+        printf("     with value '%.*s'\n", (int)payload_value->payload.len, payload_value->payload.start);
+    }
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)VALUE, strlen(VALUE), &options);
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): VALUE encoding
+    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
     z_drop(z_move(keystr));
 }
 

@@ -42,11 +42,12 @@
                   z_owned_publisher_t : z_publisher_loan,             \
                   z_owned_reply_t : z_reply_loan,                     \
                   z_owned_hello_t : z_hello_loan,                     \
-                  z_owned_str_t : z_str_loan,                         \
-                  z_view_str_t : z_view_str_loan,                     \
-                  z_owned_str_array_t : z_str_array_loan,             \
+                  z_owned_string_t : z_string_loan,                   \
+                  z_view_string_t : z_view_string_loan,               \
+                  z_owned_string_array_t : z_string_array_loan,       \
                   z_owned_sample_t : z_sample_loan,                   \
-                  z_owned_query_t : z_query_loan                      \
+                  z_owned_query_t : z_query_loan,                     \
+                  z_owned_bytes_t : z_bytes_loan                      \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
@@ -57,10 +58,12 @@
                   z_owned_publisher_t : z_publisher_loan_mut,             \
                   z_owned_reply_t : z_reply_loan_mut,                     \
                   z_owned_hello_t : z_hello_loan_mut,                     \
-                  z_owned_str_t : z_str_loan_mut,                         \
-                  z_owned_str_array_t : z_str_array_loan_mut,             \
+                  z_owned_string_t : z_string_loan_mut,                   \
+                  z_view_string_t : z_view_string_loan_mut,               \
+                  z_owned_string_array_t : z_string_array_loan_mut,       \
                   z_owned_sample_t : z_sample_loan_mut,                   \
-                  z_owned_query_t : z_query_loan_mut                      \
+                  z_owned_query_t : z_query_loan_mut,                     \
+                  z_owned_bytes_t : z_bytes_loan_mut                      \
             )(&x)
 /**
  * Defines a generic function for dropping any of the ``z_owned_X_t`` types.
@@ -78,8 +81,8 @@
                   z_owned_queryable_t * : z_queryable_drop,                         \
                   z_owned_reply_t * : z_reply_drop,                                 \
                   z_owned_hello_t * : z_hello_drop,                                 \
-                  z_owned_str_t * : z_str_drop,                                     \
-                  z_owned_str_array_t * : z_str_array_drop,                         \
+                  z_owned_string_t * : z_string_drop,                               \
+                  z_owned_string_array_t * : z_string_array_drop,                   \
                   z_owned_sample_t * : z_sample_drop,                               \
                   z_owned_query_t * : z_query_drop,                                 \
                   z_owned_closure_sample_t * : z_closure_sample_drop,               \
@@ -109,7 +112,7 @@
 #define z_check(x) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_check,                 \
                   z_view_keyexpr_t : z_keyexpr_is_initialized,         \
-                  z_value_t : z_value_is_initialized,                  \
+                  z_owned_value_t : z_value_check,                     \
                   z_owned_config_t : z_config_check,                   \
                   z_owned_scouting_config_t : z_scouting_config_check, \
                   z_owned_session_t : z_session_check,                 \
@@ -118,8 +121,8 @@
                   z_owned_queryable_t : z_queryable_check,             \
                   z_owned_reply_t : z_reply_check,                     \
                   z_owned_hello_t : z_hello_check,                     \
-                  z_owned_str_t : z_str_check,                         \
-                  z_owned_str_array_t : z_str_array_check,             \
+                  z_owned_string_t : z_string_check,                   \
+                  z_owned_string_array_t : z_string_array_check,       \
                   z_owned_bytes_t : z_bytes_check,                     \
                   z_owned_sample_t : z_sample_check,                   \
                   z_owned_query_t : z_query_check                      \
@@ -161,8 +164,8 @@
                   z_owned_queryable_t : z_queryable_move,                         \
                   z_owned_reply_t : z_reply_move,                                 \
                   z_owned_hello_t : z_hello_move,                                 \
-                  z_owned_str_t : z_str_move,                                     \
-                  z_owned_str_array_t : z_str_array_move,                         \
+                  z_owned_string_t : z_string_move,                               \
+                  z_owned_string_array_t : z_string_array_move,                   \
                   z_owned_closure_sample_t : z_closure_sample_move,               \
                   z_owned_closure_owned_sample_t : z_closure_owned_sample_move,   \
                   z_owned_closure_query_t : z_closure_query_move,                 \
@@ -172,6 +175,7 @@
                   z_owned_closure_zid_t  : z_closure_zid_move,                    \
                   z_owned_sample_t : z_sample_move,                               \
                   z_owned_query_t : z_query_move,                                 \
+                  z_owned_bytes_t : z_bytes_move,                                 \
                   z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
                   z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move,     \
                   z_owned_query_ring_channel_t : z_query_ring_channel_move,       \
@@ -198,8 +202,8 @@
                   z_owned_queryable_t : z_queryable_clone,             \
                   z_owned_reply_t : z_reply_clone,                     \
                   z_owned_hello_t : z_hello_clone,                     \
-                  z_owned_str_t : z_str_clone,                         \
-                  z_owned_str_array_t : z_str_array_clone              \
+                  z_owned_string_t : z_string_clone,                   \
+                  z_owned_string_array_t : z_string_array_clone        \
             )(&x)
 
 /**
@@ -219,7 +223,7 @@
                   z_owned_query_t * : z_query_null,                                 \
                   z_owned_reply_t * : z_reply_null,                                 \
                   z_owned_hello_t * : z_hello_null,                                 \
-                  z_owned_str_t * : z_str_null,                                     \
+                  z_owned_string_t * : z_string_null,                               \
                   z_owned_closure_sample_t * : z_closure_sample_null,               \
                   z_owned_closure_owned_sample_t * : z_closure_owned_sample_null,   \
                   z_owned_closure_query_t * : z_closure_query_null,                 \
@@ -265,14 +269,14 @@ template<> struct zenoh_loan_type<z_owned_keyexpr_t>{ typedef z_keyexpr_t type; 
 template<> struct zenoh_loan_type<z_owned_config_t>{ typedef z_config_t type; };
 template<> struct zenoh_loan_type<z_owned_publisher_t>{ typedef z_publisher_t type; };
 template<> struct zenoh_loan_type<z_owned_hello_t>{ typedef z_hello_t type; };
-template<> struct zenoh_loan_type<z_owned_str_t>{  typedef const char* type; };
+template<> struct zenoh_loan_type<z_owned_string_t>{  typedef const char* type; };
 
 template<> inline z_session_t z_loan(const z_owned_session_t& x) { return z_session_loan(&x); }
 template<> inline z_keyexpr_t z_loan(const z_owned_keyexpr_t& x) { return z_keyexpr_loan(&x); }
 template<> inline z_config_t z_loan(const z_owned_config_t& x) { return z_config_loan(&x); }
 template<> inline z_publisher_t z_loan(const z_owned_publisher_t& x) { return z_publisher_loan(&x); }
 template<> inline z_hello_t z_loan(const z_owned_hello_t& x) { return z_hello_loan(&x); }
-template<> inline const char* z_loan(const z_owned_str_t& x) { return z_str_loan(&x); }
+template<> inline const char* z_loan(const z_owned_string_t& x) { return z_string_loan(&x); }
 
 template<class T> struct zenoh_drop_type { typedef T type; };
 template<class T> inline typename zenoh_drop_type<T>::type z_drop(T*);
@@ -286,7 +290,7 @@ template<> struct zenoh_drop_type<z_owned_subscriber_t> { typedef int8_t type; }
 template<> struct zenoh_drop_type<z_owned_queryable_t> { typedef int8_t type; };
 template<> struct zenoh_drop_type<z_owned_reply_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_hello_t> { typedef void type; };
-template<> struct zenoh_drop_type<z_owned_str_t> { typedef void type; };
+template<> struct zenoh_drop_type<z_owned_string_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_sample_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_clusure_owned_sample_t> { typedef void type; };
 template<> struct zenoh_drop_type<z_owned_closure_query_t> { typedef void type; };
@@ -305,7 +309,7 @@ template<> inline int8_t z_drop(z_owned_subscriber_t* v) { return z_undeclare_su
 template<> inline int8_t z_drop(z_owned_queryable_t* v) { return z_undeclare_queryable(v); }
 template<> inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
 template<> inline void z_drop(z_owned_hello_t* v) { z_hello_drop(v); }
-template<> inline void z_drop(z_owned_str_t* v) { z_str_drop(v); }
+template<> inline void z_drop(z_owned_string_t* v) { z_string_drop(v); }
 template<> inline void z_drop(z_owned_closure_sample_t* v) { z_closure_sample_drop(v); }
 template<> inline void z_drop(z_owned_closure_owned_sample_t* v) { z_closure_owned_sample_drop(v); }
 template<> inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }
@@ -328,7 +332,7 @@ inline void z_null(z_owned_subscriber_t* v) { z_subscriber_null(v); }
 inline void z_null(z_owned_queryable_t* v) { z_queryable_null(v); }
 inline void z_null(z_owned_reply_t* v) { z_reply_null(v); }
 inline void z_null(z_owned_hello_t* v) { z_hello_null(v); }
-inline void z_null(z_owned_str_t* v) { z_str_null(v); }
+inline void z_null(z_owned_string_t* v) { z_string_null(v); }
 inline void z_null(z_owned_closure_sample_t* v) { z_closure_sample_null(v); }
 inline void z_null(z_owned_clusure_owned_sample_t* v) { z_closure_owned_sample_null(v); }
 inline void z_null(z_owned_closure_query_t* v) { z_closure_query_null(v); }
@@ -348,8 +352,8 @@ inline bool z_check(const z_owned_subscriber_t& v) { return z_subscriber_check(&
 inline bool z_check(const z_owned_queryable_t& v) { return z_queryable_check(&v); }
 inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }
 inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
-inline bool z_check(const z_owned_str_t& v) { return z_str_check(&v); }
-inline bool z_check(const z_owned_str_t& v) { return z_sample_check(&v); }
+inline bool z_check(const z_owned_string_t& v) { return z_string_check(&v); }
+inline bool z_check(const z_owned_string_t& v) { return z_sample_check(&v); }
 
 inline void z_call(const z_owned_closure_sample_t &closure, const z_loaned_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }

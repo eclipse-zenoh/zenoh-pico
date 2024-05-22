@@ -65,7 +65,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     }
 
     if (config != NULL) {
-        _z_str_array_t locators = _z_str_array_empty();
+        _z_string_vec_t locators = _z_string_vec_make(0);
         char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
         char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
         if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
@@ -91,7 +91,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_str_array_copy(&locators, &hello->locators);
+                _z_string_vec_copy(&locators, &hello->locators);
             }
             _z_hello_list_free(&hellos);
         } else {
@@ -104,15 +104,16 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                     return _Z_ERR_GENERIC;
                 }
             }
-            locators = _z_str_array_make(1);
-            locators.val[0] = _z_str_clone(_z_config_get(config, key));
+            locators = _z_string_vec_make(1);
+            _z_string_vec_append(&locators, _z_string_make_as_ptr(_z_config_get(config, key)));
         }
 
         ret = _Z_ERR_SCOUT_NO_RESULTS;
-        for (size_t i = 0; i < locators.len; i++) {
+        size_t len = _z_string_vec_len(&locators);
+        for (size_t i = 0; i < len; i++) {
             ret = _Z_RES_OK;
 
-            char *locator = locators.val[i];
+            _z_string_t *locator = _z_string_vec_get(&locators, i);
             // @TODO: check invalid configurations
             // For example, client mode in multicast links
 
@@ -130,7 +131,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
 
             if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, locator, mode);
+                ret = __z_open_inner(zn, locator->val, mode);
                 if (ret == _Z_RES_OK) {
                     break;
                 }
@@ -138,7 +139,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                 _Z_ERROR("Trying to configure an invalid mode.");
             }
         }
-        _z_str_array_clear(&locators);
+        _z_string_vec_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.");
         ret = _Z_ERR_GENERIC;

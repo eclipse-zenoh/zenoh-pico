@@ -36,20 +36,22 @@
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
 void query_handler(const z_loaned_query_t *query, void *arg) {
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
 
     Serial.print(" >> [Queryable handler] Replying Data ('");
-    Serial.print(z_str_data(z_str_loan(&keystr)));
+    Serial.print(z_str_data(z_string_loan(&keystr)));
     Serial.print("': '");
     Serial.print(VALUE);
     Serial.println("')");
 
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
-    z_query_reply(query, z_view_keyexpr_loan(&ke), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): VALUE encoding
+    z_query_reply(query, z_view_keyexpr_loan(&ke), z_bytes_move(&reply_payload), NULL);
 
-    z_str_drop(z_str_move(&keystr));
+    z_string_drop(z_string_move(&keystr));
 }
 
 void setup() {

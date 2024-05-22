@@ -248,12 +248,12 @@ void _z_value_free(_z_value_t **hello);
  *
  * Members:
  *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
- *   _z_str_array_t locators: The locators of the scouted entity.
+ *   _z_string_vec_t locators: The locators of the scouted entity.
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
     _z_id_t zid;
-    _z_str_array_t locators;
+    _z_string_vec_t locators;
     z_whatami_t whatami;
     uint8_t version;
 } _z_hello_t;

@@ -33,15 +33,16 @@ int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
-    // TODO(sashacmc): z_query_parameters
-    // z_bytes_t pred = z_query_parameters(query);
-    // z_value_t payload_value = z_query_value(query);
-    // printf(">> [Queryable handler] Received Query '%s?%.*s'\n", z_str_data(z_loan(keystr)), (int)pred.len,
-    // pred.start); if (payload_value.payload.len > 0) {
-    //     printf("     with value '%.*s'\n", (int)payload_value.payload.len, payload_value.payload.start);
-    // }
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_loan(keystr)), (int)z_loan(params)->len,
+           z_loan(params)->val);
+    const z_loaned_value_t *payload_value = z_query_value(query);
+    if (payload_value->payload.len > 0) {
+        printf("     with value '%.*s'\n", (int)payload_value->payload.len, payload_value->payload.start);
+    }
 #if Z_FEATURE_ATTACHMENT == 1
     z_attachment_t attachment = z_query_attachment(query);
     if (z_attachment_check(&attachment)) {
@@ -61,7 +62,9 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
 
-    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)value, strlen(value), &options);
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): value encoding
+    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
     z_drop(z_move(keystr));
     msg_nb++;
 

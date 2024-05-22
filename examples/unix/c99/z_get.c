@@ -33,11 +33,11 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
-        z_owned_str_t keystr;
+        z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         const z_loaned_bytes_t *payload = z_sample_payload(sample);
-        printf(">> Received ('%s': '%.*s')\n", z_str_data(z_str_loan(&keystr)), (int)payload->len, payload->start);
-        z_str_drop(z_str_move(&keystr));
+        printf(">> Received ('%s': '%.*s')\n", z_str_data(z_string_loan(&keystr)), (int)payload->len, payload->start);
+        z_string_drop(z_string_move(&keystr));
     } else {
         printf(">> Received an error\n");
     }
@@ -118,7 +118,8 @@ int main(int argc, char **argv) {
     z_get_options_t opts;
     z_get_options_default(&opts);
     if (value != NULL) {
-        opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+        // TODO(sashacmc): encoding
+        // opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
     }
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, reply_handler, reply_dropper, NULL);

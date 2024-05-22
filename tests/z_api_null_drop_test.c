@@ -44,8 +44,8 @@ int main(void) {
     z_closure_hello_null(&closure_hello_null_1);
     z_owned_closure_zid_t closure_zid_null_1;
     z_closure_zid_null(&closure_zid_null_1);
-    z_owned_str_t str_null_1;
-    z_str_null(&str_null_1);
+    z_owned_string_t str_null_1;
+    z_string_null(&str_null_1);
 
     //
     // Test that they actually make invalid value (where applicable)
@@ -70,7 +70,7 @@ int main(void) {
     z_owned_closure_reply_t closure_reply_null_2;
     z_owned_closure_hello_t closure_hello_null_2;
     z_owned_closure_zid_t closure_zid_null_2;
-    z_owned_str_t str_null_2;
+    z_owned_string_t str_null_2;
 
     z_null(&session_null_2);
     z_null(&keyexpr_null_2);

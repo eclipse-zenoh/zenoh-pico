@@ -36,7 +36,7 @@ void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"
 void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
     if (z_reply_is_ok(oreply)) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
-        z_owned_str_t keystr;
+        z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         const z_loaned_bytes_t *payload = z_sample_payload(sample);
         printf(" >> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)payload->len, payload->start);

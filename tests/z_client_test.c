@@ -52,16 +52,18 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
-    z_owned_str_t k_str;
+    z_owned_string_t k_str;
     z_keyexpr_to_string(z_query_keyexpr(query), &k_str);
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
-    z_view_str_t pred;
+    z_view_string_t pred;
     z_query_parameters(query, &pred);
     assert(z_loan(pred)->len == strlen(""));
     assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
 
-    z_query_reply(query, z_query_keyexpr(query), (const uint8_t *)res, strlen(res), NULL);
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): res encoding
+    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
 
     queries++;
     z_drop(z_move(k_str));
@@ -76,7 +78,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
-        z_owned_str_t k_str;
+        z_owned_string_t k_str;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
         const z_loaned_bytes_t *payload = z_sample_payload(sample);
         assert(payload->len == strlen(res));
@@ -97,7 +99,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_str_t k_str;
+    z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
     const z_loaned_bytes_t *payload = z_sample_payload(sample);
     assert((payload->len == MSG_LEN) || (payload->len == FRAGMENT_MSG_LEN));

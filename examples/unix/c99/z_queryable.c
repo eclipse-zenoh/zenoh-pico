@@ -24,17 +24,19 @@ const char *value = "Queryable from Pico!";
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
-    z_view_str_t pred;
-    z_query_parameters(query, &pred);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_str_loan(&keystr)),
-           (int)z_view_str_loan(&pred)->len, z_view_str_loan(&pred)->val);
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_string_loan(&keystr)),
+           (int)z_view_string_loan(&params)->len, z_view_string_loan(&params)->val);
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)value, strlen(value), &options);
-    z_str_drop(z_str_move(&keystr));
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): value encoding
+    z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
+    z_string_drop(z_string_move(&keystr));
 }
 
 int main(int argc, char **argv) {

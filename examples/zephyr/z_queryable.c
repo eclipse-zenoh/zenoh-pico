@@ -33,13 +33,16 @@
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
-    // TODO(sashacmc): z_query_parameters
-    // z_bytes_t pred = z_query_parameters(query);
-    // printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_loan(keystr)), (int)pred.len,
-    // pred.start);
-    z_query_reply(query, z_query_keyexpr(query), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_loan(keystr)), z_loan(params)->len,
+           z_loan(params)->val);
+
+    z_owned_bytes_t reply_payload;
+    // TODO(sashacmc): VALUE encoding
+    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     z_drop(z_move(keystr));
 }
 

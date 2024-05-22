@@ -41,18 +41,17 @@ void fprintwhatami(FILE *stream, unsigned int whatami) {
     }
 }
 
-void fprintlocators(FILE *stream, const z_str_array_t *locs) {
+void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
     fprintf(stream, "[");
-    (void)locs;
-    // TODO(sashacmc):
-    // for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
-    //    fprintf(stream, "\"");
-    //    fprintf(stream, "%s", *z_str_array_get(locs, i));
-    //    fprintf(stream, "\"");
-    //    if (i < z_str_array_len(locs) - 1) {
-    //        fprintf(stream, ", ");
-    //    }
-    //}
+    for (unsigned int i = 0; i < z_string_array_len(locs); i++) {
+        fprintf(stream, "\"");
+        const z_loaned_string_t *str = z_string_array_get(locs, i);
+        fprintf(stream, "%.*s", (int)str->len, str->val);
+        fprintf(stream, "\"");
+        if (i < z_string_array_len(locs) - 1) {
+            fprintf(stream, ", ");
+        }
+    }
     fprintf(stream, "]");
 }
 

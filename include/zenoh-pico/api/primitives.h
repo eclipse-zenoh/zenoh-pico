@@ -45,7 +45,7 @@ extern "C" {
  * Returns:
  *   The :c:type:`z_string_t` corresponding to the given string.
  */
-int8_t z_view_str_wrap(z_view_str_t *str, const char *value);
+int8_t z_view_str_wrap(z_view_string_t *str, const char *value);
 
 /**
  * Constructs a :c:type:`z_keyexpr_t` departing from a string.
@@ -71,9 +71,6 @@ int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name);
  * Returns:
  *   The :c:type:`z_keyexpr_t` corresponding to the given string.
  */
-// TODO(sashacmc):
-z_owned_keyexpr_t z_keyexpr_unchecked(const char *name);
-
 int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
@@ -87,9 +84,9 @@ int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const cha
  *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
  *
  * Returns:
- *   The :c:type:`z_owned_str_t` containing key expression string representation if it's possible
+ *   The :c:type:`z_owned_string_t` containing key expression string representation if it's possible
  */
-void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *s);
+void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s);
 
 /**
  * Returns the key expression's internal string by aliasing it.
@@ -127,7 +124,7 @@ _Bool zp_keyexpr_was_declared(const z_loaned_keyexpr_t *keyexpr);
  * Returns:
  *   The string representation of a keyexpr for a given session.
  */
-int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *str);
+int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
 
 /**
  * Checks if a given keyexpr is valid.
@@ -519,7 +516,7 @@ z_query_consolidation_t z_query_consolidation_none(void);
  *   Returns the value selector wrapped as a :c:type:`z_loaned_bytes_t*`, since value selector is a user-defined
  * representation.
  */
-void z_query_parameters(const z_loaned_query_t *query, z_view_str_t *parameters);
+void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters);
 
 /**
  * Get a query's payload value by aliasing it.
@@ -531,7 +528,7 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_str_t *parameters)
  * Returns:
  *   Returns the payload wrapped as a :c:type:`z_value_t`, since payload value is a user-defined representation.
  */
-z_value_t z_query_value(const z_loaned_query_t *query);
+const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
 
 #if Z_FEATURE_ATTACHMENT == 1
 /**
@@ -784,7 +781,7 @@ int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_drop
     void z_##name##_drop(ownedtype *obj);                         \
     void z_##name##_null(ownedtype *obj);
 
-_OWNED_FUNCTIONS(z_loaned_str_t, z_owned_str_t, str)
+_OWNED_FUNCTIONS(z_loaned_string_t, z_owned_string_t, string)
 _OWNED_FUNCTIONS(z_loaned_keyexpr_t, z_owned_keyexpr_t, keyexpr)
 _OWNED_FUNCTIONS(z_loaned_config_t, z_owned_config_t, config)
 _OWNED_FUNCTIONS(z_loaned_scouting_config_t, z_owned_scouting_config_t, scouting_config)
@@ -794,10 +791,11 @@ _OWNED_FUNCTIONS(z_loaned_publisher_t, z_owned_publisher_t, publisher)
 _OWNED_FUNCTIONS(z_loaned_queryable_t, z_owned_queryable_t, queryable)
 _OWNED_FUNCTIONS(z_loaned_hello_t, z_owned_hello_t, hello)
 _OWNED_FUNCTIONS(z_loaned_reply_t, z_owned_reply_t, reply)
-_OWNED_FUNCTIONS(z_loaned_str_array_t, z_owned_str_array_t, str_array)
+_OWNED_FUNCTIONS(z_loaned_string_array_t, z_owned_string_array_t, string_array)
 _OWNED_FUNCTIONS(z_loaned_sample_t, z_owned_sample_t, sample)
 _OWNED_FUNCTIONS(z_loaned_query_t, z_owned_query_t, query)
 _OWNED_FUNCTIONS(z_loaned_bytes_t, z_owned_bytes_t, bytes)
+_OWNED_FUNCTIONS(z_loaned_value_t, z_owned_value_t, value)
 
 #define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
     _Bool z_##name##_check(const ownedtype *val); \
@@ -820,7 +818,7 @@ _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
     void z_view_##name##_null(viewtype *name);
 
 _VIEW_FUNCTIONS(z_loaned_keyexpr_t, z_view_keyexpr_t, keyexpr)
-_VIEW_FUNCTIONS(z_loaned_str_t, z_view_str_t, str)
+_VIEW_FUNCTIONS(z_loaned_string_t, z_view_string_t, string)
 
 // Gets internal value from refcountered type (e.g. z_loaned_session_t, z_query_t)
 #define _Z_RC_IN_VAL(arg) ((arg)->in->val)
@@ -830,7 +828,7 @@ _VIEW_FUNCTIONS(z_loaned_str_t, z_view_str_t, str)
 
 // TODO(sashacmc): comments, docs, etc.
 const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
-const char *z_str_data(const z_loaned_str_t *str);
+const char *z_str_data(const z_loaned_string_t *str);
 
 /************* Primitives **************/
 /**
@@ -1174,7 +1172,7 @@ void z_get_options_default(z_get_options_t *options);
  *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
  */
 int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
-             z_owned_closure_reply_t *callback, const z_get_options_t *options);
+             z_owned_closure_reply_t *callback, z_get_options_t *options);
 /**
  * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.
  *
@@ -1214,7 +1212,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  * Returns:
  *   Returns the :c:type:`z_value_t` wrapped in the query reply.
  */
-z_value_t z_reply_err(const z_loaned_reply_t *reply);
+const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
@@ -1297,8 +1295,8 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * Returns:
  *   Returns ``0`` if the send query reply operation is successful, or a ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-                     size_t payload_len, const z_query_reply_options_t *options);
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+                     const z_query_reply_options_t *options);
 #endif
 
 /**
@@ -1406,17 +1404,6 @@ int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
  */
 z_owned_keyexpr_t z_subscriber_keyexpr(z_loaned_subscriber_t *sub);
 #endif
-
-/**
- * Checks if a given value is valid.
- *
- * Parameters:
- *   value: A loaned instance of :c:type:`z_value_t` to be checked.
- *
- * Returns:
- *   Returns ``true`` if the value is valid, or ``false`` otherwise.
- */
-_Bool z_value_is_initialized(z_value_t *value);
 
 /************* Multi Thread Tasks helpers **************/
 /**

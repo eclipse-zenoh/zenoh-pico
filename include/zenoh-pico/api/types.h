@@ -18,6 +18,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/reply.h"
@@ -87,9 +88,9 @@ typedef _z_id_t z_id_t;
  *   const char *val: A pointer to the string.
  */
 
-_OWNED_TYPE_PTR(_z_string_t, str)
-_LOANED_TYPE(_z_string_t, str)
-_VIEW_TYPE(_z_string_t, str)
+_OWNED_TYPE_PTR(_z_string_t, string)
+_LOANED_TYPE(_z_string_t, string)
+_VIEW_TYPE(_z_string_t, string)
 
 /**
  * Represents a key expression in Zenoh.
@@ -207,8 +208,9 @@ typedef _z_timestamp_t z_timestamp_t;
  *   z_encoding_t encoding: The encoding of the `payload`.
  *   z_loaned_bytes_t* payload: The payload of this zenoh value.
  */
-// TODO(sashacmc):
-typedef _z_value_t z_value_t;
+
+_OWNED_TYPE_PTR(_z_value_t, value)
+_LOANED_TYPE(_z_value_t, value)
 
 /**
  * Represents the set of options that can be applied to a (push) subscriber,
@@ -329,10 +331,12 @@ typedef struct {
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
- *   z_value_t value: The payload to include in the query.
+ *   z_owned_bytes_t payload: The payload to include in the query.
+ *   z_encoding_t encoding: Payload encoding.
  */
 typedef struct {
-    z_value_t value;
+    z_owned_bytes_t *payload;
+    z_encoding_t encoding;
     z_query_consolidation_t consolidation;
     z_query_target_t target;
     uint32_t timeout_ms;
@@ -437,7 +441,7 @@ _LOANED_TYPE(_z_sample_rc_t, sample)
  * Members:
  *   z_whatami_t whatami: The kind of zenoh entity.
  *   z_loaned_bytes_t* zid: The Zenoh ID of the scouted entity (empty if absent).
- *   z_str_array_t locators: The locators of the scouted entity.
+ *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
 _OWNED_TYPE_PTR(_z_hello_t, hello)
 _LOANED_TYPE(_z_hello_t, hello)
@@ -464,21 +468,20 @@ _LOANED_TYPE(_z_reply_rc_t, reply)
 /**
  * Represents an array of ``z_str_t``.
  *
- * Operations over :c:type:`z_str_array_t` must be done using the provided functions:
+ * Operations over :c:type:`z_loaned_string_array_t` must be done using the provided functions:
  *
- *   - ``char *z_str_array_get(z_str_array_t *a, size_t k);``
- *   - ``size_t z_str_array_len(z_str_array_t *a);``
- *   - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
+ *   - ``char *z_string_array_get(z_loaned_string_array_t *a, size_t k);``
+ *   - ``size_t z_string_array_len(z_loaned_string_array_t *a);``
+ *   - ``_Bool z_str_array_array_is_empty(z_loaned_string_array_t *a);``
  */
-// TODO(sashacmc):
-typedef _z_str_array_t z_str_array_t;
 
-z_owned_str_t *z_str_array_get(const z_str_array_t *a, size_t k);
-size_t z_str_array_len(const z_str_array_t *a);
-_Bool z_str_array_is_empty(const z_str_array_t *a);
+_OWNED_TYPE_PTR(_z_string_vec_t, string_array)
+_LOANED_TYPE(_z_string_vec_t, string_array)
+_VIEW_TYPE(_z_string_vec_t, string_array)
 
-_OWNED_TYPE_PTR(z_str_array_t, str_array)
-_LOANED_TYPE(z_str_array_t, str_array)
+const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
+size_t z_string_array_len(const z_loaned_string_array_t *a);
+_Bool z_string_array_is_empty(const z_loaned_string_array_t *a);
 
 typedef void (*z_dropper_handler_t)(void *arg);
 typedef void (*z_owned_sample_handler_t)(z_owned_sample_t *sample, void *arg);

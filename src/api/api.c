@@ -43,15 +43,18 @@
 
 /********* Data Types Handlers *********/
 
-int8_t z_view_str_wrap(z_view_str_t *str, const char *value) {
+int8_t z_view_str_wrap(z_view_string_t *str, const char *value) {
     str->_val = _z_string_make(value);
     return _Z_RES_OK;
 }
 
-// TODO(sashacmc): to z_slice_array_t ???
-// z_str_t *z_str_array_get(const z_str_array_t *a, size_t k) { return _z_str_array_get(a, k); }
-// size_t z_str_array_len(const z_str_array_t *a) { return _z_str_array_len(a); }
-//_Bool z_str_array_is_empty(const z_str_array_t *a) { return _z_str_array_is_empty(a); }
+const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k) {
+    return _z_string_vec_get(a, k);
+}
+
+size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_vec_len(a); }
+
+_Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_vec_is_empty(a); }
 
 int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
@@ -63,7 +66,7 @@ int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const cha
     return _Z_RES_OK;
 }
 
-void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *s) {
+void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s) {
     if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
         s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
         if (s->_val != NULL) {
@@ -90,7 +93,7 @@ _Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
     return ret;
 }
 */
-int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_str_t *str) {
+int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
     _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&_Z_RC_IN_VAL(zs), keyexpr);
     *str->_val = _z_string_make((char *)ekey._suffix);  // ekey will be out of scope so
                                                         //  - suffix can be safely casted as non-const
@@ -265,10 +268,6 @@ z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFA
 
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 
-z_value_t z_value(const char *payload, size_t payload_len, z_encoding_t encoding) {
-    return (z_value_t){.payload = {.start = (const uint8_t *)payload, .len = payload_len}, .encoding = encoding};
-}
-
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
@@ -289,28 +288,18 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
-void z_query_parameters(const z_loaned_query_t *query, z_view_str_t *parameters) {
-    // TODO(sashacmc)
-    //  *parameters = _z_bytes_wrap((uint8_t *)query->in->val._parameters, strlen(query->in->val._parameters));
+void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
+    parameters->_val.val = query->in->val._parameters;
+    parameters->_val.len = strlen(query->in->val._parameters);
 }
 
-z_value_t z_query_value(const z_loaned_query_t *query) { return query->in->val._value; }
+const z_loaned_value_t *z_query_value(const z_loaned_query_t *query) { return &query->in->val._value; }
 
 #if Z_FEATURE_ATTACHMENT == 1
 z_attachment_t z_query_attachment(const z_loaned_query_t *query) { return query->in->val.attachment; }
 #endif
 
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
-
-_Bool z_value_is_initialized(z_value_t *value) {
-    _Bool ret = false;
-
-    if ((value->payload.start != NULL)) {
-        ret = true;
-    }
-
-    return ret;
-}
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
@@ -401,18 +390,20 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
 }
 
 // TODO(sashacmc): remove
-// OWNED_FUNCTIONS_STR(z_str_t, z_owned_str_t, str, _z_str_free, _z_str_n_copy)
+// OWNED_FUNCTIONS_STR(z_str_t, z_owned_string_t, str, _z_str_free, _z_str_n_copy)
 
 OWNED_FUNCTIONS_PTR(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
 OWNED_FUNCTIONS_PTR(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
-OWNED_FUNCTIONS_PTR(_z_string_t, str, _z_string_copy, _z_string_free)
+OWNED_FUNCTIONS_PTR(_z_string_t, string, _z_string_copy, _z_string_free)
+OWNED_FUNCTIONS_PTR(_z_value_t, value, _z_value_copy, _z_value_free)
 
 OWNED_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
 VIEW_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr)
-VIEW_FUNCTIONS_PTR(_z_string_t, str)
+VIEW_FUNCTIONS_PTR(_z_string_t, string)
 
 OWNED_FUNCTIONS_PTR(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
-OWNED_FUNCTIONS_PTR(_z_str_array_t, str_array, _z_owner_noop_copy, _z_str_array_free)
+OWNED_FUNCTIONS_PTR(_z_string_vec_t, string_array, _z_owner_noop_copy, _z_string_vec_free)
+VIEW_FUNCTIONS_PTR(_z_string_vec_t, string_array)
 OWNED_FUNCTIONS_PTR(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
 OWNED_FUNCTIONS_RC(sample)
@@ -597,7 +588,7 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(samp
 z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).attachment; }
 #endif
 
-const char *z_str_data(const z_loaned_str_t *str) { return str->val; }
+const char *z_str_data(const z_loaned_string_t *str) { return str->val; }
 
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_publisher_drop(_z_publisher_t **pub) {
@@ -799,8 +790,8 @@ OWNED_FUNCTIONS_RC(reply)
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
-    options->value.encoding = z_encoding_default();
-    options->value.payload = _z_bytes_empty();
+    options->encoding = z_encoding_default();
+    z_bytes_null(options->payload);
 #if Z_FEATURE_ATTACHMENT == 1
     options->attachment = z_attachment_null();
 #endif
@@ -808,7 +799,7 @@ void z_get_options_default(z_get_options_t *options) {
 }
 
 int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
-             z_owned_closure_reply_t *callback, const z_get_options_t *options) {
+             z_owned_closure_reply_t *callback, z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->context;
@@ -819,7 +810,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     if (options != NULL) {
         opt.consolidation = options->consolidation;
         opt.target = options->target;
-        opt.value = options->value;
+        opt.encoding = options->encoding;
+        opt.payload = z_bytes_move(options->payload);
 #if Z_FEATURE_ATTACHMENT == 1
         opt.attachment = options->attachment;
 #endif
@@ -833,13 +825,16 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
         }
     }
-    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, opt.value,
-                   callback->call, callback->drop, ctx, opt.timeout_ms
+    z_loaned_bytes_t *payload = z_bytes_loan_mut(opt.payload);
+    _z_value_t value = {.payload = _z_bytes_wrap(payload->start, payload->len), .encoding = opt.encoding};
+    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, value, callback->call,
+                   callback->drop, ctx, opt.timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                    ,
                    opt.attachment
 #endif
     );
+    z_bytes_drop(opt.payload);
     return ret;
 }
 
@@ -852,9 +847,9 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
-z_value_t z_reply_err(const z_loaned_reply_t *reply) {
+const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);
-    return (z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()};
+    return NULL;
 }
 #endif
 
@@ -906,23 +901,21 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) { return _z_queryab
 
 void z_query_reply_options_default(z_query_reply_options_t *options) { options->encoding = z_encoding_default(); }
 
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-                     size_t payload_len, const z_query_reply_options_t *options) {
+// TODO(sashacmc): Why z_owned_bytes_t *payload but not z_view_bytes_t, do we really want clean it up after?
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+                     const z_query_reply_options_t *options) {
     z_query_reply_options_t opts;
     if (options == NULL) {
         z_query_reply_options_default(&opts);
     } else {
         opts = *options;
     }
-    _z_value_t value = {.payload =
-                            {
-                                .start = payload,
-                                ._is_alloc = false,
-                                .len = payload_len,
-                            },
+    z_loaned_bytes_t *loaned_payload = z_bytes_loan_mut(payload);
+    _z_value_t value = {.payload = _z_bytes_wrap(loaned_payload->start, loaned_payload->len),
                         .encoding = {.id = opts.encoding.id, .schema = opts.encoding.schema}};
-    return _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
-    return _Z_ERR_GENERIC;
+    int8_t ret = _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
+    z_bytes_drop(payload);
+    return ret;
 }
 #endif
 

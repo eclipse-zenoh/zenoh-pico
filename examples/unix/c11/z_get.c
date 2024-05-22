@@ -41,7 +41,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
-        z_owned_str_t keystr;
+        z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         printf(">> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)z_sample_payload(sample)->len,
                z_sample_payload(sample)->start);
@@ -132,7 +132,8 @@ int main(int argc, char **argv) {
     z_get_options_t opts;
     z_get_options_default(&opts);
     if (value != NULL) {
-        opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+        // TODO(sashacmc): encoding
+        // opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
     }
 #if Z_FEATURE_ATTACHMENT == 1
     z_owned_bytes_map_t map = z_bytes_map_new();

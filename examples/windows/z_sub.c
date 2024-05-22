@@ -21,7 +21,7 @@
 #if Z_FEATURE_SUBSCRIPTION == 1
 void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr;
+    z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     const z_loaned_bytes_t *payload = z_sample_payload(sample);
     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)payload->len, payload->start);
