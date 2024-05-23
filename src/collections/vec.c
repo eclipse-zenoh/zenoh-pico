@@ -36,7 +36,7 @@ void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f) {
     dst->_val = (void **)z_malloc(sizeof(void *) * src->_capacity);
     if (dst->_val != NULL) {
         for (size_t i = 0; i < src->_len; i++) {
-            _z_vec_append(dst, d_f(src->_val[i]));
+            dst->_val[i] = d_f(src->_val[i]);
         }
     }
 }
