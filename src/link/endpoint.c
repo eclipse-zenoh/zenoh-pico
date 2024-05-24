@@ -263,6 +263,26 @@ char *_z_locator_to_str(const _z_locator_t *l) {
     return dst;
 }
 
+/**
+ * Converts a :c:type:`_z_locator_t` into its _z_string format.
+ *
+ * Parameters:
+ *   loc: :c:type:`_z_locator_t` to be converted into its _z_string format.
+ *
+ * Returns:
+ *   The pointer to the z_stringified :c:type:`_z_locator_t`.
+ */
+_z_string_t *_z_locator_to_zstring(const _z_locator_t *loc) {
+    _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
+    s->len = _z_locator_strlen(loc) + (size_t)1;
+    s->val = (char *)z_malloc(s->len);
+    if (s->val == NULL) {
+        return NULL;
+    }
+    __z_locator_onto_str(s->val, s->len, loc);
+    return s;
+}
+
 /*------------------ Endpoint ------------------*/
 void _z_endpoint_init(_z_endpoint_t *endpoint) {
     _z_locator_init(&endpoint->_locator);
