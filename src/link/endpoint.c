@@ -254,7 +254,7 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
  * Returns:
  *   The pointer to the stringified :c:type:`_z_locator_t`.
  */
-char *_z_locator_to_str(const _z_locator_t *l) {
+char *_z_locator_to_string(const _z_locator_t *l) {
     size_t len = _z_locator_strlen(l) + (size_t)1;
     char *dst = (char *)z_malloc(len);
     if (dst != NULL) {
@@ -438,7 +438,7 @@ int8_t _z_endpoint_from_str(_z_endpoint_t *ep, const char *str) {
 char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *ret = NULL;
 
-    char *locator = _z_locator_to_str(&endpoint->_locator);
+    char *locator = _z_locator_to_string(&endpoint->_locator);
     if (locator != NULL) {
         size_t len = 1;  // Start with space for the null-terminator
         len = len + strlen(locator);

@@ -331,8 +331,8 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         const _z_locator_t *l = &left->_val[i];
         const _z_locator_t *r = &right->_val[i];
 
-        char *ls = _z_locator_to_str(l);
-        char *rs = _z_locator_to_str(r);
+        char *ls = _z_locator_to_string(l);
+        char *rs = _z_locator_to_string(r);
 
         printf("%s:%s", ls, rs);
         if (i < left->_len - 1) printf(" ");
