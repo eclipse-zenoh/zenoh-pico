@@ -919,13 +919,13 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
         opts = *options;
     }
     // Set value
-    _z_value_t value = {.payload = _z_bytes_empty(), .encoding = opts.encoding};;
+    _z_value_t value = {.payload = _z_bytes_empty(), .encoding = opts.encoding};
     if (payload != NULL) {
         z_loaned_bytes_t *loaned_payload = z_bytes_loan_mut(payload);
         value.payload =
             (loaned_payload != NULL) ? _z_bytes_wrap(loaned_payload->start, loaned_payload->len) : _z_bytes_empty();
     }
-    
+
     int8_t ret = _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
     if (payload != NULL) {
         z_bytes_drop(payload);

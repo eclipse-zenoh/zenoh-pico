@@ -86,9 +86,9 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                                 if (n_loc > 0) {
                                     hello->locators = _z_string_vec_make(n_loc);
                                     for (size_t i = 0; i < n_loc; i++) {
-                                        _z_string_vec_append(&hello->locators,
-                                                             _z_locator_to_zstring(
-                                                                 &s_msg._body._hello._locators._val[i]));
+                                        _z_string_vec_append(
+                                            &hello->locators,
+                                            _z_locator_to_zstring(&s_msg._body._hello._locators._val[i]));
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address
