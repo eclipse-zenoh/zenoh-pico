@@ -192,13 +192,12 @@ _LOANED_TYPE(_z_query_rc_t, query)
  *   z_encoding_prefix_t prefix: The integer prefix of this encoding.
  *   z_loaned_bytes_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
-// TODO(sashacmc):
+// TODO(sashacmc): z_encoding_t
 typedef _z_encoding_t z_encoding_t;
 
 /*
  * Represents timestamp value in Zenoh
  */
-// TODO(sashacmc):
 typedef _z_timestamp_t z_timestamp_t;
 
 /**
@@ -453,7 +452,7 @@ _LOANED_TYPE(_z_hello_t, hello)
  *   z_sample_t sample: The :c:type:`_z_sample_t` containing the key and value of the reply.
  *   z_loaned_bytes_t* replier_id: The id of the replier that sent this reply.
  */
-// TODO(sashacmc):
+// TODO(sashacmc): z_reply_data_t
 typedef _z_reply_data_t z_reply_data_t;
 
 /**
@@ -497,7 +496,6 @@ typedef _z_data_handler_t z_data_handler_t;
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_data_handler_t call;
@@ -517,7 +515,6 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loan
  * 	 z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_sample_handler_t call;
@@ -539,7 +536,6 @@ typedef _z_queryable_handler_t z_queryable_handler_t;
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_queryable_handler_t call;
@@ -561,7 +557,6 @@ typedef void (*z_owned_query_handler_t)(z_owned_query_t *query, void *arg);
  * 	 z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed. void *context: a
  *   pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_query_handler_t call;
@@ -584,7 +579,6 @@ typedef _z_reply_handler_t z_reply_handler_t;
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_reply_handler_t call;
@@ -604,7 +598,6 @@ void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_reply_handler_t call;
@@ -626,7 +619,6 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_owned_hello_handler_t call;
@@ -647,7 +639,6 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-// TODO(sashacmc):
 typedef struct {
     void *context;
     z_id_handler_t call;
@@ -669,7 +660,7 @@ _Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
  */
-// TODO(sashacmc):
+// TODO(sashacmc): z_owned_bytes_map_t for attachment
 typedef struct z_owned_bytes_map_t {
     _z_bytes_pair_list_t *_inner;
 } z_owned_bytes_map_t;
@@ -743,12 +734,12 @@ int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body
 /**
  * Constructs a new map.
  */
-// TODO(sashacmc):
+// TODO(sashacmc): z_bytes_map_new for attachment
 z_owned_bytes_map_t z_bytes_map_new(void);
 /**
  * Constructs the gravestone value for `z_owned_bytes_map_t`
  */
-// TODO(sashacmc):
+// TODO(sashacmc): z_bytes_map_null for attachment
 z_owned_bytes_map_t z_bytes_map_null(void);
 #endif
 

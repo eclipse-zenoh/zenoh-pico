@@ -76,23 +76,6 @@ void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s)
     }
 }
 
-/*
-TODO(sashacmc)
-z_loaned_bytes_t* z_keyexpr_as_bytes(z_loaned_keyexpr_t *keyexpr) {
-    if (keyexpr._id == Z_RESOURCE_ID_NONE) {
-        z_loaned_bytes_t* ret = {.start = (const uint8_t *)keyexpr._suffix, .len = strlen(keyexpr._suffix), ._is_alloc =
-false}; return ret; } else { z_loaned_bytes_t* ret = {.start = NULL, .len = 0, ._is_alloc = false}; return ret;
-    }
-}
-
-_Bool zp_keyexpr_was_declared(const z_keyexpr_t *keyexpr) {
-    _Bool ret = false;
-    if (keyexpr->_id != Z_RESOURCE_ID_NONE) {
-        ret = true;
-    }
-    return ret;
-}
-*/
 int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
     _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&_Z_RC_IN_VAL(zs), keyexpr);
     *str->_val = _z_string_make((char *)ekey._suffix);  // ekey will be out of scope so
@@ -361,7 +344,6 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     }
 }
 
-// TODO(sashacmc): return value for drop? (queryable, etc)
 #define OWNED_FUNCTIONS_PTR(type, name, f_copy, f_free)                                             \
     _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
@@ -380,7 +362,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         }                                                                                           \
     }
 
-// TODO(sashacmc): Sould drop clean pinter to allow double call ?
+// TODO(sashacmc): Sould drop clean ponter to allow double call ?
 #define OWNED_FUNCTIONS_RC(name)                                                                    \
     _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
@@ -400,9 +382,6 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
     (void)(src);
 }
-
-// TODO(sashacmc): remove
-// OWNED_FUNCTIONS_STR(z_str_t, z_owned_string_t, str, _z_str_free, _z_str_n_copy)
 
 OWNED_FUNCTIONS_PTR(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
 OWNED_FUNCTIONS_PTR(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
@@ -924,7 +903,6 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) { return _z_queryab
 
 void z_query_reply_options_default(z_query_reply_options_t *options) { options->encoding = z_encoding_default(); }
 
-// TODO(sashacmc): Why z_owned_bytes_t *payload but not z_view_bytes_t, do we really want clean it up after?
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
     z_query_reply_options_t opts;
@@ -1264,6 +1242,4 @@ int8_t z_bytes_from_str(z_owned_bytes_t *bytes const char *str) {
     bytes->_val = z_bytes_wrap((const uint8_t *)str, strlen(str));
     return _Z_RES_OK;
 }
-// TODO(sashacmc):
-// z_loaned_bytes_t *z_bytes_null(void) { return (z_loaned_bytes_t *){.len = 0, ._is_alloc = false, .start = NULL}; }
 #endif

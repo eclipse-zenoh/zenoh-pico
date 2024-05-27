@@ -89,31 +89,6 @@ int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const cha
 void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s);
 
 /**
- * Returns the key expression's internal string by aliasing it.
- *
- * Parameters:
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
- *
- * Returns:
- *   The :c:type:`z_loaned_bytes_t*` pointing to key expression string representation if it's possible
- */
-z_loaned_bytes_t *z_keyexpr_as_bytes(z_loaned_keyexpr_t *keyexpr);
-
-/**
- * Indicates if the key expression has been declared but don't guarantee it's still in session.
- *
- * If given keyexpr was declared, to retrieve the keyexpr string representation the user must use
- * :c:func:zp_keyexpr_resolve
- *
- * Parameters:
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
- *
- * Returns:
- *   Returns ``true`` if the keyexpr was declared or ``false`` otherwise.
- */
-_Bool zp_keyexpr_was_declared(const z_loaned_keyexpr_t *keyexpr);
-
-/**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_loaned_session_t`.
  * The user is responsible of dropping the returned string using ``z_free``.
  *
