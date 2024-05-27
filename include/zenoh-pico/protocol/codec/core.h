@@ -72,6 +72,7 @@ int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *buf);
 int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
+int8_t _z_zstr_encode(_z_wbuf_t *wbf, const _z_string_t *s);
 int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
 
 size_t _z_encoding_len(const _z_encoding_t *en);
