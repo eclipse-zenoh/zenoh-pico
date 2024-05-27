@@ -25,6 +25,13 @@ _z_string_t _z_string_make(const char *value) {
     return s;
 }
 
+_z_string_t _z_string_wrap(char *value) {
+    _z_string_t s;
+    s.val = value;
+    s.len = strlen(value);
+    return s;
+}
+
 _z_string_t *_z_string_make_as_ptr(const char *value) {
     _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
     s->val = _z_str_clone(value);
