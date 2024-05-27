@@ -246,24 +246,6 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
 }
 
 /**
- * Converts a :c:type:`_z_locator_t` into its string format.
- *
- * Parameters:
- *   loc: :c:type:`_z_locator_t` to be converted into its string format.
- *
- * Returns:
- *   The pointer to the stringified :c:type:`_z_locator_t`.
- */
-char *_z_locator_to_string(const _z_locator_t *l) {
-    size_t len = _z_locator_strlen(l) + (size_t)1;
-    char *dst = (char *)z_malloc(len);
-    if (dst != NULL) {
-        __z_locator_onto_str(dst, len, l);
-    }
-    return dst;
-}
-
-/**
  * Converts a :c:type:`_z_locator_t` into its _z_string format.
  *
  * Parameters:
@@ -272,7 +254,7 @@ char *_z_locator_to_string(const _z_locator_t *l) {
  * Returns:
  *   The pointer to the z_stringified :c:type:`_z_locator_t`.
  */
-_z_string_t *_z_locator_to_zstring(const _z_locator_t *loc) {
+_z_string_t *_z_locator_to_string(const _z_locator_t *loc) {
     _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
     s->len = _z_locator_strlen(loc) + (size_t)1;
     s->val = (char *)z_malloc(s->len);
@@ -437,37 +419,37 @@ int8_t _z_endpoint_from_str(_z_endpoint_t *ep, const char *str) {
 
 char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *ret = NULL;
-
-    char *locator = _z_locator_to_string(&endpoint->_locator);
-    if (locator != NULL) {
-        size_t len = 1;  // Start with space for the null-terminator
-        len = len + strlen(locator);
-
-        char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
-        if (config != NULL) {
-            len = len + (size_t)1;       // Config separator
-            len = len + strlen(config);  // Config content
-        }
-
-        // Reconstruct the endpoint as a string
-        ret = (char *)z_malloc(len);
-        if (ret != NULL) {
-            ret[0] = '\0';
-            len = len - (size_t)1;
-
-            if (len > (size_t)0) {
-                (void)strncat(ret, locator, len);
-                len = len - strlen(locator);
-            }
-
-            if (config != NULL) {
-                if (len > (size_t)0) {
-                    (void)strncat(ret, config, len);
-                    len = len - strlen(config);
-                }
-            }
+    // Retrieve locator
+    _z_string_t *locator = _z_locator_to_string(&endpoint->_locator);
+    if (locator == NULL) {
+        return NULL;
+    }
+    size_t curr_len = locator->len;
+    // Retrieve config
+    char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
+    if (config != NULL) {
+        curr_len += strlen(config) + (size_t)1;  // Content + separator;
+    }
+    // Reconstruct the endpoint as a string
+    ret = (char *)z_malloc(curr_len);
+    if (ret == NULL) {
+        return NULL;
+    }
+    ret[0] = '\0';
+    curr_len -= (size_t)1;
+    // Copy locator
+    if (curr_len > (size_t)0) {
+        (void)strncat(ret, locator->val, curr_len);
+        curr_len -= locator->len;
+    }
+    // Copy config
+    if (config != NULL) {
+        if (curr_len > (size_t)0) {
+            (void)strncat(ret, config, curr_len);
+            curr_len -= strlen(config);
         }
     }
-
+    // Clean up
+    _z_string_clear(locator);
     return ret;
 }
