@@ -62,8 +62,12 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     options.attachment = z_bytes_map_as_attachment(&map);
 #endif
 
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, value);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): value encoding
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
     z_drop(z_move(keystr));
     msg_nb++;

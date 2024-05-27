@@ -44,7 +44,7 @@
 /********* Data Types Handlers *********/
 
 int8_t z_view_str_wrap(z_view_string_t *str, const char *value) {
-    str->_val = _z_string_make(value);
+    str->_val = _z_string_wrap((char *)value);
     return _Z_RES_OK;
 }
 
@@ -265,6 +265,18 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix) {
 }
 
 z_encoding_t z_encoding_default(void) { return z_encoding(Z_ENCODING_PREFIX_DEFAULT, NULL); }
+
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s) {
+    // Init owned bytes
+    z_bytes_null(buffer);
+    buffer->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (buffer->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Encode data
+    *buffer->_val = _z_bytes_wrap((uint8_t *)s->val, s->len);
+    return _Z_RES_OK;
+}
 
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 

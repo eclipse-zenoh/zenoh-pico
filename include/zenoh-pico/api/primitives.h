@@ -441,6 +441,11 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 z_encoding_t z_encoding_default(void);
 
 /**
+ * Encodes string by aliasing.
+ */
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s);
+
+/**
  *
  * Checks validity of the timestamp
  *
@@ -820,10 +825,10 @@ _OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
 _VIEW_FUNCTIONS(z_loaned_keyexpr_t, z_view_keyexpr_t, keyexpr)
 _VIEW_FUNCTIONS(z_loaned_string_t, z_view_string_t, string)
 
-// Gets internal value from refcountered type (e.g. z_loaned_session_t, z_query_t)
+// Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)
 #define _Z_RC_IN_VAL(arg) ((arg)->in->val)
 
-// Gets internal value from refcountered owned type (e.g. z_owned_session_t, z_owned_query_t)
+// Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
 
 // TODO(sashacmc): comments, docs, etc.
