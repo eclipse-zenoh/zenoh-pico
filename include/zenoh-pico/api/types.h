@@ -446,20 +446,7 @@ _OWNED_TYPE_PTR(_z_hello_t, hello)
 _LOANED_TYPE(_z_hello_t, hello)
 
 /**
- * Represents the content of a reply to a query.
- *
- * Members:
- *   z_sample_t sample: The :c:type:`_z_sample_t` containing the key and value of the reply.
- *   z_loaned_bytes_t* replier_id: The id of the replier that sent this reply.
- */
-// TODO(sashacmc): z_reply_data_t
-typedef _z_reply_data_t z_reply_data_t;
-
-/**
  * Represents the reply to a query.
- *
- * Members:
- *   z_reply_data_t data: the content of the reply.
  */
 _OWNED_TYPE_RC(_z_reply_rc_t, reply)
 _LOANED_TYPE(_z_reply_rc_t, reply)
