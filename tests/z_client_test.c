@@ -61,10 +61,13 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     assert(z_loan(pred)->len == strlen(""));
     assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
 
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, res);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): res encoding
-    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
 
+    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
     z_drop(z_move(k_str));
     free(res);

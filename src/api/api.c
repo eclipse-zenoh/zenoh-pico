@@ -113,81 +113,51 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start) {
     return ret;
 }
 
-int8_t z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    int8_t ret = 0;
-
+_Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
-    } else {
-        ret = _Z_ERR_GENERIC;
+        return zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
     }
-
-    return ret;
+    return false;
 }
 
-int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
-    int8_t ret = 0;
-
+_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
     if (l != NULL && r != NULL) {
-        ret = _z_keyexpr_includes(l, strlen(l), r, strlen(r)) == true ? 0 : -1;
-    } else {
-        ret = _Z_ERR_GENERIC;
+        return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
     }
-
-    return ret;
+    return false;
 }
 
-int8_t z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    int8_t ret = 0;
-
+_Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
-    } else {
-        ret = _Z_ERR_GENERIC;
+        return zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
     }
-
-    return ret;
+    return false;
 }
 
-int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
-    int8_t ret = -1;
-
+_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
     if (l != NULL && r != NULL) {
-        ret = (_z_keyexpr_intersects(l, strlen(l), r, strlen(r)) == true) ? 0 : -1;
-    } else {
-        ret = _Z_ERR_GENERIC;
+        return _z_keyexpr_intersects(l, strlen(l), r, strlen(r));
     }
-
-    return ret;
+    return false;
 }
 
-int8_t z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    int8_t ret = 0;
-
+_Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        ret = zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
-    } else {
-        ret = _Z_ERR_GENERIC;
+        return zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
     }
-
-    return ret;
+    return false;
 }
 
-int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
-    int8_t ret = -1;
-
+_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
     if (l != NULL && r != NULL) {
         size_t llen = strlen(l);
         if (llen == strlen(r)) {
             if (strncmp(l, r, llen) == 0) {
-                ret = 0;
+                return true;
             }
         }
-    } else {
-        ret = _Z_ERR_GENERIC;
     }
-
-    return ret;
+    return false;
 }
 
 void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); }
@@ -608,6 +578,7 @@ OWNED_FUNCTIONS_PTR(_z_publisher_t, publisher, _z_owner_noop_copy, _z_publisher_
 void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
+    options->encoding = z_encoding_default();
 #if Z_FEATURE_ATTACHMENT == 1
     options->attachment = z_attachment_null();
 #endif

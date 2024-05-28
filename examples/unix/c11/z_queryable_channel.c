@@ -112,8 +112,12 @@ int main(int argc, char **argv) {
         }
         z_query_reply_options_t options;
         z_query_reply_options_default(&options);
+        // Reply value encoding
+        z_view_string_t reply_str;
+        z_view_str_wrap(&reply_str, value);
         z_owned_bytes_t reply_payload;
-        // TODO(sashacmc): value encoding
+        z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+
         z_query_reply(q, z_query_keyexpr(q), z_move(reply_payload), &options);
         z_drop(z_move(keystr));
         z_drop(z_move(query));

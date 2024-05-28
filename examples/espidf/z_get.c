@@ -160,9 +160,13 @@ void app_main() {
         printf("Sending Query '%s'...\n", KEYEXPR);
         z_get_options_t opts;
         z_get_options_default(&opts);
+        // Value encoding
         if (strcmp(VALUE, "") != 0) {
-            // TODO(sashacmc): encoding
-            // opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+            z_view_string_t value_str;
+            z_view_str_wrap(&value_str, VALUE);
+            z_owned_bytes_t payload;
+            z_bytes_encode_from_string(&payload, z_loan(value_str));
+            opts.payload = &payload;
         }
         z_owned_closure_reply_t callback;
         z_closure(&callback, reply_handler, reply_dropper);

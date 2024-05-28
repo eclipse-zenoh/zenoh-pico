@@ -174,10 +174,10 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start);
  *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
+ *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, returns ``false``.
  */
-int8_t z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+_Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Check if a given keyexpr contains another keyexpr in its set.
@@ -189,10 +189,10 @@ int8_t z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t 
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``0`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
+ *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * defined by ``r``. Otherwise, returns ``false``.
  */
-int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -202,10 +202,10 @@ int8_t zp_keyexpr_includes_null_terminated(const char *l, const char *r);
  *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
+ *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
-int8_t z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+_Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Check if a given keyexpr intersects with another keyexpr.
@@ -217,10 +217,10 @@ int8_t z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``0`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, it returns a ``-1``, or other ``negative value`` for errors.
+ *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
-int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
  * Check if a two keyexprs are equal.
@@ -230,10 +230,9 @@ int8_t zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  *   r: The second keyexpr.
  *
  * Returns:
- *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
- * errors.
+ *   Returns ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
  */
-int8_t z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+_Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Check if a two keyexprs are equal.
@@ -245,10 +244,9 @@ int8_t z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r
  *   rlen: Number of characters in ``r``.
  *
  * Returns:
- *   Returns ``0`` if both ``l`` and ``r`` are equal. Otherwise, it returns a ``-1``, or other ``negative value`` for
- * errors.
+ *   Returns ``true`` if both ``l`` and ``r`` are equal. Otherwise, it returns ``false``.
  */
-int8_t zp_keyexpr_equals_null_terminated(const char *l, const char *r);
+_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 // TODO(sashacmc): update comment
 /**

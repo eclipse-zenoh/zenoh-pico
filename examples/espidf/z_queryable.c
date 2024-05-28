@@ -111,8 +111,12 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
            z_loan(params)->val);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, VALUE);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): VALUE encoding
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+
     z_query_reply(query, z_loan(ke), z_move(reply_payload), NULL);
     z_drop(z_move(keystr));
 }

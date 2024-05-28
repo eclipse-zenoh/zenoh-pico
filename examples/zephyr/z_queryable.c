@@ -40,8 +40,12 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_loan(keystr)), z_loan(params)->len,
            z_loan(params)->val);
 
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, VALUE);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): VALUE encoding
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     z_drop(z_move(keystr));
 }

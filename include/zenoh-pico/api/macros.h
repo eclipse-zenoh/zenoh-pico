@@ -270,6 +270,7 @@ template<> struct zenoh_loan_type<z_owned_config_t>{ typedef z_config_t type; };
 template<> struct zenoh_loan_type<z_owned_publisher_t>{ typedef z_publisher_t type; };
 template<> struct zenoh_loan_type<z_owned_hello_t>{ typedef z_hello_t type; };
 template<> struct zenoh_loan_type<z_owned_string_t>{  typedef const char* type; };
+template<> struct zenoh_loan_type<z_view_string_t>{  typedef z_loaned_string_t type; };
 
 template<> inline z_session_t z_loan(const z_owned_session_t& x) { return z_session_loan(&x); }
 template<> inline z_keyexpr_t z_loan(const z_owned_keyexpr_t& x) { return z_keyexpr_loan(&x); }
@@ -277,6 +278,7 @@ template<> inline z_config_t z_loan(const z_owned_config_t& x) { return z_config
 template<> inline z_publisher_t z_loan(const z_owned_publisher_t& x) { return z_publisher_loan(&x); }
 template<> inline z_hello_t z_loan(const z_owned_hello_t& x) { return z_hello_loan(&x); }
 template<> inline const char* z_loan(const z_owned_string_t& x) { return z_string_loan(&x); }
+template<> inline z_loaned_string_t z_loan(const z_view_string_t& x) { return z_view_string_loan(&x); }
 
 template<class T> struct zenoh_drop_type { typedef T type; };
 template<class T> inline typename zenoh_drop_type<T>::type z_drop(T*);

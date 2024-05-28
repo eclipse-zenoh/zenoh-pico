@@ -29,7 +29,7 @@ int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
     int8_t ret = _Z_RES_OK;
 
     char *res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
-    if (res != value) {
+    if (strcmp(res, value) != 0) {
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
 

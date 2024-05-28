@@ -30,6 +30,7 @@
 #endif
 
 #define KEYEXPR "demo/example/**"
+#define VALUE ""
 
 void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"); }
 
@@ -76,6 +77,14 @@ int main(int argc, char **argv) {
         z_get_options_t opts;
         z_get_options_default(&opts);
         opts.target = Z_QUERY_TARGET_ALL;
+        // Value encoding
+        if (strcmp(VALUE, "") != 0) {
+            z_view_string_t value_str;
+            z_view_str_wrap(&value_str, VALUE);
+            z_owned_bytes_t payload;
+            z_bytes_encode_from_string(&payload, z_loan(value_str));
+            opts.payload = &payload;
+        }
         z_owned_closure_reply_t callback;
         z_closure(&callback, reply_handler, reply_dropper);
         z_view_keyexpr_t ke;

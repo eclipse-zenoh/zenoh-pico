@@ -57,8 +57,7 @@ void hello_handler(z_owned_hello_t *hello, void *arg) {
     (void)(arg);
     printf("%s\n", __func__);
     hellos++;
-    z_null(hello);
-    z_drop(hello);  // validate double-drop safety: caller drops hello if it's not dropped by the handler
+    z_drop(hello);
 }
 
 volatile unsigned int queries = 0;
@@ -82,8 +81,13 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     (void)(payload_value);
     z_query_reply_options_t _ret_qreply_opt;
     z_query_reply_options_default(&_ret_qreply_opt);
+
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, value);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): value encoding
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+
     z_query_reply(query, query_ke, z_move(reply_payload), &_ret_qreply_opt);
 
     z_drop(z_move(k_str));
@@ -350,7 +354,7 @@ int main(int argc, char **argv) {
     z_publisher_options_default(&_ret_pub_opt);
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_owned_publisher_t _ret_pub;
-    _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(ke), &_ret_pub_opt);
+    _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
     assert(_ret_int8 == _Z_RES_OK);
     printf("Ok\n");
 

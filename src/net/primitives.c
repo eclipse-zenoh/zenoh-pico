@@ -50,6 +50,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const
     if (dropper != NULL) {
         (*dropper)(arg_drop);
     }
+    _z_hello_list_free(&hellos);
 }
 
 /*------------------ Resource Declaration ------------------*/

@@ -33,8 +33,12 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
     options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    // Reply value encoding
+    z_view_string_t reply_str;
+    z_view_str_wrap(&reply_str, value);
     z_owned_bytes_t reply_payload;
-    // TODO(sashacmc): value encoding
+    z_bytes_encode_from_string(&reply_payload, z_view_string_loan(&reply_str));
+
     z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
     z_string_drop(z_string_move(&keystr));
 }
