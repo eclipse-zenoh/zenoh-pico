@@ -66,14 +66,21 @@ int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const cha
     return _Z_RES_OK;
 }
 
-void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s) {
+int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s) {
+    int8_t ret = _Z_RES_OK;
     if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
         s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
         if (s->_val != NULL) {
             s->_val->val = _z_str_clone(keyexpr->_suffix);
             s->_val->len = strlen(keyexpr->_suffix);
+        } else {
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
+
+    return ret;
 }
 
 int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
@@ -320,11 +327,15 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
     void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                             \
     z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                    \
-    void z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
+        int8_t ret = _Z_RES_OK;                                                                     \
         obj->_val = (type *)z_malloc(sizeof(type));                                                 \
         if (obj->_val != NULL) {                                                                    \
             f_copy(obj->_val, src);                                                                 \
+        } else {                                                                                    \
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
         }                                                                                           \
+        return ret;                                                                                 \
     }                                                                                               \
     void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
         if (obj->_val != NULL) {                                                                    \
@@ -338,8 +349,13 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }         \
     void z_##name##_null(z_owned_##name##_t *val) { val->_rc.in = NULL; }                           \
     z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                    \
-    void z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
+        int8_t ret = _Z_RES_OK;                                                                     \
         obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
+        if (obj->_rc.in == NULL) {                                                                  \
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
+        }                                                                                           \
+        return ret;                                                                                 \
     }                                                                                               \
     void z_##name##_drop(z_owned_##name##_t *val) {                                                 \
         if (val->_rc.in != NULL) {                                                                  \
@@ -898,22 +914,30 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
 #endif
 
 int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name) {
+    int8_t ret = _Z_RES_OK;
+
     key->_val = name ? (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t)) : NULL;
     if (key->_val != NULL) {
         *key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+    } else {
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
-    return _Z_RES_OK;
+    return ret;
 }
 
 int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
+    int8_t ret = _Z_RES_OK;
+
     key->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
     if (key->_val != NULL) {
         uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
         *key->_val = _z_rid_with_suffix(id, NULL);
+    } else {
+        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
-    return _Z_RES_OK;
+    return ret;
 }
 
 int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
@@ -987,7 +1011,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     sub->_val = int_sub;
 
     if (int_sub == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;  // TODO(sashacmc): shoud we introduce sperate error?
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     } else {
         return _Z_RES_OK;
     }

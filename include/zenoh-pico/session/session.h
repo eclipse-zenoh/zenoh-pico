@@ -80,9 +80,9 @@ typedef struct {
     uint32_t _id;
 } _z_publication_t;
 
-// TODO(sashacmc): make in proper way
-typedef struct _z_query_rc_t _z_query_rc_t;
-typedef _z_query_rc_t z_loaned_query_t;  // Forward type declaration to avoid cyclical include
+// Forward type declaration to avoid cyclical include
+typedef struct _z_query_rc_t z_loaned_query_t;
+
 /**
  * The callback signature of the functions handling query messages.
  */

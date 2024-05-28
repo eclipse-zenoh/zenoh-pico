@@ -86,7 +86,7 @@ int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const cha
  * Returns:
  *   The :c:type:`z_owned_string_t` containing key expression string representation if it's possible
  */
-void z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s);
+int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s);
 
 /**
  * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_loaned_session_t`.
@@ -750,13 +750,13 @@ int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t
 int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
-#define _OWNED_FUNCTIONS(loanedtype, ownedtype, name)             \
-    _Bool z_##name##_check(const ownedtype *obj);                 \
-    const loanedtype *z_##name##_loan(const ownedtype *obj);      \
-    loanedtype *z_##name##_loan_mut(ownedtype *obj);              \
-    ownedtype *z_##name##_move(ownedtype *obj);                   \
-    void z_##name##_clone(ownedtype *obj, const loanedtype *src); \
-    void z_##name##_drop(ownedtype *obj);                         \
+#define _OWNED_FUNCTIONS(loanedtype, ownedtype, name)               \
+    _Bool z_##name##_check(const ownedtype *obj);                   \
+    const loanedtype *z_##name##_loan(const ownedtype *obj);        \
+    loanedtype *z_##name##_loan_mut(ownedtype *obj);                \
+    ownedtype *z_##name##_move(ownedtype *obj);                     \
+    int8_t z_##name##_clone(ownedtype *obj, const loanedtype *src); \
+    void z_##name##_drop(ownedtype *obj);                           \
     void z_##name##_null(ownedtype *obj);
 
 _OWNED_FUNCTIONS(z_loaned_string_t, z_owned_string_t, string)
