@@ -362,7 +362,6 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         }                                                                                           \
     }
 
-// TODO(sashacmc): Sould drop clean ponter to allow double call ?
 #define OWNED_FUNCTIONS_RC(name)                                                                    \
     _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
@@ -372,7 +371,13 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     void z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
         obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
     }                                                                                               \
-    void z_##name##_drop(z_owned_##name##_t *val) { _z_##name##_rc_drop(&val->_rc); }
+    void z_##name##_drop(z_owned_##name##_t *val) {                                                 \
+        if (val->_rc.in != NULL) {                                                                  \
+            if (_z_##name##_rc_drop(&val->_rc)) {                                                   \
+                val->_rc.in = NULL;                                                                 \
+            }                                                                                       \
+        }                                                                                           \
+    }
 
 #define VIEW_FUNCTIONS_PTR(type, name)                                                                   \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
@@ -406,7 +411,6 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
 }
 
 OWNED_FUNCTIONS_RC(sample)
-// TODO(sashacmc): drop != close
 OWNED_FUNCTIONS_RC(session)
 
 #define OWNED_FUNCTIONS_CLOSURE(ownedtype, name, f_call, f_drop)                   \
