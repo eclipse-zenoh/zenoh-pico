@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/handlers.h"
+#include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/net/sample.h"
 
 #undef NDEBUG

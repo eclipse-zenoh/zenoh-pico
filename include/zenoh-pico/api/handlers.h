@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#include "zenoh-pico/api/macros.h"
+#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/fifo_mt.h"
