@@ -39,7 +39,14 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_parameters(query, &pred);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_str_data(z_string_loan(&keystr)),
            (int)z_view_string_loan(&pred)->len, z_view_string_loan(&pred)->val);
-
+    // Process value
+    const z_loaned_bytes_t *payload = z_value_payload(z_query_value(query));
+    if (z_bytes_len(payload) > 0) {
+        z_owned_string_t payload_string;
+        z_bytes_decode_into_string(payload, &payload_string);
+        printf("     with value '%s'\n", z_str_data(z_string_loan(&payload_string)));
+        z_string_drop(z_string_move(&payload_string));
+    }
     // Reply value encoding
     z_view_string_t reply_str;
     z_view_str_wrap(&reply_str, VALUE);

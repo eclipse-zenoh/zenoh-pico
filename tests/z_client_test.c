@@ -115,7 +115,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
 _z_string_t format_id(const z_id_t *id) {
     _z_bytes_t id_as_bytes = _z_bytes_wrap(id->id, _z_id_len(*id));
-    return _z_string_from_bytes(&id_as_bytes);
+    return _z_string_convert_bytes(&id_as_bytes);
 }
 
 int main(int argc, char **argv) {

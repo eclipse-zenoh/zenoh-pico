@@ -414,6 +414,24 @@ z_encoding_t z_encoding(z_encoding_prefix_t prefix, const char *suffix);
 z_encoding_t z_encoding_default(void);
 
 /**
+ * Returns value payload.
+ */
+const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
+
+/**
+ * Returns total number of bytes in the payload.
+ */
+size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+
+/**
+ * Decodes data into an owned null-terminated string.
+ *
+ * @param this_: Data to decode.
+ * @param dst: An unitialized memory location where to construct a decoded string.
+ */
+int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s);
+
+/**
  * Encodes string by aliasing.
  */
 int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s);

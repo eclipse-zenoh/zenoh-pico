@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     assert(z_check(s1));
     _z_bytes_t id_as_bytes =
         _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s1))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))._local_zid));
-    _z_string_t zid1 = _z_string_from_bytes(&id_as_bytes);
+    _z_string_t zid1 = _z_string_convert_bytes(&id_as_bytes);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
 
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     z_open(&s2, z_move(config));
     assert(z_check(s2));
     id_as_bytes = _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s2))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))._local_zid));
-    _z_string_t zid2 = _z_string_from_bytes(&id_as_bytes);
+    _z_string_t zid2 = _z_string_convert_bytes(&id_as_bytes);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);
 

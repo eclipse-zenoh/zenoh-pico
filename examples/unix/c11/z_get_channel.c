@@ -112,9 +112,12 @@ int main(int argc, char **argv) {
             const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
             z_owned_string_t keystr;
             z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-            printf(">> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)z_sample_payload(sample)->len,
-                   z_sample_payload(sample)->start);
+            z_owned_string_t replystr;
+            z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
+
+            printf(">> Received ('%s': '%s')\n", z_str_data(z_loan(keystr)), z_str_data(z_loan(replystr)));
             z_drop(z_move(keystr));
+            z_drop(z_move(replystr));
         } else {
             printf(">> Received an error\n");
         }

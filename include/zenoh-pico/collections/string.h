@@ -69,6 +69,7 @@ typedef struct {
     char *val;
 } _z_string_t;
 
+_z_string_t _z_string_null(void);
 _z_string_t _z_string_make(const char *value);
 _z_string_t _z_string_wrap(char *value);
 _z_string_t *_z_string_make_as_ptr(const char *value);
@@ -80,6 +81,7 @@ void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
+_z_string_t _z_string_convert_bytes(const _z_bytes_t *bs);
 _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)

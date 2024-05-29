@@ -48,15 +48,17 @@ void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-        std::string val((const char *)z_sample_payload(sample)->start, z_sample_payload(sample)->len);
+        z_owned_string_t replystr;
+        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
 
         Serial.print(" >> [Get listener] Received (");
         Serial.print(z_str_data(z_string_loan(&keystr)));
         Serial.print(", ");
-        Serial.print(val.c_str());
+        Serial.print(z_str_data(z_string_loan(&replystr)));
         Serial.println(")");
 
         z_string_drop(z_string_move(&keystr));
+        z_string_drop(z_string_move(&replystr));
     } else {
         Serial.println(" >> Received an error");
     }

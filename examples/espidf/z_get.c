@@ -108,10 +108,12 @@ void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+        z_owned_string_t replystr;
+        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
 
-        printf(" >> Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)), (int)z_sample_payload(sample)->len,
-               z_sample_payload(sample)->start);
+        printf(" >> Received ('%s': '%s')\n", z_str_data(z_loan(keystr)), z_str_data(z_loan(replystr)));
         z_drop(z_move(keystr));
+        z_drop(z_move(replystr));
     } else {
         printf(" >> Received an error\n");
     }
