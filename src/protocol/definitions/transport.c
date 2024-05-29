@@ -203,12 +203,13 @@ _z_transport_message_t _z_t_msg_make_keep_alive(void) {
     return msg;
 }
 
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages, _Bool is_reliable) {
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages,
+                                           z_reliability_t reliability) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAME;
 
     msg._body._frame._sn = sn;
-    if (is_reliable == true) {
+    if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
 
@@ -218,12 +219,12 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_
 }
 
 /*------------------ Frame Message ------------------*/
-_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliable) {
+_z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAME;
 
     msg._body._frame._sn = sn;
-    if (is_reliable == true) {
+    if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAME_R);
     }
 
@@ -233,16 +234,17 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, _Bool is_reliabl
 }
 
 /*------------------ Fragment Message ------------------*/
-_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, _Bool is_reliable, _Bool is_last) {
-    return _z_t_msg_make_fragment(sn, _z_bytes_empty(), is_reliable, is_last);
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, _Bool is_last) {
+    return _z_t_msg_make_fragment(sn, _z_bytes_empty(), reliability, is_last);
 }
-_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_bytes_t payload, _Bool is_reliable, _Bool is_last) {
+_z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_bytes_t payload, z_reliability_t reliability,
+                                              _Bool is_last) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == false) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_M);
     }
-    if (is_reliable == true) {
+    if (reliability == Z_RELIABILITY_RELIABLE) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_FRAGMENT_R);
     }
 
