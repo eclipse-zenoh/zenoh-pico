@@ -994,24 +994,25 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
         if (r == NULL) {
             char *wild = strpbrk(keyexpr->_suffix, "*$");
             _Bool do_keydecl = true;
-            if (wild != NULL && wild != keyexpr->_suffix) {
+            _z_keyexpr_t resource_key = *keyexpr;
+            if (wild != NULL && wild != resource_key._suffix) {
                 wild -= 1;
-                size_t len = wild - keyexpr->_suffix;
+                size_t len = wild - resource_key._suffix;
                 suffix = z_malloc(len + 1);
                 if (suffix != NULL) {
-                    memcpy(suffix, keyexpr->_suffix, len);
+                    memcpy(suffix, resource_key._suffix, len);
                     suffix[len] = 0;
-                    // TODO(sashacmc): Why we modify it? Rework to remove cast
-                    ((z_loaned_keyexpr_t *)keyexpr)->_suffix = suffix;
-                    _z_keyexpr_set_owns_suffix((z_loaned_keyexpr_t *)keyexpr, false);
+                    resource_key._suffix = suffix;
+                    _z_keyexpr_set_owns_suffix(&resource_key, false);
                 } else {
                     do_keydecl = false;
                 }
             }
             if (do_keydecl) {
-                uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+                uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), resource_key);
                 key = _z_rid_with_suffix(id, wild);
             }
+            _z_keyexpr_clear(&resource_key);
         }
     }
 
