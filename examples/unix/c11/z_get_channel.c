@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
             z_owned_string_t replystr;
             z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
 
-            printf(">> Received ('%s': '%s')\n", z_str_data(z_loan(keystr)), z_str_data(z_loan(replystr)));
+            printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
             z_drop(z_move(keystr));
             z_drop(z_move(replystr));
         } else {

@@ -31,7 +31,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
             break;
         }
     }
-    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_str_data(z_loan(keystr)),
+    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_string_data(z_loan(keystr)),
            (int)z_sample_payload(sample)->len, is_valid);
     z_drop(z_move(keystr));
 }

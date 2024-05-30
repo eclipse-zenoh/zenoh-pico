@@ -33,7 +33,7 @@
 // void data_handler(const z_loaned_sample_t *sample, void *arg) {
 //     z_owned_string_t keystr;
 //     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-//     printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_str_data(z_loan(keystr)),
+//     printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_string_data(z_loan(keystr)),
 //     (int)sample->payload.len,
 //            sample->payload.start);
 //     z_drop(z_move(keystr));

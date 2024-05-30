@@ -824,7 +824,7 @@ _VIEW_FUNCTIONS(z_loaned_string_t, z_view_string_t, string)
 
 // TODO(sashacmc): comments, docs, etc.
 const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
-const char *z_str_data(const z_loaned_string_t *str);
+const char *z_string_data(const z_loaned_string_t *str);
 
 /************* Primitives **************/
 /**

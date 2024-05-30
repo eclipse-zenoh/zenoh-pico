@@ -44,7 +44,7 @@
 //     std::string val((const char *)sample->payload.start, sample->payload.len);
 
 //     Serial.print(" >> [Subscription listener] Received (");
-//     Serial.print(z_str_data(z_string_loan(&keystr)));
+//     Serial.print(z_string_data(z_string_loan(&keystr)));
 //     Serial.print(", ");
 //     Serial.print(val.c_str());
 //     Serial.println(")");

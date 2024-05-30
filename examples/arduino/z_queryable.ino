@@ -39,7 +39,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
     Serial.print(" >> [Queryable handler] Received Query '");
-    Serial.print(z_str_data(z_string_loan(&keystr)));
+    Serial.print(z_string_data(z_string_loan(&keystr)));
     Serial.println("'");
 
     // Process value
@@ -48,7 +48,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
         z_owned_string_t payload_string;
         z_bytes_decode_into_string(payload, &payload_string);
         Serial.print("     with value '");
-        Serial.print(z_str_data(z_string_loan(&payload_string)));
+        Serial.print(z_string_data(z_string_loan(&payload_string)));
         Serial.println("'");
         z_string_drop(z_string_move(&payload_string));
     }

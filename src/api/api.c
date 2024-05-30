@@ -593,7 +593,7 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(samp
 z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).attachment; }
 #endif
 
-const char *z_str_data(const z_loaned_string_t *str) { return str->val; }
+const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
 
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_publisher_drop(_z_publisher_t **pub) {
