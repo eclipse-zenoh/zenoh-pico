@@ -25,7 +25,7 @@ Enums
 .. autocenum:: constants.h::z_whatami_t
 .. autocenum:: constants.h::zp_keyexpr_canon_status_t
 .. autocenum:: constants.h::z_sample_kind_t
-.. autocenum:: constants.h::z_encoding_prefix_t
+.. autocenum:: constants.h::z_encoding_id_t
 .. autocenum:: constants.h::z_consolidation_mode_t
 .. autocenum:: constants.h::z_reliability_t
 .. autocenum:: constants.h::z_reply_tag_t
@@ -192,7 +192,7 @@ Primitives
 .. autocfunction:: primitives.h::z_scouting_config_from
 .. autocfunction:: primitives.h::zp_scouting_config_get
 .. autocfunction:: primitives.h::zp_scouting_config_insert
-.. autocfunction:: primitives.h::z_encoding_default
+.. autocfunction:: primitives.h::zp_encoding_default
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
 .. autocfunction:: primitives.h::z_query_consolidation_default

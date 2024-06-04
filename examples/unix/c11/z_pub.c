@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s));
+        z_close(z_move(s));
         return -1;
     }
     // Wait for joins in peer mode
@@ -94,6 +94,7 @@ int main(int argc, char **argv) {
         printf("Waiting for joins...\n");
         sleep(3);
     }
+    // Declare publisher
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
@@ -102,27 +103,29 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
+
+    // Publish data
     printf("Press CTRL-C to quit...\n");
     char buf[256];
     for (int idx = 0; idx < n; ++idx) {
-        sleep(1);
+        z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
+        // Create encoding
+        z_owned_encoding_t encoding;
+        zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, "utf8");
         z_publisher_put_options_t options;
         z_publisher_put_options_default(&options);
-        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+        options.encoding = z_move(encoding);
+
         z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
-
+    // Clean up
     z_undeclare_publisher(z_move(pub));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));
     zp_stop_lease_task(z_loan_mut(s));
-
     z_close(z_move(s));
-
     return 0;
 }
 #else

@@ -59,11 +59,14 @@ int main(int argc, char **argv) {
         z_close(z_move(s));
         return -1;
     }
+    // Create encoding
+    z_owned_encoding_t encoding;
+    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options;
     z_put_options_default(&options);
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    options.encoding = z_move(encoding);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }

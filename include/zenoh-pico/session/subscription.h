@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 #define INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/session.h"
 
 /*------------------ Subscription ------------------*/

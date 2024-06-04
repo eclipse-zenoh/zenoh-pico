@@ -66,7 +66,6 @@ void app_main(void) {
     printf("Putting Data ('%s': '%s')...\n", KEYEXPR, VALUE);
     z_put_options_t options;
     z_put_options_default(&options);
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)VALUE, strlen(VALUE), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }

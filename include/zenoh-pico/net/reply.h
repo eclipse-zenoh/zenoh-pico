@@ -18,6 +18,7 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"

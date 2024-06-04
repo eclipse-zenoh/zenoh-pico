@@ -38,8 +38,13 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
         printf("     with value '%s'\n", z_string_data(z_loan(payload_string)));
         z_drop(z_move(payload_string));
     }
+    // Create encoding
+    z_owned_encoding_t encoding;
+    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
+
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
+    options.encoding = z_move(encoding);
     // Reply value encoding
     z_view_string_t reply_str;
     z_view_str_wrap(&reply_str, value);

@@ -28,7 +28,7 @@
         _z_sample_t s = {.keyexpr = _z_rname("key"),                                 \
                          .payload = {.start = (const uint8_t *)v, .len = strlen(v)}, \
                          .timestamp = _z_timestamp_null(),                           \
-                         .encoding = z_encoding_default(),                           \
+                         .encoding = _z_encoding_null(),                             \
                          .kind = 0,                                                  \
                          .qos = {0}};                                                \
         z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                     \

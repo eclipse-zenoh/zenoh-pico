@@ -99,16 +99,13 @@ void app_main(void) {
 
         z_publisher_put_options_t options;
         z_publisher_put_options_default(&options);
-        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
         z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
     }
 
+    // Clean-up
     z_undeclare_publisher(z_move(pub));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));
     zp_stop_lease_task(z_loan_mut(s));
-
     z_close(z_move(s));
 }
 #else

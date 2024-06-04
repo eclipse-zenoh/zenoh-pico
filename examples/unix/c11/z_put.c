@@ -97,10 +97,14 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    // Create encoding
+    z_owned_encoding_t encoding;
+    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
+
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     z_put_options_t options;
     z_put_options_default(&options);
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    options.encoding = z_move(encoding);
 #if Z_FEATURE_ATTACHMENT == 1
     z_owned_bytes_map_t map = z_bytes_map_new();
     z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hi"), z_bytes_from_str("there"));

@@ -20,8 +20,7 @@ _z_sample_t _z_sample_null(void) {
     _z_sample_t s = {
         .keyexpr = _z_keyexpr_null(),
         .payload = _z_bytes_empty(),
-        .encoding = {.id = Z_ENCODING_PREFIX_DEFAULT,
-                     .schema = _z_bytes_wrap(NULL, (size_t)0)},  // FIXME: call _z_encoding_null
+        .encoding = _z_encoding_null(),
         .timestamp = _z_timestamp_null(),
         .kind = 0,
         .qos = {0},
@@ -42,9 +41,7 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     src->keyexpr._suffix = NULL;                  // FIXME: call the z_keyexpr_move
 
     _z_bytes_move(&dst->payload, &src->payload);
-
-    dst->encoding.id = src->encoding.id;                          // FIXME: call the z_encoding_move
-    _z_bytes_move(&dst->encoding.schema, &src->encoding.schema);  // FIXME: call the z_encoding_move
+    _z_encoding_move(&dst->encoding, &src->encoding);
 
     dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
     dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
@@ -53,7 +50,7 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
     _z_bytes_clear(&sample->payload);
-    _z_bytes_clear(&sample->encoding.schema);  // FIXME: call the z_encoding_clear
+    _z_encoding_clear(&sample->encoding);
     _z_timestamp_clear(&sample->timestamp);
 #if Z_FEATURE_ATTACHMENT == 1
     _z_attachment_drop(&sample->attachment);
@@ -73,10 +70,7 @@ void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
     dst->payload = _z_bytes_duplicate(&src->payload);
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
-
-    // TODO(sashacmc): should be changed after encoding rework
-    dst->encoding.id = src->encoding.id;
-    _z_bytes_copy(&dst->encoding.schema, &src->encoding.schema);
+    _z_encoding_copy(&dst->encoding, &src->encoding);
 
     dst->kind = src->kind;
 #if Z_FEATURE_ATTACHMENT == 1
@@ -97,7 +91,7 @@ _z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t *payload,
     _z_sample_t s = _z_sample_null();
     _z_keyexpr_copy(&s.keyexpr, key);
     _z_bytes_copy(&s.payload, payload);
-    s.encoding = encoding;  // FIXME: call z_encoding_move or copy
+    _z_encoding_copy(&s.encoding, &encoding);
     s.kind = kind;
     s.timestamp = timestamp;
     s.qos = qos;

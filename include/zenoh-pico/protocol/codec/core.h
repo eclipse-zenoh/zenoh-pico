@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/config.h"

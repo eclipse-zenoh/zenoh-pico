@@ -55,9 +55,13 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     }
 #endif
 
+    // Create encoding
+    z_owned_encoding_t encoding;
+    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
+
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    options.encoding = z_move(encoding);
 
 #if Z_FEATURE_ATTACHMENT == 1
     // Add attachment

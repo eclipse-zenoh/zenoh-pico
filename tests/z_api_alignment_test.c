@@ -320,10 +320,9 @@ int main(int argc, char **argv) {
     z_put_options_t _ret_put_opt;
     z_put_options_default(&_ret_put_opt);
     _ret_put_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-    z_encoding_t _ret_encoding = z_encoding_default();
-    (void)(_ret_encoding);
-    _ret_encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-    _ret_put_opt.encoding = _ret_encoding;
+    z_owned_encoding_t _ret_encoding;
+    zp_encoding_make(&_ret_encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
+    _ret_put_opt.encoding = z_move(_ret_encoding);
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), (const uint8_t *)value, strlen(value), &_ret_put_opt);
     assert_eq(_ret_int8, 0);
     printf("Ok\n");

@@ -279,8 +279,7 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         if (has_timestamp) {
             header |= _Z_FLAG_Z_P_T;
         }
-        has_encoding = pshb->_body._put._encoding.id != Z_ENCODING_PREFIX_EMPTY ||
-                       !_z_bytes_is_empty(&pshb->_body._put._encoding.schema);
+        has_encoding = _z_encoding_check(&pshb->_body._put._encoding);
         if (has_encoding) {
             header |= _Z_FLAG_Z_P_E;
         }
@@ -556,7 +555,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     uint8_t header = _Z_MID_Z_ERR;
 
     // Encode header
-    _Bool has_encoding = err->encoding.id != Z_ENCODING_PREFIX_EMPTY;
+    _Bool has_encoding = _z_encoding_check(&err->encoding);
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }

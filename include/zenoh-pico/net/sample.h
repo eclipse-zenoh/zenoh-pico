@@ -14,6 +14,7 @@
 #ifndef ZENOH_PICO_SAMPLE_NETAPI_H
 #define ZENOH_PICO_SAMPLE_NETAPI_H
 
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 

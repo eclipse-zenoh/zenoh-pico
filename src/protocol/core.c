@@ -66,15 +66,14 @@ _z_source_info_t _z_source_info_null() {
     return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
 }
 _z_timestamp_t _z_timestamp_null() { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
-_z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()}; }
+_z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_empty(), .encoding = _z_encoding_null()}; }
 _z_value_t _z_value_steal(_z_value_t *value) {
     _z_value_t ret = *value;
     *value = _z_value_null();
     return ret;
 }
 void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
-    dst->encoding.id = src->encoding.id;
-    _z_bytes_copy(&dst->encoding.schema, &src->encoding.schema);
+    _z_encoding_copy(&dst->encoding, &src->encoding);
     _z_bytes_copy(&dst->payload, &src->payload);
 }
 

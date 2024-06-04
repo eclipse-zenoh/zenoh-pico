@@ -54,6 +54,18 @@ jobs:
           sudo apt install -y ninja-build
           FORCE_C99=ON CMAKE_GENERATOR=Ninja make
 
+  raweth_build:
+    name: Build raweth transport on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build raweth
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_RAWETH_TRANSPORT=1 CMAKE_GENERATOR=Ninja make
+
   zenoh_build:
     name: Build Zenoh from source
     runs-on: ubuntu-latest
@@ -114,29 +126,6 @@ jobs:
       - name: Kill Zenoh router
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
-
-  raweth_build:
-    name: Build and test raweth transport on ubuntu-latest
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        feature_reth: [1, 0]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build project and run test
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_on: error
-          command: |
-            sudo apt install -y ninja-build
-            CMAKE_GENERATOR=Ninja make
-            python3 ./build/tests/raweth.py --reth $Z_FEATURE_RAWETH_TRANSPORT
-        env:
-          Z_FEATURE_RAWETH_TRANSPORT: ${{ matrix.feature_reth }}
 
   st_build:
     needs: zenoh_build

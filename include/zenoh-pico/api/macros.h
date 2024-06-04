@@ -47,7 +47,8 @@
                   z_owned_string_array_t : z_string_array_loan,       \
                   z_owned_sample_t : z_sample_loan,                   \
                   z_owned_query_t : z_query_loan,                     \
-                  z_owned_bytes_t : z_bytes_loan                      \
+                  z_owned_bytes_t : z_bytes_loan,                     \
+                  z_owned_encoding_t : z_encoding_loan                \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
@@ -85,6 +86,7 @@
                   z_owned_string_array_t * : z_string_array_drop,                   \
                   z_owned_sample_t * : z_sample_drop,                               \
                   z_owned_query_t * : z_query_drop,                                 \
+                  z_owned_encoding_t * : z_encoding_drop,                           \
                   z_owned_closure_sample_t * : z_closure_sample_drop,               \
                   z_owned_closure_owned_sample_t * : z_closure_owned_sample_drop,   \
                   z_owned_closure_query_t * : z_closure_query_drop,                 \
@@ -125,7 +127,8 @@
                   z_owned_string_array_t : z_string_array_check,       \
                   z_owned_bytes_t : z_bytes_check,                     \
                   z_owned_sample_t : z_sample_check,                   \
-                  z_owned_query_t : z_query_check                      \
+                  z_owned_query_t : z_query_check,                     \
+                  z_owned_encoding_t : z_encoding_check                \
             )(&x)
 
 /**
@@ -176,6 +179,7 @@
                   z_owned_sample_t : z_sample_move,                               \
                   z_owned_query_t : z_query_move,                                 \
                   z_owned_bytes_t : z_bytes_move,                                 \
+                  z_owned_encoding_t : z_encoding_move,                           \
                   z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
                   z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move,     \
                   z_owned_query_ring_channel_t : z_query_ring_channel_move,       \
@@ -231,7 +235,8 @@
                   z_owned_closure_reply_t * : z_closure_reply_null,                 \
                   z_owned_closure_hello_t * : z_closure_hello_null,                 \
                   z_owned_closure_zid_t * : z_closure_zid_null,                     \
-                  z_owned_sample_t * : z_sample_null                                \
+                  z_owned_sample_t * : z_sample_null,                               \
+                  z_owned_encoding_t * : z_encoding_null                            \
             )(x)
 
 // clang-format on
