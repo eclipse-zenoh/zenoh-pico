@@ -1078,27 +1078,27 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
 
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub) { return _z_subscriber_drop(&sub->_val); }
 
-z_owned_keyexpr_t z_subscriber_keyexpr(z_loaned_subscriber_t *sub) {
-    z_owned_keyexpr_t ret;
-    z_keyexpr_null(&ret);
-    if (sub != NULL) {
-        uint32_t lookup = sub->_entity_id;
-        _z_subscription_rc_list_t *tail = sub->_zn.in->val._local_subscriptions;
-        while (tail != NULL && !z_keyexpr_check(&ret)) {
-            _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
-            if (head->in->val._id == lookup) {
-                _z_keyexpr_t key = _z_keyexpr_duplicate(head->in->val._key);
-                ret = (z_owned_keyexpr_t){._val = z_malloc(sizeof(_z_keyexpr_t))};
-                if (ret._val != NULL) {
-                    *ret._val = key;
-                } else {
-                    _z_keyexpr_clear(&key);
-                }
-            }
-            tail = _z_subscription_rc_list_tail(tail);
-        }
+int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *sub) {
+    // Init keyexpr
+    z_keyexpr_null(keyexpr);
+    if ((keyexpr == NULL) || (sub == NULL)) {
+        return _Z_ERR_GENERIC;
     }
-    return ret;
+    uint32_t lookup = sub->_entity_id;
+    _z_subscription_rc_list_t *tail = sub->_zn.in->val._local_subscriptions;
+    while (tail != NULL && !z_keyexpr_check(keyexpr)) {
+        _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
+        if (head->in->val._id == lookup) {
+            // Allocate keyexpr
+            keyexpr->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
+            if (keyexpr->_val == NULL) {
+                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            }
+            _z_keyexpr_copy(keyexpr->_val, &head->in->val._key);
+        }
+        tail = _z_subscription_rc_list_tail(tail);
+    }
+    return _Z_RES_OK;
 }
 #endif
 

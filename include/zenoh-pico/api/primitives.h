@@ -34,70 +34,73 @@ extern "C" {
 /********* Data Types Handlers *********/
 #define z_bytes_wrap _z_bytes_wrap
 
-// TODO(sashacmc): docs
 /**
- * Constructs a :c:type:`z_string_t` departing from a ``const char *``.
- * It is a loaned key expression that aliases ``value``.
+ * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` string.
  *
  * Parameters:
- *   value: Pointer to null terminated string.
+ *   value: Pointer to a null terminated string.
+ *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
  *
- * Returns:
- *   The :c:type:`z_string_t` corresponding to the given string.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t z_view_str_wrap(z_view_string_t *str, const char *value);
 
 /**
- * Constructs a :c:type:`z_keyexpr_t` departing from a string.
+ * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
  * It is a loaned key expression that aliases ``name``.
  * Unlike it's counterpart in zenoh-c, this function does not test passed expression to correctness.
  *
  * Parameters:
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
  *
- * Returns:
- *   The :c:type:`z_keyexpr_t` corresponding to the given string.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
- * Constructs a :c:type:`z_keyexpr_t` departing from a string.
+ * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
  * It is a loaned key expression that aliases ``name``.
  * Input key expression is not checked for correctness.
  *
  * Parameters:
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
  *
- * Returns:
- *   The :c:type:`z_keyexpr_t` corresponding to the given string.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
- * Get null-terminated string departing from a :c:type:`z_keyexpr_t`.
+ * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
  *
  * If given keyexpr contains a declared keyexpr, the resulting owned string will be uninitialized.
  * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
  * and get its full expanded representation.
  *
  * Parameters:
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t`
+ *   keyexpr: Pointer to a loaned instance of :c:type:`z_keyexpr_t`.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *
- * Returns:
- *   The :c:type:`z_owned_string_t` containing key expression string representation if it's possible
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s);
+int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
 
 /**
- * Constructs a null-terminated string departing from a :c:type:`z_keyexpr_t` for a given :c:type:`z_loaned_session_t`.
- * The user is responsible of dropping the returned string using ``z_free``.
+ * Builds a null-terminated string from a :c:type:`z_loaned_keyexpr_t` for a given
+ * :c:type:`z_loaned_session_t`.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` to resolve the keyexpr.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to be resolved.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to resolve the keyexpr.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to be resolved.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *
- * Returns:
- *   The string representation of a keyexpr for a given session.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
 
@@ -105,82 +108,82 @@ int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t
  * Checks if a given keyexpr is valid.
  *
  * Parameters:
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to be checked.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to be checked.
  *
- * Returns:
- *   Returns ``true`` if the keyexpr is valid, or ``false`` otherwise.
+ * Return:
+ *   ``true`` if keyexpr is valid, or ``false`` otherwise.
  */
 _Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr);
 
 /**
- * Check if a given keyexpr is valid and in its canonical form.
+ * Checks if a given keyexpr is valid and in canonical form.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a non-null terminated string.
  *   len: Number of characters in ``start``.
  *
- * Returns:
- *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
- * Check if a given keyexpr is valid and in its canonical form.
+ * Checks if a given keyexpr is valid and in canonical form.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a null terminated string.
  *   len: Number of characters in ``start``.
  *
- * Returns:
- *   Returns ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
 
 /**
- * Canonization of a given keyexpr in its its string representation.
+ * Canonizes of a given keyexpr in string representation.
  * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a non-null terminated string.
  *   len: Number of characters in ``start``.
  *
- * Returns:
- *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
- * Canonization of a given keyexpr in its its string representation.
+ * Canonizes a given keyexpr in string representation.
  * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
  *
  * Parameters:
  *   start: Pointer to the keyexpr in its string representation as a null terminated string.
  *   len: Number of characters in ``start``.
  *
- * Returns:
- *   Returns ``0`` if the canonization is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t zp_keyexpr_canonize_null_terminated(char *start);
 
 /**
- * Check if a given keyexpr contains another keyexpr in its set.
+ * Checks if a given keyexpr contains another keyexpr in its set.
  *
  * Parameters:
- *   l: The first keyexpr.
- *   r: The second keyexpr.
+ *   l: Pointer to a :c:type:`z_loaned_keyexpr_t`.
+ *   r: Pointer to a :c:type:`z_loaned_keyexpr_t`.
  *
- * Returns:
- *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * Return:
+ *   ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
  * defined by ``r``. Otherwise, returns ``false``.
  */
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Check if a given keyexpr contains another keyexpr in its set.
+ * Checks if a given keyexpr contains another keyexpr in its set.
  *
  * Parameters:
  *   l: Pointer to the keyexpr in its string representation as a null terminated string.
@@ -188,27 +191,27 @@ _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *
  *   r: Pointer to the keyexpr in its string representation as a null terminated string.
  *   rlen: Number of characters in ``r``.
  *
- * Returns:
- *   Returns ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
+ * Return:
+ *   ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
  * defined by ``r``. Otherwise, returns ``false``.
  */
 _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 
 /**
- * Check if a given keyexpr intersects with another keyexpr.
+ * Checks if a given keyexpr intersects with another keyexpr.
  *
  * Parameters:
- *   l: The first keyexpr.
- *   r: The second keyexpr.
+ *   l: Pointer to a :c:type:`z_loaned_keyexpr_t`.
+ *   r: Pointer to a :c:type:`z_loaned_keyexpr_t`.
  *
- * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * Return:
+ *   ``true`` if keyexprs intersect, i.e. there exists at least one key which is contained in both of the
  * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
 _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Check if a given keyexpr intersects with another keyexpr.
+ * Checks if a given keyexpr intersects with another keyexpr.
  *
  * Parameters:
  *   l: Pointer to the keyexpr in its string representation as a null terminated string.
@@ -216,26 +219,26 @@ _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t
  *   r: Pointer to the keyexpr in its string representation as a null terminated string.
  *   rlen: Number of characters in ``r``.
  *
- * Returns:
- *   Returns ``true`` if the keyexprs intersect, i.e. there exists at least one key which is contained in both of the
+ * Return:
+ *   ``true`` if keyexprs intersect, i.e. there exists at least one key which is contained in both of the
  * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
 _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
 
 /**
- * Check if a two keyexprs are equal.
+ * Checks if two keyexpr are equal.
  *
  * Parameters:
- *   l: The first keyexpr.
- *   r: The second keyexpr.
+ *   l: Pointer to a :c:type:`z_loaned_keyexpr_t`.
+ *   r: Pointer to a :c:type:`z_loaned_keyexpr_t`.
  *
- * Returns:
- *   Returns ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
+ * Return:
+ *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
  */
 _Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Check if a two keyexprs are equal.
+ * Checks if two keyexpr as null terminated string are equal.
  *
  * Parameters:
  *   l: Pointer to the keyexpr in its string representation as a null terminated string.
@@ -243,54 +246,26 @@ _Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r)
  *   r: Pointer to the keyexpr in its string representation as a null terminated string.
  *   rlen: Number of characters in ``r``.
  *
- * Returns:
- *   Returns ``true`` if both ``l`` and ``r`` are equal. Otherwise, it returns ``false``.
+ * Return:
+ *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, it returns ``false``.
  */
 _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
-// TODO(sashacmc): update comment
 /**
- * Return a new, zenoh-allocated, empty configuration.
+ * Builds a new, zenoh-allocated, empty configuration.
  * It consists in an empty set of properties for zenoh session configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
- * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_config_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
- * Returns:
- *   Returns a new, zenoh-allocated, empty configuration.
+ * Parameters:
+ *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
  */
 void z_config_new(z_owned_config_t *config);
 
-// TODO(sashacmc): update comment
 /**
- * Return a new, zenoh-allocated, default configuration.
+ * Builds a new, zenoh-allocated, default configuration.
  * It consists in a default set of properties for zenoh session configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_config_t` by loaning it using
- * ``z_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_config_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_config_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
- * Returns:
- *   Returns a new, zenoh-allocated, default configuration.
+ * Parameters:
+ *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
  */
 void z_config_default(z_owned_config_t *config);
 
@@ -298,11 +273,11 @@ void z_config_default(z_owned_config_t *config);
  * Gets the property with the given integer key from the configuration.
  *
  * Parameters:
- *   config: A loaned instance of :c:type:`z_owned_config_t`.
- *   key: Integer key for the requested property.
+ *   config: Pointer to a :c:type:`z_loaned_config_t` to get the property from.
+ *   key: Integer key of the requested property.
  *
- * Returns:
- *   Returns the property with the given integer key from the configuration.
+ * Return:
+ *   The requested property value.
  */
 const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
 
@@ -310,61 +285,32 @@ const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
  * Inserts or replaces the property with the given integer key in the configuration.
  *
  * Parameters:
- *   config: A loaned instance of :c:type:`z_owned_config_t`.
- *   key: Integer key for the property to be inserted.
+ *   config: Pointer to a :c:type:`z_loaned_config_t` to modify.
+ *   key: Integer key of the property to be inserted.
  *   value: Property value to be inserted.
  *
- * Returns:
- *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if insertion successful, ``negative value`` otherwise.
  */
 int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
 
 /**
- * Return a new, zenoh-allocated, default scouting configuration.
- * It consists in a default set of properties for scouting configuration.
+ * Builds a new :c:type:`z_owned_scouting_config_t` with a default set of properties for scouting configuration.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it
- * using
- * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
- * is equivalent to writing ``z_config_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your
- * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
- * Returns:
- *   Returns a new, zenoh-allocated, default scouting configuration.
+ * Parameters:
+ *   sc: Pointer to an uninitialized :c:type:`z_owned_scouting_config_t`.
  */
 void z_scouting_config_default(z_owned_scouting_config_t *sc);
 
 /**
- * Return a new, zenoh-allocated, scouting configuration extracted from a :c:type:`z_owned_config_t`.
- * It consists in a default set of properties for scouting configuration.
- *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_scouting_config_t` by loaning it
- * using
- * ``z_scouting_config_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
- * is equivalent to writing ``z_config_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_scouting_config_check(&val)`` or ``z_check(val)`` if your
- * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * Builds a new :c:type:`z_owned_scouting_config_t` with values from a :c:type:`z_loaned_config_t`.
  *
  * Parameters:
- *   config: A loaned instance of :c:type:`z_owned_config_t`.
+ *   config: Pointer to a :c:type:`z_owned_config_t` to get the values from.
+ *   sc: Pointer to an uninitialized :c:type:`z_owned_scouting_config_t`.
  *
- * Returns:
- *   Returns a new, zenoh-allocated, default scouting configuration.
+ * Return:
+ *   ``0`` if build successful, ``negative value`` otherwise.
  */
 int8_t z_scouting_config_from(z_owned_scouting_config_t *sc, const z_loaned_config_t *config);
 
@@ -372,89 +318,116 @@ int8_t z_scouting_config_from(z_owned_scouting_config_t *sc, const z_loaned_conf
  * Gets the property with the given integer key from the configuration.
  *
  * Parameters:
- *   config: A loaned instance of :c:type:`z_owned_scouting_config_t`.
+ *   config: Pointer to a :c:type:`z_loaned_scouting_config_t` to get the property from.
  *   key: Integer key for the requested property.
  *
- * Returns:
- *   Returns the property with the given integer key from the configuration.
+ * Return:
+ *   The requested property value.
  */
 const char *zp_scouting_config_get(const z_loaned_scouting_config_t *config, uint8_t key);
 
 /**
- * Inserts or replaces the property with the given integer key in the configuration.
+ * Inserts or replace the property with the given integer key in the configuration.
  *
  * Parameters:
- *   config: A loaned instance of :c:type:`z_owned_scouting_config_t`.
+ *   config: Pointer to a :c:type:`z_loaned_scouting_config_t` to modify.
  *   key: Integer key for the property to be inserted.
  *   value: Property value to be inserted.
  *
- * Returns:
- *   Returns ``0`` if the insertion is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if insertion successful, ``negative value`` otherwise.
  */
 int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *config, uint8_t key, const char *value);
 
 /**
- * Constructs a :c:type:`z_owned_encoding_t`.
+ * Builds a new :c:type:`z_owned_encoding_t`.
  *
  * Parameters:
- *   encoding: a reference to an uninitialized :c:type:`z_owned_encoding_t`
- *   id: A known :c:type:`z_encoding_id_t`.
- *   schema: A custom schema string value.
+ *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
+ *   id: A known :c:type:`z_encoding_id_t` value.
+ *   schema: Pointer to a custom schema string value.
  *
- * Returns:
- *   Returns ``0`` if construction is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t zp_encoding_make(z_owned_encoding_t *encoding, z_encoding_id_t id, const char *schema);
 
 /**
- * Constructs a :c:type:`z_owned_encoding_t` with default value.
+ * Builds a new a :c:type:`z_owned_encoding_t` with default value.
  *
  * Parameters:
- *   encoding: a reference to an uninitialized :c:type:`z_owned_encoding_t`
+ *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
  *
- * Returns:
- *   Returns ``0`` if construction is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t zp_encoding_default(z_owned_encoding_t *encoding);
 
 /**
- * Returns ``true`` if encoding is in non-default state, ``false`` otherwise.
+ * Checks if a :c:type:`z_owned_encoding_t` has non-default values.
+ *
+ * Return:
+ *   ``true`` if encoding is in non-default state, ``false`` otherwise.
  */
 _Bool z_encoding_check(const z_owned_encoding_t *encoding);
 
 /**
- * Frees the memory of a :c:type:`z_owned_encoding_t`.
+ * Free the memory of a :c:type:`z_owned_encoding_t`.
  */
 void z_encoding_drop(z_owned_encoding_t *encoding);
 
 /**
- * Returns a loaned :c:type:`z_loaned_encoding_t`.
+ * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
+ *
+ * Parameters:
+ *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to loan.
+ *
+ * Return:
+ *    Pointer to the loaned version.
  */
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding);
 
 /**
- * Moves a owned :c:type:`z_owned_encoding_t`.
+ * Gets a moved version of a :c:type:`z_owned_encoding_t`.
+ *
+ * Parameters:
+ *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to move.
+ *
+ * Return:
+ *    Pointer to the moved version.
  */
 z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding);
 
 /**
- * Constructs a :c:type:`z_owned_encoding_t` with default value.
+ * Builds a :c:type:`z_owned_encoding_t` with default value.
  *
  * Parameters:
- *   encoding: a reference to an uninitialized :c:type:`z_owned_encoding_t`
+ *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
  *
- * Returns:
- *   Returns ``0`` if construction is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if creation successful,``negative value`` otherwise.
  */
 int8_t z_encoding_null(z_owned_encoding_t *encoding);
 
 /**
- * Returns value payload.
+ * Gets the bytes data from a value payload by aliasing it.
+ *
+ * Parameters:
+ *    value: Pointer to a :c:type:`z_loaned_value_t` to get data from.
+ *
+ * Return:
+ *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
  */
 const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
 
 /**
- * Returns total number of bytes in the payload.
+ * Gets total number of bytes in a bytes array.
+ *
+ * Parameters:
+ *    bytes: Pointer to a :c:type:`z_loaned_bytes_t` to get length from.
+ *
+ * Return:
+ *    The number of bytes.
  */
 size_t z_bytes_len(const z_loaned_bytes_t *bytes);
 
@@ -462,348 +435,256 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
  * Decodes data into a :c:type:`z_owned_string_t`
  *
  * Parameters:
- *   bytes: Data to decode.
- *   s: An uninitialized memory location where to construct a decoded string.
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t` to contain the decoded string.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s);
+int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
- * Encodes string into a :c:type:`z_owned_bytes_t`
+ * Encodes a string into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
- *   buffer: An uninitialized memory location where to encode the string.
- *   s: The string to encode.
+ *   buffer: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   str: Pointer to the string to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s);
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *str);
 
 /**
+ * Checks validity of a timestamp
  *
- * Checks validity of the timestamp
+ * Parameters:
+ *   ts: Timestamp value to check validity of.
  *
+ * Return:
+ *   ``true`` if timestamp is valid, ``false`` otherwise.
  */
 _Bool z_timestamp_check(z_timestamp_t ts);
 
 /**
- * Constructs a default query target.
+ * Builds a default query target.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_target_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_target_t`.
  */
 z_query_target_t z_query_target_default(void);
 
 /**
- * Automatic query consolidation strategy selection.
+ * Builds an automatic query consolidation :c:type:`z_query_consolidation_t`.
  *
- * A query consolidation strategy will automatically be selected depending the query selector.
- * If the selector contains time range properties, no consolidation is performed.
+ * A query consolidation strategy will automatically be selected depending on the query selector.
+ * If selector contains time range properties, no consolidation is performed.
  * Otherwise the :c:func:`z_query_consolidation_latest` strategy is used.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_auto(void);
 
 /**
- * Constructs a default :c:type:`z_query_consolidation_t`.
+ * Builds a default :c:type:`z_query_consolidation_t`.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_default(void);
 
 /**
- * Latest consolidation.
+ * Builds a latest query consolidation :c:type:`z_query_consolidation_t`.
  *
  * This strategy optimizes bandwidth on all links in the system but will provide a very poor latency.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_latest(void);
 
 /**
- * Monotonic consolidation.
+ * Builds a monotonic query consolidation :c:type:`z_query_consolidation_t`.
  *
  * This strategy offers the best latency. Replies are directly transmitted to the application when received
  * without needing to wait for all replies. This mode does not guarantee that there will be no duplicates.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_monotonic(void);
 
 /**
- * No consolidation.
+ * Builds a no query consolidation :c:type:`z_query_consolidation_t`.
  *
  * This strategy is useful when querying timeseries data bases or when using quorums.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_consolidation_t`.
+ * Return:
+ *   The constructed :c:type:`z_query_consolidation_t`.
  */
 z_query_consolidation_t z_query_consolidation_none(void);
 
 /**
- * Get a query's value selector by aliasing it.
+ * Gets a query parameters field.
  *
  * Parameters:
- *   query: Pointer to the query to get the value selector from.
- *
- * Returns:
- *   Returns the value selector wrapped as a :c:type:`z_loaned_bytes_t*`, since value selector is a user-defined
- * representation.
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the parameters from.
+ *   parameters: Pointer to an uninitialized :c:type:`z_view_string_t` to contain the parameters.
  */
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters);
 
 /**
- * Get a query's payload value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets a query value payload by aliasing it.
  *
  * Parameters:
- *   query: Pointer to the query to get the payload from.
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the value from.
  *
- * Returns:
- *   Returns the payload wrapped as a :c:type:`z_value_t`, since payload value is a user-defined representation.
+ * Return:
+ *   Pointer to the value payload as a :c:type:`z_loaned_value_t`.
  */
 const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
 
 #if Z_FEATURE_ATTACHMENT == 1
 /**
- * Get a query's attachment value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets a query attachment value by aliasing it.
  *
  * Parameters:
- *   query: Pointer to the query to get the attachment from.
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the attachment from.
  *
- * Returns:
- *   Returns the attachment wrapped as a :c:type:`z_attachment_t`, since attachment is a user-defined representation.
+ * Return:
+ *   The attachment value wrapped as a :c:type:`z_attachment_t`.
  */
 z_attachment_t z_query_attachment(const z_loaned_query_t *query);
 #endif
 
 /**
- * Get a query's key by aliasing it.
+ * Gets a query keyexpr by aliasing it.
  *
  * Parameters:
- *   query: Pointer to the query to get keyexpr from.
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the keyexpr from.
  *
- * Returns:
- *   Returns the :c:type:`z_keyexpr_t` associated to the query.
+ * Return:
+ *   The keyexpr wrapped as a:c:type:`z_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
 
-// TODO(sashacmc): update comment for all "owned"
 /**
- * Return a new sample closure.
+ * Builds a new sample closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_sample_t` by loaning it using
- * ``z_closure_sample_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
- * is equivalent to writing ``z_closure_sample_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_sample_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new sample closure.
+ * Return:
+ *   The sample closure.
  */
 int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
                         void *context);
 
 /**
- * Return a new sample closure.
+ * Builds a new sample closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_owned_sample_check(&val)`` or ``z_check(val)`` if your
- * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new sample closure.
+ * Return:
+ *   The sample closure.
  */
 int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, z_owned_sample_handler_t call,
                               z_dropper_handler_t drop, void *context);
 
 /**
- * Return a new query closure.
+ * Builds a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_query_t` by loaning it using
- * ``z_closure_query_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_closure_query_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_query_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new query closure.
+ * Return:
+ *   The query closure.
  */
 int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
- * Return a new query closure.
+ * Builds a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_owned_query_check(&val)`` or ``z_check(val)`` if your
- * compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new query closure.
+ * Return:
+ *   The query closure.
  */
 int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, z_owned_query_handler_t call,
                              z_dropper_handler_t drop, void *context);
 
 /**
- * Return a new reply closure.
+ * Builds a new reply closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_reply_t` by loaning it using
- * ``z_closure_reply_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_closure_reply_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_reply_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new reply closure.
+ * Return:
+ *   The reply closure.
  */
 int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
- * Return a new reply closure.
+ * Builds a new reply closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_reply_t` by loaning it using
- * ``z_closure_reply_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_closure_reply_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_reply_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new reply closure.
+ * Return:
+ *   The reply closure.
  */
 int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_reply_handler_t call,
                              z_dropper_handler_t drop, void *context);
 
 /**
- * Return a new hello closure.
+ * Builds a new hello closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_hello_t` by loaning it using
- * ``z_closure_hello_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``,
- * is equivalent to writing ``z_closure_hello_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_hello_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new hello closure.
+ * Return:
+ *   The hello closure.
  */
 int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**
- * Return a new zid closure.
+ * Builds a new zid closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_closure_zid_t` by loaning it using
- * ``z_closure_zid_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_closure_zid_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_closure_zid_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   call: the typical callback function. ``context`` will be passed as its last argument.
- *   drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
- *   context: a pointer to an arbitrary state.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
  *
- * Returns:
- *   Returns a new zid closure.
+ * Return:
+ *   The hello closure.
  */
 int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
@@ -862,45 +743,50 @@ _VIEW_FUNCTIONS(z_loaned_string_t, z_view_string_t, string)
 // Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
 
-// TODO(sashacmc): comments, docs, etc.
+/**
+ * Loans a :c:type:`z_owned_sample_t`.
+ *
+ * Parameters:
+ *   sample: Pointer to a :c:type:`z_owned_sample_t` to loan.
+ *
+ * Return:
+ *   Pointer to the loaned sample as a :c:type:`z_loaned_sample_t`.
+ */
 const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
+
+/**
+ * Gets data from a :c:type:`z_loaned_string_t`.
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to get data from.
+ *
+ * Return:
+ *   Pointer to the string data.
+ */
 const char *z_string_data(const z_loaned_string_t *str);
 
 /************* Primitives **************/
 /**
- * Looks for other Zenoh-enabled entities like routers and/or peers.
+ * Scouts for other Zenoh entities like routers and/or peers.
  *
  * Parameters:
- *   config: A moved instance of :c:type:`z_owned_scouting_config_t` containing the set properties to configure the
- * scouting. callback: A moved instance of :c:type:`z_owned_closure_hello_t` containing the callbacks to be called.
+ *   config: Pointer to a moved :c:type:`z_owned_scouting_config_t` to configure the scouting with.
+ *   callback: Pointer to a moved :c:type:`z_owned_closure_hello_t` callback.
  *
- * Returns:
- *   Returns ``0`` if the scouting is successful triggered, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
  */
 int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
  * Opens a Zenoh session.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_session_t` by loaning it using
- * ``z_session_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_session_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_session_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   config: A moved instance of :c:type:`z_owned_config_t` containing the set properties to configure the session.
+ *   zs: Pointer to an uninitialized :c:type:`z_owned_session_t` to store the session info.
+ *   config: Pointer to a moved :c:type:`z_owned_config_t` to configure the session with.
  *
- * Returns:
- *   A :c:type:`z_owned_session_t` with either a valid open session or a failing session.
- *   Should the session opening fail, ``z_check(val)`` ing the returned value will return ``false``.
+ * Return:
+ *   ``0`` if open successful, ``negative value`` otherwise.
  */
 int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config);
 
@@ -908,157 +794,149 @@ int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config);
  * Closes a Zenoh session.
  *
  * Parameters:
- *   zs: A moved instance of the the :c:type:`z_owned_session_t` to close.
+ *   zs: Pointer to a moved :c:type:`z_owned_session_t` to close.
  *
- * Returns:
- *   Returns ``0`` if the session is successful closed, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if close successful, ``negative value`` otherwise.
  */
 int8_t z_close(z_owned_session_t *zs);
 
 /**
- * Fetches the Zenoh IDs of all connected peers.
+ * Fetches Zenoh IDs of all connected peers.
  *
- * :c:var:`callback` will be called once for each ID. It is guaranteed to never be called concurrently,
+ * The callback will be called once for each ID. It is guaranteed to never be called concurrently,
  * and to be dropped before this function exits.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` to inquiry.
- *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containing the callbacks to be called.
+ *   zs: Pointer to :c:type:`z_loaned_session_t` to fetch peer id from.
+ *   callback: Pointer to a moved :c:type:`z_owned_closure_zid_t` callback.
  *
- * Returns:
- *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
 int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
- * Fetches the Zenoh IDs of all connected routers.
+ * Fetches Zenoh IDs of all connected routers.
  *
- * :c:var:`callback` will be called once for each ID. It is guaranteed to never be called concurrently,
+ * The callback will be called once for each ID. It is guaranteed to never be called concurrently,
  * and to be dropped before this function exits.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` to inquiry.
- *   callback: A moved instance of :c:type:`z_owned_closure_zid_t` containing the callbacks to be called.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to fetch router id from.
+ *   callback: Pointer to a moved :c:type:`z_owned_closure_zid_t` callback.
  *
- * Returns:
- *   Returns ``0`` if the info is successful triggered, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
 int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *callback);
 
 /**
- * Get the local Zenoh ID associated to a given Zenoh session.
+ * Gets the local Zenoh ID associated to a given Zenoh session.
  *
- * Unless the :c:type:`z_loaned_session_t` is invalid, that ID is guaranteed to be non-zero.
- * In other words, this function returning an array of 16 zeros means you failed to pass it a valid session.
+ * If this function returns an array of 16 zeros, this means the session is invalid.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` to inquiry.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to get the id from.
  *
- * Returns:
- *   Returns the local Zenoh ID of the given :c:type:`z_loaned_session_t`.
+ * Return:
+ *   The local Zenoh ID of the session as :c:type:`z_id_t`.
  */
 z_id_t z_info_zid(const z_loaned_session_t *zs);
 
 /**
- * Get a sample's keyexpr value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the keyexpr from a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the keyexpr from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the keyexpr from.
  *
- * Returns:
- *   Returns the keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
+ * Return:
+ *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample);
 
 /**
- * Get a sample's payload value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the payload of a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the payload from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the payload from.
  *
- * Returns:
- *   Returns the payload wrapped as a :c:type:`z_loaned_bytes_t`.
+ * Return:
+ *   The payload wrapped as a :c:type:`z_loaned_bytes_t`.
  */
 const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample);
 
 /**
- * Get a sample's timestamp value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the timestamp of a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the timestamp from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the timestamp from.
  *
- * Returns:
- *   Returns the timestamp wrapped as a :c:type:`z_timestamp_t`.
+ * Return:
+ *   The timestamp wrapped as a :c:type:`z_timestamp_t`.
  */
 z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample);
 
 /**
- * Get a sample's encoding value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the encoding of a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the encoding from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the encoding from.
  *
- * Returns:
- *   Returns the encoding wrapped as a :c:type:`z_loaned_encoding_t*`.
+ * Return:
+ *   The encoding wrapped as a :c:type:`z_loaned_encoding_t*`.
  */
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
 
 /**
- * Get a sample's kind by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the kind of a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the sample kind from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the kind from.
  *
- * Returns:
- *   Returns the sample kind wrapped as a :c:type:`z_sample_kind_t`.
+ * Return:
+ *   The sample kind wrapped as a :c:type:`z_sample_kind_t`.
  */
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 
 /**
- * Get a sample's qos value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the qos value of a sample by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the qos from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos from.
  *
- * Returns:
- *   Returns the qos wrapped as a :c:type:`z_qos_t`.
+ * Return:
+ *   The qos wrapped as a :c:type:`z_qos_t`.
  */
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
 
 #if Z_FEATURE_ATTACHMENT == 1
 /**
- * Get a sample's attachment value by aliasing it.
- * Note: This API has been marked as unstable: it works as advertised, but we may change it in a future release.
+ * Gets the attachment of a value by aliasing it.
  *
  * Parameters:
- *   sample: Pointer to the sample to get the attachment from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the attachment from.
  *
- * Returns:
- *   Returns the attachment wrapped as a :c:type:`z_attachment_t`.
+ * Return:
+ *   The attachment wrapped as a :c:type:`z_attachment_t`.
  */
 z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample);
 #endif
 #if Z_FEATURE_PUBLICATION == 1
 /**
- * Constructs the default values for the put operation.
+ * Builds a :c:type:`z_put_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_put_options_t`.
+ * Parameters:
+ *   Pointer to an uninitialized :c:type:`z_put_options_t`.
  */
 
 void z_put_options_default(z_put_options_t *options);
 
 /**
- * Constructs the default values for the delete operation.
+ * Builds a :c:type:`z_delete_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_delete_options_t`.
+ * Parameters:
+ *   Pointer to an uninitialized :c:type:`z_delete_options_t`.
  */
 void z_delete_options_default(z_delete_options_t *options);
 
@@ -1066,249 +944,215 @@ void z_delete_options_default(z_delete_options_t *options);
  * Puts data for a given keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` through where data will be put.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to put the data through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to put the data for.
  *   payload: Pointer to the data to put.
  *   payload_len: The length of the ``payload``.
- *   options: The put options to be applied in the put operation.
+ *   options: Pointer to a :c:type:`z_put_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
 int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
              z_zint_t payload_len, const z_put_options_t *options);
 
 /**
- * Deletes data from a given keyexpr.
+ * Deletes data for a given keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` through where data will be put.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
- *   options: The delete options to be applied in the delete operation.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to delete the data through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to delete the data for.
+ *   options: Pointer to a :c:type:`z_delete_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the delete operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if delete operation successful, ``negative value`` otherwise.
  */
 int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options);
 
 /**
- * Constructs the default values for the publisher entity.
+ * Builds a :c:type:`z_publisher_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_publisher_options_t`.
+ * Parameters:
+ *   Pointer to an uninitialized :c:type:`z_delete_options_t`.
  */
 void z_publisher_options_default(z_publisher_options_t *options);
 
 /**
- * Declares a publisher for the given keyexpr.
+ * Declares a publisher for a given keyexpr.
  *
  * Data can be put and deleted with this publisher with the help of the
  * :c:func:`z_publisher_put` and :c:func:`z_publisher_delete` functions.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_publisher_t` by loaning it using
- * ``z_publisher_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_publisher_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_publisher_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to declare the publisher.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the publisher.
- *   options: The options to apply to the publisher. If ``NULL`` is passed, the default options will be applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the publisher through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the publisher with.
+ *   options: Pointer to a :c:type:`z_publisher_options_t` to configure the operation.
  *
- * Returns:
- *   A :c:type:`z_owned_publisher_t` with either a valid publisher or a failing publisher.
- *   Should the publisher be invalid, ``z_check(val)`` ing the returned value will return ``false``.
+ * Return:
+ *   ``0`` if declare successful, ``negative value`` otherwise.
  */
 int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                            const z_publisher_options_t *options);
 
 /**
- * Undeclare the publisher generated by a call to :c:func:`z_declare_publisher`.
+ * Undeclares a publisher.
  *
  * Parameters:
- *   pub: A moved instance of :c:type:`z_owned_publisher_t` to undeclare.
+ *   pub: Pointer to a moved :c:type:`z_owned_publisher_t` to undeclare.
  *
- * Returns:
- *   Returns ``0`` if the undeclare publisher operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
 int8_t z_undeclare_publisher(z_owned_publisher_t *pub);
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher);
 
 /**
- * Constructs the default values for the put operation via a publisher entity.
+ * Builds a :c:type:`z_publisher_put_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_publisher_put_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_publisher_put_options_t`.
  */
 void z_publisher_put_options_default(z_publisher_put_options_t *options);
 
 /**
- * Constructs the default values for the delete operation via a publisher entity.
+ * Builds a :c:type:`z_publisher_delete_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_publisher_delete_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_publisher_delete_options_t`.
  */
 void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
 
 /**
- * Puts data for the keyexpr associated to the given publisher.
+ * Puts data for the keyexpr bound to the given publisher.
  *
  * Parameters:
- *   pub: A loaned instance of :c:type:`z_loaned_publisher_t` from where to put the data.
- *   options: The options to apply to the put operation. If ``NULL`` is passed, the default options will be applied.
+ *   pub: Pointer to a :c:type:`z_loaned_publisher_t` from where to put the data.
+ *   options: Pointer to a :c:type:`z_publisher_put_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
 int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
                        const z_publisher_put_options_t *options);
 
 /**
- * Deletes data from the keyexpr associated to the given publisher.
+ * Deletes data from the keyexpr bound to the given publisher.
  *
  * Parameters:
- *   pub: A loaned instance of :c:type:`z_loaned_publisher_t` from where to delete the data.
- *   options: The options to apply to the delete operation. If ``NULL`` is passed, the default options will be applied.
+ *   pub: Pointer to a :c:type:`z_loaned_publisher_t` from where to delete the data.
+ *   options: Pointer to a :c:type:`z_publisher_delete_options_t` to configure the delete operation.
  *
- * Returns:
- *   Returns ``0`` if the delete operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if delete operation successful, ``negative value`` otherwise.
  */
 int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
 #endif
 
 #if Z_FEATURE_QUERY == 1
 /**
- * Constructs the default values for the get operation.
+ * Builds a :c:type:`z_get_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_get_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_get_options_t`.
  */
 void z_get_options_default(z_get_options_t *options);
 
 /**
- * Issues a distributed query for a given keyexpr.
+ * Sends a distributed query for a given keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` through where data will be put.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to put.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to send the query through.
+ *   keyexpr: Pointer to a  :c:type:`z_loaned_keyexpr_t` to send the query for.
  *   parameters: Pointer to the parameters as a null-terminated string.
- *   callback: A moved instance of :c:type:`z_owned_closure_reply_t` containing the callbacks to be called.
- *   options: The get options to be applied in the distributed query.
+ *   callback: Pointer to a :c:type:`z_owned_closure_reply_t` callback.
+ *   options: Pointer to a :c:type:`z_get_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the put operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
 int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
              z_owned_closure_reply_t *callback, z_get_options_t *options);
 /**
- * Checks if the queryable answered with an OK, which allows this value to be treated as a sample.
- *
- * If this returns ``false``, you should use ``z_check`` before trying to use :c:func:`z_reply_err` if you want to
- * process the error that may be here.
+ * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *
  * Parameters:
- *   reply: Pointer to the received query reply.
+ *   reply: Pointer to a :c:type:`z_loaned_reply_t` to check.
  *
- * Returns:
- *   Returns ``true`` if the queryable answered with an OK, which allows this value to be treated as a sample, or
- * ``false`` otherwise.
+ * Return:
+ *   ``true`` if queryable answered with an OK, ``false`` otherwise.
  */
 _Bool z_reply_is_ok(const z_loaned_reply_t *reply);
 
 /**
- * Yields the contents of the reply by asserting it indicates a success.
+ * Gets the content of an OK reply.
  *
  * You should always make sure that :c:func:`z_reply_is_ok` returns ``true`` before calling this function.
  *
  * Parameters:
- *   reply: Pointer to the received query reply.
+ *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
  *
- * Returns:
- *   Returns the :c:type:`z_loaned_sample_t` wrapped in the query reply.
+ * Return:
+ *   The OK reply content wrapped as a :c:type:`z_loaned_sample_t`.
  */
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
 
 /**
- * Yields the contents of the reply by asserting it indicates a failure.
+ * Gets the contents of an error reply.
  *
  * You should always make sure that :c:func:`z_reply_is_ok` returns ``false`` before calling this function.
  *
  * Parameters:
- *   reply: Pointer to the received query reply.
+ *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
  *
- * Returns:
- *   Returns the :c:type:`z_value_t` wrapped in the query reply.
+ * Return:
+ *   The error reply content wrapped as a :c:type:`z_loaned_value_t`.
  */
 const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
 /**
- * Constructs the default values for the queryable entity.
+ * Builds a :c:type:`z_queryable_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_queryable_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_queryable_options_t`.
  */
 void z_queryable_options_default(z_queryable_options_t *options);
 
 /**
- * Declares a queryable for the given keyexpr.
- *
- * Received queries are processed by means of callbacks.
- *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_queryable_t` by loaning it using
- * ``z_queryable_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_queryable_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_queryable_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * Declares a queryable for a given keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to declare the subscriber.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_query_t` containing the callbacks to be called and the
- * context to pass to them. options: The options to apply to the queryable. If ``NULL`` is passed, the default options
- * will be applied.
+ *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
+ *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
  *
- * Returns:
- *   A :c:type:`z_owned_queryable_t` with either a valid queryable or a failing queryable.
- *   Should the queryable be invalid,_loaned ``z_check(val)`` ing the returned value will return ``false``.
+ * Return:
+ *   ``0`` if declare operation successful, ``negative value`` otherwise.
  */
 int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
                            const z_loaned_keyexpr_t *keyexpr, z_owned_closure_query_t *callback,
                            const z_queryable_options_t *options);
 
 /**
- * Undeclares the queryable generated by a call to :c:func:`z_declare_queryable`.
+ * Undeclares a queryable.
  *
  * Parameters:
- *   queryable: A moved instance of :c:type:`z_owned_queryable_t` to undeclare.
+ *   queryable: Pointer to a :c:type:`z_owned_queryable_t` to undeclare.
  *
- * Returns:
- *   Returns ``0`` if the undeclare queryable operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if undeclare operation successful, ``negative value`` otherwise.
  */
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable);
 
 /**
- * Constructs the default values for the query reply operation.
+ * Builds a :c:type:`z_query_reply_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_query_reply_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_query_reply_options_t`.
  */
 void z_query_reply_options_default(z_query_reply_options_t *options);
 
@@ -1321,266 +1165,240 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * returns.
  *
  * Parameters:
- *   query: Pointer to the received query.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   payload: Pointer to the data to put.
- *   payload_len: The length of the ``payload``.
- *   options: The options to apply to the send query reply operation. If ``NULL`` is passed, the default options will be
- * applied.
+ *   query: Pointer to a :c:type:`z_loaned_query_t` to reply.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the reply with.
+ *   payload: Pointer to the reply data.
+ *   payload_len: The length of the payload.
+ *   options: Pointer to a :c:type:`z_query_reply_options_t` to configure the reply.
  *
- * Returns:
- *   Returns ``0`` if the send query reply operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options);
 #endif
 
 /**
- * Creates keyexpr owning string passed to it
+ * Builds a new keyexpr.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   name: Pointer to the null-terminated string of the keyexpr.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name);
+int8_t z_keyexpr_new(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
- * Declares a keyexpr, so that it is internally mapped into into a numerical id.
+ * Declares a keyexpr, so that it is mapped on a numerical id.
  *
  * This numerical id is used on the network to save bandwidth and ease the retrieval of the concerned resource
  * in the routing tables.
  *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_keyexpr_t` by loaning it using
- * ``z_keyexpr_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_keyexpr_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_keyexpr_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
- *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to declare the keyexpr.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to declare.
+ *   ke: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the keyexpr through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the keyexpr with.
  *
- * Returns:
- *   A :c:type:`z_owned_keyexpr_t` with either a valid or invalid keyexpr.
- *   Should the keyexpr be invalid, ``z_check(val)`` ing the returned value will return ``false``.
+ * Return:
+ *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr);
+int8_t z_declare_keyexpr(z_owned_keyexpr_t *ke, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr);
 
 /**
- * Undeclares the keyexpr generated by a call to :c:func:`z_declare_keyexpr`.
+ * Undeclares a keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` through where data will be put.
- *   keyexpr: A moved instance of :c:type:`z_owned_keyexpr_t` to undeclare.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
+ *   keyexpr: Pointer to a moved :c:type:`z_owned_keyexpr_t` to undeclare.
  *
- * Returns:
- *   Returns ``0`` if the undeclare keyexpr operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
 // TODO(sashacmc): change parameters order?
 int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
- * Constructs the default values for the subscriber entity.
+ * Builds a :c:type:`z_subscriber_options_t` with default values.
  *
- * Returns:
- *   Returns the constructed :c:type:`z_subscriber_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_subscriber_options_t`.
  */
 void z_subscriber_options_default(z_subscriber_options_t *options);
 
 /**
- * Declares a (push) subscriber for the given keyexpr.
- *
- * Received data is processed by means of callbacks.
- *
- * Like most ``z_owned_X_t`` types, you may obtain an instance of :c:type:`z_owned_subscriber_t` by loaning it using
- * ``z_subscriber_loan(&val)``. The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is
- * equivalent to writing ``z_subscriber_loan(&val)``.
- *
- * Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said
- * instance, as this implies the instance's inners were moved. To make this fact more obvious when reading your code,
- * consider using ``z_move(val)`` instead of ``&val`` as the argument. After a ``z_move``, ``val`` will still exist, but
- * will no longer be valid. The destructors are double-drop-safe, but other functions will still trust that your ``val``
- * is valid.
- *
- * To check if ``val`` is still valid, you may use ``z_subscriber_check(&val)`` or ``z_check(val)`` if your compiler
- * supports ``_Generic``, which will return ``true`` if ``val`` is valid, or ``false`` otherwise.
+ * Declares a subscriber for a given keyexpr.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to declare the subscriber.
- *   keyexpr: A loaned instance of :c:type:`z_keyexpr_t` to associate with the subscriber.
- *   callback: A moved instance of :c:type:`z_owned_closure_sample_t` containg the callbacks to be called and the
- * context to pass to them. options: The options to apply to the subscriber. If ``NULL`` is passed, the default options
- * will be applied.
+ *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a`z_owned_closure_sample_t` callback.
+ *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
  *
- * Returns:
- *   A :c:type:`z_owned_subscriber_t` with either a valid subscriber or a failing subscriber.
- *   Should the subscriber be invalid, ``z_check(val)`` ing the returned value will return ``false``.
+ * Return:
+ *   ``0`` if declare successful, ``negative value`` otherwise.
  */
 int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                             z_owned_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**
- * Undeclares the (push) subscriber generated by a call to :c:func:`z_declare_subscriber`.
+ * Undeclares the subscriber.
  *
  * Parameters:
- *   sub: A moved instance of :c:type:`z_owned_subscriber_t` to undeclare.
+ *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to undeclare.
  *
- * Returns:
- *   Returns ``0`` if the undeclare (push) subscriber operation is successful, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
 int8_t z_undeclare_subscriber(z_owned_subscriber_t *sub);
 
 /**
- * @brief
+ * Copies the keyexpr of a subscriber
  *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the keyexpr.
+ *   sub: Pointer to a :c:type:`z_loaned_subscriber_t` to copy the keyexpr from.
+ *
+ * Return:
+ *   ``0`` if copy successful, ``negative value`` otherwise.
  */
-z_owned_keyexpr_t z_subscriber_keyexpr(z_loaned_subscriber_t *sub);
+int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *sub);
 #endif
 
 /************* Multi Thread Tasks helpers **************/
 /**
- * Constructs the default values for the session read task.
+ * Builds a :c:type:`zp_task_read_options_t` with default value.
  *
- * Returns:
- *   Returns the constructed :c:type:`zp_task_read_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_task_read_options_t`.
  */
 void zp_task_read_options_default(zp_task_read_options_t *options);
 
 /**
- * Start a separate task to read from the network and process the messages as soon as they are received.
+ * Starts a task to read from the network and process the received messages.
  *
  * Note that the task can be implemented in form of thread, process, etc. and its implementation is platform-dependent.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to start the read task.
- *   options: The options to apply when starting the read task. If ``NULL`` is passed, the default options will be
- * applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
+ *   options: Pointer to a :c:type:`zp_task_read_options_t` to configure the task.
  *
- * Returns:
- *   Returns ``0`` if the read task started successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
 int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
 
 /**
- * Stop the read task.
+ * Stops the read task.
  *
  * This may result in stopping a thread or a process depending on the target platform.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to stop the read task.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to stop the task from.
  *
- * Returns:
- *   Returns ``0`` if the read task stopped successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
 int8_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
- * Constructs the default values for the session lease task.
+ * Builds a :c:type:`zp_task_lease_options_t` with default value.
  *
- * Returns:
- *   Returns the constructed :c:type:`zp_task_lease_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_task_lease_options_t`.
  */
 void zp_task_lease_options_default(zp_task_lease_options_t *options);
 
 /**
- * Start a separate task to handle the session lease.
+ * Starts a task to handle the session lease.
  *
  * This task will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
  * When operating over a multicast transport, it also periodically sends the ``Join`` messages.
  * Note that the task can be implemented in form of thread, process, etc. and its implementation is platform-dependent.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to start the lease task.
- *   options: The options to apply when starting the lease task. If ``NULL`` is passed, the default options will be
- * applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
+ *   options: Pointer to a :c:type:`zp_task_lease_options_t` to configure the task.
  *
- * Returns:
- *   Returns ``0`` if the lease task started successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
 int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
- * Stop the lease task.
+ * Stops the lease task.
  *
  * This may result in stopping a thread or a process depending on the target platform.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where to stop the lease task.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to stop the task from.
  *
- * Returns:
- *   Returns ``0`` if the lease task stopped successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
 int8_t zp_stop_lease_task(z_loaned_session_t *zs);
 
 /************* Single Thread helpers **************/
 /**
- * Constructs the default values for the reading procedure.
+ * Builds a :c:type:`zp_read_options_t` with default value.
  *
- * Returns:
- *   Returns the constructed :c:type:`zp_read_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_read_options_t`.
  */
 void zp_read_options_default(zp_read_options_t *options);
 
 /**
- * Triggers a single execution of reading procedure from the network and processes of any received the message.
+ * Executes a single read from the network and process received messages.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where trigger the reading procedure.
- *   options: The options to apply to the read. If ``NULL`` is passed, the default options will be
- * applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the read for.
+ *   options: Pointer to a :c:type:`zp_read_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the reading procedure was executed successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
 int8_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
 
 /**
- * Constructs the default values for sending the keep alive.
+ * Builds a :c:type:`zp_send_keep_alive_options_t` with default value.
  *
- * Returns:
- *   Returns the constructed :c:type:`zp_send_keep_alive_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_send_keep_alive_options_t`.
  */
 void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
 
 /**
- * Triggers a single execution of keep alive procedure.
- *
- * It will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
+ * Executes a single send keep alive procedure.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where trigger the leasing procedure.
- *   options: The options to apply to the send of a ``KeepAlive`` messages. If ``NULL`` is passed, the default options
- * will be applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
+ *   options: Pointer to a :c:type:`zp_send_keep_alive_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
 int8_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
 
 /**
- * Constructs the default values for sending the join.
+ * Builds a :c:type:`zp_send_join_options_t` with default value.
  *
- * Returns:
- *   Returns the constructed :c:type:`zp_send_join_options_t`.
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_send_join_options_t`.
  */
 void zp_send_join_options_default(zp_send_join_options_t *options);
 
 /**
- * Triggers a single execution of join procedure.
- *
- * It will send ``Join`` messages.
+ * Executes a single send join procedure.
  *
  * Parameters:
- *   zs: A loaned instance of the the :c:type:`z_loaned_session_t` where trigger the leasing procedure.
- *   options: The options to apply to the send of a ``Join`` messages. If ``NULL`` is passed, the default options will
- * be applied.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to execute the send for.
+ *   options: Pointer to a :c:type:`zp_send_keep_alive_options_t` to configure the operation.
  *
- * Returns:
- *   Returns ``0`` if the leasing procedure was executed successfully, or a ``negative value`` otherwise.
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
 int8_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
