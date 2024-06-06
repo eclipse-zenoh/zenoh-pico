@@ -53,7 +53,7 @@ Data Structures
 .. autoctype:: types.h::zp_task_lease_options_t
 .. autoctype:: types.h::zp_read_options_t
 .. autoctype:: types.h::zp_send_keep_alive_options_t
-.. autoctype:: types.h::zp_send_keep_join_options_t
+.. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_qos_t
 
 Owned Types
