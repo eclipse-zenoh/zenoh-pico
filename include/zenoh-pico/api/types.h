@@ -277,7 +277,7 @@ typedef struct {
 } z_put_options_t;
 
 /**
- * Represents the configuration used to configure a delete operation sent via :c:func:`z_delete`,
+ * Represents the configuration used to configure a delete operation sent via :c:func:`z_delete`.
  *
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
@@ -304,14 +304,14 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a delete operation by a previously declared publisher,
- * sent via :c:func:`z_publisher_delete`,
+ * sent via :c:func:`z_publisher_delete`.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
 } z_publisher_delete_options_t;
 
 /**
- * Represents the configuration used to configure a get operation sent via :c:func:`z_get`,
+ * Represents the configuration used to configure a get operation sent via :c:func:`z_get`.
  *
  * Members:
  *   z_query_target_t target: The queryables that should be targeted by this get.

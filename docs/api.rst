@@ -37,17 +37,8 @@ Data Structures
 ~~~~~~~~~~~~~~~
 
 .. autoctype:: types.h::z_zint_t
-.. autoctype:: types.h::z_bytes_t
 .. autoctype:: types.h::z_id_t
-.. autoctype:: types.h::z_string_t
-.. autoctype:: types.h::z_keyexpr_t
-.. autoctype:: types.h::z_config_t
-.. autoctype:: types.h::z_session_t
-.. autoctype:: types.h::z_subscriber_t
-.. autoctype:: types.h::z_publisher_t
-.. autoctype:: types.h::z_queryable_t
-.. autoctype:: types.h::z_encoding_t
-.. autoctype:: types.h::z_value_t
+.. autoctype:: types.h::z_timestamp_t
 .. autoctype:: types.h::z_subscriber_options_t
 .. autoctype:: types.h::z_query_consolidation_t
 .. autoctype:: types.h::z_publisher_options_t
@@ -58,78 +49,66 @@ Data Structures
 .. autoctype:: types.h::z_publisher_put_options_t
 .. autoctype:: types.h::z_publisher_delete_options_t
 .. autoctype:: types.h::z_get_options_t
-.. autoctype:: types.h::z_sample_t
-.. autoctype:: types.h::z_hello_t
-.. autoctype:: types.h::z_reply_t
-.. autoctype:: types.h::z_reply_data_t
 .. autoctype:: types.h::zp_task_read_options_t
 .. autoctype:: types.h::zp_task_lease_options_t
 .. autoctype:: types.h::zp_read_options_t
 .. autoctype:: types.h::zp_send_keep_alive_options_t
-
-Arrays
-~~~~~~
-.. c:type:: z_str_array_t
-
-  Represents an array of ``char *``.
-
-  Operations over :c:type:`z_str_array_t` must be done using the provided functions:
-
-    - ``char *z_str_array_get(z_str_array_t *a, size_t k);``
-    - ``size_t z_str_array_len(z_str_array_t *a);``
-    - ``_Bool z_str_array_array_is_empty(z_str_array_t *a);``
+.. autoctype:: types.h::zp_send_keep_join_options_t
+.. autoctype:: types.h::z_qos_t
 
 Owned Types
 ~~~~~~~~~~~
 
-Like most ``z_owned_X_t`` types, you may obtain an instance of ``z_X_t`` by loaning it using ``z_X_loan(&val)``.
-The ``z_loan(val)`` macro, available if your compiler supports C11's ``_Generic``, is equivalent to writing ``z_X_loan(&val)``.
+TODO: owned type description
 
-Like all ``z_owned_X_t``, an instance will be destroyed by any function which takes a mutable pointer to said instance, as this implies the instance's inners were moved.
-To make this fact more obvious when reading your code, consider using ``z_move(val)`` instead of ``&val`` as the argument.
-After a move, ``val`` will still exist, but will no longer be valid. The destructors are double-free-safe, but other functions will still trust that your ``val`` is valid.
+.. autoctype:: types.h::z_owned_bytes_t
+.. autoctype:: types.h::z_owned_string_t
+.. autoctype:: types.h::z_owned_keyexpr_t
+.. autoctype:: types.h::z_owned_config_t
+.. autoctype:: types.h::z_owned_scouting_config_t
+.. autoctype:: types.h::z_owned_session_t
+.. autoctype:: types.h::z_owned_subscriber_t
+.. autoctype:: types.h::z_owned_publisher_t
+.. autoctype:: types.h::z_owned_queryable_t
+.. autoctype:: types.h::z_owned_query_t
+.. autoctype:: types.h::z_owned_encoding_t
+.. autoctype:: types.h::z_owned_value_t
+.. autoctype:: types.h::z_owned_sample_t
+.. autoctype:: types.h::z_owned_hello_t
+.. autoctype:: types.h::z_owned_reply_t
+.. autoctype:: types.h::z_owned_string_array_t
+.. autoctype:: types.h::z_owned_bytes_map_t
 
-To check if ``val`` is still valid, you may use ``z_X_check(&val)`` or ``z_check(val)`` if your compiler supports ``_Generic``, which will return ``true`` if ``val`` is valid.
+Loaned Types
+~~~~~~~~~~~
 
-.. c:type:: z_owned_bytes_t
+TODO: loaned type description
 
-  A zenoh-allocated :c:type:`z_bytes_t`.
+.. autoctype:: types.h::z_loaned_bytes_t
+.. autoctype:: types.h::z_loaned_string_t
+.. autoctype:: types.h::z_loaned_keyexpr_t
+.. autoctype:: types.h::z_loaned_config_t
+.. autoctype:: types.h::z_loaned_scouting_config_t
+.. autoctype:: types.h::z_loaned_session_t
+.. autoctype:: types.h::z_loaned_subscriber_t
+.. autoctype:: types.h::z_loaned_publisher_t
+.. autoctype:: types.h::z_loaned_queryable_t
+.. autoctype:: types.h::z_loaned_query_t
+.. autoctype:: types.h::z_loaned_encoding_t
+.. autoctype:: types.h::z_loaned_value_t
+.. autoctype:: types.h::z_loaned_sample_t
+.. autoctype:: types.h::z_loaned_hello_t
+.. autoctype:: types.h::z_loaned_reply_t
+.. autoctype:: types.h::z_loaned_string_array_t
 
-.. c:type:: z_owned_str_t
+View Types
+~~~~~~~~~~~
 
-  A zenoh-allocated :c:type:`char *`.
+TODO: view type description
 
-.. c:type:: z_owned_keyexpr_t
-
-  A zenoh-allocated :c:type:`z_keyexpr_t`.
-
-.. c:type:: z_owned_config_t
-
-  A zenoh-allocated :c:type:`z_config_t`.
-
-.. c:type:: z_owned_session_t
-
-  A zenoh-allocated :c:type:`z_session_t`.
-
-.. c:type:: z_owned_subscriber_t
-
-  A zenoh-allocated :c:type:`z_subscriber_t`.
-
-.. c:type:: z_owned_publisher_t
-
-  A zenoh-allocated :c:type:`z_publisher_t`.
-
-.. c:type:: z_owned_queryable_t
-
-  A zenoh-allocated :c:type:`z_queryable_t`.
-
-.. c:type:: z_owned_reply_t
-
-  A zenoh-allocated :c:type:`z_reply_t`.
-
-.. c:type:: z_owned_str_array_t
-
-  A zenoh-allocated :c:type:`z_str_array_t`.
+.. autoctype:: types.h::z_view_string_t
+.. autoctype:: types.h::z_view_keyexpr_t
+.. autoctype:: types.h::z_view_string_array_t
 
 Closures
 ~~~~~~~~
@@ -170,7 +149,9 @@ Macros
 Primitives
 ~~~~~~~~~~
 
-.. autocfunction:: primitives.h::z_keyexpr
+.. autocfunction:: primitives.h::z_view_str_wrap
+.. autocfunction:: primitives.h::z_view_keyexpr_from_string
+.. autocfunction:: primitives.h::z_view_keyexpr_from_string_unchecked
 .. autocfunction:: primitives.h::z_keyexpr_to_string
 .. autocfunction:: primitives.h::zp_keyexpr_resolve
 .. autocfunction:: primitives.h::z_keyexpr_is_initialized
@@ -192,7 +173,18 @@ Primitives
 .. autocfunction:: primitives.h::z_scouting_config_from
 .. autocfunction:: primitives.h::zp_scouting_config_get
 .. autocfunction:: primitives.h::zp_scouting_config_insert
+.. autocfunction:: primitives.h::zp_encoding_make
 .. autocfunction:: primitives.h::zp_encoding_default
+.. autocfunction:: primitives.h::z_encoding_check
+.. autocfunction:: primitives.h::z_encoding_drop
+.. autocfunction:: primitives.h::z_encoding_loan
+.. autocfunction:: primitives.h::z_encoding_move
+.. autocfunction:: primitives.h::z_encoding_null
+.. autocfunction:: primitives.h::z_value_payload
+.. autocfunction:: primitives.h::z_bytes_len
+.. autocfunction:: primitives.h::z_bytes_decode_into_string
+.. autocfunction:: primitives.h::z_bytes_encode_from_string
+.. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
 .. autocfunction:: primitives.h::z_query_consolidation_default
@@ -200,28 +192,33 @@ Primitives
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_parameters
-.. autocfunction:: primitives.h::z_query_keyexpr
 .. autocfunction:: primitives.h::z_query_value
-.. autocfunction:: primitives.h::z_value_is_initialized
+.. autocfunction:: primitives.h::z_query_attachment
+.. autocfunction:: primitives.h::z_query_keyexpr
 .. autocfunction:: primitives.h::z_closure_sample
 .. autocfunction:: primitives.h::z_closure_query
 .. autocfunction:: primitives.h::z_closure_reply
 .. autocfunction:: primitives.h::z_closure_hello
 .. autocfunction:: primitives.h::z_closure_zid
+.. autocfunction:: primitives.h::z_sample_loan
+.. autocfunction:: primitives.h::z_string_data
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
 .. autocfunction:: primitives.h::z_info_peers_zid
 .. autocfunction:: primitives.h::z_info_routers_zid
 .. autocfunction:: primitives.h::z_info_zid
+.. autocfunction:: primitives.h::z_sample_keyexpr
+.. autocfunction:: primitives.h::z_sample_payload
+.. autocfunction:: primitives.h::z_sample_timestamp
+.. autocfunction:: primitives.h::z_sample_encoding
+.. autocfunction:: primitives.h::z_sample_kind
+.. autocfunction:: primitives.h::z_sample_qos
+.. autocfunction:: primitives.h::z_sample_attachment
 .. autocfunction:: primitives.h::z_put_options_default
 .. autocfunction:: primitives.h::z_delete_options_default
 .. autocfunction:: primitives.h::z_put
 .. autocfunction:: primitives.h::z_delete
-.. autocfunction:: primitives.h::z_get_options_default
-.. autocfunction:: primitives.h::z_get
-.. autocfunction:: primitives.h::z_declare_keyexpr
-.. autocfunction:: primitives.h::z_undeclare_keyexpr
 .. autocfunction:: primitives.h::z_publisher_options_default
 .. autocfunction:: primitives.h::z_declare_publisher
 .. autocfunction:: primitives.h::z_undeclare_publisher
@@ -229,16 +226,23 @@ Primitives
 .. autocfunction:: primitives.h::z_publisher_delete_options_default
 .. autocfunction:: primitives.h::z_publisher_put
 .. autocfunction:: primitives.h::z_publisher_delete
-.. autocfunction:: primitives.h::z_subscriber_options_default
-.. autocfunction:: primitives.h::z_declare_subscriber
-.. autocfunction:: primitives.h::z_undeclare_subscriber
-.. autocfunction:: primitives.h::z_queryable_options_default
-.. autocfunction:: primitives.h::z_declare_queryable
-.. autocfunction:: primitives.h::z_undeclare_queryable
-.. autocfunction:: primitives.h::z_query_reply
+.. autocfunction:: primitives.h::z_get_options_default
+.. autocfunction:: primitives.h::z_get
 .. autocfunction:: primitives.h::z_reply_is_ok
 .. autocfunction:: primitives.h::z_reply_ok
 .. autocfunction:: primitives.h::z_reply_err
+.. autocfunction:: primitives.h::z_queryable_options_default
+.. autocfunction:: primitives.h::z_declare_queryable
+.. autocfunction:: primitives.h::z_undeclare_queryable
+.. autocfunction:: primitives.h::z_query_reply_options_default
+.. autocfunction:: primitives.h::z_query_reply
+.. autocfunction:: primitives.h::z_keyexpr_new
+.. autocfunction:: primitives.h::z_declare_keyexpr
+.. autocfunction:: primitives.h::z_undeclare_keyexpr
+.. autocfunction:: primitives.h::z_subscriber_options_default
+.. autocfunction:: primitives.h::z_declare_subscriber
+.. autocfunction:: primitives.h::z_undeclare_subscriber
+.. autocfunction:: primitives.h::z_subscriber_keyexpr
 .. autocfunction:: primitives.h::zp_task_read_options_default
 .. autocfunction:: primitives.h::zp_start_read_task
 .. autocfunction:: primitives.h::zp_stop_read_task
@@ -249,3 +253,5 @@ Primitives
 .. autocfunction:: primitives.h::zp_read
 .. autocfunction:: primitives.h::zp_send_keep_alive_options_default
 .. autocfunction:: primitives.h::zp_send_keep_alive
+.. autocfunction:: primitives.h::zp_send_join_options_default
+.. autocfunction:: primitives.h::zp_send_join
