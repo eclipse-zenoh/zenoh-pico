@@ -90,6 +90,7 @@ TODO: owned type description
   Represents a Zenoh Subscriber entity.
 
 .. c:type:: z_owned_publisher_t
+
   Represents a Zenoh Publisher entity.
 
 .. c:type:: z_owned_queryable_t
@@ -123,8 +124,6 @@ TODO: owned type description
 .. c:type:: z_owned_string_array_t
 
   Represents an array of non null-terminated string.
-
-.. autoctype:: types.h::z_owned_bytes_map_t
 
 Loaned Types
 ~~~~~~~~~~~
