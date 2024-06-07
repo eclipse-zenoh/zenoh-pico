@@ -61,22 +61,69 @@ Owned Types
 
 TODO: owned type description
 
-.. autoctype:: types.h::z_owned_bytes_t
-.. autoctype:: types.h::z_owned_string_t
-.. autoctype:: types.h::z_owned_keyexpr_t
-.. autoctype:: types.h::z_owned_config_t
-.. autoctype:: types.h::z_owned_scouting_config_t
-.. autoctype:: types.h::z_owned_session_t
-.. autoctype:: types.h::z_owned_subscriber_t
-.. autoctype:: types.h::z_owned_publisher_t
-.. autoctype:: types.h::z_owned_queryable_t
-.. autoctype:: types.h::z_owned_query_t
-.. autoctype:: types.h::z_owned_encoding_t
-.. autoctype:: types.h::z_owned_value_t
-.. autoctype:: types.h::z_owned_sample_t
-.. autoctype:: types.h::z_owned_hello_t
-.. autoctype:: types.h::z_owned_reply_t
-.. autoctype:: types.h::z_owned_string_array_t
+.. c:type:: z_owned_bytes_t
+  
+  Represents an array of bytes.
+
+.. c:type:: z_owned_string_t
+
+  Represents a string without null-terminator.
+
+.. c:type:: z_owned_keyexpr_t
+
+  Represents a key expression in Zenoh.
+
+.. c:type:: z_owned_config_t
+
+  Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
+
+.. c:type:: z_owned_scouting_config_t
+
+  Represents a scouting configuration, used to configure a scouting procedure.
+
+.. c:type:: z_owned_session_t
+
+  Represents a Zenoh Session.
+
+.. c:type:: z_owned_subscriber_t
+
+  Represents a Zenoh Subscriber entity.
+
+.. c:type:: z_owned_publisher_t
+  Represents a Zenoh Publisher entity.
+
+.. c:type:: z_owned_queryable_t
+
+  Represents a Zenoh Queryable entity.
+
+.. c:type:: z_owned_query_t
+
+  Represents a Zenoh Query entity, received by Zenoh queryable entities.
+
+.. c:type:: z_owned_encoding_t
+
+  Represents the encoding of a payload, in a MIME-like format.
+
+.. c:type:: z_owned_value_t
+
+  Represents a Zenoh value.
+
+.. c:type:: z_owned_sample_t
+
+  Represents a data sample.
+
+.. c:type:: z_owned_hello_t
+
+  Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
+
+.. c:type:: z_owned_reply_t
+
+  Represents the reply to a query.
+
+.. c:type:: z_owned_string_array_t
+
+  Represents an array of non null-terminated string.
+
 .. autoctype:: types.h::z_owned_bytes_map_t
 
 Loaned Types
@@ -84,31 +131,86 @@ Loaned Types
 
 TODO: loaned type description
 
-.. autoctype:: types.h::z_loaned_bytes_t
-.. autoctype:: types.h::z_loaned_string_t
-.. autoctype:: types.h::z_loaned_keyexpr_t
-.. autoctype:: types.h::z_loaned_config_t
-.. autoctype:: types.h::z_loaned_scouting_config_t
-.. autoctype:: types.h::z_loaned_session_t
-.. autoctype:: types.h::z_loaned_subscriber_t
-.. autoctype:: types.h::z_loaned_publisher_t
-.. autoctype:: types.h::z_loaned_queryable_t
-.. autoctype:: types.h::z_loaned_query_t
-.. autoctype:: types.h::z_loaned_encoding_t
-.. autoctype:: types.h::z_loaned_value_t
-.. autoctype:: types.h::z_loaned_sample_t
-.. autoctype:: types.h::z_loaned_hello_t
-.. autoctype:: types.h::z_loaned_reply_t
-.. autoctype:: types.h::z_loaned_string_array_t
+.. c:type:: z_loaned_bytes_t
+
+  Represents an array of bytes.
+
+.. c:type:: z_loaned_string_t
+
+  Represents a string without null-terminator.
+
+.. c:type:: z_loaned_keyexpr_t
+
+  Represents a key expression in Zenoh.
+
+.. c:type:: z_loaned_config_t
+
+  Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
+
+.. c:type:: z_loaned_scouting_config_t
+
+  Represents a scouting configuration, used to configure a scouting procedure.
+
+.. c:type:: z_loaned_session_t
+
+  Represents a Zenoh Session.
+
+.. c:type:: z_loaned_subscriber_t
+
+  Represents a Zenoh Subscriber entity.
+
+.. c:type:: z_loaned_publisher_t
+
+  Represents a Zenoh Publisher entity.
+
+.. c:type:: z_loaned_queryable_t
+
+  Represents a Zenoh Queryable entity.
+  
+.. c:type:: z_loaned_query_t
+
+  Represents a Zenoh Query entity, received by Zenoh queryable entities.
+
+.. c:type:: z_loaned_encoding_t
+
+  Represents the encoding of a payload, in a MIME-like format.
+
+.. c:type:: z_loaned_value_t
+
+  Represents a Zenoh value.
+
+.. c:type:: z_loaned_sample_t
+
+  Represents a data sample.
+
+.. c:type:: z_loaned_hello_t
+
+  Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
+
+.. c:type:: z_loaned_reply_t
+
+  Represents the reply to a query.
+
+.. c:type:: z_loaned_string_array_t
+
+  Represents an array of non null-terminated string.
 
 View Types
 ~~~~~~~~~~~
 
 TODO: view type description
 
-.. autoctype:: types.h::z_view_string_t
-.. autoctype:: types.h::z_view_keyexpr_t
-.. autoctype:: types.h::z_view_string_array_t
+.. c:type:: z_view_string_t
+
+  Represents a string without null-terminator.
+
+.. c:type:: z_view_keyexpr_t
+
+  Represents a key expression in Zenoh.
+
+.. c:type:: z_view_string_array_t
+
+  Represents an array of non null-terminated string.
 
 Closures
 ~~~~~~~~
