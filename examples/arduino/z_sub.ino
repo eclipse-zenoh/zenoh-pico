@@ -37,7 +37,8 @@
 void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-    std::string val((const char *)z_sample_payload(sample)->start, z_sample_payload(sample)->len);
+    const z_loaned_slice_t *slice = z_sample_payload(sample);
+    std::string val((const char *)z_slice_data(slice), z_slice_len(slice));
 
     Serial.print(" >> [Subscription listener] Received (");
     Serial.print(z_string_data(z_string_loan(&keystr)));

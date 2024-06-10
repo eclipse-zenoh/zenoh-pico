@@ -20,7 +20,7 @@
 void callback(const z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_publisher_loan((z_owned_publisher_t*)context);
     const z_loaned_slice_t* payload = z_sample_payload(sample);
-    z_publisher_put(pub, payload->start, payload->len, NULL);
+    z_publisher_put(pub, z_slice_data(payload), z_slice_len(payload), NULL);
 }
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
