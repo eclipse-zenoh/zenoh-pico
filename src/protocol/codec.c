@@ -259,6 +259,13 @@ int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     return _z_wbuf_write_bytes(wbf, (const uint8_t *)s, 0, len);
 }
 
+int8_t _z_zstr_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
+    size_t len = s->len - (size_t)1;
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len))
+    // Note that this does not put the string terminator on the wire.
+    return _z_wbuf_write_bytes(wbf, (const uint8_t *)s->val, 0, len);
+}
+
 int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 

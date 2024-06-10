@@ -43,26 +43,27 @@ void fprintwhatami(FILE *stream, unsigned int whatami) {
     }
 }
 
-void fprintlocators(FILE *stream, const z_str_array_t *locs) {
+void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
     fprintf(stream, "[");
-    for (unsigned int i = 0; i < z_str_array_len(locs); i++) {
+    for (unsigned int i = 0; i < z_string_array_len(locs); i++) {
         fprintf(stream, "\"");
-        fprintf(stream, "%s", *z_str_array_get(locs, i));
+        const z_loaned_string_t *str = z_string_array_get(locs, i);
+        fprintf(stream, "%.*s", (int)str->len, str->val);
         fprintf(stream, "\"");
-        if (i < z_str_array_len(locs) - 1) {
+        if (i < z_string_array_len(locs) - 1) {
             fprintf(stream, ", ");
         }
     }
     fprintf(stream, "]");
 }
 
-void fprinthello(FILE *stream, const z_hello_t hello) {
+void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, "Hello { zid: ");
-    fprintzid(stream, hello.zid);
+    fprintzid(stream, hello->zid);
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello.whatami);
+    fprintwhatami(stream, hello->whatami);
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello.locators);
+    fprintlocators(stream, &hello->locators);
     fprintf(stream, " }");
 }
 
@@ -85,8 +86,10 @@ void drop(void *context) {
 void app_main(void) {
     int *context = (int *)pvPortMalloc(sizeof(int));
     *context = 0;
-    z_owned_scouting_config_t config = z_scouting_config_default();
-    z_owned_closure_hello_t closure = z_closure(callback, drop, context);
+    z_owned_scouting_config_t config;
+    z_scouting_config_default(&config);
+    z_owned_closure_hello_t closure;
+    z_closure(&closure, callback, drop, context);
     printf("Scouting...\n");
     z_scout(z_move(config), z_move(closure));
 }

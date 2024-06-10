@@ -116,7 +116,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_DEL: {
                     _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
-                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
+                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), _z_encoding_null(),
                                                    Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
                                                    z_attachment_null());
 #endif

@@ -34,9 +34,6 @@ void _z_str_copy(char *dst, const char *src);
 void _z_str_n_copy(char *dst, const char *src, size_t size);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
 
-// This is here for reference on why
-// the _z_str_array_t was not defined using this macro
-// but instead manually as find below
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -72,7 +69,10 @@ typedef struct {
     char *val;
 } _z_string_t;
 
+_z_string_t _z_string_null(void);
 _z_string_t _z_string_make(const char *value);
+_z_string_t _z_string_wrap(char *value);
+_z_string_t *_z_string_make_as_ptr(const char *value);
 
 size_t _z_string_size(const _z_string_t *s);
 void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
@@ -81,32 +81,13 @@ void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
+_z_string_t _z_string_convert_bytes(const _z_bytes_t *bs);
 _z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)
 
-/*-------- str_array --------*/
-/**
- * An array of NULL terminated strings.
- *
- * Members:
- *   size_t len: The length of the array.
- *   char **_val: A pointer to the array.
- */
-typedef struct {
-    size_t len;
-    char **val;
-} _z_str_array_t;
-
-_z_str_array_t _z_str_array_empty(void);
-_z_str_array_t _z_str_array_make(size_t len);
-void _z_str_array_init(_z_str_array_t *sa, size_t len);
-char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);
-size_t _z_str_array_len(const _z_str_array_t *sa);
-_Bool _z_str_array_is_empty(const _z_str_array_t *sa);
-void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
-void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
-void _z_str_array_clear(_z_str_array_t *sa);
-void _z_str_array_free(_z_str_array_t **sa);
+_Z_VEC_DEFINE(_z_string, _z_string_t)
+_Z_LIST_DEFINE(_z_string, _z_string_t)
+_Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

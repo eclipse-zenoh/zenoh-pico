@@ -18,20 +18,21 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-void data_handler(const z_sample_t *sample, void *ctx) {
+void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_keyexpr_t keyexpr = z_sample_keyexpr(sample);
-    z_owned_str_t keystr = z_keyexpr_to_string(keyexpr);
+    z_owned_string_t keystr;
+    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
-    z_bytes_t payload = z_sample_payload(sample);
-    const uint8_t *data = payload.start;
-    for (size_t i = 0; i < payload.len; i++) {
+    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    const uint8_t *data = payload->start;
+    for (size_t i = 0; i < payload->len; i++) {
         if (data[i] != (uint8_t)i) {
             is_valid = false;
             break;
         }
     }
-    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_loan(keystr), (int)payload.len, is_valid);
+    printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_string_data(z_loan(keystr)),
+           (int)z_sample_payload(sample)->len, is_valid);
     z_drop(z_move(keystr));
 }
 
@@ -51,32 +52,36 @@ int main(int argc, char **argv) {
         clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
     if (mode != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
     }
     if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     // Open session
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return -1;
     }
     // Declare subscriber
-    z_owned_closure_sample_t callback = z_closure(data_handler);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
-    if (!z_check(sub)) {
+    z_owned_closure_sample_t callback;
+    z_closure(&callback, data_handler);
+    z_owned_subscriber_t sub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
@@ -89,8 +94,8 @@ int main(int argc, char **argv) {
     }
     // Clean up
     z_undeclare_subscriber(z_move(sub));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     return 0;
 }

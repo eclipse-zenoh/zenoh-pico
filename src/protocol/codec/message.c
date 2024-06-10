@@ -148,8 +148,8 @@ int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     _Z_DEBUG("Encoding _LOCATORS");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
-        char *s = _z_locator_to_str(&la->_val[i]);
-        _Z_RETURN_IF_ERR(_z_str_encode(wbf, s))
+        _z_string_t *s = _z_locator_to_string(&la->_val[i]);
+        _Z_RETURN_IF_ERR(_z_zstr_encode(wbf, s))
         z_free(s);
     }
 
@@ -279,8 +279,7 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         if (has_timestamp) {
             header |= _Z_FLAG_Z_P_T;
         }
-        has_encoding = pshb->_body._put._encoding.id != Z_ENCODING_PREFIX_EMPTY ||
-                       !_z_bytes_is_empty(&pshb->_body._put._encoding.schema);
+        has_encoding = _z_encoding_check(&pshb->_body._put._encoding);
         if (has_encoding) {
             header |= _Z_FLAG_Z_P_E;
         }
@@ -410,7 +409,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    _Bool has_params = z_bytes_check(&msg->_parameters);
+    _Bool has_params = _z_bytes_check(msg->_parameters);
     if (has_params) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }
@@ -556,7 +555,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     uint8_t header = _Z_MID_Z_ERR;
 
     // Encode header
-    _Bool has_encoding = err->encoding.id != Z_ENCODING_PREFIX_EMPTY;
+    _Bool has_encoding = _z_encoding_check(&err->encoding);
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }

@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H
 #define INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H
 
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
 /* Zenoh Messages */

@@ -86,55 +86,79 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
 #define Z_SAMPLE_KIND_DEFAULT Z_SAMPLE_KIND_PUT
 
 /**
- * Zenoh encoding values.
- * These values are based on already existing HTTP MIME types and extended with other relevant encodings.
+ * Default encoding values used by Zenoh.
  *
- * Enumerators:
- *     Z_ENCODING_PREFIX_EMPTY: Encoding not defined.
- *     Z_ENCODING_PREFIX_APP_OCTET_STREAM: ``application/octet-stream``. Default value for all other cases. An unknown
- *         file type should use this type. Z_ENCODING_PREFIX_APP_CUSTOM: Custom application type. Non IANA standard.
- *     Z_ENCODING_PREFIX_TEXT_PLAIN: ``text/plain``. Default value for textual files. A textual file should be
- *         human-readable and must not contain binary data. Z_ENCODING_PREFIX_APP_PROPERTIES: Application properties
- *         type. Non IANA standard. Z_ENCODING_PREFIX_APP_JSON: ``application/json``. JSON format.
- *     Z_ENCODING_PREFIX_APP_SQL: Application sql type. Non IANA standard. Z_ENCODING_PREFIX_APP_INTEGER: Application
- *         integer type. Non IANA standard. Z_ENCODING_PREFIX_APP_FLOAT: Application float type. Non IANA standard.
- *     Z_ENCODING_PREFIX_APP_XML: ``application/xml``. XML.
- *     Z_ENCODING_PREFIX_APP_XHTML_XML: ``application/xhtml+xml``. XHTML.
- *     Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED: ``application/x-www-form-urlencoded``. The keys and values are
- *         encoded in key-value tuples separated by '&', with a '=' between the key and the value.
- *      Z_ENCODING_PREFIX_TEXT_JSON: Text JSON. Non IANA standard. Z_ENCODING_PREFIX_TEXT_HTML: ``text/html``. HyperText
- *         Markup Language (HTML). Z_ENCODING_PREFIX_TEXT_XML: ``text/xml``. `Application/xml` is recommended as of RFC
- *         7303 (section 4.1), but `text/xml` is still used sometimes. Z_ENCODING_PREFIX_TEXT_CSS: ``text/css``.
- *         Cascading Style Sheets (CSS). Z_ENCODING_PREFIX_TEXT_CSV: ``text/csv``. Comma-separated values (CSV).
- *     Z_ENCODING_PREFIX_TEXT_JAVASCRIPT: ``text/javascript``. JavaScript.
- *     Z_ENCODING_PREFIX_IMAGE_JPEG: ``image/jpeg``. JPEG images.
- *     Z_ENCODING_PREFIX_IMAGE_PNG: ``image/png``. Portable Network Graphics.
- *     Z_ENCODING_PREFIX_IMAGE_GIF: ``image/gif``. Graphics Interchange Format (GIF).
+ * An encoding has a similar role to Content-type in HTTP: it indicates, when present, how data should be interpreted by
+ * the application.
+ *
+ * Please note the Zenoh protocol does not impose any encoding value nor it operates on it.
+ * It can be seen as some optional metadata that is carried over by Zenoh in such a way the application may perform
+ * different operations depending on the encoding value.
+ *
+ * A set of associated constants are provided to cover the most common encodings for user convenience.
+ * This is particularly useful in helping Zenoh to perform additional network optimizations.
  */
 typedef enum {
-    Z_ENCODING_PREFIX_EMPTY = 0,
-    Z_ENCODING_PREFIX_APP_OCTET_STREAM = 1,
-    Z_ENCODING_PREFIX_APP_CUSTOM = 2,  // non iana standard
-    Z_ENCODING_PREFIX_TEXT_PLAIN = 3,
-    Z_ENCODING_PREFIX_APP_PROPERTIES = 4,  // non iana standard
-    Z_ENCODING_PREFIX_APP_JSON = 5,        // if not readable from casual users
-    Z_ENCODING_PREFIX_APP_SQL = 6,
-    Z_ENCODING_PREFIX_APP_INTEGER = 7,  // non iana standard
-    Z_ENCODING_PREFIX_APP_FLOAT = 8,    // non iana standard
-    Z_ENCODING_PREFIX_APP_XML = 9,      // if not readable from casual users (RFC 3023, section 3)
-    Z_ENCODING_PREFIX_APP_XHTML_XML = 10,
-    Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED = 11,
-    Z_ENCODING_PREFIX_TEXT_JSON = 12,  // non iana standard - if readable from casual users
-    Z_ENCODING_PREFIX_TEXT_HTML = 13,
-    Z_ENCODING_PREFIX_TEXT_XML = 14,  // if readable from casual users (RFC 3023, section 3)
-    Z_ENCODING_PREFIX_TEXT_CSS = 15,
-    Z_ENCODING_PREFIX_TEXT_CSV = 16,
-    Z_ENCODING_PREFIX_TEXT_JAVASCRIPT = 17,
-    Z_ENCODING_PREFIX_IMAGE_JPEG = 18,
-    Z_ENCODING_PREFIX_IMAGE_PNG = 19,
-    Z_ENCODING_PREFIX_IMAGE_GIF = 20
-} z_encoding_prefix_t;
-#define Z_ENCODING_PREFIX_DEFAULT Z_ENCODING_PREFIX_EMPTY
+    Z_ENCODING_ID_BYTES = 0,             // Primitives types supported in all Zenoh bindings, just some bytes.
+    Z_ENCODING_ID_INT = 1,               // A VLE-encoded signed little-endian integer.
+    Z_ENCODING_ID_UINT = 2,              // A VLE-encoded little-endian unsigned integer.
+    Z_ENCODING_ID_FLOAT = 3,             // A VLE-encoded float.
+    Z_ENCODING_ID_BOOL = 4,              // A boolean.
+    Z_ENCODING_ID_STRING = 5,            // A UTF-8 string.
+    Z_ENCODING_ID_ERROR = 6,             // A zenoh error.
+    Z_ENCODING_ID_APP_OCTET_STREAM = 7,  // An application-specific stream of bytes.
+    Z_ENCODING_ID_TEXT_PLAIN = 8,        // A textual file.
+    Z_ENCODING_ID_APP_JSON = 9,          // JSON data intended to be consumed by an application.
+    Z_ENCODING_ID_TEXT_JSON = 10,        // JSON data intended to be human readable.
+    Z_ENCODING_ID_APP_CDR = 11,          // A Common Data Representation (CDR)-encoded data.
+    Z_ENCODING_ID_APP_CBOR = 12,         // A Concise Binary Object Representation (CBOR)-encoded data.
+    Z_ENCODING_ID_APP_YAML = 13,         // YAML data intended to be consumed by an application.
+    Z_ENCODING_ID_TEXT_YAML = 14,        // YAML data intended to be human readable.
+    Z_ENCODING_ID_TEXT_JSON5 = 15,       // JSON5 encoded data that are human readable.
+    Z_ENCODING_ID_APP_PYTHON_SERIALIZED_OBJECT = 16,  // A Python object serialized using pickle.
+    Z_ENCODING_ID_APP_PROTOBUF = 17,                  // An application-specific protobuf-encoded data.
+    Z_ENCODING_ID_APP_JAVA_SERIALIZED_OBJECT = 18,    // A Java serialized object.
+    Z_ENCODING_ID_APP_OPENMETRICS_TEXT = 19,          // An openmetrics data.
+    Z_ENCODING_ID_IMAGE_PNG = 20,                     // A Portable Network Graphics (PNG) image.
+    Z_ENCODING_ID_IMAGE_JPEG = 21,                    // A Joint Photographic Experts Group (JPEG) image.
+    Z_ENCODING_ID_IMAGE_GIF = 22,                     // A Graphics Interchange Format (GIF) image.
+    Z_ENCODING_ID_IMAGE_BMP = 23,                     // A BitMap (BMP) image.
+    Z_ENCODING_ID_IMAGE_WEBP = 24,                    // A Web Portable (WebP) image.
+    Z_ENCODING_ID_APP_XML = 25,                       // An XML file intended to be consumed by an application.
+    Z_ENCODING_ID_APP_X_WWW_FORM_URLENCODED = 26,     // An encoded a list of tuples.
+    Z_ENCODING_ID_TEXT_HTML = 27,                     // An HTML file.
+    Z_ENCODING_ID_TEXT_XML = 28,                      // An XML file that is human readable.
+    Z_ENCODING_ID_TEXT_CSS = 29,                      // A CSS file.
+    Z_ENCODING_ID_TEXT_JAVASCRIPT = 30,               // A JavaScript file.
+    Z_ENCODING_ID_TEXT_MARKDOWN = 31,                 // A MarkDown file.
+    Z_ENCODING_ID_TEXT_CSV = 32,                      // A CSV file.
+    Z_ENCODING_ID_APP_SQL = 33,                       // An application-specific SQL query.
+    Z_ENCODING_ID_APP_COAP_PAYLOAD = 34,              // Constrained Application Protocol (CoAP) data.
+    Z_ENCODING_ID_APP_JSON_PATCH_JSON = 35,           // Defines a JSON document structure.
+    Z_ENCODING_ID_APP_JSON_SEQ = 36,                  // A JSON text sequence.
+    Z_ENCODING_ID_APP_JSONPATH = 37,                  // A JSONPath defines a string syntax.
+    Z_ENCODING_ID_APP_JWT = 38,                       // A JSON Web Token (JWT).
+    Z_ENCODING_ID_APP_MP4 = 39,                       // An application-specific MPEG-4 encoded data.
+    Z_ENCODING_ID_APP_SOAP_XML = 40,                  // A SOAP 1.2 message serialized as XML 1.0.
+    Z_ENCODING_ID_APP_YANG = 41,                      // A YANG-encoded data.
+    Z_ENCODING_ID_AUDIO_AAC = 42,                     // A MPEG-4 Advanced Audio Coding (AAC) media.
+    Z_ENCODING_ID_AUDIO_FLAC = 43,                    // A Free Lossless Audio Codec (FLAC) media.
+    Z_ENCODING_ID_AUDIO_MP4 = 44,                     // An audio codec defined in MPEG-4.
+    Z_ENCODING_ID_AUDIO_OGG = 45,                     // An Ogg-encapsulated audio stream.
+    Z_ENCODING_ID_AUDIO_VORBIS = 46,                  // A Vorbis-encoded audio stream.
+    Z_ENCODING_ID_VIDEO_H261 = 47,                    // A h261-encoded video stream.
+    Z_ENCODING_ID_VIDEO_H263 = 48,                    // A h263-encoded video stream.
+    Z_ENCODING_ID_VIDEO_H264 = 49,                    // A h264-encoded video stream.
+    Z_ENCODING_ID_VIDEO_H265 = 50,                    // A h265-encoded video stream.
+    Z_ENCODING_ID_VIDEO_H266 = 51,                    // A h266-encoded video stream.
+    Z_ENCODING_ID_VIDEO_MP4 = 52,                     // A video codec defined in MPEG-4.
+    Z_ENCODING_ID_VIDEO_OGG = 53,                     // An Ogg-encapsulated video stream.
+    Z_ENCODING_ID_VIDEO_RAW = 54,                     // An uncompressed, studio-quality video stream.
+    Z_ENCODING_ID_VIDEO_VP8 = 55,                     // A VP8-encoded video stream.
+    Z_ENCODING_ID_VIDEO_VP9 = 56                      // A VP9-encoded video stream.
+} z_encoding_id_t;
+
+#define Z_ENCODING_ID_DEFAULT Z_ENCODING_ID_BYTES
 
 /**
  * Consolidation mode values.

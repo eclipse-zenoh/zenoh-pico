@@ -17,10 +17,10 @@
 #include "zenoh-pico/api/primitives.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
-void callback(const z_sample_t* sample, void* context) {
-    z_publisher_t pub = z_publisher_loan((z_owned_publisher_t*)context);
-    z_bytes_t payload = z_sample_payload(sample);
-    z_publisher_put(pub, payload.start, payload.len, NULL);
+void callback(const z_loaned_sample_t* sample, void* context) {
+    const z_loaned_publisher_t* pub = z_publisher_loan((z_owned_publisher_t*)context);
+    const z_loaned_bytes_t* payload = z_sample_payload(sample);
+    z_publisher_put(pub, payload->start, payload->len, NULL);
 }
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
@@ -34,32 +34,37 @@ void drop(void* context) {
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
-    z_owned_config_t config = z_config_default();
-    z_owned_session_t session = z_open(z_config_move(&config));
+    z_owned_config_t config;
+    z_config_default(&config);
+    z_owned_session_t session;
+    z_open(&session, z_config_move(&config));
     if (!z_session_check(&session)) {
         printf("Unable to open session!\n");
         return -1;
     }
 
-    if (zp_start_read_task(z_session_loan(&session), NULL) < 0 ||
-        zp_start_lease_task(z_session_loan(&session), NULL) < 0) {
+    if (zp_start_read_task(z_session_loan_mut(&session), NULL) < 0 ||
+        zp_start_lease_task(z_session_loan_mut(&session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&session));
         return -1;
     }
 
-    z_keyexpr_t pong = z_keyexpr_unchecked("test/pong");
-    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&session), pong, NULL);
-    if (!z_publisher_check(&pub)) {
+    z_view_keyexpr_t pong;
+    z_view_keyexpr_from_string_unchecked(&pong, "test/pong");
+    z_owned_publisher_t pub;
+    if (z_declare_publisher(&pub, z_session_loan(&session), z_view_keyexpr_loan(&pong), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
 
-    z_keyexpr_t ping = z_keyexpr_unchecked("test/ping");
-    z_owned_closure_sample_t respond = z_closure_sample(callback, drop, (void*)z_publisher_move(&pub));
-    z_owned_subscriber_t sub =
-        z_declare_subscriber(z_session_loan(&session), ping, z_closure_sample_move(&respond), NULL);
-    if (!z_subscriber_check(&sub)) {
+    z_view_keyexpr_t ping;
+    z_view_keyexpr_from_string_unchecked(&ping, "test/ping");
+    z_owned_closure_sample_t respond;
+    z_closure_sample(&respond, callback, drop, (void*)z_publisher_move(&pub));
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_session_loan(&session), z_view_keyexpr_loan(&ping),
+                             z_closure_sample_move(&respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }
@@ -69,8 +74,8 @@ int main(int argc, char** argv) {
 
     z_undeclare_subscriber(z_subscriber_move(&sub));
 
-    zp_stop_read_task(z_session_loan(&session));
-    zp_stop_lease_task(z_session_loan(&session));
+    zp_stop_read_task(z_session_loan_mut(&session));
+    zp_stop_lease_task(z_session_loan_mut(&session));
 
     z_close(z_session_move(&session));
 }

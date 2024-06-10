@@ -28,8 +28,13 @@ master_doc = 'index'
 extensions = ['sphinx_c_autodoc', 'sphinx_c_autodoc.napoleon']
 language = 'c'
 c_autodoc_roots = ['../include/zenoh-pico/api/']
-c_autodoc_compilation_args = ["-DZ_FEATURE_PUBLICATION=1", "-DZ_FEATURE_SUBSCRIPTION=1",
-                               "-DZ_FEATURE_QUERY=1", "-DZ_FEATURE_QUERYABLE=1"]
+c_autodoc_compilation_args = [
+    "-DZ_FEATURE_PUBLICATION=1",
+    "-DZ_FEATURE_SUBSCRIPTION=1",
+    "-DZ_FEATURE_QUERY=1",
+    "-DZ_FEATURE_QUERYABLE=1",
+    "-DZ_FEATURE_ATTACHMENT=1",
+]
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'
@@ -50,4 +55,4 @@ elif platform == "win32":
     raise ValueError("Windows not supported yet for building docs.")
 
 else:
-    Config.set_library_file('/usr/lib/llvm-14/lib/libclang.so.1') # Required for readthedocs
+    Config.set_library_file('/usr/lib/llvm-14/lib/libclang.so.1')  # Required for readthedocs

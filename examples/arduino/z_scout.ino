@@ -54,12 +54,13 @@ void fprintwhatami(unsigned int whatami) {
     }
 }
 
-void fprintlocators(const z_str_array_t *locs) {
+void fprintlocators(const z_loaned_string_array_t *locs) {
     Serial.print("[");
-    size_t len = z_str_array_len(locs);
+    size_t len = z_string_array_len(locs);
     for (unsigned int i = 0; i < len; i++) {
         Serial.print("'");
-        Serial.print(*z_str_array_get(locs, i));
+        const z_loaned_string_t *str = z_string_array_get(locs, i);
+        Serial.print(str->val);
         Serial.print("'");
         if (i < len - 1) {
             Serial.print(", ");
@@ -68,13 +69,13 @@ void fprintlocators(const z_str_array_t *locs) {
     Serial.print("]");
 }
 
-void fprinthello(const z_hello_t hello) {
+void fprinthello(const z_loaned_hello_t *hello) {
     Serial.print(" >> Hello { zid: ");
-    fprintzid(hello.zid);
+    fprintzid(hello->zid);
     Serial.print(", whatami: ");
-    fprintwhatami(hello.whatami);
+    fprintwhatami(hello->whatami);
     Serial.print(", locators: ");
-    fprintlocators(&hello.locators);
+    fprintlocators(&hello->locators);
     Serial.println(" }");
 }
 
@@ -114,8 +115,10 @@ void setup() {
 void loop() {
     int *context = (int *)malloc(sizeof(int));
     *context = 0;
-    z_owned_scouting_config_t config = z_scouting_config_default();
-    z_owned_closure_hello_t closure = z_closure_hello(callback, drop, context);
+    z_owned_scouting_config_t config;
+    z_scouting_config_default(&config);
+    z_owned_closure_hello_t closure;
+    z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
     z_scout(z_scouting_config_move(&config), z_closure_hello_move(&closure));
 }

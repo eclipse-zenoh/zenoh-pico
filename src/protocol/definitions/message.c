@@ -23,7 +23,7 @@
 void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
-    _z_bytes_clear(&msg->_encoding.schema);
+    _z_encoding_clear(&msg->_encoding);
     _z_bytes_clear(&msg->_payload);
     _z_timestamp_clear(&msg->_commons._timestamp);
 }
@@ -33,8 +33,7 @@ _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *ms
     z_attachment_t att = _z_encoded_as_attachment(&msg->_ext_attachment);
 #endif
     return (_z_msg_query_reqexts_t) {
-        .body = msg->_ext_value.payload.start != NULL || msg->_ext_value.encoding.id != 0 ||
-                !_z_bytes_is_empty(&msg->_ext_value.encoding.schema),
+        .body = msg->_ext_value.payload.start != NULL || _z_encoding_check(&msg->_ext_value.encoding),
         .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
 #if Z_FEATURE_ATTACHMENT == 1
         .attachment = z_attachment_check(&att)
@@ -49,6 +48,6 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
-    _z_bytes_clear(&err->encoding.schema);
+    _z_encoding_clear(&err->encoding);
     _z_bytes_clear(&err->_payload);
 }

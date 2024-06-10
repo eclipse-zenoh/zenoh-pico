@@ -23,7 +23,8 @@
 #define URL "demo/example"
 
 void test_keyexpr(void) {
-    z_owned_keyexpr_t keyexpr = z_keyexpr_new(URL);
+    z_owned_keyexpr_t keyexpr;
+    z_keyexpr_new(&keyexpr, URL);
     assert(z_check(keyexpr));
     z_drop(z_move(keyexpr));
     assert(!z_check(keyexpr));
@@ -32,7 +33,8 @@ void test_keyexpr(void) {
 }
 
 void test_config(void) {
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
     assert(z_check(config));
     z_drop(z_move(config));
     assert(!z_check(config));
@@ -41,7 +43,8 @@ void test_config(void) {
 }
 
 void test_scouting_config(void) {
-    z_owned_scouting_config_t config = z_scouting_config_default();
+    z_owned_scouting_config_t config;
+    z_scouting_config_default(&config);
     assert(z_check(config));
     z_drop(z_move(config));
     assert(!z_check(config));

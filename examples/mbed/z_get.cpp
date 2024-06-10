@@ -33,12 +33,18 @@
 
 void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"); }
 
-void reply_handler(z_owned_reply_t *oreply, void *ctx) {
+void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
     if (z_reply_is_ok(oreply)) {
-        z_loaned_sample_t sample = z_reply_ok(oreply);
-        z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
-        printf(" >> Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample.payload.len, sample.payload.start);
-        z_str_drop(z_str_move(&keystr));
+        const z_loaned_sample_t *sample = z_reply_ok(oreply);
+        z_owned_string_t keystr;
+        z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+        z_owned_string_t replystr;
+        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
+
+        printf(" >> Received ('%s': '%s')\n", z_string_data(z_string_loan(&keystr)),
+               z_string_data(z_string_loan(&replystr)));
+        z_string_drop(z_string_move(&keystr));
+        z_string_drop(z_string_move(&replystr));
     } else {
         printf(" >> Received an error\n");
     }
@@ -52,34 +58,44 @@ int main(int argc, char **argv) {
     net.connect();
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     printf("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     printf("OK\n");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     while (1) {
         z_sleep_s(5);
         printf("Sending Query '%s'...\n", KEYEXPR);
-        z_get_options_t opts = z_get_options_default();
+        z_get_options_t opts;
+        z_get_options_default(&opts);
+        // Value encoding
         if (strcmp(VALUE, "") != 0) {
-            opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+            z_view_string_t value_str;
+            z_view_string_wrap(&value_str, VALUE);
+            z_owned_bytes_t payload;
+            z_bytes_encode_from_string(&payload, z_view_string_loan(&value_str));
+            opts.payload = &payload;
         }
-        z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-        if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
+        z_owned_closure_reply_t callback;
+        z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
+        z_view_keyexpr_t ke;
+        z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+        if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
             printf("Unable to send query.\n");
             exit(-1);
         }
@@ -87,8 +103,8 @@ int main(int argc, char **argv) {
 
     printf("Closing Zenoh Session...");
     // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    zp_stop_read_task(z_session_loan_mut(&s));
+    zp_stop_lease_task(z_session_loan_mut(&s));
 
     z_close(z_session_move(&s));
     printf("OK!\n");

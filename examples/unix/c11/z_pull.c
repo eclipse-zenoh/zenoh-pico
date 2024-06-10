@@ -52,42 +52,46 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
     if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, locator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return -1;
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_sample_ring_channel_t channel = z_sample_ring_channel_new(size);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(channel.send), NULL);
-    if (!z_check(sub)) {
+    z_owned_sample_ring_channel_t channel;
+    z_sample_ring_channel_new(&channel, size);
+    z_owned_subscriber_t sub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_string(&ke, keyexpr);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(channel.send), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
 
     printf("Pulling data every %zu ms... Ring size: %zd\n", interval, size);
-    z_owned_sample_t sample = z_sample_null();
+    z_owned_sample_t sample;
+    z_null(&sample);
     while (true) {
         for (z_call(channel.try_recv, &sample); z_check(sample); z_call(channel.try_recv, &sample)) {
-            z_sample_t loaned_sample = z_loan(sample);
-            z_keyexpr_t sample_key = z_sample_keyexpr(&loaned_sample);
-            z_bytes_t payload = z_sample_payload(&loaned_sample);
-            z_owned_str_t keystr = z_keyexpr_to_string(sample_key);
-            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_loan(keystr), (int)payload.len, payload.start);
+            z_owned_string_t keystr;
+            z_keyexpr_to_string(z_sample_keyexpr(z_loan(sample)), &keystr);
+            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_string_data(z_loan(keystr)),
+                   (int)z_sample_payload(z_loan(sample))->len, z_sample_payload(z_loan(sample))->start);
             z_drop(z_move(keystr));
             z_drop(z_move(sample));
         }
@@ -99,8 +103,8 @@ int main(int argc, char **argv) {
     z_drop(z_move(channel));
 
     // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
 
     z_close(z_move(s));
 

@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
@@ -86,7 +87,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  * Returns:
  *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
  */
-_z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+_z_publisher_t *_z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority);
 
 /**
@@ -143,7 +144,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  * Returns:
  *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
  */
-_z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+_z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
@@ -173,7 +174,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
  */
-_z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+_z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
@@ -225,7 +226,7 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const 
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                 ,
                 z_attachment_t attachment

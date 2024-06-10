@@ -140,7 +140,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
                                     _z_zint_t payload_len, const _z_n_qos_t qos, const z_attachment_t att) {
-    _z_encoding_t encoding = {.id = Z_ENCODING_PREFIX_DEFAULT, .schema = _z_bytes_wrap(NULL, 0)};
+    _z_encoding_t encoding = _z_encoding_null();
     int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
                                           _z_timestamp_null(), qos, att);
     (void)ret;
@@ -162,8 +162,8 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _zp_session_unlock_mutex(zn);
 
         // Build the sample
-        z_sample_t sample = {._rc = _z_sample_rc_new()};
-        sample._rc.in->val = _z_sample_create(&key, &payload, timestamp, encoding, kind, qos, att);
+        _z_sample_rc_t sample = _z_sample_rc_new();
+        sample.in->val = _z_sample_create(&key, &payload, timestamp, encoding, kind, qos, att);
         // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
@@ -173,7 +173,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
             xs = _z_subscription_rc_list_tail(xs);
         }
         // Clean up
-        _z_sample_rc_drop(&sample._rc);
+        _z_sample_rc_drop(&sample);
         _z_keyexpr_clear(&key);
         _z_subscription_rc_list_free(&subs);
     } else {
@@ -209,12 +209,7 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len, _z_n_qos_t qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                    ,
-                                    z_attachment_t att
-#endif
-) {
+                                    _z_zint_t payload_len, _z_n_qos_t qos, z_attachment_t att) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);

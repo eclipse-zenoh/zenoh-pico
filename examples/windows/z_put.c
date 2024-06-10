@@ -27,47 +27,54 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *locator = NULL;
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, locator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return -1;
     }
 
     printf("Declaring key expression '%s'...\n", keyexpr);
-    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(keyexpr));
-    if (!z_check(ke)) {
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_string(&vke, keyexpr);
+    z_owned_keyexpr_t ke;
+    if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
-        zp_stop_read_task(z_loan(s));
-        zp_stop_lease_task(z_loan(s));
+        zp_stop_read_task(z_loan_mut(s));
+        zp_stop_lease_task(z_loan_mut(s));
         z_close(z_move(s));
         return -1;
     }
+    // Create encoding
+    z_owned_encoding_t encoding;
+    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
-    z_put_options_t options = z_put_options_default();
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    z_put_options_t options;
+    z_put_options_default(&options);
+    options.encoding = z_move(encoding);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
     // Clean up
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     return 0;
 }

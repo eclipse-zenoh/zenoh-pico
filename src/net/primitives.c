@@ -50,6 +50,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const
     if (dropper != NULL) {
         (*dropper)(arg_drop);
     }
+    _z_hello_list_free(&hellos);
 }
 
 /*------------------ Resource Declaration ------------------*/
@@ -100,7 +101,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+_z_publisher_t *_z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                      z_congestion_control_t congestion_control, z_priority_t priority) {
     // Allocate publisher
     _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
@@ -188,7 +189,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+_z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
                                        _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(&zn->in->val);
@@ -258,7 +259,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+_z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
                                      _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(&zn->in->val);
@@ -383,7 +384,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
                 ,
                 z_attachment_t attachment
@@ -403,8 +404,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
-        pq->_call_arg = arg_call;
-        pq->_drop_arg = arg_drop;
+        pq->_arg = arg;
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {

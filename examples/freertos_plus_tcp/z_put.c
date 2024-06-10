@@ -30,39 +30,42 @@
 #define VALUE "[FreeRTOS-Plus-TCP] Pub from Zenoh-Pico!"
 
 void app_main(void) {
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return;
     }
 
     printf("Declaring key expression '%s'...\n", KEYEXPR);
-    z_owned_keyexpr_t ke = z_declare_keyexpr(z_loan(s), z_keyexpr(KEYEXPR));
-    if (!z_check(ke)) {
+    z_owned_keyexpr_t ke;
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_string_unchecked(&vke, KEYEXPR);
+    if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
-        zp_stop_read_task(z_loan(s));
-        zp_stop_lease_task(z_loan(s));
+        zp_stop_read_task(z_loan_mut(s));
+        zp_stop_lease_task(z_loan_mut(s));
         z_close(z_move(s));
         return;
     }
 
     printf("Putting Data ('%s': '%s')...\n", KEYEXPR, VALUE);
-    z_put_options_t options = z_put_options_default();
-    options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
+    z_put_options_t options;
+    z_put_options_default(&options);
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)VALUE, strlen(VALUE), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
@@ -73,8 +76,8 @@ void app_main(void) {
 
     // Clean up
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
 }
 #else
