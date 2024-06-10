@@ -32,8 +32,6 @@ extern "C" {
 #endif
 
 /********* Data Types Handlers *********/
-#define z_bytes_wrap _z_bytes_wrap
-
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` string.
  *

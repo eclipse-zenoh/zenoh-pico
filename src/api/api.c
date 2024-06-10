@@ -1299,7 +1299,7 @@ z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner
 z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
 
 int8_t z_bytes_from_str(z_owned_slice_t *bytes const char *str) {
-    bytes->_val = z_bytes_wrap((const uint8_t *)str, strlen(str));
+    bytes->_val = _z_bytes_wrap((const uint8_t *)str, strlen(str));
     return _Z_RES_OK;
 }
 #endif
