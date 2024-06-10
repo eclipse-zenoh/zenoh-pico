@@ -40,29 +40,29 @@
 /*           Fields            */
 /*=============================*/
 /*------------------ Payload field ------------------*/
-int8_t _z_payload_encode(_z_wbuf_t *wbf, const _z_bytes_t *pld) {
+int8_t _z_payload_encode(_z_wbuf_t *wbf, const _z_slice_t *pld) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _PAYLOAD");
-    ret |= _z_bytes_encode(wbf, pld);
+    ret |= _z_slice_encode(wbf, pld);
 
     return ret;
 }
 
-int8_t _z_payload_decode_na(_z_bytes_t *pld, _z_zbuf_t *zbf) {
+int8_t _z_payload_decode_na(_z_slice_t *pld, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _PAYLOAD");
-    return _z_bytes_decode(pld, zbf);
+    return _z_slice_decode(pld, zbf);
 }
 
-int8_t _z_payload_decode(_z_bytes_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
+int8_t _z_payload_decode(_z_slice_t *pld, _z_zbuf_t *zbf) { return _z_payload_decode_na(pld, zbf); }
 
-int8_t _z_id_encode_as_zbytes(_z_wbuf_t *wbf, const _z_id_t *id) {
+int8_t _z_id_encode_as_slice(_z_wbuf_t *wbf, const _z_id_t *id) {
     int8_t ret = _Z_RES_OK;
     uint8_t len = _z_id_len(*id);
 
     if (len != 0) {
         printf("ZIDLEN: %d\n", len);
-        _z_bytes_t buf = _z_bytes_wrap(id->id, len);
-        ret = _z_bytes_encode(wbf, &buf);
+        _z_slice_t buf = _z_slice_wrap(id->id, len);
+        ret = _z_slice_encode(wbf, &buf);
     } else {
         _Z_DEBUG("Attempted to encode invalid ID 0");
         ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
@@ -74,7 +74,7 @@ int8_t _z_id_encode_as_zbytes(_z_wbuf_t *wbf, const _z_id_t *id) {
 ///
 /// Note that while `_z_id_t` has an error state (full 0s), this function doesn't
 /// guarantee that this state will be set in case of errors.
-int8_t _z_id_decode_as_zbytes(_z_id_t *id, _z_zbuf_t *zbf) {
+int8_t _z_id_decode_as_slice(_z_id_t *id, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
     uint8_t len = _z_zbuf_read(zbf);
     _z_zbuf_read_bytes(zbf, id->id, 0, len);
@@ -88,7 +88,7 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     _Z_DEBUG("Encoding _TIMESTAMP");
 
     _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, ts->time))
-    ret |= _z_id_encode_as_zbytes(wbf, &ts->id);
+    ret |= _z_id_encode_as_slice(wbf, &ts->id);
 
     return ret;
 }
@@ -102,7 +102,7 @@ int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zint64_decode(&ts->time, zbf);
-    ret |= _z_id_decode_as_zbytes(&ts->id, zbf);
+    ret |= _z_id_decode_as_slice(&ts->id, zbf);
 
     return ret;
 }
@@ -224,8 +224,8 @@ int8_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     int8_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_id);
     ret |= _z_uint8_encode(wbf, zidlen << 4);
-    _z_bytes_t zid = _z_bytes_wrap(info->_id.id, zidlen);
-    ret |= _z_bytes_val_encode(wbf, &zid);
+    _z_slice_t zid = _z_slice_wrap(info->_id.id, zidlen);
+    ret |= _z_slice_val_encode(wbf, &zid);
     ret |= _z_zsize_encode(wbf, info->_entity_id);
     ret |= _z_zsize_encode(wbf, info->_source_sn);
     return ret;
@@ -236,17 +236,17 @@ int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     uint16_t len = 1 + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
-    _z_bytes_t zid = _z_bytes_wrap(info->_id.id, zidlen);
-    _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &zid));
+    _z_slice_t zid = _z_slice_wrap(info->_id.id, zidlen);
+    _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_entity_id));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_sn));
     return ret;
 }
 #if Z_FEATURE_ATTACHMENT == 1
-int8_t _z_attachment_encode_ext_kv(_z_bytes_t key, _z_bytes_t value, void *ctx) {
+int8_t _z_attachment_encode_ext_kv(_z_slice_t key, _z_slice_t value, void *ctx) {
     _z_wbuf_t *wbf = (_z_wbuf_t *)ctx;
-    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &key));
-    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &value));
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &key));
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &value));
     return 0;
 }
 int8_t _z_attachment_encode_ext(_z_wbuf_t *wbf, z_attachment_t att) {
@@ -308,7 +308,7 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
 #endif
     if (pshb->_is_put) {
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &pshb->_body._put._payload));
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &pshb->_body._put._payload));
     }
 
     return 0;
@@ -318,7 +318,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     int8_t ret = _Z_RES_OK;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
             break;
         }
@@ -326,8 +326,8 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {
             pshb->_body._put._attachment.is_encoded = true;
             pshb->_body._put._attachment.body.encoded = extension->_body._zbuf._val._is_alloc
-                                                            ? _z_bytes_steal(&extension->_body._zbuf._val)
-                                                            : _z_bytes_duplicate(&extension->_body._zbuf._val);
+                                                            ? _z_slice_steal(&extension->_body._zbuf._val)
+                                                            : _z_slice_duplicate(&extension->_body._zbuf._val);
             break;
         }
 #endif
@@ -356,7 +356,7 @@ int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header)
                     _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
                 }
                 if (ret == _Z_RES_OK) {
-                    _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf));
+                    _Z_RETURN_IF_ERR(_z_slice_decode(&pshb->_body._put._payload, zbf));
                 }
                 break;
             }
@@ -409,7 +409,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    _Bool has_params = _z_bytes_check(msg->_parameters);
+    _Bool has_params = _z_slice_check(msg->_parameters);
     if (has_params) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }
@@ -426,7 +426,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_consolidation));
     }
     if (has_params) {
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_parameters));
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_parameters));
     }
     if (required_exts.body) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03;
@@ -437,7 +437,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         _Z_RETURN_IF_ERR(
             _z_zsize_encode(wbf, _z_encoding_len(&msg->_ext_value.encoding) + msg->_ext_value.payload.len));
         _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &msg->_ext_value.encoding));
-        _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &msg->_ext_value.payload));
+        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &msg->_ext_value.payload));
     }
     if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
@@ -463,23 +463,23 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     int8_t ret = _Z_RES_OK;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {  // Source Info
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_source_info_decode(&msg->_ext_info, &zbf);
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Payload
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_encoding_decode(&msg->_ext_value.encoding, &zbf);
-            _z_bytes_t bytes = _z_bytes_wrap((uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
-            _z_bytes_copy(&msg->_ext_value.payload, &bytes);
+            _z_slice_t bytes = _z_slice_wrap((uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
+            _z_slice_copy(&msg->_ext_value.payload, &bytes);
             break;
         }
 #if Z_FEATURE_ATTACHMENT == 1
         case _Z_MSG_EXT_ENC_ZBUF | 0x05: {
             msg->_ext_attachment.is_encoded = true;
             msg->_ext_attachment.body.encoded = extension->_body._zbuf._val._is_alloc
-                                                    ? _z_bytes_steal(&extension->_body._zbuf._val)
-                                                    : _z_bytes_duplicate(&extension->_body._zbuf._val);
+                                                    ? _z_slice_steal(&extension->_body._zbuf._val)
+                                                    : _z_slice_duplicate(&extension->_body._zbuf._val);
             break;
         }
 #endif
@@ -502,9 +502,9 @@ int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
         msg->_consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q_P)) {
-        _Z_RETURN_IF_ERR(_z_bytes_decode(&msg->_parameters, zbf));
+        _Z_RETURN_IF_ERR(_z_slice_decode(&msg->_parameters, zbf));
     } else {
-        _z_bytes_clear(&msg->_parameters);
+        _z_slice_clear(&msg->_parameters);
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_query_decode_extensions, msg));
@@ -576,7 +576,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
         _Z_RETURN_IF_ERR(_z_source_info_encode_ext(wbf, &err->_ext_source_info));
     }
     // Encode payload
-    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &err->_payload));
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &err->_payload));
     return ret;
 }
 int8_t _z_err_decode_extension(_z_msg_ext_t *extension, void *ctx) {
@@ -584,7 +584,7 @@ int8_t _z_err_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     _z_msg_err_t *reply = (_z_msg_err_t *)ctx;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x01: {
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_source_info_decode(&reply->_ext_source_info, &zbf);
             break;
         }
@@ -604,7 +604,7 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_err_decode_extension, err));
     }
-    _Z_RETURN_IF_ERR(_z_bytes_decode(&err->_payload, zbf));
+    _Z_RETURN_IF_ERR(_z_slice_decode(&err->_payload, zbf));
     return _Z_RES_OK;
 }
 
@@ -664,7 +664,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     cbyte |= (msg->_whatami & 0x03);
     cbyte |= ((zidlen - 1) & 0x0F) << 4;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
-    _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, &(_z_bytes_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
+    _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &(_z_slice_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
         _Z_RETURN_IF_ERR(_z_locators_encode(wbf, &msg->_locators))

@@ -281,7 +281,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                             _z_bytes_t *addr) {
+                             _z_slice_t *addr) {
     // Block until something to read
     // FIXME: provide some kind of timeout functionality
     ssize_t rb = 0;
@@ -295,7 +295,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                 IPAddress rip = sock._udp->remoteIP();
                 uint16_t rport = sock._udp->remotePort();
 
-                *addr = _z_bytes_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
+                *addr = _z_slice_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
                                       strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
                 uint8_t offset = 0;
                 for (uint8_t i = 0; i < (uint8_t)4; i++) {
@@ -313,7 +313,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
 }
 
 size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
-                                   const _z_sys_net_endpoint_t lep, _z_bytes_t *addr) {
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *addr) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 

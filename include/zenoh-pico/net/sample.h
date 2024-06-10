@@ -25,12 +25,12 @@
  *
  * Members:
  *   _z_keyexpr_t key: The resource key of this data sample.
- *   _z_bytes_t value: The value of this data sample.
+ *   _z_slice_t value: The value of this data sample.
  *   _z_encoding_t encoding: The encoding for the value of this data sample.
  */
 typedef struct _z_sample_t {
     _z_keyexpr_t keyexpr;
-    _z_bytes_t payload;
+    _z_slice_t payload;
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
@@ -58,7 +58,7 @@ void _z_sample_free(_z_sample_t **sample);
 void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t *payload, _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_slice_t *payload, _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const z_attachment_t att);
 

@@ -195,7 +195,7 @@ int8_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
 }
 
 /*------------------ uint8_array ------------------*/
-int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
+int8_t _z_slice_val_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
     int8_t ret = _Z_RES_OK;
 
     if ((wbf->_expansion_step != 0) && (bs->len > Z_TSID_LENGTH)) {
@@ -207,22 +207,22 @@ int8_t _z_bytes_val_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
     return ret;
 }
 
-int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
+int8_t _z_slice_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
     int8_t ret = _Z_RES_OK;
 
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, bs->len))
-    _Z_RETURN_IF_ERR(_z_bytes_val_encode(wbf, bs))
+    _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, bs))
 
     return ret;
 }
-size_t _z_bytes_encode_len(const _z_bytes_t *bs) { return _z_zint_len(bs->len) + bs->len; }
+size_t _z_slice_encode_len(const _z_slice_t *bs) { return _z_zint_len(bs->len) + bs->len; }
 
-int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+int8_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     if (ret == _Z_RES_OK) {
         if (_z_zbuf_len(zbf) >= bs->len) {                           // Check if we have enough bytes to read
-            *bs = _z_bytes_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
+            *bs = _z_slice_wrap(_z_zbuf_get_rptr(zbf), bs->len);     // Decode without allocating
             _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);  // Move the read position
         } else {
             _Z_DEBUG("WARNING: Not enough bytes to read");
@@ -238,18 +238,18 @@ int8_t _z_bytes_val_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
     return ret;
 }
 
-int8_t _z_bytes_decode_na(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+int8_t _z_slice_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_zsize_decode(&bs->len, zbf);
-    ret |= _z_bytes_val_decode_na(bs, zbf);
+    ret |= _z_slice_val_decode_na(bs, zbf);
 
     return ret;
 }
 
-int8_t _z_bytes_val_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_val_decode_na(bs, zbf); }
+int8_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val_decode_na(bs, zbf); }
 
-int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_bytes_decode_na(bs, zbf); }
+int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
 /*------------------ string with null terminator ------------------*/
 int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
@@ -299,21 +299,21 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
 
 size_t _z_encoding_len(const _z_encoding_t *en) {
     size_t en_len = _z_zint_len((uint32_t)(en->id) << 1);
-    if (_z_bytes_check(en->schema)) {
-        en_len += _z_bytes_encode_len(&en->schema);
+    if (_z_slice_check(en->schema)) {
+        en_len += _z_slice_encode_len(&en->schema);
     }
     return en_len;
 }
 
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
-    _Bool has_schema = _z_bytes_check(en->schema);
+    _Bool has_schema = _z_slice_check(en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;
     }
     _Z_RETURN_IF_ERR(_z_zint32_encode(wbf, id));
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &en->schema));
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &en->schema));
     }
     return _Z_RES_OK;
 }
@@ -327,7 +327,7 @@ int8_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
     }
     en->id = (uint16_t)(id >> 1);
     if (has_schema) {
-        _Z_RETURN_IF_ERR(_z_bytes_decode(&en->schema, zbf));
+        _Z_RETURN_IF_ERR(_z_slice_decode(&en->schema, zbf));
     }
     return _Z_RES_OK;
 }

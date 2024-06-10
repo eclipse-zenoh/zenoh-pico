@@ -33,7 +33,7 @@ typedef struct {
 #endif
 
     _z_id_t _remote_zid;
-    _z_bytes_t _remote_addr;
+    _z_slice_t _remote_addr;
     _z_conduit_sn_list_t _sn_rx_sns;
 
     // SN numbers

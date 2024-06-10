@@ -21,7 +21,7 @@
  * A zenoh encoding.
  */
 typedef struct _z_encoding_t {
-    _z_bytes_t schema;
+    _z_slice_t schema;
     uint16_t id;
 } _z_encoding_t;
 

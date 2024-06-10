@@ -68,7 +68,7 @@ void _z_msg_ext_clear_zint(_z_msg_ext_zint_t *ext);
 
 /*------------------ Unknown Extension ------------------*/
 typedef struct {
-    _z_bytes_t _val;
+    _z_slice_t _val;
 } _z_msg_ext_zbuf_t;
 void _z_msg_ext_clear_zbuf(_z_msg_ext_zbuf_t *ext);
 
@@ -88,7 +88,7 @@ void _z_msg_ext_clear(_z_msg_ext_t *ext);
 /*------------------ Builders ------------------*/
 _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id);
 _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid);
-_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_bytes_t zbuf);
+_z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_slice_t zbuf);
 
 /*------------------ Copy ------------------*/
 void _z_msg_ext_copy(_z_msg_ext_t *clone, const _z_msg_ext_t *ext);

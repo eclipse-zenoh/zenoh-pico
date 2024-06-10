@@ -79,7 +79,7 @@ int8_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {  // Timestamp ext
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_timestamp_decode(&msg->_timestamp, &zbf);
             break;
         }
@@ -178,7 +178,7 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case 0x02 | _Z_MSG_EXT_ENC_ZBUF: {  // Timestamp ext
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             _Z_RETURN_IF_ERR(_z_timestamp_decode(&msg->_ext_timestamp, &zbf));
             break;
         }
@@ -313,12 +313,12 @@ int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_timestamp_decode(&msg->_ext_timestamp, &zbf);
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {
-            _z_zbuf_t _zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t _zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
@@ -432,7 +432,7 @@ int8_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
-            _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             return _z_timestamp_decode(&decl->_ext_timestamp, &zbf);
         }
         default:

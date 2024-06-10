@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/*-------- Bytes --------*/
+/*-------- Slice --------*/
 /**
  * An array of bytes.
  *
@@ -31,23 +31,23 @@ typedef struct {
     size_t len;
     const uint8_t *start;
     _Bool _is_alloc;
-} _z_bytes_t;
+} _z_slice_t;
 
-_z_bytes_t _z_bytes_empty(void);
-inline static _Bool _z_bytes_check(_z_bytes_t value) { return value.start != NULL; }
-int8_t _z_bytes_init(_z_bytes_t *bs, size_t capacity);
-_z_bytes_t _z_bytes_make(size_t capacity);
-_z_bytes_t _z_bytes_wrap(const uint8_t *bs, size_t len);
-_z_bytes_t _z_bytes_steal(_z_bytes_t *b);
+_z_slice_t _z_slice_empty(void);
+inline static _Bool _z_slice_check(_z_slice_t value) { return value.start != NULL; }
+int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
+_z_slice_t _z_slice_make(size_t capacity);
+_z_slice_t _z_slice_wrap(const uint8_t *bs, size_t len);
+_z_slice_t _z_slice_steal(_z_slice_t *b);
 
-void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
-_z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
-void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
-void _z_bytes_reset(_z_bytes_t *bs);
-_Bool _z_bytes_is_empty(const _z_bytes_t *bs);
+void _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
+_z_slice_t _z_slice_duplicate(const _z_slice_t *src);
+void _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
+void _z_slice_reset(_z_slice_t *bs);
+_Bool _z_slice_is_empty(const _z_slice_t *bs);
 
-_Bool _z_bytes_eq(const _z_bytes_t *left, const _z_bytes_t *right);
-void _z_bytes_clear(_z_bytes_t *bs);
-void _z_bytes_free(_z_bytes_t **bs);
+_Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
+void _z_slice_clear(_z_slice_t *bs);
+void _z_slice_free(_z_slice_t **bs);
 
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

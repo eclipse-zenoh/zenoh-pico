@@ -82,8 +82,8 @@ typedef _z_timestamp_t z_timestamp_t;
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
  */
-_OWNED_TYPE_PTR(_z_bytes_t, slice)
-_LOANED_TYPE(_z_bytes_t, slice)
+_OWNED_TYPE_PTR(_z_slice_t, slice)
+_LOANED_TYPE(_z_slice_t, slice)
 
 /**
  * Represents a string without null-terminator.
@@ -625,22 +625,22 @@ typedef struct {
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 #if Z_FEATURE_ATTACHMENT == 1
-struct _z_bytes_pair_t {
-    _z_bytes_t *key;
-    _z_bytes_t *value;
+struct _z_slice_pair_t {
+    _z_slice_t *key;
+    _z_slice_t *value;
 };
 
-void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_);
+void _z_slice_pair_clear(struct _z_slice_pair_t *this_);
 
-_Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
+_Z_ELEM_DEFINE(_z_slice_pair, struct _z_slice_pair_t, _z_noop_size, _z_slice_pair_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_slice_pair, struct _z_slice_pair_t)
 
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
  */
 // TODO(sashacmc): z_owned_bytes_map_t for attachment
 typedef struct z_owned_bytes_map_t {
-    _z_bytes_pair_list_t *_inner;
+    _z_slice_pair_list_t *_inner;
 } z_owned_bytes_map_t;
 
 /**

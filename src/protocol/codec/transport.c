@@ -83,7 +83,7 @@ int8_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     if (_Z_EXT_FULL_ID(extension->_header) ==
         (_Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1)) {  // QOS: (enc=zbuf)(mandatory=true)(id=1)
         msg->_next_sn._is_qos = true;
-        _z_zbuf_t zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+        _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
@@ -168,7 +168,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     }
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true) {
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
     }
 
     return ret;
@@ -208,9 +208,9 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
-        ret |= _z_bytes_decode(&msg->_cookie, zbf);
+        ret |= _z_slice_decode(&msg->_cookie, zbf);
     } else {
-        msg->_cookie = _z_bytes_empty();
+        msg->_cookie = _z_slice_empty();
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
@@ -234,7 +234,7 @@ int8_t _z_open_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_open_t *msg
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_initial_sn))
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false) {
-        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_cookie))
+        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
     }
 
     return ret;
@@ -253,12 +253,12 @@ int8_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     ret |= _z_zsize_decode(&msg->_initial_sn, zbf);
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
-        ret |= _z_bytes_decode(&msg->_cookie, zbf);
+        ret |= _z_slice_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_bytes_empty();
+            msg->_cookie = _z_slice_empty();
         }
     } else {
-        msg->_cookie = _z_bytes_empty();
+        msg->_cookie = _z_slice_empty();
     }
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x02);
@@ -382,7 +382,7 @@ int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragmen
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
-    if (ret == _Z_RES_OK && _z_bytes_check(msg->_payload)) {
+    if (ret == _Z_RES_OK && _z_slice_check(msg->_payload)) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_payload.start, 0, msg->_payload.len));
     }
 
@@ -400,8 +400,8 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
     }
 
-    _z_bytes_t bytes = _z_bytes_wrap((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_bytes_copy(&msg->_payload, &bytes);
+    _z_slice_t slice = _z_slice_wrap((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
+    _z_slice_copy(&msg->_payload, &slice);
     zbf->_ios._r_pos = zbf->_ios._w_pos;
 
     return ret;

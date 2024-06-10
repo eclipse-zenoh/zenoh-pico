@@ -144,12 +144,12 @@ size_t _z_f_link_write_all_udp_unicast(const _z_link_t *self, const uint8_t *ptr
     return _z_send_udp_unicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._rep);
 }
 
-size_t _z_f_link_read_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_udp_unicast(self->_socket._udp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_udp_unicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_exact_udp_unicast(self->_socket._udp._sock, ptr, len);
 }

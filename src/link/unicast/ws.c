@@ -139,12 +139,12 @@ size_t _z_f_link_write_all_ws(const _z_link_t *zl, const uint8_t *ptr, size_t le
     return _z_send_ws(zl->_socket._ws._sock, ptr, len);
 }
 
-size_t _z_f_link_read_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_ws(zl->_socket._ws._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_exact_ws(zl->_socket._ws._sock, ptr, len);
 }

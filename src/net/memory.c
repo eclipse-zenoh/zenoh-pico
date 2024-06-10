@@ -35,7 +35,7 @@ void _z_hello_free(_z_hello_t **hello) {
 
 void _z_value_clear(_z_value_t *value) {
     _z_encoding_clear(&value->encoding);
-    _z_bytes_clear(&value->payload);
+    _z_slice_clear(&value->payload);
 }
 
 void _z_value_free(_z_value_t **value) {

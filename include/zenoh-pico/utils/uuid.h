@@ -22,14 +22,3 @@
  *   uuid_str: A valid UUID string.
  */
 void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str);
-
-/**
- * Converts a byte array representing an UUID to its string representation.
- *
- * Parameters:
- *   bytes: Pointer to the byte array containing the UUID.
- *
- * Returns:
- *   The `char *` of the UUID in string format.
- */
-char *_z_bytes_to_uuid(const uint8_t *uuid);

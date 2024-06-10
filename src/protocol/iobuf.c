@@ -100,8 +100,8 @@ void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos) {
     ios->_buf[pos] = b;
 }
 
-_z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios) {
-    _z_bytes_t a;
+_z_slice_t _z_iosli_to_bytes(const _z_iosli_t *ios) {
+    _z_slice_t a;
     a.len = _z_iosli_readable(ios);
     a.start = _z_cptr_u8_offset(ios->_buf, ios->_r_pos);
     return a;
@@ -171,7 +171,7 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
     return v;
 }
-_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice) {
+_z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
     return (_z_zbuf_t){._ios = {._buf = (uint8_t *)slice.start,  // Safety: `_z_zbuf_t` is an immutable buffer
                                 ._is_alloc = false,
                                 ._capacity = slice.len,

@@ -80,7 +80,7 @@ void print_wbuf(_z_wbuf_t *wbf) {
 
 void print_zbuf(_z_zbuf_t *zbf) { print_iosli(&zbf->_ios); }
 
-void print_uint8_array(_z_bytes_t *arr) {
+void print_uint8_array(_z_slice_t *arr) {
     printf("Length: %zu, Buffer: [", arr->len);
     for (size_t i = 0; i < arr->len; i++) {
         printf("%02x", arr->start[i]);
@@ -170,8 +170,8 @@ _z_wbuf_t gen_wbuf(size_t len) {
     return _z_wbuf_make(len, is_expandable);
 }
 
-_z_bytes_t gen_payload(size_t len) {
-    _z_bytes_t pld;
+_z_slice_t gen_payload(size_t len) {
+    _z_slice_t pld;
     pld._is_alloc = true;
     pld.len = len;
     pld.start = (uint8_t *)z_malloc(len);
@@ -180,8 +180,8 @@ _z_bytes_t gen_payload(size_t len) {
     return pld;
 }
 
-_z_bytes_t gen_bytes(size_t len) {
-    _z_bytes_t arr;
+_z_slice_t gen_bytes(size_t len) {
+    _z_slice_t arr;
     arr._is_alloc = true;
     arr.len = len;
     arr.start = NULL;
@@ -246,7 +246,7 @@ _z_encoding_t gen_encoding(void) {
     if (gen_bool()) {
         en.schema = gen_bytes(16);
     } else {
-        en.schema = _z_bytes_empty();
+        en.schema = _z_slice_empty();
     }
     return en;
 }
@@ -255,7 +255,7 @@ _z_value_t gen_value(void) {
     _z_value_t val;
     val.encoding = gen_encoding();
     if (gen_bool()) {
-        val.payload = _z_bytes_empty();
+        val.payload = _z_slice_empty();
     } else {
         val.payload = gen_bytes(16);
     }
@@ -285,7 +285,7 @@ void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right) {
     printf(")");
 }
 
-void assert_eq_uint8_array(const _z_bytes_t *left, const _z_bytes_t *right) {
+void assert_eq_uint8_array(const _z_slice_t *left, const _z_slice_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->len, right->len);
 
@@ -456,7 +456,7 @@ void zint_extension(void) {
 
 /*------------------ Unit extension ------------------*/
 _z_msg_ext_t gen_zbuf_extension(void) {
-    _z_bytes_t val = gen_bytes(gen_uint8());
+    _z_slice_t val = gen_bytes(gen_uint8());
     return _z_msg_ext_make_zbuf(_Z_MOCK_EXTENSION_ZBUF, val);
 }
 
@@ -500,33 +500,33 @@ void zbuf_extension(void) {
 /*       Message Fields        */
 /*=============================*/
 /*------------------ Payload field ------------------*/
-void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) { assert_eq_uint8_array(left, right); }
+void assert_eq_bytes(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
 
 void payload_field(void) {
     printf("\n>> Payload field\n");
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
-    _z_bytes_t e_pld = gen_payload(64);
+    _z_slice_t e_pld = gen_payload(64);
 
     // Encode
-    int8_t res = _z_bytes_encode(&wbf, &e_pld);
+    int8_t res = _z_slice_encode(&wbf, &e_pld);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _z_bytes_t d_pld;
-    res = _z_bytes_decode(&d_pld, &zbf);
+    _z_slice_t d_pld;
+    res = _z_slice_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");
     assert_eq_bytes(&e_pld, &d_pld);
     printf("\n");
 
     // Free
-    _z_bytes_clear(&e_pld);
-    _z_bytes_clear(&d_pld);
+    _z_slice_clear(&e_pld);
+    _z_slice_clear(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

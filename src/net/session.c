@@ -154,7 +154,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
+        _z_slice_t local_zid = _z_slice_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
         // TODO(sasahcmc): is it zero terminated???
         // rework it!!!
         _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_convert_bytes(&local_zid).val);

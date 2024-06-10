@@ -48,7 +48,7 @@ void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, siz
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
 void _z_iosli_reset(_z_iosli_t *ios);
 
-_z_bytes_t _z_iosli_to_bytes(const _z_iosli_t *ios);
+_z_slice_t _z_iosli_to_bytes(const _z_iosli_t *ios);
 
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
@@ -67,7 +67,7 @@ typedef struct {
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 /// Constructs a _borrowing_ reader on `slice`
-_z_zbuf_t _z_zbytes_as_zbuf(_z_bytes_t slice);
+_z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
