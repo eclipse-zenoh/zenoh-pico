@@ -41,7 +41,7 @@ void z_stats_stop(z_stats_t *stats) {
 
 void on_sample(const z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    const z_loaned_slice_t *payload = z_sample_payload(sample);
 
     if (stats->curr_len != payload->len) {
         // End previous measurement

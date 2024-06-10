@@ -41,7 +41,7 @@
         z_sample_null(&sample);                                                 \
         z_call(channel.method, &sample);                                        \
         if (z_check(sample)) {                                                  \
-            const z_loaned_bytes_t *payload = z_sample_payload(z_loan(sample)); \
+            const z_loaned_slice_t *payload = z_sample_payload(z_loan(sample)); \
             strncpy(buf, (const char *)payload->start, (size_t)payload->len);   \
             buf[payload->len] = '\0';                                           \
             z_drop(z_move(sample));                                             \

@@ -416,44 +416,55 @@ int8_t z_encoding_null(z_owned_encoding_t *encoding);
  *    value: Pointer to a :c:type:`z_loaned_value_t` to get data from.
  *
  * Return:
- *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
+ *    Pointer to the data as a :c:type:`z_loaned_slice_t`.
  */
-const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
+const z_loaned_slice_t *z_value_payload(const z_loaned_value_t *value);
+
+/**
+ * Gets date pointer of a bytes array.
+ *
+ * Parameters:
+ *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
+ *
+ * Return:
+ *    The data pointer.
+ */
+const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
 
 /**
  * Gets total number of bytes in a bytes array.
  *
  * Parameters:
- *    bytes: Pointer to a :c:type:`z_loaned_bytes_t` to get length from.
+ *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
  *
  * Return:
  *    The number of bytes.
  */
-size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+size_t z_slice_len(const z_loaned_slice_t *slice);
 
 /**
  * Decodes data into a :c:type:`z_owned_string_t`
  *
  * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   slice: Pointer to a :c:type:`z_loaned_slice_t` to decode.
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t` to contain the decoded string.
  *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+int8_t z_slice_decode_into_string(const z_loaned_slice_t *slice, z_owned_string_t *str);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t`
+ * Encodes a string into a :c:type:`z_owned_slice_t`
  *
  * Parameters:
- *   buffer: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   buffer: An uninitialized :c:type:`z_owned_slice_t` to contain the encoded string.
  *   str: Pointer to the string to encode.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *str);
+int8_t z_slice_encode_from_string(z_owned_slice_t *buffer, const z_loaned_string_t *str);
 
 /**
  * Checks validity of a timestamp
@@ -711,7 +722,7 @@ _OWNED_FUNCTIONS(z_loaned_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_loaned_string_array_t, z_owned_string_array_t, string_array)
 _OWNED_FUNCTIONS(z_loaned_sample_t, z_owned_sample_t, sample)
 _OWNED_FUNCTIONS(z_loaned_query_t, z_owned_query_t, query)
-_OWNED_FUNCTIONS(z_loaned_bytes_t, z_owned_bytes_t, bytes)
+_OWNED_FUNCTIONS(z_loaned_slice_t, z_owned_slice_t, slice)
 _OWNED_FUNCTIONS(z_loaned_value_t, z_owned_value_t, value)
 
 #define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
@@ -862,9 +873,9 @@ const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the payload from.
  *
  * Return:
- *   The payload wrapped as a :c:type:`z_loaned_bytes_t`.
+ *   The payload wrapped as a :c:type:`z_loaned_slice_t`.
  */
-const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample);
+const z_loaned_slice_t *z_sample_payload(const z_loaned_sample_t *sample);
 
 /**
  * Gets the timestamp of a sample by aliasing it.
@@ -1174,7 +1185,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_slice_t *payload,
                      const z_query_reply_options_t *options);
 #endif
 

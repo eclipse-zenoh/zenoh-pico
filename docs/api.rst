@@ -61,7 +61,7 @@ Owned Types
 
 TODO: owned type description
 
-.. c:type:: z_owned_bytes_t
+.. c:type:: z_owned_slice_t
   
   Represents an array of bytes.
 
@@ -130,7 +130,7 @@ Loaned Types
 
 TODO: loaned type description
 
-.. c:type:: z_loaned_bytes_t
+.. c:type:: z_loaned_slice_t
 
   Represents an array of bytes.
 
@@ -250,7 +250,7 @@ Macros
 Primitives
 ~~~~~~~~~~
 
-.. autocfunction:: primitives.h::z_view_str_wrap
+.. autocfunction:: primitives.h::z_view_string_wrap
 .. autocfunction:: primitives.h::z_view_keyexpr_from_string
 .. autocfunction:: primitives.h::z_view_keyexpr_from_string_unchecked
 .. autocfunction:: primitives.h::z_keyexpr_to_string
@@ -282,9 +282,10 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_move
 .. autocfunction:: primitives.h::z_encoding_null
 .. autocfunction:: primitives.h::z_value_payload
-.. autocfunction:: primitives.h::z_bytes_len
-.. autocfunction:: primitives.h::z_bytes_decode_into_string
-.. autocfunction:: primitives.h::z_bytes_encode_from_string
+.. autocfunction:: primitives.h::z_slice_data
+.. autocfunction:: primitives.h::z_slice_len
+.. autocfunction:: primitives.h::z_slice_decode_into_string
+.. autocfunction:: primitives.h::z_slice_encode_from_string
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

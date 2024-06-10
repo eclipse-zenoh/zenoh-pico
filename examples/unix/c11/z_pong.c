@@ -18,7 +18,7 @@
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
 void callback(const z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_loan(*(z_owned_publisher_t*)context);
-    const z_loaned_bytes_t* payload = z_sample_payload(sample);
+    const z_loaned_slice_t* payload = z_sample_payload(sample);
     z_publisher_put(pub, payload->start, payload->len, NULL);
 }
 void drop(void* context) {

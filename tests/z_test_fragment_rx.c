@@ -23,7 +23,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    const z_loaned_slice_t *payload = z_sample_payload(sample);
     const uint8_t *data = payload->start;
     for (size_t i = 0; i < payload->len; i++) {
         if (data[i] != (uint8_t)i) {
