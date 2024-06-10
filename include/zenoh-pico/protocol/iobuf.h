@@ -19,8 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
 /*------------------ IOSli ------------------*/

@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
 
 #undef NDEBUG

@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/system/platform.h"

@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_COLLECTIONS_BYTES_H
-#define ZENOH_PICO_COLLECTIONS_BYTES_H
+#ifndef ZENOH_PICO_COLLECTIONS_SLICE_H
+#define ZENOH_PICO_COLLECTIONS_SLICE_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -50,4 +50,4 @@ _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
 
-#endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */
+#endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */

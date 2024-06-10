@@ -14,7 +14,7 @@
 
 #include "zenoh-pico/protocol/definitions/transport.h"
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/utils/logging.h"
 
 void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg) {}

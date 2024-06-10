@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/utils/logging.h"
 
 _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id) {

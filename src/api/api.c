@@ -20,7 +20,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/filtering.h"

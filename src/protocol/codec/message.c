@@ -22,7 +22,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/codec/core.h"

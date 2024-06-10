@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"

@@ -18,7 +18,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"

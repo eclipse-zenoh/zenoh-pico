@@ -15,9 +15,9 @@
 #ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/publish.h"

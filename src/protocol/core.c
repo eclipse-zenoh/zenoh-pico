@@ -19,7 +19,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"

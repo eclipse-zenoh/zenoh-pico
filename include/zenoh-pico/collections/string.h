@@ -15,10 +15,10 @@
 #define ZENOH_PICO_COLLECTIONS_STRING_H
 
 #include "zenoh-pico/collections/array.h"
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
 /*-------- str --------*/

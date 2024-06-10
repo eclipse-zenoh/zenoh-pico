@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/sample.h"

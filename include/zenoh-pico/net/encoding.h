@@ -15,7 +15,7 @@
 #define ZENOH_PICO_ENCODING_NETAPI_H
 
 #include "zenoh-pico/api/constants.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 
 /**
  * A zenoh encoding.
