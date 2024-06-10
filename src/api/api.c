@@ -43,7 +43,7 @@
 
 /********* Data Types Handlers *********/
 
-int8_t z_view_str_wrap(z_view_string_t *str, const char *value) {
+int8_t z_view_string_wrap(z_view_string_t *str, const char *value) {
     str->_val = _z_string_wrap((char *)value);
     return _Z_RES_OK;
 }

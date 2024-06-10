@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     // Value encoding
     if (value != NULL) {
         z_view_string_t value_str;
-        z_view_str_wrap(&value_str, value);
+        z_view_string_wrap(&value_str, value);
         z_owned_bytes_t payload;
         z_bytes_encode_from_string(&payload, z_loan(value_str));
         opts.payload = &payload;

@@ -44,7 +44,7 @@ extern "C" {
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_str_wrap(z_view_string_t *str, const char *value);
+int8_t z_view_string_wrap(z_view_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
