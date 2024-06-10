@@ -108,3 +108,25 @@ _z_slice_t _z_slice_steal(_z_slice_t *b) {
 _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
     return left->len == right->len && memcmp(left->start, right->start, left->len) == 0;
 }
+
+/*-------- Bytes --------*/
+void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
+    // Init only if needed
+    if (!_z_slice_check(dst->slice)) {
+        if (_z_slice_init(&dst->slice, src->slice.len) != _Z_RES_OK) {
+            return;
+        }
+    }
+    (void)memcpy((uint8_t *)dst->slice.start, src->slice.start, src->slice.len);
+}
+
+void _z_bytes_free(_z_bytes_t **bs) {
+    _z_bytes_t *ptr = *bs;
+
+    if (ptr != NULL) {
+        _z_slice_clear(&ptr->slice);
+
+        z_free(ptr);
+        *bs = NULL;
+    }
+}

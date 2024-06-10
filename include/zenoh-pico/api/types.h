@@ -86,6 +86,15 @@ _OWNED_TYPE_PTR(_z_slice_t, slice)
 _LOANED_TYPE(_z_slice_t, slice)
 
 /**
+ * Represents a container for slices.
+ *
+ * Members:
+ *   _z_slice_t slice: content of the container.
+ */
+_OWNED_TYPE_PTR(_z_bytes_t, bytes)
+_LOANED_TYPE(_z_bytes_t, bytes)
+
+/**
  * Represents a string without null-terminator.
  *
  * Members:

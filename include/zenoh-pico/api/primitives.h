@@ -721,6 +721,7 @@ _OWNED_FUNCTIONS(z_loaned_string_array_t, z_owned_string_array_t, string_array)
 _OWNED_FUNCTIONS(z_loaned_sample_t, z_owned_sample_t, sample)
 _OWNED_FUNCTIONS(z_loaned_query_t, z_owned_query_t, query)
 _OWNED_FUNCTIONS(z_loaned_slice_t, z_owned_slice_t, slice)
+_OWNED_FUNCTIONS(z_loaned_bytes_t, z_owned_bytes_t, bytes)
 _OWNED_FUNCTIONS(z_loaned_value_t, z_owned_value_t, value)
 
 #define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \

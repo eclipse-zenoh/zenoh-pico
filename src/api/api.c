@@ -437,6 +437,7 @@ OWNED_FUNCTIONS_PTR(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
 OWNED_FUNCTIONS_PTR(_z_string_vec_t, string_array, _z_owner_noop_copy, _z_string_vec_free)
 VIEW_FUNCTIONS_PTR(_z_string_vec_t, string_array)
 OWNED_FUNCTIONS_PTR(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
+OWNED_FUNCTIONS_PTR(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
 static _z_slice_t _z_slice_from_owned_bytes(z_owned_slice_t *bytes) {
     _z_slice_t b = _z_slice_empty();

@@ -50,4 +50,18 @@ _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
 
+/*-------- Bytes --------*/
+/**
+ * A container for slices.
+ *
+ * Members:
+ *   _z_slice_t slice: content of the container.
+ */
+typedef struct {
+    _z_slice_t slice;
+} _z_bytes_t;
+
+void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
+void _z_bytes_free(_z_bytes_t **bs);
+
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */
