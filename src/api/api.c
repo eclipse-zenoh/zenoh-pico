@@ -265,6 +265,8 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
 
 int8_t z_slice_decode_into_string(const z_loaned_slice_t *slice, z_owned_string_t *s) {
+
+int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
     // Init owned string
     z_string_null(s);
     s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
@@ -272,21 +274,23 @@ int8_t z_slice_decode_into_string(const z_loaned_slice_t *slice, z_owned_string_
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Convert slice to string
-    *s->_val = _z_string_from_bytes(slice);
+    *s->_val = _z_string_from_bytes(&bytes->slice);
     return _Z_RES_OK;
 }
 
-int8_t z_slice_encode_from_string(z_owned_slice_t *buffer, const z_loaned_string_t *s) {
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s) {
     // Init owned bytes
-    z_slice_null(buffer);
-    buffer->_val = (_z_slice_t *)z_malloc(sizeof(_z_slice_t));
+    z_bytes_null(buffer);
+    buffer->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
     if (buffer->_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Encode data
-    *buffer->_val = _z_slice_wrap((uint8_t *)s->val, s->len);
+    buffer->_val->slice = _z_slice_wrap((uint8_t *)s->val, s->len);
     return _Z_RES_OK;
 }
+
+// TODO: Other encode/decode functions
 
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 

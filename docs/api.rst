@@ -284,8 +284,8 @@ Primitives
 .. autocfunction:: primitives.h::z_value_payload
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
-.. autocfunction:: primitives.h::z_slice_decode_into_string
-.. autocfunction:: primitives.h::z_slice_encode_from_string
+.. autocfunction:: primitives.h::z_bytes_decode_into_string
+.. autocfunction:: primitives.h::z_bytes_encode_from_string
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

@@ -86,7 +86,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_view_string_t reply_str;
     z_view_string_wrap(&reply_str, value);
     z_owned_slice_t reply_payload;
-    z_slice_encode_from_string(&reply_payload, z_loan(reply_str));
+    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
 
     z_query_reply(query, query_ke, z_move(reply_payload), &_ret_qreply_opt);
 

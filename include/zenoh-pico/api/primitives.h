@@ -444,25 +444,25 @@ size_t z_slice_len(const z_loaned_slice_t *slice);
  * Decodes data into a :c:type:`z_owned_string_t`
  *
  * Parameters:
- *   slice: Pointer to a :c:type:`z_loaned_slice_t` to decode.
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t` to contain the decoded string.
  *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_slice_decode_into_string(const z_loaned_slice_t *slice, z_owned_string_t *str);
+int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
- * Encodes a string into a :c:type:`z_owned_slice_t`
+ * Encodes a string into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
- *   buffer: An uninitialized :c:type:`z_owned_slice_t` to contain the encoded string.
+ *   buffer: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
  *   str: Pointer to the string to encode.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_slice_encode_from_string(z_owned_slice_t *buffer, const z_loaned_string_t *str);
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *str);
 
 /**
  * Checks validity of a timestamp

@@ -49,7 +49,7 @@ void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_slice_decode_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
 
         Serial.print(" >> [Get listener] Received (");
         Serial.print(z_string_data(z_string_loan(&keystr)));
@@ -120,7 +120,7 @@ void loop() {
         z_view_string_t value_str;
         z_view_string_wrap(&value_str, VALUE);
         z_owned_slice_t payload;
-        z_slice_encode_from_string(&payload, z_view_string_loan(&value_str));
+        z_bytes_encode_from_string(&payload, z_view_string_loan(&value_str));
         opts.payload = &payload;
     }
     z_owned_closure_reply_t callback;
