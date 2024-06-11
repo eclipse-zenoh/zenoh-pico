@@ -48,6 +48,7 @@
                   z_owned_sample_t : z_sample_loan,                   \
                   z_owned_query_t : z_query_loan,                     \
                   z_owned_slice_t : z_slice_loan,                     \
+                  z_owned_bytes_t : z_bytes_loan,                     \
                   z_owned_encoding_t : z_encoding_loan                \
             )(&x)
 
@@ -64,7 +65,8 @@
                   z_owned_string_array_t : z_string_array_loan_mut,       \
                   z_owned_sample_t : z_sample_loan_mut,                   \
                   z_owned_query_t : z_query_loan_mut,                     \
-                  z_owned_slice_t : z_slice_loan_mut                      \
+                  z_owned_slice_t : z_slice_loan_mut,                     \
+                  z_owned_bytes_t : z_bytes_loan_mut                      \
             )(&x)
 /**
  * Defines a generic function for dropping any of the ``z_owned_X_t`` types.
@@ -126,6 +128,7 @@
                   z_owned_string_t : z_string_check,                   \
                   z_owned_string_array_t : z_string_array_check,       \
                   z_owned_slice_t : z_slice_check,                     \
+                  z_owned_bytes_t : z_bytes_check,                     \
                   z_owned_sample_t : z_sample_check,                   \
                   z_owned_query_t : z_query_check,                     \
                   z_owned_encoding_t : z_encoding_check                \
@@ -179,6 +182,7 @@
                   z_owned_sample_t : z_sample_move,                               \
                   z_owned_query_t : z_query_move,                                 \
                   z_owned_slice_t : z_slice_move,                                 \
+                  z_owned_bytes_t : z_bytes_move,                                 \
                   z_owned_encoding_t : z_encoding_move,                           \
                   z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
                   z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move,     \
@@ -284,6 +288,7 @@ template <> struct zenoh_loan_type<z_owned_string_array_t> { typedef const z_loa
 template <> struct zenoh_loan_type<z_owned_sample_t> { typedef const z_loaned_sample_t* type; };
 template <> struct zenoh_loan_type<z_owned_query_t> { typedef const z_loaned_query_t* type; };
 template <> struct zenoh_loan_type<z_owned_slice_t> { typedef const z_loaned_slice_t* type; };
+template <> struct zenoh_loan_type<z_owned_bytes_t> { typedef const z_loaned_bytes_t* type; };
 
 template <> inline const z_loaned_keyexpr_t* z_loan(const z_owned_keyexpr_t& x) { return z_keyexpr_loan(&x); }
 template <> inline const z_loaned_keyexpr_t* z_loan(const z_view_keyexpr_t& x) { return z_view_keyexpr_loan(&x); }
@@ -299,6 +304,7 @@ template <> inline const z_loaned_string_array_t* z_loan(const z_owned_string_ar
 template <> inline const z_loaned_sample_t* z_loan(const z_owned_sample_t& x) { return z_sample_loan(&x); }
 template <> inline const z_loaned_query_t* z_loan(const z_owned_query_t& x) { return z_query_loan(&x); }
 template <> inline const z_loaned_slice_t* z_loan(const z_owned_slice_t& x) { return z_slice_loan(&x); }
+template <> inline const z_loaned_bytes_t* z_loan(const z_owned_bytes_t& x) { return z_bytes_loan(&x); }
 
 // z_loan_mut definition
 
@@ -319,6 +325,7 @@ template <> struct zenoh_loan_mut_type<z_owned_string_array_t> { typedef z_loane
 template <> struct zenoh_loan_mut_type<z_owned_sample_t> { typedef z_loaned_sample_t* type; };
 template <> struct zenoh_loan_mut_type<z_owned_query_t> { typedef z_loaned_query_t* type; };
 template <> struct zenoh_loan_mut_type<z_owned_slice_t> { typedef z_loaned_slice_t* type; };
+template <> struct zenoh_loan_mut_type<z_owned_bytes_t> { typedef z_loaned_bytes_t* type; };
 
 template <> inline z_loaned_keyexpr_t* z_loan_mut(z_owned_keyexpr_t& x) { return z_keyexpr_loan_mut(&x); }
 template <> inline z_loaned_keyexpr_t* z_loan_mut(z_view_keyexpr_t& x) { return z_view_keyexpr_loan_mut(&x); }
@@ -334,6 +341,7 @@ template <> inline z_loaned_string_array_t* z_loan_mut(z_owned_string_array_t& x
 template <> inline z_loaned_sample_t* z_loan_mut(z_owned_sample_t& x) { return z_sample_loan_mut(&x); }
 template <> inline z_loaned_query_t* z_loan_mut(z_owned_query_t& x) { return z_query_loan_mut(&x); }
 template <> inline z_loaned_slice_t* z_loan_mut(z_owned_slice_t& x) { return z_slice_loan_mut(&x); }
+template <> inline z_loaned_bytes_t* z_loan_mut(z_owned_bytes_t& x) { return z_bytes_loan_mut(&x); }
 
 // z_drop definition
 
