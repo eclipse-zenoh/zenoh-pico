@@ -435,9 +435,9 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(
-            _z_zsize_encode(wbf, _z_encoding_len(&msg->_ext_value.encoding) + msg->_ext_value.payload.len));
+            _z_zsize_encode(wbf, _z_encoding_len(&msg->_ext_value.encoding) + msg->_ext_value.payload._slice.len));
         _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &msg->_ext_value.encoding));
-        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &msg->_ext_value.payload));
+        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &msg->_ext_value.payload._slice));
     }
     if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
@@ -471,7 +471,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_encoding_decode(&msg->_ext_value.encoding, &zbf);
             _z_slice_t bytes = _z_slice_wrap((uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
-            _z_slice_copy(&msg->_ext_value.payload, &bytes);
+            _z_slice_copy(&msg->_ext_value.payload._slice, &bytes);
             break;
         }
 #if Z_FEATURE_ATTACHMENT == 1

@@ -414,9 +414,9 @@ int8_t z_encoding_null(z_owned_encoding_t *encoding);
  *    value: Pointer to a :c:type:`z_loaned_value_t` to get data from.
  *
  * Return:
- *    Pointer to the data as a :c:type:`z_loaned_slice_t`.
+ *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
  */
-const z_loaned_slice_t *z_value_payload(const z_loaned_value_t *value);
+const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
 
 /**
  * Gets date pointer of a bytes array.
@@ -439,6 +439,28 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
  *    The number of bytes.
  */
 size_t z_slice_len(const z_loaned_slice_t *slice);
+
+/**
+ * Gets date pointer of a bytes array.
+ *
+ * Parameters:
+ *    bytes: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
+ *
+ * Return:
+ *    The data pointer.
+ */
+const uint8_t *z_bytes_data(const z_loaned_bytes_t *bytes);
+
+/**
+ * Gets total number of bytes in a bytes array.
+ *
+ * Parameters:
+ *    bytes: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
+ *
+ * Return:
+ *    The number of bytes.
+ */
+size_t z_bytes_len(const z_loaned_bytes_t *bytes);
 
 /**
  * Decodes data into a :c:type:`z_owned_string_t`
@@ -872,9 +894,9 @@ const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the payload from.
  *
  * Return:
- *   The payload wrapped as a :c:type:`z_loaned_slice_t`.
+ *   The payload wrapped as a :c:type:`z_loaned_bytes_t`.
  */
-const z_loaned_slice_t *z_sample_payload(const z_loaned_sample_t *sample);
+const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample);
 
 /**
  * Gets the timestamp of a sample by aliasing it.
@@ -1184,7 +1206,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_slice_t *payload,
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options);
 #endif
 

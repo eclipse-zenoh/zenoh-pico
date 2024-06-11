@@ -359,7 +359,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                 z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
                 z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
                 z_msg._body._response._body._reply._body._is_put = true;
-                z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
+                z_msg._body._response._body._reply._body._body._put._payload = payload.payload._slice;
                 z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
                 z_msg._body._response._body._reply._body._body._put._commons._timestamp = _z_timestamp_null();
                 z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();

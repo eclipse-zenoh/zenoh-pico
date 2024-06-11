@@ -33,7 +33,7 @@ _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *ms
     z_attachment_t att = _z_encoded_as_attachment(&msg->_ext_attachment);
 #endif
     return (_z_msg_query_reqexts_t) {
-        .body = msg->_ext_value.payload.start != NULL || _z_encoding_check(&msg->_ext_value.encoding),
+        .body = msg->_ext_value.payload._slice.start != NULL || _z_encoding_check(&msg->_ext_value.encoding),
         .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
 #if Z_FEATURE_ATTACHMENT == 1
         .attachment = z_attachment_check(&att)

@@ -74,7 +74,7 @@ _z_value_t _z_value_steal(_z_value_t *value) {
 }
 void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     _z_encoding_copy(&dst->encoding, &src->encoding);
-    _z_slice_copy(&dst->payload, &src->payload);
+    _z_bytes_copy(&dst->payload, &src->payload);
 }
 
 z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }

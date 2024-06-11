@@ -30,7 +30,7 @@
  */
 typedef struct _z_sample_t {
     _z_keyexpr_t keyexpr;
-    _z_slice_t payload;
+    _z_bytes_t payload;
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;

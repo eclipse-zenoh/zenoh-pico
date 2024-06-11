@@ -329,7 +329,7 @@ typedef struct {
  *   z_owned_encoding_t *encoding: Payload encoding.
  */
 typedef struct {
-    z_owned_slice_t *payload;
+    z_owned_bytes_t *payload;
     z_owned_encoding_t *encoding;
     z_query_consolidation_t consolidation;
     z_query_target_t target;

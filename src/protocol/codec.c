@@ -251,6 +251,10 @@ int8_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val
 
 int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
+int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(&bs->_slice, zbf); }
+
+int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs) { return _z_slice_encode(wbf, &bs->_slice); }
+
 /*------------------ string with null terminator ------------------*/
 int8_t _z_str_encode(_z_wbuf_t *wbf, const char *s) {
     size_t len = strlen(s);

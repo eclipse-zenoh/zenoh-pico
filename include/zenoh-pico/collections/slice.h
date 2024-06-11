@@ -58,10 +58,15 @@ void _z_slice_free(_z_slice_t **bs);
  *   _z_slice_t slice: content of the container.
  */
 typedef struct {
-    _z_slice_t slice;
+    _z_slice_t _slice;
 } _z_bytes_t;
 
+_Bool _z_bytes_check(_z_bytes_t bytes);
+_z_bytes_t _z_bytes_null(void);
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
+_z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
+void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
+void _z_bytes_clear(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
 
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */

@@ -110,21 +110,39 @@ _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
 }
 
 /*-------- Bytes --------*/
+_Bool _z_bytes_check(_z_bytes_t bytes) { return _z_slice_check(bytes._slice); }
+
+_z_bytes_t _z_bytes_null(void) {
+    return (_z_bytes_t){
+        ._slice = _z_slice_empty(),
+    };
+}
+
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     // Init only if needed
-    if (!_z_slice_check(dst->slice)) {
-        if (_z_slice_init(&dst->slice, src->slice.len) != _Z_RES_OK) {
+    if (!_z_slice_check(dst->_slice)) {
+        if (_z_slice_init(&dst->_slice, src->_slice.len) != _Z_RES_OK) {
             return;
         }
     }
-    (void)memcpy((uint8_t *)dst->slice.start, src->slice.start, src->slice.len);
+    (void)memcpy((uint8_t *)dst->_slice.start, src->_slice.start, src->_slice.len);
 }
+
+_z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
+    _z_bytes_t dst = _z_bytes_null();
+    _z_bytes_copy(&dst, src);
+    return dst;
+}
+
+void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) { _z_slice_move(&dst->_slice, &src->_slice); }
+
+void _z_bytes_clear(_z_bytes_t *bytes) { _z_slice_clear(&bytes->_slice); }
 
 void _z_bytes_free(_z_bytes_t **bs) {
     _z_bytes_t *ptr = *bs;
 
     if (ptr != NULL) {
-        _z_slice_clear(&ptr->slice);
+        _z_bytes_clear(ptr);
 
         z_free(ptr);
         *bs = NULL;
