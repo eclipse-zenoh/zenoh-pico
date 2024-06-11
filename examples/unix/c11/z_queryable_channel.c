@@ -106,8 +106,8 @@ int main(int argc, char **argv) {
         z_query_parameters(q, &params);
         printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)),
                (int)z_loan(params)->len, z_loan(params)->val);
-        const z_loaned_slice_t *payload = z_value_payload(z_query_value(z_loan(query)));
-        if (z_slice_len(payload) > 0) {
+        const z_loaned_bytes_t *payload = z_value_payload(z_query_value(z_loan(query)));
+        if (z_bytes_len(payload) > 0) {
             z_owned_string_t payload_string;
             z_bytes_decode_into_string(payload, &payload_string);
             printf("     with value '%s'\n", z_string_data(z_loan(payload_string)));
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
         // Reply value encoding
         z_view_string_t reply_str;
         z_view_string_wrap(&reply_str, value);
-        z_owned_slice_t reply_payload;
+        z_owned_bytes_t reply_payload;
         z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
 
         z_query_reply(q, z_query_keyexpr(q), z_move(reply_payload), &options);

@@ -166,7 +166,7 @@ void app_main() {
         if (strcmp(VALUE, "") != 0) {
             z_view_string_t value_str;
             z_view_string_wrap(&value_str, VALUE);
-            z_owned_slice_t payload;
+            z_owned_bytes_t payload;
             z_bytes_encode_from_string(&payload, z_loan(value_str));
             opts.payload = &payload;
         }

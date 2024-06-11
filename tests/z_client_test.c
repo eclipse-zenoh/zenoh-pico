@@ -64,7 +64,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     // Reply value encoding
     z_view_string_t reply_str;
     z_view_string_wrap(&reply_str, res);
-    z_owned_slice_t reply_payload;
+    z_owned_bytes_t reply_payload;
     z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
@@ -83,9 +83,9 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
 
         z_owned_string_t k_str;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-        const z_loaned_slice_t *payload = z_sample_payload(sample);
-        assert(payload->len == strlen(res));
-        assert(strncmp(res, (const char *)payload->start, strlen(res)) == 0);
+        const z_loaned_bytes_t *payload = z_sample_payload(sample);
+        assert(z_bytes_len(payload) == strlen(res));
+        assert(strncmp(res, (const char *)z_bytes_data(payload), strlen(res)) == 0);
         assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
         replies++;
@@ -104,8 +104,9 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    const z_loaned_slice_t *payload = z_sample_payload(sample);
-    assert((payload->len == MSG_LEN) || (payload->len == FRAGMENT_MSG_LEN));
+    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    size_t payload_len = z_bytes_len(payload);
+    assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     datas++;

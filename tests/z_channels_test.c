@@ -23,16 +23,16 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(channel, v)                                                             \
-    do {                                                                             \
-        _z_sample_t s = {.keyexpr = _z_rname("key"),                                 \
-                         .payload = {.start = (const uint8_t *)v, .len = strlen(v)}, \
-                         .timestamp = _z_timestamp_null(),                           \
-                         .encoding = _z_encoding_null(),                             \
-                         .kind = 0,                                                  \
-                         .qos = {0}};                                                \
-        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                     \
-        z_call(channel.send, &sample);                                               \
+#define SEND(channel, v)                                                                         \
+    do {                                                                                         \
+        _z_sample_t s = {.keyexpr = _z_rname("key"),                                             \
+                         .payload = {._slice = {.start = (const uint8_t *)v, .len = strlen(v)}}, \
+                         .timestamp = _z_timestamp_null(),                                       \
+                         .encoding = _z_encoding_null(),                                         \
+                         .kind = 0,                                                              \
+                         .qos = {0}};                                                            \
+        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                 \
+        z_call(channel.send, &sample);                                                           \
     } while (0);
 
 #define _RECV(channel, method, buf)                                             \
@@ -41,9 +41,10 @@
         z_sample_null(&sample);                                                 \
         z_call(channel.method, &sample);                                        \
         if (z_check(sample)) {                                                  \
-            const z_loaned_slice_t *payload = z_sample_payload(z_loan(sample)); \
-            strncpy(buf, (const char *)payload->start, (size_t)payload->len);   \
-            buf[payload->len] = '\0';                                           \
+            const z_loaned_bytes_t *payload = z_sample_payload(z_loan(sample)); \
+            size_t payload_len = z_bytes_len(payload);                          \
+            strncpy(buf, (const char *)z_bytes_data(payload), payload_len);     \
+            buf[payload_len] = '\0';                                            \
             z_drop(z_move(sample));                                             \
         } else {                                                                \
             buf[0] = '\0';                                                      \
