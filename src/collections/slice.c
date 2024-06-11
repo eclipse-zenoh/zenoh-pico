@@ -118,6 +118,12 @@ _z_bytes_t _z_bytes_null(void) {
     };
 }
 
+_z_bytes_t _z_bytes_make(size_t capacity) {
+    return (_z_bytes_t){
+        ._slice = _z_slice_make(capacity),
+    };
+}
+
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     // Init only if needed
     if (!_z_slice_check(dst->_slice)) {
@@ -147,4 +153,74 @@ void _z_bytes_free(_z_bytes_t **bs) {
         z_free(ptr);
         *bs = NULL;
     }
+}
+
+uint64_t _z_bytes_to_int(const _z_bytes_t *bs) {
+    uint64_t ret = 0;
+    for (size_t i = 0; i < bs->_slice.len; i++) {
+        ret |= (uint64_t)(bs->_slice.start[i] << (8 * i));
+    }
+    return ret;
+}
+
+float _z_bytes_to_float(const _z_bytes_t *bs) {
+    uint32_t temp = (uint32_t)_z_bytes_to_int(bs);
+    float val = 0;
+    memcpy(&val, &temp, sizeof(val));
+    return val;
+}
+
+double _z_bytes_to_double(const _z_bytes_t *bs) {
+    uint64_t temp = _z_bytes_to_int(bs);
+    double val = 0;
+    memcpy(&val, &temp, sizeof(val));
+    return val;
+}
+
+static size_t _z_bytes_int_len(uint64_t val) {
+    if ((val & (uint64_t)0xff00000000000000) != 0) {
+        return 8;
+    } else if ((val & (uint64_t)0x00ff000000000000) != 0) {
+        return 7;
+    } else if ((val & (uint64_t)0x0000ff0000000000) != 0) {
+        return 6;
+    } else if ((val & (uint64_t)0x000000ff00000000) != 0) {
+        return 5;
+    } else if ((val & (uint64_t)0x00000000ff000000) != 0) {
+        return 4;
+    } else if ((val & (uint64_t)0x0000000000ff0000) != 0) {
+        return 3;
+    } else if ((val & (uint64_t)0x000000000000ff00) != 0) {
+        return 2;
+    } else {
+        return 1;
+    }
+}
+
+_z_bytes_t _z_bytes_from_int(uint64_t val) {
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    size_t len = _z_bytes_int_len(val);
+    if (_z_slice_init(&ret._slice, len) != _Z_RES_OK) {
+        return ret;
+    }
+    // Encode int
+    for (size_t i = 0; i < len; i++) {
+        ((uint8_t *)ret._slice.start)[i] = (uint8_t)(val >> (8 * i));
+    }
+    return ret;
+}
+
+_z_bytes_t _z_bytes_from_float(float val) {
+    // Convert float to uint32_t
+    uint32_t temp;
+    memcpy(&temp, &val, sizeof(temp));
+    return _z_bytes_from_int((uint64_t)temp);
+}
+
+_z_bytes_t _z_bytes_from_double(double val) {
+    // Convert float to uint64_t
+    uint64_t temp;
+    memcpy(&temp, &val, sizeof(temp));
+    return _z_bytes_from_int(temp);
 }

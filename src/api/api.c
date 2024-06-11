@@ -268,6 +268,68 @@ const uint8_t *z_bytes_data(const z_loaned_bytes_t *bytes) { return bytes->_slic
 
 size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return bytes->_slice.len; }
 
+int8_t z_bytes_decode_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst) {
+    *dst = (int8_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst) {
+    *dst = (int16_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst) {
+    *dst = (int32_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst) {
+    *dst = (int64_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst) {
+    *dst = (uint8_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst) {
+    *dst = (uint16_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst) {
+    *dst = (uint32_t)_z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst) {
+    *dst = _z_bytes_to_int(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_float(const z_loaned_bytes_t *bytes, float *dst) {
+    *dst = _z_bytes_to_float(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_double(const z_loaned_bytes_t *bytes, double *dst) {
+    *dst = _z_bytes_to_double(bytes);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
+    // Init owned slice
+    z_slice_null(dst);
+    dst->_val = (_z_slice_t *)z_malloc(sizeof(_z_slice_t));
+    if (dst->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Convert bytes to slice
+    *dst->_val = bytes->_slice;
+    return _Z_RES_OK;
+}
+
 int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
     // Init owned string
     z_string_null(s);
@@ -275,24 +337,143 @@ int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_
     if (s->_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    // Convert slice to string
+    // Convert bytes to string
     *s->_val = _z_string_from_bytes(&bytes->_slice);
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *s) {
+int8_t z_bytes_encode_from_int8(z_owned_bytes_t *bytes, int8_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_int16(z_owned_bytes_t *bytes, int16_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_int32(z_owned_bytes_t *bytes, int32_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_int64(z_owned_bytes_t *bytes, int64_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
+    return z_bytes_encode_from_uint64(bytes, (uint64_t)val);
+}
+
+int8_t z_bytes_encode_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
     // Init owned bytes
-    z_bytes_null(buffer);
-    buffer->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (buffer->_val == NULL) {
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Encode data
-    buffer->_val->_slice = _z_slice_wrap((uint8_t *)s->val, s->len);
+    *bytes->_val = _z_bytes_from_int(val);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
     return _Z_RES_OK;
 }
 
-// TODO: Other encode/decode functions
+int8_t z_bytes_encode_from_float(z_owned_bytes_t *bytes, float val) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Encode data
+    *bytes->_val = _z_bytes_from_float(val);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_encode_from_double(z_owned_bytes_t *bytes, double val) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Encode data
+    *bytes->_val = _z_bytes_from_double(val);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_encode_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Encode data
+    bytes->_val->_slice = _z_slice_wrap((uint8_t *)data, len);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_encode_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Allocate bytes
+    *bytes->_val = _z_bytes_make(len);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Copy data
+    memcpy((uint8_t *)bytes->_val->_slice.start, data, len);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *bytes, const char *s) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Encode string without null terminator
+    size_t len = strlen(s);
+    bytes->_val->_slice = _z_slice_wrap((uint8_t *)s, len);
+    return _Z_RES_OK;
+}
+
+int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Allocate bytes
+    size_t len = strlen(s);
+    *bytes->_val = _z_bytes_make(len);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Copy string without null terminator
+    memcpy((uint8_t *)bytes->_val->_slice.start, s, len);
+    return _Z_RES_OK;
+}
 
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 

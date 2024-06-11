@@ -63,10 +63,17 @@ typedef struct {
 
 _Bool _z_bytes_check(_z_bytes_t bytes);
 _z_bytes_t _z_bytes_null(void);
+_z_bytes_t _z_bytes_make(size_t capacity);
 void _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_clear(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
+uint64_t _z_bytes_to_int(const _z_bytes_t *bs);
+float _z_bytes_to_float(const _z_bytes_t *bs);
+double _z_bytes_to_double(const _z_bytes_t *bs);
+_z_bytes_t _z_bytes_from_int(uint64_t val);
+_z_bytes_t _z_bytes_from_float(float val);
+_z_bytes_t _z_bytes_from_double(double val);
 
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */
