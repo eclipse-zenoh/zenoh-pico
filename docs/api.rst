@@ -65,6 +65,10 @@ TODO: owned type description
   
   Represents an array of bytes.
 
+.. c:type:: z_owned_bytes_t
+  
+  Represents an array of bytes container.
+
 .. c:type:: z_owned_string_t
 
   Represents a string without null-terminator.
@@ -133,6 +137,10 @@ TODO: loaned type description
 .. c:type:: z_loaned_slice_t
 
   Represents an array of bytes.
+
+.. c:type:: z_loaned_bytes_t
+
+  Represents an array of bytes container.
 
 .. c:type:: z_loaned_string_t
 
@@ -284,6 +292,8 @@ Primitives
 .. autocfunction:: primitives.h::z_value_payload
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
+.. autocfunction:: primitives.h::z_bytes_data
+.. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_decode_into_string
 .. autocfunction:: primitives.h::z_bytes_encode_from_string
 .. autocfunction:: primitives.h::z_timestamp_check
