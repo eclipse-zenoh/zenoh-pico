@@ -16,6 +16,17 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
+_z_query_t _z_query_null(void) {
+    return (_z_query_t){
+        ._anyke = false,
+        ._key = _z_keyexpr_null(),
+        ._parameters = NULL,
+        ._request_id = 0,
+        ._value = _z_value_null(),
+        ._zn = NULL,
+    };
+}
+
 void _z_query_clear(_z_query_t *q) {
     // Send REPLY_FINAL message
     _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
@@ -35,7 +46,7 @@ void _z_query_clear(_z_query_t *q) {
 #if Z_FEATURE_QUERYABLE == 1
 _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_slice_t *parameters,
                            _z_session_t *zn, uint32_t request_id, z_attachment_t att) {
-    _z_query_t q;
+    _z_query_t q = _z_query_null();
     q._request_id = request_id;
     q._zn = zn;  // Ideally would have been an rc
     q._parameters = (char *)z_malloc(parameters->len + 1);

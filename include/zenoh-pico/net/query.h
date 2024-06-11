@@ -35,6 +35,7 @@ typedef struct _z_query_t {
     _Bool _anyke;
 } _z_query_t;
 
+_z_query_t _z_query_null(void);
 void _z_query_clear(_z_query_t *q);
 _Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
