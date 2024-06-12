@@ -84,8 +84,8 @@ int main(int argc, char **argv) {
         z_get_options_t opts;
         z_get_options_default(&opts);
         // Value encoding
+        z_owned_bytes_t payload;
         if (strcmp(VALUE, "") != 0) {
-            z_owned_bytes_t payload;
             z_bytes_encode_from_string(&payload, VALUE);
             opts.payload = &payload;
         }

@@ -134,9 +134,9 @@ int main(int argc, char **argv) {
     printf("Sending Query '%s'...\n", keyexpr);
     z_get_options_t opts;
     z_get_options_default(&opts);
-
+    // Value encoding
+    z_owned_bytes_t payload;
     if (value != NULL) {
-        z_owned_bytes_t payload;
         z_bytes_encode_from_string(&payload, value);
         opts.payload = &payload;
     }
