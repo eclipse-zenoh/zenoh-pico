@@ -100,6 +100,7 @@ _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
 }
 
 _Bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
+
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;
     *b = _z_slice_empty();
@@ -189,6 +190,17 @@ double _z_bytes_to_double(const _z_bytes_t *bs) {
     double val = 0;
     memcpy(&val, bs->_slice.start, sizeof(val));
     return val;
+}
+
+_z_slice_t _z_bytes_to_slice(const _z_bytes_t *bytes) {
+    // Allocate slice
+    _z_slice_t ret = _z_slice_make(bytes->_slice.len);
+    if (!_z_slice_check(ret)) {
+        return ret;
+    }
+    // Recopy data
+    memcpy((uint8_t *)ret.start, bytes->_slice.start, bytes->_slice.len);
+    return ret;
 }
 
 _z_bytes_t _z_bytes_from_uint8(uint8_t val) {

@@ -325,7 +325,7 @@ int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t 
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Convert bytes to slice
-    *dst->_val = bytes->_slice;
+    *dst->_val = _z_bytes_to_slice(bytes);
     return _Z_RES_OK;
 }
 
