@@ -263,10 +263,6 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start
 
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
 
-const uint8_t *z_bytes_data(const z_loaned_bytes_t *bytes) { return bytes->_slice.start; }
-
-size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return bytes->_slice.len; }
-
 int8_t z_bytes_decode_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst) {
     *dst = (int8_t)_z_bytes_to_uint8(bytes);
     return _Z_RES_OK;
@@ -848,6 +844,7 @@ z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample) { return _Z_
 #endif
 
 const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
+size_t z_string_len(const z_loaned_string_t *str) { return str->len; }
 
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_publisher_drop(_z_publisher_t **pub) {

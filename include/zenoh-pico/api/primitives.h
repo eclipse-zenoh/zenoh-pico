@@ -441,28 +441,6 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
 size_t z_slice_len(const z_loaned_slice_t *slice);
 
 /**
- * Gets date pointer of a bytes array.
- *
- * Parameters:
- *    bytes: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
- *
- * Return:
- *    The data pointer.
- */
-const uint8_t *z_bytes_data(const z_loaned_bytes_t *bytes);
-
-/**
- * Gets total number of bytes in a bytes array.
- *
- * Parameters:
- *    bytes: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
- *
- * Return:
- *    The number of bytes.
- */
-size_t z_bytes_len(const z_loaned_bytes_t *bytes);
-
-/**
  * Decodes data into a `int8_t` signed integer.
  *
  * Parameters:
@@ -1084,6 +1062,17 @@ const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
  *   Pointer to the string data.
  */
 const char *z_string_data(const z_loaned_string_t *str);
+
+/**
+ * Gets string length from a :c:type:`z_loaned_string_t`.
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to get length from.
+ *
+ * Return:
+ *   Length of the string.
+ */
+size_t z_string_len(const z_loaned_string_t *str);
 
 /************* Primitives **************/
 /**

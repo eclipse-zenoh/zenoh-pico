@@ -292,8 +292,6 @@ Primitives
 .. autocfunction:: primitives.h::z_value_payload
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
-.. autocfunction:: primitives.h::z_bytes_data
-.. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_decode_into_int8
 .. autocfunction:: primitives.h::z_bytes_decode_into_int16
 .. autocfunction:: primitives.h::z_bytes_decode_into_int32
@@ -338,6 +336,7 @@ Primitives
 .. autocfunction:: primitives.h::z_closure_zid
 .. autocfunction:: primitives.h::z_sample_loan
 .. autocfunction:: primitives.h::z_string_data
+.. autocfunction:: primitives.h::z_string_len
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
