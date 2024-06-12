@@ -43,15 +43,14 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     Serial.println("'");
 
     // Process value
-    const z_loaned_bytes_t *payload = z_value_payload(z_query_value(query));
-    if (z_bytes_len(payload) > 0) {
-        z_owned_string_t payload_string;
-        z_bytes_decode_into_string(payload, &payload_string);
+    z_owned_string_t payload_string;
+    z_bytes_decode_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    if (z_string_len(z_string_loan(&payload_string)) > 1) {
         Serial.print("     with value '");
         Serial.print(z_string_data(z_string_loan(&payload_string)));
         Serial.println("'");
-        z_string_drop(z_string_move(&payload_string));
     }
+    z_string_drop(z_string_move(&payload_string));
 
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);

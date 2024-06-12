@@ -41,8 +41,9 @@ void z_stats_stop(z_stats_t *stats) {
 
 void on_sample(const z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    unsigned long data_len = (unsigned long)z_bytes_len(payload);
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    unsigned long data_len = (unsigned long)z_slice_len(z_loan(value));
 
     if (stats->curr_len != data_len) {
         // End previous measurement
@@ -57,6 +58,7 @@ void on_sample(const z_loaned_sample_t *sample, void *context) {
         printf("Starting test for pkt len: %lu\n", stats->curr_len);
         stats->start = z_clock_now();
     }
+    z_drop(z_move(value));
     stats->count++;
 }
 

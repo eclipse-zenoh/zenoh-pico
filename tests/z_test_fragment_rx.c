@@ -23,9 +23,10 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    const uint8_t *data = z_bytes_data(payload);
-    size_t data_len = z_bytes_len(payload);
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    const uint8_t *data = z_slice_data(z_loan(value));
+    size_t data_len = z_slice_len(z_loan(value));
     for (size_t i = 0; i < data_len; i++) {
         if (data[i] != (uint8_t)i) {
             is_valid = false;
@@ -35,6 +36,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_string_data(z_loan(keystr)), (int)data_len,
            is_valid);
     z_drop(z_move(keystr));
+    z_drop(z_move(value));
 }
 
 int main(int argc, char **argv) {

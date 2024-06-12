@@ -90,10 +90,12 @@ int main(int argc, char **argv) {
         for (z_call(channel.try_recv, &sample); z_check(sample); z_call(channel.try_recv, &sample)) {
             z_owned_string_t keystr;
             z_keyexpr_to_string(z_sample_keyexpr(z_loan(sample)), &keystr);
-            const z_loaned_bytes_t *payload = z_sample_payload(z_loan(sample));
-            printf(">> [Subscriber] Pulled ('%s': '%.*s')\n", z_string_data(z_loan(keystr)), (int)z_bytes_len(payload),
-                   z_bytes_data(payload));
+            z_owned_string_t value;
+            z_bytes_decode_into_string(z_sample_payload(z_loan(sample)), &value);
+            printf(">> [Subscriber] Pulled ('%s': '%s')\n", z_string_data(z_loan(keystr)),
+                   z_string_data(z_loan(value)));
             z_drop(z_move(keystr));
+            z_drop(z_move(value));
             z_drop(z_move(sample));
         }
         printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", interval);

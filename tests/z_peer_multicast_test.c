@@ -48,14 +48,16 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    assert(z_bytes_len(payload) == MSG_LEN);
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    assert(z_slice_len(z_loan(value)) == MSG_LEN);
     assert(z_loan(k_str)->len == strlen(res));
     assert(strncmp(res, z_loan(k_str)->val, strlen(res)) == 0);
     (void)(sample);
 
     datas++;
     z_drop(z_move(k_str));
+    z_drop(z_move(value));
     free(res);
 }
 

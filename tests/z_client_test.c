@@ -81,13 +81,15 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
 
         z_owned_string_t k_str;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-        const z_loaned_bytes_t *payload = z_sample_payload(sample);
-        assert(z_bytes_len(payload) == strlen(res));
-        assert(strncmp(res, (const char *)z_bytes_data(payload), strlen(res)) == 0);
+        z_owned_string_t value;
+        z_bytes_decode_into_string(z_sample_payload(sample), &value);
+        assert(z_string_len(z_loan(value)) == strlen(res) + 1);
+        assert(strncmp(res, z_string_data(z_loan(value)), strlen(res)) == 0);
         assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
         replies++;
         z_drop(z_move(k_str));
+        z_drop(z_move(value));
     } else {
         printf(">> Received an error\n");
     }
@@ -102,13 +104,15 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    size_t payload_len = z_bytes_len(payload);
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    size_t payload_len = z_slice_len(z_loan(value));
     assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     datas++;
     z_drop(z_move(k_str));
+    z_drop(z_move(value));
     free(res);
 }
 
