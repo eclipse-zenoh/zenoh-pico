@@ -164,16 +164,14 @@ uint64_t _z_bytes_to_int(const _z_bytes_t *bs) {
 }
 
 float _z_bytes_to_float(const _z_bytes_t *bs) {
-    uint32_t temp = (uint32_t)_z_bytes_to_int(bs);
     float val = 0;
-    memcpy(&val, &temp, sizeof(val));
+    memcpy(&val, bs->_slice.start, sizeof(val));
     return val;
 }
 
 double _z_bytes_to_double(const _z_bytes_t *bs) {
-    uint64_t temp = _z_bytes_to_int(bs);
     double val = 0;
-    memcpy(&val, &temp, sizeof(val));
+    memcpy(&val, bs->_slice.start, sizeof(val));
     return val;
 }
 
@@ -212,15 +210,23 @@ _z_bytes_t _z_bytes_from_int(uint64_t val) {
 }
 
 _z_bytes_t _z_bytes_from_float(float val) {
-    // Convert float to uint32_t
-    uint32_t temp;
-    memcpy(&temp, &val, sizeof(temp));
-    return _z_bytes_from_int((uint64_t)temp);
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
+        return ret;
+    }
+    // Encode float
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    return ret;
 }
 
 _z_bytes_t _z_bytes_from_double(double val) {
-    // Convert float to uint64_t
-    uint64_t temp;
-    memcpy(&temp, &val, sizeof(temp));
-    return _z_bytes_from_int(temp);
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
+        return ret;
+    }
+    // Encode double
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    return ret;
 }
