@@ -25,7 +25,8 @@
  *
  * Members:
  *   size_t len: The length of the bytes array.
- *   uint8_t *val: A pointer to the bytes array.
+ *   uint8_t *start: A pointer to the bytes array.
+ *   _Bool _is_alloc: Indicates if memory has been allocated by this module
  */
 typedef struct {
     size_t len;

@@ -208,7 +208,7 @@ _LOANED_TYPE(_z_encoding_t, encoding)
  *
  * Members:
  *   z_loaned_encoding_t encoding: The encoding of the `payload`.
- *   z_loaned_slice_t* payload: The payload of this zenoh value.
+ *   z_loaned_bytes_t* payload: The payload of this zenoh value.
  */
 _OWNED_TYPE_PTR(_z_value_t, value)
 _LOANED_TYPE(_z_value_t, value)
@@ -323,10 +323,10 @@ typedef struct {
  * Represents the configuration used to configure a get operation sent via :c:func:`z_get`.
  *
  * Members:
- *   z_query_target_t target: The queryables that should be targeted by this get.
- *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
- *   z_owned_slice_t payload: The payload to include in the query.
+ *   z_owned_bytes_t payload: The payload to include in the query.
  *   z_owned_encoding_t *encoding: Payload encoding.
+ *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
+ *   z_query_target_t target: The queryables that should be targeted by this get.
  */
 typedef struct {
     z_owned_bytes_t *payload;
@@ -419,7 +419,7 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *
  * Members:
  *   z_keyexpr_t keyexpr: The keyexpr of this data sample.
- *   z_loaned_slice_t* payload: The value of this data sample.
+ *   z_loaned_bytes_t* payload: The value of this data sample.
  *   z_loaned_encoding_t encoding: The encoding of the value of this data sample.
  *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
  *   z_timestamp_t timestamp: The timestamp of this data sample.
