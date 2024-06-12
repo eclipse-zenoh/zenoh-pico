@@ -155,12 +155,28 @@ void _z_bytes_free(_z_bytes_t **bs) {
     }
 }
 
-uint64_t _z_bytes_to_int(const _z_bytes_t *bs) {
-    uint64_t ret = 0;
-    for (size_t i = 0; i < bs->_slice.len; i++) {
-        ret |= (uint64_t)(bs->_slice.start[i] << (8 * i));
-    }
-    return ret;
+uint8_t _z_bytes_to_uint8(const _z_bytes_t *bs) {
+    uint8_t val = 0;
+    memcpy(&val, bs->_slice.start, sizeof(val));
+    return val;
+}
+
+uint16_t _z_bytes_to_uint16(const _z_bytes_t *bs) {
+    uint16_t val = 0;
+    memcpy(&val, bs->_slice.start, sizeof(val));
+    return val;
+}
+
+uint32_t _z_bytes_to_uint32(const _z_bytes_t *bs) {
+    uint32_t val = 0;
+    memcpy(&val, bs->_slice.start, sizeof(val));
+    return val;
+}
+
+uint64_t _z_bytes_to_uint64(const _z_bytes_t *bs) {
+    uint64_t val = 0;
+    memcpy(&val, bs->_slice.start, sizeof(val));
+    return val;
 }
 
 float _z_bytes_to_float(const _z_bytes_t *bs) {
@@ -175,37 +191,47 @@ double _z_bytes_to_double(const _z_bytes_t *bs) {
     return val;
 }
 
-static size_t _z_bytes_int_len(uint64_t val) {
-    if ((val & (uint64_t)0xff00000000000000) != 0) {
-        return 8;
-    } else if ((val & (uint64_t)0x00ff000000000000) != 0) {
-        return 7;
-    } else if ((val & (uint64_t)0x0000ff0000000000) != 0) {
-        return 6;
-    } else if ((val & (uint64_t)0x000000ff00000000) != 0) {
-        return 5;
-    } else if ((val & (uint64_t)0x00000000ff000000) != 0) {
-        return 4;
-    } else if ((val & (uint64_t)0x0000000000ff0000) != 0) {
-        return 3;
-    } else if ((val & (uint64_t)0x000000000000ff00) != 0) {
-        return 2;
-    } else {
-        return 1;
-    }
-}
-
-_z_bytes_t _z_bytes_from_int(uint64_t val) {
+_z_bytes_t _z_bytes_from_uint8(uint8_t val) {
     _z_bytes_t ret = _z_bytes_null();
     // Init bytes array
-    size_t len = _z_bytes_int_len(val);
-    if (_z_slice_init(&ret._slice, len) != _Z_RES_OK) {
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
         return ret;
     }
     // Encode int
-    for (size_t i = 0; i < len; i++) {
-        ((uint8_t *)ret._slice.start)[i] = (uint8_t)(val >> (8 * i));
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    return ret;
+}
+
+_z_bytes_t _z_bytes_from_uint16(uint16_t val) {
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
+        return ret;
     }
+    // Encode int
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    return ret;
+}
+
+_z_bytes_t _z_bytes_from_uint32(uint32_t val) {
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
+        return ret;
+    }
+    // Encode int
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    return ret;
+}
+
+_z_bytes_t _z_bytes_from_uint64(uint64_t val) {
+    _z_bytes_t ret = _z_bytes_null();
+    // Init bytes array
+    if (_z_slice_init(&ret._slice, sizeof(val)) != _Z_RES_OK) {
+        return ret;
+    }
+    // Encode int
+    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
     return ret;
 }
 
