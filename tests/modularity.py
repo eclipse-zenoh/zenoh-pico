@@ -297,7 +297,7 @@ if __name__ == "__main__":
     parser.add_argument("--sub", type=int, choices=[0, 1], help="Z_FEATURE_SUBSCRIPTION (0 or 1)")
     parser.add_argument("--queryable", type=int, choices=[0, 1], help="Z_FEATURE_QUERYABLE (0 or 1)")
     parser.add_argument("--query", type=int, choices=[0, 1], help="Z_FEATURE_QUERY (0 or 1)")
-    parser.add_argument("--attachment", type=int, choices=[0, 1], help="Z_FEATURE_ATTACHMENT (0 or 1)")
+    parser.add_argument("--attachment", type=int, choices=[0, 1], help="testing with attachment (0 or 1)")
     EXIT_STATUS = 0
     prog_args = parser.parse_args()
     print(
