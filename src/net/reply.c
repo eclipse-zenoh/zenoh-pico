@@ -86,7 +86,7 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
 
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_slice_t *payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           z_attachment_t att) {
+                           const _z_bytes_t att) {
     _z_reply_t reply = _z_reply_null();
     reply._tag = tag;
     if (tag == Z_REPLY_TAG_DATA) {
@@ -98,9 +98,8 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         _z_slice_copy(&sample.payload._slice, payload);
         sample.kind = kind;
         sample.timestamp = _z_timestamp_duplicate(timestamp);
-#if Z_FEATURE_ATTACHMENT == 1
         sample.attachment = att;  // FIXME: call z_attachment_move or copy
-#endif
+
         // Create sample rc from value
         reply.data.sample = _z_sample_rc_new_from_val(sample);
     }
@@ -109,7 +108,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
 #else
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_slice_t *payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           z_attachment_t att) {
+                           const _z_bytes_t att) {
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(tag);
     _ZP_UNUSED(id);

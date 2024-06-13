@@ -113,15 +113,9 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
         ret = _Z_ERR_QUERY_NOT_MATCH;
     }
 
-    // Retrieve attachment
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = _z_encoded_as_attachment(&msg->_attachment);
-#else
-    z_attachment_t att = z_attachment_null();
-#endif
     // Build the reply
     _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, &msg->_payload,
-                                       &msg->_commons._timestamp, msg->_encoding, Z_SAMPLE_KIND_PUT, att);
+                                       &msg->_commons._timestamp, msg->_encoding, Z_SAMPLE_KIND_PUT, msg->_attachment);
 
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||

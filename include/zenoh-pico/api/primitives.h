@@ -842,7 +842,6 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *paramete
  */
 const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
 
-#if Z_FEATURE_ATTACHMENT == 1
 /**
  * Gets a query attachment value by aliasing it.
  *
@@ -850,10 +849,9 @@ const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
  *   query: Pointer to the :c:type:`z_loaned_query_t` to get the attachment from.
  *
  * Return:
- *   The attachment value wrapped as a :c:type:`z_attachment_t`.
+ *   Pointer to the attachment as a :c:type:`z_loaned_bytes_t`.
  */
-z_attachment_t z_query_attachment(const z_loaned_query_t *query);
-#endif
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query);
 
 /**
  * Gets a query keyexpr by aliasing it.
@@ -1219,7 +1217,6 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  */
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
 
-#if Z_FEATURE_ATTACHMENT == 1
 /**
  * Gets the attachment of a value by aliasing it.
  *
@@ -1227,10 +1224,10 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the attachment from.
  *
  * Return:
- *   The attachment wrapped as a :c:type:`z_attachment_t`.
+ *   Pointer to the attachment as a :c:type:`z_loaned_bytes_t`.
  */
-z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample);
-#endif
+const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample);
+
 #if Z_FEATURE_PUBLICATION == 1
 /**
  * Builds a :c:type:`z_put_options_t` with default values.

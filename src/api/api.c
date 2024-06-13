@@ -532,9 +532,7 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *paramete
 
 const z_loaned_value_t *z_query_value(const z_loaned_query_t *query) { return &query->in->val._value; }
 
-#if Z_FEATURE_ATTACHMENT == 1
-z_attachment_t z_query_attachment(const z_loaned_query_t *query) { return query->in->val.attachment; }
-#endif
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->in->val.attachment; }
 
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
 
@@ -839,9 +837,9 @@ const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { retu
 z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).timestamp; }
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).encoding; }
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).qos; }
-#if Z_FEATURE_ATTACHMENT == 1
-z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).attachment; }
-#endif
+const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) {
+    return &_Z_RC_IN_VAL(sample).attachment;
+}
 
 const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
 size_t z_string_len(const z_loaned_string_t *str) { return str->len; }
@@ -862,9 +860,7 @@ void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
     options->encoding = NULL;
-#if Z_FEATURE_ATTACHMENT == 1
-    options->attachment = z_attachment_null();
-#endif
+    options->attachment = NULL;
 }
 
 void z_delete_options_default(z_delete_options_t *options) {
@@ -882,29 +878,17 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
         opt.congestion_control = options->congestion_control;
         opt.encoding = options->encoding;
         opt.priority = options->priority;
-#if Z_FEATURE_ATTACHMENT == 1
         opt.attachment = options->attachment;
-#endif
     }
+
     ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, (const uint8_t *)payload, payload_len,
-                   _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority
-#if Z_FEATURE_ATTACHMENT == 1
-                   ,
-                   opt.attachment
-#endif
-    );
+                   _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
+                   _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = opt.attachment;
-#else
-    z_attachment_t att = z_attachment_null();
-#endif
     _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload, payload_len,
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-                                   att
-
-    );
+                                   _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     return ret;
@@ -920,12 +904,7 @@ int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
         opt.priority = options->priority;
     }
     ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, NULL, 0, _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
-                   opt.congestion_control, opt.priority
-#if Z_FEATURE_ATTACHMENT == 1
-                   ,
-                   z_attachment_null()
-#endif
-    );
+                   opt.congestion_control, opt.priority, _z_bytes_null());
 
     return ret;
 }
@@ -981,9 +960,7 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub) { return _z_publisher_dro
 
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
     options->encoding = NULL;
-#if Z_FEATURE_ATTACHMENT == 1
-    options->attachment = z_attachment_null();
-#endif
+    options->attachment = NULL;
 }
 
 void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->__dummy = 0; }
@@ -996,29 +973,18 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, 
     z_publisher_put_options_default(&opt);
     if (options != NULL) {
         opt.encoding = options->encoding;
-#if Z_FEATURE_ATTACHMENT == 1
         opt.attachment = options->attachment;
-#endif
     }
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
         // Write value
         ret = _z_write(&pub->_zn.in->val, pub->_key, payload, len, _z_encoding_from_owned(opt.encoding),
-                       Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority
-#if Z_FEATURE_ATTACHMENT == 1
-                       ,
-                       opt.attachment
-#endif
-        );
+                       Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority,
+                       _z_bytes_from_owned_bytes(opt.attachment));
     }
-
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = opt.attachment;
-#else
-    z_attachment_t att = z_attachment_null();
-#endif
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT, att);
+    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT,
+                                   _z_bytes_from_owned_bytes(opt.attachment));
 
     // Clean-up
     z_encoding_drop(opt.encoding);
@@ -1028,12 +994,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, 
 int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
     (void)(options);
     return _z_write(&pub->_zn.in->val, pub->_key, NULL, 0, _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
-                    pub->_congestion_control, pub->_priority
-#if Z_FEATURE_ATTACHMENT == 1
-                    ,
-                    z_attachment_null()
-#endif
-    );
+                    pub->_congestion_control, pub->_priority, _z_bytes_null());
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
@@ -1053,9 +1014,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->consolidation = z_query_consolidation_default();
     options->encoding = NULL;
     options->payload = NULL;
-#if Z_FEATURE_ATTACHMENT == 1
-    options->attachment = z_attachment_null();
-#endif
+    options->attachment = NULL;
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
 }
 
@@ -1073,9 +1032,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
         opt.target = options->target;
         opt.encoding = options->encoding;
         opt.payload = z_bytes_move(options->payload);
-#if Z_FEATURE_ATTACHMENT == 1
         opt.attachment = options->attachment;
-#endif
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -1091,12 +1048,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
                         .encoding = _z_encoding_from_owned(opt.encoding)};
 
     ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, value, callback->call,
-                   callback->drop, ctx, opt.timeout_ms
-#if Z_FEATURE_ATTACHMENT == 1
-                   ,
-                   opt.attachment
-#endif
-    );
+                   callback->drop, ctx, opt.timeout_ms, _z_bytes_from_owned_bytes(opt.attachment));
     if (opt.payload != NULL) {
         z_bytes_drop(opt.payload);
     }
@@ -1180,7 +1132,8 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(payload),
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
-    int8_t ret = _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.attachment);
+    int8_t ret =
+        _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, _z_bytes_from_owned_bytes(opts.attachment));
     if (payload != NULL) {
         z_bytes_drop(payload);
     }
@@ -1406,117 +1359,3 @@ int8_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *
     (void)(options);
     return _zp_send_join(&_Z_RC_IN_VAL(zs));
 }
-#if Z_FEATURE_ATTACHMENT == 1
-void _z_slice_pair_clear(struct _z_slice_pair_t *this_) {
-    _z_slice_clear(&this_->key);
-    _z_slice_clear(&this_->value);
-}
-
-z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_) {
-    if (!z_bytes_map_check(this_)) {
-        return z_attachment_null();
-    }
-    return (z_attachment_t){.data = this_, .iteration_driver = (z_attachment_iter_driver_t)z_bytes_map_iter};
-}
-bool z_bytes_map_check(const z_owned_bytes_map_t *this_) { return this_->_inner != NULL; }
-void z_bytes_map_drop(z_owned_bytes_map_t *this_) { _z_slice_pair_list_free(&this_->_inner); }
-
-int8_t _z_slice_map_insert_by_alias(z_loaned_slice_t *key, z_loaned_slice_t *value, void *this_) {
-    z_bytes_map_insert_by_alias((z_owned_bytes_map_t *)this_, key, value);
-    return 0;
-}
-int8_t _z_slice_map_insert_by_copy(z_loaned_slice_t *key, z_loaned_slice_t *value, void *this_) {
-    z_bytes_map_insert_by_copy((z_owned_bytes_map_t *)this_, key, value);
-    return 0;
-}
-z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_) {
-    if (!z_attachment_check(&this_)) {
-        return z_bytes_map_null();
-    }
-    z_owned_bytes_map_t map = z_bytes_map_new();
-    z_attachment_iterate(this_, _z_slice_map_insert_by_copy, &map);
-    return map;
-}
-z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_) {
-    if (!z_attachment_check(&this_)) {
-        return z_bytes_map_null();
-    }
-    z_owned_bytes_map_t map = z_bytes_map_new();
-    z_attachment_iterate(this_, _z_slice_map_insert_by_alias, &map);
-    return map;
-}
-z_loaned_slice_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key) {
-    _z_slice_pair_list_t *current = this_->_inner;
-    while (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        if (_z_slice_eq(&key, &head->key)) {
-            return _z_slice_wrap(head->value.start, head->value.len);
-        }
-    }
-    return z_slice_null();
-}
-void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value) {
-    _z_slice_pair_list_t *current = this_->_inner;
-    while (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        if (_z_slice_eq(&key, &head->key)) {
-            break;
-        }
-        current = _z_slice_pair_list_tail(current);
-    }
-    if (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        _z_slice_clear(&head->value);
-        head->value = _z_slice_wrap(value.start, value.len);
-    } else {
-        struct _z_slice_pair_t *insert = z_malloc(sizeof(struct _z_slice_pair_t));
-        memset(insert, 0, sizeof(struct _z_slice_pair_t));
-        insert->key = _z_slice_wrap(key.start, key.len);
-        insert->value = _z_slice_wrap(value.start, value.len);
-        ((z_owned_bytes_map_t *)this_)->_inner = _z_slice_pair_list_push(this_->_inner, insert);
-    }
-}
-void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value) {
-    _z_slice_pair_list_t *current = this_->_inner;
-    while (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        if (_z_slice_eq(&key, &head->key)) {
-            break;
-        }
-        current = _z_slice_pair_list_tail(current);
-    }
-    if (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        _z_slice_clear(&head->value);
-        _z_slice_copy(&head->value, &value);
-        if (!head->key._is_alloc) {
-            _z_slice_copy(&head->key, &key);
-        }
-    } else {
-        struct _z_slice_pair_t *insert = z_malloc(sizeof(struct _z_slice_pair_t));
-        memset(insert, 0, sizeof(struct _z_slice_pair_t));
-        _z_slice_copy(&insert->key, &key);
-        _z_slice_copy(&insert->value, &value);
-        ((z_owned_bytes_map_t *)this_)->_inner = _z_slice_pair_list_push(this_->_inner, insert);
-    }
-}
-int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx) {
-    _z_slice_pair_list_t *current = this_->_inner;
-    while (current) {
-        struct _z_slice_pair_t *head = _z_slice_pair_list_head(current);
-        int8_t ret = body(head->key, head->value, ctx);
-        if (ret) {
-            return ret;
-        }
-        current = _z_slice_pair_list_tail(current);
-    }
-    return 0;
-}
-z_owned_bytes_map_t z_bytes_map_new(void) { return (z_owned_bytes_map_t){._inner = _z_slice_pair_list_new()}; }
-z_owned_bytes_map_t z_bytes_map_null(void) { return (z_owned_bytes_map_t){._inner = NULL}; }
-
-int8_t z_bytes_from_str(z_owned_slice_t *bytes const char *str) {
-    bytes->_val = _z_slice_wrap((const uint8_t *)str, strlen(str));
-    return _Z_RES_OK;
-}
-#endif
