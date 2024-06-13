@@ -24,14 +24,6 @@
 
 static int msg_nb = 0;
 
-#if Z_FEATURE_ATTACHMENT == 1
-int8_t attachment_handler(z_bytes_t key, z_bytes_t value, void *ctx) {
-    (void)ctx;
-    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)value.len, value.start);
-    return 0;
-}
-#endif
-
 void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_owned_string_t keystr;
@@ -39,13 +31,6 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t value;
     z_bytes_decode_into_string(z_sample_payload(sample), &value);
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment = z_sample_attachment(sample);
-    if (z_attachment_check(&attachment)) {
-        printf("Attachement found\n");
-        z_attachment_iterate(attachment, attachment_handler, NULL);
-    }
-#endif
     z_drop(z_move(keystr));
     z_drop(z_move(value));
     msg_nb++;
@@ -130,15 +115,11 @@ int main(int argc, char **argv) {
         }
         sleep(1);
     }
-
+    // Clean up
     z_undeclare_subscriber(z_move(sub));
-
-    // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));
     zp_stop_lease_task(z_loan_mut(s));
-
     z_close(z_move(s));
-
     return 0;
 }
 #else

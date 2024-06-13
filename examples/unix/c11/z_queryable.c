@@ -23,14 +23,6 @@ const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
 static int msg_nb = 0;
 
-#if Z_FEATURE_ATTACHMENT == 1
-int8_t attachment_handler(z_bytes_t key, z_bytes_t att_value, void *ctx) {
-    (void)ctx;
-    printf(">>> %.*s: %.*s\n", (int)key.len, key.start, (int)att_value.len, att_value.start);
-    return 0;
-}
-#endif
-
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
     z_owned_string_t keystr;
@@ -47,14 +39,6 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     }
     z_drop(z_move(payload_string));
 
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment = z_query_attachment(query);
-    if (z_attachment_check(&attachment)) {
-        printf("Attachement found\n");
-        z_attachment_iterate(attachment, attachment_handler, NULL);
-    }
-#endif
-
     // Create encoding
     z_owned_encoding_t encoding;
     zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
@@ -63,13 +47,6 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply_options_default(&options);
     options.encoding = z_move(encoding);
 
-#if Z_FEATURE_ATTACHMENT == 1
-    // Add attachment
-    z_owned_bytes_map_t map = z_bytes_map_new();
-    z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hello"), z_bytes_from_str("world"));
-    options.attachment = z_bytes_map_as_attachment(&map);
-#endif
-
     // Reply value encoding
     z_owned_bytes_t reply_payload;
     z_bytes_encode_from_string(&reply_payload, value);
@@ -77,10 +54,6 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
     z_drop(z_move(keystr));
     msg_nb++;
-
-#if Z_FEATURE_ATTACHMENT == 1
-    z_bytes_map_drop(&map);
-#endif
 }
 
 int main(int argc, char **argv) {
