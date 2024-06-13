@@ -29,7 +29,7 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                         _z_bytes_t *addr) {
+                                         _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 
@@ -88,11 +88,11 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
     return ret;
 }
 
-int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     return _z_multicast_recv_t_msg_na(ztm, t_msg, addr);
 }
 #else
-int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
@@ -102,7 +102,7 @@ int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_messa
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
+static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_slice_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
 
     _z_transport_peer_entry_list_t *xs = l;
@@ -121,7 +121,7 @@ static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_lis
 }
 
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                             _z_slice_t *addr) {
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
@@ -269,7 +269,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     }
 
                     if (ret == _Z_RES_OK) {
-                        entry->_remote_addr = _z_bytes_duplicate(addr);
+                        entry->_remote_addr = _z_slice_duplicate(addr);
                         entry->_remote_zid = t_msg->_body._join._zid;
 
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
@@ -348,7 +348,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 }
 #else
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                             _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);

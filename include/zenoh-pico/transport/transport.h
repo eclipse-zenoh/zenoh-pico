@@ -18,8 +18,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
@@ -33,7 +33,7 @@ typedef struct {
 #endif
 
     _z_id_t _remote_zid;
-    _z_bytes_t _remote_addr;
+    _z_slice_t _remote_addr;
     _z_conduit_sn_list_t _sn_rx_sns;
 
     // SN numbers

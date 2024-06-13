@@ -15,9 +15,9 @@
 #ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/publish.h"
@@ -81,6 +81,15 @@ typedef _z_timestamp_t z_timestamp_t;
  * Members:
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
+ */
+_OWNED_TYPE_PTR(_z_slice_t, slice)
+_LOANED_TYPE(_z_slice_t, slice)
+
+/**
+ * Represents a container for slices.
+ *
+ * Members:
+ *   _z_slice_t slice: content of the container.
  */
 _OWNED_TYPE_PTR(_z_bytes_t, bytes)
 _LOANED_TYPE(_z_bytes_t, bytes)
@@ -189,7 +198,7 @@ _LOANED_TYPE(_z_query_rc_t, query)
  *
  * Members:
  *   z_encoding_id_t prefix: The integer prefix of this encoding.
- *   z_loaned_bytes_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
+ *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
 _OWNED_TYPE_PTR(_z_encoding_t, encoding)
 _LOANED_TYPE(_z_encoding_t, encoding)
@@ -314,10 +323,10 @@ typedef struct {
  * Represents the configuration used to configure a get operation sent via :c:func:`z_get`.
  *
  * Members:
- *   z_query_target_t target: The queryables that should be targeted by this get.
- *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_owned_bytes_t payload: The payload to include in the query.
  *   z_owned_encoding_t *encoding: Payload encoding.
+ *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
+ *   z_query_target_t target: The queryables that should be targeted by this get.
  */
 typedef struct {
     z_owned_bytes_t *payload;
@@ -424,7 +433,7 @@ _LOANED_TYPE(_z_sample_rc_t, sample)
  *
  * Members:
  *   z_whatami_t whatami: The kind of zenoh entity.
- *   z_loaned_bytes_t* zid: The Zenoh ID of the scouted entity (empty if absent).
+ *   z_loaned_slice_t* zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
 _OWNED_TYPE_PTR(_z_hello_t, hello)
@@ -625,22 +634,22 @@ typedef struct {
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 #if Z_FEATURE_ATTACHMENT == 1
-struct _z_bytes_pair_t {
-    _z_bytes_t *key;
-    _z_bytes_t *value;
+struct _z_slice_pair_t {
+    _z_slice_t *key;
+    _z_slice_t *value;
 };
 
-void _z_bytes_pair_clear(struct _z_bytes_pair_t *this_);
+void _z_slice_pair_clear(struct _z_slice_pair_t *this_);
 
-_Z_ELEM_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t, _z_noop_size, _z_bytes_pair_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_bytes_pair, struct _z_bytes_pair_t)
+_Z_ELEM_DEFINE(_z_slice_pair, struct _z_slice_pair_t, _z_noop_size, _z_slice_pair_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_slice_pair, struct _z_slice_pair_t)
 
 /**
  * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
  */
 // TODO(sashacmc): z_owned_bytes_map_t for attachment
 typedef struct z_owned_bytes_map_t {
-    _z_bytes_pair_list_t *_inner;
+    _z_slice_pair_list_t *_inner;
 } z_owned_bytes_map_t;
 
 /**
@@ -681,7 +690,7 @@ z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_);
  * - `this` has no value associated to `key`
  */
 
-z_loaned_bytes_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key);
+z_loaned_slice_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key);
 
 /**
  * Associates `value` to `key` in the map, aliasing them.
@@ -692,7 +701,7 @@ z_loaned_bytes_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_byt
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
 
-void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value);
+void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value);
 
 /**
  * Associates `value` to `key` in the map, copying them to obtain ownership: `key` and `value` are not aliased past the
@@ -701,7 +710,7 @@ void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_byte
  * Calling this with `NULL` or the gravestone value is undefined behaviour.
  */
 
-void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_bytes_t *key, z_loaned_bytes_t *value);
+void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value);
 
 /**
  * Iterates over the key-value pairs in the map.
@@ -734,9 +743,9 @@ z_owned_bytes_map_t z_bytes_map_null(void);
 /**
  * Returns a view of `str` using `strlen` (this constructor should not be used on untrusted input).
  *
- * `str == NULL` will cause this to return `z_bytes_null()`
+ * `str == NULL` will cause this to return `z_slice_null()`
  */
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, const char *str);
+int8_t z_bytes_from_str(z_owned_slice_t *bytes, const char *str);
 
 #ifdef __cplusplus
 }

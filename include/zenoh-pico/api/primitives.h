@@ -32,8 +32,6 @@ extern "C" {
 #endif
 
 /********* Data Types Handlers *********/
-#define z_bytes_wrap _z_bytes_wrap
-
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` string.
  *
@@ -421,15 +419,158 @@ int8_t z_encoding_null(z_owned_encoding_t *encoding);
 const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
 
 /**
+ * Gets date pointer of a bytes array.
+ *
+ * Parameters:
+ *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
+ *
+ * Return:
+ *    The data pointer.
+ */
+const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
+
+/**
  * Gets total number of bytes in a bytes array.
  *
  * Parameters:
- *    bytes: Pointer to a :c:type:`z_loaned_bytes_t` to get length from.
+ *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
  *
  * Return:
  *    The number of bytes.
  */
-size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+size_t z_slice_len(const z_loaned_slice_t *slice);
+
+/**
+ * Decodes data into a `int8_t` signed integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`int8_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
+
+/**
+ * Decodes data into a `int16_t` signed integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`int16_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
+
+/**
+ * Decodes data into a `int32_t` signed integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`int32_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
+
+/**
+ * Decodes data into a `int64_t` signed integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`int64_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
+
+/**
+ * Decodes data into a `uint8_t` unsigned integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`uint8_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
+
+/**
+ * Decodes data into a `uint16_t` unsigned integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`uint16_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
+
+/**
+ * Decodes data into a `uint32_t` unsigned integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`uint32_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
+
+/**
+ * Decodes data into a `uint64_t` unsigned integer.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`uint64_t` to contain the decoded int.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
+
+/**
+ * Decodes data into a `float` floating number.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`float` to contain the decoded float.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_float(const z_loaned_bytes_t *bytes, float *dst);
+
+/**
+ * Decodes data into a `double` floating number.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   dst: Pointer to an uninitialized :c:type:`double` to contain the decoded float.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_double(const z_loaned_bytes_t *bytes, double *dst);
+
+/**
+ * Decodes data into a :c:type:`z_owned_slice_t`
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_slice_t` to contain the decoded slice.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
  * Decodes data into a :c:type:`z_owned_string_t`
@@ -444,16 +585,172 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
 int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t`
+ * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
- *   buffer: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `int8_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_int8(z_owned_bytes_t *bytes, int8_t val);
+
+/**
+ * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `int16_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_int16(z_owned_bytes_t *bytes, int16_t val);
+
+/**
+ * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `int32_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_int32(z_owned_bytes_t *bytes, int32_t val);
+
+/**
+ * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `int64_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_int64(z_owned_bytes_t *bytes, int64_t val);
+
+/**
+ * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `uint8_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
+
+/**
+ * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `uint16_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
+
+/**
+ * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `uint32_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
+
+/**
+ * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `uint64_t` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
+
+/**
+ * Encodes a floating number into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `float` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_float(z_owned_bytes_t *bytes, float val);
+
+/**
+ * Encodes a floating number into a :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
+ *   val: `double` value to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_double(z_owned_bytes_t *bytes, double val);
+
+/**
+ * Encodes a slice into a :c:type:`z_owned_bytes_t` by aliasing
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
+ *   str: Pointer to the slice to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+
+/**
+ * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
+ *   str: Pointer to the slice to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+
+/**
+ * Encodes a string into a :c:type:`z_owned_bytes_t` by aliasing
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   s: Pointer to the string to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_encode_from_string(z_owned_bytes_t *bytes, const char *s);
+
+/**
+ * Encodes a string into a :c:type:`z_owned_bytes_t` by copying
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
  *   str: Pointer to the string to encode.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_string(z_owned_bytes_t *buffer, const z_loaned_string_t *str);
+int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s);
 
 /**
  * Checks validity of a timestamp
@@ -711,6 +1008,7 @@ _OWNED_FUNCTIONS(z_loaned_reply_t, z_owned_reply_t, reply)
 _OWNED_FUNCTIONS(z_loaned_string_array_t, z_owned_string_array_t, string_array)
 _OWNED_FUNCTIONS(z_loaned_sample_t, z_owned_sample_t, sample)
 _OWNED_FUNCTIONS(z_loaned_query_t, z_owned_query_t, query)
+_OWNED_FUNCTIONS(z_loaned_slice_t, z_owned_slice_t, slice)
 _OWNED_FUNCTIONS(z_loaned_bytes_t, z_owned_bytes_t, bytes)
 _OWNED_FUNCTIONS(z_loaned_value_t, z_owned_value_t, value)
 
@@ -764,6 +1062,17 @@ const z_loaned_sample_t *z_sample_loan(const z_owned_sample_t *sample);
  *   Pointer to the string data.
  */
 const char *z_string_data(const z_loaned_string_t *str);
+
+/**
+ * Gets string length from a :c:type:`z_loaned_string_t`.
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to get length from.
+ *
+ * Return:
+ *   Length of the string.
+ */
+size_t z_string_len(const z_loaned_string_t *str);
 
 /************* Primitives **************/
 /**

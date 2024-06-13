@@ -483,7 +483,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                             _z_bytes_t *addr) {
+                             _z_slice_t *addr) {
     struct sockaddr_storage raddr;
     unsigned int raddrlen = sizeof(struct sockaddr_storage);
 
@@ -501,7 +501,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             if (!((a->sin_port == b->sin_port) && (a->sin_addr.s_addr == b->sin_addr.s_addr))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_bytes_make(sizeof(uint32_t) + sizeof(uint16_t));
+                    *addr = _z_slice_make(sizeof(uint32_t) + sizeof(uint16_t));
                     (void)memcpy((uint8_t *)addr->start, &b->sin_addr.s_addr, sizeof(uint32_t));
                     (void)memcpy((uint8_t *)(addr->start + sizeof(uint32_t)), &b->sin_port, sizeof(uint16_t));
                 }
@@ -514,7 +514,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                   (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL) == 0))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_bytes_make((sizeof(uint32_t) * 4UL) + sizeof(uint16_t));
+                    *addr = _z_slice_make((sizeof(uint32_t) * 4UL) + sizeof(uint16_t));
                     (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL);
                     (void)memcpy((uint8_t *)(addr->start + (sizeof(uint32_t) * 4UL)), &b->sin6_port, sizeof(uint16_t));
                 }
@@ -529,7 +529,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
 }
 
 size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
-                                   const _z_sys_net_endpoint_t lep, _z_bytes_t *addr) {
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *addr) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 

@@ -136,7 +136,7 @@ void _z_n_msg_free(_z_network_message_t **msg) {
     }
 }
 
-_z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes_t) parameters, _z_zint_t qid,
+_z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
                                      uint32_t timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1
@@ -151,7 +151,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_bytes
                 ._rid = qid,
                 ._key = _z_keyexpr_steal(key),
                 ._tag = _Z_REQUEST_QUERY,
-                ._body._query = {._parameters = _z_bytes_steal(parameters),
+                ._body._query = {._parameters = _z_slice_steal(parameters),
                                  ._consolidation = consolidation,
                                  ._ext_value = _z_value_steal(value),
                                  ._ext_info = _z_source_info_null(),

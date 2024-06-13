@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
 
 #undef NDEBUG
@@ -48,14 +48,16 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    assert(payload->len == MSG_LEN);
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    assert(z_slice_len(z_loan(value)) == MSG_LEN);
     assert(z_loan(k_str)->len == strlen(res));
     assert(strncmp(res, z_loan(k_str)->val, strlen(res)) == 0);
     (void)(sample);
 
     datas++;
     z_drop(z_move(k_str));
+    z_drop(z_move(value));
     free(res);
 }
 
@@ -77,8 +79,8 @@ int main(int argc, char **argv) {
     z_owned_session_t s1;
     z_open(&s1, z_move(config));
     assert(z_check(s1));
-    _z_bytes_t id_as_bytes =
-        _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s1))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))._local_zid));
+    _z_slice_t id_as_bytes =
+        _z_slice_wrap(_Z_RC_IN_VAL(z_loan(s1))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))._local_zid));
     _z_string_t zid1 = _z_string_convert_bytes(&id_as_bytes);
     printf("Session 1 with PID: %s\n", zid1.val);
     _z_string_clear(&zid1);
@@ -96,7 +98,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s2;
     z_open(&s2, z_move(config));
     assert(z_check(s2));
-    id_as_bytes = _z_bytes_wrap(_Z_RC_IN_VAL(z_loan(s2))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))._local_zid));
+    id_as_bytes = _z_slice_wrap(_Z_RC_IN_VAL(z_loan(s2))._local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))._local_zid));
     _z_string_t zid2 = _z_string_convert_bytes(&id_as_bytes);
     printf("Session 2 with PID: %s\n", zid2.val);
     _z_string_clear(&zid2);

@@ -88,7 +88,7 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
-_z_string_t _z_string_convert_bytes(const _z_bytes_t *bs) {
+_z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     _z_string_t s = _z_string_null();
     size_t len = bs->len * (size_t)2;
     char *s_val = (char *)z_malloc((len + (size_t)1) * sizeof(char));
@@ -110,7 +110,7 @@ _z_string_t _z_string_convert_bytes(const _z_bytes_t *bs) {
     return s;
 }
 
-_z_string_t _z_string_from_bytes(const _z_bytes_t *bs) {
+_z_string_t _z_string_from_bytes(const _z_slice_t *bs) {
     _z_string_t s = _z_string_null();
     // Allocate string
     s.len = bs->len + (size_t)1;  // bytes data + null terminator

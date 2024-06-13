@@ -196,7 +196,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_keyexpr_t *ke = (_z_keyexpr_t *)ctx;
     switch (extension->_header) {
         case _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f: {
-            _z_zbuf_t _zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t _zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));

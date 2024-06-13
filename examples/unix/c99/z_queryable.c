@@ -31,13 +31,13 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_string_loan(&keystr)),
            (int)z_view_string_loan(&params)->len, z_view_string_loan(&params)->val);
     // Process value
-    const z_loaned_bytes_t *payload = z_value_payload(z_query_value(query));
-    if (z_bytes_len(payload) > 0) {
-        z_owned_string_t payload_string;
-        z_bytes_decode_into_string(payload, &payload_string);
+    z_owned_string_t payload_string;
+    z_bytes_decode_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    if (z_string_len(z_string_loan(&payload_string)) > 1) {
         printf("     with value '%s'\n", z_string_data(z_string_loan(&payload_string)));
-        z_string_drop(z_string_move(&payload_string));
     }
+    z_string_drop(z_string_move(&payload_string));
+
     // Create encoding
     z_owned_encoding_t encoding;
     zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
@@ -46,10 +46,8 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply_options_default(&options);
     options.encoding = z_encoding_move(&encoding);
     // Reply value encoding
-    z_view_string_t reply_str;
-    z_view_string_wrap(&reply_str, value);
     z_owned_bytes_t reply_payload;
-    z_bytes_encode_from_string(&reply_payload, z_view_string_loan(&reply_str));
+    z_bytes_encode_from_string(&reply_payload, value);
 
     z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), &options);
     z_string_drop(z_string_move(&keystr));

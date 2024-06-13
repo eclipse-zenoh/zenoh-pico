@@ -37,15 +37,17 @@
 void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
-    std::string val((const char *)z_sample_payload(sample)->start, z_sample_payload(sample)->len);
+    z_owned_string_t value;
+    z_bytes_decode_into_string(z_sample_payload(sample), &value);
 
     Serial.print(" >> [Subscription listener] Received (");
     Serial.print(z_string_data(z_string_loan(&keystr)));
     Serial.print(", ");
-    Serial.print(val.c_str());
+    Serial.print(z_string_data(z_string_loan(&value)));
     Serial.println(")");
 
     z_string_drop(z_string_move(&keystr));
+    z_string_drop(z_string_move(&value));
 }
 
 void setup() {

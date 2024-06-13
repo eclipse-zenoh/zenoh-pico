@@ -92,7 +92,7 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
     return (size_t)wb;
 }
 
-size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr,
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_slice_t *addr,
                          const _zp_raweth_whitelist_array_t *whitelist) {
     // Read from socket
     ssize_t bytesRead = recvfrom(sock->_fd, buff, buff_len, 0, NULL, NULL);
@@ -118,7 +118,7 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     }
     // Copy sender mac if needed
     if (addr != NULL) {
-        *addr = _z_bytes_make(sizeof(ETH_ALEN));
+        *addr = _z_slice_make(sizeof(ETH_ALEN));
         (void)memcpy((uint8_t *)addr->start, (buff + ETH_ALEN), sizeof(ETH_ALEN));
     }
     return bytesRead;

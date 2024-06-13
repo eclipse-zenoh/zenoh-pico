@@ -19,7 +19,7 @@
 _z_sample_t _z_sample_null(void) {
     _z_sample_t s = {
         .keyexpr = _z_keyexpr_null(),
-        .payload = _z_bytes_empty(),
+        .payload = _z_bytes_null(),
         .encoding = _z_encoding_null(),
         .timestamp = _z_timestamp_null(),
         .kind = 0,
@@ -85,12 +85,12 @@ _z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t *payload, const _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_slice_t *payload, const _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const z_attachment_t att) {
     _z_sample_t s = _z_sample_null();
     _z_keyexpr_copy(&s.keyexpr, key);
-    _z_bytes_copy(&s.payload, payload);
+    _z_slice_copy(&s.payload._slice, payload);
     _z_encoding_copy(&s.encoding, &encoding);
     s.kind = kind;
     s.timestamp = timestamp;
@@ -103,7 +103,7 @@ _z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t *payload,
     return s;
 }
 #else
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t *payload, const _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_slice_t *payload, const _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const z_attachment_t att) {
     _ZP_UNUSED(key);

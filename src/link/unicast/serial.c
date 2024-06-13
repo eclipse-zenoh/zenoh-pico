@@ -101,12 +101,12 @@ size_t _z_f_link_write_all_serial(const _z_link_t *self, const uint8_t *ptr, siz
     return _z_send_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_read_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_exact_serial(self->_socket._serial._sock, ptr, len);
 }

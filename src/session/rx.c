@@ -18,7 +18,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"
@@ -116,7 +116,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_DEL: {
                     _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
-                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), _z_encoding_null(),
+                    ret = _z_trigger_subscriptions(zn, req._key, _z_slice_empty(), _z_encoding_null(),
                                                    Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
                                                    z_attachment_null());
 #endif
@@ -138,7 +138,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_RESPONSE_BODY_ERR: {
                     // @TODO: expose zenoh errors to the user
                     _z_msg_err_t error = response._body._err;
-                    _z_bytes_t payload = error._payload;
+                    _z_slice_t payload = error._payload;
                     _ZP_UNUSED(payload);  // Unused when logs are deactivated
                     _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
                              payload.start);

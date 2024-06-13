@@ -28,7 +28,7 @@
 int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t addr;
+    _z_slice_t addr;
     _z_transport_message_t t_msg;
     ret = _z_multicast_recv_t_msg(ztm, &t_msg, &addr);
     if (ret == _Z_RES_OK) {
@@ -56,7 +56,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
+    _z_slice_t addr = _z_slice_wrap(NULL, 0);
     while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
@@ -66,7 +66,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                        _z_bytes_clear(&addr);
+                        _z_slice_clear(&addr);
                         _z_zbuf_compact(&ztm->_zbuf);
                         continue;
                     }
@@ -109,7 +109,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
                 if (ret == _Z_RES_OK) {
                     _z_t_msg_clear(&t_msg);
-                    _z_bytes_clear(&addr);
+                    _z_slice_clear(&addr);
                 } else {
                     ztm->_read_task_running = false;
                     continue;

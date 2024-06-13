@@ -138,12 +138,12 @@ size_t _z_f_link_write_all_tcp(const _z_link_t *zl, const uint8_t *ptr, size_t l
     return _z_send_tcp(zl->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_tcp(zl->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     (void)(addr);
     return _z_read_exact_tcp(zl->_socket._tcp._sock, ptr, len);
 }

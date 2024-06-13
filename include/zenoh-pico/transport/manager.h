@@ -15,7 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
 #define INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/transport/transport.h"
 

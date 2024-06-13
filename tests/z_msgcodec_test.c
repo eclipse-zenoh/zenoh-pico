@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/declarations.h"
@@ -80,7 +80,7 @@ void print_wbuf(_z_wbuf_t *wbf) {
 
 void print_zbuf(_z_zbuf_t *zbf) { print_iosli(&zbf->_ios); }
 
-void print_uint8_array(_z_bytes_t *arr) {
+void print_uint8_array(_z_slice_t *arr) {
     printf("Length: %zu, Buffer: [", arr->len);
     for (size_t i = 0; i < arr->len; i++) {
         printf("%02x", arr->start[i]);
@@ -170,8 +170,8 @@ _z_wbuf_t gen_wbuf(size_t len) {
     return _z_wbuf_make(len, is_expandable);
 }
 
-_z_bytes_t gen_payload(size_t len) {
-    _z_bytes_t pld;
+_z_slice_t gen_payload(size_t len) {
+    _z_slice_t pld;
     pld._is_alloc = true;
     pld.len = len;
     pld.start = (uint8_t *)z_malloc(len);
@@ -180,8 +180,8 @@ _z_bytes_t gen_payload(size_t len) {
     return pld;
 }
 
-_z_bytes_t gen_bytes(size_t len) {
-    _z_bytes_t arr;
+_z_slice_t gen_slice(size_t len) {
+    _z_slice_t arr;
     arr._is_alloc = true;
     arr.len = len;
     arr.start = NULL;
@@ -193,6 +193,12 @@ _z_bytes_t gen_bytes(size_t len) {
     }
 
     return arr;
+}
+
+_z_bytes_t gen_bytes(size_t len) {
+    return (_z_bytes_t){
+        ._slice = gen_slice(len),
+    };
 }
 
 _z_id_t gen_zid(void) {
@@ -244,9 +250,9 @@ _z_encoding_t gen_encoding(void) {
     _z_encoding_t en;
     en.id = gen_uint16();
     if (gen_bool()) {
-        en.schema = gen_bytes(16);
+        en.schema = gen_slice(16);
     } else {
-        en.schema = _z_bytes_empty();
+        en.schema = _z_slice_empty();
     }
     return en;
 }
@@ -255,7 +261,7 @@ _z_value_t gen_value(void) {
     _z_value_t val;
     val.encoding = gen_encoding();
     if (gen_bool()) {
-        val.payload = _z_bytes_empty();
+        val.payload = _z_bytes_null();
     } else {
         val.payload = gen_bytes(16);
     }
@@ -285,7 +291,7 @@ void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right) {
     printf(")");
 }
 
-void assert_eq_uint8_array(const _z_bytes_t *left, const _z_bytes_t *right) {
+void assert_eq_uint8_array(const _z_slice_t *left, const _z_slice_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->len, right->len);
 
@@ -456,7 +462,7 @@ void zint_extension(void) {
 
 /*------------------ Unit extension ------------------*/
 _z_msg_ext_t gen_zbuf_extension(void) {
-    _z_bytes_t val = gen_bytes(gen_uint8());
+    _z_slice_t val = gen_slice(gen_uint8());
     return _z_msg_ext_make_zbuf(_Z_MOCK_EXTENSION_ZBUF, val);
 }
 
@@ -500,33 +506,37 @@ void zbuf_extension(void) {
 /*       Message Fields        */
 /*=============================*/
 /*------------------ Payload field ------------------*/
-void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) { assert_eq_uint8_array(left, right); }
+void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
+
+void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) {
+    assert_eq_slice(&left->_slice, &right->_slice);
+}
 
 void payload_field(void) {
     printf("\n>> Payload field\n");
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
-    _z_bytes_t e_pld = gen_payload(64);
+    _z_slice_t e_pld = gen_payload(64);
 
     // Encode
-    int8_t res = _z_bytes_encode(&wbf, &e_pld);
+    int8_t res = _z_slice_encode(&wbf, &e_pld);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _z_bytes_t d_pld;
-    res = _z_bytes_decode(&d_pld, &zbf);
+    _z_slice_t d_pld;
+    res = _z_slice_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");
-    assert_eq_bytes(&e_pld, &d_pld);
+    assert_eq_slice(&e_pld, &d_pld);
     printf("\n");
 
     // Free
-    _z_bytes_clear(&e_pld);
-    _z_bytes_clear(&d_pld);
+    _z_slice_clear(&e_pld);
+    _z_slice_clear(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -543,7 +553,7 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
 }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->id == right->id);
-    assert_eq_bytes(&left->schema, &right->schema);
+    assert_eq_slice(&left->schema, &right->schema);
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
@@ -1143,7 +1153,7 @@ _z_push_body_t gen_push_body(void) {
         return (_z_push_body_t){._is_put = true,
                                 ._body._put = {
                                     ._commons = commons,
-                                    ._payload = gen_bytes(64),
+                                    ._payload = gen_slice(64),
                                     ._encoding = gen_encoding(),
                                 }};
     } else {
@@ -1154,7 +1164,7 @@ _z_push_body_t gen_push_body(void) {
 void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right) {
     assert(left->_is_put == right->_is_put);
     if (left->_is_put) {
-        assert_eq_bytes(&left->_body._put._payload, &right->_body._put._payload);
+        assert_eq_slice(&left->_body._put._payload, &right->_body._put._payload);
         assert_eq_encoding(&left->_body._put._encoding, &right->_body._put._encoding);
         assert_eq_timestamp(&left->_body._put._commons._timestamp, &right->_body._put._commons._timestamp);
         assert_eq_source_info(&left->_body._put._commons._source_info, &right->_body._put._commons._source_info);
@@ -1196,7 +1206,7 @@ _z_msg_query_t gen_query(void) {
     return (_z_msg_query_t){
         ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
-        ._parameters = gen_bytes(16),
+        ._parameters = gen_slice(16),
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
     };
 }
@@ -1204,7 +1214,7 @@ _z_msg_query_t gen_query(void) {
 void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
     assert(left->_consolidation == right->_consolidation);
     assert_eq_source_info(&left->_ext_info, &right->_ext_info);
-    assert_eq_bytes(&left->_parameters, &right->_parameters);
+    assert_eq_slice(&left->_parameters, &right->_parameters);
     assert_eq_value(&left->_ext_value, &right->_ext_value);
 }
 
@@ -1237,7 +1247,7 @@ _z_msg_err_t gen_err(void) {
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert_eq_bytes(&left->_payload, &right->_payload);
+    assert_eq_slice(&left->_payload, &right->_payload);
 }
 
 void err_message(void) {
@@ -1518,14 +1528,14 @@ _z_transport_message_t gen_init(void) {
     if (gen_bool()) {
         return _z_t_msg_make_init_syn(gen_uint8() % 3, gen_zid());
     } else {
-        return _z_t_msg_make_init_ack(gen_uint8() % 3, gen_zid(), gen_bytes(16));
+        return _z_t_msg_make_init_ack(gen_uint8() % 3, gen_zid(), gen_slice(16));
     }
 }
 void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
     assert(left->_batch_size == right->_batch_size);
     assert(left->_req_id_res == right->_req_id_res);
     assert(left->_seq_num_res == right->_seq_num_res);
-    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert_eq_slice(&left->_cookie, &right->_cookie);
     assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     assert(left->_version == right->_version);
     assert(left->_whatami == right->_whatami);
@@ -1548,13 +1558,13 @@ void init_message(void) {
 
 _z_transport_message_t gen_open(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_open_syn(gen_uint32(), gen_uint32(), gen_bytes(16));
+        return _z_t_msg_make_open_syn(gen_uint32(), gen_uint32(), gen_slice(16));
     } else {
         return _z_t_msg_make_open_ack(gen_uint32(), gen_uint32());
     }
 }
 void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
-    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert_eq_slice(&left->_cookie, &right->_cookie);
     assert(left->_initial_sn == right->_initial_sn);
     assert(left->_lease == right->_lease);
 }
@@ -1703,11 +1713,11 @@ void frame_message(void) {
 }
 
 _z_transport_message_t gen_fragment(void) {
-    return _z_t_msg_make_fragment(gen_uint32(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), gen_slice(gen_uint8()), gen_bool(), gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);
-    assert_eq_bytes(&left->_payload, &right->_payload);
+    assert_eq_slice(&left->_payload, &right->_payload);
 }
 void fragment_message(void) {
     printf("\n>> fragment message\n");

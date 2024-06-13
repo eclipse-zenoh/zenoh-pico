@@ -61,9 +61,13 @@ Owned Types
 
 TODO: owned type description
 
-.. c:type:: z_owned_bytes_t
+.. c:type:: z_owned_slice_t
   
   Represents an array of bytes.
+
+.. c:type:: z_owned_bytes_t
+  
+  Represents an array of bytes container.
 
 .. c:type:: z_owned_string_t
 
@@ -130,9 +134,13 @@ Loaned Types
 
 TODO: loaned type description
 
-.. c:type:: z_loaned_bytes_t
+.. c:type:: z_loaned_slice_t
 
   Represents an array of bytes.
+
+.. c:type:: z_loaned_bytes_t
+
+  Represents an array of bytes container.
 
 .. c:type:: z_loaned_string_t
 
@@ -250,7 +258,7 @@ Macros
 Primitives
 ~~~~~~~~~~
 
-.. autocfunction:: primitives.h::z_view_str_wrap
+.. autocfunction:: primitives.h::z_view_string_wrap
 .. autocfunction:: primitives.h::z_view_keyexpr_from_string
 .. autocfunction:: primitives.h::z_view_keyexpr_from_string_unchecked
 .. autocfunction:: primitives.h::z_keyexpr_to_string
@@ -282,9 +290,34 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_move
 .. autocfunction:: primitives.h::z_encoding_null
 .. autocfunction:: primitives.h::z_value_payload
-.. autocfunction:: primitives.h::z_bytes_len
+.. autocfunction:: primitives.h::z_slice_data
+.. autocfunction:: primitives.h::z_slice_len
+.. autocfunction:: primitives.h::z_bytes_decode_into_int8
+.. autocfunction:: primitives.h::z_bytes_decode_into_int16
+.. autocfunction:: primitives.h::z_bytes_decode_into_int32
+.. autocfunction:: primitives.h::z_bytes_decode_into_int64
+.. autocfunction:: primitives.h::z_bytes_decode_into_uint8
+.. autocfunction:: primitives.h::z_bytes_decode_into_uint16
+.. autocfunction:: primitives.h::z_bytes_decode_into_uint32
+.. autocfunction:: primitives.h::z_bytes_decode_into_uint64
+.. autocfunction:: primitives.h::z_bytes_decode_into_float
+.. autocfunction:: primitives.h::z_bytes_decode_into_double
+.. autocfunction:: primitives.h::z_bytes_decode_into_slice
 .. autocfunction:: primitives.h::z_bytes_decode_into_string
+.. autocfunction:: primitives.h::z_bytes_encode_from_int8
+.. autocfunction:: primitives.h::z_bytes_encode_from_int16
+.. autocfunction:: primitives.h::z_bytes_encode_from_int32
+.. autocfunction:: primitives.h::z_bytes_encode_from_int64
+.. autocfunction:: primitives.h::z_bytes_encode_from_uint8
+.. autocfunction:: primitives.h::z_bytes_encode_from_uint16
+.. autocfunction:: primitives.h::z_bytes_encode_from_uint32
+.. autocfunction:: primitives.h::z_bytes_encode_from_uint64
+.. autocfunction:: primitives.h::z_bytes_encode_from_float
+.. autocfunction:: primitives.h::z_bytes_encode_from_double
+.. autocfunction:: primitives.h::z_bytes_encode_from_slice
+.. autocfunction:: primitives.h::z_bytes_encode_from_slice_copy
 .. autocfunction:: primitives.h::z_bytes_encode_from_string
+.. autocfunction:: primitives.h::z_bytes_encode_from_string_copy
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
@@ -303,6 +336,7 @@ Primitives
 .. autocfunction:: primitives.h::z_closure_zid
 .. autocfunction:: primitives.h::z_sample_loan
 .. autocfunction:: primitives.h::z_string_data
+.. autocfunction:: primitives.h::z_string_len
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close

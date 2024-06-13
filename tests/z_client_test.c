@@ -62,10 +62,8 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
 
     // Reply value encoding
-    z_view_string_t reply_str;
-    z_view_string_wrap(&reply_str, res);
     z_owned_bytes_t reply_payload;
-    z_bytes_encode_from_string(&reply_payload, z_loan(reply_str));
+    z_bytes_encode_from_string(&reply_payload, res);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
@@ -83,13 +81,15 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
 
         z_owned_string_t k_str;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-        const z_loaned_bytes_t *payload = z_sample_payload(sample);
-        assert(payload->len == strlen(res));
-        assert(strncmp(res, (const char *)payload->start, strlen(res)) == 0);
+        z_owned_string_t value;
+        z_bytes_decode_into_string(z_sample_payload(sample), &value);
+        assert(z_string_len(z_loan(value)) == strlen(res) + 1);
+        assert(strncmp(res, z_string_data(z_loan(value)), strlen(res)) == 0);
         assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
         replies++;
         z_drop(z_move(k_str));
+        z_drop(z_move(value));
     } else {
         printf(">> Received an error\n");
     }
@@ -104,17 +104,20 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    assert((payload->len == MSG_LEN) || (payload->len == FRAGMENT_MSG_LEN));
+    z_owned_slice_t value;
+    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    size_t payload_len = z_slice_len(z_loan(value));
+    assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     datas++;
     z_drop(z_move(k_str));
+    z_drop(z_move(value));
     free(res);
 }
 
 _z_string_t format_id(const z_id_t *id) {
-    _z_bytes_t id_as_bytes = _z_bytes_wrap(id->id, _z_id_len(*id));
+    _z_slice_t id_as_bytes = _z_slice_wrap(id->id, _z_id_len(*id));
     return _z_string_convert_bytes(&id_as_bytes);
 }
 

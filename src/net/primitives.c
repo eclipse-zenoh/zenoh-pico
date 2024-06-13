@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
@@ -152,7 +152,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
                         ._body._body._put =
                             {
                                 ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
-                                ._payload = _z_bytes_wrap(payload, len),
+                                ._payload = _z_slice_wrap(payload, len),
                                 ._encoding = encoding,
 #if Z_FEATURE_ATTACHMENT == 1
                                 ._attachment = {.is_encoded = false, .body.decoded = attachment},
@@ -359,7 +359,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                 z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
                 z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
                 z_msg._body._response._body._reply._body._is_put = true;
-                z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
+                z_msg._body._response._body._reply._body._body._put._payload = payload.payload._slice;
                 z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
                 z_msg._body._response._body._reply._body._body._put._commons._timestamp = _z_timestamp_null();
                 z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();
@@ -408,7 +408,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
-            _z_bytes_t params = _z_bytes_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
+            _z_slice_t params = _z_slice_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
             _z_zenoh_message_t z_msg =
                 _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value, timeout_ms
 #if Z_FEATURE_ATTACHMENT == 1

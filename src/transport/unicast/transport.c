@@ -224,8 +224,8 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     // Create the OpenSyn message
                     _z_zint_t lease = Z_TRANSPORT_LEASE;
                     _z_zint_t initial_sn = param->_initial_sn_tx;
-                    _z_bytes_t cookie;
-                    _z_bytes_copy(&cookie, &iam._body._init._cookie);
+                    _z_slice_t cookie;
+                    _z_slice_copy(&cookie, &iam._body._init._cookie);
 
                     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
 

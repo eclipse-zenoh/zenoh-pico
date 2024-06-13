@@ -20,9 +20,9 @@
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/encoding.h"
@@ -74,7 +74,7 @@ typedef struct {
  * Returning `0` is treated as `continue`.
  * Returning any other value is treated as `break`.
  */
-typedef int8_t (*z_attachment_iter_body_t)(_z_bytes_t key, _z_bytes_t value, void *context);
+typedef int8_t (*z_attachment_iter_body_t)(_z_slice_t key, _z_slice_t value, void *context);
 /**
  * The driver of a loop over an attachment's key-value pairs.
  *
@@ -106,7 +106,7 @@ typedef struct z_attachment_t {
 typedef struct {
     union {
         z_attachment_t decoded;
-        _z_bytes_t encoded;
+        _z_slice_t encoded;
     } body;
     _Bool is_encoded;
 } _z_owned_encoded_attachment_t;
@@ -118,7 +118,7 @@ z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att
 
 _Bool z_attachment_check(const z_attachment_t *attachment);
 int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
-_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
+_z_slice_t z_attachment_get(z_attachment_t this_, _z_slice_t key);
 
 /**
  * Estimate the length of an attachment once encoded.
@@ -223,8 +223,8 @@ typedef struct {
  * Represents a Zenoh value.
  *
  * Members:
- *   _z_encoding_t encoding: The encoding of the `payload`.
  *   _z_bytes_t payload: The payload of this zenoh value.
+ *   _z_encoding_t encoding: The encoding of the `payload`.
  */
 typedef struct {
     _z_bytes_t payload;
@@ -240,7 +240,7 @@ void _z_value_free(_z_value_t **hello);
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:
- *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
+ *   _z_slice_t zid: The Zenoh ID of the scouted entity (empty if absent).
  *   _z_string_vec_t locators: The locators of the scouted entity.
  *   z_whatami_t whatami: The kind of zenoh entity.
  */

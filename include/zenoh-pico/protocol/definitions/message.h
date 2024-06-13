@@ -55,7 +55,7 @@
 typedef struct {
     _z_encoding_t encoding;
     _z_source_info_t _ext_source_info;
-    _z_bytes_t _payload;
+    _z_slice_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
 
@@ -73,7 +73,7 @@ static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 
 typedef struct {
     _z_m_push_commons_t _commons;
-    _z_bytes_t _payload;
+    _z_slice_t _payload;
     _z_encoding_t _encoding;
 #if Z_FEATURE_ATTACHMENT == 1
     _z_owned_encoded_attachment_t _attachment;
@@ -98,7 +98,7 @@ void _z_msg_put_clear(_z_msg_put_t *);
 #define _Z_FLAG_Z_Q_C 0x20  // 1 << 5 | Consolidation if C==1 then consolidation is present
 #define _Z_FLAG_Z_Q_P 0x40  // 1 << 6 | Params        if P==1 then parameters are present
 typedef struct {
-    _z_bytes_t _parameters;
+    _z_slice_t _parameters;
     _z_source_info_t _ext_info;
     _z_value_t _ext_value;
     z_consolidation_mode_t _consolidation;

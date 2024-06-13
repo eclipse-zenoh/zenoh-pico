@@ -141,12 +141,12 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
                                     _z_zint_t payload_len, const _z_n_qos_t qos, const z_attachment_t att) {
     _z_encoding_t encoding = _z_encoding_null();
-    int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_bytes_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
+    int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_slice_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
                                           _z_timestamp_null(), qos, att);
     (void)ret;
 }
 
-int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_slice_t payload,
                                 const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
                                 const _z_n_qos_t qos, const z_attachment_t att) {
     int8_t ret = _Z_RES_OK;
