@@ -1118,7 +1118,10 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
 
 int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) { return _z_queryable_drop(&queryable->_val); }
 
-void z_query_reply_options_default(z_query_reply_options_t *options) { options->encoding = NULL; }
+void z_query_reply_options_default(z_query_reply_options_t *options) {
+    options->encoding = NULL;
+    options->attachment = NULL;
+}
 
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
