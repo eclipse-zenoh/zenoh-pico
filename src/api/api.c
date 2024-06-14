@@ -337,6 +337,49 @@ int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_
     return _Z_RES_OK;
 }
 
+int8_t zp_bytes_decode_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                 size_t *curr_idx) {
+    // Check bound size
+    if (*curr_idx >= bytes->_slice.len) {
+        return _Z_ERR_GENERIC;
+    }
+    // Init pair of owned bytes
+    z_bytes_null(first);
+    z_bytes_null(second);
+    first->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    second->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if ((first->_val == NULL) || (second->_val == NULL)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Extract first item size
+    size_t first_len = 0;
+    // FIXME: size endianness, Issue #420
+    memcpy(&first_len, &bytes->_slice.start[*curr_idx], sizeof(uint32_t));
+    *curr_idx += sizeof(uint32_t);
+    // Allocate first item bytes
+    *first->_val = _z_bytes_make(first_len);
+    if (!_z_bytes_check(*first->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Extract first item data
+    memcpy((uint8_t *)first->_val->_slice.start, &bytes->_slice.start[*curr_idx], first_len);
+    *curr_idx += first_len;
+
+    // Extract second item size
+    size_t second_len = 0;
+    memcpy(&second_len, &bytes->_slice.start[*curr_idx], sizeof(uint32_t));
+    *curr_idx += sizeof(uint32_t);
+    // Allocate second item bytes
+    *second->_val = _z_bytes_make(second_len);
+    if (!_z_bytes_check(*second->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Extract second item data
+    memcpy((uint8_t *)second->_val->_slice.start, &bytes->_slice.start[*curr_idx], second_len);
+    *curr_idx += second_len;
+    return _Z_RES_OK;
+}
+
 int8_t z_bytes_encode_from_int8(z_owned_bytes_t *bytes, int8_t val) {
     return z_bytes_encode_from_uint8(bytes, (uint8_t)val);
 }
@@ -500,6 +543,48 @@ int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s) {
     }
     // Copy string without null terminator
     memcpy((uint8_t *)bytes->_val->_slice.start, s, len);
+    return _Z_RES_OK;
+}
+
+int8_t zp_bytes_encode_from_iter(z_owned_bytes_t *bytes,
+                                 _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
+                                 void *context, size_t total_len) {
+    // Init owned bytes
+    z_bytes_null(bytes);
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Allocate bytes
+    *bytes->_val = _z_bytes_make(total_len);
+    if (!_z_bytes_check(*bytes->_val)) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    size_t curr_idx = 0;
+    while (iterator_body(bytes, context, &curr_idx))
+        ;
+    return _Z_RES_OK;
+}
+
+int8_t zp_bytes_encode_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                 size_t *curr_idx) {
+    // Calculate pair size
+    size_t first_len = z_slice_len(&first->_val->_slice);
+    size_t second_len = z_slice_len(&second->_val->_slice);
+    size_t len = 2 * sizeof(uint32_t) + first_len + second_len;
+    // Copy data
+    // FIXME: size endianness, Issue #420
+    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &first_len, sizeof(uint32_t));
+    *curr_idx += sizeof(uint32_t);
+    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&first->_val->_slice), first_len);
+    *curr_idx += first_len;
+    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &second_len, sizeof(uint32_t));
+    *curr_idx += sizeof(uint32_t);
+    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&second->_val->_slice), second_len);
+    *curr_idx += second_len;
+    // Clean up
+    z_bytes_drop(first);
+    z_bytes_drop(second);
     return _Z_RES_OK;
 }
 
@@ -985,9 +1070,9 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, 
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT,
                                    _z_bytes_from_owned_bytes(opt.attachment));
-
     // Clean-up
     z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
     return ret;
 }
 

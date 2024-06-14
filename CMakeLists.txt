@@ -177,6 +177,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   if(UNIX)
+    # FIXME: seems to not apply to library files, Issue #422
     add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0)
     # add_compile_options(-Wconversion)
     # add_link_options(-fsanitize=address)
