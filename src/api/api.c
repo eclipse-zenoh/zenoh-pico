@@ -686,7 +686,7 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
         return ret;                                                                                 \
     }                                                                                               \
     void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
-        if (obj->_val != NULL) {                                                                    \
+        if ((obj != NULL) && (obj->_val != NULL)) {                                                 \
             f_free(&obj->_val);                                                                     \
         }                                                                                           \
     }
