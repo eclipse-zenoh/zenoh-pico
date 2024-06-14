@@ -785,7 +785,7 @@ void subscriber_declaration(void) {
 _z_decl_queryable_t gen_queryable_declaration(void) {
     _z_decl_queryable_t e_qd = {._keyexpr = gen_keyexpr(),
                                 ._id = (uint32_t)gen_uint64(),
-                                ._ext_queryable_info = {._complete = gen_uint8(), ._distance = (uint32_t)gen_zint()}};
+                                ._ext_queryable_info = {._complete = gen_uint8(), ._distance = gen_uint16()}};
 
     return e_qd;
 }
