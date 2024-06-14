@@ -795,7 +795,7 @@ int8_t zp_bytes_encode_from_iter(z_owned_bytes_t *bytes,
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
 int8_t zp_bytes_encode_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                   size_t *curr_idx);
+                                 size_t *curr_idx);
 
 /**
  * Checks validity of a timestamp
