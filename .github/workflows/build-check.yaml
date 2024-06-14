@@ -115,7 +115,7 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY --attachment 0
+          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
         timeout-minutes: 5
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
@@ -190,6 +190,39 @@ jobs:
           cmake -DBATCH_UNICAST_SIZE=4096 -B build/ -G Ninja
           CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/fragment.py
+        timeout-minutes: 5
+
+      - name: Kill Zenoh router
+        if: always()
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  attachment_test:
+    needs: zenoh_build
+    name: Test attachments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
+
+      - name: Build project and run test
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/attachment.py
         timeout-minutes: 5
 
       - name: Kill Zenoh router

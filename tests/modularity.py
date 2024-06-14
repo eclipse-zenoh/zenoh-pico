@@ -159,15 +159,7 @@ def query_and_queryable(args):
     if args.query == 1:
         z_query_expected_status = 0
         if args.queryable == 1:
-            if args.attachment == 1:
-                z_query_expected_output = """Opening session...
-Sending Query 'demo/example/**'...
->> Received ('demo/example/**': 'Queryable from Pico!')
-Attachement found
->>> hello: world
->> Received query final notification"""
-            else:
-                z_query_expected_output = """Opening session...
+            z_query_expected_output = """Opening session...
 Sending Query 'demo/example/**'...
 >> Received ('demo/example/**': 'Queryable from Pico!')
 >> Received query final notification"""
@@ -185,16 +177,7 @@ Sending Query 'demo/example/**'...
     if args.queryable == 1:
         z_queryable_expected_status = -2
         if args.query == 1:
-            if args.attachment == 1:
-                z_queryable_expected_output = """Opening session...
-Creating Queryable on 'demo/example/zenoh-pico-queryable'...
-Press CTRL-C to quit...
- >> [Queryable handler] Received Query 'demo/example/**'
-Attachement found
->>> hi: there
-"""
-            else:
-                z_queryable_expected_output = """Opening session...
+            z_queryable_expected_output = """Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
  >> [Queryable handler] Received Query 'demo/example/**'
@@ -297,13 +280,9 @@ if __name__ == "__main__":
     parser.add_argument("--sub", type=int, choices=[0, 1], help="Z_FEATURE_SUBSCRIPTION (0 or 1)")
     parser.add_argument("--queryable", type=int, choices=[0, 1], help="Z_FEATURE_QUERYABLE (0 or 1)")
     parser.add_argument("--query", type=int, choices=[0, 1], help="Z_FEATURE_QUERY (0 or 1)")
-    parser.add_argument("--attachment", type=int, choices=[0, 1], help="testing with attachment (0 or 1)")
     EXIT_STATUS = 0
     prog_args = parser.parse_args()
-    print(
-        f"Args value, pub:{prog_args.pub}, sub:{prog_args.sub}, "
-        f"queryable:{prog_args.queryable}, query:{prog_args.query}, attachment:{prog_args.attachment}"
-    )
+    print(f"Args value, pub:{prog_args.pub}, sub:{prog_args.sub}, " f"queryable:{prog_args.queryable}, query:{prog_args.query}")
 
     # Test pub and sub examples
     if pub_and_sub(prog_args) == 1:
