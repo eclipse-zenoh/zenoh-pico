@@ -98,7 +98,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         _z_slice_copy(&sample.payload._slice, payload);
         sample.kind = kind;
         sample.timestamp = _z_timestamp_duplicate(timestamp);
-        sample.attachment = att;  // FIXME: call z_attachment_move or copy
+        sample.attachment = _z_bytes_duplicate(&att);
 
         // Create sample rc from value
         reply.data.sample = _z_sample_rc_new_from_val(sample);

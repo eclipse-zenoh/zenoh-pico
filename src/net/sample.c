@@ -88,7 +88,7 @@ _z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_slice_t *payload,
     s.kind = kind;
     s.timestamp = timestamp;
     s.qos = qos;
-    s.attachment = att;  // FIXME: call z_attachment_move or copy
+    s.attachment = _z_bytes_duplicate(&att);
     return s;
 }
 #else
