@@ -303,7 +303,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             ret = _z_source_info_decode(&pshb->_body._put._commons._source_info, &zbf);
             break;
         }
-        case _Z_MSG_EXT_ENC_ZBUF | 0x03: {
+        case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Attachment
             pshb->_body._put._attachment._slice = extension->_body._zbuf._val._is_alloc
                                                       ? _z_slice_steal(&extension->_body._zbuf._val)
                                                       : _z_slice_duplicate(&extension->_body._zbuf._val);
@@ -448,7 +448,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_slice_copy(&msg->_ext_value.payload._slice, &bytes);
             break;
         }
-        case _Z_MSG_EXT_ENC_ZBUF | 0x05: {
+        case _Z_MSG_EXT_ENC_ZBUF | 0x05: {  // Attachment
             msg->_ext_attachment._slice = extension->_body._zbuf._val._is_alloc
                                               ? _z_slice_steal(&extension->_body._zbuf._val)
                                               : _z_slice_duplicate(&extension->_body._zbuf._val);

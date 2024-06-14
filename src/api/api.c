@@ -976,6 +976,7 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
     return ret;
 }
 
@@ -1139,6 +1140,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     }
     // Clean-up
     z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
     return ret;
 }
 
@@ -1227,6 +1229,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
     }
     // Clean-up
     z_encoding_drop(opts.encoding);
+    z_bytes_drop(opts.attachment);
     return ret;
 }
 #endif

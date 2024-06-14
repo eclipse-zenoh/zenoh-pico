@@ -98,7 +98,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         _z_slice_copy(&sample.payload._slice, payload);
         sample.kind = kind;
         sample.timestamp = _z_timestamp_duplicate(timestamp);
-        sample.attachment = _z_bytes_duplicate(&att);
+        sample.attachment._slice = _z_slice_steal((_z_slice_t *)&att._slice);
 
         // Create sample rc from value
         reply.data.sample = _z_sample_rc_new_from_val(sample);
