@@ -26,7 +26,7 @@ char const *_z_rstrstr(char const *haystack_start, char const *haystack_end, con
     char const *he = haystack_end;
 
     const char *needle_end = strchr(needle_start, 0);
-    hs = _z_cptr_char_offset(hs, _z_ptr_char_diff(needle_end, needle_start));
+    hs = _z_cptr_char_offset(hs, (ptrdiff_t)_z_ptr_char_diff(needle_end, needle_start));
     char const *result = NULL;
     while ((result == false) && (he >= hs)) {
         char found = 1;
@@ -50,7 +50,7 @@ char const *_z_rstrstr(char const *haystack_start, char const *haystack_end, con
 }
 
 char const *_z_bstrstr(_z_str_se_t haystack, _z_str_se_t needle) {
-    haystack.end = _z_cptr_char_offset(haystack.end, -1 * _z_ptr_char_diff(needle.end, needle.start));
+    haystack.end = _z_cptr_char_offset(haystack.end, -1 * (ptrdiff_t)_z_ptr_char_diff(needle.end, needle.start));
     char const *result = NULL;
     for (; (result == false) && (haystack.start <= haystack.end);
          haystack.start = _z_cptr_char_offset(haystack.start, 1)) {
@@ -86,7 +86,7 @@ char const *_z_strstr_skipneedle(char const *haystack_start, char const *haystac
 char const *_z_bstrstr_skipneedle(_z_str_se_t haystack, _z_str_se_t needle) {
     char const *result = _z_bstrstr(haystack, needle);
     if (result != NULL) {
-        result = _z_cptr_char_offset(result, _z_ptr_char_diff(needle.end, needle.start));
+        result = _z_cptr_char_offset(result, (ptrdiff_t)_z_ptr_char_diff(needle.end, needle.start));
     }
     return result;
 }
@@ -102,7 +102,7 @@ _z_str_se_t _z_splitstr_next(_z_splitstr_t *str) {
         if (result.end == str->s.end) {
             str->s = (_z_str_se_t){.start = NULL, .end = NULL};
         } else {
-            str->s.start = _z_cptr_char_offset(result.end, strlen(str->delimiter));
+            str->s.start = _z_cptr_char_offset(result.end, (ptrdiff_t)strlen(str->delimiter));
         }
     }
     return result;
@@ -122,7 +122,7 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str) {
         if (result.start == str->s.start) {
             str->s = (_z_str_se_t){.start = NULL, .end = NULL};
         } else {
-            str->s.end = _z_cptr_char_offset(result.start, -1 * strlen(str->delimiter));
+            str->s.end = _z_cptr_char_offset(result.start, -1 * (ptrdiff_t)strlen(str->delimiter));
         }
     }
     return result;
