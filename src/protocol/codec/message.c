@@ -497,6 +497,7 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
     return _Z_RES_OK;
 }
 int8_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
+    _ZP_UNUSED(ctx);
     int8_t ret = _Z_RES_OK;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         default:

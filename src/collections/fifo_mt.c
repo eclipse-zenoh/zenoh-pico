@@ -64,6 +64,7 @@ void _z_fifo_mt_free(_z_fifo_mt_t *fifo, z_element_free_f free_f) {
 }
 
 int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element_free) {
+    _ZP_UNUSED(element_free);
     if (elem == NULL || context == NULL) {
         return _Z_ERR_GENERIC;
     }

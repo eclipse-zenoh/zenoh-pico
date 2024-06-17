@@ -581,7 +581,6 @@ int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *fir
     // Calculate pair size
     size_t first_len = z_slice_len(&first->_val->_slice);
     size_t second_len = z_slice_len(&second->_val->_slice);
-    size_t len = 2 * sizeof(uint32_t) + first_len + second_len;
     // Copy data
     // FIXME: size endianness, Issue #420
     memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &first_len, sizeof(uint32_t));

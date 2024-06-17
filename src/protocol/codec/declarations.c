@@ -323,6 +323,8 @@ int8_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t h
 }
 
 int8_t _z_decl_final_decode(_z_decl_final_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+    // Nothing to do
+    _ZP_UNUSED(decl);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x13));
     }

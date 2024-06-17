@@ -41,7 +41,7 @@ _z_encoding_t _z_encoding_wrap(z_encoding_id_t id, const char *schema) {
 
 _z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(Z_ENCODING_ID_DEFAULT, NULL); }
 
-void _z_encoding_clear(_z_encoding_t *encoding) { _z_slice_clear(&encoding->schema); };
+void _z_encoding_clear(_z_encoding_t *encoding) { _z_slice_clear(&encoding->schema); }
 
 _Bool _z_encoding_check(const _z_encoding_t *encoding) {
     return ((encoding->id != Z_ENCODING_ID_DEFAULT) || _z_slice_check(encoding->schema));
