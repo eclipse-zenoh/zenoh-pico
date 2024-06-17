@@ -285,7 +285,8 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         uint8_t zidlen = _z_id_len(msg->_ext_responder._zid);
         extheader = (zidlen - 1) << 4;
-        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, zidlen + (uint8_t)1 + _z_zint_len(msg->_ext_responder._eid)));
+        size_t ext_size = (size_t)(zidlen + 1 + _z_zint_len(msg->_ext_responder._eid));
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_ext_responder._zid.id, 0, zidlen));
         _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_responder._eid));

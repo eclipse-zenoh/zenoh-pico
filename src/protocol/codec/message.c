@@ -93,7 +93,9 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     return ret;
 }
 int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(ts->time) + (uint8_t)1 + _z_id_len(ts->id)));
+    // Encode extension size then timestamp
+    size_t ext_size = (size_t)(_z_zint_len(ts->time) + 1 + _z_id_len(ts->id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     return _z_timestamp_encode(wbf, ts);
 }
 
@@ -233,8 +235,8 @@ int8_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
 int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     int8_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_id);
-    uint16_t len = 1 + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len));
+    size_t ext_size = 1 + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
     _z_slice_t zid = _z_slice_wrap(info->_id.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
