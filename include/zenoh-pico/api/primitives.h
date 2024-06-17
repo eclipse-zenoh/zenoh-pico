@@ -450,7 +450,7 @@ size_t z_slice_len(const z_loaned_slice_t *slice);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
+int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 
 /**
  * Decodes data into a `int16_t` signed integer.
@@ -462,7 +462,7 @@ int8_t z_bytes_decode_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
+int8_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 
 /**
  * Decodes data into a `int32_t` signed integer.
@@ -474,7 +474,7 @@ int8_t z_bytes_decode_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
+int8_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 
 /**
  * Decodes data into a `int64_t` signed integer.
@@ -486,7 +486,7 @@ int8_t z_bytes_decode_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
+int8_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 
 /**
  * Decodes data into a `uint8_t` unsigned integer.
@@ -498,7 +498,7 @@ int8_t z_bytes_decode_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
+int8_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 
 /**
  * Decodes data into a `uint16_t` unsigned integer.
@@ -510,7 +510,7 @@ int8_t z_bytes_decode_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
+int8_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 
 /**
  * Decodes data into a `uint32_t` unsigned integer.
@@ -522,7 +522,7 @@ int8_t z_bytes_decode_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
+int8_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 
 /**
  * Decodes data into a `uint64_t` unsigned integer.
@@ -534,7 +534,7 @@ int8_t z_bytes_decode_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
+int8_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 
 /**
  * Decodes data into a `float` floating number.
@@ -546,7 +546,7 @@ int8_t z_bytes_decode_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_float(const z_loaned_bytes_t *bytes, float *dst);
+int8_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
 
 /**
  * Decodes data into a `double` floating number.
@@ -558,7 +558,7 @@ int8_t z_bytes_decode_into_float(const z_loaned_bytes_t *bytes, float *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_double(const z_loaned_bytes_t *bytes, double *dst);
+int8_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst);
 
 /**
  * Decodes data into a :c:type:`z_owned_slice_t`
@@ -570,7 +570,7 @@ int8_t z_bytes_decode_into_double(const z_loaned_bytes_t *bytes, double *dst);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
+int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
  * Decodes data into a :c:type:`z_owned_string_t`
@@ -582,7 +582,7 @@ int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t 
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
  * Decodes data into a pair of :c:type:`z_owned_bytes_t`
@@ -596,8 +596,8 @@ int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t zp_bytes_decode_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                 size_t *curr_idx);
+int8_t zp_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                      size_t *curr_idx);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -609,7 +609,7 @@ int8_t zp_bytes_decode_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t 
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_int8(z_owned_bytes_t *bytes, int8_t val);
+int8_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -621,7 +621,7 @@ int8_t z_bytes_encode_from_int8(z_owned_bytes_t *bytes, int8_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_int16(z_owned_bytes_t *bytes, int16_t val);
+int8_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -633,7 +633,7 @@ int8_t z_bytes_encode_from_int16(z_owned_bytes_t *bytes, int16_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_int32(z_owned_bytes_t *bytes, int32_t val);
+int8_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -645,7 +645,7 @@ int8_t z_bytes_encode_from_int32(z_owned_bytes_t *bytes, int32_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_int64(z_owned_bytes_t *bytes, int64_t val);
+int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -657,7 +657,7 @@ int8_t z_bytes_encode_from_int64(z_owned_bytes_t *bytes, int64_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
+int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -669,7 +669,7 @@ int8_t z_bytes_encode_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
+int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -681,7 +681,7 @@ int8_t z_bytes_encode_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
+int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -693,7 +693,7 @@ int8_t z_bytes_encode_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
+int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
 
 /**
  * Encodes a floating number into a :c:type:`z_owned_bytes_t`
@@ -705,7 +705,7 @@ int8_t z_bytes_encode_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_float(z_owned_bytes_t *bytes, float val);
+int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
 
 /**
  * Encodes a floating number into a :c:type:`z_owned_bytes_t`
@@ -717,7 +717,7 @@ int8_t z_bytes_encode_from_float(z_owned_bytes_t *bytes, float val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_double(z_owned_bytes_t *bytes, double val);
+int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
 
 /**
  * Encodes a slice into a :c:type:`z_owned_bytes_t` by aliasing
@@ -729,7 +729,7 @@ int8_t z_bytes_encode_from_double(z_owned_bytes_t *bytes, double val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
 /**
  * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying
@@ -741,7 +741,7 @@ int8_t z_bytes_encode_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, si
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t` by aliasing
@@ -753,7 +753,7 @@ int8_t z_bytes_encode_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *dat
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_string(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t` by copying
@@ -765,7 +765,7 @@ int8_t z_bytes_encode_from_string(z_owned_bytes_t *bytes, const char *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s);
 
 /**
  * Constructs payload from an iterator to `z_owned_bytes_t`.
@@ -778,9 +778,9 @@ int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t zp_bytes_encode_from_iter(z_owned_bytes_t *bytes,
-                                 _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
-                                 void *context, size_t total_len);
+int8_t zp_bytes_serialize_from_iter(z_owned_bytes_t *bytes,
+                                    _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
+                                    void *context, size_t total_len);
 
 /**
  * Append a pair of `z_owned_bytes` objects which are consumed in the process.
@@ -794,8 +794,8 @@ int8_t zp_bytes_encode_from_iter(z_owned_bytes_t *bytes,
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t zp_bytes_encode_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                 size_t *curr_idx);
+int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                    size_t *curr_idx);
 
 /**
  * Checks validity of a timestamp

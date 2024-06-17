@@ -40,9 +40,10 @@ static int msg_nb = 0;
 void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
     size_t curr_idx = 0;
     z_owned_bytes_t first, second;
-    while ((kvp->current_idx < kvp->len) && (zp_bytes_decode_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
-        z_bytes_decode_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_decode_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
+    while ((kvp->current_idx < kvp->len) &&
+           (zp_bytes_deserialize_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
+        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);
         z_bytes_drop(&second);
         kvp->current_idx++;
@@ -70,7 +71,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t keystr;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
-    z_bytes_decode_into_string(z_sample_payload(sample), &value);
+    z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
     // Check attachment
     kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};

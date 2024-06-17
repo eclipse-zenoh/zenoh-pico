@@ -63,9 +63,9 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_encode_from_string(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_encode_from_string(&v, kvs->data[kvs->current_idx].value);
-        zp_bytes_encode_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
+        z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
+        z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
+        zp_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
         kvs->current_idx++;
         return true;
     }
@@ -74,9 +74,10 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
 void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
     size_t curr_idx = 0;
     z_owned_bytes_t first, second;
-    while ((kvp->current_idx < kvp->len) && (zp_bytes_decode_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
-        z_bytes_decode_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_decode_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
+    while ((kvp->current_idx < kvp->len) &&
+           (zp_bytes_deserialize_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
+        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);
         z_bytes_drop(&second);
         kvp->current_idx++;
@@ -113,7 +114,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
         printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
 
@@ -210,7 +211,7 @@ int main(int argc, char **argv) {
     // Value encoding
     z_owned_bytes_t payload;
     if (value != NULL) {
-        z_bytes_encode_from_string(&payload, value);
+        z_bytes_serialize_from_string(&payload, value);
         opts.payload = &payload;
     }
 
@@ -219,7 +220,7 @@ int main(int argc, char **argv) {
     kvs[0] = (kv_pair_t){.key = "test_key", .value = "test_value"};
     kv_pairs_tx_t ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
+    zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
     opts.attachment = z_move(attachment);
 
     z_owned_closure_reply_t callback;

@@ -39,7 +39,7 @@ void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_bytes_decode_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
         printf(" >> Received ('%s': '%s')\n", z_string_data(z_string_loan(&keystr)),
                z_string_data(z_string_loan(&replystr)));
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
         // Value encoding
         z_owned_bytes_t payload;
         if (strcmp(VALUE, "") != 0) {
-            z_bytes_encode_from_string(&payload, VALUE);
+            z_bytes_serialize_from_string(&payload, VALUE);
             opts.payload = &payload;
         }
         z_owned_closure_reply_t callback;

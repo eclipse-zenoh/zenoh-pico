@@ -53,9 +53,9 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_encode_from_string(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_encode_from_string(&v, kvs->data[kvs->current_idx].value);
-        zp_bytes_encode_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
+        z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
+        z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
+        zp_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
         kvs->current_idx++;
         return true;
     }
@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
         kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
-        zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
+        zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
         options.attachment = z_move(attachment);
 
         sprintf(buf, "[%4d] %s", idx, value);

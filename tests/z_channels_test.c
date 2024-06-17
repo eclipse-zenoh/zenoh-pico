@@ -35,22 +35,22 @@
         z_call(channel.send, &sample);                                                           \
     } while (0);
 
-#define _RECV(channel, method, buf)                                              \
-    do {                                                                         \
-        z_owned_sample_t sample;                                                 \
-        z_sample_null(&sample);                                                  \
-        z_call(channel.method, &sample);                                         \
-        if (z_check(sample)) {                                                   \
-            z_owned_slice_t value;                                               \
-            z_bytes_decode_into_slice(z_sample_payload(z_loan(sample)), &value); \
-            size_t value_len = z_slice_len(z_loan(value));                       \
-            strncpy(buf, (const char *)z_slice_data(z_loan(value)), value_len);  \
-            buf[value_len] = '\0';                                               \
-            z_drop(z_move(sample));                                              \
-            z_drop(z_move(value));                                               \
-        } else {                                                                 \
-            buf[0] = '\0';                                                       \
-        }                                                                        \
+#define _RECV(channel, method, buf)                                                   \
+    do {                                                                              \
+        z_owned_sample_t sample;                                                      \
+        z_sample_null(&sample);                                                       \
+        z_call(channel.method, &sample);                                              \
+        if (z_check(sample)) {                                                        \
+            z_owned_slice_t value;                                                    \
+            z_bytes_deserialize_into_slice(z_sample_payload(z_loan(sample)), &value); \
+            size_t value_len = z_slice_len(z_loan(value));                            \
+            strncpy(buf, (const char *)z_slice_data(z_loan(value)), value_len);       \
+            buf[value_len] = '\0';                                                    \
+            z_drop(z_move(sample));                                                   \
+            z_drop(z_move(value));                                                    \
+        } else {                                                                      \
+            buf[0] = '\0';                                                            \
+        }                                                                             \
     } while (0);
 
 #define RECV(channel, buf) _RECV(channel, recv, buf)

@@ -44,7 +44,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_decode_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    z_bytes_deserialize_into_string(z_value_payload(z_query_value(query)), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         Serial.print("     with value '");
         Serial.print(z_string_data(z_string_loan(&payload_string)));
@@ -57,7 +57,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_encode_from_string(&reply_payload, VALUE);
+    z_bytes_serialize_from_string(&reply_payload, VALUE);
 
     z_query_reply(query, z_view_keyexpr_loan(&ke), z_bytes_move(&reply_payload), NULL);
 

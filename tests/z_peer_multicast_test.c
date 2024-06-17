@@ -49,7 +49,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_owned_string_t k_str;
     z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
-    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     assert(z_slice_len(z_loan(value)) == MSG_LEN);
     assert(z_loan(k_str)->len == strlen(res));
     assert(strncmp(res, z_loan(k_str)->val, strlen(res)) == 0);
