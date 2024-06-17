@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
                (int)z_loan(params)->len, z_loan(params)->val);
         // Process value
         z_owned_string_t payload_string;
-        z_bytes_decode_into_string(z_value_payload(z_query_value(z_loan(query))), &payload_string);
+        z_bytes_deserialize_into_string(z_value_payload(z_query_value(z_loan(query))), &payload_string);
         if (z_string_len(z_loan(payload_string)) > 1) {
             printf("     with value '%s'\n", z_string_data(z_loan(payload_string)));
         }
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
         z_query_reply_options_default(&options);
         // Reply value encoding
         z_owned_bytes_t reply_payload;
-        z_bytes_encode_from_string(&reply_payload, value);
+        z_bytes_serialize_from_string(&reply_payload, value);
 
         z_query_reply(q, z_query_keyexpr(q), z_move(reply_payload), &options);
         z_drop(z_move(keystr));

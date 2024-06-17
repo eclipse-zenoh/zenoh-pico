@@ -41,7 +41,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
            (int)z_view_string_loan(&pred)->len, z_view_string_loan(&pred)->val);
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_decode_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    z_bytes_deserialize_into_string(z_value_payload(z_query_value(query)), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         printf("     with value '%s'\n", z_string_data(z_string_loan(&payload_string)));
     }
@@ -49,7 +49,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_encode_from_string(&reply_payload, VALUE);
+    z_bytes_serialize_from_string(&reply_payload, VALUE);
 
     z_query_reply(query, z_query_keyexpr(query), z_bytes_move(&reply_payload), NULL);
     z_string_drop(z_string_move(&keystr));

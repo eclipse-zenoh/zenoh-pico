@@ -24,7 +24,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
     z_owned_slice_t value;
-    z_bytes_decode_into_slice(z_sample_payload(sample), &value);
+    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     const uint8_t *data = z_slice_data(z_loan(value));
     size_t data_len = z_slice_len(z_loan(value));
     for (size_t i = 0; i < data_len; i++) {

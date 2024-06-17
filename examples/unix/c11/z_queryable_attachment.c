@@ -64,9 +64,9 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_encode_from_string(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_encode_from_string(&v, kvs->data[kvs->current_idx].value);
-        zp_bytes_encode_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
+        z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
+        z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
+        zp_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
         kvs->current_idx++;
         return true;
     }
@@ -75,9 +75,10 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
 void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
     size_t curr_idx = 0;
     z_owned_bytes_t first, second;
-    while ((kvp->current_idx < kvp->len) && (zp_bytes_decode_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
-        z_bytes_decode_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_decode_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
+    while ((kvp->current_idx < kvp->len) &&
+           (zp_bytes_deserialize_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
+        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);
         z_bytes_drop(&second);
         kvp->current_idx++;
@@ -110,7 +111,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
            z_loan(params)->val);
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_decode_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    z_bytes_deserialize_into_string(z_value_payload(z_query_value(query)), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 1) {
         printf("   with value '%s'\n", z_string_data(z_loan(payload_string)));
     }
@@ -134,14 +135,14 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_encode_from_string(&reply_payload, value);
+    z_bytes_serialize_from_string(&reply_payload, value);
 
     // Reply attachment
     kv_pair_t kvs[1];
     kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
     kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx, kv_pairs_size(&kv_ctx));
+    zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx, kv_pairs_size(&kv_ctx));
     options.attachment = z_move(attachment);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
