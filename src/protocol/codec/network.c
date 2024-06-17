@@ -75,7 +75,7 @@ int8_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
             if (extension->_body._zint._val > UINT32_MAX) {
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
-            msg->_qos = (_z_n_qos_t){._val = (uint32_t)extension->_body._zint._val};
+            msg->_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x02: {  // Timestamp ext
@@ -284,7 +284,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x03 | (n_ext != 0 ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         uint8_t zidlen = _z_id_len(msg->_ext_responder._zid);
-        extheader = (zidlen - 1) << 4;
+        extheader = (uint8_t)((zidlen - 1) << 4);
         size_t ext_size = (size_t)(zidlen + 1 + _z_zint_len(msg->_ext_responder._eid));
         _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));

@@ -1242,7 +1242,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
             _z_keyexpr_t resource_key = *keyexpr;
             if (wild != NULL && wild != resource_key._suffix) {
                 wild -= 1;
-                size_t len = wild - resource_key._suffix;
+                size_t len = (size_t)(wild - resource_key._suffix);
                 suffix = z_malloc(len + 1);
                 if (suffix != NULL) {
                     memcpy(suffix, resource_key._suffix, len);

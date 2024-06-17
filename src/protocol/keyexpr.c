@@ -291,7 +291,7 @@ _Bool _z_ke_isdoublestar(_z_str_se_t s) {
 
 /*------------------ Inclusion helpers ------------------*/
 _Bool _z_ke_chunk_includes_nodsl(_z_str_se_t l, _z_str_se_t r) {
-    size_t llen = l.end - l.start;
+    size_t llen = (size_t)(l.end - l.start);
     _Bool result =
         !(r.start[0] == _Z_VERBATIM) && ((llen == (size_t)1) && (l.start[0] == '*') &&
                                          (((_z_ptr_char_diff(r.end, r.start) == 2) && (r.start[0] == '*')) == false));
