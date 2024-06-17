@@ -762,7 +762,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
-        uint32_t timeout = strtoul(opt_as_str, NULL, 10);
+        uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
         _z_id_t zid = _z_id_empty();
         char *zid_str = _z_config_get(config->_val, Z_CONFIG_SESSION_ZID_KEY);
