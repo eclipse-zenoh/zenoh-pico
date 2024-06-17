@@ -35,7 +35,8 @@ typedef struct kv_pairs_t {
 
 #if Z_FEATURE_PUBLICATION == 1
 
-size_t kv_pairs_length(kv_pairs_t *kvp) {
+// Return the total serialized size of the key value pairs
+size_t kv_pairs_size(kv_pairs_t *kvp) {
     size_t ret = 0;
     for (size_t i = 0; i < kvp->len; i++) {
         // Size fields
@@ -162,7 +163,7 @@ int main(int argc, char **argv) {
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
         kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
-        zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_length(&ctx));
+        zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
         options.attachment = z_move(attachment);
 
         sprintf(buf, "[%4d] %s", idx, value);

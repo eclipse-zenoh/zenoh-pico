@@ -47,7 +47,7 @@ const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
 static int msg_nb = 0;
 
-size_t kv_pairs_length(kv_pairs_tx_t *kvp) {
+size_t kv_pairs_size(kv_pairs_tx_t *kvp) {
     size_t ret = 0;
     for (size_t i = 0; i < kvp->len; i++) {
         // Size fields
@@ -141,7 +141,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
     kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx, kv_pairs_length(&kv_ctx));
+    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx, kv_pairs_size(&kv_ctx));
     options.attachment = z_move(attachment);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);

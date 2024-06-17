@@ -46,7 +46,7 @@ typedef struct kv_pairs_rx_t {
 static z_condvar_t cond;
 static z_mutex_t mutex;
 
-size_t kv_pairs_length(kv_pairs_tx_t *kvp) {
+size_t kv_pairs_size(kv_pairs_tx_t *kvp) {
     size_t ret = 0;
     for (size_t i = 0; i < kvp->len; i++) {
         // Size fields
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
     kvs[0] = (kv_pair_t){.key = "test_key", .value = "test_value"};
     kv_pairs_tx_t ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_length(&ctx));
+    zp_bytes_encode_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
     opts.attachment = z_move(attachment);
 
     z_owned_closure_reply_t callback;
