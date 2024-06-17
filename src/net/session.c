@@ -95,7 +95,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
             _z_hello_list_free(&hellos);
         } else {
-            int key = Z_CONFIG_CONNECT_KEY;
+            uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
             if (listen != NULL) {
                 if (connect == NULL) {
                     key = Z_CONFIG_LISTEN_KEY;
