@@ -25,7 +25,7 @@ int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
 
     memset(r, 0, sizeof(_z_ring_t));
     if (capacity != (size_t)0) {
-        r->_val = (void **)zp_malloc(sizeof(void *) * capacity);
+        r->_val = (void **)z_malloc(sizeof(void *) * capacity);
     }
     if (r->_val != NULL) {
         memset(r->_val, 0, capacity);
@@ -96,7 +96,7 @@ void _z_ring_clear(_z_ring_t *r, z_element_free_f free_f) {
         free_f(&e);
         e = _z_ring_pull(r);
     }
-    zp_free(r->_val);
+    z_free(r->_val);
 
     r->_val = NULL;
     r->_capacity = (size_t)0;
@@ -109,7 +109,7 @@ void _z_ring_free(_z_ring_t **r, z_element_free_f free_f) {
     _z_ring_t *ptr = (_z_ring_t *)*r;
     if (ptr != NULL) {
         _z_ring_clear(ptr, free_f);
-        zp_free(ptr);
+        z_free(ptr);
         *r = NULL;
     }
 }

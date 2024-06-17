@@ -47,7 +47,7 @@ void _z_fifo_free(_z_fifo_t **r, z_element_free_f free_f) {
     _z_fifo_t *ptr = (_z_fifo_t *)*r;
     if (ptr != NULL) {
         _z_fifo_clear(ptr, free_f);
-        zp_free(ptr);
+        z_free(ptr);
         *r = NULL;
     }
 }

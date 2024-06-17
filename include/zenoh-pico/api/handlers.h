@@ -126,10 +126,61 @@
     void *z_##kind_name##_handler_##item_name##_recv(); \
     void *z_##kind_name##_handler_##item_name##_try_recv();
 
-// This macro defines:
-//   z_ring_channel_sample_new()
-//   z_owned_ring_handler_sample_t/z_loaned_ring_handler_sample_t
-_Z_CHANNEL_DEFINE(sample, ring)
+// -- Channel
+#define _Z_CHANNEL_DEFINE(name, send_closure_name, recv_closure_name, send_type, recv_type, collection_type, \
+                          collection_new_f, collection_free_f, collection_push_f, collection_pull_f,         \
+                          collection_try_pull_f, elem_move_f, elem_convert_f, elem_drop_f)                   \
+    typedef struct {                                                                                         \
+        z_owned_##send_closure_name##_t send;                                                                \
+        z_owned_##recv_closure_name##_t recv;                                                                \
+        z_owned_##recv_closure_name##_t try_recv;                                                            \
+        collection_type *collection;                                                                         \
+    } z_owned_##name##_t;                                                                                    \
+                                                                                                             \
+    static inline void _z_##name##_elem_free(void **elem) {                                                  \
+        elem_drop_f((recv_type *)*elem);                                                                     \
+        z_free(*elem);                                                                                       \
+        *elem = NULL;                                                                                        \
+    }                                                                                                        \
+    static inline void _z_##name##_elem_move(void *dst, void *src) {                                         \
+        elem_move_f((recv_type *)dst, (recv_type *)src);                                                     \
+    }                                                                                                        \
+    static inline void _z_##name##_send(send_type *elem, void *context) {                                    \
+        void *internal_elem = elem_convert_f(elem);                                                          \
+        if (internal_elem == NULL) {                                                                         \
+            return;                                                                                          \
+        }                                                                                                    \
+        int8_t ret = collection_push_f(internal_elem, context, _z_##name##_elem_free);                       \
+        if (ret != _Z_RES_OK) {                                                                              \
+            _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                              \
+        }                                                                                                    \
+    }                                                                                                        \
+    static inline void _z_##name##_recv(recv_type *elem, void *context) {                                    \
+        int8_t ret = collection_pull_f(elem, context, _z_##name##_elem_move);                                \
+        if (ret != _Z_RES_OK) {                                                                              \
+            _Z_ERROR("%s failed: %i", #collection_pull_f, ret);                                              \
+        }                                                                                                    \
+    }                                                                                                        \
+    static inline void _z_##name##_try_recv(recv_type *elem, void *context) {                                \
+        int8_t ret = collection_try_pull_f(elem, context, _z_##name##_elem_move);                            \
+        if (ret != _Z_RES_OK) {                                                                              \
+            _Z_ERROR("%s failed: %i", #collection_try_pull_f, ret);                                          \
+        }                                                                                                    \
+    }                                                                                                        \
+                                                                                                             \
+    static inline int8_t z_##name##_new(z_owned_##name##_t *channel, size_t capacity) {                      \
+        channel->collection = collection_new_f(capacity);                                                    \
+        z_##send_closure_name(&channel->send, _z_##name##_send, NULL, channel->collection);                  \
+        z_##recv_closure_name(&channel->recv, _z_##name##_recv, NULL, channel->collection);                  \
+        z_##recv_closure_name(&channel->try_recv, _z_##name##_try_recv, NULL, channel->collection);          \
+        return _Z_RES_OK;                                                                                    \
+    }                                                                                                        \
+    static inline z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }               \
+    static inline void z_##name##_drop(z_owned_##name##_t *channel) {                                        \
+        collection_free_f(channel->collection, _z_##name##_elem_free);                                       \
+        z_##send_closure_name##_drop(&channel->send);                                                        \
+        z_##recv_closure_name##_drop(&channel->recv);                                                        \
+    }
 
 // This macro defines:
 //   z_fifo_channel_sample_new()
