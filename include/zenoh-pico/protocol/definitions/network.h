@@ -293,12 +293,7 @@ _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
-                                       uint32_t timeout_ms
-#if Z_FEATURE_ATTACHMENT == 1
-                                       ,
-                                       z_attachment_t attachment
-#endif
-);
+                                       uint32_t timeout_ms, _z_bytes_t attachment);
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id);

@@ -20,9 +20,50 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+typedef struct kv_pair_t {
+    z_owned_string_t key;
+    z_owned_string_t value;
+} kv_pair_t;
+
+typedef struct kv_pairs_t {
+    kv_pair_t *data;
+    uint32_t len;
+    uint32_t current_idx;
+} kv_pairs_t;
+
+#define KVP_LEN 16
+
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 static int msg_nb = 0;
+
+void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
+    size_t curr_idx = 0;
+    z_owned_bytes_t first, second;
+    while ((kvp->current_idx < kvp->len) && (zp_bytes_decode_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+        z_bytes_decode_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
+        z_bytes_decode_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
+        z_bytes_drop(&first);
+        z_bytes_drop(&second);
+        kvp->current_idx++;
+    }
+}
+
+void print_attachment(kv_pairs_t *kvp) {
+    printf("   with attachment:\n");
+    for (uint32_t i = 0; i < kvp->current_idx; i++) {
+        printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
+               z_string_data(z_loan(kvp->data[i].value)));
+    }
+}
+
+void drop_attachment(kv_pairs_t *kvp) {
+    for (size_t i = 0; i < kvp->current_idx; i++) {
+        z_string_drop(&kvp->data[i].key);
+        z_string_drop(&kvp->data[i].value);
+    }
+    z_free(kvp->data);
+}
 
 void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
@@ -31,6 +72,13 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t value;
     z_bytes_decode_into_string(z_sample_payload(sample), &value);
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
+    // Check attachment
+    kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};
+    parse_attachment(&kvp, z_sample_attachment(sample));
+    if (kvp.current_idx > 0) {
+        print_attachment(&kvp);
+    }
+    drop_attachment(&kvp);
     z_drop(z_move(keystr));
     z_drop(z_move(value));
     msg_nb++;

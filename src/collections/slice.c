@@ -162,6 +162,7 @@ uint8_t _z_bytes_to_uint8(const _z_bytes_t *bs) {
     return val;
 }
 
+// FIXME: int16+ endianness, Issue #420
 uint16_t _z_bytes_to_uint16(const _z_bytes_t *bs) {
     uint16_t val = 0;
     memcpy(&val, bs->_slice.start, sizeof(val));

@@ -115,17 +115,13 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *     kind: The kind of the value.
  *     cong_ctrl: The congestion control of this write. Possible values defined
  *                in :c:type:`_z_congestion_control_t`.
+ *     attachment: An optional attachment to this write.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
                 const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority
-#if Z_FEATURE_ATTACHMENT == 1
-                ,
-                z_attachment_t attachment
-#endif
-);
+                z_priority_t priority, const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -201,10 +197,10 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
  *     kind: The type of operation.
- *     att: The optional attachment to the sample.
+ *     attachment: An optional attachment to the reply.
  */
 int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, z_attachment_t att);
+                     const z_sample_kind_t kind, const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -220,18 +216,16 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const 
  *     consolidation: The kind of consolidation that should be applied on replies.
  *     value: The payload of the query.
  *     callback: The callback function that will be called on reception of replies for this query.
- *     arg_call: A pointer that will be passed to the **callback** on each call.
  *     dropper: The callback function that will be called on upon completion of the callback.
- *     arg_drop: A pointer that will be passed to the **dropper** on each call.
+ *     arg: A pointer that will be passed to the **callback** on each call.
+ *     timeout_ms: The timeout value of this query.
+ *     attachment: An optional attachment to this query.
+ *
+ *
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms
-#if Z_FEATURE_ATTACHMENT == 1
-                ,
-                z_attachment_t attachment
-#endif
-);
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

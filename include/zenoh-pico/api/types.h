@@ -261,11 +261,11 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
- *   z_attachment_t attachment: an attachment to the response.
+ *   z_owned_bytes_t *attachment: An optional attachment to the response.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
-    z_attachment_t attachment;
+    z_owned_bytes_t *attachment;
 } z_query_reply_options_t;
 
 /**
@@ -275,14 +275,13 @@ typedef struct {
  *   z_owned_encoding_t *encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
+ *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment;
-#endif
+    z_owned_bytes_t *attachment;
 } z_put_options_t;
 
 /**
@@ -303,12 +302,11 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
+ *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment;
-#endif
+    z_owned_bytes_t *attachment;
 } z_publisher_put_options_t;
 
 /**
@@ -327,6 +325,7 @@ typedef struct {
  *   z_owned_encoding_t *encoding: Payload encoding.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_query_target_t target: The queryables that should be targeted by this get.
+ *   z_owned_bytes_t *attachment: An optional attachment to the query.
  */
 typedef struct {
     z_owned_bytes_t *payload;
@@ -334,9 +333,7 @@ typedef struct {
     z_query_consolidation_t consolidation;
     z_query_target_t target;
     uint32_t timeout_ms;
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment;
-#endif
+    z_owned_bytes_t *attachment;
 } z_get_options_t;
 
 /**
@@ -633,112 +630,6 @@ typedef struct {
 } z_owned_closure_zid_t;
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
-#if Z_FEATURE_ATTACHMENT == 1
-struct _z_slice_pair_t {
-    _z_slice_t *key;
-    _z_slice_t *value;
-};
-
-void _z_slice_pair_clear(struct _z_slice_pair_t *this_);
-
-_Z_ELEM_DEFINE(_z_slice_pair, struct _z_slice_pair_t, _z_noop_size, _z_slice_pair_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_slice_pair, struct _z_slice_pair_t)
-
-/**
- * A map of maybe-owned vector of bytes to maybe-owned vector of bytes.
- */
-// TODO(sashacmc): z_owned_bytes_map_t for attachment
-typedef struct z_owned_bytes_map_t {
-    _z_slice_pair_list_t *_inner;
-} z_owned_bytes_map_t;
-
-/**
- * Aliases `this` into a generic `z_attachment_t`, allowing it to be passed to corresponding APIs.
- */
-z_attachment_t z_bytes_map_as_attachment(const z_owned_bytes_map_t *this_);
-
-/**
- * Returns `true` if the map is not in its gravestone state
- */
-bool z_bytes_map_check(const z_owned_bytes_map_t *this_);
-
-/**
- * Deletes the map, resetting `this` to its gravestone value.
- *
- * This function is double-free safe, passing a pointer to the gravestone value will have no effect.
- */
-void z_bytes_map_drop(z_owned_bytes_map_t *this_);
-
-/**
- * Builds a map from the provided attachment, copying keys and values.
- *
- * If `this` is at gravestone value, the returned value will also be at gravestone value.
- */
-z_owned_bytes_map_t z_bytes_map_from_attachment(z_attachment_t this_);
-
-/**
- * Builds a map from the provided attachment, aliasing the attachment's keys and values.
- *
- * If `this` is at gravestone value, the returned value will also be at gravestone value.
- */
-
-z_owned_bytes_map_t z_bytes_map_from_attachment_aliasing(z_attachment_t this_);
-
-/**
- * Returns the value associated with `key`, returning a gravestone value if:
- * - `this` or `key` is in gravestone state.
- * - `this` has no value associated to `key`
- */
-
-z_loaned_slice_t *z_bytes_map_get(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key);
-
-/**
- * Associates `value` to `key` in the map, aliasing them.
- *
- * Note that once `key` is aliased, reinserting at the same key may alias the previous instance, or the new instance of
- * `key`.
- *
- * Calling this with `NULL` or the gravestone value is undefined behaviour.
- */
-
-void z_bytes_map_insert_by_alias(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value);
-
-/**
- * Associates `value` to `key` in the map, copying them to obtain ownership: `key` and `value` are not aliased past the
- * function's return.
- *
- * Calling this with `NULL` or the gravestone value is undefined behaviour.
- */
-
-void z_bytes_map_insert_by_copy(const z_owned_bytes_map_t *this_, z_loaned_slice_t *key, z_loaned_slice_t *value);
-
-/**
- * Iterates over the key-value pairs in the map.
- *
- * `body` will be called once per pair, with `ctx` as its last argument.
- * If `body` returns a non-zero value, the iteration will stop immediately and the value will be returned.
- * Otherwise, this will return 0 once all pairs have been visited.
- * `body` is not given ownership of the key nor value, which alias the pairs in the map.
- * It is safe to keep these aliases until existing keys are modified/removed, or the map is destroyed.
- * Note that this map is unordered.
- *
- * Calling this with `NULL` or the gravestone value is undefined behaviour.
- */
-
-int8_t z_bytes_map_iter(const z_owned_bytes_map_t *this_, z_attachment_iter_body_t body, void *ctx);
-
-/**
- * Builds a new map.
- */
-// TODO(sashacmc): z_bytes_map_new for attachment
-z_owned_bytes_map_t z_bytes_map_new(void);
-
-/**
- * Initializes a `z_owned_bytes_map_t`
- */
-// TODO(sashacmc): z_bytes_map_null for attachment
-z_owned_bytes_map_t z_bytes_map_null(void);
-#endif
 
 /**
  * Returns a view of `str` using `strlen` (this constructor should not be used on untrusted input).

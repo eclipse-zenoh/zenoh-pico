@@ -29,12 +29,8 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push) {
     _z_encoding_t encoding = push->_body._is_put ? push->_body._body._put._encoding : _z_encoding_null();
     int kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
 #if Z_FEATURE_SUBSCRIPTION == 1
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = _z_encoded_as_attachment(&push->_body._body._put._attachment);
-#else
-    z_attachment_t att = z_attachment_null();
-#endif
-    ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp, push->_qos, att);
+    ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp, push->_qos,
+                                   push->_body._body._put._attachment);
 #endif
     return ret;
 }

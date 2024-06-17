@@ -585,6 +585,21 @@ int8_t z_bytes_decode_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t 
 int8_t z_bytes_decode_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
+ * Decodes data into a pair of :c:type:`z_owned_bytes_t`
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   first: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the first element.
+ *   second: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the second element.
+ *   curr_idx: Pointer to the current decoding index.
+ *
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t zp_bytes_decode_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                 size_t *curr_idx);
+
+/**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
@@ -753,6 +768,36 @@ int8_t z_bytes_encode_from_string(z_owned_bytes_t *bytes, const char *s);
 int8_t z_bytes_encode_from_string_copy(z_owned_bytes_t *bytes, const char *s);
 
 /**
+ * Constructs payload from an iterator to `z_owned_bytes_t`.
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded payload.
+ *   iterator_body: Iterator body function, providing data items. Returning false is treated as iteration end.
+ *   context: Arbitrary context that will be passed to iterator_body.
+ *   total_len: The length of all the items to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t zp_bytes_encode_from_iter(z_owned_bytes_t *bytes,
+                                 _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
+                                 void *context, size_t total_len);
+
+/**
+ * Append a pair of `z_owned_bytes` objects which are consumed in the process.
+ *
+ * Parameters:
+ *   bytes: An pre-initialized :c:type:`z_owned_bytes_t` to contain the encoded pair.
+ *   first: Pointer to the first `z_owned_bytes` to encode.
+ *   second: Pointer to the second `z_owned_bytes` to encode.
+ *   curr_idx: Pointer to the current encoding index value.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t zp_bytes_encode_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
+                                 size_t *curr_idx);
+
+/**
  * Checks validity of a timestamp
  *
  * Parameters:
@@ -842,7 +887,6 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *paramete
  */
 const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
 
-#if Z_FEATURE_ATTACHMENT == 1
 /**
  * Gets a query attachment value by aliasing it.
  *
@@ -850,10 +894,9 @@ const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
  *   query: Pointer to the :c:type:`z_loaned_query_t` to get the attachment from.
  *
  * Return:
- *   The attachment value wrapped as a :c:type:`z_attachment_t`.
+ *   Pointer to the attachment as a :c:type:`z_loaned_bytes_t`.
  */
-z_attachment_t z_query_attachment(const z_loaned_query_t *query);
-#endif
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query);
 
 /**
  * Gets a query keyexpr by aliasing it.
@@ -1219,7 +1262,6 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  */
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
 
-#if Z_FEATURE_ATTACHMENT == 1
 /**
  * Gets the attachment of a value by aliasing it.
  *
@@ -1227,10 +1269,10 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the attachment from.
  *
  * Return:
- *   The attachment wrapped as a :c:type:`z_attachment_t`.
+ *   Pointer to the attachment as a :c:type:`z_loaned_bytes_t`.
  */
-z_attachment_t z_sample_attachment(const z_loaned_sample_t *sample);
-#endif
+const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample);
+
 #if Z_FEATURE_PUBLICATION == 1
 /**
  * Builds a :c:type:`z_put_options_t` with default values.

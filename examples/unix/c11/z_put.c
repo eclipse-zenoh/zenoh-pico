@@ -105,19 +105,9 @@ int main(int argc, char **argv) {
     z_put_options_t options;
     z_put_options_default(&options);
     options.encoding = z_move(encoding);
-#if Z_FEATURE_ATTACHMENT == 1
-    z_owned_bytes_map_t map = z_bytes_map_new();
-    z_bytes_map_insert_by_alias(&map, z_bytes_from_str("hi"), z_bytes_from_str("there"));
-    options.attachment = z_bytes_map_as_attachment(&map);
-#endif
     if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, strlen(value), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
-
-#if Z_FEATURE_ATTACHMENT == 1
-    z_bytes_map_drop(&map);
-#endif
-
     // Clean up
     z_undeclare_keyexpr(z_loan(s), z_move(ke));
     zp_stop_read_task(z_loan_mut(s));

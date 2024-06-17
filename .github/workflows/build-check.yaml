@@ -115,7 +115,7 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY --attachment 0
+          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
         timeout-minutes: 5
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
@@ -196,9 +196,9 @@ jobs:
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
-  no_attachment_test:
+  attachment_test:
     needs: zenoh_build
-    name: Build and test without attachment on ubuntu-latest
+    name: Test attachments
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -222,10 +222,8 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/modularity.py --pub 1 --sub 1 --queryable 1 --query 1 --attachment 0
+          python3 ./build/tests/attachment.py
         timeout-minutes: 5
-        env:
-          Z_FEATURE_ATTACHMENT: 0
 
       - name: Kill Zenoh router
         if: always()

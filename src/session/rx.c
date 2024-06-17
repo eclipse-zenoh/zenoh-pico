@@ -91,8 +91,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req._body._query;
-                    z_attachment_t att = _z_encoded_as_attachment(&req._body._query._ext_attachment);
-                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid, att);
+                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid,
+                                                req._body._query._ext_attachment);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif
@@ -100,13 +100,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_PUT: {
                     _z_msg_put_t put = req._body._put;
 #if Z_FEATURE_SUBSCRIPTION == 1
-#if Z_FEATURE_ATTACHMENT == 1
-                    z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
-#else
-                    z_attachment_t att = z_attachment_null();
-#endif
                     ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, req._ext_qos, att);
+                                                   put._commons._timestamp, req._ext_qos, put._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
@@ -118,7 +113,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
 #if Z_FEATURE_SUBSCRIPTION == 1
                     ret = _z_trigger_subscriptions(zn, req._key, _z_slice_empty(), _z_encoding_null(),
                                                    Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
-                                                   z_attachment_null());
+                                                   _z_bytes_null());
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req._rid);

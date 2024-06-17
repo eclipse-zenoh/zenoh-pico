@@ -132,7 +132,6 @@ set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
 set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
-set(Z_FEATURE_ATTACHMENT 0 CACHE STRING "Toggle attachment feature")
 set(Z_FEATURE_INTEREST 0 CACHE STRING "Toggle interest feature") # Toggle to 1 when protocol changes are merged
 add_definition(Z_FEATURE_MULTI_THREAD=${Z_FEATURE_MULTI_THREAD})
 add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
@@ -140,7 +139,6 @@ add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
 add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
 add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
 add_definition(Z_FEATURE_RAWETH_TRANSPORT=${Z_FEATURE_RAWETH_TRANSPORT})
-add_definition(Z_FEATURE_ATTACHMENT=${Z_FEATURE_ATTACHMENT})
 add_definition(Z_FEATURE_INTEREST=${Z_FEATURE_INTEREST})
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
@@ -149,7 +147,6 @@ message(STATUS "Building with feature confing:\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
-* ATTACHMENT: ${Z_FEATURE_ATTACHMENT}\n\
 * INTEREST: ${Z_FEATURE_INTEREST}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
 
@@ -180,6 +177,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   if(UNIX)
+    # FIXME: seems to not apply to library files, Issue #422
     add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0)
     # add_compile_options(-Wconversion)
     # add_link_options(-fsanitize=address)
@@ -363,6 +361,7 @@ if(UNIX OR MSVC)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/fragment.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/fragment.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/single_thread.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/single_thread.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/attachment.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/attachment.py COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
