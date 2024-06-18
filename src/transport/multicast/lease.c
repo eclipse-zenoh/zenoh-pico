@@ -137,8 +137,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
             // Reset the keep alive parameters
             ztm->_transmitted = false;
-            next_keep_alive =
-                (int)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+            next_keep_alive = (int)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval to sleep
