@@ -215,6 +215,7 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
     _ZP_UNUSED(payload);
     _ZP_UNUSED(payload_len);
     _ZP_UNUSED(qos);
+    _ZP_UNUSED(att);
 }
 
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

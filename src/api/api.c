@@ -256,6 +256,8 @@ int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src)
 
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
+const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value) { return &value->payload; }
+
 z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
 
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
@@ -699,6 +701,8 @@ _Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
+#if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
+// Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
 static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     _z_bytes_t b = _z_bytes_null();
     if ((bytes != NULL) && (bytes->_val != NULL)) {
@@ -706,6 +710,18 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     }
     return b;
 }
+
+// Convert a user owned encoding to an internal encoding, return default encoding if value invalid
+static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
+    if (encoding == NULL) {
+        return _z_encoding_null();
+    }
+    if (encoding->_val == NULL) {
+        return _z_encoding_null();
+    }
+    return *encoding->_val;
+}
+#endif
 
 _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
