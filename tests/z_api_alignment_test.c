@@ -54,6 +54,7 @@ void zid_handler(const z_id_t *id, void *arg) {
 
 volatile unsigned int hellos = 0;
 void hello_handler(const z_loaned_hello_t *hello, void *arg) {
+    (void)hello;
     (void)(arg);
     printf("%s\n", __func__);
     hellos++;
