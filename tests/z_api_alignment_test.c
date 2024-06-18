@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
     assert_eq(_ret_int8, 0);
     assert(hellos >= 1);
 
-    uint32_t _scouting_timeout = strtoul(SCOUTING_TIMEOUT, NULL, 10);
+    uint32_t _scouting_timeout = (uint32_t)strtoul(SCOUTING_TIMEOUT, NULL, 10);
     z_sleep_ms(_scouting_timeout);
     printf("Ok\n");
     z_sleep_s(SLEEP);
