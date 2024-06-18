@@ -246,6 +246,8 @@ void z_encoding_drop(z_owned_encoding_t *encoding) {
 
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
+z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
+
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
 static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
     if (encoding == NULL) {
@@ -257,7 +259,8 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
     return *encoding->_val;
 }
 
-const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value) { return &value->payload; }
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
@@ -615,8 +618,6 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *paramete
     parameters->_val.len = strlen(query->in->val._parameters);
 }
 
-const z_loaned_value_t *z_query_value(const z_loaned_query_t *query) { return &query->in->val._value; }
-
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->in->val.attachment; }
 
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
@@ -725,7 +726,7 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
 OWNED_FUNCTIONS_PTR(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
 OWNED_FUNCTIONS_PTR(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
 OWNED_FUNCTIONS_PTR(_z_string_t, string, _z_string_copy, _z_string_free)
-OWNED_FUNCTIONS_PTR(_z_value_t, value, _z_value_copy, _z_value_free)
+OWNED_FUNCTIONS_PTR(_z_value_t, reply_err, _z_value_copy, _z_value_free)
 
 OWNED_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
 VIEW_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr)
@@ -1152,7 +1153,7 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
-const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply) {
+const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);
     return NULL;
 }
