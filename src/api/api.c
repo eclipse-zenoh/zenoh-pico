@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/slice.h"
@@ -669,73 +670,25 @@ void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) 
     }
 }
 
-#define OWNED_FUNCTIONS_PTR(type, name, f_copy, f_free)                                             \
-    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
-    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                             \
-    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                    \
-    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
-        int8_t ret = _Z_RES_OK;                                                                     \
-        obj->_val = (type *)z_malloc(sizeof(type));                                                 \
-        if (obj->_val != NULL) {                                                                    \
-            f_copy(obj->_val, src);                                                                 \
-        } else {                                                                                    \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
-        }                                                                                           \
-        return ret;                                                                                 \
-    }                                                                                               \
-    void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
-        if ((obj != NULL) && (obj->_val != NULL)) {                                                 \
-            f_free(&obj->_val);                                                                     \
-        }                                                                                           \
-    }
-
-#define OWNED_FUNCTIONS_RC(name)                                                                    \
-    _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }         \
-    void z_##name##_null(z_owned_##name##_t *val) { val->_rc.in = NULL; }                           \
-    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                    \
-    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
-        int8_t ret = _Z_RES_OK;                                                                     \
-        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
-        if (obj->_rc.in == NULL) {                                                                  \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
-        }                                                                                           \
-        return ret;                                                                                 \
-    }                                                                                               \
-    void z_##name##_drop(z_owned_##name##_t *val) {                                                 \
-        if (val->_rc.in != NULL) {                                                                  \
-            if (_z_##name##_rc_drop(&val->_rc)) {                                                   \
-                val->_rc.in = NULL;                                                                 \
-            }                                                                                       \
-        }                                                                                           \
-    }
-
-#define VIEW_FUNCTIONS_PTR(type, name)                                                                   \
-    const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
-    z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
-
 static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(dst);
     (void)(src);
 }
 
-OWNED_FUNCTIONS_PTR(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
-OWNED_FUNCTIONS_PTR(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
-OWNED_FUNCTIONS_PTR(_z_string_t, string, _z_string_copy, _z_string_free)
-OWNED_FUNCTIONS_PTR(_z_value_t, value, _z_value_copy, _z_value_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_string_t, string, _z_string_copy, _z_string_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_value_t, value, _z_value_copy, _z_value_free)
 
-OWNED_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
-VIEW_FUNCTIONS_PTR(_z_keyexpr_t, keyexpr)
-VIEW_FUNCTIONS_PTR(_z_string_t, string)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
+_Z_VIEW_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr)
+_Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_t, string)
 
-OWNED_FUNCTIONS_PTR(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
-OWNED_FUNCTIONS_PTR(_z_string_vec_t, string_array, _z_owner_noop_copy, _z_string_vec_free)
-VIEW_FUNCTIONS_PTR(_z_string_vec_t, string_array)
-OWNED_FUNCTIONS_PTR(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
-OWNED_FUNCTIONS_PTR(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array, _z_owner_noop_copy, _z_string_vec_free)
+_Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
 static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     _z_bytes_t b = _z_bytes_null();
@@ -745,44 +698,20 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     return b;
 }
 
-OWNED_FUNCTIONS_RC(sample)
-OWNED_FUNCTIONS_RC(session)
+_Z_OWNED_FUNCTIONS_RC_IMPL(sample)
+_Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
-#define OWNED_FUNCTIONS_CLOSURE(ownedtype, name, f_call, f_drop)                   \
-    _Bool z_##name##_check(const ownedtype *val) { return val->call != NULL; }     \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                     \
-    void z_##name##_drop(ownedtype *val) {                                         \
-        if (val->drop != NULL) {                                                   \
-            (val->drop)(val->context);                                             \
-            val->drop = NULL;                                                      \
-        }                                                                          \
-        val->call = NULL;                                                          \
-        val->context = NULL;                                                       \
-    }                                                                              \
-    void z_##name##_null(ownedtype *val) {                                         \
-        val->call = NULL;                                                          \
-        val->drop = NULL;                                                          \
-        val->context = NULL;                                                       \
-    }                                                                              \
-    int8_t z_##name(ownedtype *closure, f_call call, f_drop drop, void *context) { \
-        closure->call = call;                                                      \
-        closure->drop = drop;                                                      \
-        closure->context = context;                                                \
-                                                                                   \
-        return _Z_RES_OK;                                                          \
-    }
-
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
-                        z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
-                        z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
-                        z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
+                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
+                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
+                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -938,7 +867,7 @@ int8_t _z_publisher_drop(_z_publisher_t **pub) {
     return ret;
 }
 
-OWNED_FUNCTIONS_PTR(_z_publisher_t, publisher, _z_owner_noop_copy, _z_publisher_drop)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_publisher_t, publisher, _z_owner_noop_copy, _z_publisher_drop)
 
 void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
@@ -1092,7 +1021,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
-OWNED_FUNCTIONS_RC(reply)
+_Z_OWNED_FUNCTIONS_RC_IMPL(reply)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
@@ -1167,8 +1096,8 @@ int8_t _z_queryable_drop(_z_queryable_t **queryable) {
     return ret;
 }
 
-OWNED_FUNCTIONS_RC(query)
-OWNED_FUNCTIONS_PTR(_z_queryable_t, queryable, _z_owner_noop_copy, _z_queryable_drop)
+_Z_OWNED_FUNCTIONS_RC_IMPL(query)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_queryable_t, queryable, _z_owner_noop_copy, _z_queryable_drop)
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
 
@@ -1279,7 +1208,7 @@ int8_t _z_subscriber_drop(_z_subscriber_t **sub) {
     return ret;
 }
 
-OWNED_FUNCTIONS_PTR(_z_subscriber_t, subscriber, _z_owner_noop_copy, _z_subscriber_drop)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_subscriber_t, subscriber, _z_owner_noop_copy, _z_subscriber_drop)
 
 void z_subscriber_options_default(z_subscriber_options_t *options) { options->reliability = Z_RELIABILITY_DEFAULT; }
 

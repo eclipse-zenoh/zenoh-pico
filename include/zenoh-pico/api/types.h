@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_API_TYPES_H
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
+#include "olv_macros.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/slice.h"
@@ -31,27 +32,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Owned/Loaned types */
-
-// For pointer types
-#define _OWNED_TYPE_PTR(type, name) \
-    typedef struct {                \
-        type *_val;                 \
-    } z_owned_##name##_t;
-
-// For refcounted types
-#define _OWNED_TYPE_RC(type, name) \
-    typedef struct {               \
-        type _rc;                  \
-    } z_owned_##name##_t;
-
-#define _LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
-
-#define _VIEW_TYPE(type, name) \
-    typedef struct {           \
-        type _val;             \
-    } z_view_##name##_t;
 
 /**
  * Represents a variable-length encoding unsigned integer.
@@ -82,8 +62,8 @@ typedef _z_timestamp_t z_timestamp_t;
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
  */
-_OWNED_TYPE_PTR(_z_slice_t, slice)
-_LOANED_TYPE(_z_slice_t, slice)
+_Z_OWNED_TYPE_PTR(_z_slice_t, slice)
+_Z_LOANED_TYPE(_z_slice_t, slice)
 
 /**
  * Represents a container for slices.
@@ -91,8 +71,8 @@ _LOANED_TYPE(_z_slice_t, slice)
  * Members:
  *   _z_slice_t slice: content of the container.
  */
-_OWNED_TYPE_PTR(_z_bytes_t, bytes)
-_LOANED_TYPE(_z_bytes_t, bytes)
+_Z_OWNED_TYPE_PTR(_z_bytes_t, bytes)
+_Z_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
  * Represents a string without null-terminator.
@@ -101,9 +81,9 @@ _LOANED_TYPE(_z_bytes_t, bytes)
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
  */
-_OWNED_TYPE_PTR(_z_string_t, string)
-_LOANED_TYPE(_z_string_t, string)
-_VIEW_TYPE(_z_string_t, string)
+_Z_OWNED_TYPE_PTR(_z_string_t, string)
+_Z_LOANED_TYPE(_z_string_t, string)
+_Z_VIEW_TYPE(_z_string_t, string)
 
 /**
  * Represents a key expression in Zenoh.
@@ -115,9 +95,9 @@ _VIEW_TYPE(_z_string_t, string)
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
  */
-_OWNED_TYPE_PTR(_z_keyexpr_t, keyexpr)
-_LOANED_TYPE(_z_keyexpr_t, keyexpr)
-_VIEW_TYPE(_z_keyexpr_t, keyexpr)
+_Z_OWNED_TYPE_PTR(_z_keyexpr_t, keyexpr)
+_Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
+_Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
@@ -129,8 +109,8 @@ _VIEW_TYPE(_z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
-_OWNED_TYPE_PTR(_z_config_t, config)
-_LOANED_TYPE(_z_config_t, config)
+_Z_OWNED_TYPE_PTR(_z_config_t, config)
+_Z_LOANED_TYPE(_z_config_t, config)
 
 /**
  * Represents a scouting configuration, used to configure a scouting procedure.
@@ -142,14 +122,14 @@ _LOANED_TYPE(_z_config_t, config)
  *   - :c:func:`zp_scouting_config_get`
  *   - :c:func:`zp_scouting_config_insert`
  */
-_OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
-_LOANED_TYPE(_z_scouting_config_t, scouting_config)
+_Z_OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
+_Z_LOANED_TYPE(_z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh Session.
  */
-_OWNED_TYPE_RC(_z_session_rc_t, session)
-_LOANED_TYPE(_z_session_rc_t, session)
+_Z_OWNED_TYPE_RC(_z_session_rc_t, session)
+_Z_LOANED_TYPE(_z_session_rc_t, session)
 
 /**
  * Represents a Zenoh Subscriber entity.
@@ -159,8 +139,8 @@ _LOANED_TYPE(_z_session_rc_t, session)
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
-_OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
-_LOANED_TYPE(_z_subscriber_t, subscriber)
+_Z_OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
+_Z_LOANED_TYPE(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -172,8 +152,8 @@ _LOANED_TYPE(_z_subscriber_t, subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
-_OWNED_TYPE_PTR(_z_publisher_t, publisher)
-_LOANED_TYPE(_z_publisher_t, publisher)
+_Z_OWNED_TYPE_PTR(_z_publisher_t, publisher)
+_Z_LOANED_TYPE(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -183,15 +163,15 @@ _LOANED_TYPE(_z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
-_OWNED_TYPE_PTR(_z_queryable_t, queryable)
-_LOANED_TYPE(_z_queryable_t, queryable)
+_Z_OWNED_TYPE_PTR(_z_queryable_t, queryable)
+_Z_LOANED_TYPE(_z_queryable_t, queryable)
 
 /**
  * Represents a Zenoh Query entity, received by Zenoh Queryable entities.
  *
  */
-_OWNED_TYPE_RC(_z_query_rc_t, query)
-_LOANED_TYPE(_z_query_rc_t, query)
+_Z_OWNED_TYPE_RC(_z_query_rc_t, query)
+_Z_LOANED_TYPE(_z_query_rc_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
@@ -200,8 +180,8 @@ _LOANED_TYPE(_z_query_rc_t, query)
  *   z_encoding_id_t prefix: The integer prefix of this encoding.
  *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
-_OWNED_TYPE_PTR(_z_encoding_t, encoding)
-_LOANED_TYPE(_z_encoding_t, encoding)
+_Z_OWNED_TYPE_PTR(_z_encoding_t, encoding)
+_Z_LOANED_TYPE(_z_encoding_t, encoding)
 
 /**
  * Represents a Zenoh value.
@@ -210,8 +190,8 @@ _LOANED_TYPE(_z_encoding_t, encoding)
  *   z_loaned_encoding_t encoding: The encoding of the `payload`.
  *   z_loaned_bytes_t* payload: The payload of this zenoh value.
  */
-_OWNED_TYPE_PTR(_z_value_t, value)
-_LOANED_TYPE(_z_value_t, value)
+_Z_OWNED_TYPE_PTR(_z_value_t, value)
+_Z_LOANED_TYPE(_z_value_t, value)
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
@@ -422,8 +402,8 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-_OWNED_TYPE_RC(_z_sample_rc_t, sample)
-_LOANED_TYPE(_z_sample_rc_t, sample)
+_Z_OWNED_TYPE_RC(_z_sample_rc_t, sample)
+_Z_LOANED_TYPE(_z_sample_rc_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
@@ -433,14 +413,14 @@ _LOANED_TYPE(_z_sample_rc_t, sample)
  *   z_loaned_slice_t* zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
-_OWNED_TYPE_PTR(_z_hello_t, hello)
-_LOANED_TYPE(_z_hello_t, hello)
+_Z_OWNED_TYPE_PTR(_z_hello_t, hello)
+_Z_LOANED_TYPE(_z_hello_t, hello)
 
 /**
  * Represents the reply to a query.
  */
-_OWNED_TYPE_RC(_z_reply_rc_t, reply)
-_LOANED_TYPE(_z_reply_rc_t, reply)
+_Z_OWNED_TYPE_RC(_z_reply_rc_t, reply)
+_Z_LOANED_TYPE(_z_reply_rc_t, reply)
 
 /**
  * Represents an array of non null-terminated string.
@@ -451,9 +431,9 @@ _LOANED_TYPE(_z_reply_rc_t, reply)
  *   - :c:func:`z_string_array_len`
  *   - :c:func:`z_str_array_array_is_empty`
  */
-_OWNED_TYPE_PTR(_z_string_vec_t, string_array)
-_LOANED_TYPE(_z_string_vec_t, string_array)
-_VIEW_TYPE(_z_string_vec_t, string_array)
+_Z_OWNED_TYPE_PTR(_z_string_vec_t, string_array)
+_Z_LOANED_TYPE(_z_string_vec_t, string_array)
+_Z_VIEW_TYPE(_z_string_vec_t, string_array)
 
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
 size_t z_string_array_len(const z_loaned_string_array_t *a);

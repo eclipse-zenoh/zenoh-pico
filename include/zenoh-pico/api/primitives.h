@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "olv_macros.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
@@ -1029,60 +1030,34 @@ int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_
 int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
-#define _OWNED_FUNCTIONS(loanedtype, ownedtype, name)               \
-    _Bool z_##name##_check(const ownedtype *obj);                   \
-    const loanedtype *z_##name##_loan(const ownedtype *obj);        \
-    loanedtype *z_##name##_loan_mut(ownedtype *obj);                \
-    ownedtype *z_##name##_move(ownedtype *obj);                     \
-    int8_t z_##name##_clone(ownedtype *obj, const loanedtype *src); \
-    void z_##name##_drop(ownedtype *obj);                           \
-    void z_##name##_null(ownedtype *obj);
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_string_t, z_owned_string_t, string)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_keyexpr_t, z_owned_keyexpr_t, keyexpr)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_config_t, z_owned_config_t, config)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_scouting_config_t, z_owned_scouting_config_t, scouting_config)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_session_t, z_owned_session_t, session)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_subscriber_t, z_owned_subscriber_t, subscriber)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_publisher_t, z_owned_publisher_t, publisher)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_queryable_t, z_owned_queryable_t, queryable)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_hello_t, z_owned_hello_t, hello)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_t, z_owned_reply_t, reply)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_string_array_t, z_owned_string_array_t, string_array)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_sample_t, z_owned_sample_t, sample)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_query_t, z_owned_query_t, query)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_slice_t, z_owned_slice_t, slice)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_t, z_owned_bytes_t, bytes)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_value_t, z_owned_value_t, value)
 
-_OWNED_FUNCTIONS(z_loaned_string_t, z_owned_string_t, string)
-_OWNED_FUNCTIONS(z_loaned_keyexpr_t, z_owned_keyexpr_t, keyexpr)
-_OWNED_FUNCTIONS(z_loaned_config_t, z_owned_config_t, config)
-_OWNED_FUNCTIONS(z_loaned_scouting_config_t, z_owned_scouting_config_t, scouting_config)
-_OWNED_FUNCTIONS(z_loaned_session_t, z_owned_session_t, session)
-_OWNED_FUNCTIONS(z_loaned_subscriber_t, z_owned_subscriber_t, subscriber)
-_OWNED_FUNCTIONS(z_loaned_publisher_t, z_owned_publisher_t, publisher)
-_OWNED_FUNCTIONS(z_loaned_queryable_t, z_owned_queryable_t, queryable)
-_OWNED_FUNCTIONS(z_loaned_hello_t, z_owned_hello_t, hello)
-_OWNED_FUNCTIONS(z_loaned_reply_t, z_owned_reply_t, reply)
-_OWNED_FUNCTIONS(z_loaned_string_array_t, z_owned_string_array_t, string_array)
-_OWNED_FUNCTIONS(z_loaned_sample_t, z_owned_sample_t, sample)
-_OWNED_FUNCTIONS(z_loaned_query_t, z_owned_query_t, query)
-_OWNED_FUNCTIONS(z_loaned_slice_t, z_owned_slice_t, slice)
-_OWNED_FUNCTIONS(z_loaned_bytes_t, z_owned_bytes_t, bytes)
-_OWNED_FUNCTIONS(z_loaned_value_t, z_owned_value_t, value)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_sample_t, closure_owned_sample)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_query_t, closure_query)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_query_t, closure_owned_query)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_reply_t, closure_reply)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_reply_t, closure_owned_reply)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_hello_t, closure_hello)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_zid_t, closure_zid)
 
-#define _OWNED_FUNCTIONS_CLOSURE(ownedtype, name) \
-    _Bool z_##name##_check(const ownedtype *val); \
-    ownedtype *z_##name##_move(ownedtype *val);   \
-    void z_##name##_drop(ownedtype *val);         \
-    void z_##name##_null(ownedtype *name);
-
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_sample_t, closure_sample)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_sample_t, closure_owned_sample)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_query_t, closure_query)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello)
-_OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid)
-
-#define _VIEW_FUNCTIONS(loanedtype, viewtype, name)               \
-    const loanedtype *z_view_##name##_loan(const viewtype *name); \
-    loanedtype *z_view_##name##_loan_mut(viewtype *name);         \
-    void z_view_##name##_null(viewtype *name);
-
-_VIEW_FUNCTIONS(z_loaned_keyexpr_t, z_view_keyexpr_t, keyexpr)
-_VIEW_FUNCTIONS(z_loaned_string_t, z_view_string_t, string)
-
-// Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)
-#define _Z_RC_IN_VAL(arg) ((arg)->in->val)
-
-// Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
-#define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
+_Z_VIEW_FUNCTIONS_DEF(z_loaned_keyexpr_t, z_view_keyexpr_t, keyexpr)
+_Z_VIEW_FUNCTIONS_DEF(z_loaned_string_t, z_view_string_t, string)
 
 /**
  * Loans a :c:type:`z_owned_sample_t`.
