@@ -385,7 +385,6 @@ void z_encoding_drop(z_owned_encoding_t *encoding);
  */
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding);
 
-
 /**
  * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
  *

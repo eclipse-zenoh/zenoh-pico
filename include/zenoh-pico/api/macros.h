@@ -470,7 +470,9 @@ inline void z_closure(
 
 inline z_owned_bytes_t* z_move(z_owned_bytes_t& x) { return z_bytes_move(&x); };
 inline z_owned_closure_hello_t* z_move(z_owned_closure_hello_t& closure) { return z_closure_hello_move(&closure); };
-inline z_owned_closure_owned_query_t* z_move(z_owned_closure_owned_query_t& closure) { return z_closure_owned_query_move(&closure); };
+inline z_owned_closure_owned_query_t* z_move(z_owned_closure_owned_query_t& closure) {
+    return z_closure_owned_query_move(&closure);
+};
 inline z_owned_closure_query_t* z_move(z_owned_closure_query_t& closure) { return z_closure_query_move(&closure); };
 inline z_owned_closure_reply_t* z_move(z_owned_closure_reply_t& closure) { return z_closure_reply_move(&closure); };
 inline z_owned_closure_sample_t* z_move(z_owned_closure_sample_t& closure) { return z_closure_sample_move(&closure); };
@@ -491,52 +493,187 @@ inline z_owned_string_array_t* z_move(z_owned_string_array_t& x) { return z_stri
 inline z_owned_string_t* z_move(z_owned_string_t& x) { return z_string_move(&x); };
 inline z_owned_subscriber_t* z_move(z_owned_subscriber_t& x) { return z_subscriber_move(&x); };
 
-template<class T> struct z_loaned_to_owned_type_t {};
-template<class T> struct z_owned_to_loaned_type_t {};
-template<> struct z_loaned_to_owned_type_t<z_loaned_bytes_t> { typedef z_owned_bytes_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_bytes_t> { typedef z_loaned_bytes_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_hello_t> { typedef z_owned_closure_hello_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_hello_t> { typedef z_loaned_closure_hello_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_owned_query_t> { typedef z_owned_closure_owned_query_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_owned_query_t> { typedef z_loaned_closure_owned_query_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_query_t> { typedef z_owned_closure_query_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_query_t> { typedef z_loaned_closure_query_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_reply_t> { typedef z_owned_closure_reply_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_reply_t> { typedef z_loaned_closure_reply_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_sample_t> { typedef z_owned_closure_sample_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_sample_t> { typedef z_loaned_closure_sample_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_closure_zid_t> { typedef z_owned_closure_zid_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_closure_zid_t> { typedef z_loaned_closure_zid_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_config_t> { typedef z_owned_config_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_config_t> { typedef z_loaned_config_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_encoding_t> { typedef z_owned_encoding_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_encoding_t> { typedef z_loaned_encoding_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_reply_err_t> { typedef z_owned_reply_err_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_reply_err_t> { typedef z_loaned_reply_err_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_hello_t> { typedef z_owned_hello_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_hello_t> { typedef z_loaned_hello_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_keyexpr_t> { typedef z_owned_keyexpr_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_keyexpr_t> { typedef z_loaned_keyexpr_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_publisher_t> { typedef z_owned_publisher_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_publisher_t> { typedef z_loaned_publisher_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_query_t> { typedef z_owned_query_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_query_t> { typedef z_loaned_query_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_queryable_t> { typedef z_owned_queryable_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_queryable_t> { typedef z_loaned_queryable_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_reply_t> { typedef z_owned_reply_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_reply_t> { typedef z_loaned_reply_t type; };;
-template<> struct z_loaned_to_owned_type_t<z_loaned_sample_t> { typedef z_owned_sample_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_sample_t> { typedef z_loaned_sample_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_session_t> { typedef z_owned_session_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_session_t> { typedef z_loaned_session_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_slice_t> { typedef z_owned_slice_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_slice_t> { typedef z_loaned_slice_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_string_array_t> { typedef z_owned_string_array_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_string_array_t> { typedef z_loaned_string_array_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_string_t> { typedef z_owned_string_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_string_t> { typedef z_loaned_string_t type; };
-template<> struct z_loaned_to_owned_type_t<z_loaned_subscriber_t> { typedef z_owned_subscriber_t type; };
-template<> struct z_owned_to_loaned_type_t<z_owned_subscriber_t> { typedef z_loaned_subscriber_t type; };
+template <class T>
+struct z_loaned_to_owned_type_t {};
+template <class T>
+struct z_owned_to_loaned_type_t {};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_bytes_t> {
+    typedef z_owned_bytes_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_bytes_t> {
+    typedef z_loaned_bytes_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_hello_t> {
+    typedef z_owned_closure_hello_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_hello_t> {
+    typedef z_loaned_closure_hello_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_owned_query_t> {
+    typedef z_owned_closure_owned_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_owned_query_t> {
+    typedef z_loaned_closure_owned_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_query_t> {
+    typedef z_owned_closure_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_query_t> {
+    typedef z_loaned_closure_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_reply_t> {
+    typedef z_owned_closure_reply_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_reply_t> {
+    typedef z_loaned_closure_reply_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_sample_t> {
+    typedef z_owned_closure_sample_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_sample_t> {
+    typedef z_loaned_closure_sample_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_zid_t> {
+    typedef z_owned_closure_zid_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_zid_t> {
+    typedef z_loaned_closure_zid_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_config_t> {
+    typedef z_owned_config_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_config_t> {
+    typedef z_loaned_config_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_encoding_t> {
+    typedef z_owned_encoding_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_encoding_t> {
+    typedef z_loaned_encoding_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_reply_err_t> {
+    typedef z_owned_reply_err_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_reply_err_t> {
+    typedef z_loaned_reply_err_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_hello_t> {
+    typedef z_owned_hello_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_hello_t> {
+    typedef z_loaned_hello_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_keyexpr_t> {
+    typedef z_owned_keyexpr_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_keyexpr_t> {
+    typedef z_loaned_keyexpr_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_publisher_t> {
+    typedef z_owned_publisher_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_publisher_t> {
+    typedef z_loaned_publisher_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_query_t> {
+    typedef z_owned_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_query_t> {
+    typedef z_loaned_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_queryable_t> {
+    typedef z_owned_queryable_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_queryable_t> {
+    typedef z_loaned_queryable_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_reply_t> {
+    typedef z_owned_reply_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_reply_t> {
+    typedef z_loaned_reply_t type;
+};
+;
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_sample_t> {
+    typedef z_owned_sample_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_sample_t> {
+    typedef z_loaned_sample_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_session_t> {
+    typedef z_owned_session_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_session_t> {
+    typedef z_loaned_session_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_slice_t> {
+    typedef z_owned_slice_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_slice_t> {
+    typedef z_loaned_slice_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_string_array_t> {
+    typedef z_owned_string_array_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_string_array_t> {
+    typedef z_loaned_string_array_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_string_t> {
+    typedef z_owned_string_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_string_t> {
+    typedef z_loaned_string_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_subscriber_t> {
+    typedef z_owned_subscriber_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_subscriber_t> {
+    typedef z_loaned_subscriber_t type;
+};
 
 #endif
 
