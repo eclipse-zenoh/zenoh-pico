@@ -244,6 +244,15 @@ void z_encoding_drop(z_owned_encoding_t *encoding) {
     z_free(encoding->_val);
 }
 
+int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src) {
+    dst->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
+    if (dst->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_encoding_copy(dst->_val, src);
+    return _Z_RES_OK;
+}
+
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
 z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
@@ -258,9 +267,6 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
     }
     return *encoding->_val;
 }
-
-const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
-const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
@@ -622,6 +628,9 @@ const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { retu
 
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
 
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
+
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
@@ -925,6 +934,9 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(samp
 const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) {
     return &_Z_RC_IN_VAL(sample).attachment;
 }
+
+const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
+const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }
 
 const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
 size_t z_string_len(const z_loaned_string_t *str) { return str->len; }

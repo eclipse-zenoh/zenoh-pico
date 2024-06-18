@@ -219,6 +219,7 @@
                   z_owned_queryable_t : z_queryable_clone,             \
                   z_owned_query_t : z_query_clone,                     \
                   z_owned_sample_t : z_sample_clone,                   \
+                  z_owned_bytes_t : z_bytes_clone,                     \
                   z_owned_encoding_t : z_encoding_clone,               \
                   z_owned_reply_err_t : z_reply_err_clone,             \
                   z_owned_reply_t : z_reply_clone,                     \

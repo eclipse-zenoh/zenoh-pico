@@ -182,9 +182,9 @@ TODO: loaned type description
 
   Represents the encoding of a payload, in a MIME-like format.
 
-.. c:type:: z_loaned_value_t
+.. c:type:: z_loaned_reply_err_t
 
-  Represents a Zenoh value.
+  Represents a Zenoh reply error.
 
 .. c:type:: z_loaned_sample_t
 

@@ -374,6 +374,8 @@ _Bool z_encoding_check(const z_owned_encoding_t *encoding);
  */
 void z_encoding_drop(z_owned_encoding_t *encoding);
 
+int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src);
+
 /**
  * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
  *
@@ -428,6 +430,17 @@ int8_t z_encoding_null(z_owned_encoding_t *encoding);
  *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
  */
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err);
+
+/**
+ * Gets a reply error encoding by aliasing it.
+ *
+ * Parameters:
+ *   query: Pointer to the :c:type:`z_loaned_reply_err_t` to get the encoding from.
+ *
+ * Return:
+ *   Pointer to the encoding as a :c:type:`z_loaned_encoding_t`.
+ */
+const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err);
 
 /**
  * Gets date pointer of a bytes array.
