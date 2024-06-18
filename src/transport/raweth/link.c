@@ -45,6 +45,9 @@
 #define RAWETH_CONFIG_WHITELIST_KEY 0x04
 #define RAWETH_CONFIG_WHITELIST_STR "whitelist"
 
+// Ethtype must be at least 0x600 in network order
+#define RAWETH_ETHTYPE_MIN_VALUE 0x600U
+
 #define RAWETH_CONFIG_MAPPING_BUILD               \
     _z_str_intmapping_t args[RAWETH_CONFIG_ARGC]; \
     args[0]._key = RAWETH_CONFIG_IFACE_KEY;       \
@@ -99,7 +102,7 @@ static _Bool _z_valid_ethtype_raweth(_z_str_intmap_t *config) {
         return false;
     }
     long ethtype = strtol(s_ethtype, NULL, 16);
-    return (_z_raweth_htons(ethtype) > 0x600);  // Ethtype must be at least 0x600 in network order
+    return (_z_raweth_htons((uint16_t)ethtype) > RAWETH_ETHTYPE_MIN_VALUE);
 }
 
 static long _z_get_ethtype_raweth(_z_str_intmap_t *config) {

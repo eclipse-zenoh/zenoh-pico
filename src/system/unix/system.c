@@ -137,7 +137,7 @@ int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return (int8_t)pthread_co
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) { return usleep(time); }
+int z_sleep_us(size_t time) { return usleep((unsigned int)time); }
 
 int z_sleep_ms(size_t time) {
     z_time_t start = z_time_now();

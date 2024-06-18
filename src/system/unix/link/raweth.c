@@ -122,12 +122,12 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
         *addr = _z_slice_make(sizeof(ETH_ALEN));
         (void)memcpy((uint8_t *)addr->start, (header_addr + ETH_ALEN), sizeof(ETH_ALEN));
     }
-    return bytesRead;
+    return (size_t)bytesRead;
 }
 
-size_t _z_raweth_ntohs(size_t val) { return ntohs(val); }
+uint16_t _z_raweth_ntohs(uint16_t val) { return ntohs(val); }
 
-size_t _z_raweth_htons(size_t val) { return htons(val); }
+uint16_t _z_raweth_htons(uint16_t val) { return htons(val); }
 
 #endif  // defined(__linux)
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1

@@ -72,7 +72,7 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
             _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
         }
         // Store data into socket
-        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, idx);
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, (size_t)idx);
         memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
         uint16_t vlan = entry->_vlan;
         sock->_has_vlan = entry->_has_vlan;
@@ -130,7 +130,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         header.vlan_type = _ZP_ETH_TYPE_VLAN;
         header.tag = resocket->_vlan;
         header.ethtype = resocket->_ethtype;
-        header.data_length = _z_raweth_htons(wpos - sizeof(header));
+        header.data_length = _z_raweth_htons((uint16_t)(wpos - sizeof(header)));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
     } else {
@@ -139,7 +139,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
         header.ethtype = resocket->_ethtype;
-        header.data_length = _z_raweth_htons(wpos - sizeof(header));
+        header.data_length = _z_raweth_htons((uint16_t)(wpos - sizeof(header)));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
     }

@@ -61,6 +61,7 @@ if(CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release")
 else()
   if(UNIX)
     add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wunused -Wstrict-prototypes -pipe -g -O0)
+    # C99 pedantic doesn't like struct anonymous in unix header
     if (NOT CMAKE_C_STANDARD STREQUAL "99")
       add_compile_options(-Wpedantic)
     endif()
