@@ -170,7 +170,7 @@ static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_
     return _Z_RES_OK;
 }
 
-static const size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
+static size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
     // Retrieve data
     const char *cfg_str = _z_str_intmap_get(config, RAWETH_CONFIG_WHITELIST_KEY);
     if (cfg_str == NULL) {
@@ -314,13 +314,13 @@ static _Bool _z_valid_address_raweth(const char *address) {
         return false;
     }
     // Check if the colons are at the correct positions
-    for (int i = 2; i < len; i += 3) {
+    for (size_t i = 2; i < len; i += 3) {
         if (address[i] != ':') {
             return false;
         }
     }
     // Check if each character is a valid hexadecimal digit
-    for (int i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         if (i % 3 != 2) {
             char c = address[i];
             if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) {
@@ -332,7 +332,6 @@ static _Bool _z_valid_address_raweth(const char *address) {
 }
 
 static uint8_t *_z_parse_address_raweth(const char *address) {
-    size_t len = strlen(address);
     // Allocate data
     uint8_t *ret = (uint8_t *)z_malloc(_ZP_MAC_ADDR_LENGTH);
     if (ret == NULL) {

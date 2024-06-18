@@ -23,6 +23,37 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
+    _z_conduit_sn_list_t next_sn;
+    next_sn._is_qos = false;
+    next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
+    next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
+
+    _z_id_t zid = ((_z_session_t *)ztm->_session)->_local_zid;
+    _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
+
+    return ztm->_send_f(ztm, &jsm);
+}
+
+int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
+    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
+    return ztm->_send_f(ztm, &t_msg);
+}
+
+#else
+int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
+    _ZP_UNUSED(ztm);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
+
+#if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
+
 static _z_zint_t _z_get_minimum_lease(_z_transport_peer_entry_list_t *peers, _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
 
@@ -56,37 +87,6 @@ static _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
 
     return ret;
 }
-
-int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
-    _z_conduit_sn_list_t next_sn;
-    next_sn._is_qos = false;
-    next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
-    next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
-
-    _z_id_t zid = ((_z_session_t *)ztm->_session)->_local_zid;
-    _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
-
-    return ztm->_send_f(ztm, &jsm);
-}
-
-int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
-    _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    return ztm->_send_f(ztm, &t_msg);
-}
-
-#else
-int8_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
-    _ZP_UNUSED(ztm);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-
-int8_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
-    _ZP_UNUSED(ztm);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-#endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
-
-#if Z_FEATURE_MULTI_THREAD == 1 && (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1)
 
 void *_zp_multicast_lease_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
