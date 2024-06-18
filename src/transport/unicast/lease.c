@@ -44,8 +44,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     ztu->_received = false;
     ztu->_transmitted = false;
 
-    ssize_t next_lease = (ssize_t)ztu->_lease;
-    ssize_t next_keep_alive = (ssize_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+    int next_lease = (int)ztu->_lease;
+    int next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     while (ztu->_lease_task_running == true) {
         // Next lease process
         if (next_lease <= 0) {
@@ -59,7 +59,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
                 break;
             }
-            next_lease = (ssize_t)ztu->_lease;
+            next_lease = (int)ztu->_lease;
         }
         // Next keep alive process
         if (next_keep_alive <= 0) {
@@ -72,11 +72,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
             // Reset the keep alive parameters
             ztu->_transmitted = false;
-            next_keep_alive = (ssize_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+            next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval
-        ssize_t interval;
+        int interval;
         if (next_lease == 0) {
             interval = next_keep_alive;
         } else {

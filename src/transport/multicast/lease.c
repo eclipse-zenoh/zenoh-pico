@@ -93,9 +93,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
     ztm->_transmitted = false;
 
     // From all peers, get the next lease time (minimum)
-    ssize_t next_lease = (ssize_t)_z_get_minimum_lease(ztm->_peers, ztm->_lease);
-    ssize_t next_keep_alive = (ssize_t)(next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
-    ssize_t next_join = Z_JOIN_INTERVAL;
+    int next_lease = (int)_z_get_minimum_lease(ztm->_peers, ztm->_lease);
+    int next_keep_alive = (int)(next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+    int next_join = Z_JOIN_INTERVAL;
 
     _z_transport_peer_entry_list_t *it = NULL;
     while (ztm->_lease_task_running == true) {
@@ -138,11 +138,11 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
             // Reset the keep alive parameters
             ztm->_transmitted = false;
             next_keep_alive =
-                (ssize_t)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+                (int)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval to sleep
-        ssize_t interval;
+        int interval;
         if (next_lease > 0) {
             interval = next_lease;
             if (next_keep_alive < interval) {
@@ -169,7 +169,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         it = ztm->_peers;
         while (it != NULL) {
             _z_transport_peer_entry_t *entry = _z_transport_peer_entry_list_head(it);
-            ssize_t entry_next_lease = (ssize_t)entry->_next_lease - interval;
+            int entry_next_lease = (int)entry->_next_lease - interval;
             if (entry_next_lease >= 0) {
                 entry->_next_lease = (size_t)entry_next_lease;
             } else {
@@ -178,7 +178,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
             }
             it = _z_transport_peer_entry_list_tail(it);
         }
-        next_lease = (ssize_t)_z_get_next_lease(ztm->_peers);
+        next_lease = (int)_z_get_next_lease(ztm->_peers);
         next_keep_alive = next_keep_alive - interval;
         next_join = next_join - interval;
 
