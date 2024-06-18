@@ -77,8 +77,10 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_view_string_t pred;
     z_query_parameters(query, &pred);
     (void)(pred);
-    const z_loaned_value_t *payload_value = z_query_value(query);
-    (void)(payload_value);
+    const z_loaned_bytes_t *payload = z_query_payload(query);
+    const z_loaned_encoding_t *encoding = z_query_encoding(query);
+    (void)(payload);
+    (void)(encoding);
     z_query_reply_options_t _ret_qreply_opt;
     z_query_reply_options_default(&_ret_qreply_opt);
 
@@ -108,8 +110,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
 #endif
         z_drop(z_move(k_str));
     } else {
-        const z_loaned_value_t *_ret_zvalue = z_reply_err(reply);
-        (void)(_ret_zvalue);
+        const z_loaned_reply_err_t *_ret_zerr = z_reply_err(reply);
+        (void)(_ret_zerr);
     }
 }
 
