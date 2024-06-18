@@ -1011,7 +1011,7 @@ int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_rep
  * Return:
  *   The hello closure.
  */
-int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_owned_hello_handler_t call, z_dropper_handler_t drop,
+int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
                        void *context);
 
 /**

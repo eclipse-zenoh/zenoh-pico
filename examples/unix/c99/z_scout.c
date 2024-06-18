@@ -64,11 +64,10 @@ void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, " }");
 }
 
-void callback(z_owned_hello_t *hello, void *context) {
-    fprinthello(stdout, z_hello_loan(hello));
+void callback(const z_loaned_hello_t *hello, void *context) {
+    fprinthello(stdout, hello);
     fprintf(stdout, "\n");
     (*(int *)context)++;
-    z_hello_drop(hello);
 }
 
 void drop(void *context) {

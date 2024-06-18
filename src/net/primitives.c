@@ -44,7 +44,8 @@ void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const
     while (hellos != NULL) {
         _z_hello_t *hello = NULL;
         hellos = _z_hello_list_pop(hellos, &hello);
-        (*callback)(hello, arg_call);  // callback takes ownership of hello
+        (*callback)(hello, arg_call);
+        _z_hello_free(&hello);
     }
 
     if (dropper != NULL) {

@@ -588,7 +588,7 @@ typedef struct {
 
 void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply);
 
-typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
+typedef void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *arg);
 
 /**
  * Represents the Zenoh ID callback closure.
@@ -597,18 +597,18 @@ typedef void (*z_owned_hello_handler_t)(z_owned_hello_t *hello, void *arg);
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_owned_hello_handler_t call: `void (*z_owned_hello_handler_t)(const z_owned_hello_t *hello, void *arg)` is the
+ *   z_loaned_hello_handler_t call: `void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *arg)` is the
  * callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 typedef struct {
     void *context;
-    z_owned_hello_handler_t call;
+    z_loaned_hello_handler_t call;
     z_dropper_handler_t drop;
 } z_owned_closure_hello_t;
 
-void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello);
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, const z_loaned_hello_t *hello);
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 

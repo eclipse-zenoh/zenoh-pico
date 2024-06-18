@@ -657,7 +657,7 @@ void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_
     }
 }
 
-void z_closure_hello_call(const z_owned_closure_hello_t *closure, z_owned_hello_t *hello) {
+void z_closure_hello_call(const z_owned_closure_hello_t *closure, const z_loaned_hello_t *hello) {
     if (closure->call != NULL) {
         (closure->call)(hello, closure->context);
     }
@@ -781,18 +781,17 @@ OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_query_t, closure_owned_query, z_ow
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
                         z_dropper_handler_t)
-OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_owned_hello_handler_t, z_dropper_handler_t)
+OWNED_FUNCTIONS_CLOSURE(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
 OWNED_FUNCTIONS_CLOSURE(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
-    z_owned_hello_handler_t user_call;
+    z_loaned_hello_handler_t user_call;
     void *ctx;
 } __z_hello_handler_wrapper_t;
 
 void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_ctx) {
-    z_owned_hello_t ohello = {._val = hello};
-    wrapped_ctx->user_call(&ohello, wrapped_ctx->ctx);
+    wrapped_ctx->user_call(hello, wrapped_ctx->ctx);
 }
 
 int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {

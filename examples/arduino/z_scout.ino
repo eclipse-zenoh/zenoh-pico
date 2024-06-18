@@ -79,8 +79,8 @@ void fprinthello(const z_loaned_hello_t *hello) {
     Serial.println(" }");
 }
 
-void callback(z_owned_hello_t *hello, void *context) {
-    fprinthello(z_hello_loan(hello));
+void callback(const z_loaned_hello_t *hello, void *context) {
+    fprinthello(hello);
     Serial.println("");
     (*(int *)context)++;
 }
