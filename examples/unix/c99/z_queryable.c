@@ -32,7 +32,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
            (int)z_view_string_loan(&params)->len, z_view_string_loan(&params)->val);
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_value_payload(z_query_value(query)), &payload_string);
+    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         printf("     with value '%s'\n", z_string_data(z_string_loan(&payload_string)));
     }

@@ -184,14 +184,14 @@ _Z_OWNED_TYPE_PTR(_z_encoding_t, encoding)
 _Z_LOANED_TYPE(_z_encoding_t, encoding)
 
 /**
- * Represents a Zenoh value.
+ * Represents a Zenoh reply error.
  *
  * Members:
- *   z_loaned_encoding_t encoding: The encoding of the `payload`.
- *   z_loaned_bytes_t* payload: The payload of this zenoh value.
+ *   z_loaned_encoding_t encoding: The encoding of the error `payload`.
+ *   z_loaned_bytes_t* payload: The payload of this zenoh reply error.
  */
-_Z_OWNED_TYPE_PTR(_z_value_t, value)
-_Z_LOANED_TYPE(_z_value_t, value)
+_Z_OWNED_TYPE_PTR(_z_value_t, reply_err)
+_Z_LOANED_TYPE(_z_value_t, reply_err)
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
