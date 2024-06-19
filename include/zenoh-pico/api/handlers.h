@@ -115,6 +115,17 @@
                            /* elem_copy_f                     */ _z_##item_name##_rc_copy,                  \
                            /* elem_drop_f                     */ z_##item_name##_drop)
 
+#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)   \
+    typedef struct {                                    \
+    } z_owned_##kind_name##_handler_##item_name##_t;    \
+    typedef struct {                                    \
+    } z_loaned_##kind_name##_handler_##item_name##_t;   \
+    void *z_##kind_name##_handler_##item_name##_loan(); \
+    void *z_##kind_name##_handler_##item_name##_move(); \
+    void *z_##kind_name##_handler_##item_name##_drop(); \
+    void *z_##kind_name##_handler_##item_name##_recv(); \
+    void *z_##kind_name##_handler_##item_name##_try_recv();
+
 // This macro defines:
 //   z_ring_channel_sample_new()
 //   z_owned_ring_handler_sample_t/z_loaned_ring_handler_sample_t
@@ -125,6 +136,7 @@ _Z_CHANNEL_DEFINE(sample, ring)
 //   z_owned_fifo_handler_sample_t/z_loaned_fifo_handler_sample_t
 _Z_CHANNEL_DEFINE(sample, fifo)
 
+#if Z_FEATURE_QUERYABLE == 1
 // This macro defines:
 //   z_ring_channel_query_new()
 //   z_owned_ring_handler_query_t/z_loaned_ring_handler_query_t
@@ -134,7 +146,12 @@ _Z_CHANNEL_DEFINE(query, ring)
 //   z_fifo_channel_query_new()
 //   z_owned_fifo_handler_query_t/z_loaned_fifo_handler_query_t
 _Z_CHANNEL_DEFINE(query, fifo)
+#else   // Z_FEATURE_QUERYABLE
+_Z_CHANNEL_DEFINE_DUMMY(query, ring)
+_Z_CHANNEL_DEFINE_DUMMY(query, fifo)
+#endif  // Z_FEATURE_QUERYABLE
 
+#if Z_FEATURE_QUERY == 1
 // This macro defines:
 //   z_ring_channel_reply_new()
 //   z_owned_ring_handler_reply_t/z_loaned_ring_handler_reply_t
@@ -144,5 +161,9 @@ _Z_CHANNEL_DEFINE(reply, ring)
 //   z_fifo_channel_reply_new()
 //   z_owned_fifo_handler_reply_t/z_loaned_fifo_handler_reply_t
 _Z_CHANNEL_DEFINE(reply, fifo)
+#else   // Z_FEATURE_QUERY
+_Z_CHANNEL_DEFINE_DUMMY(reply, ring)
+_Z_CHANNEL_DEFINE_DUMMY(reply, fifo)
+#endif  // Z_FEATURE_QUERY
 
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H
