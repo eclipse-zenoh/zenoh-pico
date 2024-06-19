@@ -96,16 +96,17 @@ int main(int argc, char **argv) {
         z_bytes_serialize_from_string(&payload, value);
         opts.payload = &payload;
     }
-    z_owned_reply_ring_channel_t channel;
-    z_reply_ring_channel_new(&channel, 1);
-    if (z_get(z_loan(s), z_loan(ke), "", z_move(channel.send), &opts) < 0) {
+    z_owned_closure_reply_t closure;
+    z_owned_ring_handler_reply_t handler;
+    z_ring_channel_reply_new(&closure, &handler, 1);
+    if (z_get(z_loan(s), z_loan(ke), "", z_move(closure), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;
     }
 
     z_owned_reply_t reply;
     z_null(&reply);
-    for (z_call(channel.recv, &reply); z_check(reply); z_call(channel.recv, &reply)) {
+    for (z_recv(z_loan(handler), &reply); z_check(reply); z_recv(z_loan(handler), &reply)) {
         if (z_reply_is_ok(z_loan(reply))) {
             const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
             z_owned_string_t keystr;
@@ -121,7 +122,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));
