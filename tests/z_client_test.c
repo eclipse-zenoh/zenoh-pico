@@ -231,8 +231,8 @@ int main(int argc, char **argv) {
 
     // Write data from first session
     size_t len = MSG_LEN;
-    uint8_t *payload = (uint8_t *)z_malloc(len);
-    memset(payload, 1, MSG_LEN);
+    uint8_t *value = (uint8_t *)z_malloc(len);
+    memset(value, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {
@@ -240,7 +240,12 @@ int main(int argc, char **argv) {
             z_put_options_t opt;
             z_put_options_default(&opt);
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-            z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
+
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_serialize_from_slice(&payload, value, len);
+
+            z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
             printf("Wrote data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len, n * SET + (i + 1),
                    total);
         }
@@ -264,10 +269,10 @@ int main(int argc, char **argv) {
 
     // Write fragment data from first session
     if (is_reliable) {
-        z_free((uint8_t *)payload);
+        z_free((uint8_t *)value);
         len = FRAGMENT_MSG_LEN;
-        payload = (uint8_t *)z_malloc(len);
-        memset(payload, 1, FRAGMENT_MSG_LEN);
+        value = (uint8_t *)z_malloc(len);
+        memset(value, 1, FRAGMENT_MSG_LEN);
 
         total = FRAGMENT_MSG_NB * SET;
         for (unsigned int n = 0; n < FRAGMENT_MSG_NB; n++) {
@@ -275,7 +280,12 @@ int main(int argc, char **argv) {
                 z_put_options_t opt;
                 z_put_options_default(&opt);
                 opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-                z_put(z_loan(s1), z_loan(rids1[i]), (const uint8_t *)payload, len, &opt);
+
+                // Create payload
+                z_owned_bytes_t payload;
+                z_bytes_serialize_from_slice(&payload, value, len);
+
+                z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
                 printf("Wrote fragment data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len,
                        n * SET + (i + 1), total);
             }
@@ -399,8 +409,8 @@ int main(int argc, char **argv) {
     printf("Closing session 2\n");
     z_close(z_move(s2));
 
-    z_free((uint8_t *)payload);
-    payload = NULL;
+    z_free((uint8_t *)value);
+    value = NULL;
 
     free(s1_res);
 

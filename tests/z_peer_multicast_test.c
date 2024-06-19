@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
 
     // Write data from first session
     size_t len = MSG_LEN;
-    uint8_t *payload = (uint8_t *)z_malloc(len);
-    memset(payload, 1, MSG_LEN);
+    uint8_t *value = (uint8_t *)z_malloc(len);
+    memset(value, 1, MSG_LEN);
 
     total = MSG * SET;
     for (unsigned int n = 0; n < MSG; n++) {
@@ -141,7 +141,12 @@ int main(int argc, char **argv) {
             opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
             z_view_keyexpr_t ke;
             z_view_keyexpr_from_string(&ke, s1_res);
-            z_put(z_loan(s1), z_loan(ke), (const uint8_t *)payload, len, &opt);
+
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_serialize_from_slice(&payload, value, len);
+
+            z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);
         }
     }
@@ -191,8 +196,8 @@ int main(int argc, char **argv) {
     printf("Closing session 2\n");
     z_close(z_move(s2));
 
-    z_free((uint8_t *)payload);
-    payload = NULL;
+    z_free((uint8_t *)value);
+    value = NULL;
 
     free(s1_res);
 
