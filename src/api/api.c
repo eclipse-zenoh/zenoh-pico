@@ -256,20 +256,7 @@ int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src)
 
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
-const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value) { return &value->payload; }
-
 z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
-
-// Convert a user owned encoding to an internal encoding, return default encoding if value invalid
-static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
-    if (encoding == NULL) {
-        return _z_encoding_null();
-    }
-    if (encoding->_val == NULL) {
-        return _z_encoding_null();
-    }
-    return *encoding->_val;
-}
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
