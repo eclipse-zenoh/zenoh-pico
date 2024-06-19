@@ -88,17 +88,18 @@ int main(int argc, char **argv) {
     }
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
-    z_owned_query_ring_channel_t channel;
-    z_query_ring_channel_new(&channel, 10);
+    z_owned_closure_query_t closure;
+    z_owned_ring_handler_query_t handler;
+    z_ring_channel_query_new(&closure, &handler, 10);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(channel.send), NULL) < 0) {
+    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
     }
 
     z_owned_query_t query;
     z_null(&query);
-    for (z_call(channel.recv, &query); z_check(query); z_call(channel.recv, &query)) {
+    for (z_recv(z_loan(handler), &query); z_check(query); z_recv(z_loan(handler), &query)) {
         const z_loaned_query_t *q = z_loan(query);
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_query_keyexpr(q), &keystr);
@@ -125,7 +126,7 @@ int main(int argc, char **argv) {
         z_drop(z_move(query));
     }
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
     z_undeclare_queryable(z_move(qable));
 
     // Stop read and lease tasks for zenoh-pico

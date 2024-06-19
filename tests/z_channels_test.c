@@ -23,7 +23,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(channel, v)                                                                         \
+#define SEND(closure, v)                                                                         \
     do {                                                                                         \
         _z_sample_t s = {.keyexpr = _z_rname("key"),                                             \
                          .payload = {._slice = {.start = (const uint8_t *)v, .len = strlen(v)}}, \
@@ -32,14 +32,14 @@
                          .kind = 0,                                                              \
                          .qos = {0}};                                                            \
         z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                 \
-        z_call(channel.send, &sample);                                                           \
+        z_call(closure, &sample);                                                                \
     } while (0);
 
-#define _RECV(channel, method, buf)                                                   \
+#define _RECV(handler, method, buf)                                                   \
     do {                                                                              \
         z_owned_sample_t sample;                                                      \
         z_sample_null(&sample);                                                       \
-        z_call(channel.method, &sample);                                              \
+        method(z_loan(handler), &sample);                                             \
         if (z_check(sample)) {                                                        \
             z_owned_slice_t value;                                                    \
             z_bytes_deserialize_into_slice(z_sample_payload(z_loan(sample)), &value); \
@@ -53,111 +53,119 @@
         }                                                                             \
     } while (0);
 
-#define RECV(channel, buf) _RECV(channel, recv, buf)
-#define TRY_RECV(channel, buf) _RECV(channel, try_recv, buf)
+#define RECV(handler, buf) _RECV(handler, z_recv, buf)
+#define TRY_RECV(handler, buf) _RECV(handler, z_try_recv, buf)
 
 void sample_fifo_channel_test(void) {
-    z_owned_sample_fifo_channel_t channel;
-    z_sample_fifo_channel_new(&channel, 10);
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    z_fifo_channel_sample_new(&closure, &handler, 10);
 
-    SEND(channel, "v1")
-    SEND(channel, "v22")
-    SEND(channel, "v333")
-    SEND(channel, "v4444")
+    SEND(closure, "v1")
+    SEND(closure, "v22")
+    SEND(closure, "v333")
+    SEND(closure, "v4444")
 
     char buf[100];
 
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v1") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
+    z_drop(z_move(closure));
 }
 
 void sample_fifo_channel_test_try_recv(void) {
-    z_owned_sample_fifo_channel_t channel;
-    z_sample_fifo_channel_new(&channel, 10);
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    z_fifo_channel_sample_new(&closure, &handler, 10);
 
     char buf[100];
 
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    SEND(channel, "v1")
-    SEND(channel, "v22")
-    SEND(channel, "v333")
-    SEND(channel, "v4444")
+    SEND(closure, "v1")
+    SEND(closure, "v22")
+    SEND(closure, "v333")
+    SEND(closure, "v4444")
 
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "v1") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "v22") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "v333") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
+    z_drop(z_move(closure));
 }
 
 void sample_ring_channel_test_in_size(void) {
-    z_owned_sample_ring_channel_t channel;
-    z_sample_ring_channel_new(&channel, 10);
+    z_owned_closure_sample_t closure;
+    z_owned_ring_handler_sample_t handler;
+    z_ring_channel_sample_new(&closure, &handler, 10);
 
     char buf[100];
 
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    SEND(channel, "v1")
-    SEND(channel, "v22")
-    SEND(channel, "v333")
-    SEND(channel, "v4444")
+    SEND(closure, "v1")
+    SEND(closure, "v22")
+    SEND(closure, "v333")
+    SEND(closure, "v4444")
 
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v1") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
+    z_drop(z_move(closure));
 }
 
 void sample_ring_channel_test_over_size(void) {
-    z_owned_sample_ring_channel_t channel;
-    z_sample_ring_channel_new(&channel, 3);
+    z_owned_closure_sample_t closure;
+    z_owned_ring_handler_sample_t handler;
+    z_ring_channel_sample_new(&closure, &handler, 3);
 
     char buf[100];
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    SEND(channel, "v1")
-    SEND(channel, "v22")
-    SEND(channel, "v333")
-    SEND(channel, "v4444")
+    SEND(closure, "v1")
+    SEND(closure, "v22")
+    SEND(closure, "v333")
+    SEND(closure, "v4444")
 
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v22") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v333") == 0);
-    RECV(channel, buf)
+    RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
-    TRY_RECV(channel, buf)
+    TRY_RECV(handler, buf)
     assert(strcmp(buf, "") == 0);
 
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
+    z_drop(z_move(closure));
 }
 
 int main(void) {

@@ -34,25 +34,31 @@
  */
 
 #define z_loan(x) _Generic((x), \
-                  z_owned_keyexpr_t : z_keyexpr_loan,                 \
-                  z_view_keyexpr_t : z_view_keyexpr_loan,             \
-                  z_owned_config_t : z_config_loan,                   \
-                  z_owned_scouting_config_t : z_scouting_config_loan, \
-                  z_owned_session_t : z_session_loan,                 \
-                  z_owned_subscriber_t : z_subscriber_loan,           \
-                  z_owned_publisher_t : z_publisher_loan,             \
-                  z_owned_queryable_t : z_queryable_loan,             \
-                  z_owned_reply_t : z_reply_loan,                     \
-                  z_owned_hello_t : z_hello_loan,                     \
-                  z_owned_string_t : z_string_loan,                   \
-                  z_view_string_t : z_view_string_loan,               \
-                  z_owned_string_array_t : z_string_array_loan,       \
-                  z_owned_sample_t : z_sample_loan,                   \
-                  z_owned_query_t : z_query_loan,                     \
-                  z_owned_slice_t : z_slice_loan,                     \
-                  z_owned_bytes_t : z_bytes_loan,                     \
-                  z_owned_encoding_t : z_encoding_loan,               \
-                  z_owned_reply_err_t : z_reply_err_loan              \
+                  z_owned_keyexpr_t : z_keyexpr_loan,                         \
+                  z_view_keyexpr_t : z_view_keyexpr_loan,                     \
+                  z_owned_config_t : z_config_loan,                           \
+                  z_owned_scouting_config_t : z_scouting_config_loan,         \
+                  z_owned_session_t : z_session_loan,                         \
+                  z_owned_subscriber_t : z_subscriber_loan,                   \
+                  z_owned_publisher_t : z_publisher_loan,                     \
+                  z_owned_queryable_t : z_queryable_loan,                     \
+                  z_owned_reply_t : z_reply_loan,                             \
+                  z_owned_hello_t : z_hello_loan,                             \
+                  z_owned_string_t : z_string_loan,                           \
+                  z_view_string_t : z_view_string_loan,                       \
+                  z_owned_string_array_t : z_string_array_loan,               \
+                  z_owned_sample_t : z_sample_loan,                           \
+                  z_owned_query_t : z_query_loan,                             \
+                  z_owned_slice_t : z_slice_loan,                             \
+                  z_owned_bytes_t : z_bytes_loan,                             \
+                  z_owned_encoding_t : z_encoding_loan,                       \
+                  z_owned_fifo_handler_query_t : z_fifo_handler_query_loan,   \
+                  z_owned_fifo_handler_reply_t : z_fifo_handler_reply_loan,   \
+                  z_owned_fifo_handler_sample_t : z_fifo_handler_sample_loan, \
+                  z_owned_ring_handler_query_t : z_ring_handler_query_loan,   \
+                  z_owned_ring_handler_reply_t : z_ring_handler_reply_loan,   \
+                  z_owned_ring_handler_sample_t : z_ring_handler_sample_loan, \
+                  z_owned_reply_err_t : z_reply_err_loan                      \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
@@ -102,12 +108,12 @@
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
                   z_owned_closure_hello_t * : z_closure_hello_drop,                 \
                   z_owned_closure_zid_t * : z_closure_zid_drop,                     \
-                  z_owned_sample_ring_channel_t * : z_sample_ring_channel_drop,     \
-                  z_owned_sample_fifo_channel_t * : z_sample_fifo_channel_drop,     \
-                  z_owned_query_ring_channel_t * : z_query_ring_channel_drop,       \
-                  z_owned_query_fifo_channel_t * : z_query_fifo_channel_drop,       \
-                  z_owned_reply_ring_channel_t * : z_reply_ring_channel_drop,       \
-                  z_owned_reply_fifo_channel_t * : z_reply_fifo_channel_drop,       \
+                  z_owned_fifo_handler_query_t * : z_fifo_handler_query_drop,       \
+                  z_owned_fifo_handler_reply_t * : z_fifo_handler_reply_drop,       \
+                  z_owned_fifo_handler_sample_t * : z_fifo_handler_sample_drop,     \
+                  z_owned_ring_handler_query_t * : z_ring_handler_query_drop,       \
+                  z_owned_ring_handler_reply_t * : z_ring_handler_reply_drop,       \
+                  z_owned_ring_handler_sample_t * : z_ring_handler_sample_drop,     \
                   z_owned_reply_err_t : z_reply_err_drop                            \
             )(x)
 
@@ -159,6 +165,26 @@
                   z_owned_closure_owned_reply_t : z_closure_owned_reply_call        \
             ) (&x, __VA_ARGS__)
 
+#define z_try_recv(x, ...) \
+    _Generic((x), \
+        const z_loaned_fifo_handler_query_t* : z_fifo_handler_query_try_recv, \
+        const z_loaned_fifo_handler_reply_t* : z_fifo_handler_reply_try_recv, \
+        const z_loaned_fifo_handler_sample_t* : z_fifo_handler_sample_try_recv, \
+        const z_loaned_ring_handler_query_t* : z_ring_handler_query_try_recv, \
+        const z_loaned_ring_handler_reply_t* : z_ring_handler_reply_try_recv, \
+        const z_loaned_ring_handler_sample_t* : z_ring_handler_sample_try_recv \
+    )(x, __VA_ARGS__)
+
+#define z_recv(x, ...) \
+    _Generic((x), \
+        const z_loaned_fifo_handler_query_t* : z_fifo_handler_query_recv, \
+        const z_loaned_fifo_handler_reply_t* : z_fifo_handler_reply_recv, \
+        const z_loaned_fifo_handler_sample_t* : z_fifo_handler_sample_recv, \
+        const z_loaned_ring_handler_query_t* : z_ring_handler_query_recv, \
+        const z_loaned_ring_handler_reply_t* : z_ring_handler_reply_recv, \
+        const z_loaned_ring_handler_sample_t* : z_ring_handler_sample_recv \
+    )(x, __VA_ARGS__)
+
 /**
  * Defines a generic function for moving any of the ``z_owned_X_t`` types.
  *
@@ -192,12 +218,12 @@
                   z_owned_slice_t : z_slice_move,                                 \
                   z_owned_bytes_t : z_bytes_move,                                 \
                   z_owned_encoding_t : z_encoding_move,                           \
-                  z_owned_sample_ring_channel_t : z_sample_ring_channel_move,     \
-                  z_owned_sample_fifo_channel_t : z_sample_fifo_channel_move,     \
-                  z_owned_query_ring_channel_t : z_query_ring_channel_move,       \
-                  z_owned_query_fifo_channel_t : z_query_fifo_channel_move,       \
-                  z_owned_reply_ring_channel_t : z_reply_ring_channel_move,       \
-                  z_owned_reply_fifo_channel_t : z_reply_fifo_channel_move,       \
+                  z_owned_ring_handler_query_t : z_ring_handler_query_move,       \
+                  z_owned_ring_handler_reply_t : z_ring_handler_reply_move,       \
+                  z_owned_ring_handler_sample_t : z_ring_handler_sample_move,     \
+                  z_owned_fifo_handler_query_t : z_fifo_handler_query_move,       \
+                  z_owned_fifo_handler_reply_t : z_fifo_handler_reply_move,       \
+                  z_owned_fifo_handler_sample_t : z_fifo_handler_sample_move,     \
                   z_owned_reply_err_t : z_reply_err_move                          \
             )(&x)
 
@@ -465,6 +491,45 @@ inline void z_closure(
     closure->context = context;
     closure->drop = drop;
     closure->call = call;
+};
+
+inline bool z_try_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
+    return z_fifo_handler_query_try_recv(this_, query);
+};
+inline bool z_try_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
+    return z_fifo_handler_reply_try_recv(this_, reply);
+};
+inline bool z_try_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
+    return z_fifo_handler_sample_try_recv(this_, sample);
+};
+inline bool z_try_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
+    return z_ring_handler_query_try_recv(this_, query);
+};
+inline bool z_try_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
+    return z_ring_handler_reply_try_recv(this_, reply);
+};
+inline bool z_try_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
+    return z_ring_handler_sample_try_recv(this_, sample);
+};
+
+
+inline bool z_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
+    return z_fifo_handler_query_recv(this_, query);
+};
+inline bool z_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
+    return z_fifo_handler_reply_recv(this_, reply);
+};
+inline bool z_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
+    return z_fifo_handler_sample_recv(this_, sample);
+};
+inline bool z_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
+    return z_ring_handler_query_recv(this_, query);
+};
+inline bool z_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
+    return z_ring_handler_reply_recv(this_, reply);
+};
+inline bool z_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
+    return z_ring_handler_sample_recv(this_, sample);
 };
 
 // clang-format on
