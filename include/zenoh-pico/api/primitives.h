@@ -1307,15 +1307,14 @@ void z_delete_options_default(z_delete_options_t *options);
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to put the data through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to put the data for.
- *   payload: Pointer to the data to put.
- *   payload_len: The length of the ``payload``.
+ *   payload: Pointer to a moved :c:type:`z_owned_bytes_t` containing the data to put.
  *   options: Pointer to a :c:type:`z_put_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-             z_zint_t payload_len, const z_put_options_t *options);
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+             const z_put_options_t *options);
 
 /**
  * Deletes data for a given keyexpr.
@@ -1389,12 +1388,13 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
  *
  * Parameters:
  *   pub: Pointer to a :c:type:`z_loaned_publisher_t` from where to put the data.
+ *   payload: Pointer to a moved :c:type:`z_owned_bytes_t` containing the data to put.
  *   options: Pointer to a :c:type:`z_publisher_put_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload,
                        const z_publisher_put_options_t *options);
 
 /**

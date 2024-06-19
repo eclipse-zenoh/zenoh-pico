@@ -896,8 +896,8 @@ void z_delete_options_default(z_delete_options_t *options) {
     options->priority = Z_PRIORITY_DEFAULT;
 }
 
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-             z_zint_t payload_len, const z_put_options_t *options) {
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+             const z_put_options_t *options) {
     int8_t ret = 0;
 
     z_put_options_t opt;
@@ -909,17 +909,18 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
         opt.attachment = options->attachment;
     }
 
-    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, (const uint8_t *)payload, payload_len,
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
                    _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
                    _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload, payload_len,
+    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+    z_bytes_drop(payload);
     return ret;
 }
 
@@ -994,7 +995,7 @@ void z_publisher_put_options_default(z_publisher_put_options_t *options) {
 
 void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->__dummy = 0; }
 
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload,
                        const z_publisher_put_options_t *options) {
     int8_t ret = 0;
     // Build options
@@ -1007,16 +1008,17 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, 
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
         // Write value
-        ret = _z_write(&pub->_zn.in->val, pub->_key, payload, len, _z_encoding_from_owned(opt.encoding),
-                       Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority,
-                       _z_bytes_from_owned_bytes(opt.attachment));
+        ret = _z_write(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
+                       _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+                       pub->_priority, _z_bytes_from_owned_bytes(opt.attachment));
     }
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT,
-                                   _z_bytes_from_owned_bytes(opt.attachment));
+    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
+                                   _Z_N_QOS_DEFAULT, _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+    z_bytes_drop(payload);
     return ret;
 }
 
