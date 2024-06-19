@@ -151,13 +151,19 @@ int main(int argc, char **argv) {
     z_owned_bytes_t attachment;
 
     // Allocate buffer
-    char buf[256];
     char buf_ind[16];
 
     // Publish data
     printf("Press CTRL-C to quit...\n");
+    char buf[256];
     for (int idx = 0; idx < n; ++idx) {
         z_sleep_s(1);
+        sprintf(buf, "[%4d] %s", idx, value);
+        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
+
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_string(&payload, buf);
 
         // Add attachment value
         sprintf(buf_ind, "%d", idx);
@@ -166,9 +172,7 @@ int main(int argc, char **argv) {
         zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
         options.attachment = z_move(attachment);
 
-        sprintf(buf, "[%4d] %s", idx, value);
-        printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
+        z_publisher_put(z_loan(pub), z_move(payload), &options);
     }
     // Clean up
     z_undeclare_publisher(z_move(pub));

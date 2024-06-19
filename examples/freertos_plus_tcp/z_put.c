@@ -66,7 +66,12 @@ void app_main(void) {
     printf("Putting Data ('%s': '%s')...\n", KEYEXPR, VALUE);
     z_put_options_t options;
     z_put_options_default(&options);
-    if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)VALUE, strlen(VALUE), &options) < 0) {
+
+    // Create payload
+    z_owned_bytes_t payload;
+    z_bytes_serialize_from_string(&payload, VALUE);
+
+    if (z_put(z_loan(s), z_loan(ke), z_move(payload), &options) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 

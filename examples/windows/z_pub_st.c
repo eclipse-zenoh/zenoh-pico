@@ -59,7 +59,12 @@ int main(int argc, char **argv) {
         if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-            z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_serialize_from_string(&payload, buf);
+
+            z_publisher_put(z_loan(pub), z_move(payload), NULL);
             ++idx;
 
             now = z_clock_now();

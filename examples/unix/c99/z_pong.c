@@ -21,7 +21,12 @@ void callback(const z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_publisher_loan((z_owned_publisher_t*)context);
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
-    z_publisher_put(pub, z_slice_data(z_slice_loan(&value)), z_slice_len(z_slice_loan(&value)), NULL);
+
+    // Create payload
+    z_owned_bytes_t payload;
+    z_bytes_serialize_from_slice(&payload, z_slice_data(z_slice_loan(&value)), z_slice_len(z_slice_loan(&value)));
+
+    z_publisher_put(pub, z_bytes_move(&payload), NULL);
     z_slice_drop(z_slice_move(&value));
 }
 void drop(void* context) {
