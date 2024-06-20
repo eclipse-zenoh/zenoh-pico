@@ -41,6 +41,7 @@
         }                                             \
     }
 
+typedef int8_t (*__z_single_byte_reader_t)(uint8_t*, void* context);
 /*------------------ Internal Zenoh-net Macros ------------------*/
 int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
 int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf);
@@ -56,11 +57,18 @@ int8_t _z_uint16_encode(_z_wbuf_t *buf, uint16_t v);
 int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *buf);
 
 uint8_t _z_zint_len(uint64_t v);
+uint8_t _z_zint64_encode_buf(uint8_t* buf, uint64_t v);
+static inline uint8_t _z_zsize_encode_buf(uint8_t* buf, _z_zint_t v) { 
+    return _z_zint64_encode_buf(buf, (uint64_t)v); 
+}
+
 int8_t _z_zsize_encode(_z_wbuf_t *buf, _z_zint_t v);
 int8_t _z_zint64_encode(_z_wbuf_t *buf, uint64_t v);
 int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *buf);
+int8_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t reader, void *context);
+int8_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void* context);
 int8_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
 int8_t _z_slice_val_encode(_z_wbuf_t *buf, const _z_slice_t *bs);

@@ -111,18 +111,26 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
 }
 
 _z_string_t _z_string_from_bytes(const _z_slice_t *bs) {
-    _z_string_t s = _z_string_null();
-    // Allocate string
-    s.len = bs->len + (size_t)1;  // bytes data + null terminator
-    char *str_val = (char *)z_malloc(s.len * sizeof(char));
-    if (str_val == NULL) {
+    _z_string_t s = _z_string_preallocate(bs->len);
+    if (s.val == NULL) {
         return s;
     }
     // Recopy data
-    s.val = str_val;
     memcpy(s.val, bs->start, bs->len);
-    // Set null terminator
-    s.val[bs->len] = '\0';
+    return s;
+}
+
+_z_string_t _z_string_preallocate(size_t len) {
+    _z_string_t s = _z_string_null();
+    // Allocate string
+    s.len = len + (size_t)1;  // bytes data + null terminator
+    char *str_val = (char *)z_malloc(s.len * sizeof(char));
+    if (str_val == NULL) {
+        s.len = 0;
+        return s;
+    }
+    s.val = str_val;
+    s.val[len] = '\0';
     return s;
 }
 

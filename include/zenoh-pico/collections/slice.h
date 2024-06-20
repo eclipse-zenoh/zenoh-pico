@@ -39,6 +39,7 @@ inline static _Bool _z_slice_check(_z_slice_t value) { return value.start != NUL
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_wrap(const uint8_t *bs, size_t len);
+_z_slice_t _z_slice_wrap_copy(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
 void _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);

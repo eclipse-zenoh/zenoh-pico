@@ -120,18 +120,30 @@ uint8_t _z_zint_len(uint64_t v) {
     }
 }
 
-int8_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
+uint8_t _z_zint64_encode_buf(uint8_t* buf, uint64_t v) {
     uint64_t lv = v;
     uint8_t len = 0;
+    size_t start = 0;
     while ((lv & (uint64_t)~0x7f) != 0) {
         uint8_t c = (lv & 0x7f) | 0x80;
-        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
+        buf[start++] = c;
         len++;
         lv = lv >> (uint64_t)7;
     }
     if (len != VLE_LEN) {
         uint8_t c = (lv & 0xff);
-        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, c))
+        buf[start++] = c;
+    }
+
+    return start;
+}
+
+int8_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
+    uint8_t buf[VLE_LEN];
+    size_t len = _z_zint64_encode_buf(buf, v);
+
+    for (size_t i = 0; i < len; i++) {
+        _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, buf[i]));
     }
 
     return _Z_RES_OK;
@@ -141,21 +153,40 @@ int8_t _z_zint16_encode(_z_wbuf_t *wbf, uint16_t v) { return _z_zint64_encode(wb
 int8_t _z_zint32_encode(_z_wbuf_t *wbf, uint32_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
 int8_t _z_zsize_encode(_z_wbuf_t *wbf, _z_zint_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
 
-int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
+int8_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t reader, void* context) {
     *zint = 0;
 
     uint8_t b = 0;
-    _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+    _Z_RETURN_IF_ERR(reader(&b, context));
 
     uint8_t i = 0;
     while (((b & 0x80) != 0) && (i != 7 * (VLE_LEN - 1))) {
         *zint = *zint | ((uint64_t)(b & 0x7f)) << i;
-        _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+        _Z_RETURN_IF_ERR(reader(&b, context));
         i = i + (uint8_t)7;
     }
     *zint = *zint | ((uint64_t)b << i);
 
-    return _Z_RES_OK;
+    return _Z_RES_OK;  
+}
+
+int8_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void* context) { 
+    uint64_t i = 0;
+    int8_t res = _z_zint64_decode_with_reader(&i, reader, context);
+    if (res == _Z_RES_OK && i > SIZE_MAX) {
+        res = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    } else {
+        *zint = (_z_zint_t)i;
+    }
+    return res;
+}
+
+int8_t _z_uint8_decode_reader(uint8_t* zint, void* context) {
+    return _z_uint8_decode(zint, (_z_zbuf_t*)context);
+}
+
+int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
+    return _z_zint64_decode_with_reader(zint, _z_uint8_decode_reader, (void*)zbf);
 }
 
 int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
@@ -183,15 +214,7 @@ int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
-    uint64_t buf;
-    _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
-    if (buf <= SIZE_MAX) {
-        *zint = (_z_zint_t)buf;
-    } else {
-        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-    }
-    return ret;
+    return _z_zsize_decode_with_reader(zint, _z_uint8_decode_reader, (void*)zbf);
 }
 
 /*------------------ uint8_array ------------------*/
