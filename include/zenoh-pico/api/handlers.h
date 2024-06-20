@@ -115,16 +115,18 @@
                            /* elem_copy_f                     */ _z_##item_name##_rc_copy,                  \
                            /* elem_drop_f                     */ z_##item_name##_drop)
 
-#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)   \
-    typedef struct {                                    \
-    } z_owned_##kind_name##_handler_##item_name##_t;    \
-    typedef struct {                                    \
-    } z_loaned_##kind_name##_handler_##item_name##_t;   \
-    void *z_##kind_name##_handler_##item_name##_loan(); \
-    void *z_##kind_name##_handler_##item_name##_move(); \
-    void *z_##kind_name##_handler_##item_name##_drop(); \
-    void *z_##kind_name##_handler_##item_name##_recv(); \
-    void *z_##kind_name##_handler_##item_name##_try_recv();
+#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \
+    typedef struct {                                        \
+        uint8_t _foo;                                       \
+    } z_owned_##kind_name##_handler_##item_name##_t;        \
+    typedef struct {                                        \
+        uint8_t _foo;                                       \
+    } z_loaned_##kind_name##_handler_##item_name##_t;       \
+    void *z_##kind_name##_handler_##item_name##_loan(void); \
+    void *z_##kind_name##_handler_##item_name##_move(void); \
+    void *z_##kind_name##_handler_##item_name##_drop(void); \
+    void *z_##kind_name##_handler_##item_name##_recv(void); \
+    void *z_##kind_name##_handler_##item_name##_try_recv(void);
 
 // This macro defines:
 //   z_ring_channel_sample_new()
