@@ -24,8 +24,8 @@
 typedef struct {
     _z_ring_t _ring;
 #if Z_FEATURE_MULTI_THREAD == 1
-    zp_mutex_t _mutex;
-    zp_condvar_t _cv_not_empty;
+    z_mutex_t _mutex;
+    z_condvar_t _cv_not_empty;
 #endif
 } _z_ring_mt_t;
 

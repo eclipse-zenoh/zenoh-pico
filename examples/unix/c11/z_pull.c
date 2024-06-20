@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
             z_drop(z_move(sample));
         }
         printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", interval);
-        zp_sleep_ms(interval);
+        z_sleep_ms(interval);
     }
 
     z_undeclare_subscriber(z_move(sub));

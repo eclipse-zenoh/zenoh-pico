@@ -37,15 +37,15 @@
                                                                                                                      \
     static inline void _z_##handler_name##_elem_free(void **elem) {                                                  \
         elem_drop_f((elem_owned_type *)*elem);                                                                       \
-        zp_free(*elem);                                                                                              \
+        z_free(*elem);                                                                                               \
         *elem = NULL;                                                                                                \
     }                                                                                                                \
     static inline void _z_##handler_name##_elem_move(void *dst, void *src) {                                         \
         memcpy(dst, src, sizeof(elem_owned_type));                                                                   \
-        zp_free(src);                                                                                                \
+        z_free(src);                                                                                                 \
     }                                                                                                                \
     static inline void _z_##handler_name##_send(const elem_loaned_type *elem, void *context) {                       \
-        elem_owned_type *internal_elem = (elem_owned_type *)zp_malloc(sizeof(elem_owned_type));                      \
+        elem_owned_type *internal_elem = (elem_owned_type *)z_malloc(sizeof(elem_owned_type));                       \
         if (internal_elem == NULL) {                                                                                 \
             _Z_ERROR("Out of memory");                                                                               \
             return;                                                                                                  \
@@ -115,16 +115,18 @@
                            /* elem_copy_f                     */ _z_##item_name##_rc_copy,                  \
                            /* elem_drop_f                     */ z_##item_name##_drop)
 
-#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)   \
-    typedef struct {                                    \
-    } z_owned_##kind_name##_handler_##item_name##_t;    \
-    typedef struct {                                    \
-    } z_loaned_##kind_name##_handler_##item_name##_t;   \
-    void *z_##kind_name##_handler_##item_name##_loan(); \
-    void *z_##kind_name##_handler_##item_name##_move(); \
-    void *z_##kind_name##_handler_##item_name##_drop(); \
-    void *z_##kind_name##_handler_##item_name##_recv(); \
-    void *z_##kind_name##_handler_##item_name##_try_recv();
+#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \
+    typedef struct {                                        \
+        uint8_t _foo;                                       \
+    } z_owned_##kind_name##_handler_##item_name##_t;        \
+    typedef struct {                                        \
+        uint8_t _foo;                                       \
+    } z_loaned_##kind_name##_handler_##item_name##_t;       \
+    void *z_##kind_name##_handler_##item_name##_loan(void); \
+    void *z_##kind_name##_handler_##item_name##_move(void); \
+    void *z_##kind_name##_handler_##item_name##_drop(void); \
+    void *z_##kind_name##_handler_##item_name##_recv(void); \
+    void *z_##kind_name##_handler_##item_name##_try_recv(void);
 
 // This macro defines:
 //   z_ring_channel_sample_new()

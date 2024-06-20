@@ -93,7 +93,9 @@ int8_t _z_timestamp_encode(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
     return ret;
 }
 int8_t _z_timestamp_encode_ext(_z_wbuf_t *wbf, const _z_timestamp_t *ts) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_zint_len(ts->time) + (uint8_t)1 + _z_id_len(ts->id)));
+    // Encode extension size then timestamp
+    size_t ext_size = (size_t)(_z_zint_len(ts->time) + 1 + _z_id_len(ts->id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     return _z_timestamp_encode(wbf, ts);
 }
 
@@ -233,8 +235,8 @@ int8_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
 int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     int8_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_id);
-    uint16_t len = 1 + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, len));
+    size_t ext_size = 1u + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
     _z_slice_t zid = _z_slice_wrap(info->_id.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
@@ -497,6 +499,7 @@ int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
     return _Z_RES_OK;
 }
 int8_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
+    _ZP_UNUSED(ctx);
     int8_t ret = _Z_RES_OK;
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         default:
@@ -595,7 +598,7 @@ int8_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_t *m
     uint8_t zid_len = _z_id_len(msg->_zid);
     if (zid_len > 0) {
         _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);
-        cbyte |= ((zid_len - 1) & 0x0F) << 4;
+        cbyte |= (uint8_t)(((zid_len - 1) & 0x0F) << 4);
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
 
@@ -633,7 +636,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     uint8_t zidlen = _z_id_len(msg->_zid);
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
-    cbyte |= ((zidlen - 1) & 0x0F) << 4;
+    cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &(_z_slice_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
 

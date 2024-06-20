@@ -38,6 +38,42 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
   endif()
 endif()
 
+# Language options
+if(NOT CMAKE_C_STANDARD)
+  if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
+    set(CMAKE_C_STANDARD 11)
+    message(STATUS "Setting C11 as the C Standard")
+  else()
+    # C99 pedantic doesn't like unix header anonymous structure
+    set(CMAKE_C_STANDARD 99)
+    message(STATUS "Setting C99 as the C Standard")
+  endif()
+endif()
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+
+# Compile options
+if(CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release")
+  if(UNIX)
+    add_compile_options(-pipe -O3)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-pipe -O3)
+  endif()
+else()
+  if(UNIX)
+    add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wunused -Wstrict-prototypes -pipe -g -O0)
+    # C99 pedantic doesn't like struct anonymous in unix header
+    if (NOT CMAKE_C_STANDARD STREQUAL "99")
+      add_compile_options(-Wpedantic)
+    endif()
+    # add_compile_options(-Wconversion)
+    # add_link_options(-fsanitize=address)
+  elseif(MSVC)
+    add_compile_options(/W4 /WX /Od /wd4127)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -pipe -g -O0)
+  endif()
+endif()
+
 set(Libname "zenohpico")
 if(BUILD_SHARED_LIBS)
   add_library(${Libname} SHARED)
@@ -50,16 +86,6 @@ function(add_definition value)
   target_compile_definitions(${Libname} PUBLIC ${value})
 endfunction()
 
-if(NOT CMAKE_C_STANDARD)
-  if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
-    set(CMAKE_C_STANDARD 11)
-    message(STATUS "Setting C11 as the C Standard")
-  else()
-    set(CMAKE_C_STANDARD 99)
-    message(STATUS "Setting C99 as the C Standard")
-  endif()
-endif()
-set(CMAKE_C_STANDARD_REQUIRED TRUE)
 add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 # while in development, use timestamp for patch version:
@@ -175,30 +201,10 @@ if(CHECK_THREADS)
   find_package(Threads REQUIRED)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-  if(UNIX)
-    # FIXME: seems to not apply to library files, Issue #422
-    add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0)
-    # add_compile_options(-Wconversion)
-    # add_link_options(-fsanitize=address)
-  elseif(MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
-    add_compile_options(/W4 /WX /Od /wd4127)
-  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
-    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -pipe -g -O0)
-  endif()
-elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
-  if(UNIX)
-    add_compile_options(-pipe -O3)
-  elseif(MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
-  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
-    add_compile_options(-pipe -O3)
-  endif()
+if(MSVC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
 endif()
-
 
 file(GLOB_RECURSE PublicHeaders
   "include/zenoh-pico/api/*.h"
@@ -216,7 +222,6 @@ target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 file(GLOB_RECURSE Sources
   "src/api/*.c"
   "src/collections/*.c"
-  "src/deprecated/*.c"
   "src/link/*.c"
   "src/net/*.c"
   "src/protocol/*.c"

@@ -87,8 +87,8 @@ size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t 
 size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_slice_t *addr,
                          const _zp_raweth_whitelist_array_t *whitelist);
 int8_t _z_close_raweth(_z_sys_net_socket_t *sock);
-size_t _z_raweth_ntohs(size_t val);
-size_t _z_raweth_htons(size_t val);
+uint16_t _z_raweth_ntohs(uint16_t val);
+uint16_t _z_raweth_htons(uint16_t val);
 
 #endif
 

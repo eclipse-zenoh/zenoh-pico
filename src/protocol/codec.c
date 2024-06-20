@@ -76,8 +76,8 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
 int8_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t u16) {
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_wbuf_write(wbf, (u16 & 0xFF));
-    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFF));
+    ret |= _z_wbuf_write(wbf, (u16 & 0xFFU));
+    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFFU));
 
     return ret;
 }

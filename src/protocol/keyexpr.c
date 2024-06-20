@@ -89,7 +89,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
 
     _Bool in_big_wild = false;
     char const *chunk_start = start;
-    const char *end = _z_cptr_char_offset(start, *len);
+    const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
     char const *next_slash;
 
     do {
@@ -192,7 +192,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
 }
 
 void __zp_singleify(char *start, size_t *len, const char *needle) {
-    const char *end = _z_cptr_char_offset(start, *len);
+    const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
     _Bool right_after_needle = false;
     char *reader = start;
 
@@ -203,7 +203,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 break;
             }
             right_after_needle = true;
-            reader = _z_ptr_char_offset(reader, pos);
+            reader = _z_ptr_char_offset(reader, (ptrdiff_t)pos);
         } else {
             right_after_needle = false;
             reader = _z_ptr_char_offset(reader, 1);
@@ -218,10 +218,10 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
                 }
-                writer = _z_ptr_char_offset(writer, pos);
+                writer = _z_ptr_char_offset(writer, (ptrdiff_t)pos);
             }
             right_after_needle = true;
-            reader = _z_ptr_char_offset(reader, pos);
+            reader = _z_ptr_char_offset(reader, (ptrdiff_t)pos);
         } else {
             right_after_needle = false;
             *writer = *reader;
@@ -239,7 +239,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
     }
 
     (void)memcpy(writer[0], chunk, len);
-    writer[0] = _z_ptr_char_offset(writer[0], len);
+    writer[0] = _z_ptr_char_offset(writer[0], (ptrdiff_t)len);
 }
 
 /*------------------ Common helpers ------------------*/
@@ -291,7 +291,7 @@ _Bool _z_ke_isdoublestar(_z_str_se_t s) {
 
 /*------------------ Inclusion helpers ------------------*/
 _Bool _z_ke_chunk_includes_nodsl(_z_str_se_t l, _z_str_se_t r) {
-    size_t llen = l.end - l.start;
+    size_t llen = (size_t)(l.end - l.start);
     _Bool result =
         !(r.start[0] == _Z_VERBATIM) && ((llen == (size_t)1) && (l.start[0] == '*') &&
                                          (((_z_ptr_char_diff(r.end, r.start) == 2) && (r.start[0] == '*')) == false));
@@ -396,8 +396,8 @@ _Bool _z_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_c
 _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
     if (result == false) {
-        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
-        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
+        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, (ptrdiff_t)llen)};
+        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, (ptrdiff_t)rlen)};
         size_t ln_chunks = 0, ln_verbatim = 0;
         size_t rn_chunks = 0, rn_verbatim = 0;
         int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
@@ -630,8 +630,8 @@ _Bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_m
 _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
     if (result == false) {
-        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
-        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
+        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, (ptrdiff_t)llen)};
+        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, (ptrdiff_t)rlen)};
         size_t ln_chunks = 0, ln_verbatim = 0;
         size_t rn_chunks = 0, rn_verbatim = 0;
         int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
@@ -685,8 +685,8 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         (ret == Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR)) {
         ret = Z_KEYEXPR_CANON_SUCCESS;
 
-        const char *end = _z_cptr_char_offset(start, *len);
-        char *reader = _z_ptr_char_offset(start, canon_len);
+        const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
+        char *reader = _z_ptr_char_offset(start, (ptrdiff_t)canon_len);
         const char *write_start = reader;
         char *writer = reader;
         char *next_slash = strchr(reader, '/');

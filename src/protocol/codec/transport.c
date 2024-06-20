@@ -37,12 +37,12 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
     uint8_t zidlen = _z_id_len(msg->_zid);
-    cbyte |= ((zidlen - 1) & 0x0F) << 4;
+    cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
     _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S)) {
-        uint8_t cbyte = 0;
+        cbyte = 0;
         cbyte |= (msg->_seq_num_res & 0x03);
         cbyte |= ((msg->_req_id_res & 0x03) << 2);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
@@ -155,7 +155,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     uint8_t cbyte = 0;
     cbyte |= (msg->_whatami & 0x03);
     uint8_t zidlen = _z_id_len(msg->_zid);
-    cbyte |= ((zidlen - 1) & 0x0F) << 4;  // TODO[protocol]: check if ZID > 0 && <= 16
+    cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);  // TODO[protocol]: check if ZID > 0 && <= 16
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
     _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 

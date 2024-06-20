@@ -17,14 +17,20 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/utils/logging.h"
 
-void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg) {}
+void _z_s_msg_scout_clear(_z_s_msg_scout_t *msg) {
+    // Nothing to do
+    _ZP_UNUSED(msg);
+}
 
 /*------------------ Locators Field ------------------*/
 void _z_locators_clear(_z_locator_array_t *ls) { _z_locator_array_clear(ls); }
 
 void _z_s_msg_hello_clear(_z_s_msg_hello_t *msg) { _z_locators_clear(&msg->_locators); }
 
-void _z_t_msg_join_clear(_z_t_msg_join_t *msg) {}
+void _z_t_msg_join_clear(_z_t_msg_join_t *msg) {
+    // Nothing to do
+    _ZP_UNUSED(msg);
+}
 
 void _z_t_msg_init_clear(_z_t_msg_init_t *msg) { _z_slice_clear(&msg->_cookie); }
 

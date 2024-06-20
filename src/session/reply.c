@@ -30,6 +30,11 @@ int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key
     } else {
         ret = _Z_ERR_GENERIC;
     }
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(key);
+    _ZP_UNUSED(reply);
 #endif
     return ret;
 }
@@ -42,6 +47,7 @@ int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final
     _z_zint_t id = final->_request_id;
     _z_trigger_query_reply_final(zn, id);
 #else
+    _ZP_UNUSED(zn);
     _ZP_UNUSED(final);
 #endif
     return ret;

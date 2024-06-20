@@ -51,7 +51,7 @@ size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output) {
     uint8_t *pos = output;
 
     uint8_t code = (uint8_t)0xFF;
-    const uint8_t *input_end_ptr = _z_cptr_u8_offset(input, input_len);
+    const uint8_t *input_end_ptr = _z_cptr_u8_offset(input, (ptrdiff_t)input_len);
     for (uint8_t block = (uint8_t)0x00; byte < input_end_ptr; block--) {
         if (block != (uint8_t)0x00) {
             *pos = *byte;
