@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     }
     char *keyexpr = "test/thr";
     size_t len = (size_t)atoi(argv[1]);
-    uint8_t *value = (uint8_t *)malloc(len);
+    uint8_t *value = (uint8_t *)z_malloc(len);
     memset(value, 1, len);
 
     // Set config
@@ -61,14 +61,18 @@ int main(int argc, char **argv) {
 
     // Send packets
     while (1) {
-        z_publisher_put(z_loan(pub), (const uint8_t *)value, len, NULL);
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_string(&payload, (char *)value);
+
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
     // Clean up
     z_undeclare_publisher(z_move(pub));
     zp_stop_read_task(z_loan_mut(s));
     zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
-    free(value);
+    z_free(value);
     exit(0);
 }
 #else
