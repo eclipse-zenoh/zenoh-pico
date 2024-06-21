@@ -38,6 +38,7 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/unicast.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
@@ -351,9 +352,7 @@ int8_t zp_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_byt
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Extract first item size
-    size_t first_len = 0;
-    // FIXME: size endianness, Issue #420
-    memcpy(&first_len, &bytes->_slice.start[*curr_idx], sizeof(uint32_t));
+    size_t first_len = _z_host_le_load32(&bytes->_slice.start[*curr_idx]);
     *curr_idx += sizeof(uint32_t);
     // Allocate first item bytes
     *first->_val = _z_bytes_make(first_len);
@@ -365,8 +364,7 @@ int8_t zp_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_byt
     *curr_idx += first_len;
 
     // Extract second item size
-    size_t second_len = 0;
-    memcpy(&second_len, &bytes->_slice.start[*curr_idx], sizeof(uint32_t));
+    size_t second_len = _z_host_le_load32(&bytes->_slice.start[*curr_idx]);
     *curr_idx += sizeof(uint32_t);
     // Allocate second item bytes
     *second->_val = _z_bytes_make(second_len);
@@ -571,12 +569,11 @@ int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *fir
     size_t first_len = z_slice_len(&first->_val->_slice);
     size_t second_len = z_slice_len(&second->_val->_slice);
     // Copy data
-    // FIXME: size endianness, Issue #420
-    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &first_len, sizeof(uint32_t));
+    _z_host_le_store32((uint32_t)first_len, (uint8_t *)&bytes->_val->_slice.start[*curr_idx]);
     *curr_idx += sizeof(uint32_t);
     memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&first->_val->_slice), first_len);
     *curr_idx += first_len;
-    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &second_len, sizeof(uint32_t));
+    _z_host_le_store32((uint32_t)second_len, (uint8_t *)&bytes->_val->_slice.start[*curr_idx]);
     *curr_idx += sizeof(uint32_t);
     memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&second->_val->_slice), second_len);
     *curr_idx += second_len;
