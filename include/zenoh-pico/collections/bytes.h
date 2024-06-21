@@ -50,13 +50,12 @@ typedef struct {
 
 _Bool _zz_bytes_check(const _zz_bytes_t *bytes);
 _zz_bytes_t _zz_bytes_null(void);
-_zz_bytes_t _zz_bytes_make(size_t capacity);
 int8_t _zz_bytes_append(_zz_bytes_t* dst, _zz_bytes_t* src);
 int8_t _zz_bytes_append_slice(_zz_bytes_t* dst, _z_arc_slice_t* s);
 int8_t _zz_bytes_copy(_zz_bytes_t *dst, const _zz_bytes_t *src);
 _zz_bytes_t _zz_bytes_duplicate(const _zz_bytes_t *src);
 void _zz_bytes_move(_zz_bytes_t *dst, _zz_bytes_t *src);
-void _zz_bytes_clear(_zz_bytes_t *bytes);
+void _zz_bytes_drop(_zz_bytes_t *bytes);
 void _zz_bytes_free(_zz_bytes_t **bs);
 size_t _zz_bytes_num_slices(const _zz_bytes_t *bs);
 _z_arc_slice_t* _zz_bytes_get_slice(const _zz_bytes_t *bs, size_t i);

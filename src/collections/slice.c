@@ -26,13 +26,16 @@ _z_slice_t _z_slice_empty(void) { return (_z_slice_t){.start = NULL, .len = 0, .
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
     int8_t ret = _Z_RES_OK;
 
-    bs->start = (uint8_t *)z_malloc(capacity);
+    bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
     if (bs->start != NULL) {
         bs->len = capacity;
         bs->_is_alloc = true;
     } else {
         bs->len = 0;
         bs->_is_alloc = false;
+    }
+    
+    if (bs->len != capacity) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 

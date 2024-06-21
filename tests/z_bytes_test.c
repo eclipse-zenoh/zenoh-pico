@@ -27,7 +27,7 @@ void test_null_bytes() {
     assert(_zz_bytes_is_empty(&b));
     assert(!_zz_bytes_check(&b));
     assert(_zz_bytes_num_slices(&b) == 0);
-    _zz_bytes_clear(&b); // no crush
+    _zz_bytes_drop(&b); // no crush
 }
 
 void test_slice() {
@@ -45,7 +45,7 @@ void test_slice() {
     _zz_bytes_to_buf(&b, data_out, 5);
     assert(memcmp(data, data_out, 5) == 0);
     
-    _zz_bytes_clear(&b);
+    _zz_bytes_drop(&b);
 }
 
 void test_append() {
@@ -64,24 +64,109 @@ void test_append() {
     _zz_bytes_append_slice(&b, &s2);
     _zz_bytes_append_slice(&b, &s3);
 
-    printf("elements: %zu, ", _zz_bytes_len(&b));
     assert(_zz_bytes_len(&b) == 10);
     assert(!_zz_bytes_is_empty(&b));
     assert(_zz_bytes_check(&b));
     assert(_zz_bytes_num_slices(&b) == 3);
     assert(_z_slice_eq(&_zz_bytes_get_slice(&b, 0)->slice.in->val, &s1.slice.in->val));
-    assert(_z_slice_eq(&_zz_bytes_get_slice(&b, 0)->slice.in->val, &s2.slice.in->val));
-    assert(_z_slice_eq(&_zz_bytes_get_slice(&b, 0)->slice.in->val, &s3.slice.in->val));
+    assert(_z_slice_eq(&_zz_bytes_get_slice(&b, 1)->slice.in->val, &s2.slice.in->val));
+    assert(_z_slice_eq(&_zz_bytes_get_slice(&b, 2)->slice.in->val, &s3.slice.in->val));
 
     _zz_bytes_to_buf(&b, data_out, 10);
     assert(memcmp(data_in, data_out, 10) == 0);
     
-    _zz_bytes_clear(&b);
+    _zz_bytes_drop(&b);
+}
+
+void test_reader_read() {
+    uint8_t data1[5] = {1, 2, 3, 4, 5};
+    uint8_t data2[5] = {1, 2, 6, 7, 8};
+    uint8_t data3[3] = {3, 9, 10};
+    uint8_t data_in[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    uint8_t data_out[10] = {};
+    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
+    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
+    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
+
+    _zz_bytes_t b = _zz_bytes_null();
+   
+    _zz_bytes_append_slice(&b, &s1);
+    _zz_bytes_append_slice(&b, &s2);
+    _zz_bytes_append_slice(&b, &s3);
+
+    _zz_bytes_reader_t reader = _zz_bytes_get_reader(&b);
+
+    uint8_t out;
+    assert(_zz_bytes_reader_tell(&reader) == 0);
+    _zz_bytes_reader_read(&reader, &out, 1);
+    assert(_zz_bytes_reader_tell(&reader) == 1);
+    assert(out == 1);
+
+    _zz_bytes_reader_read(&reader, data_out, 3);
+    assert(_zz_bytes_reader_tell(&reader) == 4);
+    assert(memcmp(data_out, data_in + 1, 3) == 0);
+
+    _zz_bytes_reader_read(&reader, data_out, 6);
+    assert(_zz_bytes_reader_tell(&reader) == 10);
+    assert(memcmp(data_out, data_in + 4, 6) == 0);
+
+    _zz_bytes_drop(&b);
+}
+
+void test_reader_seek() {
+    uint8_t data1[5] = {1, 2, 3, 4, 5};
+    uint8_t data2[5] = {1, 2, 6, 7, 8};
+    uint8_t data3[3] = {3, 9, 10};
+    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
+    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
+    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
+
+    _zz_bytes_t b = _zz_bytes_null();
+   
+    _zz_bytes_append_slice(&b, &s1);
+    _zz_bytes_append_slice(&b, &s2);
+    _zz_bytes_append_slice(&b, &s3);
+
+    _zz_bytes_reader_t reader = _zz_bytes_get_reader(&b);
+
+    uint8_t out;
+    assert(_zz_bytes_reader_tell(&reader) == 0);
+    assert(_zz_bytes_reader_seek(&reader, 3, SEEK_CUR) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 3);
+    assert(_zz_bytes_reader_seek(&reader, 5, SEEK_CUR) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 8);
+    assert(_zz_bytes_reader_seek(&reader, 10, SEEK_CUR) != 0);
+
+    assert(_zz_bytes_reader_seek(&reader, 0, SEEK_SET) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 0);
+
+    assert(_zz_bytes_reader_seek(&reader, 3, SEEK_SET) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 3);
+    assert(_zz_bytes_reader_seek(&reader, 8, SEEK_SET) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 8);
+    assert(_zz_bytes_reader_seek(&reader, 20, SEEK_SET) != 0);
+    assert(_zz_bytes_reader_seek(&reader, -20, SEEK_SET) != 0);
+
+
+    assert(_zz_bytes_reader_seek(&reader, 0, SEEK_END) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 10);
+    assert(_zz_bytes_reader_seek(&reader, -3, SEEK_END) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 7);
+    assert(_zz_bytes_reader_seek(&reader, -8, SEEK_END) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 2);
+    assert(_zz_bytes_reader_seek(&reader, -10, SEEK_END) == 0);
+    assert(_zz_bytes_reader_tell(&reader) == 0);
+    assert(_zz_bytes_reader_seek(&reader, -20, SEEK_END) != 0);
+    assert(_zz_bytes_reader_seek(&reader, 5, SEEK_END) != 0);
+
+    _zz_bytes_drop(&b);
 }
 
 int main(void) {
     test_null_bytes();
     test_slice();
     test_append();
+    test_reader_read();
+    test_reader_seek();
     return 0;
 }

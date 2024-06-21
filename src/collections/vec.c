@@ -182,6 +182,7 @@ void _z_svec_reset(_z_svec_t *v, z_element_clear_f clear, size_t element_size) {
         size_t offset = 0;
         for (size_t i = 0; i < v->_len; i++) {
             clear(v->_val + offset);
+            offset += element_size;
         }
     }
     v->_len = 0;
@@ -218,7 +219,7 @@ _Bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
 bool _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t element_size) {
     if (v->_len == v->_capacity) {
         // Allocate a new vector
-        size_t _capacity = (v->_capacity << 1) | 0x01;
+        size_t _capacity = v->_capacity == 0 ? 1 : (v->_capacity << 1);
         void *_val = (void *)z_malloc(_capacity * element_size);
         if (_val != NULL) {
             __z_svec_move_inner(_val, v->_val, move, v->_len, element_size);
@@ -229,13 +230,13 @@ bool _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t e
             v->_val = _val;
             v->_capacity = _capacity;
             memcpy(v->_val + v->_len * element_size, e, element_size);
-            v->_len = v->_len + 1;
+            v->_len++;
         } else {
             return false;
         }
     } else {
         memcpy(v->_val + v->_len * element_size, e, element_size);
-        v->_len = v->_len + 1;
+        v->_len++;
     }
     return true;
 }

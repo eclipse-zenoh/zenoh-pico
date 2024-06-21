@@ -50,7 +50,7 @@ _zz_bytes_t _zz_bytes_duplicate(const _zz_bytes_t *src) {
 
 size_t _zz_bytes_len(const _zz_bytes_t *bs) {
     size_t len = 0;
-    for (size_t i = 0; i < _z_arc_slice_svec_len(&bs->_slices); i++) {
+    for (size_t i = 0; i < _z_arc_slice_svec_len(&bs->_slices); ++i) {
         const _z_arc_slice_t *s = _z_arc_slice_svec_get(&bs->_slices, i);
         len += _z_arc_slice_len(s);
     }
@@ -74,13 +74,13 @@ _z_arc_slice_t* _zz_bytes_get_slice(const _zz_bytes_t *bs, size_t i) {
     return _z_arc_slice_svec_get(&bs->_slices, i);
 }
 
-void _zz_bytes_clear(_zz_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
+void _zz_bytes_drop(_zz_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
 
 void _zz_bytes_free(_zz_bytes_t **bs) {
     _zz_bytes_t *ptr = *bs;
 
     if (ptr != NULL) {
-        _zz_bytes_clear(ptr);
+        _zz_bytes_drop(ptr);
 
         z_free(ptr);
         *bs = NULL;
@@ -178,11 +178,11 @@ _zz_bytes_t _zz_bytes_serialize_from_pair(_zz_bytes_t* first, _zz_bytes_t* secon
     _zz_bytes_t out = _zz_bytes_null();
 
     if (_zz_bytes_append(&out, first) != _Z_RES_OK) {
-        _zz_bytes_clear(&out);
-        _zz_bytes_clear(first);
+        _zz_bytes_drop(&out);
+        _zz_bytes_drop(first);
     } else if (_zz_bytes_append(&out, second) != _Z_RES_OK) {
-        _zz_bytes_clear(&out);
-        _zz_bytes_clear(second);
+        _zz_bytes_drop(&out);
+        _zz_bytes_drop(second);
     }
 
     return out;
@@ -195,7 +195,7 @@ int8_t _zz_bytes_deserialize_into_pair(const _zz_bytes_t* bs, _zz_bytes_t* first
     if (res != _Z_RES_OK) return res;
     res = _zz_bytes_reader_read_next(&reader, second_out);
     if (res != _Z_RES_OK) {
-       _zz_bytes_clear(first_out);
+       _zz_bytes_drop(first_out);
     };
     return res;
 }
@@ -266,6 +266,7 @@ _zz_bytes_t _zz_bytes_from_double(double val) {
 _zz_bytes_reader_t _zz_bytes_get_reader(const _zz_bytes_t *bytes) {
     _zz_bytes_reader_t r;
     r.bytes = bytes;
+    r.slice_idx = 0;
     r.byte_idx = 0;
     r.in_slice_idx = 0;
     return r;
@@ -299,7 +300,6 @@ int8_t _zz_bytes_reader_seek_backward(_zz_bytes_reader_t *reader, size_t offset)
             if (reader->slice_idx == 0) return _Z_ERR_DID_NOT_READ;
             reader->slice_idx--;
             _z_arc_slice_t* s = _zz_bytes_get_slice(reader->bytes, reader->slice_idx);
-            s = _zz_bytes_get_slice(reader->bytes, reader->slice_idx);
             reader->in_slice_idx = _z_arc_slice_len(s);
         }
         
@@ -308,9 +308,9 @@ int8_t _zz_bytes_reader_seek_backward(_zz_bytes_reader_t *reader, size_t offset)
             reader->byte_idx -= reader->in_slice_idx;
             reader->in_slice_idx = 0;
         } else {
-            offset = 0;
             reader->byte_idx -= offset;
             reader->in_slice_idx -= offset;
+            offset = 0;
         }
     }
     return _Z_RES_OK;
@@ -331,6 +331,9 @@ int8_t _zz_bytes_reader_seek(_zz_bytes_reader_t *reader, int64_t offset, int ori
             else return _zz_bytes_reader_seek_backward(reader, -offset);
         }
         case SEEK_END: {
+            reader->byte_idx = _zz_bytes_len(reader->bytes);
+            reader->in_slice_idx = 0;
+            reader->slice_idx = _zz_bytes_num_slices(reader->bytes);
             if (offset > 0) return _Z_ERR_DID_NOT_READ;
             else return _zz_bytes_reader_seek_backward(reader, -offset);
         }
@@ -409,7 +412,7 @@ int8_t _zz_bytes_reader_read_slices(_zz_bytes_reader_t* reader, size_t len, _zz_
     }
 
     if (len > 0 && res == _Z_RES_OK) res = _Z_ERR_DID_NOT_READ;
-    if (res != _Z_RES_OK) _zz_bytes_clear(out);
+    if (res != _Z_RES_OK) _zz_bytes_drop(out);
 
     return res;
     

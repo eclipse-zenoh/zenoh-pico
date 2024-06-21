@@ -63,7 +63,7 @@ _Bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) {
 }
 
 const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) {
-    return s->slice.in->val.start;
+    return s->slice.in->val.start + s->start;
 }
 
 int8_t _z_arc_slice_copy(_z_arc_slice_t *dst, const _z_arc_slice_t *src) {
@@ -75,6 +75,8 @@ int8_t _z_arc_slice_copy(_z_arc_slice_t *dst, const _z_arc_slice_t *src) {
 
 int8_t _z_arc_slice_move(_z_arc_slice_t *dst, _z_arc_slice_t *src) {
     dst->slice = src->slice;
+    dst->len = src->len;
+    dst->start = src->start;
     src->len = 0;
     src->start = 0;
     src->slice.in = NULL;
