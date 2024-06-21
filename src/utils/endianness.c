@@ -139,3 +139,19 @@ void _z_host_le_store64(const uint64_t val, uint8_t *dst) {
     _z_le_store64(val, dst);
 #endif
 }
+
+uint8_t _z_host_u16_lsb(uint_fast16_t val) {
+#if defined(ZENOH_ENDIANNNESS_BIG)
+    return (uint8_t)(val >> 8);
+#elif defined(ZENOH_ENDIANNNESS_LITTLE)
+    return (uint8_t)(val >> 0);
+#endif
+}
+
+uint8_t _z_host_u16_msb(uint_fast16_t val) {
+#if defined(ZENOH_ENDIANNNESS_BIG)
+    return (uint8_t)(val >> 0);
+#elif defined(ZENOH_ENDIANNNESS_LITTLE)
+    return (uint8_t)(val >> 8);
+#endif
+}
