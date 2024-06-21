@@ -19,6 +19,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -71,11 +72,9 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                         continue;
                     }
                 }
-
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-                }
-
+                // Get stream size
+                to_read = _z_read_stream_size(&ztm->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
                     if (_z_zbuf_len(&ztm->_zbuf) < to_read) {

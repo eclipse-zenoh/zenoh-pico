@@ -21,6 +21,7 @@
 #include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/tx.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Transmission helper ------------------*/
@@ -57,9 +58,9 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability) {
         // Stream capable links
         case Z_LINK_CAP_FLOW_STREAM: {
             size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
-            for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                _z_wbuf_put(buf, (uint8_t)((len >> (uint8_t)8 * i) & (uint8_t)0xFF), i);
-            }
+            // Encode the u16 size as little endian
+            _z_wbuf_put(buf, _z_host_u16_lsb(len), 0);
+            _z_wbuf_put(buf, _z_host_u16_msb(len), 1);
             break;
         }
         // Datagram capable links
