@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -66,11 +67,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         continue;
                     }
                 }
-
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-                }
-
+                // Get stream size
+                to_read = _z_read_stream_size(&ztu->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_zbuf) < to_read) {

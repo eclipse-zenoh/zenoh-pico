@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/result.h"
 
 /*-------- Slice --------*/
@@ -162,24 +163,11 @@ uint8_t _z_bytes_to_uint8(const _z_bytes_t *bs) {
     return val;
 }
 
-// FIXME: int16+ endianness, Issue #420
-uint16_t _z_bytes_to_uint16(const _z_bytes_t *bs) {
-    uint16_t val = 0;
-    memcpy(&val, bs->_slice.start, sizeof(val));
-    return val;
-}
+uint16_t _z_bytes_to_uint16(const _z_bytes_t *bs) { return _z_host_le_load16(bs->_slice.start); }
 
-uint32_t _z_bytes_to_uint32(const _z_bytes_t *bs) {
-    uint32_t val = 0;
-    memcpy(&val, bs->_slice.start, sizeof(val));
-    return val;
-}
+uint32_t _z_bytes_to_uint32(const _z_bytes_t *bs) { return _z_host_le_load32(bs->_slice.start); }
 
-uint64_t _z_bytes_to_uint64(const _z_bytes_t *bs) {
-    uint64_t val = 0;
-    memcpy(&val, bs->_slice.start, sizeof(val));
-    return val;
-}
+uint64_t _z_bytes_to_uint64(const _z_bytes_t *bs) { return _z_host_le_load64(bs->_slice.start); }
 
 float _z_bytes_to_float(const _z_bytes_t *bs) {
     float val = 0;
@@ -222,7 +210,7 @@ _z_bytes_t _z_bytes_from_uint16(uint16_t val) {
         return ret;
     }
     // Encode int
-    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    _z_host_le_store16(val, (uint8_t *)ret._slice.start);
     return ret;
 }
 
@@ -233,7 +221,7 @@ _z_bytes_t _z_bytes_from_uint32(uint32_t val) {
         return ret;
     }
     // Encode int
-    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    _z_host_le_store32(val, (uint8_t *)ret._slice.start);
     return ret;
 }
 
@@ -244,7 +232,7 @@ _z_bytes_t _z_bytes_from_uint64(uint64_t val) {
         return ret;
     }
     // Encode int
-    memcpy((uint8_t *)ret._slice.start, &val, sizeof(val));
+    _z_host_le_store64(val, (uint8_t *)ret._slice.start);
     return ret;
 }
 

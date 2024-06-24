@@ -24,6 +24,7 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -50,9 +51,9 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
                         break;
                     }
                 }
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-                }
+                // Get stream size
+                to_read = _z_read_stream_size(&ztm->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < to_read) {

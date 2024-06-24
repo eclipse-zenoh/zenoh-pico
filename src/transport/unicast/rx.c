@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -48,9 +49,9 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
                         continue;
                     }
                 }
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-                }
+                // Get stream size
+                to_read = _z_read_stream_size(&ztu->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
