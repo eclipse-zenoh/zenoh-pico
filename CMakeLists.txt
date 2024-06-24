@@ -17,6 +17,9 @@ file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 
 project(zenohpico VERSION ${version} LANGUAGES C)
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+include(helpers)
+
 # Configure header file to define the project version
 set(ZENOH_PICO ${PROJECT_VERSION})
 set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
@@ -28,6 +31,16 @@ configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
   @ONLY
 )
+set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+if(NOT DEFINED PROJECT_VERSION_TWEAK)
+	set(project_version "${project_version}")
+elseif(PROJECT_VERSION_TWEAK EQUAL 0)
+	set(project_version "${project_version}-dev")
+elseif(PROJECT_VERSION_TWEAK GREATER 1)
+	set(project_version "${project_version}-pre.${PROJECT_VERSION_TWEAK}")
+endif()
+status_print(project_version)
+
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
