@@ -108,8 +108,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
+ *     payload: The data to write.
  *     encoding: The encoding of the payload. The callee gets the ownership of
  *               any allocated value.
  *     kind: The kind of the value.
@@ -119,9 +118,9 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority, const _z_bytes_t attachment);
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t encoding,
+                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1

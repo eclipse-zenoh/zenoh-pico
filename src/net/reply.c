@@ -84,9 +84,9 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_timestamp_clear(&pr->_tstamp);
 }
 
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_slice_t *payload,
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           const _z_bytes_t att) {
+                           const _z_bytes_t attachment) {
     _z_reply_t reply = _z_reply_null();
     reply._tag = tag;
     if (tag == Z_REPLY_TAG_DATA) {
@@ -95,10 +95,10 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         _z_sample_t sample = _z_sample_null();
         sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
         sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
-        _z_slice_copy(&sample.payload._slice, payload);
+        sample.payload = payload;    // FIXME: call z_bytes_move or copy
         sample.kind = kind;
         sample.timestamp = _z_timestamp_duplicate(timestamp);
-        sample.attachment._slice = _z_slice_steal((_z_slice_t *)&att._slice);
+        sample.attachment = attachment;  // FIXME: call z_bytes_move or copy
 
         // Create sample rc from value
         reply.data.sample = _z_sample_rc_new_from_val(sample);
@@ -106,9 +106,9 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     return reply;
 }
 #else
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_slice_t *payload,
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           const _z_bytes_t att) {
+                           const _z_bytes_t attachment) {
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(tag);
     _ZP_UNUSED(id);
@@ -116,7 +116,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     _ZP_UNUSED(timestamp);
     _ZP_UNUSED(encoding);
     _ZP_UNUSED(kind);
-    _ZP_UNUSED(att);
+    _ZP_UNUSED(attachment);
     return _z_reply_null();
 }
 #endif

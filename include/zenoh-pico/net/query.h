@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 

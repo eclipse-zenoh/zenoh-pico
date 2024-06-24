@@ -66,6 +66,11 @@ static inline void _z_noop_copy(void *dst, const void *src) {
     (void)(src);
 }
 
+static inline void _z_noop_move(void *dst, void *src) {
+    (void)(dst);
+    (void)(src);
+}
+
 _Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

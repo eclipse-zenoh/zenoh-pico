@@ -114,7 +114,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     }
 
     // Build the reply
-    _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, &msg->_payload,
+    _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
                                        &msg->_commons._timestamp, msg->_encoding, Z_SAMPLE_KIND_PUT, msg->_attachment);
 
     // Verify if this is a newer reply, free the old one in case it is

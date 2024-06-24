@@ -23,16 +23,18 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(closure, v)                                                                         \
-    do {                                                                                         \
-        _z_sample_t s = {.keyexpr = _z_rname("key"),                                             \
-                         .payload = {._slice = {.start = (const uint8_t *)v, .len = strlen(v)}}, \
-                         .timestamp = _z_timestamp_null(),                                       \
-                         .encoding = _z_encoding_null(),                                         \
-                         .kind = 0,                                                              \
-                         .qos = {0}};                                                            \
-        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                 \
-        z_call(closure, &sample);                                                                \
+#define SEND(closure, v)                                                                             \
+    do {                                                                                             \
+        _z_bytes_t payload;                                                                         \
+        _z_bytes_from_slice(&payload, (_z_slice_t){.start = (const uint8_t *)v, .len = strlen(v)}); \
+        _z_sample_t s = {.keyexpr = _z_rname("key"),                                                 \
+                         .payload = payload,                                                         \
+                         .timestamp = _z_timestamp_null(),                                           \
+                         .encoding = _z_encoding_null(),                                             \
+                         .kind = 0,                                                                  \
+                         .qos = {0}};                                                                \
+        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                     \
+        z_call(closure, &sample);                                                                    \
     } while (0);
 
 #define _RECV(handler, method, buf)                                                   \

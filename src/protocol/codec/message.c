@@ -254,7 +254,7 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
                             pshb->_body._put._commons._source_info._source_sn != 0 ||
                             pshb->_body._put._commons._source_info._entity_id != 0;
 
-    _Bool has_attachment = pshb->_is_put && _z_bytes_check(pshb->_body._put._attachment);
+    _Bool has_attachment = pshb->_is_put && _z_bytes_check(&pshb->_body._put._attachment);
     _Bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
     _Bool has_encoding = false;
     if (has_source_info || has_attachment) {
@@ -288,10 +288,10 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     }
     if (has_attachment) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x03));
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &pshb->_body._put._attachment._slice));
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &pshb->_body._put._attachment));
     }
     if (pshb->_is_put) {
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &pshb->_body._put._payload));
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &pshb->_body._put._payload));
     }
 
     return 0;
@@ -306,10 +306,13 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Attachment
-            pshb->_body._put._attachment._slice = extension->_body._zbuf._val._is_alloc
-                                                      ? _z_slice_steal(&extension->_body._zbuf._val)
-                                                      : _z_slice_duplicate(&extension->_body._zbuf._val);
-            break;
+            _z_slice_t s;
+            if (extension->_body._zbuf._val._is_alloc) {
+                s = _z_slice_steal(&extension->_body._zbuf._val);
+            } else {
+                _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
+            }
+            ret = _z_bytes_from_slice(&pshb->_body._put._attachment, s);
         }
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
@@ -336,7 +339,7 @@ int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header)
                     _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
                 }
                 if (ret == _Z_RES_OK) {
-                    _Z_RETURN_IF_ERR(_z_slice_decode(&pshb->_body._put._payload, zbf));
+                    _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf));
                 }
                 break;
             }
@@ -414,10 +417,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
             extheader |= _Z_FLAG_Z_Z;
         }
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(
-            _z_zsize_encode(wbf, _z_encoding_len(&msg->_ext_value.encoding) + msg->_ext_value.payload._slice.len));
-        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &msg->_ext_value.encoding));
-        _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &msg->_ext_value.payload._slice));
+        _Z_RETURN_IF_ERR(_z_value_encode(wbf, &msg->_ext_value));
     }
     if (required_exts.info) {
         uint8_t extheader = _Z_MSG_EXT_ENC_ZBUF | 0x01;
@@ -429,7 +429,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     }
     if (required_exts.attachment) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | 0x05));
-        _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_ext_attachment._slice));
+        _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &msg->_ext_attachment));
     }
     return ret;
 }
@@ -446,14 +446,17 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Payload
             _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             ret = _z_encoding_decode(&msg->_ext_value.encoding, &zbf);
-            _z_slice_t bytes = _z_slice_wrap((uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
-            _z_slice_copy(&msg->_ext_value.payload._slice, &bytes);
+            ret |= _z_bytes_from_buf(&msg->_ext_value.payload, (uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x05: {  // Attachment
-            msg->_ext_attachment._slice = extension->_body._zbuf._val._is_alloc
-                                              ? _z_slice_steal(&extension->_body._zbuf._val)
-                                              : _z_slice_duplicate(&extension->_body._zbuf._val);
+            _z_slice_t s;
+            if (extension->_body._zbuf._val._is_alloc) {
+                s = _z_slice_steal(&extension->_body._zbuf._val);
+            } else {
+                _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
+            }
+            ret = _z_bytes_from_slice(&msg->_ext_attachment, s);
             break;
         }
         default:
@@ -550,7 +553,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
         _Z_RETURN_IF_ERR(_z_source_info_encode_ext(wbf, &err->_ext_source_info));
     }
     // Encode payload
-    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &err->_payload));
+    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &err->_payload));
     return ret;
 }
 int8_t _z_err_decode_extension(_z_msg_ext_t *extension, void *ctx) {
@@ -578,7 +581,7 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_err_decode_extension, err));
     }
-    _Z_RETURN_IF_ERR(_z_slice_decode(&err->_payload, zbf));
+    _Z_RETURN_IF_ERR(_z_bytes_decode(&err->_payload, zbf));
     return _Z_RES_OK;
 }
 

@@ -68,6 +68,8 @@ typedef enum {
 
     _Z_ERR_CONNECTION_CLOSED = -77,
 
+    _Z_ERR_DID_NOT_READ = -76,
+
     _Z_ERR_GENERIC = -128
 } _z_res_t;
 
