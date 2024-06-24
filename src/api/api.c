@@ -819,6 +819,18 @@ const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) {
     return &_Z_RC_IN_VAL(sample).attachment;
 }
 
+const z_loaned_keyexpr_t *zp_reply_sample_keyexpr(const zp_loaned_reply_sample_t *sample) { return &sample->keyexpr; }
+z_sample_kind_t zp_reply_sample_kind(const zp_loaned_reply_sample_t *sample) { return sample->kind; }
+const z_loaned_bytes_t *zp_reply_sample_payload(const zp_loaned_reply_sample_t *sample) { return &sample->payload; }
+z_timestamp_t zp_reply_sample_timestamp(const zp_loaned_reply_sample_t *sample) { return sample->timestamp; }
+const z_loaned_encoding_t *zp_reply_sample_encoding(const zp_loaned_reply_sample_t *sample) {
+    return &sample->encoding;
+}
+z_qos_t zp_reply_sample_qos(const zp_loaned_reply_sample_t *sample) { return sample->qos; }
+const z_loaned_bytes_t *zp_reply_sample_attachment(const zp_loaned_reply_sample_t *sample) {
+    return &sample->attachment;
+}
+
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
 const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }
 
@@ -1045,11 +1057,25 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
 _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);
     // For the moment always return TRUE.
-    // The support for reply errors will come in the next release.
+    // FIXME: The support for reply errors will come in the next release.
     return true;
 }
 
-const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) {
+    // Convert sample to sample_rc if needed
+    if (!reply->in->val.data.has_sample_as_rc) {
+        reply->in->val.data.sample.rc = _z_sample_rc_new_from_val(reply->in->val.data.sample.base);
+        reply->in->val.data.has_sample_as_rc = true;
+    }
+    return &reply->in->val.data.sample.rc;
+}
+
+const zp_loaned_reply_sample_t *zp_reply_ok(const z_loaned_reply_t *reply) {
+    if (reply->in->val.data.has_sample_as_rc) {
+        return NULL;
+    }
+    return &reply->in->val.data.sample.base;
+}
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);

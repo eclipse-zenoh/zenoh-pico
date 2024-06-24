@@ -21,14 +21,19 @@ _z_reply_t _z_reply_null(void) {
     _z_reply_t r = {._tag = Z_REPLY_TAG_DATA,
                     .data = {
                         .replier_id = {.id = {0}},
-                        .sample = {.in = NULL},
+                        .has_sample_as_rc = false,
+                        .sample.base = _z_sample_null(),
                     }};
     return r;
 }
 
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
-    _z_sample_rc_drop(&reply_data->sample);
+    if (reply_data->has_sample_as_rc) {
+        _z_sample_rc_drop(&reply_data->sample.rc);
+    } else {
+        _z_sample_clear(&reply_data->sample.base);
+    }
     reply_data->replier_id = _z_id_empty();
 }
 
@@ -37,15 +42,20 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 
     if (ptr != NULL) {
         _z_reply_data_clear(ptr);
-
         z_free(ptr);
         *reply_data = NULL;
     }
 }
 
 void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src) {
-    _z_sample_rc_copy(&dst->sample, &src->sample);
     dst->replier_id = src->replier_id;
+    dst->has_sample_as_rc = src->has_sample_as_rc;
+
+    if (src->has_sample_as_rc) {
+        _z_sample_rc_copy(&dst->sample.rc, &src->sample.rc);
+    } else {
+        _z_sample_copy(&dst->sample.base, &src->sample.base);
+    }
 }
 
 _z_reply_t _z_reply_move(_z_reply_t *src_reply) {
@@ -91,17 +101,13 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     reply._tag = tag;
     if (tag == Z_REPLY_TAG_DATA) {
         reply.data.replier_id = id;
-        // Create sample
-        _z_sample_t sample = _z_sample_null();
-        sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
-        sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
+        // Create reply sample
+        reply.data.sample.base.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
+        reply.data.sample.base.encoding = encoding;  // FIXME: call z_encoding_move or copy
         _z_bytes_copy(&sample.payload, &payload);
-        sample.kind = kind;
-        sample.timestamp = _z_timestamp_duplicate(timestamp);
-        _z_bytes_copy(&sample.attachment, &attachment);
-
-        // Create sample rc from value
-        reply.data.sample = _z_sample_rc_new_from_val(sample);
+        reply.data.sample.base.kind = kind;
+        reply.data.sample.base.timestamp = _z_timestamp_duplicate(timestamp);
+        reply.data.sample.base.attachment._slice = _z_slice_steal((_z_slice_t *)&att._slice);
     }
     return reply;
 }

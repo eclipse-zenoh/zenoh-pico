@@ -127,8 +127,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply.data.sample.in->val.keyexpr._suffix,
-                          reply.data.sample.in->val.keyexpr._suffix) == true) {
+            if (_z_str_eq(pen_rep->_reply.data.sample.base.keyexpr._suffix, reply.data.sample.base.keyexpr._suffix) ==
+                true) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -149,7 +149,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                     _z_reply_t partial_reply;
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialized values on the reply
-                    partial_reply.data.sample.in->val.keyexpr = _z_keyexpr_duplicate(reply.data.sample.in->val.keyexpr);
+                    partial_reply.data.sample.base.keyexpr = _z_keyexpr_duplicate(reply.data.sample.base.keyexpr);
                     pen_rep->_reply = partial_reply;
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode

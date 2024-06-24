@@ -50,6 +50,7 @@ _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 // Forward declaration to avoid cyclical include
 typedef struct _z_sample_rc_t z_loaned_sample_t;
+typedef struct _z_sample_t zp_loaned_reply_sample_t;
 
 /**
  * The callback signature of the functions handling data messages.

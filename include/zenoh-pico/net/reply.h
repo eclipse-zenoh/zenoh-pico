@@ -32,8 +32,12 @@
  *
  */
 typedef struct _z_reply_data_t {
-    _z_sample_rc_t sample;
+    union {
+        _z_sample_t base;
+        _z_sample_rc_t rc;
+    } sample;
     _z_id_t replier_id;
+    _Bool has_sample_as_rc;
 } _z_reply_data_t;
 
 void _z_reply_data_clear(_z_reply_data_t *rd);
