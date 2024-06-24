@@ -14,8 +14,8 @@
 
 #include "zenoh-pico/utils/endianness.h"
 
-// TODO: expand this test (endianness types; platforms).
-// Gcc specific
+// Expand this test as needed (endianness types; platforms).
+// Gcc/clang test
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define ZENOH_ENDIANNNESS_BIG
 #else
