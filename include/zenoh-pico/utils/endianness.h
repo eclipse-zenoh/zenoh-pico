@@ -44,7 +44,8 @@ void _z_host_le_store16(const uint16_t val, uint8_t *dst);
 void _z_host_le_store32(const uint32_t val, uint8_t *dst);
 void _z_host_le_store64(const uint64_t val, uint8_t *dst);
 
-uint8_t _z_host_u16_lsb(uint_fast16_t val);
-uint8_t _z_host_u16_msb(uint_fast16_t val);
+// Return u16 individual bytes
+uint8_t _z_get_u16_lsb(uint_fast16_t val);
+uint8_t _z_get_u16_msb(uint_fast16_t val);
 
 #endif /* ZENOH_PICO_UTILS_ENDIANNESS_H */

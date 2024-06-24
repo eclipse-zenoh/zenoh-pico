@@ -23,13 +23,13 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Reception helper ------------------*/
-uint16_t _z_read_stream_size(_z_zbuf_t *zbuf) {
-    uint8_t stream_size[_Z_MSG_LEN_ENC_SIZE];
+size_t _z_read_stream_size(_z_zbuf_t *zbuf) {
+    size_t stream_size = 0;
     // Read the bytes from stream
     for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-        stream_size[i] = _z_zbuf_read(zbuf);
+        stream_size += (size_t)_z_zbuf_read(zbuf) << (8 * i);
     }
-    return _z_host_le_load16(stream_size);
+    return stream_size;
 }
 
 int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
