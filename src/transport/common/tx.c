@@ -59,8 +59,8 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability) {
         case Z_LINK_CAP_FLOW_STREAM: {
             size_t len = _z_wbuf_len(buf) - _Z_MSG_LEN_ENC_SIZE;
             // Encode the u16 size as little endian
-            _z_wbuf_put(buf, (size_t)_z_get_u16_lsb(len), 0);
-            _z_wbuf_put(buf, (size_t)_z_get_u16_msb(len), 1);
+            _z_wbuf_put(buf, _z_get_u16_lsb((uint_fast16_t)len), 0);
+            _z_wbuf_put(buf, _z_get_u16_msb((uint_fast16_t)len), 1);
             break;
         }
         // Datagram capable links
