@@ -25,8 +25,8 @@
 
 #define SEND(closure, v)                                                                             \
     do {                                                                                             \
-        _zz_bytes_t payload;                                                                         \
-        _zz_bytes_from_slice(&payload, (_z_slice_t){.start = (const uint8_t *)v, .len = strlen(v)}); \
+        _z_bytes_t payload;                                                                         \
+        _z_bytes_from_slice(&payload, (_z_slice_t){.start = (const uint8_t *)v, .len = strlen(v)}); \
         _z_sample_t s = {.keyexpr = _z_rname("key"),                                                 \
                          .payload = payload,                                                         \
                          .timestamp = _z_timestamp_null(),                                           \

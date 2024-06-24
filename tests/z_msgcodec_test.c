@@ -185,18 +185,18 @@ _z_slice_t gen_slice(size_t len) {
     return arr;
 }
 
-_zz_bytes_t gen_payload(size_t len) {
+_z_bytes_t gen_payload(size_t len) {
     _z_slice_t pld = gen_slice(len);
-    _zz_bytes_t b;
-    _zz_bytes_from_slice(&b, pld);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, pld);
 
     return b;
 }
 
-_zz_bytes_t gen_bytes(size_t len) {
+_z_bytes_t gen_bytes(size_t len) {
     _z_slice_t s = gen_slice(len);
-    _zz_bytes_t b;
-    _zz_bytes_from_slice(&b, s);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, s);
     return b;
 }
 
@@ -260,7 +260,7 @@ _z_value_t gen_value(void) {
     _z_value_t val;
     val.encoding = gen_encoding();
     if (gen_bool()) {
-        val.payload = _zz_bytes_null();
+        val.payload = _z_bytes_null();
     } else {
         val.payload = gen_bytes(16);
     }
@@ -507,20 +507,20 @@ void zbuf_extension(void) {
 /*------------------ Payload field ------------------*/
 void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
 
-void assert_eq_bytes(const _zz_bytes_t *left, const _zz_bytes_t *right) {
-    size_t len_left = _zz_bytes_len(left);
-    size_t len_right = _zz_bytes_len(right);
+void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) {
+    size_t len_left = _z_bytes_len(left);
+    size_t len_right = _z_bytes_len(right);
     printf("Array -> ");
     printf("Length (%zu:%zu), ", len_left, len_right);
 
     assert(len_left == len_right);
     printf("Content (");
-    _zz_bytes_reader_t reader_left = _zz_bytes_get_reader(left);
-    _zz_bytes_reader_t reader_right = _zz_bytes_get_reader(right);
+    _z_bytes_reader_t reader_left = _z_bytes_get_reader(left);
+    _z_bytes_reader_t reader_right = _z_bytes_get_reader(right);
     for (size_t i = 0; i < len_left; i++) {
         uint8_t l = 0, r = 0;
-        _zz_bytes_reader_read(&reader_left, &l, 1);
-        _zz_bytes_reader_read(&reader_right, &r, 1);
+        _z_bytes_reader_read(&reader_left, &l, 1);
+        _z_bytes_reader_read(&reader_right, &r, 1);
 
         printf("%02x:%02x", l, r);
         if (i < len_left - 1) printf(" ");
@@ -535,26 +535,26 @@ void payload_field(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
-    _zz_bytes_t e_pld = gen_payload(64);
+    _z_bytes_t e_pld = gen_payload(64);
 
     // Encode
-    int8_t res = _zz_bytes_encode(&wbf, &e_pld);
+    int8_t res = _z_bytes_encode(&wbf, &e_pld);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _zz_bytes_t d_pld;
-    res = _zz_bytes_decode(&d_pld, &zbf);
+    _z_bytes_t d_pld;
+    res = _z_bytes_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");
     assert_eq_bytes(&e_pld, &d_pld);
     printf("\n");
 
     // Free
-    _zz_bytes_drop(&e_pld);
-    _zz_bytes_drop(&d_pld);
+    _z_bytes_drop(&e_pld);
+    _z_bytes_drop(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

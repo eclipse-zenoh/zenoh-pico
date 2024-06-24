@@ -72,13 +72,13 @@ _Z_LOANED_TYPE(_z_slice_t, slice)
  * Members:
  *   _z_slice_t slice: content of the container.
  */
-_Z_OWNED_TYPE_PTR(_zz_bytes_t, bytes)
-_Z_LOANED_TYPE(_zz_bytes_t, bytes)
+_Z_OWNED_TYPE_PTR(_z_bytes_t, bytes)
+_Z_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
  * An iterator over multi-element serialized data
  */
-typedef _zz_bytes_iterator_t z_bytes_iterator_t;
+typedef _z_bytes_iterator_t z_bytes_iterator_t;
 
 /**
  * Represents a string without null-terminator.

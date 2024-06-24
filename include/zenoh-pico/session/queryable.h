@@ -29,7 +29,7 @@ _z_session_queryable_rc_list_t *_z_get_session_queryable_by_key(_z_session_t *zn
 
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q);
 int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *query, const _z_keyexpr_t q_key, uint32_t qid,
-                             const _zz_bytes_t attachment);
+                             const _z_bytes_t attachment);
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *q);
 void _z_flush_session_queryable(_z_session_t *zn);
 #endif

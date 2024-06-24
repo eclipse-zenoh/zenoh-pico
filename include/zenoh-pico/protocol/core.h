@@ -158,11 +158,11 @@ typedef struct {
  * Represents a Zenoh value.
  *
  * Members:
- *   _zz_bytes_t payload: The payload of this zenoh value.
+ *   _z_bytes_t payload: The payload of this zenoh value.
  *   _z_encoding_t encoding: The encoding of the `payload`.
  */
 typedef struct {
-    _zz_bytes_t payload;
+    _z_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
 _z_value_t _z_value_null(void);

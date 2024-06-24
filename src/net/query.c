@@ -38,12 +38,12 @@ void _z_query_clear(_z_query_t *q) {
     z_free(q->_parameters);
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
-    _zz_bytes_drop(&q->attachment);
+    _z_bytes_drop(&q->attachment);
 }
 
 #if Z_FEATURE_QUERYABLE == 1
 _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_slice_t *parameters,
-                           _z_session_t *zn, uint32_t request_id, const _zz_bytes_t attachment) {
+                           _z_session_t *zn, uint32_t request_id, const _z_bytes_t attachment) {
     _z_query_t q = _z_query_null();
     q._request_id = request_id;
     q._zn = zn;  // Ideally would have been an rc
