@@ -14,12 +14,13 @@
 
 #include "zenoh-pico/utils/endianness.h"
 
-// Expand this test as needed (endianness types; platforms).
+#if !defined(ZENOH_ENDIANNNESS_BIG) && !defined(ZENOH_ENDIANNNESS_LITTLE)
 // Gcc/clang test
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define ZENOH_ENDIANNNESS_BIG
 #else
 #define ZENOH_ENDIANNNESS_LITTLE
+#endif
 #endif
 
 // *** Little endian ***
