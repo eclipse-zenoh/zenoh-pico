@@ -130,9 +130,9 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority, const _z_bytes_t attachment) {
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _zz_bytes_t payload, const _z_encoding_t encoding,
+                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                const _zz_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
@@ -148,7 +148,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
                         ._body._body._put =
                             {
                                 ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
-                                ._payload = _z_slice_wrap(payload, len),
+                                ._payload = payload,
                                 ._encoding = encoding,
                                 ._attachment = attachment,
                             },
@@ -318,7 +318,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
 }
 
 int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const _z_bytes_t att) {
+                     const z_sample_kind_t kind, const _zz_bytes_t att) {
     int8_t ret = _Z_RES_OK;
 
     _z_keyexpr_t q_ke;
@@ -353,7 +353,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                 z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
                 z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
                 z_msg._body._response._body._reply._body._is_put = true;
-                z_msg._body._response._body._reply._body._body._put._payload = payload.payload._slice;
+                z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
                 z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
                 z_msg._body._response._body._reply._body._body._put._commons._timestamp = _z_timestamp_null();
                 z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();
@@ -375,7 +375,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment) {
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _zz_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object

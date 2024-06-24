@@ -38,10 +38,10 @@ typedef struct kv_pairs_t {
 static int msg_nb = 0;
 
 void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
-    size_t curr_idx = 0;
-    z_owned_bytes_t first, second;
-    while ((kvp->current_idx < kvp->len) &&
-           (zp_bytes_deserialize_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+    z_owned_bytes_t kv, first, second;
+    z_bytes_iterator_t iter = z_bytes_get_iterator(attachment);
+
+    while (kvp->current_idx < kvp->len && z_bytes_iterator_next(&iter, &kv)) {
         z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
         z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);

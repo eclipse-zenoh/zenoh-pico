@@ -138,17 +138,17 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
     return ret;
 }
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len, const _z_n_qos_t qos, const _z_bytes_t att) {
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _zz_bytes_t payload,
+                                    const _z_n_qos_t qos, const _zz_bytes_t attachment) {
     _z_encoding_t encoding = _z_encoding_null();
-    int8_t ret = _z_trigger_subscriptions(zn, keyexpr, _z_slice_wrap(payload, payload_len), encoding, Z_SAMPLE_KIND_PUT,
-                                          _z_timestamp_null(), qos, att);
+    int8_t ret = _z_trigger_subscriptions(zn, keyexpr, payload, encoding, Z_SAMPLE_KIND_PUT, _z_timestamp_null(), qos,
+                                          attachment);
     (void)ret;
 }
 
-int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_slice_t payload,
+int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _zz_bytes_t payload,
                                 const _z_encoding_t encoding, const _z_zint_t kind, const _z_timestamp_t timestamp,
-                                const _z_n_qos_t qos, const _z_bytes_t att) {
+                                const _z_n_qos_t qos, const _zz_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
@@ -163,7 +163,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
 
         // Build the sample
         _z_sample_rc_t sample = _z_sample_rc_new();
-        sample.in->val = _z_sample_create(&key, &payload, timestamp, encoding, kind, qos, att);
+        sample.in->val = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment);
         // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
@@ -208,14 +208,14 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 }
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload,
-                                    _z_zint_t payload_len, _z_n_qos_t qos, const _z_bytes_t att) {
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _zz_bytes_t attachment,
+                                    _z_n_qos_t qos, const _zz_bytes_t attachment) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
     _ZP_UNUSED(payload_len);
     _ZP_UNUSED(qos);
-    _ZP_UNUSED(att);
+    _ZP_UNUSED(attachment);
 }
 
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

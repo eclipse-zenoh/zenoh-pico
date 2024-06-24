@@ -30,12 +30,12 @@
  */
 typedef struct _z_sample_t {
     _z_keyexpr_t keyexpr;
-    _z_bytes_t payload;
+    _zz_bytes_t payload;
     _z_timestamp_t timestamp;
     _z_encoding_t encoding;
     z_sample_kind_t kind;
     _z_qos_t qos;
-    _z_bytes_t attachment;
+    _zz_bytes_t attachment;
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
 
@@ -56,8 +56,8 @@ void _z_sample_free(_z_sample_t **sample);
 void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_slice_t *payload, _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _zz_bytes_t, _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                             const _z_bytes_t attachment);
+                             const _zz_bytes_t attachment);
 
 #endif /* ZENOH_PICO_SAMPLE_NETAPI_H */

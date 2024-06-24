@@ -27,14 +27,15 @@ void test_null_bytes(void) {
     assert(_zz_bytes_is_empty(&b));
     assert(!_zz_bytes_check(&b));
     assert(_zz_bytes_num_slices(&b) == 0);
-    _zz_bytes_drop(&b); // no crush
+    _zz_bytes_drop(&b);  // no crush
 }
 
 void test_slice(void) {
     uint8_t data[5] = {1, 2, 3, 4, 5};
     uint8_t data_out[5] = {0};
     _z_slice_t s = _z_slice_wrap_copy(data, 5);
-    _zz_bytes_t b = _zz_bytes_from_slice(s);
+    _zz_bytes_t b;
+    _zz_bytes_from_slice(&b, s);
 
     assert(_zz_bytes_len(&b) == 5);
     assert(!_zz_bytes_is_empty(&b));
@@ -44,7 +45,7 @@ void test_slice(void) {
 
     _zz_bytes_to_buf(&b, data_out, 5);
     assert(memcmp(data, data_out, 5) == 0);
-    
+
     _zz_bytes_drop(&b);
 }
 
@@ -59,7 +60,7 @@ void test_append(void) {
     _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
 
     _zz_bytes_t b = _zz_bytes_null();
-   
+
     _zz_bytes_append_slice(&b, &s1);
     _zz_bytes_append_slice(&b, &s2);
     _zz_bytes_append_slice(&b, &s3);
@@ -74,7 +75,7 @@ void test_append(void) {
 
     _zz_bytes_to_buf(&b, data_out, 10);
     assert(memcmp(data_in, data_out, 10) == 0);
-    
+
     _zz_bytes_drop(&b);
 }
 
@@ -89,7 +90,7 @@ void test_reader_read(void) {
     _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
 
     _zz_bytes_t b = _zz_bytes_null();
-   
+
     _zz_bytes_append_slice(&b, &s1);
     _zz_bytes_append_slice(&b, &s2);
     _zz_bytes_append_slice(&b, &s3);
@@ -122,7 +123,7 @@ void test_reader_seek(void) {
     _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
 
     _zz_bytes_t b = _zz_bytes_null();
-   
+
     _zz_bytes_append_slice(&b, &s1);
     _zz_bytes_append_slice(&b, &s2);
     _zz_bytes_append_slice(&b, &s3);
@@ -145,7 +146,6 @@ void test_reader_seek(void) {
     assert(_zz_bytes_reader_tell(&reader) == 8);
     assert(_zz_bytes_reader_seek(&reader, 20, SEEK_SET) != 0);
     assert(_zz_bytes_reader_seek(&reader, -20, SEEK_SET) != 0);
-
 
     assert(_zz_bytes_reader_seek(&reader, 0, SEEK_END) == 0);
     assert(_zz_bytes_reader_tell(&reader) == 10);

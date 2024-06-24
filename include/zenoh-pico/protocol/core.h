@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
@@ -157,11 +158,11 @@ typedef struct {
  * Represents a Zenoh value.
  *
  * Members:
- *   _z_bytes_t payload: The payload of this zenoh value.
+ *   _zz_bytes_t payload: The payload of this zenoh value.
  *   _z_encoding_t encoding: The encoding of the `payload`.
  */
 typedef struct {
-    _z_bytes_t payload;
+    _zz_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
 _z_value_t _z_value_null(void);

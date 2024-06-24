@@ -26,7 +26,7 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push) {
 
     // TODO check body to know where to dispatch
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_slice_t payload = push->_body._is_put ? push->_body._body._put._payload : _z_slice_empty();
+    _zz_bytes_t payload = push->_body._is_put ? push->_body._body._put._payload : _zz_bytes_null();
     _z_encoding_t encoding = push->_body._is_put ? push->_body._body._put._encoding : _z_encoding_null();
     size_t kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
     ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp, push->_qos,

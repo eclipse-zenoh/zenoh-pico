@@ -64,7 +64,6 @@ void _z_vec_release(_z_vec_t *v);
     static inline void name##_vec_free(name##_vec_t **v) { _z_vec_free(v, name##_elem_free); }                     \
     static inline void name##_vec_release(name##_vec_t *v) { _z_vec_release(v); }
 
-
 /*-------- Dynamically allocated sized vector --------*/
 /**
  * A dynamically allocate vector.
@@ -91,31 +90,28 @@ void _z_svec_clear(_z_svec_t *v, z_element_clear_f f, size_t element_size);
 void _z_svec_free(_z_svec_t **v, z_element_clear_f f, size_t element_size);
 void _z_svec_release(_z_svec_t *v);
 
-#define _Z_SVEC_DEFINE(name, type)                                                                                \
-    typedef _z_svec_t name##_svec_t;                                                                              \
-    static inline name##_svec_t name##_svec_make(size_t capacity) {                                               \
-        return _z_svec_make(capacity, sizeof(type));                                                              \
-    }                                                                                                             \
-    static inline size_t name##_svec_len(const name##_svec_t *v) { return _z_svec_len(v); }                       \
-    static inline _Bool name##_svec_is_empty(const name##_svec_t *v) { return _z_svec_is_empty(v); }              \
-    static inline _Bool name##_svec_append(name##_svec_t *v, type *e) {                                           \
-        return _z_svec_append(v, e, name##_elem_move, sizeof(type));                                              \
-    }                                                                                                             \
-    static inline type *name##_svec_get(const name##_svec_t *v, size_t pos) {                                     \
-        return (type *)_z_svec_get(v, pos, sizeof(type));                                                         \
-    }                                                                                                             \
-    static inline void name##_svec_set(name##_svec_t *v, size_t pos, type *e) {                                   \
-        _z_svec_set(v, pos, e, name##_elem_clear, sizeof(type));                                                  \
-    }                                                                                                             \
-    static inline void name##_svec_remove(name##_svec_t *v, size_t pos) {                                         \
-        _z_svec_remove(v, pos, name##_elem_clear, name##_elem_move, sizeof(type));                                \
-    }                                                                                                             \
-    static inline void name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src) {                           \
-        _z_svec_copy(dst, src, name##_elem_copy, sizeof(type));                                                   \
-    }                                                                                                             \
-    static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); } \
-    static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); } \
-    static inline void name##_svec_free(name##_svec_t **v) { _z_svec_free(v, name##_elem_clear, sizeof(type)); }  \
-
+#define _Z_SVEC_DEFINE(name, type)                                                                                 \
+    typedef _z_svec_t name##_svec_t;                                                                               \
+    static inline name##_svec_t name##_svec_make(size_t capacity) { return _z_svec_make(capacity, sizeof(type)); } \
+    static inline size_t name##_svec_len(const name##_svec_t *v) { return _z_svec_len(v); }                        \
+    static inline _Bool name##_svec_is_empty(const name##_svec_t *v) { return _z_svec_is_empty(v); }               \
+    static inline _Bool name##_svec_append(name##_svec_t *v, type *e) {                                            \
+        return _z_svec_append(v, e, name##_elem_move, sizeof(type));                                               \
+    }                                                                                                              \
+    static inline type *name##_svec_get(const name##_svec_t *v, size_t pos) {                                      \
+        return (type *)_z_svec_get(v, pos, sizeof(type));                                                          \
+    }                                                                                                              \
+    static inline void name##_svec_set(name##_svec_t *v, size_t pos, type *e) {                                    \
+        _z_svec_set(v, pos, e, name##_elem_clear, sizeof(type));                                                   \
+    }                                                                                                              \
+    static inline void name##_svec_remove(name##_svec_t *v, size_t pos) {                                          \
+        _z_svec_remove(v, pos, name##_elem_clear, name##_elem_move, sizeof(type));                                 \
+    }                                                                                                              \
+    static inline void name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src) {                            \
+        _z_svec_copy(dst, src, name##_elem_copy, sizeof(type));                                                    \
+    }                                                                                                              \
+    static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }  \
+    static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); }  \
+    static inline void name##_svec_free(name##_svec_t **v) { _z_svec_free(v, name##_elem_clear, sizeof(type)); }
 
 #endif /* ZENOH_PICO_COLLECTIONS_VECTOR_H */

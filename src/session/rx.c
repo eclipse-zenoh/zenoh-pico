@@ -111,9 +111,9 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_DEL: {
 #if Z_FEATURE_SUBSCRIPTION == 1
                     _z_msg_del_t del = req._body._del;
-                    ret = _z_trigger_subscriptions(zn, req._key, _z_slice_empty(), _z_encoding_null(),
+                    ret = _z_trigger_subscriptions(zn, req._key, _zz_bytes_null(), _z_encoding_null(),
                                                    Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
-                                                   _z_bytes_null());
+                                                   _zz_bytes_null());
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
@@ -133,7 +133,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_RESPONSE_BODY_ERR: {
                     // @TODO: expose zenoh errors to the user
                     _z_msg_err_t error = response._body._err;
-                    _z_slice_t payload = error._payload;
+                    _z_slice_t payload = _zz_bytes_try_get_contiguous(&error._payload);
                     _ZP_UNUSED(payload);  // Unused when logs are deactivated
                     _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
                              payload.start);

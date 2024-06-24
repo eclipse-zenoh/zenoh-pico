@@ -24,15 +24,15 @@ void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); 
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
     _z_encoding_clear(&msg->_encoding);
-    _z_slice_clear(&msg->_payload);
+    _zz_bytes_drop(&msg->_payload);
     _z_timestamp_clear(&msg->_commons._timestamp);
 }
 
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg) {
     return (_z_msg_query_reqexts_t){
-        .body = msg->_ext_value.payload._slice.start != NULL || _z_encoding_check(&msg->_ext_value.encoding),
+        .body = _zz_bytes_check(&msg->_ext_value.payload) || _z_encoding_check(&msg->_ext_value.encoding),
         .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
-        .attachment = _z_bytes_check(msg->_ext_attachment),
+        .attachment = _zz_bytes_check(&msg->_ext_attachment),
     };
 }
 
@@ -42,5 +42,5 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
     _z_encoding_clear(&err->encoding);
-    _z_slice_clear(&err->_payload);
+    _zz_bytes_drop(&err->_payload);
 }

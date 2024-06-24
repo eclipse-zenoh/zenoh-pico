@@ -58,7 +58,7 @@ size_t kv_pairs_size(kv_pairs_tx_t *kvp) {
     return ret;
 }
 
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *curr_idx) {
+_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     kv_pairs_tx_t *kvs = (kv_pairs_tx_t *)(context);
     z_owned_bytes_t k, v;
     if (kvs->current_idx >= kvs->len) {
@@ -66,17 +66,17 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
     } else {
         z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
         z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
-        zp_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
+        z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
     }
 }
 
 void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
-    size_t curr_idx = 0;
-    z_owned_bytes_t first, second;
-    while ((kvp->current_idx < kvp->len) &&
-           (zp_bytes_deserialize_into_pair(attachment, &first, &second, &curr_idx) == 0)) {
+    z_owned_bytes_t kv, first, second;
+    z_bytes_iterator_t iter = z_bytes_get_iterator(attachment);
+
+    while (kvp->current_idx < kvp->len && z_bytes_iterator_next(&iter, &kv)) {
         z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
         z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);
@@ -142,7 +142,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
     kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx, kv_pairs_size(&kv_ctx));
+    z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
     options.attachment = z_move(attachment);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);

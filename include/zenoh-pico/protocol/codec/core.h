@@ -41,7 +41,7 @@
         }                                             \
     }
 
-typedef int8_t (*__z_single_byte_reader_t)(uint8_t*, void* context);
+typedef int8_t (*__z_single_byte_reader_t)(uint8_t *, void *context);
 /*------------------ Internal Zenoh-net Macros ------------------*/
 int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
 int8_t _z_consolidation_mode_decode(z_consolidation_mode_t *en, _z_zbuf_t *zbf);
@@ -57,10 +57,8 @@ int8_t _z_uint16_encode(_z_wbuf_t *buf, uint16_t v);
 int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *buf);
 
 uint8_t _z_zint_len(uint64_t v);
-uint8_t _z_zint64_encode_buf(uint8_t* buf, uint64_t v);
-static inline uint8_t _z_zsize_encode_buf(uint8_t* buf, _z_zint_t v) { 
-    return _z_zint64_encode_buf(buf, (uint64_t)v); 
-}
+uint8_t _z_zint64_encode_buf(uint8_t *buf, uint64_t v);
+static inline uint8_t _z_zsize_encode_buf(uint8_t *buf, _z_zint_t v) { return _z_zint64_encode_buf(buf, (uint64_t)v); }
 
 int8_t _z_zsize_encode(_z_wbuf_t *buf, _z_zint_t v);
 int8_t _z_zint64_encode(_z_wbuf_t *buf, uint64_t v);
@@ -68,7 +66,7 @@ int8_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *buf);
 int8_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t reader, void *context);
-int8_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void* context);
+int8_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void *context);
 int8_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
 int8_t _z_slice_val_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
@@ -78,8 +76,8 @@ int8_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf);
 int8_t _z_slice_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
 size_t _z_slice_encode_len(const _z_slice_t *bs);
 int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *buf);
-int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf);
-int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);
+int8_t _zz_bytes_decode(_zz_bytes_t *bs, _z_zbuf_t *zbf);
+int8_t _zz_bytes_encode(_z_wbuf_t *wbf, const _zz_bytes_t *bs);
 int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
@@ -89,6 +87,9 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
 size_t _z_encoding_len(const _z_encoding_t *en);
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en);
 int8_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf);
+
+int8_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *en);
+int8_t _z_value_decode(_z_value_t *en, _z_zbuf_t *zbf);
 
 int8_t _z_keyexpr_encode(_z_wbuf_t *buf, _Bool has_suffix, const _z_keyexpr_t *ke);
 int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, _Bool has_suffix);

@@ -108,8 +108,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
+ *     payload: The data to write.
  *     encoding: The encoding of the payload. The callee gets the ownership of
  *               any allocated value.
  *     kind: The kind of the value.
@@ -119,9 +118,9 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority, const _z_bytes_t attachment);
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _zz_bytes_t payload, const _z_encoding_t encoding,
+                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                const _zz_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -200,7 +199,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     attachment: An optional attachment to the reply.
  */
 int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const _z_bytes_t attachment);
+                     const z_sample_kind_t kind, const _zz_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -225,7 +224,7 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const 
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment);
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _zz_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

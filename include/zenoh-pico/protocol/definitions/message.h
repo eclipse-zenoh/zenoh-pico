@@ -55,7 +55,7 @@
 typedef struct {
     _z_encoding_t encoding;
     _z_source_info_t _ext_source_info;
-    _z_slice_t _payload;
+    _zz_bytes_t _payload;
 } _z_msg_err_t;
 void _z_msg_err_clear(_z_msg_err_t *err);
 
@@ -73,9 +73,9 @@ static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 
 typedef struct {
     _z_m_push_commons_t _commons;
-    _z_slice_t _payload;
+    _zz_bytes_t _payload;
     _z_encoding_t _encoding;
-    _z_bytes_t _attachment;
+    _zz_bytes_t _attachment;
 } _z_msg_put_t;
 void _z_msg_put_clear(_z_msg_put_t *);
 #define _Z_M_PUT_ID 0x01
@@ -100,7 +100,7 @@ typedef struct {
     _z_source_info_t _ext_info;
     _z_value_t _ext_value;
     z_consolidation_mode_t _consolidation;
-    _z_bytes_t _ext_attachment;
+    _zz_bytes_t _ext_attachment;
 } _z_msg_query_t;
 typedef struct {
     _Bool info;
