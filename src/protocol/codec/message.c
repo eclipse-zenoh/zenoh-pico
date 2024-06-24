@@ -313,6 +313,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
             }
             ret = _z_bytes_from_slice(&pshb->_body._put._attachment, s);
+            break;
         }
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {

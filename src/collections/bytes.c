@@ -20,8 +20,8 @@
 
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/endianness.h"
+#include "zenoh-pico/utils/result.h"
 
 /*-------- Bytes --------*/
 _Bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
@@ -132,9 +132,7 @@ int8_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
     return _Z_RES_OK;
 }
 
-int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    return _z_arc_slice_svec_append(&dst->_slices, s);
-}
+int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) { return _z_arc_slice_svec_append(&dst->_slices, s); }
 
 int8_t _z_bytes_append_inner(_z_bytes_t *dst, _z_bytes_t *src) {
     _Bool success = true;
@@ -243,9 +241,7 @@ int8_t _z_bytes_to_double(const _z_bytes_t *bs, double *val) {
     return _z_bytes_to_buf(bs, (uint8_t *)val, sizeof(double)) == sizeof(double) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
 }
 
-int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) {
-    return _z_bytes_from_buf(b, &val, sizeof(val)); 
-}
+int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) { return _z_bytes_from_buf(b, &val, sizeof(val)); }
 
 int8_t _z_bytes_from_uint16(_z_bytes_t *b, uint16_t val) {
     uint8_t buf[sizeof(uint16_t)];
