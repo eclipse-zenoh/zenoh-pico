@@ -71,7 +71,12 @@ int main(int argc, char **argv) {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, VALUE);
         printf("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_string(&payload, buf);
+
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
 
     printf("Closing Zenoh Session...");

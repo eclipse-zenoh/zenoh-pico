@@ -21,7 +21,7 @@
 int8_t _z_lifo_init(_z_lifo_t *r, size_t capacity) {
     memset(r, 0, sizeof(_z_lifo_t));
     if (capacity != (size_t)0) {
-        r->_val = (void **)zp_malloc(sizeof(void *) * capacity);
+        r->_val = (void **)z_malloc(sizeof(void *) * capacity);
     }
     if (r->_val != NULL) {
         memset(r->_val, 0, capacity);
@@ -73,7 +73,7 @@ void _z_lifo_clear(_z_lifo_t *r, z_element_free_f free_f) {
         free_f(&e);
         e = _z_lifo_pull(r);
     }
-    zp_free(r->_val);
+    z_free(r->_val);
 
     r->_val = NULL;
     r->_capacity = (size_t)0;
@@ -84,7 +84,7 @@ void _z_lifo_free(_z_lifo_t **r, z_element_free_f free_f) {
     _z_lifo_t *ptr = (_z_lifo_t *)*r;
     if (ptr != NULL) {
         _z_lifo_clear(ptr, free_f);
-        zp_free(ptr);
+        z_free(ptr);
         *r = NULL;
     }
 }

@@ -95,7 +95,12 @@ int main(int argc, char **argv) {
         sleep(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_string(&payload, buf);
+
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
 
         zp_read(z_loan(s), NULL);
         zp_send_keep_alive(z_loan(s), NULL);

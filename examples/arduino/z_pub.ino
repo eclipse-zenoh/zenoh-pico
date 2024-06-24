@@ -99,13 +99,18 @@ void loop() {
     delay(1000);
     char buf[256];
     sprintf(buf, "[%4d] %s", idx++, VALUE);
+
     Serial.print("Writing Data ('");
     Serial.print(KEYEXPR);
     Serial.print("': '");
     Serial.print(buf);
     Serial.println("')");
 
-    if (z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL) < 0) {
+    // Create payload
+    z_owned_bytes_t payload;
+    z_bytes_serialize_from_string(&payload, buf);
+
+    if (z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL) < 0) {
         Serial.println("Error while publishing data");
     }
 }

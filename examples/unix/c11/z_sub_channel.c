@@ -65,19 +65,21 @@ int main(int argc, char **argv) {
     }
 
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
-    z_owned_sample_fifo_channel_t channel;
-    z_sample_fifo_channel_new(&channel, 3);
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    z_fifo_channel_sample_new(&closure, &handler, 3);
+
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_string(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(channel.send), NULL) < 0) {
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
 
     z_owned_sample_t sample;
     z_null(&sample);
-    for (z_call(channel.recv, &sample); z_check(sample); z_call(channel.recv, &sample)) {
+    for (z_recv(z_loan(handler), &sample); z_check(sample); z_recv(z_loan(handler), &sample)) {
         z_owned_string_t keystr;
         z_keyexpr_to_string(z_sample_keyexpr(z_loan(sample)), &keystr);
         z_owned_string_t value;
@@ -90,7 +92,7 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_subscriber(z_move(sub));
-    z_drop(z_move(channel));
+    z_drop(z_move(handler));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));

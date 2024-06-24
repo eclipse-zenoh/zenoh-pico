@@ -47,9 +47,9 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     }
     size_t data_length = 0;
     if (has_vlan) {
-        _zp_eth_vlan_header_t *header = (_zp_eth_vlan_header_t *)buff;
+        _zp_eth_vlan_header_t *vlan_header = (_zp_eth_vlan_header_t *)buff;
         // Retrieve data length
-        data_length = _z_raweth_ntohs(header->data_length);
+        data_length = _z_raweth_ntohs(vlan_header->data_length);
         if (rb < (data_length + sizeof(_zp_eth_vlan_header_t))) {
             // Invalid data_length
             return SIZE_MAX;
@@ -58,7 +58,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + sizeof(_zp_eth_vlan_header_t) + data_length);
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_vlan_header_t));
     } else {
-        _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+        header = (_zp_eth_header_t *)buff;
         // Retrieve data length
         data_length = _z_raweth_ntohs(header->data_length);
         if (rb < (data_length + sizeof(_zp_eth_header_t))) {

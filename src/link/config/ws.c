@@ -28,8 +28,7 @@ size_t _z_ws_config_strlen(const _z_str_intmap_t *s) {
 
 void _z_ws_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s) {
     WS_CONFIG_MAPPING_BUILD
-
-    return _z_str_intmap_onto_str(dst, dst_len, s, argc, args);
+    _z_str_intmap_onto_str(dst, dst_len, s, argc, args);
 }
 
 char *_z_ws_config_to_str(const _z_str_intmap_t *s) {

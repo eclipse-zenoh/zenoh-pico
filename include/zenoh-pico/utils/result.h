@@ -26,6 +26,7 @@
 #define _Z_ERR_SYSTEM_MASK 0xb0
 #define _Z_ERR_GENERIC_MASK 0xb8
 
+typedef int8_t z_error_t;
 /*------------------ Result Enums ------------------*/
 typedef enum {
     _Z_RES_OK = 0,

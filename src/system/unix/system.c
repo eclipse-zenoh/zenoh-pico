@@ -102,12 +102,12 @@ void z_free(void *ptr) { free(ptr); }
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    return pthread_create(task, attr, fun, arg);
+    return (int8_t)pthread_create(task, attr, fun, arg);
 }
 
-int8_t z_task_join(z_task_t *task) { return pthread_join(*task, NULL); }
+int8_t z_task_join(z_task_t *task) { return (int8_t)pthread_join(*task, NULL); }
 
-int8_t zp_task_cancel(z_task_t *task) { return pthread_cancel(*task); }
+int8_t zp_task_cancel(z_task_t *task) { return (int8_t)pthread_cancel(*task); }
 
 void z_task_free(z_task_t **task) {
     z_task_t *ptr = *task;
@@ -116,28 +116,28 @@ void z_task_free(z_task_t **task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t z_mutex_init(z_mutex_t *m) { return pthread_mutex_init(m, 0); }
+int8_t z_mutex_init(z_mutex_t *m) { return (int8_t)pthread_mutex_init(m, 0); }
 
-int8_t z_mutex_free(z_mutex_t *m) { return pthread_mutex_destroy(m); }
+int8_t z_mutex_free(z_mutex_t *m) { return (int8_t)pthread_mutex_destroy(m); }
 
-int8_t z_mutex_lock(z_mutex_t *m) { return pthread_mutex_lock(m); }
+int8_t z_mutex_lock(z_mutex_t *m) { return (int8_t)pthread_mutex_lock(m); }
 
-int8_t z_mutex_trylock(z_mutex_t *m) { return pthread_mutex_trylock(m); }
+int8_t z_mutex_trylock(z_mutex_t *m) { return (int8_t)pthread_mutex_trylock(m); }
 
-int8_t z_mutex_unlock(z_mutex_t *m) { return pthread_mutex_unlock(m); }
+int8_t z_mutex_unlock(z_mutex_t *m) { return (int8_t)pthread_mutex_unlock(m); }
 
 /*------------------ Condvar ------------------*/
-int8_t z_condvar_init(z_condvar_t *cv) { return pthread_cond_init(cv, 0); }
+int8_t z_condvar_init(z_condvar_t *cv) { return (int8_t)pthread_cond_init(cv, 0); }
 
-int8_t z_condvar_free(z_condvar_t *cv) { return pthread_cond_destroy(cv); }
+int8_t z_condvar_free(z_condvar_t *cv) { return (int8_t)pthread_cond_destroy(cv); }
 
-int8_t z_condvar_signal(z_condvar_t *cv) { return pthread_cond_signal(cv); }
+int8_t z_condvar_signal(z_condvar_t *cv) { return (int8_t)pthread_cond_signal(cv); }
 
-int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return pthread_cond_wait(cv, m); }
+int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return (int8_t)pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) { return usleep(time); }
+int z_sleep_us(size_t time) { return usleep((unsigned int)time); }
 
 int z_sleep_ms(size_t time) {
     z_time_t start = z_time_now();
@@ -152,7 +152,7 @@ int z_sleep_ms(size_t time) {
     return 0;
 }
 
-int z_sleep_s(size_t time) { return sleep(time); }
+int z_sleep_s(size_t time) { return (int)sleep((unsigned int)time); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
@@ -165,7 +165,8 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    unsigned long elapsed = (1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    unsigned long elapsed =
+        (unsigned long)(1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
@@ -173,7 +174,8 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    unsigned long elapsed = (1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    unsigned long elapsed =
+        (unsigned long)(1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
     return elapsed;
 }
 
@@ -181,7 +183,7 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    unsigned long elapsed = now.tv_sec - instant->tv_sec;
+    unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
     return elapsed;
 }
 
@@ -204,7 +206,7 @@ unsigned long z_time_elapsed_us(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    unsigned long elapsed = (1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
+    unsigned long elapsed = (unsigned long)(1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
     return elapsed;
 }
 
@@ -212,7 +214,7 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    unsigned long elapsed = (1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
+    unsigned long elapsed = (unsigned long)(1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
     return elapsed;
 }
 
@@ -220,6 +222,6 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     z_time_t now;
     gettimeofday(&now, NULL);
 
-    unsigned long elapsed = now.tv_sec - time->tv_sec;
+    unsigned long elapsed = (unsigned long)(now.tv_sec - time->tv_sec);
     return elapsed;
 }

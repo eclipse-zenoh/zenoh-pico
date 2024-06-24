@@ -102,6 +102,10 @@ int main(int argc, char **argv) {
         snprintf(buf, 256, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_string(&payload, buf);
+
         // Create encoding
         z_owned_encoding_t encoding;
         zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
@@ -109,7 +113,7 @@ int main(int argc, char **argv) {
         z_publisher_put_options_default(&options);
         options.encoding = z_encoding_move(&encoding);
 
-        z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), &options);
+        z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), &options);
     }
     // Clean up
     z_undeclare_publisher(z_publisher_move(&pub));

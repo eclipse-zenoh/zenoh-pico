@@ -77,8 +77,12 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_string(&ke, keyexpr);
     for (int i = 0; i < 5; i++) {
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_slice(&payload, value, size);
+
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
-        if (z_put(z_loan(s), z_loan(ke), (const uint8_t *)value, size, NULL) < 0) {
+        if (z_put(z_loan(s), z_loan(ke), z_move(payload), NULL) < 0) {
             printf("Oh no! Put has failed...\n");
         }
         z_sleep_s(1);

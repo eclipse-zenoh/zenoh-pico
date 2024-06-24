@@ -85,7 +85,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
             }
-            uint32_t timeout = strtoul(opt_as_str, NULL, 10);
+            uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
             _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
@@ -95,7 +95,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             }
             _z_hello_list_free(&hellos);
         } else {
-            int key = Z_CONFIG_CONNECT_KEY;
+            uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
             if (listen != NULL) {
                 if (connect == NULL) {
                     key = Z_CONFIG_LISTEN_KEY;

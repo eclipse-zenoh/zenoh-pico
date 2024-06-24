@@ -245,20 +245,18 @@ void z_encoding_drop(z_owned_encoding_t *encoding) {
     z_free(encoding->_val);
 }
 
-const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
-
-// Convert a user owned encoding to an internal encoding, return default encoding if value invalid
-static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
-    if (encoding == NULL) {
-        return _z_encoding_null();
+int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src) {
+    dst->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
+    if (dst->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    if (encoding->_val == NULL) {
-        return _z_encoding_null();
-    }
-    return *encoding->_val;
+    _z_encoding_copy(dst->_val, src);
+    return _Z_RES_OK;
 }
 
-const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value) { return &value->payload; }
+const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
+
+z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
@@ -572,7 +570,6 @@ int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *fir
     // Calculate pair size
     size_t first_len = z_slice_len(&first->_val->_slice);
     size_t second_len = z_slice_len(&second->_val->_slice);
-    size_t len = 2 * sizeof(uint32_t) + first_len + second_len;
     // Copy data
     // FIXME: size endianness, Issue #420
     memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], &first_len, sizeof(uint32_t));
@@ -616,11 +613,12 @@ void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *paramete
     parameters->_val.len = strlen(query->in->val._parameters);
 }
 
-const z_loaned_value_t *z_query_value(const z_loaned_query_t *query) { return &query->in->val._value; }
-
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->in->val.attachment; }
 
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
+
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
 
 void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
@@ -678,7 +676,7 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_string_t, string, _z_string_copy, _z_string_free)
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_value_t, value, _z_value_copy, _z_value_free)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_value_t, reply_err, _z_value_copy, _z_value_free)
 
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
 _Z_VIEW_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr)
@@ -690,6 +688,8 @@ _Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 
+#if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
+// Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
 static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     _z_bytes_t b = _z_bytes_null();
     if ((bytes != NULL) && (bytes->_val != NULL)) {
@@ -697,6 +697,18 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     }
     return b;
 }
+
+// Convert a user owned encoding to an internal encoding, return default encoding if value invalid
+static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
+    if (encoding == NULL) {
+        return _z_encoding_null();
+    }
+    if (encoding->_val == NULL) {
+        return _z_encoding_null();
+    }
+    return *encoding->_val;
+}
+#endif
 
 _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
@@ -753,7 +765,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
-        uint32_t timeout = strtoul(opt_as_str, NULL, 10);
+        uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
         _z_id_t zid = _z_id_empty();
         char *zid_str = _z_config_get(config->_val, Z_CONFIG_SESSION_ZID_KEY);
@@ -854,6 +866,9 @@ const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) {
     return &_Z_RC_IN_VAL(sample).attachment;
 }
 
+const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
+const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }
+
 const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
 size_t z_string_len(const z_loaned_string_t *str) { return str->len; }
 
@@ -881,8 +896,8 @@ void z_delete_options_default(z_delete_options_t *options) {
     options->priority = Z_PRIORITY_DEFAULT;
 }
 
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-             z_zint_t payload_len, const z_put_options_t *options) {
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+             const z_put_options_t *options) {
     int8_t ret = 0;
 
     z_put_options_t opt;
@@ -894,17 +909,18 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
         opt.attachment = options->attachment;
     }
 
-    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, (const uint8_t *)payload, payload_len,
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
                    _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
                    _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload, payload_len,
+    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+    z_bytes_drop(payload);
     return ret;
 }
 
@@ -979,7 +995,7 @@ void z_publisher_put_options_default(z_publisher_put_options_t *options) {
 
 void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->__dummy = 0; }
 
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload,
                        const z_publisher_put_options_t *options) {
     int8_t ret = 0;
     // Build options
@@ -992,16 +1008,17 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, 
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
         // Write value
-        ret = _z_write(&pub->_zn.in->val, pub->_key, payload, len, _z_encoding_from_owned(opt.encoding),
-                       Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority,
-                       _z_bytes_from_owned_bytes(opt.attachment));
+        ret = _z_write(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
+                       _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+                       pub->_priority, _z_bytes_from_owned_bytes(opt.attachment));
     }
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload, len, _Z_N_QOS_DEFAULT,
-                                   _z_bytes_from_owned_bytes(opt.attachment));
+    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
+                                   _Z_N_QOS_DEFAULT, _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+    z_bytes_drop(payload);
     return ret;
 }
 
@@ -1081,7 +1098,7 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
 
-const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply) {
+const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);
     return NULL;
 }
@@ -1230,7 +1247,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
             _z_keyexpr_t resource_key = *keyexpr;
             if (wild != NULL && wild != resource_key._suffix) {
                 wild -= 1;
-                size_t len = wild - resource_key._suffix;
+                size_t len = (size_t)(wild - resource_key._suffix);
                 suffix = z_malloc(len + 1);
                 if (suffix != NULL) {
                     memcpy(suffix, resource_key._suffix, len);

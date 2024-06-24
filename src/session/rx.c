@@ -98,8 +98,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
 #endif
                 } break;
                 case _Z_REQUEST_PUT: {
-                    _z_msg_put_t put = req._body._put;
 #if Z_FEATURE_SUBSCRIPTION == 1
+                    _z_msg_put_t put = req._body._put;
                     ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
                                                    put._commons._timestamp, req._ext_qos, put._attachment);
 #endif
@@ -109,8 +109,8 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     }
                 } break;
                 case _Z_REQUEST_DEL: {
-                    _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
+                    _z_msg_del_t del = req._body._del;
                     ret = _z_trigger_subscriptions(zn, req._key, _z_slice_empty(), _z_encoding_null(),
                                                    Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
                                                    _z_bytes_null());

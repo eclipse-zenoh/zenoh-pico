@@ -109,9 +109,9 @@ TODO: owned type description
 
   Represents the encoding of a payload, in a MIME-like format.
 
-.. c:type:: z_owned_value_t
+.. c:type:: z_owned_reply_err_t
 
-  Represents a Zenoh value.
+  Represents a Zenoh reply error value.
 
 .. c:type:: z_owned_sample_t
 
@@ -182,9 +182,9 @@ TODO: loaned type description
 
   Represents the encoding of a payload, in a MIME-like format.
 
-.. c:type:: z_loaned_value_t
+.. c:type:: z_loaned_reply_err_t
 
-  Represents a Zenoh value.
+  Represents a Zenoh reply error.
 
 .. c:type:: z_loaned_sample_t
 
@@ -287,9 +287,11 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_check
 .. autocfunction:: primitives.h::z_encoding_drop
 .. autocfunction:: primitives.h::z_encoding_loan
+.. autocfunction:: primitives.h::z_encoding_loan_mut
 .. autocfunction:: primitives.h::z_encoding_move
 .. autocfunction:: primitives.h::z_encoding_null
-.. autocfunction:: primitives.h::z_value_payload
+.. autocfunction:: primitives.h::z_reply_err_payload
+.. autocfunction:: primitives.h::z_reply_err_encoding
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
@@ -326,7 +328,8 @@ Primitives
 .. autocfunction:: primitives.h::z_query_consolidation_monotonic
 .. autocfunction:: primitives.h::z_query_consolidation_none
 .. autocfunction:: primitives.h::z_query_parameters
-.. autocfunction:: primitives.h::z_query_value
+.. autocfunction:: primitives.h::z_query_payload
+.. autocfunction:: primitives.h::z_query_encoding
 .. autocfunction:: primitives.h::z_query_attachment
 .. autocfunction:: primitives.h::z_query_keyexpr
 .. autocfunction:: primitives.h::z_closure_sample

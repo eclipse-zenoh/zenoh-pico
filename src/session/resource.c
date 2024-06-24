@@ -213,8 +213,8 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 }
 
 /// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
-int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
-    int16_t ret = Z_RESOURCE_ID_NONE;
+uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
+    uint16_t ret = Z_RESOURCE_ID_NONE;
     key = _z_keyexpr_alias(key);
     uint16_t mapping = register_to_mapping;
     uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);

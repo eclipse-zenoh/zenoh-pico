@@ -271,7 +271,7 @@
  * Default session lease expire factor.
  */
 #ifndef Z_TRANSPORT_LEASE_EXPIRE_FACTOR
-#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3.5
+#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3
 #endif
 
 /**

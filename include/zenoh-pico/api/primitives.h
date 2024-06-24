@@ -375,6 +375,8 @@ _Bool z_encoding_check(const z_owned_encoding_t *encoding);
  */
 void z_encoding_drop(z_owned_encoding_t *encoding);
 
+int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src);
+
 /**
  * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
  *
@@ -385,6 +387,17 @@ void z_encoding_drop(z_owned_encoding_t *encoding);
  *    Pointer to the loaned version.
  */
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding);
+
+/**
+ * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
+ *
+ * Parameters:
+ *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to loan.
+ *
+ * Return:
+ *    Pointer to the loaned version.
+ */
+z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding);
 
 /**
  * Gets a moved version of a :c:type:`z_owned_encoding_t`.
@@ -409,15 +422,26 @@ z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding);
 int8_t z_encoding_null(z_owned_encoding_t *encoding);
 
 /**
- * Gets the bytes data from a value payload by aliasing it.
+ * Gets the bytes data from a reply error payload by aliasing it.
  *
  * Parameters:
- *    value: Pointer to a :c:type:`z_loaned_value_t` to get data from.
+ *    reply_err: Pointer to a :c:type:`z_loaned_reply_err_t` to get data from.
  *
  * Return:
  *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
  */
-const z_loaned_bytes_t *z_value_payload(const z_loaned_value_t *value);
+const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err);
+
+/**
+ * Gets a reply error encoding by aliasing it.
+ *
+ * Parameters:
+ *   query: Pointer to the :c:type:`z_loaned_reply_err_t` to get the encoding from.
+ *
+ * Return:
+ *   Pointer to the encoding as a :c:type:`z_loaned_encoding_t`.
+ */
+const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err);
 
 /**
  * Gets date pointer of a bytes array.
@@ -878,15 +902,26 @@ z_query_consolidation_t z_query_consolidation_none(void);
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters);
 
 /**
- * Gets a query value payload by aliasing it.
+ * Gets a query payload by aliasing it.
  *
  * Parameters:
  *   query: Pointer to the :c:type:`z_loaned_query_t` to get the value from.
  *
  * Return:
- *   Pointer to the value payload as a :c:type:`z_loaned_value_t`.
+ *   Pointer to the payload as a :c:type:`z_loaned_bytes_t`.
  */
-const z_loaned_value_t *z_query_value(const z_loaned_query_t *query);
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query);
+
+/**
+ * Gets a query encoding by aliasing it.
+ *
+ * Parameters:
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the value from.
+ *
+ * Return:
+ *   Pointer to the encoding as a :c:type:`z_loaned_encoding_t`.
+ */
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query);
 
 /**
  * Gets a query attachment value by aliasing it.
@@ -1045,7 +1080,7 @@ _Z_OWNED_FUNCTIONS_DEF(z_loaned_sample_t, z_owned_sample_t, sample)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_query_t, z_owned_query_t, query)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_slice_t, z_owned_slice_t, slice)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_t, z_owned_bytes_t, bytes)
-_Z_OWNED_FUNCTIONS_DEF(z_loaned_value_t, z_owned_value_t, value)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_err_t, z_owned_reply_err_t, reply_err)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_sample_t, closure_owned_sample)
@@ -1272,15 +1307,14 @@ void z_delete_options_default(z_delete_options_t *options);
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to put the data through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to put the data for.
- *   payload: Pointer to the data to put.
- *   payload_len: The length of the ``payload``.
+ *   payload: Pointer to a moved :c:type:`z_owned_bytes_t` containing the data to put.
  *   options: Pointer to a :c:type:`z_put_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const uint8_t *payload,
-             z_zint_t payload_len, const z_put_options_t *options);
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+             const z_put_options_t *options);
 
 /**
  * Deletes data for a given keyexpr.
@@ -1354,12 +1388,13 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
  *
  * Parameters:
  *   pub: Pointer to a :c:type:`z_loaned_publisher_t` from where to put the data.
+ *   payload: Pointer to a moved :c:type:`z_owned_bytes_t` containing the data to put.
  *   options: Pointer to a :c:type:`z_publisher_put_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, const uint8_t *payload, size_t len,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload,
                        const z_publisher_put_options_t *options);
 
 /**
@@ -1432,9 +1467,9 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
  *
  * Return:
- *   The error reply content wrapped as a :c:type:`z_loaned_value_t`.
+ *   The error reply content wrapped as a :c:type:`z_loaned_reply_err_t`.
  */
-const z_loaned_value_t *z_reply_err(const z_loaned_reply_t *reply);
+const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
