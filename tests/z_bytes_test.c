@@ -21,7 +21,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-void test_null_bytes() {
+void test_null_bytes(void) {
     _zz_bytes_t b = _zz_bytes_null();
     assert(_zz_bytes_len(&b) == 0);
     assert(_zz_bytes_is_empty(&b));
@@ -30,9 +30,9 @@ void test_null_bytes() {
     _zz_bytes_drop(&b); // no crush
 }
 
-void test_slice() {
+void test_slice(void) {
     uint8_t data[5] = {1, 2, 3, 4, 5};
-    uint8_t data_out[5] = {};
+    uint8_t data_out[5] = {0};
     _z_slice_t s = _z_slice_wrap_copy(data, 5);
     _zz_bytes_t b = _zz_bytes_from_slice(s);
 
@@ -48,12 +48,12 @@ void test_slice() {
     _zz_bytes_drop(&b);
 }
 
-void test_append() {
+void test_append(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
     uint8_t data3[3] = {3, 9, 10};
     uint8_t data_in[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    uint8_t data_out[10] = {};
+    uint8_t data_out[10] = {0};
     _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
     _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
     _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
@@ -78,12 +78,12 @@ void test_append() {
     _zz_bytes_drop(&b);
 }
 
-void test_reader_read() {
+void test_reader_read(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
     uint8_t data3[3] = {3, 9, 10};
     uint8_t data_in[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    uint8_t data_out[10] = {};
+    uint8_t data_out[10] = {0};
     _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
     _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
     _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
@@ -113,7 +113,7 @@ void test_reader_read() {
     _zz_bytes_drop(&b);
 }
 
-void test_reader_seek() {
+void test_reader_seek(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
     uint8_t data3[3] = {3, 9, 10};
@@ -129,7 +129,6 @@ void test_reader_seek() {
 
     _zz_bytes_reader_t reader = _zz_bytes_get_reader(&b);
 
-    uint8_t out;
     assert(_zz_bytes_reader_tell(&reader) == 0);
     assert(_zz_bytes_reader_seek(&reader, 3, SEEK_CUR) == 0);
     assert(_zz_bytes_reader_tell(&reader) == 3);

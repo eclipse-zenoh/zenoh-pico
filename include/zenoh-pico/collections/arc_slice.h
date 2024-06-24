@@ -25,7 +25,7 @@
 #include "zenoh-pico/system/platform-common.h"
 
 
-_Z_REFCOUNT_DEFINE(_z_slice, _z_slice);
+_Z_REFCOUNT_DEFINE(_z_slice, _z_slice)
 
 /*-------- ArcSlice --------*/
 /**

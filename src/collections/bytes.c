@@ -424,7 +424,6 @@ int8_t _zz_bytes_reader_read_next(_zz_bytes_reader_t* reader, _zz_bytes_t* out) 
     if (_zz_bytes_reader_read_zint(reader, &len) != _Z_RES_OK) {
         return _Z_ERR_DID_NOT_READ;
     }
-    size_t offset = _zz_bytes_reader_tell(reader);
 
     return _zz_bytes_reader_read_slices(reader, len, out);
 }

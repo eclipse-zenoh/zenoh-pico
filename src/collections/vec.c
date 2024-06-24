@@ -148,7 +148,7 @@ void __z_svec_copy_inner(void *dst, const void *src, z_element_copy_f copy, size
     } else {
         size_t offset = 0;
         for (size_t i = 0; i < num_elements; i++) {
-            copy(dst + offset, src + offset);
+            copy((uint8_t*)dst + offset, (uint8_t*)src + offset);
             offset += element_size;
         }
     }
@@ -160,7 +160,7 @@ void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num
     } else {
         size_t offset = 0;
         for (size_t i = 0; i < num_elements; i++) {
-            move(dst + offset, src + offset);
+            move((uint8_t*)dst + offset, (uint8_t*)src + offset);
             offset += element_size;
         }
     }
@@ -181,7 +181,7 @@ void _z_svec_reset(_z_svec_t *v, z_element_clear_f clear, size_t element_size) {
     if (clear != NULL) {
         size_t offset = 0;
         for (size_t i = 0; i < v->_len; i++) {
-            clear(v->_val + offset);
+            clear((uint8_t*)v->_val + offset);
             offset += element_size;
         }
     }
@@ -229,13 +229,13 @@ bool _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t e
             // Update the current vector
             v->_val = _val;
             v->_capacity = _capacity;
-            memcpy(v->_val + v->_len * element_size, e, element_size);
+            memcpy((uint8_t*)v->_val + v->_len * element_size, e, element_size);
             v->_len++;
         } else {
             return false;
         }
     } else {
-        memcpy(v->_val + v->_len * element_size, e, element_size);
+        memcpy((uint8_t*)v->_val + v->_len * element_size, e, element_size);
         v->_len++;
     }
     return true;
@@ -243,20 +243,20 @@ bool _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t e
 
 void *_z_svec_get(const _z_svec_t *v, size_t i, size_t element_size) {
     assert(i < v->_len);
-    return v->_val + i * element_size;
+    return (uint8_t*)v->_val + i * element_size;
 }
 
 void _z_svec_set(_z_svec_t *v, size_t i, void *e, z_element_clear_f clear, size_t element_size) {
     assert(i < v->_len);
-    clear(v->_val + i * element_size);
-    memcpy(v->_val + i * element_size, e, element_size);
+    clear((uint8_t*)v->_val + i * element_size);
+    memcpy((uint8_t*)v->_val + i * element_size, e, element_size);
 }
 
 void _z_svec_remove(_z_svec_t *v, size_t pos, z_element_clear_f clear, z_element_move_f move, size_t element_size) {
     assert(pos < v->_len);
-    clear(v->_val + pos * element_size);
+    clear((uint8_t*)v->_val + pos * element_size);
     __z_svec_move_inner(
-        v->_val + pos * element_size, v->_val + (pos + 1) * element_size, 
+        (uint8_t*)v->_val + pos * element_size, (uint8_t*)v->_val + (pos + 1) * element_size, 
         move, (v->_len - pos - 1) * element_size, element_size
     );
 
