@@ -21,6 +21,7 @@
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/utils/endianness.h"
 
 /*-------- Bytes --------*/
 _Bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
@@ -202,20 +203,34 @@ int8_t _z_bytes_to_uint8(const _z_bytes_t *bs, uint8_t *val) {
     return _z_bytes_to_buf(bs, val, sizeof(uint8_t)) == sizeof(uint8_t) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
 }
 
-// FIXME: int16+ endianness, Issue #420
 int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *val) {
     *val = 0;
-    return _z_bytes_to_buf(bs, (uint8_t *)val, sizeof(uint16_t)) == sizeof(uint16_t) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
+    uint8_t buf[sizeof(uint16_t)];
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint16_t)) != sizeof(uint16_t)) {
+        return _Z_ERR_DID_NOT_READ;
+    }
+    *val = _z_host_le_load16(buf);
+    return _Z_RES_OK;
 }
 
 int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *val) {
     *val = 0;
-    return _z_bytes_to_buf(bs, (uint8_t *)val, sizeof(uint32_t)) == sizeof(uint32_t) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
+    uint8_t buf[sizeof(uint32_t)];
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint32_t)) != sizeof(uint32_t)) {
+        return _Z_ERR_DID_NOT_READ;
+    }
+    *val = _z_host_le_load32(buf);
+    return _Z_RES_OK;
 }
 
 int8_t _z_bytes_to_uint64(const _z_bytes_t *bs, uint64_t *val) {
     *val = 0;
-    return _z_bytes_to_buf(bs, (uint8_t *)val, sizeof(uint64_t)) == sizeof(uint64_t) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
+    uint8_t buf[sizeof(uint64_t)];
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint64_t)) != sizeof(uint64_t)) {
+        return _Z_ERR_DID_NOT_READ;
+    }
+    *val = _z_host_le_load64(buf);
+    return _Z_RES_OK;
 }
 
 int8_t _z_bytes_to_float(const _z_bytes_t *bs, float *val) {
@@ -228,18 +243,26 @@ int8_t _z_bytes_to_double(const _z_bytes_t *bs, double *val) {
     return _z_bytes_to_buf(bs, (uint8_t *)val, sizeof(double)) == sizeof(double) ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
 }
 
-int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) { return _z_bytes_from_buf(b, &val, sizeof(val)); }
+int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) {
+    return _z_bytes_from_buf(b, &val, sizeof(val)); 
+}
 
 int8_t _z_bytes_from_uint16(_z_bytes_t *b, uint16_t val) {
-    return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val));
+    uint8_t buf[sizeof(uint16_t)];
+    _z_host_le_store16(val, buf);
+    return _z_bytes_from_buf(b, buf, sizeof(uint16_t));
 }
 
 int8_t _z_bytes_from_uint32(_z_bytes_t *b, uint32_t val) {
-    return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val));
+    uint8_t buf[sizeof(uint32_t)];
+    _z_host_le_store32(val, buf);
+    return _z_bytes_from_buf(b, buf, sizeof(uint32_t));
 }
 
 int8_t _z_bytes_from_uint64(_z_bytes_t *b, uint64_t val) {
-    return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val));
+    uint8_t buf[sizeof(uint64_t)];
+    _z_host_le_store64(val, buf);
+    return _z_bytes_from_buf(b, buf, sizeof(uint64_t));
 }
 
 int8_t _z_bytes_from_float(_z_bytes_t *b, float val) { return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val)); }

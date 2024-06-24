@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -76,44 +77,52 @@ int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
 int8_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t u16) {
     int8_t ret = _Z_RES_OK;
 
-    ret |= _z_wbuf_write(wbf, (u16 & 0xFFU));
-    ret |= _z_wbuf_write(wbf, ((u16 >> 8) & 0xFFU));
+    ret |= _z_wbuf_write(wbf, _z_get_u16_lsb(u16));
+    ret |= _z_wbuf_write(wbf, _z_get_u16_msb(u16));
 
     return ret;
 }
 
 int8_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
-    *u16 = 0;
+    uint8_t enc_u16[2];
 
-    uint8_t u8;
-    ret |= _z_uint8_decode(&u8, zbf);
-    *u16 |= u8;
-    ret |= _z_uint8_decode(&u8, zbf);
-    *u16 |= u8 << 8;
+    ret |= _z_uint8_decode(&enc_u16[0], zbf);
+    ret |= _z_uint8_decode(&enc_u16[1], zbf);
+    *u16 = _z_host_le_load16(enc_u16);
 
     return ret;
 }
 
 /*------------------ z_zint ------------------*/
+// Zint is a variable int composed of up to 9 bytes.
+// The msb of the 8 first bytes has meaning: (1: the zint continue, 0: end of the zint)
 #define VLE_LEN 9
+#define VLE_LEN1_MASK (UINT64_MAX << (7 * 1))
+#define VLE_LEN2_MASK (UINT64_MAX << (7 * 2))
+#define VLE_LEN3_MASK (UINT64_MAX << (7 * 3))
+#define VLE_LEN4_MASK (UINT64_MAX << (7 * 4))
+#define VLE_LEN5_MASK (UINT64_MAX << (7 * 5))
+#define VLE_LEN6_MASK (UINT64_MAX << (7 * 6))
+#define VLE_LEN7_MASK (UINT64_MAX << (7 * 7))
+#define VLE_LEN8_MASK (UINT64_MAX << (7 * 8))
 
 uint8_t _z_zint_len(uint64_t v) {
-    if ((v & (UINT64_MAX << (7 * 1))) == 0) {
+    if ((v & VLE_LEN1_MASK) == 0) {
         return 1;
-    } else if ((v & (UINT64_MAX << (7 * 2))) == 0) {
+    } else if ((v & VLE_LEN2_MASK) == 0) {
         return 2;
-    } else if ((v & (UINT64_MAX << (7 * 3))) == 0) {
+    } else if ((v & VLE_LEN3_MASK) == 0) {
         return 3;
-    } else if ((v & (UINT64_MAX << (7 * 4))) == 0) {
+    } else if ((v & VLE_LEN4_MASK) == 0) {
         return 4;
-    } else if ((v & (UINT64_MAX << (7 * 5))) == 0) {
+    } else if ((v & VLE_LEN5_MASK) == 0) {
         return 5;
-    } else if ((v & (UINT64_MAX << (7 * 6))) == 0) {
+    } else if ((v & VLE_LEN6_MASK) == 0) {
         return 6;
-    } else if ((v & (UINT64_MAX << (7 * 7))) == 0) {
+    } else if ((v & VLE_LEN7_MASK) == 0) {
         return 7;
-    } else if ((v & (UINT64_MAX << (7 * 8))) == 0) {
+    } else if ((v & VLE_LEN8_MASK) == 0) {
         return 8;
     } else {
         return 9;
@@ -124,7 +133,7 @@ uint8_t _z_zint64_encode_buf(uint8_t *buf, uint64_t v) {
     uint64_t lv = v;
     uint8_t len = 0;
     size_t start = 0;
-    while ((lv & (uint64_t)~0x7f) != 0) {
+    while ((lv & VLE_LEN1_MASK) != 0) {
         uint8_t c = (lv & 0x7f) | 0x80;
         buf[start++] = c;
         len++;
@@ -145,7 +154,6 @@ int8_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
     for (size_t i = 0; i < len; i++) {
         _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, buf[i]));
     }
-
     return _Z_RES_OK;
 }
 
