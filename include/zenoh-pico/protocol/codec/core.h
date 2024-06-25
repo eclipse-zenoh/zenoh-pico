@@ -68,15 +68,15 @@ int8_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *buf);
 int8_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf);
 
 int8_t _z_slice_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
-size_t _z_slice_encode_len(const _z_slice_t *bs);
 int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *buf);
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf);
 int8_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);
 int8_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);
 
 int8_t _z_str_encode(_z_wbuf_t *buf, const char *s);
-int8_t _z_zstr_encode(_z_wbuf_t *wbf, const _z_string_t *s);
 int8_t _z_str_decode(char **str, _z_zbuf_t *buf);
+int8_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s);
+int8_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf);
 
 size_t _z_encoding_len(const _z_encoding_t *en);
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en);
