@@ -15,13 +15,13 @@
 #define ZENOH_PICO_ENCODING_NETAPI_H
 
 #include "zenoh-pico/api/constants.h"
-#include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/collections/string.h"
 
 /**
  * A zenoh encoding.
  */
 typedef struct _z_encoding_t {
-    _z_slice_t schema;
+    _z_string_t schema;
     uint16_t id;
 } _z_encoding_t;
 
