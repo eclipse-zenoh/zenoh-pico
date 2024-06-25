@@ -221,7 +221,7 @@ int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *sc, uint8_t key, co
     return _zp_config_insert(sc, key, value);
 }
 
-int8_t zp_encoding_make(z_owned_encoding_t *encoding, z_encoding_id_t id, const char *schema) {
+int8_t zp_encoding_make(z_owned_encoding_t *encoding, uint16_t id, const char *schema) {
     // Init encoding
     encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
     if (encoding->_val == NULL) {

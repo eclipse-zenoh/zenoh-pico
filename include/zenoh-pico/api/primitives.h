@@ -343,13 +343,13 @@ int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *config, uint8_t key
  *
  * Parameters:
  *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
- *   id: A known :c:type:`z_encoding_id_t` value.
+ *   id: A known :c:type:`uint16_t` value.
  *   schema: Pointer to a custom schema string value.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t zp_encoding_make(z_owned_encoding_t *encoding, z_encoding_id_t id, const char *schema);
+int8_t zp_encoding_make(z_owned_encoding_t *encoding, uint16_t id, const char *schema);
 
 /**
  * Builds a new a :c:type:`z_owned_encoding_t` with default value.
