@@ -14,6 +14,7 @@
 #ifndef ZENOH_PICO_API_MACROS_H
 #define ZENOH_PICO_API_MACROS_H
 
+#include "zenoh-pico/api/handlers.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 
