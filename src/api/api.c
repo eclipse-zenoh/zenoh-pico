@@ -240,8 +240,8 @@ void z_encoding_drop(z_owned_encoding_t *encoding) {
     if (encoding == NULL) {
         return;
     }
-    if (!_z_slice_is_empty(&encoding->_val->schema)) {
-        _z_slice_clear(&encoding->_val->schema);
+    if (!_z_string_check(encoding->_val->schema)) {
+        _z_string_clear(&encoding->_val->schema);
     }
     z_free(encoding->_val);
 }
