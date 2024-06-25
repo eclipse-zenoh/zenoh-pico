@@ -92,7 +92,7 @@ _z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t payload, 
     return s;
 }
 #else
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes payload, const _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t payload, const _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const _z_bytes_t attachment) {
     _ZP_UNUSED(key);
