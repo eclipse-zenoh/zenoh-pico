@@ -42,12 +42,14 @@ _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset,
     assert(s->slice.in != NULL || (len == 0 && offset == 0));
 
     _z_arc_slice_t out;
-    out.len = len;
-    out.start = offset;
     if (s->slice.in == NULL) {
         out.slice.in = NULL;
+        out.start = 0;
+        out.len = 0;
     } else {
         out.slice = _z_slice_rc_clone(&s->slice);
+        out.len = len;
+        out.start = out.start + offset;
     }
     return out;
 }

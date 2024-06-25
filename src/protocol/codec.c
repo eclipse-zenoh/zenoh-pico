@@ -144,7 +144,7 @@ uint8_t _z_zint64_encode_buf(uint8_t *buf, uint64_t v) {
         buf[start++] = c;
     }
 
-    return start;
+    return (uint8_t)start;
 }
 
 int8_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
@@ -181,7 +181,7 @@ int8_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t rea
 int8_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void *context) {
     uint64_t i = 0;
     int8_t res = _z_zint64_decode_with_reader(&i, reader, context);
-    if (res == _Z_RES_OK && i > SIZE_MAX) {
+    if (res != _Z_RES_OK || i > SIZE_MAX) {
         res = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     } else {
         *zint = (_z_zint_t)i;

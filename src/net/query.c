@@ -51,7 +51,7 @@ _z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, con
     memcpy(q._parameters, parameters->start, parameters->len);
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
-    q.attachment = attachment;
+    _z_bytes_copy(&q.attachment, &attachment);
 
     _z_keyexpr_copy(&q._key, key);
     _z_value_copy(&q._value, value);

@@ -93,12 +93,12 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         reply.data.replier_id = id;
         // Create sample
         _z_sample_t sample = _z_sample_null();
-        sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
-        sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
-        sample.payload = payload;    // FIXME: call z_bytes_move or copy
+        sample.keyexpr = keyexpr;                  // FIXME: call z_keyexpr_move or copy
+        sample.encoding = encoding;                // FIXME: call z_encoding_move or copy
+        _z_bytes_copy(&sample.payload, &payload);  // FIXME: call z_bytes_move or copy
         sample.kind = kind;
         sample.timestamp = _z_timestamp_duplicate(timestamp);
-        sample.attachment = attachment;  // FIXME: call z_bytes_move or copy
+        _z_bytes_copy(&sample.attachment, &attachment);  // FIXME: call z_bytes_move or copy
 
         // Create sample rc from value
         reply.data.sample = _z_sample_rc_new_from_val(sample);

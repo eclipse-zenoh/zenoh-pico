@@ -48,7 +48,7 @@ typedef struct {
 _Bool _z_bytes_check(const _z_bytes_t *bytes);
 _z_bytes_t _z_bytes_null(void);
 int8_t _z_bytes_append(_z_bytes_t *dst, _z_bytes_t *src);
-int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
+_Bool _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 int8_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);

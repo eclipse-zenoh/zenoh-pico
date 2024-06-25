@@ -86,18 +86,18 @@ void _z_bytes_free(_z_bytes_t **bs) {
 
 size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
     uint8_t *start = dst;
-
-    for (size_t i = 0; i < _z_bytes_num_slices(bytes) && len > 0; ++i) {
+    size_t remaining = len;
+    for (size_t i = 0; i < _z_bytes_num_slices(bytes) && remaining > 0; ++i) {
         // Recopy data
         _z_arc_slice_t *s = _z_bytes_get_slice(bytes, i);
         size_t s_len = _z_arc_slice_len(s);
-        size_t len_to_copy = len >= s_len ? s_len : len;
+        size_t len_to_copy = remaining >= s_len ? s_len : remaining;
         memcpy(start, _z_arc_slice_data(s), len_to_copy);
         start += s_len;
-        len -= len_to_copy;
+        remaining -= len_to_copy;
     }
 
-    return len;
+    return len - remaining;
 }
 int8_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
     *b = _z_bytes_null();
@@ -132,13 +132,13 @@ int8_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
     return _Z_RES_OK;
 }
 
-int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) { return _z_arc_slice_svec_append(&dst->_slices, s); }
+_Bool _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) { return _z_arc_slice_svec_append(&dst->_slices, s); }
 
 int8_t _z_bytes_append_inner(_z_bytes_t *dst, _z_bytes_t *src) {
     _Bool success = true;
     for (size_t i = 0; i < _z_bytes_num_slices(src); ++i) {
         _z_arc_slice_t *s = _z_bytes_get_slice(src, i);
-        success = success && _z_arc_slice_svec_append(&dst->_slices, s);
+        success = success && _z_bytes_append_slice(dst, s);
     }
     if (!success) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -156,7 +156,7 @@ int8_t _z_bytes_append(_z_bytes_t *dst, _z_bytes_t *src) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, l_len);
-    _z_arc_slice_svec_append(&dst->_slices, &arc_s);
+    _z_bytes_append_slice(dst, &arc_s);
 
     if (dst->_slices._val == NULL) {
         _z_arc_slice_drop(&arc_s);
@@ -419,7 +419,7 @@ int8_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z_byt
             res = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             break;
         }
-        res = _z_arc_slice_svec_append(&out->_slices, &ss);
+        res = _z_bytes_append_slice(out, &ss) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         if (res != _Z_RES_OK) {
             _z_arc_slice_drop(&ss);
             break;

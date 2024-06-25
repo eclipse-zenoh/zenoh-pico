@@ -43,7 +43,7 @@ void test_slice(void) {
     assert(_z_bytes_num_slices(&b) == 1);
     assert(_z_slice_eq(&_z_bytes_get_slice(&b, 0)->slice.in->val, &s));
 
-    _z_bytes_to_buf(&b, data_out, 5);
+    assert(_z_bytes_to_buf(&b, data_out, 5) == 5);
     assert(memcmp(data, data_out, 5) == 0);
 
     _z_bytes_drop(&b);
@@ -73,7 +73,7 @@ void test_append(void) {
     assert(_z_slice_eq(&_z_bytes_get_slice(&b, 1)->slice.in->val, &s2.slice.in->val));
     assert(_z_slice_eq(&_z_bytes_get_slice(&b, 2)->slice.in->val, &s3.slice.in->val));
 
-    _z_bytes_to_buf(&b, data_out, 10);
+    assert(_z_bytes_to_buf(&b, data_out, 15) == 10);
     assert(memcmp(data_in, data_out, 10) == 0);
 
     _z_bytes_drop(&b);

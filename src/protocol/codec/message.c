@@ -446,8 +446,9 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Payload
             _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
-            ret = _z_encoding_decode(&msg->_ext_value.encoding, &zbf);
-            ret |= _z_bytes_from_buf(&msg->_ext_value.payload, (uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf));
+            _Z_RETURN_IF_ERR(_z_encoding_decode(&msg->_ext_value.encoding, &zbf));
+            _Z_RETURN_IF_ERR(
+                _z_bytes_from_buf(&msg->_ext_value.payload, (uint8_t *)_z_zbuf_start(&zbf), _z_zbuf_len(&zbf)));
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x05: {  // Attachment
