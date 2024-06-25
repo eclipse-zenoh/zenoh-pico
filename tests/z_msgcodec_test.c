@@ -345,8 +345,8 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         printf("%s:%s", ls->val, rs->val);
         if (i < left->_len - 1) printf(" ");
 
-        z_free(ls);
-        z_free(rs);
+        _z_string_free(&ls);
+        _z_string_free(&rs);
 
         assert(_z_locator_eq(l, r) == true);
     }
