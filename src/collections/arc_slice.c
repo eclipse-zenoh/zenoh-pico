@@ -49,7 +49,7 @@ _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset,
     } else {
         out.slice = _z_slice_rc_clone(&s->slice);
         out.len = len;
-        out.start = out.start + offset;
+        out.start = s->start + offset;
     }
     return out;
 }

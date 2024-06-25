@@ -123,8 +123,8 @@ _z_string_t _z_string_from_bytes(const _z_slice_t *bs) {
 _z_string_t _z_string_preallocate(size_t len) {
     _z_string_t s = _z_string_null();
     // Allocate string
-    s.len = len + (size_t)1;  // bytes data + null terminator
-    char *str_val = (char *)z_malloc(s.len * sizeof(char));
+    s.len = len;
+    char *str_val = (char *)z_malloc((s.len + (size_t)1) * sizeof(char));  // bytes data + null terminator
     if (str_val == NULL) {
         s.len = 0;
         return s;
