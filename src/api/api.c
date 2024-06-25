@@ -323,7 +323,7 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
     }
     // Convert bytes to string
     size_t len = _z_bytes_len(bytes);
-    *s->_val = _z_string_preallocate(_z_bytes_len(bytes));
+    *s->_val = _z_string_preallocate(len);
     if (s->_val->len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     _z_bytes_to_buf(bytes, (uint8_t *)s->_val->val, len);
     return _Z_RES_OK;

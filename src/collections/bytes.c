@@ -34,7 +34,7 @@ _z_bytes_t _z_bytes_null(void) {
 
 int8_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     _z_arc_slice_svec_copy(&dst->_slices, &src->_slices);
-    if (_z_arc_slice_svec_len(&dst->_slices) == _z_arc_slice_svec_len(&dst->_slices)) {
+    if (_z_arc_slice_svec_len(&dst->_slices) == _z_arc_slice_svec_len(&src->_slices)) {
         return _Z_RES_OK;
     } else {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -93,7 +93,7 @@ size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
         size_t s_len = _z_arc_slice_len(s);
         size_t len_to_copy = remaining >= s_len ? s_len : remaining;
         memcpy(start, _z_arc_slice_data(s), len_to_copy);
-        start += s_len;
+        start += len_to_copy;
         remaining -= len_to_copy;
     }
 

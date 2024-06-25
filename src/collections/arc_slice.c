@@ -79,7 +79,6 @@ int8_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src) {
 
 int8_t _z_arc_slice_drop(_z_arc_slice_t* s) {
     _z_slice_rc_drop(&s->slice);
-    s->len = 0;
-    s->start = 0;
+    *s = _z_arc_slice_empty();
     return _Z_RES_OK;
 }

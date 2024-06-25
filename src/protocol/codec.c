@@ -270,12 +270,8 @@ int8_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_slice_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
-
-    ret |= _z_zsize_decode(&bs->len, zbf);
-    ret |= _z_slice_val_decode_na(bs, zbf);
-
-    return ret;
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&bs->len, zbf));
+    return _z_slice_val_decode_na(bs, zbf);
 }
 
 int8_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val_decode_na(bs, zbf); }
@@ -283,10 +279,8 @@ int8_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val
 int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
-    int8_t ret = _Z_RES_OK;
     _z_slice_t s;
-    ret = _z_slice_decode(&s, zbf);
-    if (ret != _Z_RES_OK) return ret;
+    _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
     return _z_bytes_from_slice(bs, s);
 }
 
