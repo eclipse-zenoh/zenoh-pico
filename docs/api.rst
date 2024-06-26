@@ -281,7 +281,6 @@ Primitives
 .. autocfunction:: primitives.h::z_scouting_config_from
 .. autocfunction:: primitives.h::zp_scouting_config_get
 .. autocfunction:: primitives.h::zp_scouting_config_insert
-.. autocfunction:: primitives.h::zp_encoding_default
 .. autocfunction:: primitives.h::z_encoding_check
 .. autocfunction:: primitives.h::z_encoding_drop
 .. autocfunction:: primitives.h::z_encoding_loan
