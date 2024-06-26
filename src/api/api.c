@@ -476,6 +476,18 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); 
 
 _Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
 
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_reader(bytes); }
+
+size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len) {
+    return _z_bytes_reader_read(reader, dst, len);
+}
+
+int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin) {
+    return _z_bytes_reader_seek(reader, offset, origin);
+}
+
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(reader); }
+
 z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
 _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {

@@ -55,6 +55,7 @@ Data Structures
 .. autoctype:: types.h::zp_send_keep_alive_options_t
 .. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_qos_t
+.. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_iterator_t
   
 
@@ -327,6 +328,10 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_is_empty
 .. autocfunction:: primitives.h::z_bytes_get_iterator
 .. autocfunction:: primitives.h::z_bytes_iterator_next
+.. autocfunction:: primitives.h::z_bytes_get_reader
+.. autocfunction:: primitives.h::z_bytes_reader_read
+.. autocfunction:: primitives.h::z_bytes_reader_seek
+.. autocfunction:: primitives.h::z_bytes_reader_tell
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

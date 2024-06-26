@@ -825,6 +825,26 @@ int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *firs
 int8_t z_bytes_empty(z_owned_bytes_t *bytes);
 
 /**
+ * Returns total number of bytes in the container.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  Number of bytes in the container.
+ */
+size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+
+/**
+ * Checks if container is empty
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  ``true`` if conainer is empty,  ``false`` otherwise.
+ */
+_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+
+/**
  * Returns an iterator for multi-element serialized data.
  *
  * Parameters:
@@ -849,24 +869,67 @@ z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
 _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
 
 /**
- * Returns total number of bytes in the container.
+ * Returns a reader for the `bytes`.
+ *
+ * The `bytes` should outlive the reader and should not be modified, while reader is in use.
  *
  * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *   bytes: Data to read.
+ *
  * Return:
- *  Number of bytes in the container.
+ *   The constructed :c:type:`z_bytes_reader_t`.
  */
-size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
 
 /**
- * Checks if container is empty
+ * Reads data into specified destination.
  *
  * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *  reader: Data reader to read from.
+ *  dst: Buffer where the read data is written.
+ *  len: Maximum number of bytes to read.
+ *
  * Return:
- *  ``true`` if conainer is empty,  ``false`` otherwise.
+ *  Number of bytes read. If return value is smaller than `len`, it means that the end of the data was reached.
  */
-_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
+/**
+ * Sets the `reader` position indicator for the payload to the value pointed to by offset.
+ * The new position is exactly `offset` bytes measured from the beginning of the payload if origin is `SEEK_SET`,
+ * from the current reader position if origin is `SEEK_CUR`, and from the end of the payload if origin is `SEEK_END`.
+ *
+ * Parameters:
+ *  reader: Data reader to reposition.
+ *  offset: New position ffset in bytes.
+ *  origin: Origin for the new position.
+ *
+ * Return:
+ *  ​0​ upon success, negative error code otherwise.
+ */
+int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+/**
+ * Gets the read position indicator.
+ *
+ * Parameters:
+ *  reader: Data reader to get position of.
+ *
+ * Return:
+ *  Read position indicator on success or -1L if failure occurs.
+ */
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
+
+/**
+ * Constructs :c:type:`z_owned_bytes_t` object corresponding to the next element of serialized data.
+ *
+ * Will construct null-state `z_owned_bytes_t` when iterator reaches the end (or in case of error).
+ *
+ * Parameters:
+ *   iter: An iterator over multi-element serialized data.
+ *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contained next serialized element.
+ * Return:
+ *  ``false`` when iterator reaches the end,  ``true`` otherwise.
+ */
+_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
 
 /**
  * Checks validity of a timestamp

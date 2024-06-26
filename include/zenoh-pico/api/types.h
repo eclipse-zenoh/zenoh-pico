@@ -81,6 +81,11 @@ _Z_LOANED_TYPE(_z_bytes_t, bytes)
 typedef _z_bytes_iterator_t z_bytes_iterator_t;
 
 /**
+ * A reader for serialized data.
+ */
+typedef _z_bytes_reader_t z_bytes_reader_t;
+
+/**
  * Represents a string without null-terminator.
  *
  * Members:
