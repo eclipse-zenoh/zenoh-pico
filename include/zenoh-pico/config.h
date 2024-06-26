@@ -239,6 +239,13 @@
 #define Z_FEATURE_INTEREST 0
 #endif
 
+/**
+ * Enable encoding values.
+ */
+#ifndef Z_FEATURE_ENCODING_VALUES
+#define Z_FEATURE_ENCODING_VALUES 1
+#endif
+
 /*------------------ Compile-time configuration properties ------------------*/
 /**
  * Default length for Zenoh ID. Maximum size is 16 bytes.
