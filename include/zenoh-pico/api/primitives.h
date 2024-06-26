@@ -844,9 +844,29 @@ z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
  *   iter: An iterator over multi-element serialized data.
  *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contained next serialized element.
  * Return:
- *  ``false`` when iterator reaches the end,  ``true`` otherwise
+ *  ``false`` when iterator reaches the end,  ``true`` otherwise.
  */
 _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+
+/**
+ * Returns total number of bytes in the container.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  Number of bytes in the container.
+ */
+size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+
+/**
+ * Checks if container is empty
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  ``true`` if conainer is empty,  ``false`` otherwise.
+ */
+_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
 
 /**
  * Checks validity of a timestamp

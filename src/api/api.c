@@ -472,6 +472,10 @@ int8_t z_bytes_empty(z_owned_bytes_t *bytes) {
     return _Z_RES_OK;
 }
 
+size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); }
+
+_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
+
 z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
 _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {

@@ -55,6 +55,8 @@ Data Structures
 .. autoctype:: types.h::zp_send_keep_alive_options_t
 .. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_qos_t
+.. autoctype:: types.h::z_bytes_iterator_t
+  
 
 Owned Types
 ~~~~~~~~~~~
@@ -320,6 +322,11 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice_copy
 .. autocfunction:: primitives.h::z_bytes_serialize_from_string
 .. autocfunction:: primitives.h::z_bytes_serialize_from_string_copy
+.. autocfunction:: primitives.h::z_bytes_empty
+.. autocfunction:: primitives.h::z_bytes_len
+.. autocfunction:: primitives.h::z_bytes_is_empty
+.. autocfunction:: primitives.h::z_bytes_get_iterator
+.. autocfunction:: primitives.h::z_bytes_iterator_next
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

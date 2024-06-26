@@ -76,7 +76,7 @@ _Z_OWNED_TYPE_PTR(_z_bytes_t, bytes)
 _Z_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
- * An iterator over multi-element serialized data
+ * An iterator over multi-element serialized data.
  */
 typedef _z_bytes_iterator_t z_bytes_iterator_t;
 
