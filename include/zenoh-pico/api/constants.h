@@ -99,10 +99,6 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
  * This is particularly useful in helping Zenoh to perform additional network optimizations.
  */
 
-
-
-
-
 /**
  * Consolidation mode values.
  *

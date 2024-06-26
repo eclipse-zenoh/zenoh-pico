@@ -221,18 +221,9 @@ int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *sc, uint8_t key, co
     return _zp_config_insert(sc, key, value);
 }
 
-int8_t zp_encoding_make(z_owned_encoding_t *encoding, uint16_t id, const char *schema) {
-    // Init encoding
-    encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
-    if (encoding->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    return _z_encoding_make(encoding->_val, id, schema);
-}
-
 z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding) { return encoding; }
 
-int8_t z_encoding_null(z_owned_encoding_t *encoding) { return zp_encoding_make(encoding, Z_ENCODING_ID_DEFAULT, NULL); }
+void z_encoding_null(z_owned_encoding_t *encoding) { encoding->_val = NULL; }
 
 _Bool z_encoding_check(const z_owned_encoding_t *encoding) { return _z_encoding_check(encoding->_val); }
 
@@ -258,6 +249,37 @@ int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src)
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
 z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
+
+int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
+    // Init owned encoding
+    z_encoding_null(encoding);
+    encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
+    if (encoding->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    if (s != NULL) {
+        // TODO: Convert to id if possible
+        _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+    // Init owned string
+    z_string_null(s);
+    // Check encoding
+    if (!_z_encoding_check(encoding)) {
+        return _Z_RES_OK;
+    }
+    // Allocate owned string
+    s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
+    if (s->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // TODO: Convert id to string if possible
+    _z_string_copy(s->_val, &encoding->schema);
+    return _Z_RES_OK;
+}
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 

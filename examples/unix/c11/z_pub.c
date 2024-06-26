@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
         // Create encoding
         z_owned_encoding_t encoding;
-        zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, "utf8");
+        z_encoding_from_str(&encoding, "text/plain;utf8");
         z_publisher_put_options_t options;
         z_publisher_put_options_default(&options);
         options.encoding = z_move(encoding);
