@@ -116,14 +116,7 @@ int main(int argc, char **argv) {
         z_owned_bytes_t payload;
         z_bytes_serialize_from_string(&payload, buf);
 
-        // Create encoding
-        z_owned_encoding_t encoding;
-        z_encoding_from_str(&encoding, "text/plain;utf8");
-        z_publisher_put_options_t options;
-        z_publisher_put_options_default(&options);
-        options.encoding = z_move(encoding);
-
-        z_publisher_put(z_loan(pub), z_move(payload), &options);
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
     // Clean up
     z_undeclare_publisher(z_move(pub));
