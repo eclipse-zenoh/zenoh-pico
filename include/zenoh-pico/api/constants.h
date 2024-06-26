@@ -100,7 +100,7 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
  *
  * Register your encoding metadata from a string with :c:func:`z_encoding_from_str`. To get the optimization, you need
  * Z_FEATURE_ENCODING_VALUES to 1 and your string should follow the format: "<constant>;<optional additional data>"
- * 
+ *
  * E.g: "text/plain;utf8"
  *
  * Here is the list of constants:
