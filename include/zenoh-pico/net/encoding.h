@@ -17,6 +17,8 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
 
+#define _Z_ENCODING_ID_DEFAULT 0
+
 /**
  * A zenoh encoding.
  */

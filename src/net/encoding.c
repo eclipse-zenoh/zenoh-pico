@@ -37,12 +37,12 @@ _z_encoding_t _z_encoding_wrap(uint16_t id, const char *schema) {
     return (_z_encoding_t){.id = id, .schema = (schema == NULL) ? _z_string_null() : _z_string_wrap((char *)schema)};
 }
 
-_z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(Z_ENCODING_ID_DEFAULT, NULL); }
+_z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(_Z_ENCODING_ID_DEFAULT, NULL); }
 
 void _z_encoding_clear(_z_encoding_t *encoding) { _z_string_clear(&encoding->schema); }
 
 _Bool _z_encoding_check(const _z_encoding_t *encoding) {
-    return ((encoding->id != Z_ENCODING_ID_DEFAULT) || _z_string_check(encoding->schema));
+    return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(encoding->schema));
 }
 
 void _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
@@ -52,6 +52,6 @@ void _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
 
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     dst->id = src->id;
-    src->id = Z_ENCODING_ID_DEFAULT;
+    src->id = _Z_ENCODING_ID_DEFAULT;
     _z_string_move(&dst->schema, &src->schema);
 }
