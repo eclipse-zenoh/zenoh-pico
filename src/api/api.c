@@ -331,13 +331,8 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
 
 int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
     // Init pair of owned bytes
-    z_bytes_null(first);
-    z_bytes_null(second);
-    first->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    second->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if ((first->_val == NULL) || (second->_val == NULL)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(first));
+    _Z_DO_AND_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(second));
     return _z_bytes_deserialize_into_pair(bytes, first->_val, second->_val);
 }
 
@@ -359,11 +354,7 @@ int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val) {
 
 int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_uint8(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -372,11 +363,7 @@ int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
 
 int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_uint16(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -385,11 +372,7 @@ int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
 
 int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_uint32(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -398,11 +381,7 @@ int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
 
 int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_uint64(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -411,11 +390,7 @@ int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
 
 int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_float(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -424,11 +399,7 @@ int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val) {
 
 int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     int8_t res = _z_bytes_from_double(bytes->_val, val);
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
@@ -437,11 +408,7 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
 
 int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     _z_slice_t s = _z_slice_wrap((uint8_t *)data, len);
     int8_t res = _z_bytes_from_slice(bytes->_val, s);
@@ -451,11 +418,7 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data,
 
 int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Allocate bytes
     _z_slice_t s = _z_slice_make(len);
     if (!_z_slice_check(s) && len > 0) {
@@ -483,35 +446,30 @@ int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s)
 int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
                                    void *context) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     z_owned_bytes_t data;
     while (iterator_body(&data, context)) {
-        int8_t res = _z_bytes_append(bytes->_val, data._val);
-        if (res != _Z_RES_OK) {
-            z_bytes_drop(bytes);
-            return res;
-        }
+        _Z_DO_AND_RETURN_IF_ERR(_z_bytes_append(bytes->_val, data._val), z_bytes_drop(bytes));
     }
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        z_bytes_drop(first);
-        z_bytes_drop(second);
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_DO_AND_RETURN_IF_ERR(z_bytes_empty(bytes), z_bytes_drop(first); z_bytes_drop(second));
     int8_t res = _z_bytes_serialize_from_pair(bytes->_val, first->_val, second->_val);
     first->_val = NULL;
     second->_val = NULL;
     if (res != _Z_RES_OK) z_bytes_drop(bytes);
     return res;
+}
+
+int8_t z_bytes_empty(z_owned_bytes_t *bytes) {
+    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
+    if (bytes->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    *bytes->_val = _z_bytes_null();
+    return _Z_RES_OK;
 }
 
 z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }

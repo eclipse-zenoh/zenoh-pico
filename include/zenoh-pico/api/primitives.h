@@ -817,6 +817,14 @@ int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body
 int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
 
 /**
+ * Parameters:
+ *   bytes: Pointer to an unitialized :c:type:`z_lowned_bytes_t` instance.
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_empty(z_owned_bytes_t *bytes);
+
+/**
  * Returns an iterator for multi-element serialized data.
  *
  * Parameters:

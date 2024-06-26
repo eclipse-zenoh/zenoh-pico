@@ -24,23 +24,6 @@
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
-#define _Z_RETURN_IF_ERR(expr)    \
-    {                             \
-        int8_t __res = expr;      \
-        if (__res != _Z_RES_OK) { \
-            return __res;         \
-        }                         \
-    }
-
-#define _Z_CLEAN_RETURN_IF_ERR(base_expr, clean_expr) \
-    {                                                 \
-        int8_t __res = base_expr;                     \
-        if (__res != _Z_RES_OK) {                     \
-            clean_expr;                               \
-            return __res;                             \
-        }                                             \
-    }
-
 typedef int8_t (*__z_single_byte_reader_t)(uint8_t *, void *context);
 /*------------------ Internal Zenoh-net Macros ------------------*/
 int8_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
