@@ -97,15 +97,8 @@ int main(int argc, char **argv) {
     z_owned_bytes_t payload;
     z_bytes_serialize_from_string(&payload, value);
 
-    // Create encoding
-    z_owned_encoding_t encoding;
-    zp_encoding_make(&encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
-
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
-    z_put_options_t options;
-    z_put_options_default(&options);
-    options.encoding = z_encoding_move(&encoding);
-    if (z_put(z_session_loan(&s), z_keyexpr_loan(&ke), z_bytes_move(&payload), &options) < 0) {
+    if (z_put(z_session_loan(&s), z_keyexpr_loan(&ke), z_bytes_move(&payload), NULL) < 0) {
         printf("Oh no! Put has failed...\n");
     }
 
