@@ -30,22 +30,27 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')...'''
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit...
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')
+    with encoding: text/plain;utf8
    with attachment:
      0: source, C
      1: index, 0
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')
+    with encoding: text/plain;utf8
    with attachment:
      0: source, C
      1: index, 1
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')
+    with encoding: text/plain;utf8
    with attachment:
      0: source, C
      1: index, 2
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')
+    with encoding: text/plain;utf8
    with attachment:
      0: source, C
      1: index, 3
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')
+    with encoding: text/plain;utf8
    with attachment:
      0: source, C
      1: index, 4'''
