@@ -332,7 +332,7 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
 int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
     // Init pair of owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(first));
-    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(second));
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(first));
     return _z_bytes_deserialize_into_pair(bytes, first->_val, second->_val);
 }
 
@@ -356,54 +356,48 @@ int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_uint8(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint8(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_uint16(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint16(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_uint32(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint32(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_uint64(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint64(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_float(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_float(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
     // Init owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    int8_t res = _z_bytes_from_double(bytes->_val, val);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_double(bytes->_val, val), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
@@ -411,24 +405,21 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data,
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
     _z_slice_t s = _z_slice_wrap((uint8_t *)data, len);
-    int8_t res = _z_bytes_from_slice(bytes->_val, s);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(bytes->_val, s), z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
-    // Init owned bytes
-    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Allocate bytes
-    _z_slice_t s = _z_slice_make(len);
+    _z_slice_t s = _z_slice_wrap_copy((uint8_t *)data, len);
     if (!_z_slice_check(s) && len > 0) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    // Copy data
-    memcpy((uint8_t *)s.start, data, len);
-    int8_t res = _z_bytes_from_slice(bytes->_val, s);
-    if (res != _Z_RES_OK) z_bytes_drop(bytes);
-    return res;
+
+    // Init owned bytes
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(bytes), _z_slice_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(bytes->_val, s), _z_slice_clear(&s); z_bytes_drop(bytes));
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s) {
