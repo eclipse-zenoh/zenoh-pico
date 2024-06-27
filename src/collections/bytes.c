@@ -106,7 +106,7 @@ int8_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
     return _z_arc_slice_svec_append(&b->_slices, &arc_s) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
 
-int8_t _z_bytes_from_buf(_z_bytes_t *b, uint8_t *src, size_t len) {
+int8_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
     *b = _z_bytes_null();
     _z_slice_t s = _z_slice_wrap_copy(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;

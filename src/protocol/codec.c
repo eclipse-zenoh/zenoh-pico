@@ -281,7 +281,11 @@ int8_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_
 int8_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    return _z_bytes_from_slice(bs, s);
+    if (s._is_alloc) {
+        return _z_bytes_from_slice(bs, s);
+    } else {
+        return _z_bytes_from_buf(bs, s.start, s.len);
+    }
 }
 
 int8_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
