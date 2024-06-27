@@ -160,5 +160,4 @@
 // Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
 
-
 #endif /* INCLUDE_ZENOH_PICO_API_OLV_MACROS_H */

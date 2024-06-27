@@ -928,11 +928,11 @@ int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t* writer);
+int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer);
 
 /**
  * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
- * 
+ *
  * Parameters:
  *   writer: A data writer
  *   src: Buffer to write from.

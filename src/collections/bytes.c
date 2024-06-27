@@ -18,11 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/result.h"
-#include "zenoh-pico/api/olv_macros.h"
 
 /*-------- Bytes --------*/
 _Bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
@@ -133,11 +133,9 @@ int8_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
     return _Z_RES_OK;
 }
 
-int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) { 
-    _Z_CLEAN_RETURN_IF_ERR(
-        _z_arc_slice_svec_append(&dst->_slices, s) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY,
-        _z_arc_slice_drop(s)
-    );
+int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
+    _Z_CLEAN_RETURN_IF_ERR(_z_arc_slice_svec_append(&dst->_slices, s) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY,
+                           _z_arc_slice_drop(s));
     return _Z_RES_OK;
 }
 
@@ -428,11 +426,7 @@ _Bool _z_bytes_iterator_next(_z_bytes_iterator_t *iter, _z_bytes_t *b) {
 }
 
 _z_bytes_writer_t _z_bytes_get_writer(_z_bytes_t *bytes, size_t cache_size) {
-    return (_z_bytes_writer_t) {
-        .cache = NULL,
-        .cache_size = cache_size,
-        .bytes = bytes
-    };
+    return (_z_bytes_writer_t){.cache = NULL, .cache_size = cache_size, .bytes = bytes};
 }
 
 int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
@@ -454,27 +448,24 @@ int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
-    _Z_CLEAN_RETURN_IF_ERR(
-        _z_bytes_append_slice(writer->bytes, &cache),
-        _z_arc_slice_drop(&cache)
-    );
-    writer->cache = (uint8_t*)_Z_RC_IN_VAL(&cache.slice).start;
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_slice(writer->bytes, &cache), _z_arc_slice_drop(&cache));
+    writer->cache = (uint8_t *)_Z_RC_IN_VAL(&cache.slice).start;
     return _Z_RES_OK;
 }
 
 int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    if (writer->cache_size == 0) { // no cache append data as a single slice
+    if (writer->cache_size == 0) {  // no cache append data as a single slice
         _z_slice_t s = _z_slice_wrap_copy(src, len);
         if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, len);
-        if _Z_RC_IS_NULL(&arc_s.slice) {
+        if _Z_RC_IS_NULL (&arc_s.slice) {
             _z_slice_clear(&s);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         return _z_bytes_append_slice(writer->bytes, &arc_s);
     }
 
-    while (len > 0) { 
+    while (len > 0) {
         _Z_RETURN_IF_ERR(_z_bytes_writer_ensure_cache(writer));
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(writer->bytes, _z_bytes_num_slices(writer->bytes) - 1);
         size_t remaining_in_cache = _Z_RC_IN_VAL(&arc_s->slice).len - arc_s->len;
@@ -488,11 +479,8 @@ int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size
     return _Z_RES_OK;
 }
 
-
 _z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes) {
-    return (_z_bytes_iterator_writer_t){
-        .writer = _z_bytes_get_writer(bytes, 0)
-    };
+    return (_z_bytes_iterator_writer_t){.writer = _z_bytes_get_writer(bytes, 0)};
 }
 int8_t _z_bytes_iterator_writer_write(_z_bytes_iterator_writer_t *writer, _z_bytes_t *src) {
     uint8_t l_buf[16];

@@ -493,11 +493,11 @@ _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
     return true;
 }
 
-int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t* writer) {
+int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer) {
     writer->_val = (z_loaned_bytes_writer_t *)z_malloc(sizeof(z_loaned_bytes_writer_t));
     if (writer->_val == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     *writer->_val = _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE);
-    return _Z_RES_OK; 
+    return _Z_RES_OK;
 }
 
 int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
@@ -606,7 +606,6 @@ _Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
 _Z_OWNED_FUNCTIONS_PTR_TRIVIAL_IMPL(_z_bytes_writer_t, bytes_writer)
-
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid

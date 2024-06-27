@@ -161,7 +161,6 @@ void test_reader_seek(void) {
     _z_bytes_drop(&b);
 }
 
-
 void test_writer_no_cache(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
@@ -190,7 +189,7 @@ void test_writer_with_cache(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
     uint8_t data3[3] = {3, 9, 10};
-    
+
     uint8_t data1_out[7] = {1, 2, 3, 4, 5, 1, 2};
     uint8_t data2_out[6] = {6, 7, 8, 3, 9, 10};
     _z_bytes_t b = _z_bytes_null();
@@ -212,7 +211,6 @@ void test_writer_with_cache(void) {
     assert(memcmp(data2_out, _z_arc_slice_data(_z_bytes_get_slice(&b, 1)), 6) == 0);
     _z_bytes_drop(&b);
 }
-
 
 int main(void) {
     test_null_bytes();

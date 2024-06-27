@@ -98,9 +98,8 @@ typedef struct {
 _z_bytes_iterator_t _z_bytes_get_iterator(const _z_bytes_t *bytes);
 _Bool _z_bytes_iterator_next(_z_bytes_iterator_t *iter, _z_bytes_t *b);
 
-
 typedef struct {
-    uint8_t* cache;
+    uint8_t *cache;
     size_t cache_size;
     _z_bytes_t *bytes;
 } _z_bytes_writer_t;
