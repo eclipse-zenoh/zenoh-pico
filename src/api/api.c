@@ -327,16 +327,26 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         prefix = ENCODING_VALUES_ID_TO_STR[encoding->id];
         prefix_len = strlen(prefix);
     }
-    // Allocate string (include separator and null terminator)
-    char *value = (char *)z_malloc(sizeof(char) * (prefix_len + encoding->schema.len + 2));
+    _Bool has_schema = encoding->schema.len > 0;
+    // Size include null terminator
+    size_t total_len = prefix_len + encoding->schema.len + 1;
+    // Check for schema separator
+    if (has_schema) {
+        total_len += 1;
+    }
+    // Allocate string
+    char *value = (char *)z_malloc(sizeof(char) * total_len);
     if (value == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    // Copy data
+    // Copy prefix
     char sep = ENCODING_SCHEMA_SEPARATOR;
-    (void)strcpy(value, prefix);
-    (void)strncat(value, &sep, 1);
-    (void)strcat(value, encoding->schema.val);
+    (void)strncpy(value, prefix, prefix_len);
+    // Copy schema and separator
+    if (has_schema) {
+        (void)strncat(value, &sep, 1);
+        (void)strncat(value, encoding->schema.val, encoding->schema.len);
+    }
     // Fill container
     *s->_val = _z_string_wrap(value);
     return _Z_RES_OK;
@@ -400,10 +410,6 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
 int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
     // Init owned string
     z_string_null(s);
-    // Check encoding
-    if (!_z_encoding_check(encoding)) {
-        return _Z_RES_OK;
-    }
     // Allocate owned string
     s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
     if (s->_val == NULL) {
