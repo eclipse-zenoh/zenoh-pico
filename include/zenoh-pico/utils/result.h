@@ -91,14 +91,6 @@ typedef enum {
     }
 
 #define _Z_IS_OK(expr) (expr == _Z_RES_OK)
-#define _Z_IS_ERR(expr) (expr == _Z_RES_OK)
-#define _Z_DO_AND_RETURN_IF_ERR(expr, action) \
-    {                                         \
-        int8_t __res = expr;                  \
-        if (__res != _Z_RES_OK) {             \
-            { action; }                       \
-            return __res;                     \
-        }                                     \
-    }
+#define _Z_IS_ERR(expr) (expr != _Z_RES_OK)
 
 #endif /* ZENOH_PICO_UTILS_RESULT_H */

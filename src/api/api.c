@@ -332,7 +332,7 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
 int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
     // Init pair of owned bytes
     _Z_RETURN_IF_ERR(z_bytes_empty(first));
-    _Z_DO_AND_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(second));
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(second));
     return _z_bytes_deserialize_into_pair(bytes, first->_val, second->_val);
 }
 
@@ -449,13 +449,13 @@ int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body
     _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     z_owned_bytes_t data;
     while (iterator_body(&data, context)) {
-        _Z_DO_AND_RETURN_IF_ERR(_z_bytes_append(bytes->_val, data._val), z_bytes_drop(bytes));
+        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append(bytes->_val, data._val), z_bytes_drop(bytes));
     }
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
-    _Z_DO_AND_RETURN_IF_ERR(z_bytes_empty(bytes), z_bytes_drop(first); z_bytes_drop(second));
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(bytes), z_bytes_drop(first); z_bytes_drop(second));
     int8_t res = _z_bytes_serialize_from_pair(bytes->_val, first->_val, second->_val);
     first->_val = NULL;
     second->_val = NULL;
