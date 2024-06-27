@@ -486,7 +486,7 @@ _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
     z_bytes_null(bytes);
     bytes->_val = (z_loaned_bytes_t *)z_malloc(sizeof(z_loaned_bytes_t));
     if (bytes->_val == NULL) return false;
-    if (!_z_bytes_iterator_next(iter, bytes->_val)) {
+    if (_z_bytes_iterator_next(iter, bytes->_val) != _Z_RES_OK) {
         z_bytes_drop(bytes);
         return false;
     }
