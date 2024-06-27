@@ -319,7 +319,7 @@ static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, cons
     return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
 }
 
-static int8_t _z_encoding_convert_into_int(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
     const char *prefix = NULL;
     size_t prefix_len = 0;
     // Convert id
@@ -347,7 +347,7 @@ static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, cons
     return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
 }
 
-static int8_t _z_encoding_convert_into_int(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
     _z_string_copy(s->_val, &encoding->schema);
     return _Z_RES_OK;
 }
@@ -410,7 +410,7 @@ int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Convert encoding to string
-    _z_encoding_convert_into_int(encoding, s);
+    _z_encoding_convert_into_string(encoding, s);
     return _Z_RES_OK;
 }
 
