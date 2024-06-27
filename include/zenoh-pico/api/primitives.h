@@ -1201,6 +1201,7 @@ _Z_OWNED_FUNCTIONS_DEF(z_loaned_sample_t, z_owned_sample_t, sample)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_query_t, z_owned_query_t, query)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_slice_t, z_owned_slice_t, slice)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_t, z_owned_bytes_t, bytes)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_writer_t, z_owned_bytes_writer_t, bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_err_t, z_owned_reply_err_t, reply_err)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)

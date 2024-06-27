@@ -340,8 +340,9 @@ int8_t _z_bytes_reader_seek(_z_bytes_reader_t *reader, int64_t offset, int origi
 
 int64_t _z_bytes_reader_tell(const _z_bytes_reader_t *reader) { return reader->byte_idx; }
 
-int8_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len) {
+size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len) {
     uint8_t *buf_start = buf;
+    size_t to_read = len;
     for (size_t i = reader->slice_idx; i < _z_bytes_num_slices(reader->bytes); ++i) {
         _z_arc_slice_t *s = _z_bytes_get_slice(reader->bytes, i);
         size_t remaining = _z_arc_slice_len(s) - reader->in_slice_idx;
@@ -361,13 +362,12 @@ int8_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len)
         if (len == 0) break;
     }
 
-    if (len > 0) return _Z_ERR_DID_NOT_READ;
-    return _Z_RES_OK;
+    return to_read - len;
 }
 
 int8_t __read_single_byte(uint8_t *b, void *context) {
     _z_bytes_reader_t *reader = (_z_bytes_reader_t *)context;
-    return _z_bytes_reader_read(reader, b, 1);
+    return _z_bytes_reader_read(reader, b, 1) == 1 ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
 }
 
 int8_t _z_bytes_reader_read_zint(_z_bytes_reader_t *reader, _z_zint_t *zint) {

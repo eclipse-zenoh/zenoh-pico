@@ -91,7 +91,8 @@
     }                                                                                               \
     void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
         if ((obj != NULL) && (obj->_val != NULL)) {                                                 \
-            z_free(&obj->_val);                                                                     \
+            z_free(obj->_val);                                                                      \
+            obj->_val = NULL;                                                                       \
         }                                                                                           \
     }
 

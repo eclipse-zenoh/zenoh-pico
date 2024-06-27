@@ -89,7 +89,7 @@ _z_bytes_reader_t _z_bytes_get_reader(const _z_bytes_t *bytes);
 int8_t _z_bytes_reader_seek(_z_bytes_reader_t *reader, int64_t offset, int origin);
 int64_t _z_bytes_reader_tell(const _z_bytes_reader_t *reader);
 int8_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z_bytes_t *out);
-int8_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len);
+size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len);
 
 typedef struct {
     _z_bytes_reader_t _reader;
