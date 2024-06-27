@@ -161,11 +161,66 @@ void test_reader_seek(void) {
     _z_bytes_drop(&b);
 }
 
+
+void test_writer_no_cache(void) {
+    uint8_t data1[5] = {1, 2, 3, 4, 5};
+    uint8_t data2[5] = {1, 2, 6, 7, 8};
+    uint8_t data3[3] = {3, 9, 10};
+
+    _z_bytes_t b = _z_bytes_null();
+    _z_bytes_writer_t writer = _z_bytes_get_writer(&b, 0);
+
+    _z_bytes_writer_write(&writer, data1, 5);
+    assert(_z_bytes_len(&b) == 5);
+    assert(_z_bytes_num_slices(&b) == 1);
+    _z_bytes_writer_write(&writer, data2, 5);
+    assert(_z_bytes_len(&b) == 10);
+    assert(_z_bytes_num_slices(&b) == 2);
+    _z_bytes_writer_write(&writer, data3, 3);
+    assert(_z_bytes_len(&b) == 13);
+    assert(_z_bytes_num_slices(&b) == 3);
+
+    assert(memcmp(data1, _z_arc_slice_data(_z_bytes_get_slice(&b, 0)), 5) == 0);
+    assert(memcmp(data2, _z_arc_slice_data(_z_bytes_get_slice(&b, 1)), 5) == 0);
+    assert(memcmp(data3, _z_arc_slice_data(_z_bytes_get_slice(&b, 2)), 3) == 0);
+    _z_bytes_drop(&b);
+}
+
+void test_writer_with_cache(void) {
+    uint8_t data1[5] = {1, 2, 3, 4, 5};
+    uint8_t data2[5] = {1, 2, 6, 7, 8};
+    uint8_t data3[3] = {3, 9, 10};
+    
+    uint8_t data1_out[7] = {1, 2, 3, 4, 5, 1, 2};
+    uint8_t data2_out[6] = {6, 7, 8, 3, 9, 10};
+    _z_bytes_t b = _z_bytes_null();
+    _z_bytes_writer_t writer = _z_bytes_get_writer(&b, 7);
+
+    _z_bytes_writer_write(&writer, data1, 5);
+    assert(_z_bytes_len(&b) == 5);
+    assert(_z_bytes_num_slices(&b) == 1);
+    _z_bytes_writer_write(&writer, data2, 5);
+    assert(_z_bytes_len(&b) == 10);
+    assert(_z_bytes_num_slices(&b) == 2);
+    _z_bytes_writer_write(&writer, data3, 3);
+    assert(_z_bytes_len(&b) == 13);
+    assert(_z_bytes_num_slices(&b) == 2);
+
+    assert(_z_arc_slice_len(_z_bytes_get_slice(&b, 0)) == 7);
+    assert(_z_arc_slice_len(_z_bytes_get_slice(&b, 1)) == 6);
+    assert(memcmp(data1_out, _z_arc_slice_data(_z_bytes_get_slice(&b, 0)), 7) == 0);
+    assert(memcmp(data2_out, _z_arc_slice_data(_z_bytes_get_slice(&b, 1)), 6) == 0);
+    _z_bytes_drop(&b);
+}
+
+
 int main(void) {
     test_null_bytes();
     test_slice();
     test_append();
     test_reader_read();
     test_reader_seek();
+    test_writer_no_cache();
+    test_writer_with_cache();
     return 0;
 }

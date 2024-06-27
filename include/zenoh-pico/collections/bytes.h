@@ -47,8 +47,8 @@ typedef struct {
 
 _Bool _z_bytes_check(const _z_bytes_t *bytes);
 _z_bytes_t _z_bytes_null(void);
-int8_t _z_bytes_append(_z_bytes_t *dst, _z_bytes_t *src);
-_Bool _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
+int8_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
+int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 int8_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
@@ -90,7 +90,6 @@ int8_t _z_bytes_reader_seek(_z_bytes_reader_t *reader, int64_t offset, int origi
 int64_t _z_bytes_reader_tell(const _z_bytes_reader_t *reader);
 int8_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z_bytes_t *out);
 int8_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len);
-int8_t _z_bytes_reader_read_next(_z_bytes_reader_t *reader, _z_bytes_t *out);
 
 typedef struct {
     _z_bytes_reader_t _reader;
@@ -99,4 +98,21 @@ typedef struct {
 _z_bytes_iterator_t _z_bytes_get_iterator(const _z_bytes_t *bytes);
 _Bool _z_bytes_iterator_next(_z_bytes_iterator_t *iter, _z_bytes_t *b);
 
+
+typedef struct {
+    uint8_t* cache;
+    size_t cache_size;
+    _z_bytes_t *bytes;
+} _z_bytes_writer_t;
+
+_z_bytes_writer_t _z_bytes_get_writer(_z_bytes_t *bytes, size_t cache_size);
+int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer);
+
+typedef struct {
+    _z_bytes_writer_t writer;
+} _z_bytes_iterator_writer_t;
+
+_z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes);
+int8_t _z_bytes_iterator_writer_write(_z_bytes_iterator_writer_t *writer, _z_bytes_t *bytes);
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

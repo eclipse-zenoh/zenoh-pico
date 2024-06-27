@@ -919,17 +919,29 @@ int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin)
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
- * Constructs :c:type:`z_owned_bytes_t` object corresponding to the next element of serialized data.
- *
- * Will construct null-state `z_owned_bytes_t` when iterator reaches the end (or in case of error).
+ * Constructs writer for :c:type:`z_loaned_bytes_t`.
  *
  * Parameters:
- *   iter: An iterator over multi-element serialized data.
- *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contained next serialized element.
+ *   bytes: Data container to write to.
+ *   writer: Uninitialized memory location where writer is to be constructed.
+ *
  * Return:
- *  ``false`` when iterator reaches the end,  ``true`` otherwise.
+ *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t* writer);
+
+/**
+ * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
+ * 
+ * Parameters:
+ *   writer: A data writer
+ *   src: Buffer to write from.
+ *   len: Number of bytes to write.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Checks validity of a timestamp
