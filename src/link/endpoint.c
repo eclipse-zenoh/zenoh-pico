@@ -252,16 +252,17 @@ void __z_locator_onto_str(char *dst, size_t dst_len, const _z_locator_t *loc) {
  *   loc: :c:type:`_z_locator_t` to be converted into its _z_string format.
  *
  * Returns:
- *   The pointer to the z_stringified :c:type:`_z_locator_t`.
+ *   The z_stringified :c:type:`_z_locator_t`.
  */
-_z_string_t *_z_locator_to_string(const _z_locator_t *loc) {
-    _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
-    s->len = _z_locator_strlen(loc) + (size_t)1;
-    s->val = (char *)z_malloc(s->len);
-    if (s->val == NULL) {
-        return NULL;
+_z_string_t _z_locator_to_string(const _z_locator_t *loc) {
+    _z_string_t s;
+    s.len = _z_locator_strlen(loc);
+    s.val = (char *)z_malloc(s.len + 1);
+    if (s.val == NULL) {
+        s.len = 0;
+        return s;
     }
-    __z_locator_onto_str(s->val, s->len, loc);
+    __z_locator_onto_str(s.val, s.len + 1, loc);
     return s;
 }
 
@@ -420,11 +421,11 @@ int8_t _z_endpoint_from_str(_z_endpoint_t *ep, const char *str) {
 char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     char *ret = NULL;
     // Retrieve locator
-    _z_string_t *locator = _z_locator_to_string(&endpoint->_locator);
-    if (locator == NULL) {
+    _z_string_t locator = _z_locator_to_string(&endpoint->_locator);
+    if (locator.val == NULL) {
         return NULL;
     }
-    size_t curr_len = locator->len;
+    size_t curr_len = locator.len;
     // Retrieve config
     char *config = _z_endpoint_config_to_str(&endpoint->_config, endpoint->_locator._protocol);
     if (config != NULL) {
@@ -439,8 +440,8 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
     curr_len -= (size_t)1;
     // Copy locator
     if (curr_len > (size_t)0) {
-        (void)strncat(ret, locator->val, curr_len);
-        curr_len -= locator->len;
+        (void)strncat(ret, locator.val, curr_len);
+        curr_len -= locator.len;
     }
     // Copy config
     if (config != NULL) {
@@ -450,6 +451,6 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
         }
     }
     // Clean up
-    _z_string_free(&locator);
+    _z_string_clear(&locator);
     return ret;
 }
