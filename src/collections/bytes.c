@@ -316,13 +316,13 @@ int8_t _z_bytes_reader_seek(_z_bytes_reader_t *reader, int64_t offset, int origi
             reader->in_slice_idx = 0;
             reader->slice_idx = 0;
             if (offset < 0) return _Z_ERR_DID_NOT_READ;
-            return _z_bytes_reader_seek_forward(reader, offset);
+            return _z_bytes_reader_seek_forward(reader, (size_t)offset);
         }
         case SEEK_CUR: {
             if (offset >= 0)
-                return _z_bytes_reader_seek_forward(reader, offset);
+                return _z_bytes_reader_seek_forward(reader, (size_t)offset);
             else
-                return _z_bytes_reader_seek_backward(reader, -offset);
+                return _z_bytes_reader_seek_backward(reader, (size_t)(-offset));
         }
         case SEEK_END: {
             reader->byte_idx = _z_bytes_len(reader->bytes);
@@ -331,14 +331,14 @@ int8_t _z_bytes_reader_seek(_z_bytes_reader_t *reader, int64_t offset, int origi
             if (offset > 0)
                 return _Z_ERR_DID_NOT_READ;
             else
-                return _z_bytes_reader_seek_backward(reader, -offset);
+                return _z_bytes_reader_seek_backward(reader, (size_t)(-offset));
         }
         default:
             return _Z_ERR_GENERIC;
     }
 }
 
-int64_t _z_bytes_reader_tell(const _z_bytes_reader_t *reader) { return reader->byte_idx; }
+int64_t _z_bytes_reader_tell(const _z_bytes_reader_t *reader) { return (int64_t)reader->byte_idx; }
 
 size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len) {
     uint8_t *buf_start = buf;
