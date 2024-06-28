@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
@@ -221,18 +222,151 @@ int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *sc, uint8_t key, co
     return _zp_config_insert(sc, key, value);
 }
 
-int8_t zp_encoding_make(z_owned_encoding_t *encoding, z_encoding_id_t id, const char *schema) {
-    // Init encoding
-    encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
-    if (encoding->_val == NULL) {
+#if Z_FEATURE_ENCODING_VALUES == 1
+#define ENCODING_SCHEMA_SEPARATOR ';'
+
+const char *ENCODING_VALUES_ID_TO_STR[] = {
+    "zenoh/bytes",
+    "zenoh/int8",
+    "zenoh/int16",
+    "zenoh/int32",
+    "zenoh/int64",
+    "zenoh/int128",
+    "zenoh/uint8",
+    "zenoh/uint16",
+    "zenoh/uint32",
+    "zenoh/uint64",
+    "zenoh/uint128",
+    "zenoh/float32",
+    "zenoh/float64",
+    "zenoh/bool",
+    "zenoh/string",
+    "zenoh/error",
+    "application/octet-stream",
+    "text/plain",
+    "application/json",
+    "text/json",
+    "application/cdr",
+    "application/cbor",
+    "application/yaml",
+    "text/yaml",
+    "text/json5",
+    "application/python-serialized-object",
+    "application/protobuf",
+    "application/java-serialized-object",
+    "application/openmetrics-text",
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/bmp",
+    "image/webp",
+    "application/xml",
+    "application/x-www-form-urlencoded",
+    "text/html",
+    "text/xml",
+    "text/css",
+    "text/javascript",
+    "text/markdown",
+    "text/csv",
+    "application/sql",
+    "application/coap-payload",
+    "application/json-patch+json",
+    "application/json-seq",
+    "application/jsonpath",
+    "application/jwt",
+    "application/mp4",
+    "application/soap+xml",
+    "application/yang",
+    "audio/aac",
+    "audio/flac",
+    "audio/mp4",
+    "audio/ogg",
+    "audio/vorbis",
+    "video/h261",
+    "video/h263",
+    "video/h264",
+    "video/h265",
+    "video/h266",
+    "video/mp4",
+    "video/ogg",
+    "video/raw",
+    "video/vp8",
+    "video/vp9",
+};
+
+static uint16_t _z_encoding_values_str_to_int(const char *schema, size_t len) {
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(ENCODING_VALUES_ID_TO_STR); i++) {
+        if (strncmp(schema, ENCODING_VALUES_ID_TO_STR[i], len) == 0) {
+            return (uint16_t)i;
+        }
+    }
+    return UINT16_MAX;
+}
+
+static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+    const char *id_end = strchr(s, ENCODING_SCHEMA_SEPARATOR);
+    // Check id_end value + corner cases
+    if ((id_end != NULL) && (id_end != s)) {
+        // Calc length of the segment before separator
+        size_t len = (size_t)(id_end - 1 - s);
+        uint16_t id = _z_encoding_values_str_to_int(s, len);
+        // Check id
+        if (id != UINT16_MAX) {
+            return _z_encoding_make(encoding->_val, id, (id_end[1] == '\0') ? NULL : ++id_end);
+        }
+    }
+    // By default store the string as schema
+    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+}
+
+static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+    const char *prefix = NULL;
+    size_t prefix_len = 0;
+    // Convert id
+    if (encoding->id < _ZP_ARRAY_SIZE(ENCODING_VALUES_ID_TO_STR)) {
+        prefix = ENCODING_VALUES_ID_TO_STR[encoding->id];
+        prefix_len = strlen(prefix);
+    }
+    _Bool has_schema = encoding->schema.len > 0;
+    // Size include null terminator
+    size_t total_len = prefix_len + encoding->schema.len + 1;
+    // Check for schema separator
+    if (has_schema) {
+        total_len += 1;
+    }
+    // Allocate string
+    char *value = (char *)z_malloc(sizeof(char) * total_len);
+    if (value == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    return _z_encoding_make(encoding->_val, id, schema);
+    // Copy prefix
+    char sep = ENCODING_SCHEMA_SEPARATOR;
+    (void)strncpy(value, prefix, prefix_len);
+    // Copy schema and separator
+    if (has_schema) {
+        (void)strncat(value, &sep, 1);
+        (void)strncat(value, encoding->schema.val, encoding->schema.len);
+    }
+    // Fill container
+    *s->_val = _z_string_wrap(value);
+    return _Z_RES_OK;
 }
+
+#else
+static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+}
+
+static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+    _z_string_copy(s->_val, &encoding->schema);
+    return _Z_RES_OK;
+}
+
+#endif
 
 z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding) { return encoding; }
 
-int8_t z_encoding_null(z_owned_encoding_t *encoding) { return zp_encoding_make(encoding, Z_ENCODING_ID_DEFAULT, NULL); }
+void z_encoding_null(z_owned_encoding_t *encoding) { encoding->_val = NULL; }
 
 _Bool z_encoding_check(const z_owned_encoding_t *encoding) { return _z_encoding_check(encoding->_val); }
 
@@ -240,8 +374,8 @@ void z_encoding_drop(z_owned_encoding_t *encoding) {
     if (encoding == NULL) {
         return;
     }
-    if (!_z_slice_is_empty(&encoding->_val->schema)) {
-        _z_slice_clear(&encoding->_val->schema);
+    if (_z_string_check(encoding->_val->schema)) {
+        _z_string_clear(&encoding->_val->schema);
     }
     z_free(encoding->_val);
 }
@@ -258,6 +392,33 @@ int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src)
 const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
 
 z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
+
+int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
+    // Init owned encoding
+    z_encoding_null(encoding);
+    encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
+    if (encoding->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Convert string to encoding
+    if (s != NULL) {
+        return _z_encoding_convert_from_string(encoding, s);
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
+    // Init owned string
+    z_string_null(s);
+    // Allocate owned string
+    s->_val = (_z_string_t *)z_malloc(sizeof(_z_string_t));
+    if (s->_val == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Convert encoding to string
+    _z_encoding_convert_into_string(encoding, s);
+    return _Z_RES_OK;
+}
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 

@@ -141,6 +141,9 @@ int main(int argc, char **argv) {
     // Allocate buffer
     char buf_ind[16];
 
+    // Create encoding
+    z_owned_encoding_t encoding;
+
     // Publish data
     printf("Press CTRL-C to quit...\n");
     char buf[256];
@@ -159,6 +162,10 @@ int main(int argc, char **argv) {
         kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
         z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
         options.attachment = z_move(attachment);
+
+        // Add encoding value
+        z_encoding_from_str(&encoding, "text/plain;utf8");
+        options.encoding = z_move(encoding);
 
         z_publisher_put(z_loan(pub), z_move(payload), &options);
     }

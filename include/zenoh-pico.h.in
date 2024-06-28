@@ -17,11 +17,11 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#define ZENOH_PICO "1.0.0.0"
-#define ZENOH_PICO_MAJOR 1
-#define ZENOH_PICO_MINOR 0
-#define ZENOH_PICO_PATCH 0
-#define ZENOH_PICO_TWEAK 0
+#define ZENOH_PICO "@ZENOH_PICO@"
+#define ZENOH_PICO_MAJOR @ZENOH_PICO_MAJOR@
+#define ZENOH_PICO_MINOR @ZENOH_PICO_MINOR@
+#define ZENOH_PICO_PATCH @ZENOH_PICO_PATCH@
+#define ZENOH_PICO_TWEAK @ZENOH_PICO_TWEAK@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/handlers.h"

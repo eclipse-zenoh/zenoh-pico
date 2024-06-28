@@ -23,6 +23,8 @@ _z_string_t _z_string_null(void) {
     return s;
 }
 
+_Bool _z_string_check(_z_string_t value) { return value.val != NULL; }
+
 _z_string_t _z_string_make(const char *value) {
     _z_string_t s;
     s.val = _z_str_clone(value);

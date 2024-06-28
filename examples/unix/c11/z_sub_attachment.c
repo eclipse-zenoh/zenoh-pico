@@ -73,7 +73,11 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
     z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
+    z_owned_string_t encoding;
+    z_encoding_to_string(z_sample_encoding(sample), &encoding);
+
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
+    printf("    with encoding: %s\n", z_string_data(z_loan(encoding)));
     // Check attachment
     kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};
     parse_attachment(&kvp, z_sample_attachment(sample));
@@ -83,6 +87,7 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     drop_attachment(&kvp);
     z_drop(z_move(keystr));
     z_drop(z_move(value));
+    z_drop(z_move(encoding));
     msg_nb++;
 }
 

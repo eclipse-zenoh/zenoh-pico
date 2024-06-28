@@ -151,8 +151,8 @@ int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
         _z_string_t *s = _z_locator_to_string(&la->_val[i]);
-        _Z_RETURN_IF_ERR(_z_zstr_encode(wbf, s))
-        z_free(s);
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, s))
+        _z_string_free(&s);
     }
 
     return ret;

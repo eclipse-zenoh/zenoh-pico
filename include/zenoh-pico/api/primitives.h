@@ -339,30 +339,6 @@ const char *zp_scouting_config_get(const z_loaned_scouting_config_t *config, uin
 int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *config, uint8_t key, const char *value);
 
 /**
- * Builds a new :c:type:`z_owned_encoding_t`.
- *
- * Parameters:
- *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
- *   id: A known :c:type:`z_encoding_id_t` value.
- *   schema: Pointer to a custom schema string value.
- *
- * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
- */
-int8_t zp_encoding_make(z_owned_encoding_t *encoding, z_encoding_id_t id, const char *schema);
-
-/**
- * Builds a new a :c:type:`z_owned_encoding_t` with default value.
- *
- * Parameters:
- *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
- *
- * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
- */
-int8_t zp_encoding_default(z_owned_encoding_t *encoding);
-
-/**
  * Checks if a :c:type:`z_owned_encoding_t` has non-default values.
  *
  * Return:
@@ -411,15 +387,36 @@ z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding);
 z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding);
 
 /**
- * Builds a :c:type:`z_owned_encoding_t` with default value.
+ * Initialize a :c:type:`z_owned_encoding_t` with default value.
  *
  * Parameters:
  *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
+ */
+void z_encoding_null(z_owned_encoding_t *encoding);
+
+/**
+ * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
+ *
+ * Parameters:
+ *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
+ *   s: Pointer to the null terminated string to use.
  *
  * Return:
  *   ``0`` if creation successful,``negative value`` otherwise.
  */
-int8_t z_encoding_null(z_owned_encoding_t *encoding);
+int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
+
+/**
+ * Builds a string from a :c:type:`z_loaned_encoding_t`.
+ *
+ * Parameters:
+ *   encoding: Pointer to the :c:type:`z_loaned_encoding_t` to use.
+ *   string: Pointer to an uninitialized :c:type:`z_owned_string_t` to store the string.
+ *
+ * Return:
+ *   ``0`` if creation successful,``negative value`` otherwise.
+ */
+int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
 
 /**
  * Gets the bytes data from a reply error payload by aliasing it.
