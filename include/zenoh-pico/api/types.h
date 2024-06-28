@@ -628,13 +628,6 @@ typedef struct {
 
 void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
 
-/**
- * Returns a view of `str` using `strlen` (this constructor should not be used on untrusted input).
- *
- * `str == NULL` will cause this to return `z_slice_null()`
- */
-int8_t z_bytes_from_str(z_owned_slice_t *bytes, const char *str);
-
 #ifdef __cplusplus
 }
 #endif
