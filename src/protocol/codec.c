@@ -371,14 +371,14 @@ int8_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
 
 size_t _z_encoding_len(const _z_encoding_t *en) {
     size_t en_len = _z_zint_len((uint32_t)(en->id) << 1);
-    if (_z_string_check(en->schema)) {
+    if (_z_string_check(&en->schema)) {
         en_len += _z_zint_len(en->schema.len) + en->schema.len;
     }
     return en_len;
 }
 
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
-    _Bool has_schema = _z_string_check(en->schema);
+    _Bool has_schema = _z_string_check(&en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;

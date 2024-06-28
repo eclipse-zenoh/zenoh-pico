@@ -17,8 +17,8 @@
 #include "zenoh-pico/protocol/core.h"
 
 void _z_hello_clear(_z_hello_t *hello) {
-    if (!_z_string_vec_is_empty(&hello->locators)) {
-        _z_string_vec_clear(&hello->locators);
+    if (!_z_string_svec_is_empty(&hello->locators)) {
+        _z_string_svec_clear(&hello->locators);
     }
 }
 

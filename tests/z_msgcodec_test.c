@@ -224,10 +224,11 @@ char *gen_str(size_t size) {
     return str;
 }
 
-_z_string_vec_t gen_str_array(size_t size) {
-    _z_string_vec_t sa = _z_string_vec_make(size);
+_z_string_svec_t gen_str_array(size_t size) {
+    _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
-        _z_string_vec_append(&sa, _z_string_make_as_ptr(gen_str(16)));
+        _z_string_t s = _z_string_make(gen_str(16));
+        _z_string_svec_append(&sa, &s);
     }
 
     return sa;
@@ -310,15 +311,15 @@ void assert_eq_uint8_array(const _z_slice_t *left, const _z_slice_t *right) {
     printf(")");
 }
 
-void assert_eq_str_array(_z_string_vec_t *left, _z_string_vec_t *right) {
+void assert_eq_str_array(_z_string_svec_t *left, _z_string_svec_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->_len, right->_len);
 
     assert(left->_len == right->_len);
     printf("Content (");
     for (size_t i = 0; i < left->_len; i++) {
-        const char *l = left->_val[i];
-        const char *r = right->_val[i];
+        const char *l = _z_string_svec_get(left, i)->val;
+        const char *r = _z_string_svec_get(right, i)->val;
 
         printf("%s:%s", l, r);
         if (i < left->_len - 1) printf(" ");

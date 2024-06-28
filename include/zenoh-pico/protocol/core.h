@@ -181,7 +181,7 @@ void _z_value_free(_z_value_t **hello);
  */
 typedef struct {
     _z_id_t zid;
-    _z_string_vec_t locators;
+    _z_string_svec_t locators;
     z_whatami_t whatami;
     uint8_t version;
 } _z_hello_t;

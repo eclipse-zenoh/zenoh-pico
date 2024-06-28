@@ -23,12 +23,16 @@ _z_string_t _z_string_null(void) {
     return s;
 }
 
-_Bool _z_string_check(_z_string_t value) { return value.val != NULL; }
+_Bool _z_string_check(const _z_string_t *value) { return value->val != NULL; }
 
 _z_string_t _z_string_make(const char *value) {
     _z_string_t s;
     s.val = _z_str_clone(value);
-    s.len = strlen(value);
+    if (s.val == NULL) {
+        s.len = 0;
+    } else {
+        s.len = strlen(value);
+    }
     return s;
 }
 
@@ -48,13 +52,18 @@ _z_string_t *_z_string_make_as_ptr(const char *value) {
 
 size_t _z_string_size(const _z_string_t *s) { return s->len; }
 
-void _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
+int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
     if (src->val != NULL) {
         dst->val = _z_str_clone(src->val);
+        if (dst->val == NULL) {
+            dst->len = 0;
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
     } else {
         dst->val = NULL;
     }
     dst->len = src->len;
+    return _Z_RES_OK;
 }
 
 void _z_string_move(_z_string_t *dst, _z_string_t *src) {

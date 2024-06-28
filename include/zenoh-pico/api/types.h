@@ -63,22 +63,19 @@ typedef _z_timestamp_t z_timestamp_t;
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
  */
-_Z_OWNED_TYPE_PTR(_z_slice_t, slice)
+_Z_OWNED_TYPE_VALUE(_z_slice_t, slice)
 _Z_LOANED_TYPE(_z_slice_t, slice)
 
 /**
  * Represents a container for slices.
- *
- * Members:
- *   _z_slice_t slice: content of the container.
  */
-_Z_OWNED_TYPE_PTR(_z_bytes_t, bytes)
+_Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
 _Z_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
  * Represents a writer for serialized data.
  */
-_Z_OWNED_TYPE_PTR(_z_bytes_writer_t, bytes_writer)
+_Z_OWNED_TYPE_VALUE(_z_bytes_writer_t, bytes_writer)
 _Z_LOANED_TYPE(_z_bytes_writer_t, bytes_writer)
 
 /**
@@ -98,7 +95,7 @@ typedef _z_bytes_reader_t z_bytes_reader_t;
  *   size_t len: The length of the string.
  *   const char *val: A pointer to the string.
  */
-_Z_OWNED_TYPE_PTR(_z_string_t, string)
+_Z_OWNED_TYPE_VALUE(_z_string_t, string)
 _Z_LOANED_TYPE(_z_string_t, string)
 _Z_VIEW_TYPE(_z_string_t, string)
 
@@ -448,9 +445,9 @@ _Z_LOANED_TYPE(_z_reply_rc_t, reply)
  *   - :c:func:`z_string_array_len`
  *   - :c:func:`z_str_array_array_is_empty`
  */
-_Z_OWNED_TYPE_PTR(_z_string_vec_t, string_array)
-_Z_LOANED_TYPE(_z_string_vec_t, string_array)
-_Z_VIEW_TYPE(_z_string_vec_t, string_array)
+_Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
+_Z_LOANED_TYPE(_z_string_svec_t, string_array)
+_Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
 size_t z_string_array_len(const z_loaned_string_array_t *a);

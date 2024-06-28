@@ -382,7 +382,7 @@ int8_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragmen
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
-    if (ret == _Z_RES_OK && _z_slice_check(msg->_payload)) {
+    if (ret == _Z_RES_OK && _z_slice_check(&msg->_payload)) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_payload.start, 0, msg->_payload.len));
     }
 
