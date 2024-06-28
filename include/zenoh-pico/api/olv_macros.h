@@ -73,6 +73,29 @@
         }                                                                                           \
     }
 
+#define _Z_OWNED_FUNCTIONS_PTR_TRIVIAL_IMPL(type, name)                                             \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
+    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                             \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                    \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
+        int8_t ret = _Z_RES_OK;                                                                     \
+        obj->_val = (type *)z_malloc(sizeof(type));                                                 \
+        if (obj->_val != NULL) {                                                                    \
+            *obj->_val = *src;                                                                      \
+        } else {                                                                                    \
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
+        }                                                                                           \
+        return ret;                                                                                 \
+    }                                                                                               \
+    void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
+        if ((obj != NULL) && (obj->_val != NULL)) {                                                 \
+            z_free(obj->_val);                                                                      \
+            obj->_val = NULL;                                                                       \
+        }                                                                                           \
+    }
+
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                            \
     _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
@@ -131,6 +154,9 @@
 
 // Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)
 #define _Z_RC_IN_VAL(arg) ((arg)->in->val)
+
+// Checks if refcounted type is initialized
+#define _Z_RC_IS_NULL(arg) ((arg)->in == NULL)
 
 // Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)

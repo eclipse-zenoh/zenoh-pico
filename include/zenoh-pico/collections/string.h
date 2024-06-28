@@ -84,6 +84,7 @@ void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 _z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
 _z_string_t _z_string_from_bytes(const _z_slice_t *bs);
+_z_string_t _z_string_preallocate(const size_t len);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)
 

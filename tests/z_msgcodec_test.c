@@ -170,16 +170,6 @@ _z_wbuf_t gen_wbuf(size_t len) {
     return _z_wbuf_make(len, is_expandable);
 }
 
-_z_slice_t gen_payload(size_t len) {
-    _z_slice_t pld;
-    pld._is_alloc = true;
-    pld.len = len;
-    pld.start = (uint8_t *)z_malloc(len);
-    z_random_fill((uint8_t *)pld.start, pld.len);
-
-    return pld;
-}
-
 _z_slice_t gen_slice(size_t len) {
     _z_slice_t arr;
     arr._is_alloc = true;
@@ -195,10 +185,19 @@ _z_slice_t gen_slice(size_t len) {
     return arr;
 }
 
+_z_bytes_t gen_payload(size_t len) {
+    _z_slice_t pld = gen_slice(len);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, pld);
+
+    return b;
+}
+
 _z_bytes_t gen_bytes(size_t len) {
-    return (_z_bytes_t){
-        ._slice = gen_slice(len),
-    };
+    _z_slice_t s = gen_slice(len);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, s);
+    return b;
 }
 
 _z_id_t gen_zid(void) {
@@ -518,7 +517,26 @@ void assert_eq_string(const _z_string_t *left, const _z_string_t *right) {
 }
 
 void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) {
-    assert_eq_slice(&left->_slice, &right->_slice);
+    size_t len_left = _z_bytes_len(left);
+    size_t len_right = _z_bytes_len(right);
+    printf("Array -> ");
+    printf("Length (%zu:%zu), ", len_left, len_right);
+
+    assert(len_left == len_right);
+    printf("Content (");
+    _z_bytes_reader_t reader_left = _z_bytes_get_reader(left);
+    _z_bytes_reader_t reader_right = _z_bytes_get_reader(right);
+    for (size_t i = 0; i < len_left; i++) {
+        uint8_t l = 0, r = 0;
+        _z_bytes_reader_read(&reader_left, &l, 1);
+        _z_bytes_reader_read(&reader_right, &r, 1);
+
+        printf("%02x:%02x", l, r);
+        if (i < len_left - 1) printf(" ");
+
+        assert(l == r);
+    }
+    printf(")");
 }
 
 void payload_field(void) {
@@ -526,26 +544,26 @@ void payload_field(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
-    _z_slice_t e_pld = gen_payload(64);
+    _z_bytes_t e_pld = gen_payload(64);
 
     // Encode
-    int8_t res = _z_slice_encode(&wbf, &e_pld);
+    int8_t res = _z_bytes_encode(&wbf, &e_pld);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _z_slice_t d_pld;
-    res = _z_slice_decode(&d_pld, &zbf);
+    _z_bytes_t d_pld;
+    res = _z_bytes_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");
-    assert_eq_slice(&e_pld, &d_pld);
+    assert_eq_bytes(&e_pld, &d_pld);
     printf("\n");
 
     // Free
-    _z_slice_clear(&e_pld);
-    _z_slice_clear(&d_pld);
+    _z_bytes_drop(&e_pld);
+    _z_bytes_drop(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1162,7 +1180,7 @@ _z_push_body_t gen_push_body(void) {
         return (_z_push_body_t){._is_put = true,
                                 ._body._put = {
                                     ._commons = commons,
-                                    ._payload = gen_slice(64),
+                                    ._payload = gen_bytes(64),
                                     ._encoding = gen_encoding(),
                                 }};
     } else {
@@ -1173,7 +1191,7 @@ _z_push_body_t gen_push_body(void) {
 void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right) {
     assert(left->_is_put == right->_is_put);
     if (left->_is_put) {
-        assert_eq_slice(&left->_body._put._payload, &right->_body._put._payload);
+        assert_eq_bytes(&left->_body._put._payload, &right->_body._put._payload);
         assert_eq_encoding(&left->_body._put._encoding, &right->_body._put._encoding);
         assert_eq_timestamp(&left->_body._put._commons._timestamp, &right->_body._put._commons._timestamp);
         assert_eq_source_info(&left->_body._put._commons._source_info, &right->_body._put._commons._source_info);
@@ -1256,7 +1274,7 @@ _z_msg_err_t gen_err(void) {
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert_eq_slice(&left->_payload, &right->_payload);
+    assert_eq_bytes(&left->_payload, &right->_payload);
 }
 
 void err_message(void) {

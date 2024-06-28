@@ -16,6 +16,7 @@
 #define INCLUDE_ZENOH_PICO_API_TYPES_H
 
 #include "olv_macros.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/slice.h"
@@ -73,6 +74,22 @@ _Z_LOANED_TYPE(_z_slice_t, slice)
  */
 _Z_OWNED_TYPE_PTR(_z_bytes_t, bytes)
 _Z_LOANED_TYPE(_z_bytes_t, bytes)
+
+/**
+ * Represents a writer for serialized data.
+ */
+_Z_OWNED_TYPE_PTR(_z_bytes_writer_t, bytes_writer)
+_Z_LOANED_TYPE(_z_bytes_writer_t, bytes_writer)
+
+/**
+ * An iterator over multi-element serialized data.
+ */
+typedef _z_bytes_iterator_t z_bytes_iterator_t;
+
+/**
+ * A reader for serialized data.
+ */
+typedef _z_bytes_reader_t z_bytes_reader_t;
 
 /**
  * Represents a string without null-terminator.

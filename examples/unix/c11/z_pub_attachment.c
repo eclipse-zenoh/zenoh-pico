@@ -35,19 +35,7 @@ typedef struct kv_pairs_t {
 
 #if Z_FEATURE_PUBLICATION == 1
 
-// Return the total serialized size of the key value pairs
-size_t kv_pairs_size(kv_pairs_t *kvp) {
-    size_t ret = 0;
-    for (size_t i = 0; i < kvp->len; i++) {
-        // Size fields
-        ret += 2 * sizeof(uint32_t);
-        // Data size
-        ret += strlen(kvp->data[i].key) + strlen(kvp->data[i].value);
-    }
-    return ret;
-}
-
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *curr_idx) {
+_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     kv_pairs_t *kvs = (kv_pairs_t *)(context);
     z_owned_bytes_t k, v;
     if (kvs->current_idx >= kvs->len) {
@@ -55,7 +43,7 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context, size_t *cu
     } else {
         z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
         z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
-        zp_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v), curr_idx);
+        z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
     }
@@ -172,7 +160,7 @@ int main(int argc, char **argv) {
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
         kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
-        zp_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx, kv_pairs_size(&ctx));
+        z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
         options.attachment = z_move(attachment);
 
         // Add encoding value

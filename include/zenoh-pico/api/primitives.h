@@ -613,13 +613,11 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
  *   first: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the first element.
  *   second: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the second element.
- *   curr_idx: Pointer to the current decoding index.
  *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t zp_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                      size_t *curr_idx);
+int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -795,29 +793,152 @@ int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s)
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded payload.
  *   iterator_body: Iterator body function, providing data items. Returning false is treated as iteration end.
  *   context: Arbitrary context that will be passed to iterator_body.
- *   total_len: The length of all the items to encode.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t zp_bytes_serialize_from_iter(z_owned_bytes_t *bytes,
-                                    _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
-                                    void *context, size_t total_len);
+int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+                                   void *context);
 
 /**
  * Append a pair of `z_owned_bytes` objects which are consumed in the process.
  *
  * Parameters:
- *   bytes: An pre-initialized :c:type:`z_owned_bytes_t` to contain the encoded pair.
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded pair.
  *   first: Pointer to the first `z_owned_bytes` to encode.
  *   second: Pointer to the second `z_owned_bytes` to encode.
- *   curr_idx: Pointer to the current encoding index value.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                    size_t *curr_idx);
+int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
+
+/**
+ * Parameters:
+ *   bytes: Pointer to an unitialized :c:type:`z_lowned_bytes_t` instance.
+ * Return:
+ *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ */
+int8_t z_bytes_empty(z_owned_bytes_t *bytes);
+
+/**
+ * Returns total number of bytes in the container.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  Number of bytes in the container.
+ */
+size_t z_bytes_len(const z_loaned_bytes_t *bytes);
+
+/**
+ * Checks if container is empty
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ * Return:
+ *  ``true`` if conainer is empty,  ``false`` otherwise.
+ */
+_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+
+/**
+ * Returns an iterator for multi-element serialized data.
+ *
+ * Parameters:
+ *   bytes: Data to iterate over.
+ *
+ * Return:
+ *   The constructed :c:type:`z_bytes_iterator_t`.
+ */
+z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
+
+/**
+ * Constructs :c:type:`z_owned_bytes_t` object corresponding to the next element of serialized data.
+ *
+ * Will construct null-state `z_owned_bytes_t` when iterator reaches the end (or in case of error).
+ *
+ * Parameters:
+ *   iter: An iterator over multi-element serialized data.
+ *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contained next serialized element.
+ * Return:
+ *  ``false`` when iterator reaches the end,  ``true`` otherwise.
+ */
+_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+
+/**
+ * Returns a reader for the `bytes`.
+ *
+ * The `bytes` should outlive the reader and should not be modified, while reader is in use.
+ *
+ * Parameters:
+ *   bytes: Data to read.
+ *
+ * Return:
+ *   The constructed :c:type:`z_bytes_reader_t`.
+ */
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
+
+/**
+ * Reads data into specified destination.
+ *
+ * Parameters:
+ *  reader: Data reader to read from.
+ *  dst: Buffer where the read data is written.
+ *  len: Maximum number of bytes to read.
+ *
+ * Return:
+ *  Number of bytes read. If return value is smaller than `len`, it means that the end of the data was reached.
+ */
+size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
+/**
+ * Sets the `reader` position indicator for the payload to the value pointed to by offset.
+ * The new position is exactly `offset` bytes measured from the beginning of the payload if origin is `SEEK_SET`,
+ * from the current reader position if origin is `SEEK_CUR`, and from the end of the payload if origin is `SEEK_END`.
+ *
+ * Parameters:
+ *  reader: Data reader to reposition.
+ *  offset: New position ffset in bytes.
+ *  origin: Origin for the new position.
+ *
+ * Return:
+ *  ​0​ upon success, negative error code otherwise.
+ */
+int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+/**
+ * Gets the read position indicator.
+ *
+ * Parameters:
+ *  reader: Data reader to get position of.
+ *
+ * Return:
+ *  Read position indicator on success or -1L if failure occurs.
+ */
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
+
+/**
+ * Constructs writer for :c:type:`z_loaned_bytes_t`.
+ *
+ * Parameters:
+ *   bytes: Data container to write to.
+ *   writer: Uninitialized memory location where writer is to be constructed.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer);
+
+/**
+ * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
+ *
+ * Parameters:
+ *   writer: A data writer
+ *   src: Buffer to write from.
+ *   len: Number of bytes to write.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Checks validity of a timestamp
@@ -1077,6 +1198,7 @@ _Z_OWNED_FUNCTIONS_DEF(z_loaned_sample_t, z_owned_sample_t, sample)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_query_t, z_owned_query_t, query)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_slice_t, z_owned_slice_t, slice)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_t, z_owned_bytes_t, bytes)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_writer_t, z_owned_bytes_writer_t, bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_err_t, z_owned_reply_err_t, reply_err)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)

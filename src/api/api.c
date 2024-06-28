@@ -425,53 +425,43 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
 
 int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst) {
-    *dst = (int8_t)_z_bytes_to_uint8(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint8(bytes, (uint8_t *)dst);
 }
 
 int8_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst) {
-    *dst = (int16_t)_z_bytes_to_uint16(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint16(bytes, (uint16_t *)dst);
 }
 
 int8_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst) {
-    *dst = (int32_t)_z_bytes_to_uint32(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint32(bytes, (uint32_t *)dst);
 }
 
 int8_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst) {
-    *dst = (int64_t)_z_bytes_to_uint64(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint64(bytes, (uint64_t *)dst);
 }
 
 int8_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst) {
-    *dst = _z_bytes_to_uint8(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint8(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst) {
-    *dst = _z_bytes_to_uint16(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint16(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst) {
-    *dst = _z_bytes_to_uint32(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint32(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst) {
-    *dst = _z_bytes_to_uint64(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_uint64(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst) {
-    *dst = _z_bytes_to_float(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_float(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst) {
-    *dst = _z_bytes_to_double(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_double(bytes, dst);
 }
 
 int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
@@ -482,8 +472,7 @@ int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_sli
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Convert bytes to slice
-    *dst->_val = _z_bytes_to_slice(bytes);
-    return _Z_RES_OK;
+    return _z_bytes_to_slice(bytes, dst->_val);
 }
 
 int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
@@ -494,48 +483,18 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Convert bytes to string
-    *s->_val = _z_string_from_bytes(&bytes->_slice);
+    size_t len = _z_bytes_len(bytes);
+    *s->_val = _z_string_preallocate(len);
+    if (s->_val->len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    _z_bytes_to_buf(bytes, (uint8_t *)s->_val->val, len);
     return _Z_RES_OK;
 }
 
-int8_t zp_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                      size_t *curr_idx) {
-    // Check bound size
-    if (*curr_idx >= bytes->_slice.len) {
-        return _Z_ERR_GENERIC;
-    }
+int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
     // Init pair of owned bytes
-    z_bytes_null(first);
-    z_bytes_null(second);
-    first->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    second->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if ((first->_val == NULL) || (second->_val == NULL)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Extract first item size
-    size_t first_len = _z_host_le_load32(&bytes->_slice.start[*curr_idx]);
-    *curr_idx += sizeof(uint32_t);
-    // Allocate first item bytes
-    *first->_val = _z_bytes_make(first_len);
-    if (!_z_bytes_check(*first->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Extract first item data
-    memcpy((uint8_t *)first->_val->_slice.start, &bytes->_slice.start[*curr_idx], first_len);
-    *curr_idx += first_len;
-
-    // Extract second item size
-    size_t second_len = _z_host_le_load32(&bytes->_slice.start[*curr_idx]);
-    *curr_idx += sizeof(uint32_t);
-    // Allocate second item bytes
-    *second->_val = _z_bytes_make(second_len);
-    if (!_z_bytes_check(*second->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Extract second item data
-    memcpy((uint8_t *)second->_val->_slice.start, &bytes->_slice.start[*curr_idx], second_len);
-    *curr_idx += second_len;
-    return _Z_RES_OK;
+    _Z_RETURN_IF_ERR(z_bytes_empty(first));
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(second), z_bytes_drop(first));
+    return _z_bytes_deserialize_into_pair(bytes, first->_val, second->_val);
 }
 
 int8_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val) {
@@ -556,192 +515,154 @@ int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val) {
 
 int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_uint8(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint8(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_uint16(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint16(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_uint32(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint32(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_uint64(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_uint64(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_float(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_float(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    *bytes->_val = _z_bytes_from_double(val);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_double(bytes->_val, val), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
     // Encode data
-    bytes->_val->_slice = _z_slice_wrap((uint8_t *)data, len);
+    _z_slice_t s = _z_slice_wrap((uint8_t *)data, len);
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(bytes->_val, s), z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
-    // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
     // Allocate bytes
-    *bytes->_val = _z_bytes_make(len);
-    if (!_z_bytes_check(*bytes->_val)) {
+    _z_slice_t s = _z_slice_wrap_copy((uint8_t *)data, len);
+    if (!_z_slice_check(s) && len > 0) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    // Copy data
-    memcpy((uint8_t *)bytes->_val->_slice.start, data, len);
+
+    // Init owned bytes
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(bytes), _z_slice_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(bytes->_val, s), _z_slice_clear(&s); z_bytes_drop(bytes));
     return _Z_RES_OK;
 }
 
 int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s) {
-    // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
     // Encode string without null terminator
     size_t len = strlen(s);
-    bytes->_val->_slice = _z_slice_wrap((uint8_t *)s, len);
-    return _Z_RES_OK;
+    return z_bytes_serialize_from_slice(bytes, (uint8_t *)s, len);
 }
 
 int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s) {
-    // Init owned bytes
-    z_bytes_null(bytes);
-    bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
-    if (bytes->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Allocate bytes
+    // Encode string without null terminator
     size_t len = strlen(s);
-    *bytes->_val = _z_bytes_make(len);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return z_bytes_serialize_from_slice_copy(bytes, (uint8_t *)s, len);
+}
+
+int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+                                   void *context) {
+    // Init owned bytes
+    _Z_RETURN_IF_ERR(z_bytes_empty(bytes));
+    z_owned_bytes_t data;
+    _z_bytes_iterator_writer_t iter_writer = _z_bytes_get_iterator_writer(bytes->_val);
+    while (iterator_body(&data, context)) {
+        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&iter_writer, data._val), z_bytes_drop(bytes));
     }
-    // Copy string without null terminator
-    memcpy((uint8_t *)bytes->_val->_slice.start, s, len);
     return _Z_RES_OK;
 }
 
-int8_t zp_bytes_serialize_from_iter(z_owned_bytes_t *bytes,
-                                    _Bool (*iterator_body)(z_owned_bytes_t *data, void *context, size_t *curr_idx),
-                                    void *context, size_t total_len) {
-    // Init owned bytes
-    z_bytes_null(bytes);
+int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
+    _Z_CLEAN_RETURN_IF_ERR(z_bytes_empty(bytes), z_bytes_drop(first); z_bytes_drop(second));
+    int8_t res = _z_bytes_serialize_from_pair(bytes->_val, first->_val, second->_val);
+    first->_val = NULL;
+    second->_val = NULL;
+    if (res != _Z_RES_OK) z_bytes_drop(bytes);
+    return res;
+}
+
+int8_t z_bytes_empty(z_owned_bytes_t *bytes) {
     bytes->_val = (_z_bytes_t *)z_malloc(sizeof(_z_bytes_t));
     if (bytes->_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    // Allocate bytes
-    *bytes->_val = _z_bytes_make(total_len);
-    if (!_z_bytes_check(*bytes->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    size_t curr_idx = 0;
-    while (iterator_body(bytes, context, &curr_idx))
-        ;
+    *bytes->_val = _z_bytes_null();
     return _Z_RES_OK;
 }
 
-int8_t zp_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second,
-                                    size_t *curr_idx) {
-    // Calculate pair size
-    size_t first_len = z_slice_len(&first->_val->_slice);
-    size_t second_len = z_slice_len(&second->_val->_slice);
-    // Copy data
-    _z_host_le_store32((uint32_t)first_len, (uint8_t *)&bytes->_val->_slice.start[*curr_idx]);
-    *curr_idx += sizeof(uint32_t);
-    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&first->_val->_slice), first_len);
-    *curr_idx += first_len;
-    _z_host_le_store32((uint32_t)second_len, (uint8_t *)&bytes->_val->_slice.start[*curr_idx]);
-    *curr_idx += sizeof(uint32_t);
-    memcpy((uint8_t *)&bytes->_val->_slice.start[*curr_idx], z_slice_data(&second->_val->_slice), second_len);
-    *curr_idx += second_len;
-    // Clean up
-    z_bytes_drop(first);
-    z_bytes_drop(second);
+size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); }
+
+_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
+
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_reader(bytes); }
+
+size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len) {
+    return _z_bytes_reader_read(reader, dst, len);
+}
+
+int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin) {
+    return _z_bytes_reader_seek(reader, offset, origin);
+}
+
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(reader); }
+
+z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
+
+_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
+    z_bytes_null(bytes);
+    bytes->_val = (z_loaned_bytes_t *)z_malloc(sizeof(z_loaned_bytes_t));
+    if (bytes->_val == NULL) return false;
+    if (_z_bytes_iterator_next(iter, bytes->_val) != _Z_RES_OK) {
+        z_bytes_drop(bytes);
+        return false;
+    }
+    return true;
+}
+
+int8_t z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer) {
+    writer->_val = (z_loaned_bytes_writer_t *)z_malloc(sizeof(z_loaned_bytes_writer_t));
+    if (writer->_val == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    *writer->_val = _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE);
     return _Z_RES_OK;
+}
+
+int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
+    return _z_bytes_writer_write(writer, src, len);
 }
 
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
@@ -845,15 +766,16 @@ _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array, _z_owner_noop_copy, _
 _Z_VIEW_FUNCTIONS_PTR_IMPL(_z_string_vec_t, string_array)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_slice_t, slice, _z_slice_copy, _z_slice_free)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_bytes_t, bytes, _z_bytes_copy, _z_bytes_free)
+_Z_OWNED_FUNCTIONS_PTR_TRIVIAL_IMPL(_z_bytes_writer_t, bytes_writer)
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
 static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
-    _z_bytes_t b = _z_bytes_null();
     if ((bytes != NULL) && (bytes->_val != NULL)) {
-        b._slice = _z_slice_wrap(bytes->_val->_slice.start, bytes->_val->_slice.len);
+        return *bytes->_val;
+    } else {
+        return _z_bytes_null();
     }
-    return b;
 }
 
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
@@ -1067,12 +989,12 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
         opt.attachment = options->attachment;
     }
 
-    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
-                   _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
-                   _z_bytes_from_owned_bytes(opt.attachment));
+    ret =
+        _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload), _z_encoding_from_owned(opt.encoding),
+                 Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority, _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, payload->_val->_slice.start, payload->_val->_slice.len,
+    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
@@ -1091,7 +1013,7 @@ int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
     }
-    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, NULL, 0, _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
                    opt.congestion_control, opt.priority, _z_bytes_null());
 
     return ret;
@@ -1166,13 +1088,13 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
         // Write value
-        ret = _z_write(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
+        ret = _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_from_owned_bytes(payload),
                        _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                        pub->_priority, _z_bytes_from_owned_bytes(opt.attachment));
     }
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, payload->_val->_slice.start, payload->_val->_slice.len,
-                                   _Z_N_QOS_DEFAULT, _z_bytes_from_owned_bytes(opt.attachment));
+    _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, _z_bytes_from_owned_bytes(payload), _Z_N_QOS_DEFAULT,
+                                   _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
@@ -1182,7 +1104,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
 
 int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
     (void)(options);
-    return _z_write(&pub->_zn.in->val, pub->_key, NULL, 0, _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
+    return _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
                     pub->_congestion_control, pub->_priority, _z_bytes_null());
 }
 
