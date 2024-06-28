@@ -96,69 +96,81 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
  * different operations depending on the encoding value.
  *
  * A set of associated constants are provided to cover the most common encodings for user convenience.
- * This is particularly useful in helping Zenoh to perform additional network optimizations.
+ * This is particularly useful in helping Zenoh to perform additional wire-level optimizations.
+ *
+ * Register your encoding metadata from a string with :c:func:`z_encoding_from_str`. To get the optimization, you need
+ * Z_FEATURE_ENCODING_VALUES to 1 and your string should follow the format: "<constant>;<optional additional data>"
+ *
+ * E.g: "text/plain;utf8"
+ *
+ * Here is the list of constants:
  */
-typedef enum {
-    Z_ENCODING_ID_BYTES = 0,             // Primitives types supported in all Zenoh bindings, just some bytes.
-    Z_ENCODING_ID_INT = 1,               // A VLE-encoded signed little-endian integer.
-    Z_ENCODING_ID_UINT = 2,              // A VLE-encoded little-endian unsigned integer.
-    Z_ENCODING_ID_FLOAT = 3,             // A VLE-encoded float.
-    Z_ENCODING_ID_BOOL = 4,              // A boolean.
-    Z_ENCODING_ID_STRING = 5,            // A UTF-8 string.
-    Z_ENCODING_ID_ERROR = 6,             // A zenoh error.
-    Z_ENCODING_ID_APP_OCTET_STREAM = 7,  // An application-specific stream of bytes.
-    Z_ENCODING_ID_TEXT_PLAIN = 8,        // A textual file.
-    Z_ENCODING_ID_APP_JSON = 9,          // JSON data intended to be consumed by an application.
-    Z_ENCODING_ID_TEXT_JSON = 10,        // JSON data intended to be human readable.
-    Z_ENCODING_ID_APP_CDR = 11,          // A Common Data Representation (CDR)-encoded data.
-    Z_ENCODING_ID_APP_CBOR = 12,         // A Concise Binary Object Representation (CBOR)-encoded data.
-    Z_ENCODING_ID_APP_YAML = 13,         // YAML data intended to be consumed by an application.
-    Z_ENCODING_ID_TEXT_YAML = 14,        // YAML data intended to be human readable.
-    Z_ENCODING_ID_TEXT_JSON5 = 15,       // JSON5 encoded data that are human readable.
-    Z_ENCODING_ID_APP_PYTHON_SERIALIZED_OBJECT = 16,  // A Python object serialized using pickle.
-    Z_ENCODING_ID_APP_PROTOBUF = 17,                  // An application-specific protobuf-encoded data.
-    Z_ENCODING_ID_APP_JAVA_SERIALIZED_OBJECT = 18,    // A Java serialized object.
-    Z_ENCODING_ID_APP_OPENMETRICS_TEXT = 19,          // An openmetrics data.
-    Z_ENCODING_ID_IMAGE_PNG = 20,                     // A Portable Network Graphics (PNG) image.
-    Z_ENCODING_ID_IMAGE_JPEG = 21,                    // A Joint Photographic Experts Group (JPEG) image.
-    Z_ENCODING_ID_IMAGE_GIF = 22,                     // A Graphics Interchange Format (GIF) image.
-    Z_ENCODING_ID_IMAGE_BMP = 23,                     // A BitMap (BMP) image.
-    Z_ENCODING_ID_IMAGE_WEBP = 24,                    // A Web Portable (WebP) image.
-    Z_ENCODING_ID_APP_XML = 25,                       // An XML file intended to be consumed by an application.
-    Z_ENCODING_ID_APP_X_WWW_FORM_URLENCODED = 26,     // An encoded a list of tuples.
-    Z_ENCODING_ID_TEXT_HTML = 27,                     // An HTML file.
-    Z_ENCODING_ID_TEXT_XML = 28,                      // An XML file that is human readable.
-    Z_ENCODING_ID_TEXT_CSS = 29,                      // A CSS file.
-    Z_ENCODING_ID_TEXT_JAVASCRIPT = 30,               // A JavaScript file.
-    Z_ENCODING_ID_TEXT_MARKDOWN = 31,                 // A MarkDown file.
-    Z_ENCODING_ID_TEXT_CSV = 32,                      // A CSV file.
-    Z_ENCODING_ID_APP_SQL = 33,                       // An application-specific SQL query.
-    Z_ENCODING_ID_APP_COAP_PAYLOAD = 34,              // Constrained Application Protocol (CoAP) data.
-    Z_ENCODING_ID_APP_JSON_PATCH_JSON = 35,           // Defines a JSON document structure.
-    Z_ENCODING_ID_APP_JSON_SEQ = 36,                  // A JSON text sequence.
-    Z_ENCODING_ID_APP_JSONPATH = 37,                  // A JSONPath defines a string syntax.
-    Z_ENCODING_ID_APP_JWT = 38,                       // A JSON Web Token (JWT).
-    Z_ENCODING_ID_APP_MP4 = 39,                       // An application-specific MPEG-4 encoded data.
-    Z_ENCODING_ID_APP_SOAP_XML = 40,                  // A SOAP 1.2 message serialized as XML 1.0.
-    Z_ENCODING_ID_APP_YANG = 41,                      // A YANG-encoded data.
-    Z_ENCODING_ID_AUDIO_AAC = 42,                     // A MPEG-4 Advanced Audio Coding (AAC) media.
-    Z_ENCODING_ID_AUDIO_FLAC = 43,                    // A Free Lossless Audio Codec (FLAC) media.
-    Z_ENCODING_ID_AUDIO_MP4 = 44,                     // An audio codec defined in MPEG-4.
-    Z_ENCODING_ID_AUDIO_OGG = 45,                     // An Ogg-encapsulated audio stream.
-    Z_ENCODING_ID_AUDIO_VORBIS = 46,                  // A Vorbis-encoded audio stream.
-    Z_ENCODING_ID_VIDEO_H261 = 47,                    // A h261-encoded video stream.
-    Z_ENCODING_ID_VIDEO_H263 = 48,                    // A h263-encoded video stream.
-    Z_ENCODING_ID_VIDEO_H264 = 49,                    // A h264-encoded video stream.
-    Z_ENCODING_ID_VIDEO_H265 = 50,                    // A h265-encoded video stream.
-    Z_ENCODING_ID_VIDEO_H266 = 51,                    // A h266-encoded video stream.
-    Z_ENCODING_ID_VIDEO_MP4 = 52,                     // A video codec defined in MPEG-4.
-    Z_ENCODING_ID_VIDEO_OGG = 53,                     // An Ogg-encapsulated video stream.
-    Z_ENCODING_ID_VIDEO_RAW = 54,                     // An uncompressed, studio-quality video stream.
-    Z_ENCODING_ID_VIDEO_VP8 = 55,                     // A VP8-encoded video stream.
-    Z_ENCODING_ID_VIDEO_VP9 = 56                      // A VP9-encoded video stream.
-} z_encoding_id_t;
-
-#define Z_ENCODING_ID_DEFAULT Z_ENCODING_ID_BYTES
+//     "zenoh/bytes"
+//     "zenoh/int8"
+//     "zenoh/int16"
+//     "zenoh/int32"
+//     "zenoh/int64"
+//     "zenoh/int128"
+//     "zenoh/uint8"
+//     "zenoh/uint16"
+//     "zenoh/uint32"
+//     "zenoh/uint64"
+//     "zenoh/uint128"
+//     "zenoh/float32"
+//     "zenoh/float64"
+//     "zenoh/bool"
+//     "zenoh/string"
+//     "zenoh/error"
+//     "application/octet-stream"
+//     "text/plain"
+//     "application/json"
+//     "text/json"
+//     "application/cdr"
+//     "application/cbor"
+//     "application/yaml"
+//     "text/yaml"
+//     "text/json5"
+//     "application/python-serialized-object"
+//     "application/protobuf"
+//     "application/java-serialized-object"
+//     "application/openmetrics-text"
+//     "image/png"
+//     "image/jpeg"
+//     "image/gif"
+//     "image/bmp"
+//     "image/webp"
+//     "application/xml"
+//     "application/x-www-form-urlencoded"
+//     "text/html"
+//     "text/xml"
+//     "text/css"
+//     "text/javascript"
+//     "text/markdown"
+//     "text/csv"
+//     "application/sql"
+//     "application/coap-payload"
+//     "application/json-patch+json"
+//     "application/json-seq"
+//     "application/jsonpath"
+//     "application/jwt"
+//     "application/mp4"
+//     "application/soap+xml"
+//     "application/yang"
+//     "audio/aac"
+//     "audio/flac"
+//     "audio/mp4"
+//     "audio/ogg"
+//     "audio/vorbis"
+//     "video/h261"
+//     "video/h263"
+//     "video/h264"
+//     "video/h265"
+//     "video/h266"
+//     "video/mp4"
+//     "video/ogg"
+//     "video/raw"
+//     "video/vp8"
+//     "video/vp9"
 
 /**
  * Consolidation mode values.

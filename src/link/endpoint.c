@@ -450,6 +450,6 @@ char *_z_endpoint_to_str(const _z_endpoint_t *endpoint) {
         }
     }
     // Clean up
-    _z_string_clear(locator);
+    _z_string_free(&locator);
     return ret;
 }

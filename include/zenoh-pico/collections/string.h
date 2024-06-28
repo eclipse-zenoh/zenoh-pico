@@ -70,6 +70,7 @@ typedef struct {
 } _z_string_t;
 
 _z_string_t _z_string_null(void);
+_Bool _z_string_check(_z_string_t value);
 _z_string_t _z_string_make(const char *value);
 _z_string_t _z_string_wrap(char *value);
 _z_string_t *_z_string_make_as_ptr(const char *value);

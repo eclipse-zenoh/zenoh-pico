@@ -25,7 +25,6 @@ Enums
 .. autocenum:: constants.h::z_whatami_t
 .. autocenum:: constants.h::zp_keyexpr_canon_status_t
 .. autocenum:: constants.h::z_sample_kind_t
-.. autocenum:: constants.h::z_encoding_id_t
 .. autocenum:: constants.h::z_consolidation_mode_t
 .. autocenum:: constants.h::z_reliability_t
 .. autocenum:: constants.h::z_reply_tag_t
@@ -282,14 +281,14 @@ Primitives
 .. autocfunction:: primitives.h::z_scouting_config_from
 .. autocfunction:: primitives.h::zp_scouting_config_get
 .. autocfunction:: primitives.h::zp_scouting_config_insert
-.. autocfunction:: primitives.h::zp_encoding_make
-.. autocfunction:: primitives.h::zp_encoding_default
 .. autocfunction:: primitives.h::z_encoding_check
 .. autocfunction:: primitives.h::z_encoding_drop
 .. autocfunction:: primitives.h::z_encoding_loan
 .. autocfunction:: primitives.h::z_encoding_loan_mut
 .. autocfunction:: primitives.h::z_encoding_move
 .. autocfunction:: primitives.h::z_encoding_null
+.. autocfunction:: primitives.h::z_encoding_from_str
+.. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
 .. autocfunction:: primitives.h::z_slice_data

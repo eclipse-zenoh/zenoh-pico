@@ -177,7 +177,7 @@ _Z_LOANED_TYPE(_z_query_rc_t, query)
  * Represents the encoding of a payload, in a MIME-like format.
  *
  * Members:
- *   z_encoding_id_t prefix: The integer prefix of this encoding.
+ *   uint16_t prefix: The integer prefix of this encoding.
  *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
 _Z_OWNED_TYPE_PTR(_z_encoding_t, encoding)

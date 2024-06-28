@@ -234,6 +234,8 @@ _z_string_vec_t gen_str_array(size_t size) {
     return sa;
 }
 
+_z_string_t gen_string(size_t len) { return _z_string_wrap(gen_str(len)); }
+
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);
     for (size_t i = 0; i < size; i++) {
@@ -250,9 +252,9 @@ _z_encoding_t gen_encoding(void) {
     _z_encoding_t en;
     en.id = gen_uint16();
     if (gen_bool()) {
-        en.schema = gen_slice(16);
+        en.schema = gen_string(16);
     } else {
-        en.schema = _z_slice_empty();
+        en.schema = _z_string_null();
     }
     return en;
 }
@@ -343,8 +345,8 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         printf("%s:%s", ls->val, rs->val);
         if (i < left->_len - 1) printf(" ");
 
-        z_free(ls);
-        z_free(rs);
+        _z_string_free(&ls);
+        _z_string_free(&rs);
 
         assert(_z_locator_eq(l, r) == true);
     }
@@ -508,6 +510,13 @@ void zbuf_extension(void) {
 /*------------------ Payload field ------------------*/
 void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
 
+void assert_eq_string(const _z_string_t *left, const _z_string_t *right) {
+    assert(left->len == right->len);
+    if (left->len > 0) {
+        assert(_z_str_eq(left->val, right->val) == true);
+    }
+}
+
 void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) {
     assert_eq_slice(&left->_slice, &right->_slice);
 }
@@ -553,7 +562,7 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
 }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->id == right->id);
-    assert_eq_slice(&left->schema, &right->schema);
+    assert_eq_string(&left->schema, &right->schema);
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);

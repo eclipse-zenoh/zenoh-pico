@@ -77,9 +77,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_query_parameters(query, &pred);
     (void)(pred);
     const z_loaned_bytes_t *payload = z_query_payload(query);
-    const z_loaned_encoding_t *encoding = z_query_encoding(query);
     (void)(payload);
-    (void)(encoding);
     z_query_reply_options_t _ret_qreply_opt;
     z_query_reply_options_default(&_ret_qreply_opt);
 
@@ -319,9 +317,6 @@ int main(int argc, char **argv) {
     z_put_options_t _ret_put_opt;
     z_put_options_default(&_ret_put_opt);
     _ret_put_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
-    z_owned_encoding_t _ret_encoding;
-    zp_encoding_make(&_ret_encoding, Z_ENCODING_ID_TEXT_PLAIN, NULL);
-    _ret_put_opt.encoding = z_move(_ret_encoding);
 
     // Create payload
     z_owned_bytes_t payload;
