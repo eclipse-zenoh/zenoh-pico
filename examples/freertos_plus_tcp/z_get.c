@@ -76,7 +76,7 @@ void app_main(void) {
     }
 
     z_view_keyexpr_t ke;
-    if (z_view_keyexpr_from_string(&ke, KEYEXPR) < 0) {
+    if (z_view_keyexpr_from_str(&ke, KEYEXPR) < 0) {
         printf("%s is not a valid key expression", KEYEXPR);
         return -1;
     }
@@ -89,7 +89,7 @@ void app_main(void) {
         // Value encoding
         z_owned_bytes_t payload;
         if (strcmp(VALUE, "") != 0) {
-            z_bytes_serialize_from_string(&payload, VALUE);
+            z_bytes_serialize_from_str(&payload, VALUE);
             opts.payload = &payload;
         }
         z_owned_closure_reply_t callback;

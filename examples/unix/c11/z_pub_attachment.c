@@ -41,8 +41,8 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_serialize_from_string(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_serialize_from_string(&v, kvs->data[kvs->current_idx].value);
+        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
+        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
         z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     // Declare publisher
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string(&ke, keyexpr);
+    z_view_keyexpr_from_str(&ke, keyexpr);
     z_owned_publisher_t pub;
     if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_string(&payload, buf);
+        z_bytes_serialize_from_str(&payload, buf);
 
         // Add attachment value
         sprintf(buf_ind, "%d", idx);

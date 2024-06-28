@@ -59,12 +59,12 @@ size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_v
 
 _Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_vec_is_empty(a); }
 
-int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
 
-int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -303,7 +303,7 @@ static uint16_t _z_encoding_values_str_to_int(const char *schema, size_t len) {
     return UINT16_MAX;
 }
 
-static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
     const char *id_end = strchr(s, ENCODING_SCHEMA_SEPARATOR);
     // Check id_end value + corner cases
     if ((id_end != NULL) && (id_end != s)) {
@@ -353,7 +353,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 }
 
 #else
-static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
     return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
 }
 
@@ -402,7 +402,7 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     }
     // Convert string to encoding
     if (s != NULL) {
-        return _z_encoding_convert_from_string(encoding, s);
+        return _z_encoding_convert_from_str(encoding, s);
     }
     return _Z_RES_OK;
 }
@@ -583,13 +583,13 @@ int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s) {
+int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s) {
     // Encode string without null terminator
     size_t len = strlen(s);
     return z_bytes_serialize_from_slice(bytes, (uint8_t *)s, len);
 }
 
-int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s) {
+int8_t z_bytes_serialize_from_str_copy(z_owned_bytes_t *bytes, const char *s) {
     // Encode string without null terminator
     size_t len = strlen(s);
     return z_bytes_serialize_from_slice_copy(bytes, (uint8_t *)s, len);

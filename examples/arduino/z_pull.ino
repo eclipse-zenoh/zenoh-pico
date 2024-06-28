@@ -100,7 +100,7 @@ void setup() {
     // z_closure_sample(&callback, data_handler, NULL, NULL);
     // @TODO
     // z_view_keyexpr_t ke;
-    // z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    // z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     // sub = z_declare_pull_subscriber(z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback),
     // NULL); if (!z_pull_subscriber_check(&sub)) {
     //     Serial.println("Unable to declare subscriber.");

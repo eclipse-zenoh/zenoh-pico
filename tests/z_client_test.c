@@ -63,7 +63,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_string(&reply_payload, res);
+    z_bytes_serialize_from_str(&reply_payload, res);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_view_keyexpr_t ke;
-        z_view_keyexpr_from_string(&ke, s1_res);
+        z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(&expr, z_loan(s1), z_loan(ke));
         printf("Declared resource on session 1: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) {
         snprintf(s1_res, 64, "%s%u", uri, i);
         z_view_keyexpr_t ke;
-        z_view_keyexpr_from_string(&ke, s1_res);
+        z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(&expr, z_loan(s2), z_loan(ke));
         printf("Declared resource on session 2: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
         z_closure(&callback, query_handler, NULL, &idx[i]);
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         z_view_keyexpr_t ke;
-        z_view_keyexpr_from_string(&ke, s1_res);
+        z_view_keyexpr_from_str(&ke, s1_res);
         assert(z_declare_queryable(qle, z_loan(s2), z_loan(ke), &callback, NULL) == _Z_RES_OK);
         printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val->_entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
             z_owned_closure_reply_t callback;
             z_closure(&callback, reply_handler, NULL, &idx[i]);
             z_view_keyexpr_t ke;
-            z_view_keyexpr_from_string(&ke, s1_res);
+            z_view_keyexpr_from_str(&ke, s1_res);
             z_get(z_loan(s1), z_loan(ke), "", &callback, NULL);
             printf("Queried data from session 1: %zu %s\n", (z_zint_t)0, s1_res);
         }
