@@ -705,31 +705,13 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loan
     }
 }
 
-void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample) {
-    if (closure->call != NULL) {
-        (closure->call)(sample, closure->context);
-    }
-}
-
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query) {
     if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
-void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_owned_query_t *query) {
-    if (closure->call != NULL) {
-        (closure->call)(query, closure->context);
-    }
-}
-
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
-    if (closure->call != NULL) {
-        (closure->call)(reply, closure->context);
-    }
-}
-
-void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
@@ -794,14 +776,8 @@ _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 

@@ -1079,21 +1079,6 @@ int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call
                         void *context);
 
 /**
- * Builds a new sample closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Parameters:
- *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
- *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
- *   context: Pointer to an arbitrary state.
- *
- * Return:
- *   The sample closure.
- */
-int8_t z_closure_owned_sample(z_owned_closure_owned_sample_t *closure, z_owned_sample_handler_t call,
-                              z_dropper_handler_t drop, void *context);
-
-/**
  * Builds a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -1109,21 +1094,6 @@ int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t c
                        void *context);
 
 /**
- * Builds a new query closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Parameters:
- *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
- *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
- *   context: Pointer to an arbitrary state.
- *
- * Return:
- *   The query closure.
- */
-int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, z_owned_query_handler_t call,
-                             z_dropper_handler_t drop, void *context);
-
-/**
  * Builds a new reply closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -1137,21 +1107,6 @@ int8_t z_closure_owned_query(z_owned_closure_owned_query_t *closure, z_owned_que
  */
 int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
                        void *context);
-
-/**
- * Builds a new reply closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Parameters:
- *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
- *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
- *   context: Pointer to an arbitrary state.
- *
- * Return:
- *   The reply closure.
- */
-int8_t z_closure_owned_reply(z_owned_closure_owned_reply_t *closure, z_owned_reply_handler_t call,
-                             z_dropper_handler_t drop, void *context);
 
 /**
  * Builds a new hello closure.
@@ -1202,11 +1157,8 @@ _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_writer_t, z_owned_bytes_writer_t, bytes_wr
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_err_t, z_owned_reply_err_t, reply_err)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)
-_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_sample_t, closure_owned_sample)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_query_t, closure_query)
-_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_query_t, closure_owned_query)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_reply_t, closure_reply)
-_Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_reply_t, closure_owned_reply)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_hello_t, closure_hello)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_zid_t, closure_zid)
 
