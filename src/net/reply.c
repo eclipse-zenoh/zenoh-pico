@@ -85,25 +85,25 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
 
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           const _z_bytes_t attachment) {
+                           _z_bytes_t attachment) {
     _z_reply_t reply = _z_reply_null();
     reply._tag = tag;
     if (tag == Z_REPLY_TAG_DATA) {
         reply.data.replier_id = id;
         // Create reply sample
-        reply.data.sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
-        reply.data.sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
+        reply.data.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
+        _z_encoding_copy(&reply.data.sample.encoding, &encoding);
         _z_bytes_copy(&reply.data.sample.payload, &payload);
         reply.data.sample.kind = kind;
         reply.data.sample.timestamp = _z_timestamp_duplicate(timestamp);
-        _z_bytes_copy(&reply.data.sample.attachment, &attachment);  // FIXME: Steal slices
+        _z_bytes_move(&reply.data.sample.attachment, &attachment);
     }
     return reply;
 }
 #else
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           const _z_bytes_t attachment) {
+                           _z_bytes_t attachment) {
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(tag);
     _ZP_UNUSED(id);

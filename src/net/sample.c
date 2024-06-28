@@ -80,7 +80,7 @@ _z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
 #if Z_FEATURE_SUBSCRIPTION == 1
 _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                             const _z_bytes_t attachment) {
+                             _z_bytes_t attachment) {
     _z_sample_t s = _z_sample_null();
     _z_bytes_copy(&s.payload, &payload);
     _z_encoding_copy(&s.encoding, &encoding);
@@ -88,13 +88,13 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const 
     s.kind = kind;
     s.timestamp = timestamp;
     s.qos = qos;
-    _z_bytes_copy(&s.attachment, &attachment);
+    _z_bytes_move(&s.attachment, &attachment);
     return s;
 }
 #else
 _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                             const _z_bytes_t attachment) {
+                             _z_bytes_t attachment) {
     _ZP_UNUSED(key);
     _ZP_UNUSED(payload);
     _ZP_UNUSED(timestamp);
