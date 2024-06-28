@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     }
     // Put data
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string(&ke, keyexpr);
+    z_view_keyexpr_from_str(&ke, keyexpr);
     for (int i = 0; i < 5; i++) {
         // Create payload
         z_owned_bytes_t payload;

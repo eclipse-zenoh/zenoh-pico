@@ -82,7 +82,7 @@ void setup() {
     Serial.print(KEYEXPR);
     Serial.println("...");
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_publisher(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
         Serial.println("Unable to declare publisher for key expression!");
         while (1) {
@@ -108,7 +108,7 @@ void loop() {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_string(&payload, buf);
+    z_bytes_serialize_from_str(&payload, buf);
 
     if (z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL) < 0) {
         Serial.println("Error while publishing data");

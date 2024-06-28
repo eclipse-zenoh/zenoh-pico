@@ -57,7 +57,7 @@ int8_t z_view_string_wrap(z_view_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name);
+int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
@@ -71,7 +71,7 @@ int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
+int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
@@ -773,7 +773,7 @@ int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t` by copying
@@ -785,7 +785,7 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_str_copy(z_owned_bytes_t *bytes, const char *s);
 
 /**
  * Constructs payload from an iterator to `z_owned_bytes_t`.
