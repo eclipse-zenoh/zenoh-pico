@@ -1249,83 +1249,6 @@ z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
  */
 const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample);
 
-/**
- * Gets the keyexpr from a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the keyexpr from.
- *
- * Return:
- *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
- */
-const z_loaned_keyexpr_t *zp_reply_sample_keyexpr(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the payload of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the payload from.
- *
- * Return:
- *   The payload wrapped as a :c:type:`z_loaned_bytes_t`.
- */
-const z_loaned_bytes_t *zp_reply_sample_payload(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the timestamp of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the timestamp from.
- *
- * Return:
- *   The timestamp wrapped as a :c:type:`z_timestamp_t`.
- */
-z_timestamp_t zp_reply_sample_timestamp(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the encoding of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the encoding from.
- *
- * Return:
- *   The encoding wrapped as a :c:type:`z_loaned_encoding_t*`.
- */
-const z_loaned_encoding_t *zp_reply_sample_encoding(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the kind of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the kind from.
- *
- * Return:
- *   The sample kind wrapped as a :c:type:`z_sample_kind_t`.
- */
-z_sample_kind_t zp_reply_sample_kind(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the qos value of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the qos from.
- *
- * Return:
- *   The qos wrapped as a :c:type:`z_qos_t`.
- */
-z_qos_t zp_reply_sample_qos(const zp_loaned_reply_sample_t *sample);
-
-/**
- * Gets the attachment of a reply sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`zp_loaned_reply_sample_t` to get the attachment from.
- *
- * Return:
- *   Pointer to the attachment as a :c:type:`z_loaned_bytes_t`.
- */
-const z_loaned_bytes_t *zp_reply_sample_attachment(const zp_loaned_reply_sample_t *sample);
-
 #if Z_FEATURE_PUBLICATION == 1
 /**
  * Builds a :c:type:`z_put_options_t` with default values.
@@ -1489,7 +1412,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
 _Bool z_reply_is_ok(const z_loaned_reply_t *reply);
 
 /**
- * Gets the content of an OK reply refcounted.
+ * Gets the content of an OK reply.
  *
  * You should always make sure that :c:func:`z_reply_is_ok` returns ``true`` before calling this function.
  *
@@ -1500,19 +1423,6 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply);
  *   The OK reply content wrapped as a :c:type:`z_loaned_sample_t`.
  */
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
-
-/**
- * Gets the content of an OK reply.
- *
- * You should always make sure that :c:func:`z_reply_is_ok` returns ``true`` before calling this function.
- *
- * Parameters:
- *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
- *
- * Return:
- *   The OK reply content wrapped as a :c:type:`zp_loaned_reply_sample_t`.
- */
-const zp_loaned_reply_sample_t *zp_reply_ok(const z_loaned_reply_t *reply);
 
 /**
  * Gets the contents of an error reply.

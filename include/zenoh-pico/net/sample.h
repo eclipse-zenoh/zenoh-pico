@@ -39,8 +39,6 @@ typedef struct _z_sample_t {
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
 
-_Z_REFCOUNT_DEFINE(_z_sample, _z_sample)
-
 _z_sample_t _z_sample_null(void);
 _Bool _z_sample_check(const _z_sample_t *sample);
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
@@ -56,7 +54,7 @@ void _z_sample_free(_z_sample_t **sample);
 void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
-_z_sample_t _z_sample_create(const _z_keyexpr_t *key, const _z_bytes_t payload, _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, _z_timestamp_t timestamp,
                              const _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const _z_bytes_t attachment);
 

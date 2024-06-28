@@ -51,9 +51,15 @@
             return;                                                                                                  \
         }                                                                                                            \
         if (elem == NULL) {                                                                                          \
-            internal_elem->_rc.in = NULL;                                                                            \
+            internal_elem->_val = NULL;                                                                              \
         } else {                                                                                                     \
-            elem_copy_f(&internal_elem->_rc, elem);                                                                  \
+            internal_elem->_val = (elem_loaned_type *)z_malloc(sizeof(elem_loaned_type));                            \
+            if (internal_elem->_val == NULL) {                                                                       \
+                z_free(internal_elem);                                                                               \
+                _Z_ERROR("Out of memory");                                                                           \
+                return;                                                                                              \
+            }                                                                                                        \
+            elem_copy_f(internal_elem->_val, (elem_loaned_type *)elem);                                              \
         }                                                                                                            \
         int8_t ret = collection_push_f(internal_elem, context, _z_##handler_name##_elem_free);                       \
         if (ret != _Z_RES_OK) {                                                                                      \
@@ -112,7 +118,7 @@
                            /* collection_try_pull_f           */ _z_##kind_name##_mt_try_pull,              \
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
-                           /* elem_copy_f                     */ _z_##item_name##_rc_copy,                  \
+                           /* elem_copy_f                     */ _z_##item_name##_copy,                     \
                            /* elem_drop_f                     */ z_##item_name##_drop)
 
 #define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \

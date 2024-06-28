@@ -41,19 +41,36 @@ void _z_query_clear(_z_query_t *q) {
     _z_bytes_drop(&q->attachment);
 }
 
+void _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
+    dst->_anyke = src->_anyke;
+    dst->_key = _z_keyexpr_duplicate(src->_key);
+    dst->_parameters = src->_parameters;
+    dst->_request_id = src->_request_id;
+    dst->_zn = src->_zn;
+    _z_value_copy(&dst->_value, &src->_value);
+}
+
+void _z_query_free(_z_query_t **query) {
+    _z_query_t *ptr = *query;
+    if (ptr != NULL) {
+        _z_query_clear(ptr);
+        z_free(ptr);
+        *query = NULL;
+    }
+}
+
 #if Z_FEATURE_QUERYABLE == 1
-_z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_slice_t *parameters,
-                           _z_session_t *zn, uint32_t request_id, const _z_bytes_t attachment) {
+_z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_t *zn,
+                           uint32_t request_id, const _z_bytes_t attachment) {
     _z_query_t q = _z_query_null();
     q._request_id = request_id;
-    q._zn = zn;  // Ideally would have been an rc
+    q._zn = zn;
     q._parameters = (char *)z_malloc(parameters->len + 1);
     memcpy(q._parameters, parameters->start, parameters->len);
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     _z_bytes_copy(&q.attachment, &attachment);
-
-    _z_keyexpr_copy(&q._key, key);
+    q._key = _z_keyexpr_steal(key);
     _z_value_copy(&q._value, value);
     return q;
 }

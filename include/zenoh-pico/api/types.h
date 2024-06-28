@@ -171,8 +171,8 @@ _Z_LOANED_TYPE(_z_queryable_t, queryable)
  * Represents a Zenoh Query entity, received by Zenoh Queryable entities.
  *
  */
-_Z_OWNED_TYPE_RC(_z_query_rc_t, query)
-_Z_LOANED_TYPE(_z_query_rc_t, query)
+_Z_OWNED_TYPE_PTR(_z_query_t, query)
+_Z_LOANED_TYPE(_z_query_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
@@ -403,8 +403,8 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *   z_timestamp_t timestamp: The timestamp of this data sample.
  *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-_Z_OWNED_TYPE_RC(_z_sample_rc_t, sample)
-_Z_LOANED_TYPE(_z_sample_rc_t, sample)
+_Z_OWNED_TYPE_PTR(_z_sample_t, sample)
+_Z_LOANED_TYPE(_z_sample_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
@@ -420,8 +420,8 @@ _Z_LOANED_TYPE(_z_hello_t, hello)
 /**
  * Represents the reply to a query.
  */
-_Z_OWNED_TYPE_RC(_z_reply_rc_t, reply)
-_Z_LOANED_TYPE(_z_reply_rc_t, reply)
+_Z_OWNED_TYPE_PTR(_z_reply_t, reply)
+_Z_LOANED_TYPE(_z_reply_t, reply)
 
 /**
  * Represents an array of non null-terminated string.
