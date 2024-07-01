@@ -321,7 +321,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
                               _z_encoding_clear)
-                              
+
 int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     // Init owned encoding
     z_encoding_null(encoding);
