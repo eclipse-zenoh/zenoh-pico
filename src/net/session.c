@@ -65,7 +65,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     }
 
     if (config != NULL) {
-        _z_string_vec_t locators = _z_string_vec_make(0);
+        _z_string_svec_t locators = _z_string_svec_make(0);
         char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
         char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
         if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
@@ -91,7 +91,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_string_vec_copy(&locators, &hello->locators);
+                _z_string_svec_copy(&locators, &hello->locators);
             }
             _z_hello_list_free(&hellos);
         } else {
@@ -104,16 +104,17 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                     return _Z_ERR_GENERIC;
                 }
             }
-            locators = _z_string_vec_make(1);
-            _z_string_vec_append(&locators, _z_string_make_as_ptr(_z_config_get(config, key)));
+            locators = _z_string_svec_make(1);
+            _z_string_t s = _z_string_make(_z_config_get(config, key));
+            _z_string_svec_append(&locators, &s);
         }
 
         ret = _Z_ERR_SCOUT_NO_RESULTS;
-        size_t len = _z_string_vec_len(&locators);
+        size_t len = _z_string_svec_len(&locators);
         for (size_t i = 0; i < len; i++) {
             ret = _Z_RES_OK;
 
-            _z_string_t *locator = _z_string_vec_get(&locators, i);
+            _z_string_t *locator = _z_string_svec_get(&locators, i);
             // @TODO: check invalid configurations
             // For example, client mode in multicast links
 
@@ -139,7 +140,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                 _Z_ERROR("Trying to configure an invalid mode.");
             }
         }
-        _z_string_vec_clear(&locators);
+        _z_string_svec_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.");
         ret = _Z_ERR_GENERIC;

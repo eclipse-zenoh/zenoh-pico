@@ -35,7 +35,7 @@ typedef struct {
 } _z_slice_t;
 
 _z_slice_t _z_slice_empty(void);
-inline static _Bool _z_slice_check(_z_slice_t value) { return value.start != NULL; }
+inline static _Bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_wrap(const uint8_t *bs, size_t len);

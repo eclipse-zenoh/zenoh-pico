@@ -42,7 +42,7 @@ _z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(_Z_ENCODING_ID_DE
 void _z_encoding_clear(_z_encoding_t *encoding) { _z_string_clear(&encoding->schema); }
 
 _Bool _z_encoding_check(const _z_encoding_t *encoding) {
-    return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(encoding->schema));
+    return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(&encoding->schema));
 }
 
 void _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {

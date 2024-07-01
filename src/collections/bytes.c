@@ -118,7 +118,7 @@ int8_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
     // Allocate slice
     size_t len = _z_bytes_len(bytes);
     *s = _z_slice_make(len);
-    if (!_z_slice_check(*s) && len > 0) {
+    if (!_z_slice_check(s) && len > 0) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     uint8_t *start = (uint8_t *)s->start;

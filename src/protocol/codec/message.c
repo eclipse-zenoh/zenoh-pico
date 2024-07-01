@@ -150,9 +150,9 @@ int8_t _z_locators_encode(_z_wbuf_t *wbf, const _z_locator_array_t *la) {
     _Z_DEBUG("Encoding _LOCATORS");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, la->_len))
     for (size_t i = 0; i < la->_len; i++) {
-        _z_string_t *s = _z_locator_to_string(&la->_val[i]);
-        _Z_RETURN_IF_ERR(_z_string_encode(wbf, s))
-        _z_string_free(&s);
+        _z_string_t s = _z_locator_to_string(&la->_val[i]);
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &s))
+        _z_string_clear(&s);
     }
 
     return ret;
@@ -393,7 +393,7 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    _Bool has_params = _z_slice_check(msg->_parameters);
+    _Bool has_params = _z_slice_check(&msg->_parameters);
     if (has_params) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }

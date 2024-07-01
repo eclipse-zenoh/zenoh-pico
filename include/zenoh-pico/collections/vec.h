@@ -21,7 +21,7 @@
 
 /*-------- Dynamically allocated vector --------*/
 /**
- * A dynamically allocate vector.
+ * A dynamically allocated vector. Elements are stored as pointers.
  */
 typedef struct {
     size_t _capacity;
@@ -66,7 +66,7 @@ void _z_vec_release(_z_vec_t *v);
 
 /*-------- Dynamically allocated sized vector --------*/
 /**
- * A dynamically allocate vector.
+ * A dynamically allocated vector. Elements are stored by value.
  */
 typedef struct {
     size_t _capacity;

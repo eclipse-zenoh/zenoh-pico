@@ -24,6 +24,12 @@
         type *_val;                   \
     } z_owned_##name##_t;
 
+// For value types
+#define _Z_OWNED_TYPE_VALUE(type, name) \
+    typedef struct {                    \
+        type _val;                      \
+    } z_owned_##name##_t;
+
 // For refcounted types
 #define _Z_OWNED_TYPE_RC(type, name) \
     typedef struct {                 \
@@ -73,27 +79,17 @@
         }                                                                                           \
     }
 
-#define _Z_OWNED_FUNCTIONS_PTR_TRIVIAL_IMPL(type, name)                                             \
-    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
-    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                             \
-    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                    \
-    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
-        int8_t ret = _Z_RES_OK;                                                                     \
-        obj->_val = (type *)z_malloc(sizeof(type));                                                 \
-        if (obj->_val != NULL) {                                                                    \
-            *obj->_val = *src;                                                                      \
-        } else {                                                                                    \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
-        }                                                                                           \
-        return ret;                                                                                 \
-    }                                                                                               \
-    void z_##name##_drop(z_owned_##name##_t *obj) {                                                 \
-        if ((obj != NULL) && (obj->_val != NULL)) {                                                 \
-            z_free(obj->_val);                                                                      \
-            obj->_val = NULL;                                                                       \
-        }                                                                                           \
+#define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_drop)                   \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }          \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
+    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                          \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                     \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {               \
+        return f_copy((&obj->_val), src);                                                            \
+    }                                                                                                \
+    void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
+        if (obj != NULL) f_drop((&obj->_val));                                                       \
     }
 
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                            \
@@ -118,7 +114,7 @@
         }                                                                                           \
     }
 
-#define _Z_VIEW_FUNCTIONS_PTR_IMPL(type, name)                                                           \
+#define _Z_VIEW_FUNCTIONS_IMPL(type, name)                                                               \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
 

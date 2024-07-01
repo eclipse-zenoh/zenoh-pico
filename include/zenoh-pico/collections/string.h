@@ -70,13 +70,13 @@ typedef struct {
 } _z_string_t;
 
 _z_string_t _z_string_null(void);
-_Bool _z_string_check(_z_string_t value);
+_Bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_make(const char *value);
 _z_string_t _z_string_wrap(char *value);
 _z_string_t *_z_string_make_as_ptr(const char *value);
 
 size_t _z_string_size(const _z_string_t *s);
-void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
+int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
@@ -88,7 +88,8 @@ _z_string_t _z_string_preallocate(const size_t len);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)
 
-_Z_VEC_DEFINE(_z_string, _z_string_t)
+static inline void _z_string_elem_move(void *dst, void *src) { _z_string_move((_z_string_t *)dst, (_z_string_t *)src); }
+_Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
