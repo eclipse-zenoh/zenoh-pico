@@ -96,7 +96,7 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
 }
 
 int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
-                                      const _z_msg_put_t *msg) {
+                                      _z_msg_put_t *msg) {
     int8_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
@@ -115,7 +115,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 
     // Build the reply
     _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
-                                       &msg->_commons._timestamp, msg->_encoding, Z_SAMPLE_KIND_PUT, msg->_attachment);
+                                       &msg->_commons._timestamp, &msg->_encoding, Z_SAMPLE_KIND_PUT, msg->_attachment);
 
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
