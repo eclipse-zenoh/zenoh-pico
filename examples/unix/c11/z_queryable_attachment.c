@@ -87,7 +87,7 @@ void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
 }
 
 void print_attachment(kv_pairs_rx_t *kvp) {
-    printf("   with attachment:\n");
+    printf("    with attachment:\n");
     for (uint32_t i = 0; i < kvp->current_idx; i++) {
         printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
                z_string_data(z_loan(kvp->data[i].value)));
@@ -119,7 +119,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_owned_string_t payload_string;
     z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 1) {
-        printf("   with value '%s'\n", z_string_data(z_loan(payload_string)));
+        printf("    with value '%s'\n", z_string_data(z_loan(payload_string)));
     }
     // Check attachment
     kv_pairs_rx_t kvp = {
