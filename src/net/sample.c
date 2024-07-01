@@ -88,7 +88,7 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const 
     s.qos = qos;
     _z_bytes_copy(&s.payload, &payload);
     _z_bytes_copy(&s.attachment, &attachment);
-    _z_encoding_copy(&s.encoding, &encoding); // FIXME: Move encoding, Issue #482
+    _z_encoding_copy(&s.encoding, &encoding);  // FIXME: Move encoding, Issue #482
     return s;
 }
 #else
