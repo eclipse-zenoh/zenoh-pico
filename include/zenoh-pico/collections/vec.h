@@ -107,8 +107,8 @@ void _z_svec_release(_z_svec_t *v);
     static inline void name##_svec_remove(name##_svec_t *v, size_t pos) {                                          \
         _z_svec_remove(v, pos, name##_elem_clear, name##_elem_move, sizeof(type));                                 \
     }                                                                                                              \
-    static inline _Bool name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src) {                            \
-        return _z_svec_copy(dst, src, name##_elem_copy, sizeof(type));                                                    \
+    static inline _Bool name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src) {                           \
+        return _z_svec_copy(dst, src, name##_elem_copy, sizeof(type));                                             \
     }                                                                                                              \
     static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }  \
     static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); }  \

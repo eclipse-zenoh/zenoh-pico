@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     printf("Testing Configs...");
     z_owned_config_t _ret_config;
     z_config_new(&_ret_config);
-    assert(!z_check(_ret_config)); // null config corresponds to empty one
+    assert(!z_check(_ret_config));  // null config corresponds to empty one
     z_drop(z_move(_ret_config));
     z_config_default(&_ret_config);
     assert(z_check(_ret_config));

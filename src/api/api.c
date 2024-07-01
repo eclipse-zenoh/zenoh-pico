@@ -626,12 +626,13 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_config_t, config, _z_config_check, _z_c
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
 
-_Bool _z_value_check(const _z_value_t *value) { 
+_Bool _z_value_check(const _z_value_t *value) {
     return _z_string_check(&value->encoding.schema) && value->encoding.id == _Z_ENCODING_ID_DEFAULT;
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy, _z_keyexpr_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
+                              _z_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
 
@@ -671,7 +672,8 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
     }
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy, _z_encoding_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
+                              _z_encoding_clear)
 
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
 static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
