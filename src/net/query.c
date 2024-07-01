@@ -71,7 +71,7 @@ _z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     q._key = _z_keyexpr_steal(key);
     _z_bytes_copy(&q.attachment, &attachment);
-    _z_value_copy(&q._value, value);  // FIXME: Move encoding, Issue #482
+    _z_value_move(&q._value, value);
     return q;
 }
 
