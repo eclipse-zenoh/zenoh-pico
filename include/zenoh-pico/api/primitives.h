@@ -294,62 +294,6 @@ const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
 int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
 
 /**
- * Checks if a :c:type:`z_owned_encoding_t` has non-default values.
- *
- * Return:
- *   ``true`` if encoding is in non-default state, ``false`` otherwise.
- */
-_Bool z_encoding_check(const z_owned_encoding_t *encoding);
-
-/**
- * Free the memory of a :c:type:`z_owned_encoding_t`.
- */
-void z_encoding_drop(z_owned_encoding_t *encoding);
-
-int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src);
-
-/**
- * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
- *
- * Parameters:
- *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to loan.
- *
- * Return:
- *    Pointer to the loaned version.
- */
-const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding);
-
-/**
- * Gets a loaned version of a :c:type:`z_owned_encoding_t`.
- *
- * Parameters:
- *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to loan.
- *
- * Return:
- *    Pointer to the loaned version.
- */
-z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding);
-
-/**
- * Gets a moved version of a :c:type:`z_owned_encoding_t`.
- *
- * Parameters:
- *    encoding: Pointer to a :c:type:`z_owned_encoding_t` to move.
- *
- * Return:
- *    Pointer to the moved version.
- */
-z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding);
-
-/**
- * Initialize a :c:type:`z_owned_encoding_t` with default value.
- *
- * Parameters:
- *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
- */
-void z_encoding_null(z_owned_encoding_t *encoding);
-
-/**
  * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
  *
  * Parameters:
