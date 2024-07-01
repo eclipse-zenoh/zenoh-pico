@@ -319,6 +319,9 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 
 #endif
 
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
+                              _z_encoding_clear)
+                              
 int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     // Init owned encoding
     z_encoding_null(encoding);
@@ -653,9 +656,6 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
         return _z_bytes_null();
     }
 }
-
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
-                              _z_encoding_clear)
 
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
 static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
