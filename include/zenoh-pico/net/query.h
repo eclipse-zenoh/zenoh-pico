@@ -49,7 +49,7 @@ typedef struct {
 
 #if Z_FEATURE_QUERYABLE == 1
 _z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_t *zn,
-                           uint32_t request_id, _z_bytes_t attachment);
+                           uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
 #endif

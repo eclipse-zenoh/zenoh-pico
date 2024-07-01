@@ -63,7 +63,7 @@ void _z_reply_free(_z_reply_t **hello);
 void _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           _z_bytes_t attachment);
+                           const _z_bytes_t attachment);
 
 typedef struct _z_pending_reply_t {
     _z_reply_t _reply;
