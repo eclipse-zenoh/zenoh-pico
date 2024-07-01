@@ -57,3 +57,12 @@ void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     src->id = _Z_ENCODING_ID_DEFAULT;
     _z_string_move(&dst->schema, &src->schema);
 }
+
+_z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
+    _z_encoding_t ret = {
+        .id = val->id,
+        .schema = _z_string_steal(&val->schema),
+    };
+    val->id = _Z_ENCODING_ID_DEFAULT;
+    return ret;
+}

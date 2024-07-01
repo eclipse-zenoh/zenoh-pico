@@ -74,6 +74,16 @@ void _z_string_move(_z_string_t *dst, _z_string_t *src) {
     src->len = 0;
 }
 
+_z_string_t _z_string_steal(_z_string_t *str) {
+    _z_string_t ret = {
+        .val = str->val,
+        .len = str->len,
+    };
+    str->val = NULL;
+    str->len = 0;
+    return ret;
+}
+
 void _z_string_move_str(_z_string_t *dst, char *src) {
     dst->val = src;
     dst->len = strlen(src);
