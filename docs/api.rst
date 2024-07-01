@@ -280,12 +280,6 @@ Primitives
 .. autocfunction:: primitives.h::z_config_default
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert
-.. autocfunction:: primitives.h::z_encoding_check
-.. autocfunction:: primitives.h::z_encoding_drop
-.. autocfunction:: primitives.h::z_encoding_loan
-.. autocfunction:: primitives.h::z_encoding_loan_mut
-.. autocfunction:: primitives.h::z_encoding_move
-.. autocfunction:: primitives.h::z_encoding_null
 .. autocfunction:: primitives.h::z_encoding_from_str
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
