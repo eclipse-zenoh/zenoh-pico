@@ -66,12 +66,12 @@ _z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_
     q._request_id = request_id;
     q._zn = zn;
     q._parameters = (char *)z_malloc(parameters->len + 1);
-    memcpy(q._parameters, parameters->start, parameters->len);
+    memcpy(q._parameters, parameters->start, parameters->len); // TODO: Might be movable, Issue #482
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     q._key = _z_keyexpr_steal(key);
-    _z_value_copy(&q._value, value);
-    _z_bytes_move(&q.attachment, &attachment);
+    _z_bytes_copy(&q.attachment, &attachment);
+    _z_value_copy(&q._value, value); // FIXME: Move encoding, Issue #482
     return q;
 }
 

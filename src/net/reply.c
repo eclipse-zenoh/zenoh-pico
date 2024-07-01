@@ -92,11 +92,11 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
         reply.data.replier_id = id;
         // Create reply sample
         reply.data.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
-        _z_encoding_copy(&reply.data.sample.encoding, &encoding);
-        _z_bytes_copy(&reply.data.sample.payload, &payload);
         reply.data.sample.kind = kind;
         reply.data.sample.timestamp = _z_timestamp_duplicate(timestamp);
-        _z_bytes_move(&reply.data.sample.attachment, &attachment);
+        _z_bytes_copy(&reply.data.sample.payload, &payload);
+        _z_bytes_copy(&reply.data.sample.attachment, &attachment);
+        _z_encoding_copy(&reply.data.sample.encoding, &encoding); // FIXME: Move encoding, Issue #482
     }
     return reply;
 }

@@ -82,13 +82,13 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const 
                              _z_encoding_t encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              _z_bytes_t attachment) {
     _z_sample_t s = _z_sample_null();
-    _z_bytes_copy(&s.payload, &payload);
-    _z_encoding_copy(&s.encoding, &encoding);
     s.keyexpr = _z_keyexpr_steal(key);
     s.kind = kind;
     s.timestamp = timestamp;
     s.qos = qos;
-    _z_bytes_move(&s.attachment, &attachment);
+    _z_bytes_copy(&s.payload, &payload);
+    _z_bytes_copy(&s.attachment, &attachment);
+    _z_encoding_copy(&s.encoding, &encoding); // FIXME: Move encoding, Issue #482
     return s;
 }
 #else

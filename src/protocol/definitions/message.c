@@ -23,8 +23,9 @@
 void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
-    _z_encoding_clear(&msg->_encoding);
     _z_bytes_drop(&msg->_payload);
+    _z_bytes_drop(&msg->_attachment);
+    _z_encoding_clear(&msg->_encoding);  // FIXME: Remove when possible, Issue #482
     _z_timestamp_clear(&msg->_commons._timestamp);
 }
 
@@ -38,6 +39,7 @@ _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *ms
 
 void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_slice_clear(&msg->_parameters);
+    _z_bytes_drop(&msg->_ext_attachment);
     _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
