@@ -148,12 +148,14 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                         ._body._body._put =
                             {
                                 ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
-                                ._payload = payload,
-                                ._encoding = encoding,
-                                ._attachment = attachment,
+                                ._payload = _z_bytes_null(),
+                                ._encoding = _z_encoding_steal(&encoding),
+                                ._attachment = _z_bytes_null(),
                             },
                     },
             };
+            _z_bytes_copy(&msg._body._push._body._body._put._payload, &payload);
+            _z_bytes_copy(&msg._body._push._body._body._put._attachment, &attachment);
             break;
         case Z_SAMPLE_KIND_DELETE:
             msg = (_z_network_message_t){
