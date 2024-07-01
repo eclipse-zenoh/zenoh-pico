@@ -130,7 +130,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, _z_encoding_t encoding,
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
                 const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
@@ -148,14 +148,12 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                         ._body._body._put =
                             {
                                 ._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()},
-                                ._payload = _z_bytes_null(),
-                                ._encoding = _z_encoding_steal(&encoding),
-                                ._attachment = _z_bytes_null(),
+                                ._payload = payload,
+                                ._encoding = encoding,
+                                ._attachment = attachment,
                             },
                     },
             };
-            _z_bytes_copy(&msg._body._push._body._body._put._payload, &payload);
-            _z_bytes_copy(&msg._body._push._body._body._put._attachment, &attachment);
             break;
         case Z_SAMPLE_KIND_DELETE:
             msg = (_z_network_message_t){

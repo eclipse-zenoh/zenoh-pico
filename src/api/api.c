@@ -865,12 +865,13 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
         _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload), _z_encoding_from_owned(opt.encoding),
                  Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority, _z_bytes_from_owned_bytes(opt.attachment));
 
-    // Trigger local subscriptions (consumes attachment)
+    // Trigger local subscriptions
     _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
     z_bytes_drop(payload);
     return ret;
 }
@@ -963,11 +964,12 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
                        _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                        pub->_priority, _z_bytes_from_owned_bytes(opt.attachment));
     }
-    // Trigger local subscriptions (consumes attachment)
+    // Trigger local subscriptions
     _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, _z_bytes_from_owned_bytes(payload), _Z_N_QOS_DEFAULT,
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
     z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
     z_bytes_drop(payload);
     return ret;
 }
