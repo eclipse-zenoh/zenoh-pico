@@ -294,51 +294,6 @@ const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
 int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
 
 /**
- * Builds a new :c:type:`z_owned_scouting_config_t` with a default set of properties for scouting configuration.
- *
- * Parameters:
- *   sc: Pointer to an uninitialized :c:type:`z_owned_scouting_config_t`.
- */
-void z_scouting_config_default(z_owned_scouting_config_t *sc);
-
-/**
- * Builds a new :c:type:`z_owned_scouting_config_t` with values from a :c:type:`z_loaned_config_t`.
- *
- * Parameters:
- *   config: Pointer to a :c:type:`z_owned_config_t` to get the values from.
- *   sc: Pointer to an uninitialized :c:type:`z_owned_scouting_config_t`.
- *
- * Return:
- *   ``0`` if build successful, ``negative value`` otherwise.
- */
-int8_t z_scouting_config_from(z_owned_scouting_config_t *sc, const z_loaned_config_t *config);
-
-/**
- * Gets the property with the given integer key from the configuration.
- *
- * Parameters:
- *   config: Pointer to a :c:type:`z_loaned_scouting_config_t` to get the property from.
- *   key: Integer key for the requested property.
- *
- * Return:
- *   The requested property value.
- */
-const char *zp_scouting_config_get(const z_loaned_scouting_config_t *config, uint8_t key);
-
-/**
- * Inserts or replace the property with the given integer key in the configuration.
- *
- * Parameters:
- *   config: Pointer to a :c:type:`z_loaned_scouting_config_t` to modify.
- *   key: Integer key for the property to be inserted.
- *   value: Property value to be inserted.
- *
- * Return:
- *   ``0`` if insertion successful, ``negative value`` otherwise.
- */
-int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *config, uint8_t key, const char *value);
-
-/**
  * Checks if a :c:type:`z_owned_encoding_t` has non-default values.
  *
  * Return:
@@ -1181,8 +1136,7 @@ int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_drop
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_string_t, z_owned_string_t, string)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_keyexpr_t, z_owned_keyexpr_t, keyexpr)
-_Z_OWNED_FUNCTIONS_DEF(z_loaned_config_t, z_owned_config_t, config)
-_Z_OWNED_FUNCTIONS_DEF(z_loaned_scouting_config_t, z_owned_scouting_config_t, scouting_config)
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF(z_loaned_config_t, z_owned_config_t, config)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_session_t, z_owned_session_t, session)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_subscriber_t, z_owned_subscriber_t, subscriber)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_publisher_t, z_owned_publisher_t, publisher)
@@ -1196,6 +1150,7 @@ _Z_OWNED_FUNCTIONS_DEF(z_loaned_slice_t, z_owned_slice_t, slice)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_t, z_owned_bytes_t, bytes)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_bytes_writer_t, z_owned_bytes_writer_t, bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(z_loaned_reply_err_t, z_owned_reply_err_t, reply_err)
+_Z_OWNED_FUNCTIONS_DEF(z_loaned_encoding_t, z_owned_encoding_t, encoding)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_sample_t, closure_sample)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(z_owned_closure_owned_sample_t, closure_owned_sample)
@@ -1247,13 +1202,13 @@ size_t z_string_len(const z_loaned_string_t *str);
  * Scouts for other Zenoh entities like routers and/or peers.
  *
  * Parameters:
- *   config: Pointer to a moved :c:type:`z_owned_scouting_config_t` to configure the scouting with.
+ *   config: Pointer to a moved :c:type:`z_owned_config_t` to configure the scouting with.
  *   callback: Pointer to a moved :c:type:`z_owned_closure_hello_t` callback.
  *
  * Return:
  *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback);
+int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback);
 
 /**
  * Opens a Zenoh session.

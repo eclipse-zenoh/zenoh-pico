@@ -38,7 +38,6 @@
                   z_owned_keyexpr_t : z_keyexpr_loan,                         \
                   z_view_keyexpr_t : z_view_keyexpr_loan,                     \
                   z_owned_config_t : z_config_loan,                           \
-                  z_owned_scouting_config_t : z_scouting_config_loan,         \
                   z_owned_session_t : z_session_loan,                         \
                   z_owned_subscriber_t : z_subscriber_loan,                   \
                   z_owned_publisher_t : z_publisher_loan,                     \
@@ -65,7 +64,6 @@
 #define z_loan_mut(x) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_loan_mut,                 \
                   z_owned_config_t : z_config_loan_mut,                   \
-                  z_owned_scouting_config_t : z_scouting_config_loan_mut, \
                   z_owned_session_t : z_session_loan_mut,                 \
                   z_owned_publisher_t : z_publisher_loan_mut,             \
                   z_owned_queryable_t : z_queryable_loan_mut,             \
@@ -89,7 +87,6 @@
 #define z_drop(x) _Generic((x), \
                   z_owned_keyexpr_t * : z_keyexpr_drop,                             \
                   z_owned_config_t * : z_config_drop,                               \
-                  z_owned_scouting_config_t * : z_scouting_config_drop,             \
                   z_owned_session_t * : z_session_drop,                             \
                   z_owned_subscriber_t * : z_subscriber_drop,                       \
                   z_owned_publisher_t * : z_publisher_drop,                         \
@@ -133,7 +130,6 @@
                   z_view_keyexpr_t : z_keyexpr_is_initialized,         \
                   z_owned_reply_err_t : z_reply_err_check,             \
                   z_owned_config_t : z_config_check,                   \
-                  z_owned_scouting_config_t : z_scouting_config_check, \
                   z_owned_session_t : z_session_check,                 \
                   z_owned_subscriber_t : z_subscriber_check,           \
                   z_owned_publisher_t : z_publisher_check,             \
@@ -198,7 +194,6 @@
 #define z_move(x) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_move,                             \
                   z_owned_config_t : z_config_move,                               \
-                  z_owned_scouting_config_t : z_scouting_config_move,             \
                   z_owned_session_t : z_session_move,                             \
                   z_owned_subscriber_t : z_subscriber_move,                       \
                   z_owned_publisher_t : z_publisher_move,                         \
@@ -266,7 +261,6 @@
                   z_owned_publisher_t * : z_publisher_null,                         \
                   z_owned_keyexpr_t * : z_keyexpr_null,                             \
                   z_owned_config_t * : z_config_null,                               \
-                  z_owned_scouting_config_t * : z_scouting_config_null,             \
                   z_owned_subscriber_t * : z_subscriber_null,                       \
                   z_owned_queryable_t * : z_queryable_null,                         \
                   z_owned_query_t * : z_query_null,                                 \
@@ -318,7 +312,6 @@
 inline const z_loaned_keyexpr_t* z_loan(const z_owned_keyexpr_t& x) { return z_keyexpr_loan(&x); }
 inline const z_loaned_keyexpr_t* z_loan(const z_view_keyexpr_t& x) { return z_view_keyexpr_loan(&x); }
 inline const z_loaned_config_t* z_loan(const z_owned_config_t& x) { return z_config_loan(&x); }
-inline const z_loaned_scouting_config_t* z_loan(const z_owned_scouting_config_t& x) { return z_scouting_config_loan(&x); }
 inline const z_loaned_session_t* z_loan(const z_owned_session_t& x) { return z_session_loan(&x); }
 inline const z_loaned_subscriber_t* z_loan(const z_owned_subscriber_t& x) { return z_subscriber_loan(&x); }
 inline const z_loaned_publisher_t* z_loan(const z_owned_publisher_t& x) { return z_publisher_loan(&x); }
@@ -339,7 +332,6 @@ inline const z_loaned_reply_err_t* z_loan(const z_owned_reply_err_t& x) { return
 inline z_loaned_keyexpr_t* z_loan_mut(z_owned_keyexpr_t& x) { return z_keyexpr_loan_mut(&x); }
 inline z_loaned_keyexpr_t* z_loan_mut(z_view_keyexpr_t& x) { return z_view_keyexpr_loan_mut(&x); }
 inline z_loaned_config_t* z_loan_mut(z_owned_config_t& x) { return z_config_loan_mut(&x); }
-inline z_loaned_scouting_config_t* z_loan_mut(z_owned_scouting_config_t& x) { return z_scouting_config_loan_mut(&x); }
 inline z_loaned_session_t* z_loan_mut(z_owned_session_t& x) { return z_session_loan_mut(&x); }
 inline z_loaned_publisher_t* z_loan_mut(z_owned_publisher_t& x) { return z_publisher_loan_mut(&x); }
 inline z_loaned_queryable_t* z_loan_mut(z_owned_queryable_t& x) { return z_queryable_loan_mut(&x); }
@@ -360,7 +352,6 @@ inline int8_t z_drop(z_owned_session_t* v) { return z_close(v); }
 inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_publisher(v); }
 inline void z_drop(z_owned_keyexpr_t* v) { z_keyexpr_drop(v); }
 inline void z_drop(z_owned_config_t* v) { z_config_drop(v); }
-inline void z_drop(z_owned_scouting_config_t* v) { z_scouting_config_drop(v); }
 inline int8_t z_drop(z_owned_subscriber_t* v) { return z_undeclare_subscriber(v); }
 inline int8_t z_drop(z_owned_queryable_t* v) { return z_undeclare_queryable(v); }
 inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
@@ -391,7 +382,6 @@ inline void z_null(z_owned_session_t* v) { z_session_null(v); }
 inline void z_null(z_owned_publisher_t* v) { z_publisher_null(v); }
 inline void z_null(z_owned_keyexpr_t* v) { z_keyexpr_null(v); }
 inline void z_null(z_owned_config_t* v) { z_config_null(v); }
-inline void z_null(z_owned_scouting_config_t* v) { z_scouting_config_null(v); }
 inline void z_null(z_owned_subscriber_t* v) { z_subscriber_null(v); }
 inline void z_null(z_owned_queryable_t* v) { z_queryable_null(v); }
 inline void z_null(z_owned_query_t* v) { z_query_null(v); }
@@ -412,7 +402,6 @@ inline bool z_check(const z_owned_session_t& v) { return z_session_check(&v); }
 inline bool z_check(const z_owned_publisher_t& v) { return z_publisher_check(&v); }
 inline bool z_check(const z_owned_keyexpr_t& v) { return z_keyexpr_check(&v); }
 inline bool z_check(const z_owned_config_t& v) { return z_config_check(&v); }
-inline bool z_check(const z_owned_scouting_config_t& v) { return z_scouting_config_check(&v); }
 inline bool z_check(const z_owned_subscriber_t& v) { return z_subscriber_check(&v); }
 inline bool z_check(const z_owned_queryable_t& v) { return z_queryable_check(&v); }
 inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }

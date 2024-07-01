@@ -17,9 +17,7 @@
 #include "zenoh-pico/protocol/core.h"
 
 void _z_hello_clear(_z_hello_t *hello) {
-    if (!_z_string_svec_is_empty(&hello->locators)) {
-        _z_string_svec_clear(&hello->locators);
-    }
+    _z_string_svec_clear(&hello->locators);
 }
 
 void _z_hello_free(_z_hello_t **hello) {
@@ -47,4 +45,8 @@ void _z_value_free(_z_value_t **value) {
         z_free(ptr);
         *value = NULL;
     }
+}
+
+_Bool _z_hello_check(const _z_hello_t* hello) {
+    return _z_id_check(hello->zid);
 }

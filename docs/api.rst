@@ -83,10 +83,6 @@ TODO: owned type description
 
   Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
 
-.. c:type:: z_owned_scouting_config_t
-
-  Represents a scouting configuration, used to configure a scouting procedure.
-
 .. c:type:: z_owned_session_t
 
   Represents a Zenoh Session.
@@ -159,10 +155,6 @@ TODO: loaned type description
 .. c:type:: z_loaned_config_t
 
   Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
-
-.. c:type:: z_loaned_scouting_config_t
-
-  Represents a scouting configuration, used to configure a scouting procedure.
 
 .. c:type:: z_loaned_session_t
 
@@ -288,10 +280,6 @@ Primitives
 .. autocfunction:: primitives.h::z_config_default
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert
-.. autocfunction:: primitives.h::z_scouting_config_default
-.. autocfunction:: primitives.h::z_scouting_config_from
-.. autocfunction:: primitives.h::zp_scouting_config_get
-.. autocfunction:: primitives.h::zp_scouting_config_insert
 .. autocfunction:: primitives.h::z_encoding_check
 .. autocfunction:: primitives.h::z_encoding_drop
 .. autocfunction:: primitives.h::z_encoding_loan

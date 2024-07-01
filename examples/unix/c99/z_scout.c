@@ -86,12 +86,12 @@ int main(int argc, char **argv) {
 
     int *context = (int *)malloc(sizeof(int));
     *context = 0;
-    z_owned_scouting_config_t config;
-    z_scouting_config_default(&config);
+    z_owned_config_t config;
+    z_config_default(&config);
     z_owned_closure_hello_t closure;
     z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
-    z_scout(z_scouting_config_move(&config), z_closure_hello_move(&closure));
+    z_scout(z_config_move(&config), z_closure_hello_move(&closure));
     sleep(1);
     return 0;
 }

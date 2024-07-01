@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     printf("Testing Configs...");
     z_owned_config_t _ret_config;
     z_config_new(&_ret_config);
-    assert(z_check(_ret_config));
+    assert(!z_check(_ret_config)); // null config corresponds to empty one
     z_drop(z_move(_ret_config));
     z_config_default(&_ret_config);
     assert(z_check(_ret_config));
@@ -200,23 +200,14 @@ int main(int argc, char **argv) {
     assert_eq(strncmp(_ret_cstr, argv[1], strlen(_ret_cstr)), 0);
 #endif
 
-    z_owned_scouting_config_t _ret_sconfig;
-    z_scouting_config_default(&_ret_sconfig);
+    z_owned_config_t _ret_sconfig;
+    z_config_default(&_ret_sconfig);
     assert(z_check(_ret_sconfig));
-#ifdef ZENOH_PICO
-    _ret_int8 = zp_scouting_config_insert(z_loan_mut(_ret_sconfig), Z_CONFIG_SCOUTING_TIMEOUT_KEY, SCOUTING_TIMEOUT);
-    assert_eq(_ret_int8, 0);
-    _ret_cstr = zp_scouting_config_get(z_loan(_ret_sconfig), Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-    assert_eq(strlen(_ret_cstr), strlen(SCOUTING_TIMEOUT));
-    assert_eq(strncmp(_ret_cstr, SCOUTING_TIMEOUT, strlen(_ret_cstr)), 0);
-#endif
-    z_drop(z_move(_ret_sconfig));
 
     printf("Ok\n");
     z_sleep_s(SLEEP);
 
     printf("Testing Scouting...");
-    z_scouting_config_from(&_ret_sconfig, z_loan(_ret_config));
     z_owned_closure_hello_t _ret_closure_hello;
     z_closure(&_ret_closure_hello, hello_handler, NULL, NULL);
     _ret_int8 = z_scout(z_move(_ret_sconfig), z_move(_ret_closure_hello));

@@ -167,7 +167,7 @@ typedef struct {
 } _z_value_t;
 _z_value_t _z_value_null(void);
 _z_value_t _z_value_steal(_z_value_t *value);
-void _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 
@@ -187,6 +187,10 @@ typedef struct {
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
+int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t* src);
+_z_hello_t _z_hello_null(void);
+_Bool _z_hello_check(const _z_hello_t* hello);
+
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_hello, _z_hello_t)
 

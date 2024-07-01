@@ -24,7 +24,7 @@
  * Returns:
  *     A :c:type:`_z_config_t` containing an empty configuration.
  */
-_z_config_t *_z_config_empty(void);
+_z_config_t _z_config_empty(void);
 
 /**
  * Create a default set of properties for zenoh-net session configuration.
@@ -32,7 +32,7 @@ _z_config_t *_z_config_empty(void);
  * Returns:
  *     A :c:type:`_z_config_t` containing a default configuration.
  */
-_z_config_t *_z_config_default(void);
+_z_config_t _z_config_default(void);
 
 /**
  * Create a default set of properties for client mode zenoh-net session configuration.
@@ -43,6 +43,6 @@ _z_config_t *_z_config_default(void);
  * Returns:
  *     A :c:type:`_z_config_t` containing a default configuration for client mode.
  */
-_z_config_t *_z_config_client(const char *locator);
+_z_config_t _z_config_client(const char *locator);
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

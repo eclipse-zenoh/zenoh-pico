@@ -52,6 +52,14 @@
     void z_##name##_drop(ownedtype *obj);                           \
     void z_##name##_null(ownedtype *obj);
 
+#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(loanedtype, ownedtype, name) \
+    _Bool z_##name##_check(const ownedtype *obj);                   \
+    const loanedtype *z_##name##_loan(const ownedtype *obj);        \
+    loanedtype *z_##name##_loan_mut(ownedtype *obj);                \
+    ownedtype *z_##name##_move(ownedtype *obj);                     \
+    void z_##name##_drop(ownedtype *obj);                           \
+    void z_##name##_null(ownedtype *obj);
+
 #define _Z_VIEW_FUNCTIONS_DEF(loanedtype, viewtype, name)         \
     const loanedtype *z_view_##name##_loan(const viewtype *name); \
     loanedtype *z_view_##name##_loan_mut(viewtype *name);         \
@@ -88,6 +96,16 @@
     int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {               \
         return f_copy((&obj->_val), src);                                                            \
     }                                                                                                \
+    void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
+        if (obj != NULL) f_drop((&obj->_val));                                                       \
+    }
+
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(type, name, f_check, f_null, f_drop)                   \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }          \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
+    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                          \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                     \
     void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
         if (obj != NULL) f_drop((&obj->_val));                                                       \
     }
