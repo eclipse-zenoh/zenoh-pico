@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
     }
 
     z_view_keyexpr_t ping;
-    z_view_keyexpr_from_string_unchecked(&ping, "test/ping");
+    z_view_keyexpr_from_str_unchecked(&ping, "test/ping");
     z_view_keyexpr_t pong;
-    z_view_keyexpr_from_string_unchecked(&pong, "test/pong");
+    z_view_keyexpr_from_str_unchecked(&pong, "test/pong");
 
     z_owned_publisher_t pub;
     if (z_declare_publisher(&pub, z_loan(session), z_loan(ping), NULL) < 0) {

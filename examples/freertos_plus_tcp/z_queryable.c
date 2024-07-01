@@ -49,7 +49,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_query_reply_options_default(&options);
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_string(&reply_payload, VALUE);
+    z_bytes_serialize_from_str(&reply_payload, VALUE);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
     z_drop(z_move(keystr));
@@ -78,7 +78,7 @@ void app_main(void) {
     }
 
     z_view_keyexpr_t ke;
-    if (z_view_keyexpr_from_string(&ke, KEYEXPR) < 0) {
+    if (z_view_keyexpr_from_str(&ke, KEYEXPR) < 0) {
         printf("%s is not a valid key expression", KEYEXPR);
         return -1;
     }

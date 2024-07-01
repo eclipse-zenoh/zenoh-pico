@@ -30,6 +30,12 @@
         type _val;                      \
     } z_owned_##name##_t;
 
+// For value types
+#define _Z_OWNED_TYPE_VALUE(type, name) \
+    typedef struct {                    \
+        type _val;                      \
+    } z_owned_##name##_t;
+
 // For refcounted types
 #define _Z_OWNED_TYPE_RC(type, name) \
     typedef struct {                 \

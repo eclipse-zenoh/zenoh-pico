@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
     printf("Declaring key expression '%s'...\n", keyexpr);
     z_view_keyexpr_t vke;
-    z_view_keyexpr_from_string(&vke, keyexpr);
+    z_view_keyexpr_from_str(&vke, keyexpr);
     z_owned_keyexpr_t ke;
     if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_string(&payload, value);
+    z_bytes_serialize_from_str(&payload, value);
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     if (z_put(z_loan(s), z_loan(ke), z_move(payload), NULL) < 0) {

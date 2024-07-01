@@ -118,13 +118,13 @@ void loop() {
     // Value encoding
     z_owned_bytes_t payload;
     if (strcmp(VALUE, "") != 0) {
-        z_bytes_serialize_from_string(&payload, VALUE);
+        z_bytes_serialize_from_str(&payload, VALUE);
         opts.payload = &payload;
     }
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
         Serial.println("Unable to send query.");
     }

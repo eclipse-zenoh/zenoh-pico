@@ -83,7 +83,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_string(&reply_payload, value);
+    z_bytes_serialize_from_str(&reply_payload, value);
 
     z_query_reply(query, query_ke, z_move(reply_payload), &_ret_qreply_opt);
 
@@ -137,9 +137,9 @@ int main(int argc, char **argv) {
 #endif
 
     z_view_keyexpr_t key_demo_example, key_demo_example_a, key_demo_example_starstar;
-    z_view_keyexpr_from_string(&key_demo_example, "demo/example");
-    z_view_keyexpr_from_string(&key_demo_example_a, "demo/example/a");
-    z_view_keyexpr_from_string(&key_demo_example_starstar, "demo/example/**");
+    z_view_keyexpr_from_str(&key_demo_example, "demo/example");
+    z_view_keyexpr_from_str(&key_demo_example_a, "demo/example/a");
+    z_view_keyexpr_from_str(&key_demo_example_starstar, "demo/example/**");
 
     _Bool _ret_bool = z_keyexpr_includes(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
     assert(_ret_bool);
@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
     z_subscriber_options_default(&_ret_sub_opt);
 
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string(&ke, keyexpr_str);
+    z_view_keyexpr_from_str(&ke, keyexpr_str);
     z_owned_subscriber_t _ret_sub;
     _ret_int8 = z_declare_subscriber(&_ret_sub, z_loan(s2), z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
     assert(_ret_int8 == _Z_RES_OK);
@@ -298,7 +298,7 @@ int main(int argc, char **argv) {
     char s1_res[64];
     sprintf(s1_res, "%s/chunk/%d", keyexpr_str, 1);
     z_view_keyexpr_t s1_key;
-    z_view_keyexpr_from_string(&s1_key, s1_res);
+    z_view_keyexpr_from_str(&s1_key, s1_res);
     z_owned_keyexpr_t _ret_expr;
     z_declare_keyexpr(&_ret_expr, z_loan(s1), z_loan(s1_key));
     assert(z_check(_ret_expr));
@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_string(&payload, value);
+    z_bytes_serialize_from_str(&payload, value);
 
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), z_move(payload), &_ret_put_opt);
     assert_eq(_ret_int8, 0);
@@ -351,7 +351,7 @@ int main(int argc, char **argv) {
 
     printf("Publisher Put...");
     // Create payload
-    z_bytes_serialize_from_string(&payload, value);
+    z_bytes_serialize_from_str(&payload, value);
 
     z_publisher_put_options_t _ret_pput_opt;
     z_publisher_put_options_default(&_ret_pput_opt);

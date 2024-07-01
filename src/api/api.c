@@ -59,12 +59,12 @@ size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_s
 
 _Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_svec_is_empty(a); }
 
-int8_t z_view_keyexpr_from_string(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
 
-int8_t z_view_keyexpr_from_string_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
+int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -258,7 +258,7 @@ static uint16_t _z_encoding_values_str_to_int(const char *schema, size_t len) {
     return UINT16_MAX;
 }
 
-static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
     const char *id_end = strchr(s, ENCODING_SCHEMA_SEPARATOR);
     // Check id_end value + corner cases
     if ((id_end != NULL) && (id_end != s)) {
@@ -308,7 +308,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 }
 
 #else
-static int8_t _z_encoding_convert_from_string(z_owned_encoding_t *encoding, const char *s) {
+static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
     return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
 }
 
@@ -324,7 +324,7 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     z_encoding_null(encoding);
     // Convert string to encoding
     if (s != NULL) {
-        return _z_encoding_convert_from_string(encoding, s);
+        return _z_encoding_convert_from_str(encoding, s);
     }
     return _Z_RES_OK;
 }
@@ -467,13 +467,13 @@ int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const char *s) {
+int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s) {
     // Encode string without null terminator
     size_t len = strlen(s);
     return z_bytes_serialize_from_slice(bytes, (uint8_t *)s, len);
 }
 
-int8_t z_bytes_serialize_from_string_copy(z_owned_bytes_t *bytes, const char *s) {
+int8_t z_bytes_serialize_from_str_copy(z_owned_bytes_t *bytes, const char *s) {
     // Encode string without null terminator
     size_t len = strlen(s);
     return z_bytes_serialize_from_slice_copy(bytes, (uint8_t *)s, len);
@@ -572,31 +572,13 @@ void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loan
     }
 }
 
-void z_closure_owned_sample_call(const z_owned_closure_owned_sample_t *closure, z_owned_sample_t *sample) {
-    if (closure->call != NULL) {
-        (closure->call)(sample, closure->context);
-    }
-}
-
 void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query) {
     if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
-void z_closure_owned_query_call(const z_owned_closure_owned_query_t *closure, z_owned_query_t *query) {
-    if (closure->call != NULL) {
-        (closure->call)(query, closure->context);
-    }
-}
-
 void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
-    if (closure->call != NULL) {
-        (closure->call)(reply, closure->context);
-    }
-}
-
-void z_closure_owned_reply_call(const z_owned_closure_owned_reply_t *closure, z_owned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
@@ -688,14 +670,8 @@ _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_sample_t, closure_owned_sample, z_owned_sample_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_query_t, closure_owned_query, z_owned_query_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_owned_reply_t, closure_owned_reply, z_owned_reply_handler_t,
-                                z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
 

@@ -154,7 +154,7 @@ void app_main() {
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
     // @TODO
     // z_view_keyexpr_t ke;
-    // z_view_keyexpr_from_string_unchecked(&ke, KEYEXPR);
+    // z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     // z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL);
     // if (!z_check(sub)) {
     //     printf("Unable to declare subscriber.\n");

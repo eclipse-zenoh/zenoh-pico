@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_string(&ke, keyexpr);
+    z_view_keyexpr_from_str(&ke, keyexpr);
     if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;

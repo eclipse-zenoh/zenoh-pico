@@ -261,8 +261,8 @@ Primitives
 ~~~~~~~~~~
 
 .. autocfunction:: primitives.h::z_view_string_wrap
-.. autocfunction:: primitives.h::z_view_keyexpr_from_string
-.. autocfunction:: primitives.h::z_view_keyexpr_from_string_unchecked
+.. autocfunction:: primitives.h::z_view_keyexpr_from_str
+.. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
 .. autocfunction:: primitives.h::z_keyexpr_to_string
 .. autocfunction:: primitives.h::zp_keyexpr_resolve
 .. autocfunction:: primitives.h::z_keyexpr_is_initialized
@@ -316,8 +316,8 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_serialize_from_double
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice_copy
-.. autocfunction:: primitives.h::z_bytes_serialize_from_string
-.. autocfunction:: primitives.h::z_bytes_serialize_from_string_copy
+.. autocfunction:: primitives.h::z_bytes_serialize_from_str
+.. autocfunction:: primitives.h::z_bytes_serialize_from_str_copy
 .. autocfunction:: primitives.h::z_bytes_empty
 .. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_is_empty
