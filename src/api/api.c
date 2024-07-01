@@ -631,7 +631,7 @@ _Bool _z_value_check(const _z_value_t *value) {
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy, _z_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
 
@@ -1001,10 +1001,8 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
-    z_owned_keyexpr_t ret = {._val = z_malloc(sizeof(_z_keyexpr_t))};
-    if (ret._val != NULL && publisher != NULL) {
-        *ret._val = _z_keyexpr_duplicate(publisher->_key);
-    }
+    z_owned_keyexpr_t ret;
+    ret._val = _z_keyexpr_duplicate(publisher->_key);
     return ret;
 }
 #endif
@@ -1152,36 +1150,24 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
 #endif
 
 int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name) {
-    int8_t ret = _Z_RES_OK;
-
-    key->_val = name ? (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t)) : NULL;
-    if (key->_val != NULL) {
-        *key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+    if (name != NULL) {
+        key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        key->_val = _z_keyexpr_null();
     }
-
-    return ret;
+    return _Z_RES_OK;
 }
 
 int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
-    int8_t ret = _Z_RES_OK;
-
-    key->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-    if (key->_val != NULL) {
-        uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
-        *key->_val = _z_rid_with_suffix(id, NULL);
-    } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
+    uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+    key->_val = _z_rid_with_suffix(id, NULL);
+    return _Z_RES_OK;
 }
 
 int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val->_id);
+    ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val._id);
     z_keyexpr_drop(keyexpr);
 
     return ret;
@@ -1269,12 +1255,7 @@ int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *s
     while (tail != NULL && !z_keyexpr_check(keyexpr)) {
         _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
         if (head->in->val._id == lookup) {
-            // Allocate keyexpr
-            keyexpr->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-            if (keyexpr->_val == NULL) {
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
-            _z_keyexpr_copy(keyexpr->_val, &head->in->val._key);
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr->_val, &head->in->val._key));
         }
         tail = _z_subscription_rc_list_tail(tail);
     }

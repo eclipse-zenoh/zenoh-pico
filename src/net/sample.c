@@ -30,7 +30,7 @@ _z_sample_t _z_sample_null(void) {
 }
 
 _Bool _z_sample_check(const _z_sample_t *sample) {
-    return _z_keyexpr_check(sample->keyexpr) && _z_bytes_check(&sample->payload);
+    return _z_keyexpr_check(&sample->keyexpr) && _z_bytes_check(&sample->payload);
 }
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {

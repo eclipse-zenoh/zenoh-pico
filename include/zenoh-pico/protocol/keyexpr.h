@@ -25,7 +25,7 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
 _Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
+int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_to_owned(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
