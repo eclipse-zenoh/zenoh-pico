@@ -52,17 +52,17 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = z_mutex_init(&ztm->_mutex_tx);
+    ret = _z_mutex_init(&ztm->_mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = z_mutex_init(&ztm->_mutex_rx);
+        ret = _z_mutex_init(&ztm->_mutex_rx);
         if (ret == _Z_RES_OK) {
-            ret = z_mutex_init(&ztm->_mutex_peer);
+            ret = _z_mutex_init(&ztm->_mutex_peer);
             if (ret != _Z_RES_OK) {
-                z_mutex_free(&ztm->_mutex_tx);
-                z_mutex_free(&ztm->_mutex_rx);
+                _z_mutex_drop(&ztm->_mutex_tx);
+                _z_mutex_drop(&ztm->_mutex_rx);
             }
         } else {
-            z_mutex_free(&ztm->_mutex_tx);
+            _z_mutex_drop(&ztm->_mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -79,9 +79,9 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&ztm->_mutex_tx);
-            z_mutex_free(&ztm->_mutex_rx);
-            z_mutex_free(&ztm->_mutex_peer);
+            _z_mutex_drop(&ztm->_mutex_tx);
+            _z_mutex_drop(&ztm->_mutex_rx);
+            _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&ztm->_wbuf);
@@ -184,17 +184,17 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztm->_read_task != NULL) {
-        z_task_join(ztm->_read_task);
-        z_task_free(&ztm->_read_task);
+        _z_task_join(ztm->_read_task);
+        _z_task_drop(&ztm->_read_task);
     }
     if (ztm->_lease_task != NULL) {
-        z_task_join(ztm->_lease_task);
-        z_task_free(&ztm->_lease_task);
+        _z_task_join(ztm->_lease_task);
+        _z_task_drop(&ztm->_lease_task);
     }
     // Clean up the mutexes
-    z_mutex_free(&ztm->_mutex_tx);
-    z_mutex_free(&ztm->_mutex_rx);
-    z_mutex_free(&ztm->_mutex_peer);
+    _z_mutex_drop(&ztm->_mutex_tx);
+    _z_mutex_drop(&ztm->_mutex_rx);
+    _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

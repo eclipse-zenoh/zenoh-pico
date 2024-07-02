@@ -74,7 +74,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    ret = z_mutex_init(&zn->_mutex_inner);
+    ret = _z_mutex_init(&zn->_mutex_inner);
     if (ret != _Z_RES_OK) {
         _z_transport_clear(&zn->_tp);
         return ret;
@@ -119,7 +119,7 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_interest(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_free(&zn->_mutex_inner);
+    _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
@@ -134,8 +134,8 @@ int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-void _zp_session_lock_mutex(_z_session_t *zn) { (void)z_mutex_lock(&zn->_mutex_inner); }
-void _zp_session_unlock_mutex(_z_session_t *zn) { (void)z_mutex_unlock(&zn->_mutex_inner); }
+void _zp_session_lock_mutex(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
+void _zp_session_unlock_mutex(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
 #else
 void _zp_session_lock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
 void _zp_session_unlock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }

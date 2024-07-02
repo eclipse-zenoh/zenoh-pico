@@ -28,17 +28,17 @@
 #define DEFAULT_PING_NB 100
 #define DEFAULT_WARMUP_MS 1000
 
-static z_condvar_t cond;
-static z_mutex_t mutex;
+static z_owned_condvar_t cond;
+static z_owned_mutex_t mutex;
 
 void callback(const z_loaned_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
-    z_condvar_signal(&cond);
+    z_condvar_signal(z_condvar_loan_mut(&cond));
 }
 void drop(void* context) {
     (void)context;
-    z_condvar_free(&cond);
+    z_condvar_drop(z_condvar_move(&cond));
 }
 
 struct args_t {
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     for (unsigned int i = 0; i < args.size; i++) {
         data[i] = (uint8_t)(i % 10);
     }
-    z_mutex_lock(&mutex);
+    z_mutex_lock(z_mutex_loan_mut(&mutex));
     if (args.warmup_ms) {
         printf("Warming up for %dms...\n", args.warmup_ms);
         z_clock_t warmup_start = z_clock_now();
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
             z_bytes_serialize_from_slice(&payload, data, args.size);
 
             z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
-            z_condvar_wait(&cond, &mutex);
+            z_condvar_wait(z_condvar_loan_mut(&cond), z_mutex_loan_mut(&mutex));
             elapsed_us = z_clock_elapsed_us(&warmup_start);
         }
     }
@@ -127,13 +127,13 @@ int main(int argc, char** argv) {
         z_bytes_serialize_from_slice(&payload, data, args.size);
 
         z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
-        z_condvar_wait(&cond, &mutex);
+        z_condvar_wait(z_condvar_loan_mut(&cond), z_mutex_loan_mut(&mutex));
         results[i] = z_clock_elapsed_us(&measure_start);
     }
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
         printf("%d bytes: seq=%d rtt=%luµs, lat=%luµs\n", args.size, i, results[i], results[i] / 2);
     }
-    z_mutex_unlock(&mutex);
+    z_mutex_unlock(z_mutex_loan_mut(&mutex));
     z_free(results);
     z_free(data);
     z_undeclare_subscriber(z_subscriber_move(&sub));

@@ -18,14 +18,14 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
-z_condvar_t cond;
-z_mutex_t mutex;
+z_owned_condvar_t cond;
+z_owned_mutex_t mutex;
 
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
-    z_condvar_signal(&cond);
-    z_condvar_free(&cond);
+    z_condvar_signal(z_loan_mut(cond));
+    z_drop(z_move(cond));
 }
 
 void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    z_mutex_lock(&mutex);
+    z_mutex_lock(z_loan_mut(mutex));
     printf("Sending Query '%s'...\n", keyexpr);
     z_get_options_t opts;
     z_get_options_default(&opts);
@@ -97,8 +97,8 @@ int main(int argc, char **argv) {
         printf("Unable to send query.\n");
         return -1;
     }
-    z_condvar_wait(&cond, &mutex);
-    z_mutex_unlock(&mutex);
+    z_condvar_wait(z_loan_mut(cond), z_loan_mut(mutex));
+    z_mutex_unlock(z_loan_mut(mutex));
 
     // Stop read and lease tasks for zenoh-pico
     zp_stop_read_task(z_loan_mut(s));
