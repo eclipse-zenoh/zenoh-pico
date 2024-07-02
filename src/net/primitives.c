@@ -383,10 +383,9 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
     if (pq != NULL) {
         pq->_id = _z_get_query_id(zn);
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
-        pq->_parameters = _z_str_clone(parameters);
         pq->_target = target;
         pq->_consolidation = consolidation;
-        pq->_anykey = (strstr(pq->_parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+        pq->_anykey = (strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
@@ -394,7 +393,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
-            _z_slice_t params = _z_slice_wrap((uint8_t *)pq->_parameters, strlen(pq->_parameters));
+            _z_slice_t params = _z_slice_wrap((uint8_t *)parameters, strlen(parameters));
             _z_zenoh_message_t z_msg =
                 _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value, timeout_ms, attachment);
 

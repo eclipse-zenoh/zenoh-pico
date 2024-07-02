@@ -66,7 +66,7 @@ _z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_
     q._request_id = request_id;
     q._zn = zn;
     q._parameters = (char *)z_malloc(parameters->len + 1);
-    memcpy(q._parameters, parameters->start, parameters->len);  // TODO: Might be movable, Issue #482
+    memcpy(q._parameters, parameters->start, parameters->len);
     q._parameters[parameters->len] = 0;
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     q._key = _z_keyexpr_steal(key);
