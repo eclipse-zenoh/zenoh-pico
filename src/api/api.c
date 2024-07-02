@@ -291,6 +291,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
     }
     // Allocate string
     char *value = (char *)z_malloc(sizeof(char) * total_len);
+    memset(value, 0, total_len);
     if (value == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -666,7 +667,7 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 }
 #endif
 
-_Z_OWNED_FUNCTIONS_RC_IMPL(sample)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_sample_t, sample, _z_sample_copy, _z_sample_free)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_data_handler_t, z_dropper_handler_t)
@@ -809,15 +810,13 @@ int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *c
 
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)._local_zid; }
 
-const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).keyexpr; }
-z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).kind; }
-const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).payload; }
-z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).timestamp; }
-const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &_Z_RC_IN_VAL(sample).encoding; }
-z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return _Z_RC_IN_VAL(sample).qos; }
-const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) {
-    return &_Z_RC_IN_VAL(sample).attachment;
-}
+const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &sample->keyexpr; }
+z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return sample->kind; }
+const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &sample->payload; }
+z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return sample->timestamp; }
+const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &sample->encoding; }
+z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return sample->qos; }
+const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) { return &sample->attachment; }
 
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
 const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }
@@ -989,7 +988,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
-_Z_OWNED_FUNCTIONS_RC_IMPL(reply)
+_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_reply_t, reply, _z_reply_copy, _z_reply_free)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
@@ -1045,11 +1044,11 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
 _Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);
     // For the moment always return TRUE.
-    // The support for reply errors will come in the next release.
+    // FIXME: The support for reply errors will come in the next release.
     return true;
 }
 
-const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->in->val.data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data.sample; }
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) {
     _ZP_UNUSED(reply);

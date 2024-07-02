@@ -49,12 +49,12 @@ _Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_r
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 // Forward declaration to avoid cyclical include
-typedef struct _z_sample_rc_t z_loaned_sample_t;
+typedef struct _z_sample_t _z_sample_t;
 
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_data_handler_t)(const z_loaned_sample_t *sample, void *arg);
+typedef void (*_z_data_handler_t)(const _z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -81,12 +81,12 @@ typedef struct {
 } _z_publication_t;
 
 // Forward type declaration to avoid cyclical include
-typedef struct _z_query_rc_t z_loaned_query_t;
+typedef struct _z_query_rc_t _z_query_rc_t;
 
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_queryable_handler_t)(const z_loaned_query_t *query, void *arg);
+typedef void (*_z_queryable_handler_t)(const _z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -110,12 +110,12 @@ _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 typedef struct _z_reply_t _z_reply_t;
 typedef _z_list_t _z_reply_data_list_t;
 typedef _z_list_t _z_pending_reply_list_t;
-typedef struct _z_reply_rc_t _z_reply_rc_t;
-typedef _z_reply_rc_t z_loaned_reply_t;
+typedef struct _z_reply_t _z_reply_t;
+
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(const z_loaned_reply_t *reply, void *arg);
+typedef void (*_z_reply_handler_t)(const _z_reply_t *reply, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

@@ -21,14 +21,14 @@ _z_reply_t _z_reply_null(void) {
     _z_reply_t r = {._tag = Z_REPLY_TAG_DATA,
                     .data = {
                         .replier_id = {.id = {0}},
-                        .sample = {.in = NULL},
+                        .sample = _z_sample_null(),
                     }};
     return r;
 }
 
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
-    _z_sample_rc_drop(&reply_data->sample);
+    _z_sample_clear(&reply_data->sample);
     reply_data->replier_id = _z_id_empty();
 }
 
@@ -37,15 +37,14 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 
     if (ptr != NULL) {
         _z_reply_data_clear(ptr);
-
         z_free(ptr);
         *reply_data = NULL;
     }
 }
 
-void _z_reply_data_copy(_z_reply_data_t *dst, _z_reply_data_t *src) {
-    _z_sample_rc_copy(&dst->sample, &src->sample);
+void _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
     dst->replier_id = src->replier_id;
+    _z_sample_copy(&dst->sample, &src->sample);
 }
 
 _z_reply_t _z_reply_move(_z_reply_t *src_reply) {
@@ -67,7 +66,7 @@ void _z_reply_free(_z_reply_t **reply) {
     }
 }
 
-void _z_reply_copy(_z_reply_t *dst, _z_reply_t *src) {
+void _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
     _z_reply_data_copy(&dst->data, &src->data);
     dst->_tag = src->_tag;
 }
@@ -91,17 +90,13 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     reply._tag = tag;
     if (tag == Z_REPLY_TAG_DATA) {
         reply.data.replier_id = id;
-        // Create sample
-        _z_sample_t sample = _z_sample_null();
-        sample.keyexpr = keyexpr;    // FIXME: call z_keyexpr_move or copy
-        sample.encoding = encoding;  // FIXME: call z_encoding_move or copy
-        _z_bytes_copy(&sample.payload, &payload);
-        sample.kind = kind;
-        sample.timestamp = _z_timestamp_duplicate(timestamp);
-        _z_bytes_copy(&sample.attachment, &attachment);
-
-        // Create sample rc from value
-        reply.data.sample = _z_sample_rc_new_from_val(sample);
+        // Create reply sample
+        reply.data.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
+        reply.data.sample.kind = kind;
+        reply.data.sample.timestamp = _z_timestamp_duplicate(timestamp);
+        _z_bytes_copy(&reply.data.sample.payload, &payload);
+        _z_bytes_copy(&reply.data.sample.attachment, &attachment);
+        _z_encoding_copy(&reply.data.sample.encoding, &encoding);  // FIXME: Move encoding, Issue #482
     }
     return reply;
 }

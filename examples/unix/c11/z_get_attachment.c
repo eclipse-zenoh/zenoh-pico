@@ -70,12 +70,13 @@ void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
         z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
         z_bytes_drop(&first);
         z_bytes_drop(&second);
+        z_bytes_drop(&kv);
         kvp->current_idx++;
     }
 }
 
 void print_attachment(kv_pairs_rx_t *kvp) {
-    printf("   with attachment:\n");
+    printf("    with attachment:\n");
     for (uint32_t i = 0; i < kvp->current_idx; i++) {
         printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
                z_string_data(z_loan(kvp->data[i].value)));
@@ -105,8 +106,11 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+        z_owned_string_t encoding;
+        z_encoding_to_string(z_sample_encoding(sample), &encoding);
 
         printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
+        printf("    with encoding: %s\n", z_string_data(z_loan(encoding)));
 
         // Check attachment
         kv_pairs_rx_t kvp = {
@@ -119,6 +123,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
 
         z_drop(z_move(keystr));
         z_drop(z_move(replystr));
+        z_drop(z_move(encoding));
     } else {
         printf(">> Received an error\n");
     }
@@ -212,6 +217,11 @@ int main(int argc, char **argv) {
     z_owned_bytes_t attachment;
     z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
     opts.attachment = z_move(attachment);
+
+    // Add encoding value
+    z_owned_encoding_t encoding;
+    z_encoding_from_str(&encoding, "zenoh/string;utf8");
+    opts.encoding = z_move(encoding);
 
     z_owned_closure_reply_t callback;
     z_closure(&callback, reply_handler, reply_dropper);

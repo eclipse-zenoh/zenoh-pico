@@ -78,6 +78,7 @@ _z_string_t *_z_string_make_as_ptr(const char *value);
 size_t _z_string_size(const _z_string_t *s);
 int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
+_z_string_t _z_string_steal(_z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);

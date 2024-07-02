@@ -27,7 +27,7 @@
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,        \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,              \
                                collection_pull_f, collection_try_pull_f, elem_owned_type, elem_loaned_type,          \
-                               elem_copy_f, elem_drop_f)                                                             \
+                               elem_clone_f, elem_drop_f)                                                            \
     typedef struct {                                                                                                 \
         collection_type *collection;                                                                                 \
     } handler_type;                                                                                                  \
@@ -50,11 +50,8 @@
             _Z_ERROR("Out of memory");                                                                               \
             return;                                                                                                  \
         }                                                                                                            \
-        if (elem == NULL) {                                                                                          \
-            internal_elem->_rc.in = NULL;                                                                            \
-        } else {                                                                                                     \
-            elem_copy_f(&internal_elem->_rc, elem);                                                                  \
-        }                                                                                                            \
+        elem_clone_f(internal_elem, elem);                                                                           \
+                                                                                                                     \
         int8_t ret = collection_push_f(internal_elem, context, _z_##handler_name##_elem_free);                       \
         if (ret != _Z_RES_OK) {                                                                                      \
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                      \
@@ -112,7 +109,7 @@
                            /* collection_try_pull_f           */ _z_##kind_name##_mt_try_pull,              \
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
-                           /* elem_copy_f                     */ _z_##item_name##_rc_copy,                  \
+                           /* elem_clone_f                     */ z_##item_name##_clone,                    \
                            /* elem_drop_f                     */ z_##item_name##_drop)
 
 #define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \

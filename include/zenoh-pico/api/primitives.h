@@ -1239,7 +1239,7 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
 
 /**
- * Gets the attachment of a value by aliasing it.
+ * Gets the attachment of a sample by aliasing it.
  *
  * Parameters:
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the attachment from.

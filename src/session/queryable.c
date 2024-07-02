@@ -156,7 +156,6 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
         }
         // Clean up
         _z_query_rc_drop(&query);
-        _z_keyexpr_clear(&key);
         _z_session_queryable_rc_list_free(&qles);
     } else {
         _zp_session_unlock_mutex(zn);
