@@ -118,36 +118,36 @@
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
 
-#define _Z_OWNED_FUNCTIONS_CLOSURE_DEF(ownedtype, loanedtype, name) \
-    _Bool z_##name##_check(const ownedtype *val);                   \
-    ownedtype *z_##name##_move(ownedtype *val);                     \
-    void z_##name##_drop(ownedtype *val);                           \
-    const loanedtype *z_##name##_loan(const ownedtype *val);        \
-    void z_##name##_null(ownedtype *name);
+#define _Z_OWNED_FUNCTIONS_CLOSURE_DEF(name)                                   \
+    _Bool z_##name##_check(const z_owned_##name##_t *val);                     \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val);              \
+    void z_##name##_drop(z_owned_##name##_t *val);                             \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val); \
+    void z_##name##_null(z_owned_##name##_t *name);
 
-#define _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(ownedtype, loanedtype, name, f_call, f_drop) \
-    _Bool z_##name##_check(const ownedtype *val) { return val->_val.call != NULL; }  \
-    ownedtype *z_##name##_move(ownedtype *val) { return val; }                       \
-    void z_##name##_drop(ownedtype *val) {                                           \
-        if (val->_val.drop != NULL) {                                                \
-            (val->_val.drop)(val->_val.context);                                     \
-            val->_val.drop = NULL;                                                   \
-        }                                                                            \
-        val->_val.call = NULL;                                                       \
-        val->_val.context = NULL;                                                    \
-    }                                                                                \
-    void z_##name##_null(ownedtype *val) {                                           \
-        val->_val.call = NULL;                                                       \
-        val->_val.drop = NULL;                                                       \
-        val->_val.context = NULL;                                                    \
-    }                                                                                \
-    const loanedtype *z_##name##_loan(const ownedtype *val) { return &val->_val; }   \
-    int8_t z_##name(ownedtype *closure, f_call call, f_drop drop, void *context) {   \
-        closure->_val.call = call;                                                   \
-        closure->_val.drop = drop;                                                   \
-        closure->_val.context = context;                                             \
-                                                                                     \
-        return _Z_RES_OK;                                                            \
+#define _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(name, f_call, f_drop)                                        \
+    _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_val.call != NULL; }         \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                     \
+    void z_##name##_drop(z_owned_##name##_t *val) {                                                  \
+        if (val->_val.drop != NULL) {                                                                \
+            (val->_val.drop)(val->_val.context);                                                     \
+            val->_val.drop = NULL;                                                                   \
+        }                                                                                            \
+        val->_val.call = NULL;                                                                       \
+        val->_val.context = NULL;                                                                    \
+    }                                                                                                \
+    void z_##name##_null(z_owned_##name##_t *val) {                                                  \
+        val->_val.call = NULL;                                                                       \
+        val->_val.drop = NULL;                                                                       \
+        val->_val.context = NULL;                                                                    \
+    }                                                                                                \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_val; } \
+    int8_t z_##name(z_owned_##name##_t *closure, f_call call, f_drop drop, void *context) {          \
+        closure->_val.call = call;                                                                   \
+        closure->_val.drop = drop;                                                                   \
+        closure->_val.context = context;                                                             \
+                                                                                                     \
+        return _Z_RES_OK;                                                                            \
     }
 
 // Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)

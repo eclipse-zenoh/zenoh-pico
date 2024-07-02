@@ -737,16 +737,11 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, z_loaned_closure_sample_t, closure_sample, _z_data_handler_t,
-                                z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, z_loaned_closure_query_t, closure_query,
-                                _z_queryable_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, z_loaned_closure_reply_t, closure_reply, _z_reply_handler_t,
-                                z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, z_loaned_closure_hello_t, closure_hello,
-                                z_loaned_hello_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, z_loaned_closure_zid_t, closure_zid, z_id_handler_t,
-                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_data_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_queryable_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_reply_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_id_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
