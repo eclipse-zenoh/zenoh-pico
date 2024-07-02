@@ -46,8 +46,20 @@
 
 /********* Data Types Handlers *********/
 
+int8_t z_view_string_empty(z_view_string_t *str) {
+    str->_val.val = NULL;
+    str->_val.len = 0;
+    return _Z_RES_OK;
+}
+
 int8_t z_view_string_wrap(z_view_string_t *str, const char *value) {
     str->_val = _z_string_wrap((char *)value);
+    return _Z_RES_OK;
+}
+
+int8_t z_view_string_from_substring(z_view_string_t *str, const char *value, size_t len) {
+    str->_val.val = (char *)value;
+    str->_val.len = len;
     return _Z_RES_OK;
 }
 
