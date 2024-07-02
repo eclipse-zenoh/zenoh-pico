@@ -39,7 +39,6 @@ int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     dst->_id = src->_id;
-    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
     dst->_mapping = src->_mapping;
     _z_keyexpr_set_owns_suffix(dst, true);
     return _Z_RES_OK;
