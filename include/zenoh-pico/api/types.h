@@ -140,7 +140,7 @@ _Z_LOANED_TYPE(_z_session_rc_t, session)
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
-_Z_OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
+_Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 _Z_LOANED_TYPE(_z_subscriber_t, subscriber)
 
 /**
@@ -153,7 +153,7 @@ _Z_LOANED_TYPE(_z_subscriber_t, subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
-_Z_OWNED_TYPE_PTR(_z_publisher_t, publisher)
+_Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 _Z_LOANED_TYPE(_z_publisher_t, publisher)
 
 /**
@@ -164,7 +164,7 @@ _Z_LOANED_TYPE(_z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
-_Z_OWNED_TYPE_PTR(_z_queryable_t, queryable)
+_Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
 _Z_LOANED_TYPE(_z_queryable_t, queryable)
 
 /**

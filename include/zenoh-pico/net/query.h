@@ -54,6 +54,8 @@ _z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_
                            uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
+_z_queryable_t _z_queryable_null(void);
+_Bool _z_queryable_check(const _z_queryable_t *queryable);
 #endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

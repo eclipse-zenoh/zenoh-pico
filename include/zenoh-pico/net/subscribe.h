@@ -39,6 +39,8 @@ _z_subinfo_t _z_subinfo_default(void);
 
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
+_Bool _z_subscriber_check(const _z_subscriber_t *subscriber);
+_z_subscriber_t _z_subscriber_null(void);
 #endif
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

@@ -102,24 +102,21 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t *_z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                     z_congestion_control_t congestion_control, z_priority_t priority) {
+_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                    z_congestion_control_t congestion_control, z_priority_t priority) {
     // Allocate publisher
-    _z_publisher_t *ret = (_z_publisher_t *)z_malloc(sizeof(_z_publisher_t));
-    if (ret == NULL) {
-        return NULL;
-    }
+    _z_publisher_t ret;
     // Fill publisher
-    ret->_key = _z_keyexpr_duplicate(keyexpr);
-    ret->_id = _z_get_entity_id(&zn->in->val);
-    ret->_congestion_control = congestion_control;
-    ret->_priority = priority;
-    ret->_zn = _z_session_rc_clone(zn);
+    ret._key = _z_keyexpr_duplicate(keyexpr);
+    ret._id = _z_get_entity_id(&zn->in->val);
+    ret._congestion_control = congestion_control;
+    ret._priority = priority;
+    ret._zn = _z_session_rc_clone(zn);
     return ret;
 }
 
 int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
-    if (pub == NULL) {
+    if (pub == NULL || _Z_RC_IS_NULL(&pub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Clear publisher
@@ -183,8 +180,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                       _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(&zn->in->val);
     s._key_id = keyexpr._id;
@@ -194,17 +191,12 @@ _z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t k
     s._dropper = dropper;
     s._arg = arg;
 
-    // Allocate subscriber
-    _z_subscriber_t *ret = (_z_subscriber_t *)z_malloc(sizeof(_z_subscriber_t));
-    if (ret == NULL) {
-        _z_subscription_clear(&s);
-        return NULL;
-    }
+    _z_subscriber_t ret = _z_subscriber_null();
     // Register subscription, stored at session-level, do not drop it by the end of this function.
     _z_subscription_rc_t *sp_s = _z_register_subscription(&zn->in->val, _Z_RESOURCE_IS_LOCAL, &s);
     if (sp_s == NULL) {
-        _z_subscriber_free(&ret);
-        return NULL;
+        _z_subscriber_clear(&ret);
+        return ret;
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration =
@@ -212,18 +204,18 @@ _z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t k
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_subscription(&zn->in->val, _Z_RESOURCE_IS_LOCAL, sp_s);
-        _z_subscriber_free(&ret);
-        return NULL;
+        _z_subscriber_clear(&ret);
+        return ret;
     }
     _z_n_msg_clear(&n_msg);
     // Fill subscriber
-    ret->_entity_id = s._id;
-    ret->_zn = _z_session_rc_clone(zn);
+    ret._entity_id = s._id;
+    ret._zn = _z_session_rc_clone(zn);
     return ret;
 }
 
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
-    if (sub == NULL) {
+    if (sub == NULL || _Z_RC_IS_NULL(&sub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find subscription entry
@@ -253,8 +245,8 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
-                                     _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
+_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+                                    _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(&zn->in->val);
     q._key = _z_get_expanded_key_from_key(&zn->in->val, &keyexpr);
@@ -263,35 +255,30 @@ _z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t key
     q._dropper = dropper;
     q._arg = arg;
 
-    // Allocate queryable
-    _z_queryable_t *ret = (_z_queryable_t *)z_malloc(sizeof(_z_queryable_t));
-    if (ret == NULL) {
-        _z_session_queryable_clear(&q);
-        return NULL;
-    }
+    _z_queryable_t ret;
     // Create session_queryable entry, stored at session-level, do not drop it by the end of this function.
     _z_session_queryable_rc_t *sp_q = _z_register_session_queryable(&zn->in->val, &q);
     if (sp_q == NULL) {
-        _z_queryable_free(&ret);
-        return NULL;
+        _z_queryable_clear(&ret);
+        return ret;
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(&zn->in->val, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_session_queryable(&zn->in->val, sp_q);
-        _z_queryable_free(&ret);
-        return NULL;
+        _z_queryable_clear(&ret);
+        return ret;
     }
     _z_n_msg_clear(&n_msg);
     // Fill queryable
-    ret->_entity_id = q._id;
-    ret->_zn = _z_session_rc_clone(zn);
+    ret._entity_id = q._id;
+    ret._zn = _z_session_rc_clone(zn);
     return ret;
 }
 
 int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
-    if (qle == NULL) {
+    if (qle == NULL || _Z_RC_IS_NULL(&qle->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find session_queryable entry
