@@ -28,7 +28,7 @@ typedef struct _z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    _z_session_t *_zn;  // FIXME: Switch to session rc, Issue #476
+    _z_session_t *_zn;  // FIXME: Potential UB source, Issue #476
     _z_bytes_t attachment;
     char *_parameters;
     _Bool _anyke;
@@ -38,6 +38,8 @@ _z_query_t _z_query_null(void);
 void _z_query_clear(_z_query_t *q);
 void _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
+
+_Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
  * Return type when declaring a queryable.

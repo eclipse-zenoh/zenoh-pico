@@ -559,16 +559,16 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val.val = query->_parameters;
-    parameters->_val.len = strlen(query->_parameters);
+    parameters->_val.val = query->in->val._parameters;
+    parameters->_val.len = strlen(query->in->val._parameters);
 }
 
-const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->attachment; }
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->in->val.attachment; }
 
-const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->_key; }
+const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->in->val._key; }
 
-const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->_value.payload; }
-const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->_value.encoding; }
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
 
 void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
@@ -1065,7 +1065,7 @@ int8_t _z_queryable_drop(_z_queryable_t **queryable) {
     return ret;
 }
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_query_t, query, _z_query_copy, _z_query_free)
+_Z_OWNED_FUNCTIONS_RC_IMPL(query)
 _Z_OWNED_FUNCTIONS_PTR_IMPL(_z_queryable_t, queryable, _z_owner_noop_copy, _z_queryable_drop)
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
@@ -1120,7 +1120,8 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(payload),
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
-    int8_t ret = _z_send_reply(query, *keyexpr, value, Z_SAMPLE_KIND_PUT, _z_bytes_from_owned_bytes(opts.attachment));
+    int8_t ret =
+        _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, _z_bytes_from_owned_bytes(opts.attachment));
     if (payload != NULL) {
         z_bytes_drop(payload);
     }

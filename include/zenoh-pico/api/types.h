@@ -171,8 +171,8 @@ _Z_LOANED_TYPE(_z_queryable_t, queryable)
  * Represents a Zenoh Query entity, received by Zenoh Queryable entities.
  *
  */
-_Z_OWNED_TYPE_PTR(_z_query_t, query)
-_Z_LOANED_TYPE(_z_query_t, query)
+_Z_OWNED_TYPE_RC(_z_query_rc_t, query)
+_Z_LOANED_TYPE(_z_query_rc_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
