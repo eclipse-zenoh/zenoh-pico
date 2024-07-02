@@ -52,7 +52,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     // Acquire and keep the lock
-    z_mutex_lock(&ztm->_mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
@@ -123,15 +123,15 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
     }
-    z_mutex_unlock(&ztm->_mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
     return NULL;
 }
 
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(_z_task_t));
     // Init task
-    if (z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
+    if (_z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task

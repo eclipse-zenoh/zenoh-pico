@@ -38,11 +38,11 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = _z_mutex_init(&zt->_transport._unicast._mutex_rx);
         if (ret != _Z_RES_OK) {
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -86,8 +86,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -115,8 +115,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -290,17 +290,17 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL) {
-        z_task_join(ztu->_read_task);
-        z_task_free(&ztu->_read_task);
+        _z_task_join(ztu->_read_task);
+        _z_task_drop(&ztu->_read_task);
     }
     if (ztu->_lease_task != NULL) {
-        z_task_join(ztu->_lease_task);
-        z_task_free(&ztu->_lease_task);
+        _z_task_join(ztu->_lease_task);
+        _z_task_drop(&ztu->_lease_task);
     }
 
     // Clean up the mutexes
-    z_mutex_free(&ztu->_mutex_tx);
-    z_mutex_free(&ztu->_mutex_rx);
+    _z_mutex_drop(&ztu->_mutex_tx);
+    _z_mutex_drop(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

@@ -49,27 +49,34 @@
         type _val;               \
     } z_view_##name##_t;
 
-#define _Z_OWNED_FUNCTIONS_DEF(loanedtype, ownedtype, name)         \
-    _Bool z_##name##_check(const ownedtype *obj);                   \
-    const loanedtype *z_##name##_loan(const ownedtype *obj);        \
-    loanedtype *z_##name##_loan_mut(ownedtype *obj);                \
-    ownedtype *z_##name##_move(ownedtype *obj);                     \
-    int8_t z_##name##_clone(ownedtype *obj, const loanedtype *src); \
-    void z_##name##_drop(ownedtype *obj);                           \
-    void z_##name##_null(ownedtype *obj);
+#define _Z_OWNED_FUNCTIONS_DEF(name)                                                  \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj);                            \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj);        \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);                \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj);                     \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src); \
+    void z_##name##_drop(z_owned_##name##_t *obj);                                    \
+    void z_##name##_null(z_owned_##name##_t *obj);
 
-#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(loanedtype, ownedtype, name) \
-    _Bool z_##name##_check(const ownedtype *obj);                   \
-    const loanedtype *z_##name##_loan(const ownedtype *obj);        \
-    loanedtype *z_##name##_loan_mut(ownedtype *obj);                \
-    ownedtype *z_##name##_move(ownedtype *obj);                     \
-    void z_##name##_drop(ownedtype *obj);                           \
-    void z_##name##_null(ownedtype *obj);
+#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(name)                                   \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj);                     \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj); \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);         \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj);              \
+    void z_##name##_drop(z_owned_##name##_t *obj);                             \
+    void z_##name##_null(z_owned_##name##_t *obj);
 
-#define _Z_VIEW_FUNCTIONS_DEF(loanedtype, viewtype, name)         \
-    const loanedtype *z_view_##name##_loan(const viewtype *name); \
-    loanedtype *z_view_##name##_loan_mut(viewtype *name);         \
-    void z_view_##name##_null(viewtype *name);
+#define _Z_OWNED_FUNCTIONS_SYSTEM_DEF(name)                                    \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj);                     \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj); \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);         \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj);              \
+    void z_##name##_null(z_owned_##name##_t *obj);
+
+#define _Z_VIEW_FUNCTIONS_DEF(name)                                                 \
+    const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *name); \
+    z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *name);         \
+    void z_view_##name##_null(z_view_##name##_t *name);
 
 #define _Z_OWNED_FUNCTIONS_PTR_IMPL(type, name, f_copy, f_free)                                     \
     _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }             \
@@ -137,6 +144,13 @@
             }                                                                                       \
         }                                                                                           \
     }
+
+#define _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(type, name)                                                   \
+    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return obj != NULL; }                    \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
+    void z_##name##_null(z_owned_##name##_t *obj) { (void)obj; }                                     \
+    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }
 
 #define _Z_VIEW_FUNCTIONS_IMPL(type, name)                                                               \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \

@@ -52,6 +52,9 @@
                   z_owned_slice_t : z_slice_loan,                             \
                   z_owned_bytes_t : z_bytes_loan,                             \
                   z_owned_encoding_t : z_encoding_loan,                       \
+                  z_owned_task_t : z_task_loan,                               \
+                  z_owned_mutex_t : z_mutex_loan,                             \
+                  z_owned_condvar_t : z_condvar_loan,                         \
                   z_owned_fifo_handler_query_t : z_fifo_handler_query_loan,   \
                   z_owned_fifo_handler_reply_t : z_fifo_handler_reply_loan,   \
                   z_owned_fifo_handler_sample_t : z_fifo_handler_sample_loan, \
@@ -76,6 +79,9 @@
                   z_owned_query_t : z_query_loan_mut,                     \
                   z_owned_slice_t : z_slice_loan_mut,                     \
                   z_owned_bytes_t : z_bytes_loan_mut,                     \
+                  z_owned_task_t : z_task_loan_mut,                       \
+                  z_owned_mutex_t : z_mutex_loan_mut,                     \
+                  z_owned_condvar_t : z_condvar_loan_mut,                 \
                   z_owned_reply_err_t : z_reply_err_loan_mut              \
             )(&x)
 /**
@@ -105,13 +111,16 @@
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
                   z_owned_closure_hello_t * : z_closure_hello_drop,                 \
                   z_owned_closure_zid_t * : z_closure_zid_drop,                     \
+                  z_owned_task_t *: z_task_drop,                                    \
+                  z_owned_mutex_t *: z_mutex_drop,                                  \
+                  z_owned_condvar_t *: z_condvar_drop,                              \
                   z_owned_fifo_handler_query_t * : z_fifo_handler_query_drop,       \
                   z_owned_fifo_handler_reply_t * : z_fifo_handler_reply_drop,       \
                   z_owned_fifo_handler_sample_t * : z_fifo_handler_sample_drop,     \
                   z_owned_ring_handler_query_t * : z_ring_handler_query_drop,       \
                   z_owned_ring_handler_reply_t * : z_ring_handler_reply_drop,       \
                   z_owned_ring_handler_sample_t * : z_ring_handler_sample_drop,     \
-                  z_owned_reply_err_t : z_reply_err_drop                            \
+                  z_owned_reply_err_t * : z_reply_err_drop                          \
             )(x)
 
 /**
@@ -208,6 +217,9 @@
                   z_owned_slice_t : z_slice_move,                                 \
                   z_owned_bytes_t : z_bytes_move,                                 \
                   z_owned_encoding_t : z_encoding_move,                           \
+                  z_owned_task_t : z_task_move,                                   \
+                  z_owned_mutex_t : z_mutex_move,                                 \
+                  z_owned_condvar_t : z_condvar_move,                             \
                   z_owned_ring_handler_query_t : z_ring_handler_query_move,       \
                   z_owned_ring_handler_reply_t : z_ring_handler_reply_move,       \
                   z_owned_ring_handler_sample_t : z_ring_handler_sample_move,     \
@@ -318,6 +330,9 @@ inline const z_loaned_query_t* z_loan(const z_owned_query_t& x) { return z_query
 inline const z_loaned_slice_t* z_loan(const z_owned_slice_t& x) { return z_slice_loan(&x); }
 inline const z_loaned_bytes_t* z_loan(const z_owned_bytes_t& x) { return z_bytes_loan(&x); }
 inline const z_loaned_encoding_t* z_loan(const z_owned_encoding_t& x) { return z_encoding_loan(&x); }
+inline const z_loaned_task_t* z_loan(const z_owned_task_t& x) { return z_task_loan(&x); }
+inline const z_loaned_mutex_t* z_loan(const z_owned_mutex_t& x) { return z_mutex_loan(&x); }
+inline const z_loaned_condvar_t* z_loan(const z_owned_condvar_t& x) { return z_condvar_loan(&x); }
 inline const z_loaned_reply_err_t* z_loan(const z_owned_reply_err_t& x) { return z_reply_err_loan(&x); }
 
 // z_loan_mut definition
@@ -336,7 +351,10 @@ inline z_loaned_sample_t* z_loan_mut(z_owned_sample_t& x) { return z_sample_loan
 inline z_loaned_query_t* z_loan_mut(z_owned_query_t& x) { return z_query_loan_mut(&x); }
 inline z_loaned_slice_t* z_loan_mut(z_owned_slice_t& x) { return z_slice_loan_mut(&x); }
 inline z_loaned_bytes_t* z_loan_mut(z_owned_bytes_t& x) { return z_bytes_loan_mut(&x); }
-inline z_loaned_encoding_t* z_loan(z_owned_encoding_t& x) { return z_encoding_loan_mut(&x); }
+inline z_loaned_encoding_t* z_loan_mut(z_owned_encoding_t& x) { return z_encoding_loan_mut(&x); }
+inline z_loaned_task_t* z_loan_mut(z_owned_task_t& x) { return z_task_loan_mut(&x); }
+inline z_loaned_mutex_t* z_loan_mut(z_owned_mutex_t& x) { return z_mutex_loan_mut(&x); }
+inline z_loaned_condvar_t* z_loan_mut(z_owned_condvar_t& x) { return z_condvar_loan_mut(&x); }
 inline z_loaned_reply_err_t* z_loan_mut(z_owned_reply_err_t& x) { return z_reply_err_loan_mut(&x); }
 
 // z_drop definition
@@ -355,6 +373,9 @@ inline void z_drop(z_owned_sample_t* v) { z_sample_drop(v); }
 inline void z_drop(z_owned_query_t* v) { z_query_drop(v); }
 inline void z_drop(z_owned_bytes_t* v) { z_bytes_drop(v); }
 inline void z_drop(z_owned_encoding_t* v) { z_encoding_drop(v); }
+inline void z_drop(z_owned_task_t* v) { z_task_drop(v); }
+inline void z_drop(z_owned_mutex_t* v) { z_mutex_drop(v); }
+inline void z_drop(z_owned_condvar_t* v) { z_condvar_drop(v); }
 inline void z_drop(z_owned_reply_err_t* v) { z_reply_err_drop(v); }
 inline void z_drop(z_owned_closure_sample_t* v) { z_closure_sample_drop(v); }
 inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }

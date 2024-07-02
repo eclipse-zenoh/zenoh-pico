@@ -71,7 +71,7 @@ K_THREAD_STACK_ARRAY_DEFINE(thread_stack_area, Z_THREADS_NUM, Z_PTHREAD_STACK_SI
 static int thread_index = 0;
 
 /*------------------ Task ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     z_task_attr_t *lattr = NULL;
     z_task_attr_t tmp;
     if (attr == NULL) {
@@ -83,35 +83,35 @@ int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), vo
     return pthread_create(task, lattr, fun, arg);
 }
 
-int8_t z_task_join(z_task_t *task) { return pthread_join(*task, NULL); }
+int8_t _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }
 
-int8_t zp_task_cancel(z_task_t *task) { return pthread_cancel(*task); }
+int8_t _z_task_cancel(_z_task_t *task) { return pthread_cancel(*task); }
 
-void z_task_free(z_task_t **task) {
-    z_task_t *ptr = *task;
+void _z_task_drop(_z_task_t **task) {
+    _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int8_t z_mutex_init(z_mutex_t *m) { return pthread_mutex_init(m, 0); }
+int8_t _z_mutex_init(_z_mutex_t *m) { return pthread_mutex_init(m, 0); }
 
-int8_t z_mutex_free(z_mutex_t *m) { return pthread_mutex_destroy(m); }
+int8_t _z_mutex_drop(_z_mutex_t *m) { return pthread_mutex_destroy(m); }
 
-int8_t z_mutex_lock(z_mutex_t *m) { return pthread_mutex_lock(m); }
+int8_t _z_mutex_lock(_z_mutex_t *m) { return pthread_mutex_lock(m); }
 
-int8_t z_mutex_trylock(z_mutex_t *m) { return pthread_mutex_trylock(m); }
+int8_t _z_mutex_try_lock(_z_mutex_t *m) { return pthread_mutex_trylock(m); }
 
-int8_t z_mutex_unlock(z_mutex_t *m) { return pthread_mutex_unlock(m); }
+int8_t _z_mutex_unlock(_z_mutex_t *m) { return pthread_mutex_unlock(m); }
 
 /*------------------ Condvar ------------------*/
-int8_t z_condvar_init(z_condvar_t *cv) { return pthread_cond_init(cv, 0); }
+int8_t _z_condvar_init(_z_condvar_t *cv) { return pthread_cond_init(cv, 0); }
 
-int8_t z_condvar_free(z_condvar_t *cv) { return pthread_cond_destroy(cv); }
+int8_t _z_condvar_drop(_z_condvar_t *cv) { return pthread_cond_destroy(cv); }
 
-int8_t z_condvar_signal(z_condvar_t *cv) { return pthread_cond_signal(cv); }
+int8_t _z_condvar_signal(_z_condvar_t *cv) { return pthread_cond_signal(cv); }
 
-int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) { return pthread_cond_wait(cv, m); }
+int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/

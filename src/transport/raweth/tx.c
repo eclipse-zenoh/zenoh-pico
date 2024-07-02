@@ -31,7 +31,7 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { z_mutex_unlock(&ztm->_mutex_tx); }
+static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_tx); }
 #else
 static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif
@@ -196,7 +196,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&ztm->_mutex_tx);
+    _z_mutex_lock(&ztm->_mutex_tx);
 #endif
     // Reset wbuf
     _z_wbuf_reset(&ztm->_wbuf);
@@ -214,7 +214,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     ztm->_transmitted = true;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_tx);
+    _z_mutex_unlock(&ztm->_mutex_tx);
 #endif
 
     return ret;
@@ -229,9 +229,9 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     // Acquire the lock and drop the message if needed
 #if Z_FEATURE_MULTI_THREAD == 1
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
-        z_mutex_lock(&ztm->_mutex_tx);
+        _z_mutex_lock(&ztm->_mutex_tx);
     } else {
-        if (z_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
+        if (_z_mutex_try_lock(&ztm->_mutex_tx) != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;
@@ -314,7 +314,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 #endif
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_tx);
+    _z_mutex_unlock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     return ret;
 }

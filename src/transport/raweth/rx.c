@@ -79,7 +79,7 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    z_mutex_lock(&ztm->_mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer
@@ -107,7 +107,7 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;

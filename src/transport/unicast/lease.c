@@ -95,11 +95,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     return 0;
 }
 
-int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(_z_task_t));
     // Init task
-    if (z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
+    if (_z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
