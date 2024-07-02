@@ -162,8 +162,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
         _zp_session_unlock_mutex(zn);
 
         // Build the sample
-        _z_sample_t sample = _z_sample_null();
-        sample = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment);
+        _z_sample_t sample = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment);
         // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
