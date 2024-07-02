@@ -263,6 +263,7 @@ Primitives
 .. autocfunction:: primitives.h::z_view_string_wrap
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
+.. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
 .. autocfunction:: primitives.h::z_keyexpr_to_string
 .. autocfunction:: primitives.h::zp_keyexpr_resolve
 .. autocfunction:: primitives.h::z_keyexpr_is_initialized

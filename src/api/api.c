@@ -59,7 +59,26 @@ size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_s
 
 _Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_svec_is_empty(a); }
 
+int8_t zp_keyexpr_canonize_null_terminated(char *start) {
+    zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;
+
+    size_t len = strlen(start);
+    size_t newlen = len;
+    ret = _z_keyexpr_canonize(start, &newlen);
+    if (newlen < len) {
+        start[newlen] = '\0';
+    }
+
+    return ret;
+}
+
 int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
+    keyexpr->_val = _z_rname(name);
+    return _Z_RES_OK;
+}
+
+int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
+    zp_keyexpr_canonize_null_terminated(name);
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -106,19 +125,6 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_
 int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexpr_is_canon(start, strlen(start)); }
 
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
-
-int8_t zp_keyexpr_canonize_null_terminated(char *start) {
-    zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;
-
-    size_t len = strlen(start);
-    size_t newlen = len;
-    ret = _z_keyexpr_canonize(start, &newlen);
-    if (newlen < len) {
-        start[newlen] = '\0';
-    }
-
-    return ret;
-}
 
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
