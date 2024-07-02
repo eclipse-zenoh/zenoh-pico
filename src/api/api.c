@@ -177,48 +177,6 @@ int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *valu
     return _zp_config_insert(config, key, value);
 }
 
-void z_scouting_config_default(z_owned_scouting_config_t *sc) {
-    sc->_val = _z_config_empty();
-
-    _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, Z_CONFIG_MULTICAST_LOCATOR_DEFAULT);
-    _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT);
-    _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, Z_CONFIG_SCOUTING_WHAT_DEFAULT);
-}
-
-int8_t z_scouting_config_from(z_owned_scouting_config_t *sc, const z_loaned_config_t *c) {
-    sc->_val = _z_config_empty();
-
-    char *opt;
-    opt = _z_config_get(c, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-    if (opt == NULL) {
-        _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, Z_CONFIG_MULTICAST_LOCATOR_DEFAULT);
-    } else {
-        _zp_config_insert(sc->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY, opt);
-    }
-
-    opt = _z_config_get(c, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-    if (opt == NULL) {
-        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT);
-    } else {
-        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY, opt);
-    }
-
-    opt = _z_config_get(c, Z_CONFIG_SCOUTING_WHAT_KEY);
-    if (opt == NULL) {
-        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, Z_CONFIG_SCOUTING_WHAT_DEFAULT);
-    } else {
-        _zp_config_insert(sc->_val, Z_CONFIG_SCOUTING_WHAT_KEY, opt);
-    }
-
-    return _Z_RES_OK;
-}
-
-const char *zp_scouting_config_get(const z_loaned_scouting_config_t *sc, uint8_t key) { return _z_config_get(sc, key); }
-
-int8_t zp_scouting_config_insert(z_loaned_scouting_config_t *sc, uint8_t key, const char *value) {
-    return _zp_config_insert(sc, key, value);
-}
-
 #if Z_FEATURE_ENCODING_VALUES == 1
 #define ENCODING_SCHEMA_SEPARATOR ';'
 
@@ -309,11 +267,11 @@ static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const c
         uint16_t id = _z_encoding_values_str_to_int(s, len);
         // Check id
         if (id != UINT16_MAX) {
-            return _z_encoding_make(encoding->_val, id, (id_end[1] == '\0') ? NULL : ++id_end);
+            return _z_encoding_make(&encoding->_val, id, (id_end[1] == '\0') ? NULL : ++id_end);
         }
     }
     // By default store the string as schema
-    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+    return _z_encoding_make(&encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
 }
 
 static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
@@ -361,42 +319,12 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 
 #endif
 
-z_owned_encoding_t *z_encoding_move(z_owned_encoding_t *encoding) { return encoding; }
-
-void z_encoding_null(z_owned_encoding_t *encoding) { encoding->_val = NULL; }
-
-_Bool z_encoding_check(const z_owned_encoding_t *encoding) { return _z_encoding_check(encoding->_val); }
-
-void z_encoding_drop(z_owned_encoding_t *encoding) {
-    if (encoding == NULL) {
-        return;
-    }
-    if (_z_string_check(&encoding->_val->schema)) {
-        _z_string_clear(&encoding->_val->schema);
-    }
-    z_free(encoding->_val);
-}
-
-int8_t z_encoding_clone(z_owned_encoding_t *dst, const z_loaned_encoding_t *src) {
-    dst->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
-    if (dst->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    _z_encoding_copy(dst->_val, src);
-    return _Z_RES_OK;
-}
-
-const z_loaned_encoding_t *z_encoding_loan(const z_owned_encoding_t *encoding) { return encoding->_val; }
-
-z_loaned_encoding_t *z_encoding_loan_mut(z_owned_encoding_t *encoding) { return encoding->_val; }
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
+                              _z_encoding_clear)
 
 int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     // Init owned encoding
     z_encoding_null(encoding);
-    encoding->_val = (_z_encoding_t *)z_malloc(sizeof(_z_encoding_t));
-    if (encoding->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
     // Convert string to encoding
     if (s != NULL) {
         return _z_encoding_convert_from_str(encoding, s);
@@ -676,17 +604,24 @@ static inline void _z_owner_noop_copy(void *dst, const void *src) {
     (void)(src);
 }
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_config_t, config, _z_owner_noop_copy, _z_config_free)
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_scouting_config_t, scouting_config, _z_owner_noop_copy, _z_scouting_config_free)
+_Bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
+_z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
+void _z_config_drop(_z_config_t *config) { _z_str_intmap_clear(config); }
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_config_t, config, _z_config_check, _z_config_null, _z_config_drop)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_value_t, reply_err, _z_value_copy, _z_value_free)
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_copy, _z_keyexpr_free)
+_Bool _z_value_check(const _z_value_t *value) {
+    return _z_string_check(&value->encoding.schema) && value->encoding.id == _Z_ENCODING_ID_DEFAULT;
+}
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
+
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
+                              _z_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_hello_t, hello, _z_owner_noop_copy, _z_hello_free)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
 
 _Bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
@@ -727,10 +662,7 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
     if (encoding == NULL) {
         return _z_encoding_null();
     }
-    if (encoding->_val == NULL) {
-        return _z_encoding_null();
-    }
-    return *encoding->_val;
+    return encoding->_val;
 }
 #endif
 
@@ -753,7 +685,7 @@ void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_c
     wrapped_ctx->user_call(hello, wrapped_ctx->ctx);
 }
 
-int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
+int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback) {
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->context;
@@ -767,26 +699,26 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         wrapped_ctx->user_call = callback->call;
         wrapped_ctx->ctx = ctx;
 
-        char *opt_as_str = _z_config_get(config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
+        char *opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
         }
         z_what_t what = strtol(opt_as_str, NULL, 10);
 
-        opt_as_str = _z_config_get(config->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        opt_as_str = _z_config_get(&config->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
         char *mcast_locator = opt_as_str;
 
-        opt_as_str = _z_config_get(config->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
         }
         uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
         _z_id_t zid = _z_id_empty();
-        char *zid_str = _z_config_get(config->_val, Z_CONFIG_SESSION_ZID_KEY);
+        char *zid_str = _z_config_get(&config->_val, Z_CONFIG_SESSION_ZID_KEY);
         if (zid_str != NULL) {
             _z_uuid_to_bytes(zid.id, zid_str);
         }
@@ -794,7 +726,7 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
         _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
 
         z_free(wrapped_ctx);
-        z_scouting_config_drop(config);
+        z_config_drop(config);
     } else {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -812,7 +744,7 @@ int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Open session
-    int8_t ret = _z_open(&zsrc.in->val, config->_val);
+    int8_t ret = _z_open(&zsrc.in->val, &config->_val);
     if (ret != _Z_RES_OK) {
         _z_session_rc_drop(&zsrc);
         z_config_drop(config);
@@ -1047,10 +979,8 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
-    z_owned_keyexpr_t ret = {._val = z_malloc(sizeof(_z_keyexpr_t))};
-    if (ret._val != NULL && publisher != NULL) {
-        *ret._val = _z_keyexpr_duplicate(publisher->_key);
-    }
+    z_owned_keyexpr_t ret;
+    ret._val = _z_keyexpr_duplicate(publisher->_key);
     return ret;
 }
 #endif
@@ -1198,36 +1128,24 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
 #endif
 
 int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name) {
-    int8_t ret = _Z_RES_OK;
-
-    key->_val = name ? (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t)) : NULL;
-    if (key->_val != NULL) {
-        *key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
+    if (name != NULL) {
+        key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        key->_val = _z_keyexpr_null();
     }
-
-    return ret;
+    return _Z_RES_OK;
 }
 
 int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
-    int8_t ret = _Z_RES_OK;
-
-    key->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-    if (key->_val != NULL) {
-        uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
-        *key->_val = _z_rid_with_suffix(id, NULL);
-    } else {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
+    uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+    key->_val = _z_rid_with_suffix(id, NULL);
+    return _Z_RES_OK;
 }
 
 int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
     int8_t ret = _Z_RES_OK;
 
-    ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val->_id);
+    ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val._id);
     z_keyexpr_drop(keyexpr);
 
     return ret;
@@ -1315,12 +1233,7 @@ int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *s
     while (tail != NULL && !z_keyexpr_check(keyexpr)) {
         _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
         if (head->in->val._id == lookup) {
-            // Allocate keyexpr
-            keyexpr->_val = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-            if (keyexpr->_val == NULL) {
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
-            _z_keyexpr_copy(keyexpr->_val, &head->in->val._key);
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr->_val, &head->in->val._key));
         }
         tail = _z_subscription_rc_list_tail(tail);
     }

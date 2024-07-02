@@ -32,11 +32,17 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     };
 }
 
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+    *dst = _z_keyexpr_null();
+    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
+    if (dst->_suffix == NULL && src->_suffix != NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
     dst->_id = src->_id;
     dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
     dst->_mapping = src->_mapping;
     _z_keyexpr_set_owns_suffix(dst, true);
+    return _Z_RES_OK;
 }
 
 _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
@@ -61,6 +67,7 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk) {
         _z_str_clear((char *)rk->_suffix);
         _z_keyexpr_set_owns_suffix(rk, false);
     }
+    rk->_suffix = NULL;
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {

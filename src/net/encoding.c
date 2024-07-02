@@ -45,9 +45,11 @@ _Bool _z_encoding_check(const _z_encoding_t *encoding) {
     return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(&encoding->schema));
 }
 
-void _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
+int8_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
+    *dst = _z_encoding_null();
+    _Z_RETURN_IF_ERR(_z_string_copy(&dst->schema, &src->schema));
     dst->id = src->id;
-    _z_string_copy(&dst->schema, &src->schema);
+    return _Z_RES_OK;
 }
 
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {

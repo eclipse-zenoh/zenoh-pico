@@ -42,19 +42,8 @@ void test_config(void) {
     assert(!z_check(config));
 }
 
-void test_scouting_config(void) {
-    z_owned_scouting_config_t config;
-    z_scouting_config_default(&config);
-    assert(z_check(config));
-    z_drop(z_move(config));
-    assert(!z_check(config));
-    z_drop(z_move(config));
-    assert(!z_check(config));
-}
-
 int main(void) {
     test_keyexpr();
     test_config();
-    test_scouting_config();
     return 0;
 }

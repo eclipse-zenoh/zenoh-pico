@@ -30,8 +30,6 @@ int main(void) {
     z_keyexpr_null(&keyexpr_null_1);
     z_owned_config_t config_null_1;
     z_config_null(&config_null_1);
-    z_owned_scouting_config_t scouting_config_null_1;
-    z_scouting_config_null(&scouting_config_null_1);
     z_owned_hello_t hello_null_1;
     z_hello_null(&hello_null_1);
     z_owned_closure_sample_t closure_sample_null_1;
@@ -53,7 +51,6 @@ int main(void) {
     assert(!z_check(session_null_1));
     assert(!z_check(keyexpr_null_1));
     assert(!z_check(config_null_1));
-    assert(!z_check(scouting_config_null_1));
     assert(!z_check(hello_null_1));
     assert(!z_check(str_null_1));
 
@@ -63,7 +60,6 @@ int main(void) {
     z_owned_session_t session_null_2;
     z_owned_keyexpr_t keyexpr_null_2;
     z_owned_config_t config_null_2;
-    z_owned_scouting_config_t scouting_config_null_2;
     z_owned_hello_t hello_null_2;
     z_owned_closure_sample_t closure_sample_null_2;
     z_owned_closure_query_t closure_query_null_2;
@@ -75,7 +71,6 @@ int main(void) {
     z_null(&session_null_2);
     z_null(&keyexpr_null_2);
     z_null(&config_null_2);
-    z_null(&scouting_config_null_2);
     z_null(&hello_null_2);
     z_null(&closure_sample_null_2);
     z_null(&closure_query_null_2);
@@ -123,7 +118,6 @@ int main(void) {
     assert(!z_check(session_null_2));
     assert(!z_check(keyexpr_null_2));
     assert(!z_check(config_null_2));
-    assert(!z_check(scouting_config_null_2));
     assert(!z_check(hello_null_2));
     assert(!z_check(str_null_2));
 
@@ -134,7 +128,6 @@ int main(void) {
         z_drop(z_move(session_null_1));
         z_drop(z_move(keyexpr_null_1));
         z_drop(z_move(config_null_1));
-        z_drop(z_move(scouting_config_null_1));
         z_drop(z_move(hello_null_1));
         z_drop(z_move(closure_sample_null_1));
         z_drop(z_move(closure_query_null_1));
@@ -146,7 +139,6 @@ int main(void) {
         z_drop(z_move(session_null_2));
         z_drop(z_move(keyexpr_null_2));
         z_drop(z_move(config_null_2));
-        z_drop(z_move(scouting_config_null_2));
         z_drop(z_move(hello_null_2));
         z_drop(z_move(closure_sample_null_2));
         z_drop(z_move(closure_query_null_2));

@@ -164,7 +164,7 @@ void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num
     }
 }
 
-void _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size) {
+_Bool _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size) {
     dst->_capacity = 0;
     dst->_len = 0;
     dst->_val = z_malloc(element_size * src->_capacity);
@@ -173,6 +173,7 @@ void _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, s
         dst->_len = src->_len;
         __z_svec_copy_inner(dst->_val, src->_val, copy, src->_len, element_size);
     }
+    return dst->_len == src->_len;
 }
 
 void _z_svec_reset(_z_svec_t *v, z_element_clear_f clear, size_t element_size) {

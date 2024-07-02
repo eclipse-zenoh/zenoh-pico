@@ -109,7 +109,7 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
  */
-_Z_OWNED_TYPE_PTR(_z_keyexpr_t, keyexpr)
+_Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
 _Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
 _Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
 
@@ -123,21 +123,8 @@ _Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_get`
  *   - :c:func:`zp_config_insert`
  */
-_Z_OWNED_TYPE_PTR(_z_config_t, config)
+_Z_OWNED_TYPE_VALUE(_z_config_t, config)
 _Z_LOANED_TYPE(_z_config_t, config)
-
-/**
- * Represents a scouting configuration, used to configure a scouting procedure.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_scouting_config_default`
- *   - :c:func:`z_scouting_config_from`
- *   - :c:func:`zp_scouting_config_get`
- *   - :c:func:`zp_scouting_config_insert`
- */
-_Z_OWNED_TYPE_PTR(_z_scouting_config_t, scouting_config)
-_Z_LOANED_TYPE(_z_scouting_config_t, scouting_config)
 
 /**
  * Represents a Zenoh Session.
@@ -194,7 +181,7 @@ _Z_LOANED_TYPE(_z_query_rc_t, query)
  *   uint16_t prefix: The integer prefix of this encoding.
  *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
-_Z_OWNED_TYPE_PTR(_z_encoding_t, encoding)
+_Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
 _Z_LOANED_TYPE(_z_encoding_t, encoding)
 
 /**
@@ -204,7 +191,7 @@ _Z_LOANED_TYPE(_z_encoding_t, encoding)
  *   z_loaned_encoding_t encoding: The encoding of the error `payload`.
  *   z_loaned_bytes_t* payload: The payload of this zenoh reply error.
  */
-_Z_OWNED_TYPE_PTR(_z_value_t, reply_err)
+_Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 _Z_LOANED_TYPE(_z_value_t, reply_err)
 
 /**
@@ -427,7 +414,7 @@ _Z_LOANED_TYPE(_z_sample_rc_t, sample)
  *   z_loaned_slice_t* zid: The Zenoh ID of the scouted entity (empty if absent).
  *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
-_Z_OWNED_TYPE_PTR(_z_hello_t, hello)
+_Z_OWNED_TYPE_VALUE(_z_hello_t, hello)
 _Z_LOANED_TYPE(_z_hello_t, hello)
 
 /**

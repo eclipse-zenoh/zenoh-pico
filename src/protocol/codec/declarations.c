@@ -91,7 +91,7 @@ int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl) {
     return _z_zsize_encode(wbf, decl->_id);
 }
 int8_t _z_undecl_encode(_z_wbuf_t *wbf, uint8_t header, _z_zint_t decl_id, _z_keyexpr_t ke) {
-    _Bool has_keyexpr_ext = _z_keyexpr_check(ke);
+    _Bool has_keyexpr_ext = _z_keyexpr_check(&ke);
     if (has_keyexpr_ext) {
         header |= _Z_FLAG_Z_Z;
     }

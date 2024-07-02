@@ -24,8 +24,10 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"
 
+#define _Z_ID_LEN (16)
+
 uint8_t _z_id_len(_z_id_t id) {
-    uint8_t len = 16;
+    uint8_t len = _Z_ID_LEN;
     while (len > 0) {
         --len;
         if (id.id[len] != 0) {
@@ -37,7 +39,7 @@ uint8_t _z_id_len(_z_id_t id) {
 }
 _Bool _z_id_check(_z_id_t id) {
     _Bool ret = false;
-    for (int i = 0; !ret && i < 16; i++) {
+    for (int i = 0; !ret && i < _Z_ID_LEN; i++) {
         ret |= id.id[i] != 0;
     }
     return ret;
@@ -62,6 +64,7 @@ _z_id_t _z_id_empty(void) {
                          0,
                      }};
 }
+
 _z_source_info_t _z_source_info_null(void) {
     return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
 }
@@ -72,7 +75,22 @@ _z_value_t _z_value_steal(_z_value_t *value) {
     *value = _z_value_null();
     return ret;
 }
-void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
-    _z_encoding_copy(&dst->encoding, &src->encoding);
-    _z_bytes_copy(&dst->payload, &src->payload);
+int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
+    *dst = _z_value_null();
+    _Z_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_encoding_clear(&dst->encoding));
+    return _Z_RES_OK;
+}
+
+int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
+    *dst = _z_hello_null();
+    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->locators, &src->locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    dst->version = src->version;
+    dst->whatami = src->whatami;
+    memcpy(&dst->zid.id, &src->zid.id, _Z_ID_LEN);
+    return _Z_RES_OK;
+}
+
+_z_hello_t _z_hello_null(void) {
+    return (_z_hello_t){.zid = _z_id_empty(), .version = 0, .whatami = 0x0, .locators = _z_string_svec_make(0)};
 }
