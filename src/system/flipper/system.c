@@ -89,7 +89,7 @@ int8_t _z_task_join(_z_task_t* task) {
 
 int8_t _z_task_cancel(_z_task_t* task) { return -1; }
 
-void _z_task_drop(_z_task_t** task) {
+void _z_task_free(_z_task_t** task) {
     if (task == NULL || *task == NULL) {
         return;
     }

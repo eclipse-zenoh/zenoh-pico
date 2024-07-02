@@ -52,7 +52,7 @@ int8_t _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }
 
 int8_t _z_task_cancel(_z_task_t *task) { return pthread_cancel(*task); }
 
-void _z_task_drop(_z_task_t **task) {
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
