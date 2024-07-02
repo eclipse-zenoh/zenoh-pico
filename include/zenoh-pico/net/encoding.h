@@ -34,5 +34,6 @@ void _z_encoding_clear(_z_encoding_t *encoding);
 _Bool _z_encoding_check(const _z_encoding_t *encoding);
 int8_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
+_z_encoding_t _z_encoding_steal(_z_encoding_t *val);
 
 #endif /* ZENOH_PICO_ENCODING_NETAPI_H */

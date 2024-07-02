@@ -53,7 +53,7 @@ void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
 }
 
 void print_attachment(kv_pairs_t *kvp) {
-    printf("   with attachment:\n");
+    printf("    with attachment:\n");
     for (uint32_t i = 0; i < kvp->current_idx; i++) {
         printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
                z_string_data(z_loan(kvp->data[i].value)));

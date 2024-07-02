@@ -30,28 +30,28 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')...'''
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit...
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')
-    with encoding: text/plain;utf8
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: source, C
      1: index, 0
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')
-    with encoding: text/plain;utf8
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: source, C
      1: index, 1
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')
-    with encoding: text/plain;utf8
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: source, C
      1: index, 2
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')
-    with encoding: text/plain;utf8
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: source, C
      1: index, 3
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')
-    with encoding: text/plain;utf8
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: source, C
      1: index, 4'''
 
@@ -137,7 +137,8 @@ def query_and_queryable():
     z_query_expected_output = """Opening session...
 Sending Query 'demo/example/**'...
 >> Received ('demo/example/**': 'Queryable from Pico!')
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: reply_key, reply_value
 >> Received query final notification"""
 
@@ -147,7 +148,8 @@ Sending Query 'demo/example/**'...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
  >> [Queryable handler] Received Query 'demo/example/**'
-   with attachment:
+    with encoding: zenoh/string;utf8
+    with attachment:
      0: test_key, test_value"""
 
     print("Start queryable")

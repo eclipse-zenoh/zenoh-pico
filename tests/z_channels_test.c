@@ -27,13 +27,15 @@
     do {                                                                                            \
         _z_bytes_t payload;                                                                         \
         _z_bytes_from_slice(&payload, (_z_slice_t){.start = (const uint8_t *)v, .len = strlen(v)}); \
-        _z_sample_t s = {.keyexpr = _z_rname("key"),                                                \
-                         .payload = payload,                                                        \
-                         .timestamp = _z_timestamp_null(),                                          \
-                         .encoding = _z_encoding_null(),                                            \
-                         .kind = 0,                                                                 \
-                         .qos = {0}};                                                               \
-        z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                    \
+        z_loaned_sample_t sample = {                                                                \
+            .keyexpr = _z_rname("key"),                                                             \
+            .payload = payload,                                                                     \
+            .timestamp = _z_timestamp_null(),                                                       \
+            .encoding = _z_encoding_null(),                                                         \
+            .kind = 0,                                                                              \
+            .qos = {0},                                                                             \
+            .attachment = _z_bytes_null(),                                                          \
+        };                                                                                          \
         z_call(*z_loan(closure), &sample);                                                          \
     } while (0);
 

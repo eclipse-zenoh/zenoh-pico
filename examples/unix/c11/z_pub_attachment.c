@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
         options.attachment = z_move(attachment);
 
         // Add encoding value
-        z_encoding_from_str(&encoding, "text/plain;utf8");
+        z_encoding_from_str(&encoding, "zenoh/string;utf8");
         options.encoding = z_move(encoding);
 
         z_publisher_put(z_loan(pub), z_move(payload), &options);
