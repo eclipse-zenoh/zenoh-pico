@@ -59,7 +59,7 @@ int8_t _z_task_cancel(_z_task_t *task) {
     return res;
 }
 
-void _z_task_drop(_z_task_t **task) {
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;

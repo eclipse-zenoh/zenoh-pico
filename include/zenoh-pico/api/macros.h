@@ -116,7 +116,6 @@
                   z_owned_closure_reply_t * : z_closure_reply_drop,                 \
                   z_owned_closure_hello_t * : z_closure_hello_drop,                 \
                   z_owned_closure_zid_t * : z_closure_zid_drop,                     \
-                  z_owned_task_t *: z_task_drop,                                    \
                   z_owned_mutex_t *: z_mutex_drop,                                  \
                   z_owned_condvar_t *: z_condvar_drop,                              \
                   z_owned_fifo_handler_query_t * : z_fifo_handler_query_drop,       \
@@ -382,7 +381,6 @@ inline void z_drop(z_owned_sample_t* v) { z_sample_drop(v); }
 inline void z_drop(z_owned_query_t* v) { z_query_drop(v); }
 inline void z_drop(z_owned_bytes_t* v) { z_bytes_drop(v); }
 inline void z_drop(z_owned_encoding_t* v) { z_encoding_drop(v); }
-inline void z_drop(z_owned_task_t* v) { z_task_drop(v); }
 inline void z_drop(z_owned_mutex_t* v) { z_mutex_drop(v); }
 inline void z_drop(z_owned_condvar_t* v) { z_condvar_drop(v); }
 inline void z_drop(z_owned_reply_err_t* v) { z_reply_err_drop(v); }
