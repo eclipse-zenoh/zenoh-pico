@@ -236,12 +236,45 @@ It is guaranteed that:
   - ``drop`` will only be called **once**, and **after every** ``call`` has ended.
   - The two previous guarantees imply that ``call`` and ``drop`` are never called concurrently.
 
+Represents a `sample` closure.
 
-.. autoctype:: types.h::z_owned_closure_sample_t
-.. autoctype:: types.h::z_owned_closure_query_t
-.. autoctype:: types.h::z_owned_closure_reply_t
-.. autoctype:: types.h::z_owned_closure_hello_t
-.. autoctype:: types.h::z_owned_closure_zid_t
+.. c:type:: types.h::z_owned_closure_sample_t
+
+Represents a loaned `sample` closure.
+
+.. c:type:: types.h::z_loaned_closure_sample_t
+
+Represents a `query` closure.
+
+.. c:type:: types.h::z_owned_closure_query_t
+
+Represents a loaned `query` closure.
+
+.. c:type:: types.h::z_loaned_closure_query_t
+
+Represents a `reply` closure.
+
+.. c:type:: types.h::z_owned_closure_reply_t
+
+Represents a loaned `reply` closure.
+
+.. c:type:: types.h::z_loaned_closure_reply_t
+
+Represents a `hello` closure.
+
+.. c:type:: types.h::z_owned_closure_hello_t
+
+Represents a loaned `hello` closure.
+
+.. c:type:: types.h::z_loaned_closure_hello_t
+
+Represents a `Zenoh id` closure.
+
+.. c:type:: types.h::z_owned_closure_zid_t
+
+Represents a loaned `Zenoh id` closure.
+
+.. c:type:: types.h::z_loaned_closure_zid_t
 
 
 Zenoh Functions

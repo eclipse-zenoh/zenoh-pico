@@ -34,7 +34,7 @@
                          .kind = 0,                                                                 \
                          .qos = {0}};                                                               \
         z_loaned_sample_t sample = _z_sample_rc_new_from_val(s);                                    \
-        z_call(closure, &sample);                                                                   \
+        z_call(*z_loan(closure), &sample);                                                          \
     } while (0);
 
 #define _RECV(handler, method, buf)                                                   \
