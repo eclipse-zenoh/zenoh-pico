@@ -132,7 +132,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
+int8_t _z_trigger_queryables(_z_session_t *zn, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
                              const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
 

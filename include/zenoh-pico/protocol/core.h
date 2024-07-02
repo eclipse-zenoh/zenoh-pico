@@ -168,6 +168,7 @@ typedef struct {
 _z_value_t _z_value_null(void);
 _z_value_t _z_value_steal(_z_value_t *value);
 int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+void _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 

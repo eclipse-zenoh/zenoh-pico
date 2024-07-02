@@ -60,7 +60,7 @@ void _z_query_free(_z_query_t **query) {
 }
 
 #if Z_FEATURE_QUERYABLE == 1
-_z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_t *zn,
+_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_t *zn,
                            uint32_t request_id, const _z_bytes_t attachment) {
     _z_query_t q = _z_query_null();
     q._request_id = request_id;
@@ -71,7 +71,7 @@ _z_query_t _z_query_create(const _z_value_t *value, _z_keyexpr_t *key, const _z_
     q._anyke = (strstr(q._parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
     q._key = _z_keyexpr_steal(key);
     _z_bytes_copy(&q.attachment, &attachment);
-    _z_value_copy(&q._value, value);  // FIXME: Move encoding, Issue #482
+    _z_value_move(&q._value, value);
     return q;
 }
 
