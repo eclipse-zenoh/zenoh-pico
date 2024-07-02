@@ -95,6 +95,11 @@
     typedef struct name##_rc_t {                                                          \
         name##_inner_rc_t *in;                                                            \
     } name##_rc_t;                                                                        \
+    static inline name##_rc_t name##_rc_null(void) {                                      \
+        name##_rc_t p;                                                                    \
+        p.in = NULL;                                                                      \
+        return p;                                                                         \
+    }                                                                                     \
     static inline name##_rc_t name##_rc_new(void) {                                       \
         name##_rc_t p;                                                                    \
         p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \

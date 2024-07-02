@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         assert(z_declare_queryable(qle, z_loan(s2), z_loan(ke), &callback, NULL) == _Z_RES_OK);
-        printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val->_entity_id, (z_zint_t)0, s1_res);
+        printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val._entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
 
@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_val->_entity_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_val._entity_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
 
     while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
-        printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_val->_entity_id);
+        printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_val._entity_id);
         z_undeclare_queryable(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free, NULL);
     }
