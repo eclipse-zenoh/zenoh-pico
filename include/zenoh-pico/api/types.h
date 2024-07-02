@@ -456,6 +456,11 @@ _Bool z_string_array_is_empty(const z_loaned_string_array_t *a);
 typedef void (*z_dropper_handler_t)(void *arg);
 typedef _z_data_handler_t z_data_handler_t;
 
+typedef struct {
+    void *context;
+    z_data_handler_t call;
+    z_dropper_handler_t drop;
+} _z_closure_sample_t;
 /**
  * Represents the sample closure.
  *
@@ -466,16 +471,18 @@ typedef _z_data_handler_t z_data_handler_t;
  *   z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
-typedef struct {
-    void *context;
-    z_data_handler_t call;
-    z_dropper_handler_t drop;
-} z_owned_closure_sample_t;
+_Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
+_Z_LOANED_TYPE(_z_closure_sample_t, closure_sample)
 
-void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample);
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample);
 
 typedef _z_queryable_handler_t z_queryable_handler_t;
 
+typedef struct {
+    void *context;
+    z_queryable_handler_t call;
+    z_dropper_handler_t drop;
+} _z_closure_query_t;
 /**
  * Represents the query callback closure.
  *
@@ -488,16 +495,18 @@ typedef _z_queryable_handler_t z_queryable_handler_t;
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-typedef struct {
-    void *context;
-    z_queryable_handler_t call;
-    z_dropper_handler_t drop;
-} z_owned_closure_query_t;
+_Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
+_Z_LOANED_TYPE(_z_closure_query_t, closure_query)
 
-void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query);
+void z_closure_query_call(const z_loaned_closure_query_t *closure, const z_loaned_query_t *query);
 
 typedef _z_reply_handler_t z_reply_handler_t;
 
+typedef struct {
+    void *context;
+    z_reply_handler_t call;
+    z_dropper_handler_t drop;
+} _z_closure_reply_t;
 /**
  * Represents the query reply callback closure.
  *
@@ -510,16 +519,18 @@ typedef _z_reply_handler_t z_reply_handler_t;
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-typedef struct {
-    void *context;
-    z_reply_handler_t call;
-    z_dropper_handler_t drop;
-} z_owned_closure_reply_t;
+_Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
+_Z_LOANED_TYPE(_z_closure_reply_t, closure_reply)
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply);
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, const z_loaned_reply_t *reply);
 
 typedef void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *arg);
 
+typedef struct {
+    void *context;
+    z_loaned_hello_handler_t call;
+    z_dropper_handler_t drop;
+} _z_closure_hello_t;
 /**
  * Represents the Zenoh ID callback closure.
  *
@@ -532,16 +543,18 @@ typedef void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *ar
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-typedef struct {
-    void *context;
-    z_loaned_hello_handler_t call;
-    z_dropper_handler_t drop;
-} z_owned_closure_hello_t;
+_Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
+_Z_LOANED_TYPE(_z_closure_hello_t, closure_hello)
 
-void z_closure_hello_call(const z_owned_closure_hello_t *closure, const z_loaned_hello_t *hello);
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, const z_loaned_hello_t *hello);
 
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
+typedef struct {
+    void *context;
+    z_id_handler_t call;
+    z_dropper_handler_t drop;
+} _z_closure_zid_t;
 /**
  * Represents the Zenoh ID callback closure.
  *
@@ -553,13 +566,10 @@ typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
-typedef struct {
-    void *context;
-    z_id_handler_t call;
-    z_dropper_handler_t drop;
-} z_owned_closure_zid_t;
+_Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
+_Z_LOANED_TYPE(_z_closure_zid_t, closure_zid)
 
-void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id);
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

@@ -641,31 +641,31 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { retur
 const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->in->val._value.payload; }
 const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->in->val._value.encoding; }
 
-void z_closure_sample_call(const z_owned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
 }
 
-void z_closure_query_call(const z_owned_closure_query_t *closure, const z_loaned_query_t *query) {
+void z_closure_query_call(const z_loaned_closure_query_t *closure, const z_loaned_query_t *query) {
     if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
-void z_closure_reply_call(const z_owned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
 }
 
-void z_closure_hello_call(const z_owned_closure_hello_t *closure, const z_loaned_hello_t *hello) {
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, const z_loaned_hello_t *hello) {
     if (closure->call != NULL) {
         (closure->call)(hello, closure->context);
     }
 }
 
-void z_closure_zid_call(const z_owned_closure_zid_t *closure, const z_id_t *id) {
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id) {
     if (closure->call != NULL) {
         (closure->call)(id, closure->context);
     }
@@ -737,11 +737,16 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 _Z_OWNED_FUNCTIONS_RC_IMPL(sample)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, closure_sample, _z_data_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, closure_query, _z_queryable_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, closure_reply, _z_reply_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, closure_zid, z_id_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_sample_t, z_loaned_closure_sample_t, closure_sample, _z_data_handler_t,
+                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_query_t, z_loaned_closure_query_t, closure_query,
+                                _z_queryable_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_reply_t, z_loaned_closure_reply_t, closure_reply, _z_reply_handler_t,
+                                z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_hello_t, z_loaned_closure_hello_t, closure_hello,
+                                z_loaned_hello_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(z_owned_closure_zid_t, z_loaned_closure_zid_t, closure_zid, z_id_handler_t,
+                                z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -756,15 +761,15 @@ void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_c
 int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callback) {
     int8_t ret = _Z_RES_OK;
 
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
 
     // TODO[API-NET]: When API and NET are a single layer, there is no wrap the user callback and args
     //                to enclose the z_reply_t into a z_owned_reply_t.
     __z_hello_handler_wrapper_t *wrapped_ctx =
         (__z_hello_handler_wrapper_t *)z_malloc(sizeof(__z_hello_handler_wrapper_t));
     if (wrapped_ctx != NULL) {
-        wrapped_ctx->user_call = callback->call;
+        wrapped_ctx->user_call = callback->_val.call;
         wrapped_ctx->ctx = ctx;
 
         char *opt_as_str = _z_config_get(config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
@@ -791,13 +796,14 @@ int8_t z_scout(z_owned_scouting_config_t *config, z_owned_closure_hello_t *callb
             _z_uuid_to_bytes(zid.id, zid_str);
         }
 
-        _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->drop, ctx);
+        _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->_val.drop, ctx);
 
         z_free(wrapped_ctx);
         z_scouting_config_drop(config);
     } else {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    z_closure_hello_null(callback);
 
     return ret;
 }
@@ -838,18 +844,19 @@ int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *cal
     switch (_Z_RC_IN_VAL(zs)._tp._type) {
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), callback);
+            _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), &callback->_val);
             break;
         default:
             break;
     }
     // Note and clear context
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
     // Drop if needed
-    if (callback->drop != NULL) {
-        callback->drop(ctx);
+    if (callback->_val.drop != NULL) {
+        callback->_val.drop(ctx);
     }
+    z_closure_zid_null(callback);
     return 0;
 }
 
@@ -857,18 +864,19 @@ int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_owned_closure_zid_t *c
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)._tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            _zp_unicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), callback);
+            _zp_unicast_fetch_zid(&(_Z_RC_IN_VAL(zs)._tp), &callback->_val);
             break;
         default:
             break;
     }
     // Note and clear context
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
     // Drop if needed
-    if (callback->drop != NULL) {
-        callback->drop(ctx);
+    if (callback->_val.drop != NULL) {
+        callback->_val.drop(ctx);
     }
+    z_closure_zid_null(callback);
     return 0;
 }
 
@@ -1071,8 +1079,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
              z_owned_closure_reply_t *callback, z_get_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
 
     z_get_options_t opt;
     z_get_options_default(&opt);
@@ -1096,14 +1104,16 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(opt.payload),
                         .encoding = _z_encoding_from_owned(opt.encoding)};
 
-    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, value, callback->call,
-                   callback->drop, ctx, opt.timeout_ms, _z_bytes_from_owned_bytes(opt.attachment));
+    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, value,
+                   callback->_val.call, callback->_val.drop, ctx, opt.timeout_ms,
+                   _z_bytes_from_owned_bytes(opt.attachment));
     if (opt.payload != NULL) {
         z_bytes_drop(opt.payload);
     }
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+    z_closure_reply_null(callback);
     return ret;
 }
 
@@ -1139,8 +1149,8 @@ void z_queryable_options_default(z_queryable_options_t *options) { options->comp
 int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
                            const z_loaned_keyexpr_t *keyexpr, z_owned_closure_query_t *callback,
                            const z_queryable_options_t *options) {
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
 
     _z_keyexpr_t key = *keyexpr;
 
@@ -1161,8 +1171,9 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
         opt.complete = options->complete;
     }
 
-    queryable->_val = _z_declare_queryable(zs, key, opt.complete, callback->call, callback->drop, ctx);
+    queryable->_val = _z_declare_queryable(zs, key, opt.complete, callback->_val.call, callback->_val.drop, ctx);
 
+    z_closure_query_null(callback);
     return _Z_RES_OK;
 }
 
@@ -1249,8 +1260,8 @@ void z_subscriber_options_default(z_subscriber_options_t *options) { options->re
 
 int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                             z_owned_closure_sample_t *callback, const z_subscriber_options_t *options) {
-    void *ctx = callback->context;
-    callback->context = NULL;
+    void *ctx = callback->_val.context;
+    callback->_val.context = NULL;
     char *suffix = NULL;
 
     _z_keyexpr_t key = *keyexpr;
@@ -1288,11 +1299,11 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     if (options != NULL) {
         subinfo.reliability = options->reliability;
     }
-    _z_subscriber_t *int_sub = _z_declare_subscriber(zs, key, subinfo, callback->call, callback->drop, ctx);
+    _z_subscriber_t *int_sub = _z_declare_subscriber(zs, key, subinfo, callback->_val.call, callback->_val.drop, ctx);
     if (suffix != NULL) {
         z_free(suffix);
     }
-
+    z_closure_sample_null(callback);
     sub->_val = int_sub;
 
     if (int_sub == NULL) {

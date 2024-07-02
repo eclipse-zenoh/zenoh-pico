@@ -245,6 +245,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
     assert_eq(zids, 0);
 
+    z_closure(&_ret_closure_zid, zid_handler, NULL, NULL);
     _ret_int8 = z_info_routers_zid(z_loan(s1), z_move(_ret_closure_zid));
     assert_eq(_ret_int8, 0);
 

@@ -59,7 +59,12 @@
                   z_owned_ring_handler_query_t : z_ring_handler_query_loan,   \
                   z_owned_ring_handler_reply_t : z_ring_handler_reply_loan,   \
                   z_owned_ring_handler_sample_t : z_ring_handler_sample_loan, \
-                  z_owned_reply_err_t : z_reply_err_loan                      \
+                  z_owned_reply_err_t : z_reply_err_loan,                     \
+                  z_owned_closure_sample_t : z_closure_sample_loan,           \
+                  z_owned_closure_reply_t : z_closure_reply_loan,             \
+                  z_owned_closure_query_t : z_closure_query_loan,             \
+                  z_owned_closure_hello_t : z_closure_hello_loan,             \
+                  z_owned_closure_zid_t : z_closure_zid_loan                  \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
@@ -155,11 +160,11 @@
  *   x: The closure to call
  */
 #define z_call(x, ...) \
-    _Generic((x), z_owned_closure_sample_t : z_closure_sample_call,                 \
-                  z_owned_closure_query_t : z_closure_query_call,                   \
-                  z_owned_closure_reply_t : z_closure_reply_call,                   \
-                  z_owned_closure_hello_t : z_closure_hello_call,                   \
-                  z_owned_closure_zid_t : z_closure_zid_call                        \
+    _Generic((x), z_loaned_closure_sample_t : z_closure_sample_call,                 \
+                  z_loaned_closure_query_t : z_closure_query_call,                   \
+                  z_loaned_closure_reply_t : z_closure_reply_call,                   \
+                  z_loaned_closure_hello_t : z_closure_hello_call,                   \
+                  z_loaned_closure_zid_t : z_closure_zid_call                        \
             ) (&x, __VA_ARGS__)
 
 #define z_try_recv(x, ...) \
@@ -283,9 +288,9 @@
 
 #define _z_closure_overloader(closure, callback, dropper, ctx, ...) \
     do {                                                            \
-        (closure)->call = callback;                                 \
-        (closure)->drop = dropper;                                  \
-        (closure)->context = ctx;                                   \
+        (closure)->_val.call = callback;                            \
+        (closure)->_val.drop = dropper;                             \
+        (closure)->_val.context = ctx;                              \
     } while (0);
 
 /**
@@ -326,7 +331,11 @@ inline const z_loaned_slice_t* z_loan(const z_owned_slice_t& x) { return z_slice
 inline const z_loaned_bytes_t* z_loan(const z_owned_bytes_t& x) { return z_bytes_loan(&x); }
 inline const z_loaned_encoding_t* z_loan(const z_owned_encoding_t& x) { return z_encoding_loan(&x); }
 inline const z_loaned_reply_err_t* z_loan(const z_owned_reply_err_t& x) { return z_reply_err_loan(&x); }
-
+inline const z_loaned_closure_sample_t* z_loan(const z_owned_closure_sample_t& x) { return z_closure_sample_loan(&x); }
+inline const z_loaned_closure_reply_t* z_loan(const z_owned_closure_reply_t& x) { return z_closure_reply_loan(&x); }
+inline const z_loaned_closure_query_t* z_loan(const z_owned_closure_query_t& x) { return z_closure_query_loan(&x); }
+inline const z_loaned_closure_hello_t* z_loan(const z_owned_closure_hello_t& x) { return z_closure_hello_loan(&x); }
+inline const z_loaned_closure_zid_t* z_loan(const z_owned_closure_zid_t& x) { return z_closure_zid_loan(&x); }
 // z_loan_mut definition
 inline z_loaned_keyexpr_t* z_loan_mut(z_owned_keyexpr_t& x) { return z_keyexpr_loan_mut(&x); }
 inline z_loaned_keyexpr_t* z_loan_mut(z_view_keyexpr_t& x) { return z_view_keyexpr_loan_mut(&x); }
@@ -418,15 +427,15 @@ inline bool z_check(const z_owned_reply_err_t& v) { return z_reply_err_check(&v)
 
 // z_call definition
 
-inline void z_call(const z_owned_closure_sample_t &closure, const z_loaned_sample_t *sample) 
+inline void z_call(const z_loaned_closure_sample_t &closure, const z_loaned_sample_t *sample) 
     { z_closure_sample_call(&closure, sample); }
-inline void z_call(const z_owned_closure_query_t &closure, const z_loaned_query_t *query)
+inline void z_call(const z_loaned_closure_query_t &closure, const z_loaned_query_t *query)
     { z_closure_query_call(&closure, query); }
-inline void z_call(const z_owned_closure_reply_t &closure, const z_loaned_reply_t *reply)
+inline void z_call(const z_loaned_closure_reply_t &closure, const z_loaned_reply_t *reply)
     { z_closure_reply_call(&closure, reply); }
-inline void z_call(const z_owned_closure_hello_t &closure, const z_loaned_hello_t *hello)
+inline void z_call(const z_loaned_closure_hello_t &closure, const z_loaned_hello_t *hello)
     { z_closure_hello_call(&closure, hello); }
-inline void z_call(const z_owned_closure_zid_t &closure, const z_id_t *zid)
+inline void z_call(const z_loaned_closure_zid_t &closure, const z_id_t *zid)
     { z_closure_zid_call(&closure, zid); }
 
 inline void z_closure(
@@ -434,45 +443,45 @@ inline void z_closure(
     void (*call)(const z_loaned_hello_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
-    closure->context = context;
-    closure->drop = drop;
-    closure->call = call;
+    closure->_val.context = context;
+    closure->_val.drop = drop;
+    closure->_val.call = call;
 };
 inline void z_closure(
     z_owned_closure_query_t* closure,
     void (*call)(const z_loaned_query_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
-    closure->context = context;
-    closure->drop = drop;
-    closure->call = call;
+    closure->_val.context = context;
+    closure->_val.drop = drop;
+    closure->_val.call = call;
 };
 inline void z_closure(
     z_owned_closure_reply_t* closure,
     void (*call)(const z_loaned_reply_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
-    closure->context = context;
-    closure->drop = drop;
-    closure->call = call;
+    closure->_val.context = context;
+    closure->_val.drop = drop;
+    closure->_val.call = call;
 };
 inline void z_closure(
     z_owned_closure_sample_t* closure,
     void (*call)(const z_loaned_sample_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
-    closure->context = context;
-    closure->drop = drop;
-    closure->call = call;
+    closure->_val.context = context;
+    closure->_val.drop = drop;
+    closure->_val.call = call;
 };
 inline void z_closure(
     z_owned_closure_zid_t* closure,
     void (*call)(const z_id_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
-    closure->context = context;
-    closure->drop = drop;
-    closure->call = call;
+    closure->_val.context = context;
+    closure->_val.drop = drop;
+    closure->_val.call = call;
 };
 
 inline bool z_try_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
@@ -710,6 +719,46 @@ struct z_loaned_to_owned_type_t<z_loaned_subscriber_t> {
 template <>
 struct z_owned_to_loaned_type_t<z_owned_subscriber_t> {
     typedef z_loaned_subscriber_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_sample_t> {
+    typedef z_loaned_closure_sample_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_sample_t> {
+    typedef z_owned_closure_sample_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_reply_t> {
+    typedef z_loaned_closure_reply_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_reply_t> {
+    typedef z_owned_closure_reply_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_query_t> {
+    typedef z_loaned_closure_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_query_t> {
+    typedef z_owned_closure_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_hello_t> {
+    typedef z_loaned_closure_hello_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_hello_t> {
+    typedef z_owned_closure_hello_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_closure_zid_t> {
+    typedef z_loaned_closure_zid_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_closure_zid_t> {
+    typedef z_owned_closure_zid_t type;
 };
 
 #endif

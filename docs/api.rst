@@ -246,10 +246,15 @@ It is guaranteed that:
 
 
 .. autoctype:: types.h::z_owned_closure_sample_t
+.. autoctype:: types.h::z_loaned_closure_sample_t
 .. autoctype:: types.h::z_owned_closure_query_t
+.. autoctype:: types.h::z_loaned_closure_query_t
 .. autoctype:: types.h::z_owned_closure_reply_t
+.. autoctype:: types.h::z_loaned_closure_reply_t
 .. autoctype:: types.h::z_owned_closure_hello_t
+.. autoctype:: types.h::z_loaned_closure_hello_t
 .. autoctype:: types.h::z_owned_closure_zid_t
+.. autoctype:: types.h::z_loaned_closure_zid_t
 
 
 Zenoh Functions

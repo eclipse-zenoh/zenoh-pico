@@ -17,7 +17,7 @@
 
 #include "zenoh-pico/api/types.h"
 
-void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback);
+void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback);
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
 
 #endif /* ZENOH_PICO_UNICAST_H */
