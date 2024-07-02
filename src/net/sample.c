@@ -30,7 +30,8 @@ _z_sample_t _z_sample_null(void) {
 }
 
 _Bool _z_sample_check(const _z_sample_t *sample) {
-    return _z_keyexpr_check(&sample->keyexpr) && _z_bytes_check(&sample->payload);
+    return _z_keyexpr_check(&sample->keyexpr) || _z_bytes_check(&sample->payload) ||
+           _z_bytes_check(&sample->attachment) || _z_encoding_check(&sample->encoding);
 }
 
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
@@ -40,6 +41,7 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 
     _z_bytes_move(&dst->payload, &src->payload);
     _z_encoding_move(&dst->encoding, &src->encoding);
+    _z_bytes_move(&dst->attachment, &src->attachment);
 
     dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
     dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
@@ -62,13 +64,15 @@ void _z_sample_free(_z_sample_t **sample) {
     }
 }
 
-void _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
-    dst->keyexpr = _z_keyexpr_duplicate(src->keyexpr);
-    _z_bytes_copy(&dst->payload, &src->payload);
-    dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
-    _z_encoding_copy(&dst->encoding, &src->encoding);
+int8_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
+    *dst = _z_sample_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->keyexpr, &src->keyexpr));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_sample_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding), _z_sample_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, &src->attachment), _z_sample_clear(dst));
     dst->kind = src->kind;
-    _z_bytes_copy(&dst->attachment, &src->attachment);
+    dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
+    return _Z_RES_OK;
 }
 
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src) {

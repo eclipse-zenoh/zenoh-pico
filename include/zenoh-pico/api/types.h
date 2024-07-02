@@ -395,15 +395,8 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *
  * A sample is the value associated to a given key-expression at a given point in time.
  *
- * Members:
- *   z_keyexpr_t keyexpr: The keyexpr of this data sample.
- *   z_loaned_bytes_t* payload: The value of this data sample.
- *   z_loaned_encoding_t encoding: The encoding of the value of this data sample.
- *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
- *   z_timestamp_t timestamp: The timestamp of this data sample.
- *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-_Z_OWNED_TYPE_PTR(_z_sample_t, sample)
+_Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
 _Z_LOANED_TYPE(_z_sample_t, sample)
 
 /**
@@ -420,7 +413,7 @@ _Z_LOANED_TYPE(_z_hello_t, hello)
 /**
  * Represents the reply to a query.
  */
-_Z_OWNED_TYPE_PTR(_z_reply_t, reply)
+_Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 _Z_LOANED_TYPE(_z_reply_t, reply)
 
 /**

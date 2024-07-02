@@ -667,7 +667,7 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 }
 #endif
 
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_sample_t, sample, _z_sample_copy, _z_sample_free)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_clear)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_data_handler_t, z_dropper_handler_t)
@@ -988,7 +988,7 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
-_Z_OWNED_FUNCTIONS_PTR_IMPL(_z_reply_t, reply, _z_reply_copy, _z_reply_free)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, _z_reply_copy, _z_reply_clear)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();

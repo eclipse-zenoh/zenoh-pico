@@ -37,7 +37,7 @@ typedef struct _z_reply_data_t {
 } _z_reply_data_t;
 
 void _z_reply_data_clear(_z_reply_data_t *rd);
-void _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
+int8_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
 _z_reply_t _z_reply_move(_z_reply_t *src_reply);
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
@@ -58,9 +58,10 @@ typedef struct _z_reply_t {
 } _z_reply_t;
 
 _z_reply_t _z_reply_null(void);
+_Bool _z_reply_check(const _z_reply_t *reply);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
-void _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
+int8_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
 _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
                            const _z_bytes_t attachment);
