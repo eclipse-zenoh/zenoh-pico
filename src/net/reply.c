@@ -17,14 +17,19 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
+_z_reply_data_t _z_reply_data_null(void) {
+    return (_z_reply_data_t){
+        .replier_id = {.id = {0}},
+        .sample = _z_sample_null(),
+    };
+}
+
 _z_reply_t _z_reply_null(void) {
-    _z_reply_t r = {._tag = Z_REPLY_TAG_DATA,
-                    .data = {
-                        .replier_id = {.id = {0}},
-                        .sample = _z_sample_null(),
-                    }};
+    _z_reply_t r = {._tag = Z_REPLY_TAG_DATA, .data = _z_reply_data_null()};
     return r;
 }
+
+_Bool _z_reply_check(const _z_reply_t *reply) { return _z_sample_check(&reply->data.sample); }
 
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
@@ -42,9 +47,11 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
     }
 }
 
-void _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
+int8_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
+    *dst = _z_reply_data_null();
+    _Z_RETURN_IF_ERR(_z_sample_copy(&dst->sample, &src->sample));
     dst->replier_id = src->replier_id;
-    _z_sample_copy(&dst->sample, &src->sample);
+    return _Z_RES_OK;
 }
 
 _z_reply_t _z_reply_move(_z_reply_t *src_reply) {
@@ -66,9 +73,11 @@ void _z_reply_free(_z_reply_t **reply) {
     }
 }
 
-void _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
-    _z_reply_data_copy(&dst->data, &src->data);
+int8_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
+    *dst = _z_reply_null();
+    _Z_RETURN_IF_ERR(_z_reply_data_copy(&dst->data, &src->data));
     dst->_tag = src->_tag;
+    return _Z_RES_OK;
 }
 
 _Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
