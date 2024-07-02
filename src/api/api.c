@@ -837,6 +837,24 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
 const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
 size_t z_string_len(const z_loaned_string_t *str) { return str->len; }
 
+int8_t z_string_wrap(z_owned_string_t *str, const char *value) {
+    str->_val = _z_string_wrap((char *)value);
+    return _Z_RES_OK;
+}
+
+void z_string_empty(z_owned_string_t *str) {
+    str->_val.val = NULL;
+    str->_val.len = 0;
+}
+
+int8_t z_string_from_substring(z_owned_string_t *str, const char *value, size_t len) {
+    str->_val.val = (char *)value;
+    str->_val.len = len;
+    return _Z_RES_OK;
+}
+
+bool z_string_is_empty(const z_loaned_string_t *str) { return str->val == NULL; }
+
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_undeclare_and_clear_publisher(_z_publisher_t *pub) {
     int8_t ret = _Z_RES_OK;

@@ -379,6 +379,10 @@ Primitives
 .. autocfunction:: primitives.h::z_sample_loan
 .. autocfunction:: primitives.h::z_string_data
 .. autocfunction:: primitives.h::z_string_len
+.. autocfunction:: primitives.h::z_string_wrap
+.. autocfunction:: primitives.h::z_string_from_substring
+.. autocfunction:: primitives.h::z_string_empty
+.. autocfunction:: primitives.h::z_string_is_empty
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
