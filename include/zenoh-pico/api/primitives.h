@@ -74,6 +74,22 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
+ * Builds a :c:type:`z_keyexpr_t` from a null-terminated string with auto canonization.
+ * It is a loaned key expression that aliases ``name``.
+ * The string is canonized in-place before being passed to keyexpr, possibly shortening it by modifying len.
+ * May SEGFAULT if `name` is NULL or lies in read-only memory (as values initialized with string litterals do).
+ * `name` must outlive the constucted key expression.
+ *
+ * Parameters:
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
+
+/**
  * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
  *
  * If given keyexpr contains a declared keyexpr, the resulting owned string will be uninitialized.
