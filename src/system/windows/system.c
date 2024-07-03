@@ -141,6 +141,12 @@ int8_t _z_condvar_signal(_z_condvar_t *cv) {
     return ret;
 }
 
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    int8_t ret = _Z_RES_OK;
+    WakeAllConditionVariable(cv);
+    return ret;
+}
+
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     SleepConditionVariableSRW(cv, m, INFINITE, 0);

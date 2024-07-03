@@ -391,12 +391,12 @@ inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }
 inline void z_drop(z_owned_closure_reply_t* v) { z_closure_reply_drop(v); }
 inline void z_drop(z_owned_closure_hello_t* v) { z_closure_hello_drop(v); }
 inline void z_drop(z_owned_closure_zid_t* v) { z_closure_zid_drop(v); }
-inline void z_drop(z_owned_sample_ring_channel_t* v) { z_sample_ring_channel_drop(v); }
-inline void z_drop(z_owned_sample_fifo_channel_t* v) { z_sample_fifo_channel_drop(v); }
-inline void z_drop(z_owned_query_ring_channel_t* v) { z_query_ring_channel_drop(v); }
-inline void z_drop(z_owned_query_fifo_channel_t* v) { z_query_fifo_channel_drop(v); }
-inline void z_drop(z_owned_reply_ring_channel_t* v) { z_reply_ring_channel_drop(v); }
-inline void z_drop(z_owned_reply_fifo_channel_t* v) { z_reply_fifo_channel_drop(v); }
+inline void z_drop(z_owned_ring_handler_sample_t* v) { z_ring_handler_sample_drop(v); }
+inline void z_drop(z_owned_fifo_handler_sample_t* v) { z_fifo_handler_sample_drop(v); }
+inline void z_drop(z_owned_ring_handler_query_t* v) { z_ring_handler_query_drop(v); }
+inline void z_drop(z_owned_fifo_handler_query_t* v) { z_fifo_handler_query_drop(v); }
+inline void z_drop(z_owned_ring_handler_reply_t* v) { z_ring_handler_reply_drop(v); }
+inline void z_drop(z_owned_fifo_handler_reply_t* v) { z_fifo_handler_reply_drop(v); }
 
 // z_null definition
 

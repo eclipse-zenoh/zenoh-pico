@@ -26,8 +26,8 @@
 // -- Channel
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,          \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,                \
-                               collection_pull_f, collection_try_pull_f, elem_owned_type, elem_loaned_type,            \
-                               elem_clone_f, elem_drop_f)                                                              \
+                               collection_pull_f, collection_try_pull_f, collection_close_f, elem_owned_type,          \
+                               elem_loaned_type, elem_clone_f, elem_drop_f, elem_null_f)                               \
     typedef struct {                                                                                                   \
         collection_type *collection;                                                                                   \
     } handler_type;                                                                                                    \
@@ -44,6 +44,12 @@
         memcpy(dst, src, sizeof(elem_owned_type));                                                                     \
         z_free(src);                                                                                                   \
     }                                                                                                                  \
+    static inline void _z_##handler_name##_close(void *context) {                                                      \
+        int8_t ret = collection_close_f((collection_type *)context);                                                   \
+        if (ret < 0) {                                                                                                 \
+            _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                        \
+        }                                                                                                              \
+    }                                                                                                                  \
     static inline void _z_##handler_name##_send(const elem_loaned_type *elem, void *context) {                         \
         elem_owned_type *internal_elem = (elem_owned_type *)z_malloc(sizeof(elem_owned_type));                         \
         if (internal_elem == NULL) {                                                                                   \
@@ -56,19 +62,31 @@
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                        \
         }                                                                                                              \
     }                                                                                                                  \
-    static inline void z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler, elem_owned_type *elem) {    \
+    static inline _Bool z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler, elem_owned_type *elem) {   \
+        elem_null_f(elem);                                                                                             \
         int8_t ret = collection_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);   \
+        if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                            \
+            return false;                                                                                              \
+        }                                                                                                              \
         if (ret != _Z_RES_OK) {                                                                                        \
             _Z_ERROR("%s failed: %i", #collection_pull_f, ret);                                                        \
+            return false;                                                                                              \
         }                                                                                                              \
+        return true;                                                                                                   \
     }                                                                                                                  \
-    static inline void z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                         \
-                                                   elem_owned_type *elem) {                                            \
+    static inline _Bool z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                        \
+                                                    elem_owned_type *elem) {                                           \
+        elem_null_f(elem);                                                                                             \
         int8_t ret =                                                                                                   \
             collection_try_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);        \
+        if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                            \
+            return false;                                                                                              \
+        }                                                                                                              \
         if (ret != _Z_RES_OK) {                                                                                        \
             _Z_ERROR("%s failed: %i", #collection_try_pull_f, ret);                                                    \
+            return false;                                                                                              \
         }                                                                                                              \
+        return true;                                                                                                   \
     }                                                                                                                  \
                                                                                                                        \
     static inline void _z_##handler_name##_clear(handler_type *handler) {                                              \
@@ -93,7 +111,7 @@
         if (handler->_val.collection == NULL) {                                                                        \
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                        \
         }                                                                                                              \
-        callback_new_f(callback, _z_##handler_name##_send, NULL, handler->_val.collection);                            \
+        callback_new_f(callback, _z_##handler_name##_send, _z_##handler_name##_close, handler->_val.collection);       \
         return _Z_RES_OK;                                                                                              \
     }
 
@@ -109,10 +127,12 @@
                            /* collection_push_f               */ _z_##kind_name##_mt_push,                  \
                            /* collection_pull_f               */ _z_##kind_name##_mt_pull,                  \
                            /* collection_try_pull_f           */ _z_##kind_name##_mt_try_pull,              \
+                           /* collection_close_f              */ _z_##kind_name##_mt_close,                 \
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
                            /* elem_clone_f                     */ z_##item_name##_clone,                    \
-                           /* elem_drop_f                     */ z_##item_name##_drop)
+                           /* elem_drop_f                     */ z_##item_name##_drop,                      \
+                           /* elem_null                       */ z_##item_name##_null)
 
 #define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \
     typedef struct {                                        \
