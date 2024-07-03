@@ -24,11 +24,11 @@ int8_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     return _z_task_init(&task->_val, attr, fun, arg);
 }
 
-int8_t z_task_join(z_loaned_task_t *task) { return _z_task_join(task); }
-
-void z_task_drop(z_owned_task_t *task) {
+int8_t z_task_join(z_owned_task_t *task) {
     _z_task_t *ptr = &task->_val;
-    _z_task_drop(&ptr);
+    int8_t ret = _z_task_join(ptr);
+    _z_task_free(&ptr);
+    return ret;
 }
 
 /*------------------ Mutex ------------------*/
