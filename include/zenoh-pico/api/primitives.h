@@ -876,6 +876,29 @@ void z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer)
 int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
+ * Create timestamp
+ *
+ * Parameters:
+ *   ts: An uninitialized :c:type:`z_timestamp_t`.
+ *   npt64_time: NPT64 time.
+ *   zid: id associated with this timestamp
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_id_t *zid, uint64_t npt64_time);
+
+/**
+ * Returns NPT64 time associated with this timestamp.
+ */
+uint64_t z_timestamp_npt64_time(const z_timestamp_t *ts);
+
+/**
+ * Returns id associated with this timestamp.
+ */
+z_id_t z_timestamp_id(const z_timestamp_t *ts);
+
+/**
  * Checks validity of a timestamp
  *
  * Parameters:

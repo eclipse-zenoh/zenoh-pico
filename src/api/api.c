@@ -554,6 +554,16 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
     return _z_bytes_writer_write(writer, src, len);
 }
 
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_id_t *zid, uint64_t npt64_time) {
+    ts->id = *zid;
+    ts->time = npt64_time;
+    return _Z_RES_OK;
+}
+
+uint64_t z_timestamp_npt64_time(const z_timestamp_t *ts) { return ts->time; }
+
+z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
+
 _Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
