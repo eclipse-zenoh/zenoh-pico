@@ -23,6 +23,7 @@
 /*-------- Fifo Buffer Multithreaded --------*/
 typedef struct {
     _z_fifo_t _fifo;
+    _Bool is_closed;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _cv_not_full;
@@ -33,6 +34,7 @@ typedef struct {
 int8_t _z_fifo_mti_init(size_t capacity);
 _z_fifo_mt_t *_z_fifo_mt_new(size_t capacity);
 
+int8_t _z_fifo_mt_close(_z_fifo_mt_t *fifo);
 void _z_fifo_mt_clear(_z_fifo_mt_t *fifo, z_element_free_f free_f);
 void _z_fifo_mt_free(_z_fifo_mt_t *fifo, z_element_free_f free_f);
 

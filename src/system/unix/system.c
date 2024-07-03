@@ -133,6 +133,8 @@ int8_t _z_condvar_drop(_z_condvar_t *cv) { return (int8_t)pthread_cond_destroy(c
 
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return (int8_t)pthread_cond_signal(cv); }
 
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return (int8_t)pthread_cond_broadcast(cv); }
+
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return (int8_t)pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

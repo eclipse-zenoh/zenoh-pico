@@ -156,6 +156,7 @@ int8_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pd
 int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
 int8_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 

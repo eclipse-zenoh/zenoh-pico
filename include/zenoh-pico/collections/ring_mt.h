@@ -23,6 +23,7 @@
 /*-------- Ring Buffer Multithreaded --------*/
 typedef struct {
     _z_ring_t _ring;
+    _Bool is_closed;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _cv_not_empty;
@@ -31,6 +32,7 @@ typedef struct {
 
 int8_t _z_ring_mt_init(_z_ring_mt_t *ring, size_t capacity);
 _z_ring_mt_t *_z_ring_mt_new(size_t capacity);
+int8_t _z_ring_mt_close(_z_ring_mt_t *ring);
 
 void _z_ring_mt_clear(_z_ring_mt_t *ring, z_element_free_f free_f);
 void _z_ring_mt_free(_z_ring_mt_t *ring, z_element_free_f free_f);

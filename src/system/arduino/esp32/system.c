@@ -111,6 +111,8 @@ int8_t _z_condvar_free(_z_condvar_t *cv) { return pthread_cond_destroy(cv); }
 
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return pthread_cond_signal(cv); }
 
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return pthread_cond_broadcast(cv); }
+
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

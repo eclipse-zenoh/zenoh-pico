@@ -107,6 +107,7 @@ int8_t _z_condvar_init(_z_condvar_t *cv);
 int8_t _z_condvar_drop(_z_condvar_t *cv);
 
 int8_t _z_condvar_signal(_z_condvar_t *cv);
+int8_t _z_condvar_signal_all(_z_condvar_t *cv);
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
 
 _Z_OWNED_TYPE_VALUE(_z_condvar_t, condvar)

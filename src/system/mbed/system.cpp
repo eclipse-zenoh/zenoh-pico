@@ -97,6 +97,11 @@ int8_t _z_condvar_drop(_z_condvar_t *cv) {
 }
 
 int8_t _z_condvar_signal(_z_condvar_t *cv) {
+    ((ConditionVariable *)*cv)->notify_one();
+    return 0;
+}
+
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
     ((ConditionVariable *)*cv)->notify_all();
     return 0;
 }
