@@ -143,7 +143,7 @@ int8_t _z_condvar_signal(_z_condvar_t *cv) {
 
 int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
-    WakeAllConditionVariables(cv);
+    WakeAllConditionVariable(cv);
     return ret;
 }
 
