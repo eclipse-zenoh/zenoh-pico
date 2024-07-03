@@ -27,7 +27,7 @@ typedef struct _z_encoding_t {
     uint16_t id;
 } _z_encoding_t;
 
-int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema);
+int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len);
 _z_encoding_t _z_encoding_wrap(uint16_t id, const char *schema);
 _z_encoding_t _z_encoding_null(void);
 void _z_encoding_clear(_z_encoding_t *encoding);

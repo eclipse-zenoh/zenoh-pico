@@ -19,12 +19,12 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
-int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema) {
+int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len) {
     encoding->id = id;
     // Clone schema
     if (schema != NULL) {
-        encoding->schema = _z_string_make(schema);
-        if (encoding->schema.val == NULL) {
+        encoding->schema = _z_string_n_make(schema, len);
+        if (encoding->schema.len != len) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     } else {
