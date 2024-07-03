@@ -36,6 +36,17 @@ _z_string_t _z_string_make(const char *value) {
     return s;
 }
 
+_z_string_t _z_string_n_make(const char *value, size_t len) {
+    _z_string_t s;
+    s.val = _z_str_n_clone(value, len);
+    if (s.val == NULL) {
+        s.len = 0;
+    } else {
+        s.len = len;
+    }
+    return s;
+}
+
 _z_string_t _z_string_wrap(char *value) {
     _z_string_t s;
     s.val = value;
@@ -171,12 +182,12 @@ void _z_str_free(char **src) {
 
 void _z_str_copy(char *dst, const char *src) {
     size_t size = _z_str_size(src);
-    strncpy(dst, src, size);
+    strncpy(dst, src, size - 1);
     dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
 }
 
 void _z_str_n_copy(char *dst, const char *src, size_t size) {
-    strncpy(dst, src, size);
+    strncpy(dst, src, size - 1);
     dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
 }
 
@@ -185,6 +196,15 @@ char *_z_str_clone(const char *src) {
     char *dst = (char *)z_malloc(len);
     if (dst != NULL) {
         _z_str_n_copy(dst, src, len);
+    }
+
+    return dst;
+}
+
+char *_z_str_n_clone(const char *src, size_t len) {
+    char *dst = (char *)z_malloc(len + 1);
+    if (dst != NULL) {
+        _z_str_n_copy(dst, src, len + 1);
     }
 
     return dst;

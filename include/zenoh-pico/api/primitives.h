@@ -1133,6 +1133,49 @@ const char *z_string_data(const z_loaned_string_t *str);
  */
 size_t z_string_len(const z_loaned_string_t *str);
 
+/**
+ * Builds a :c:type:`z_string_t` by wrapping a ``const char *`` string.
+ *
+ * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_string_t`.
+ *   value: Pointer to a null terminated string.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_string_from_str(z_owned_string_t *str, const char *value);
+
+/**
+ * Builds an empty :c:type:`z_string_t`.
+ *
+ * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_string_t`.
+ */
+void z_string_empty(z_owned_string_t *str);
+
+/**
+ * Builds a :c:type:`z_string_t` by wrapping a substring specified by ``const char *`` and length `len`.
+ *
+ * Parameters:
+ *   value: Pointer to a string.
+ *   len: String size.
+ *   str: Pointer to an uninitialized :c:type:`z_string_t`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len);
+
+/**
+ * Checks if string is empty
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to check.
+ * Return:
+ *  ``true`` if conainer is empty, ``false`` otherwise.
+ */
+bool z_string_is_empty(const z_loaned_string_t *str);
+
 /************* Primitives **************/
 /**
  * Scouts for other Zenoh entities like routers and/or peers.
