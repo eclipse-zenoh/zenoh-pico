@@ -25,6 +25,7 @@
 typedef char *_z_str_t;
 
 char *_z_str_clone(const char *src);
+char *_z_str_n_clone(const char *src, size_t len);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
 _Bool _z_str_eq(const char *left, const char *right);
@@ -72,6 +73,7 @@ typedef struct {
 _z_string_t _z_string_null(void);
 _Bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_make(const char *value);
+_z_string_t _z_string_n_make(const char *value, size_t len);
 _z_string_t _z_string_wrap(char *value);
 _z_string_t *_z_string_make_as_ptr(const char *value);
 

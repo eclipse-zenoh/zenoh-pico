@@ -1143,7 +1143,7 @@ size_t z_string_len(const z_loaned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_wrap(z_owned_string_t *str, const char *value);
+int8_t z_string_from_str(z_owned_string_t *str, const char *value);
 
 /**
  * Builds an empty :c:type:`z_string_t`.
@@ -1164,7 +1164,7 @@ void z_string_empty(z_owned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_substring(z_owned_string_t *str, const char *value, size_t len);
+int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len);
 
 /**
  * Checks if string is empty
