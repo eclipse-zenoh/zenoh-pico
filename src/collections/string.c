@@ -182,12 +182,12 @@ void _z_str_free(char **src) {
 
 void _z_str_copy(char *dst, const char *src) {
     size_t size = _z_str_size(src);
-    strncpy(dst, src, size);
+    strncpy(dst, src, size - 1);
     dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
 }
 
 void _z_str_n_copy(char *dst, const char *src, size_t size) {
-    strncpy(dst, src, size);
+    strncpy(dst, src, size - 1);
     dst[size - 1] = '\0';  // No matter what, strings are always null-terminated upon copy
 }
 
