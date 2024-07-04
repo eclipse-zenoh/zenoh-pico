@@ -276,20 +276,23 @@ static uint16_t _z_encoding_values_str_to_int(const char *schema, size_t len) {
     return UINT16_MAX;
 }
 
-static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
-    const char *id_end = strchr(s, ENCODING_SCHEMA_SEPARATOR);
+static int8_t _z_encoding_convert_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len) {
+    size_t pos = 0;
+    for (; pos < len; ++pos) {
+        if (s[pos] == ENCODING_SCHEMA_SEPARATOR) break;
+    }
+
     // Check id_end value + corner cases
-    if ((id_end != NULL) && (id_end != s)) {
-        // Calc length of the segment before separator
-        size_t len = (size_t)(id_end - 1 - s);
-        uint16_t id = _z_encoding_values_str_to_int(s, len);
+    if ((pos != len) && (pos != 0)) {
+        uint16_t id = _z_encoding_values_str_to_int(s, pos);
         // Check id
         if (id != UINT16_MAX) {
-            return _z_encoding_make(&encoding->_val, id, (id_end[1] == '\0') ? NULL : ++id_end);
+            const char *ptr = (pos + 1 == len) ? NULL : s + pos + 1;
+            return _z_encoding_make(&encoding->_val, id, ptr, len - pos - 1);
         }
     }
     // By default store the string as schema
-    return _z_encoding_make(&encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+    return _z_encoding_make(&encoding->_val, _Z_ENCODING_ID_DEFAULT, s, len);
 }
 
 static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
@@ -327,8 +330,8 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
 }
 
 #else
-static int8_t _z_encoding_convert_from_str(z_owned_encoding_t *encoding, const char *s) {
-    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s);
+static int8_t _z_encoding_convert_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len) {
+    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s, len);
 }
 
 static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
@@ -346,7 +349,17 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s) {
     z_encoding_null(encoding);
     // Convert string to encoding
     if (s != NULL) {
-        return _z_encoding_convert_from_str(encoding, s);
+        return _z_encoding_convert_from_substr(encoding, s, strlen(s));
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len) {
+    // Init owned encoding
+    z_encoding_null(encoding);
+    // Convert string to encoding
+    if (s != NULL) {
+        return _z_encoding_convert_from_substr(encoding, s, len);
     }
     return _Z_RES_OK;
 }

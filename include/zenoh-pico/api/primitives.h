@@ -346,6 +346,19 @@ int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *valu
 int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
 
 /**
+ * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
+ *
+ * Parameters:
+ *   encoding: Pointer to an uninitialized :c:type:`z_owned_encoding_t`.
+ *   s: Pointer to the string to use.
+ *   len: Number of characters from the string s to use.
+ *
+ * Return:
+ *   ``0`` if creation successful,``negative value`` otherwise.
+ */
+int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
+
+/**
  * Builds a string from a :c:type:`z_loaned_encoding_t`.
  *
  * Parameters:
