@@ -53,7 +53,7 @@ int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf) {
 
     _z_zint_t tmp;
     ret |= _z_zsize_decode(&tmp, zbf);
-    *en = _z_whatami_from_uint8(tmp);
+    *en = _z_whatami_from_uint8((uint8_t)tmp);
 
     return ret;
 }
