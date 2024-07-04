@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 /**
- * What values.
+ * What bitmask for scouting.
  *
  * Enumerators:
  *     Z_WHAT_ROUTER: Router.
@@ -32,7 +32,11 @@ extern "C" {
 typedef enum {
     Z_WHAT_ROUTER = 0x01,  // Router
     Z_WHAT_PEER = 0x02,    // Peer
-    Z_WHAT_CLIENT = 0x03   // Client
+    Z_WHAT_CLIENT = 0x04,  // Client
+    Z_WHAT_ROUTER_PEER = (0x01 | 0x02),
+    Z_WHAT_ROUTER_CLIENT = (0x01 | 0x04),
+    Z_WHAT_PEER_CLIENT = (0x02 | 0x04),
+    Z_WHAT_ROUTER_PEER_CLIENT = ((0x01 | 0x02) | 0x04),
 } z_what_t;
 
 /**
@@ -43,8 +47,12 @@ typedef enum {
  *     Z_WHATAMI_PEER: Bitmask to filter for Zenoh peers.
  *     Z_WHATAMI_CLIENT: Bitmask to filter for Zenoh clients.
  */
-typedef enum { Z_WHATAMI_ROUTER = 0x00, Z_WHATAMI_PEER = 0x01, Z_WHATAMI_CLIENT = 0x02 } z_whatami_t;
-#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
+typedef enum z_whatami_t {
+    Z_WHATAMI_ROUTER = 0x01,
+    Z_WHATAMI_PEER = 0x02,
+    Z_WHATAMI_CLIENT = 0x04,
+} z_whatami_t;
+#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER;
 
 /**
  * Status values for keyexpr canonization operation.

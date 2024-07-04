@@ -660,6 +660,34 @@ _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
 
+z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
+
+z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello) { return hello->_whatami; }
+
+const z_loaned_string_array_t *z_hello_locators(const z_loaned_hello_t *hello) { return &hello->_locators; }
+
+static const char *WHAT_AM_I_TO_STRING_MAP[8] = {
+    "Other",              // 0
+    "Router",             // 0b1
+    "Peer",               // 0b01
+    "Router|Peer",        // 0b11,
+    "Client",             // 0b100
+    "Router|Client",      // 0b101
+    "Peer|Client",        // 0b110
+    "Router|Peer|Client"  // 0b111
+};
+
+int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out) {
+    uint8_t idx = (uint8_t)whatami;
+    if (idx >= _ZP_ARRAY_SIZE(WHAT_AM_I_TO_STRING_MAP) || idx == 0) {
+        z_view_string_wrap(str_out, WHAT_AM_I_TO_STRING_MAP[0]);
+        return _Z_ERR_INVALID;
+    } else {
+        z_view_string_wrap(str_out, WHAT_AM_I_TO_STRING_MAP[idx]);
+    }
+    return _Z_RES_OK;
+}
+
 _Bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
     _z_string_svec_copy(dst, src);

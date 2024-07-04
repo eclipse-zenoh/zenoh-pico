@@ -181,10 +181,10 @@ void _z_value_free(_z_value_t **hello);
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_id_t zid;
-    _z_string_svec_t locators;
-    z_whatami_t whatami;
-    uint8_t version;
+    _z_id_t _zid;
+    _z_string_svec_t _locators;
+    z_whatami_t _whatami;
+    uint8_t _version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);

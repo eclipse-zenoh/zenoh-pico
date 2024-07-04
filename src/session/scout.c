@@ -78,21 +78,21 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             _Z_INFO("Received _Z_HELLO message");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
-                                hello->version = s_msg._body._hello._version;
-                                hello->whatami = s_msg._body._hello._whatami;
-                                memcpy(hello->zid.id, s_msg._body._hello._zid.id, 16);
+                                hello->_version = s_msg._body._hello._version;
+                                hello->_whatami = s_msg._body._hello._whatami;
+                                memcpy(hello->_zid.id, s_msg._body._hello._zid.id, 16);
 
                                 size_t n_loc = _z_locator_array_len(&s_msg._body._hello._locators);
                                 if (n_loc > 0) {
-                                    hello->locators = _z_string_svec_make(n_loc);
+                                    hello->_locators = _z_string_svec_make(n_loc);
 
                                     for (size_t i = 0; i < n_loc; i++) {
                                         _z_string_t s = _z_locator_to_string(&s_msg._body._hello._locators._val[i]);
-                                        _z_string_svec_append(&hello->locators, &s);
+                                        _z_string_svec_append(&hello->_locators, &s);
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address
-                                    _z_string_svec_clear(&hello->locators);
+                                    _z_string_svec_clear(&hello->_locators);
                                 }
 
                                 ret = _z_hello_list_push(ret, hello);

@@ -638,7 +638,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
     uint8_t zidlen = _z_id_len(msg->_zid);
     uint8_t cbyte = 0;
-    cbyte |= (msg->_whatami & 0x03);
+    cbyte |= _z_whatami_to_uint8(msg->_whatami);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &(_z_slice_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
@@ -659,7 +659,7 @@ int8_t _z_hello_decode_na(_z_s_msg_hello_t *msg, _z_zbuf_t *zbf, uint8_t header)
 
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
-    msg->_whatami = cbyte & 0x03;
+    msg->_whatami = _z_whatami_from_uint8(cbyte);
     uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
 
     if (ret == _Z_RES_OK) {
