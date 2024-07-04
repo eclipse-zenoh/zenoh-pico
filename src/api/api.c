@@ -1183,7 +1183,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
 }
 #endif
 
-int8_t z_keyexpr_new(z_owned_keyexpr_t *key, const char *name) {
+int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
     if (name != NULL) {
         key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
     } else {

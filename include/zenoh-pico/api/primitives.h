@@ -1634,7 +1634,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_new(z_owned_keyexpr_t *keyexpr, const char *name);
+int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.

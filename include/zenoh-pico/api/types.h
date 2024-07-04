@@ -104,7 +104,7 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *
  * Members are private and operations must be done using the provided functions:
  *
- *   - :c:func:`z_keyexpr_new`
+ *   - :c:func:`z_keyexpr_from_str`
  *   - :c:func:`z_keyexpr_is_initialized`
  *   - :c:func:`z_keyexpr_to_string`
  *   - :c:func:`zp_keyexpr_resolve`
