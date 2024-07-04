@@ -256,12 +256,14 @@ typedef struct {
  *   z_owned_encoding_t *encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    z_timestamp_t *timestamp;
     z_owned_bytes_t *attachment;
 } z_put_options_t;
 
@@ -271,10 +273,12 @@ typedef struct {
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when router.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    z_timestamp_t *timestamp;
 } z_delete_options_t;
 
 /**
@@ -283,19 +287,24 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
+    z_timestamp_t *timestamp;
     z_owned_bytes_t *attachment;
 } z_publisher_put_options_t;
 
 /**
  * Represents the configuration used to configure a delete operation by a previously declared publisher,
  * sent via :c:func:`z_publisher_delete`.
+ *
+ * Members:
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+    z_timestamp_t *timestamp;
 } z_publisher_delete_options_t;
 
 /**
