@@ -47,7 +47,7 @@ void fprintzid(z_id_t zid) {
 void fprintwhatami(z_whatami_t whatami) {
     z_view_string_t s;
     z_whatami_to_view_string(whatami, &s);
-    Serial.write(z_string_data(z_loan(s)), z_string_len(z_loan(s)));
+    Serial.write(z_string_data(z_view_string_loan(&s)), z_string_len(z_view_string_loan(&s)));
 }
 
 void fprintlocators(const z_loaned_string_array_t *locs) {
@@ -71,7 +71,7 @@ void fprinthello(const z_loaned_hello_t *hello) {
     Serial.print(", whatami: ");
     fprintwhatami(z_hello_whatami(hello));
     Serial.print(", locators: ");
-    fprintlocators(z_hello_locators(z_loan(hello)));
+    fprintlocators(z_hello_locators(hello));
     Serial.println(" }");
 }
 
