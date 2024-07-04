@@ -891,11 +891,13 @@ void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
     options->encoding = NULL;
+    options->timestamp = NULL;
     options->attachment = NULL;
 }
 
 void z_delete_options_default(z_delete_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->timestamp = NULL;
     options->priority = Z_PRIORITY_DEFAULT;
 }
 
@@ -909,12 +911,13 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
         opt.congestion_control = options->congestion_control;
         opt.encoding = options->encoding;
         opt.priority = options->priority;
+        opt.timestamp = options->timestamp;
         opt.attachment = options->attachment;
     }
 
-    ret =
-        _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload), _z_encoding_from_owned(opt.encoding),
-                 Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority, _z_bytes_from_owned_bytes(opt.attachment));
+    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
+                   _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
+                   opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
@@ -935,9 +938,10 @@ int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
+        opt.timestamp = options->timestamp;
     }
     ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
-                   opt.congestion_control, opt.priority, _z_bytes_null());
+                   opt.congestion_control, opt.priority, opt.timestamp, _z_bytes_null());
 
     return ret;
 }
@@ -988,9 +992,10 @@ int8_t z_undeclare_publisher(z_owned_publisher_t *pub) { return _z_undeclare_and
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
     options->encoding = NULL;
     options->attachment = NULL;
+    options->timestamp = NULL;
 }
 
-void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->__dummy = 0; }
+void z_publisher_delete_options_default(z_publisher_delete_options_t *options) { options->timestamp = NULL; }
 
 int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload,
                        const z_publisher_put_options_t *options) {
@@ -1000,6 +1005,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
     z_publisher_put_options_default(&opt);
     if (options != NULL) {
         opt.encoding = options->encoding;
+        opt.timestamp = options->timestamp;
         opt.attachment = options->attachment;
     }
     // Check if write filter is active before writing
@@ -1007,7 +1013,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
         // Write value
         ret = _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_from_owned_bytes(payload),
                        _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, pub->_congestion_control,
-                       pub->_priority, _z_bytes_from_owned_bytes(opt.attachment));
+                       pub->_priority, opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
     }
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(&pub->_zn.in->val, pub->_key, _z_bytes_from_owned_bytes(payload), _Z_N_QOS_DEFAULT,
@@ -1020,9 +1026,14 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
 }
 
 int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
-    (void)(options);
+    // Build options
+    z_publisher_delete_options_t opt;
+    z_publisher_delete_options_default(&opt);
+    if (options != NULL) {
+        opt.timestamp = options->timestamp;
+    }
     return _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
-                    pub->_congestion_control, pub->_priority, _z_bytes_null());
+                    pub->_congestion_control, pub->_priority, opt.timestamp, _z_bytes_null());
 }
 
 z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
