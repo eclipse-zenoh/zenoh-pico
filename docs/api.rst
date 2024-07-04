@@ -384,6 +384,10 @@ Primitives
 .. autocfunction:: primitives.h::z_string_from_substr
 .. autocfunction:: primitives.h::z_string_empty
 .. autocfunction:: primitives.h::z_string_is_empty
+.. autocfunction:: primitives.h::z_hello_zid
+.. autocfunction:: primitives.h::z_hello_whatami
+.. autocfunction:: primitives.h::z_hello_locators
+.. autocfunction:: primitives.h::z_whatami_to_view_string
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close

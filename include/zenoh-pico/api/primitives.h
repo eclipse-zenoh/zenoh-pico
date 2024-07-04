@@ -1212,6 +1212,49 @@ int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len
  */
 bool z_string_is_empty(const z_loaned_string_t *str);
 
+/**
+ * Returns id of Zenoh entity that transmitted hello message.
+ *
+ * Parameters:
+ *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ * Return:
+ *  Id of the Zenoh entity that transmitted hello message.
+ */
+z_id_t z_hello_zid(const z_loaned_hello_t *hello);
+
+/**
+ * Returns type of Zenoh entity that transmitted hello message.
+ *
+ * Parameters:
+ *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ * Return:
+ *  Type of the Zenoh entity that transmitted hello message.
+ */
+z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello);
+
+/**
+ * Constructs an array of locators of Zenoh entity that sent hello message.
+ *
+ * Parameters:
+ *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ * Return:
+ *   :c:type:`z_loaned_string_array_t` containing locators.
+ */
+const z_loaned_string_array_t *z_hello_locators(const z_loaned_hello_t *hello);
+
+/**
+ * Constructs a non-owned non-null-terminated string from the kind of zenoh entity.
+ *
+ * The string has static storage (i.e. valid until the end of the program).
+ * Parameters:
+ *   whatami: A whatami bitmask of zenoh entity kind.
+ *   str_out: An uninitialized memory location where strring will be constructed.
+ *
+ * Return:
+ *  ``0`` in case of success, ``negative value`` otherwise.
+ */
+int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
+
 /************* Primitives **************/
 /**
  * Scouts for other Zenoh entities like routers and/or peers.

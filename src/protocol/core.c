@@ -84,15 +84,15 @@ int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
 
 int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     *dst = _z_hello_null();
-    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->locators, &src->locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    dst->version = src->version;
-    dst->whatami = src->whatami;
-    memcpy(&dst->zid.id, &src->zid.id, _Z_ID_LEN);
+    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->_locators, &src->_locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    dst->_version = src->_version;
+    dst->_whatami = src->_whatami;
+    memcpy(&dst->_zid.id, &src->_zid.id, _Z_ID_LEN);
     return _Z_RES_OK;
 }
 
 _z_hello_t _z_hello_null(void) {
-    return (_z_hello_t){.zid = _z_id_empty(), .version = 0, .whatami = 0x0, .locators = _z_string_svec_make(0)};
+    return (_z_hello_t){._zid = _z_id_empty(), ._version = 0, ._whatami = 0x0, ._locators = _z_string_svec_make(0)};
 }
 
 void _z_value_move(_z_value_t *dst, _z_value_t *src) {
