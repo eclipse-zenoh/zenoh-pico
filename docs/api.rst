@@ -418,7 +418,7 @@ Primitives
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_query_reply_options_default
 .. autocfunction:: primitives.h::z_query_reply
-.. autocfunction:: primitives.h::z_keyexpr_new
+.. autocfunction:: primitives.h::z_keyexpr_from_str
 .. autocfunction:: primitives.h::z_declare_keyexpr
 .. autocfunction:: primitives.h::z_undeclare_keyexpr
 .. autocfunction:: primitives.h::z_subscriber_options_default

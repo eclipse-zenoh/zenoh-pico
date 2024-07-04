@@ -24,7 +24,7 @@
 
 void test_keyexpr(void) {
     z_owned_keyexpr_t keyexpr;
-    z_keyexpr_new(&keyexpr, URL);
+    z_keyexpr_from_str(&keyexpr, URL);
     assert(z_check(keyexpr));
     z_drop(z_move(keyexpr));
     assert(!z_check(keyexpr));
