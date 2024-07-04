@@ -238,14 +238,14 @@
  * Defines a generic function for cloning any of the ``z_owned_X_t`` types.
  *
  * Parameters:
- *   x: The instance to clone.
+ *   x: The clone storage.
+ *   y: The instance to clone.
  *
  * Returns:
  *   Returns the cloned instance of `x`.
  */
-#define z_clone(x) _Generic((x), \
+#define z_clone(x, y) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_clone,                 \
-                  z_owned_config_t : z_config_clone,                   \
                   z_owned_session_t : z_session_clone,                 \
                   z_owned_subscriber_t : z_subscriber_clone,           \
                   z_owned_publisher_t : z_publisher_clone,             \
@@ -259,7 +259,7 @@
                   z_owned_hello_t : z_hello_clone,                     \
                   z_owned_string_t : z_string_clone,                   \
                   z_owned_string_array_t : z_string_array_clone        \
-            )(&x)
+            )(&x, y)
 
 /**
  * Defines a generic function for making null object of any of the ``z_owned_X_t`` types.
