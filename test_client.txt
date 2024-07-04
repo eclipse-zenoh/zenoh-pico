@@ -1,6 +1,0 @@
-[HANDLER_OUTPUT] 
-Test project /Users/denisbiryukov/repositories/work/zenoh-pico
-
-[ERROR_MESSAGE] 
-No tests were found!!!
-
