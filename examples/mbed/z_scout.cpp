@@ -44,7 +44,7 @@ void fprintzid(FILE *stream, z_id_t zid) {
 void fprintwhatami(FILE *stream, z_whatami_t whatami) {
     z_view_string_t s;
     z_whatami_to_view_string(whatami, &s);
-    fprintf(stream, "\"%.*s\"", (int)z_string_len(z_loan(s)), z_string_data(z_loan(s)));
+    fprintf(stream, "\"%.*s\"", (int)z_string_len(z_view_string_loan(&s)), z_string_data(z_view_string_loan(&s)));
 }
 
 void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
