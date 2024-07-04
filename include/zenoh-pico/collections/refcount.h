@@ -45,10 +45,21 @@
 
 // c11 atomic variant
 #define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_CNT _z_atomic_store_explicit(&p.in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_CNT _z_atomic_fetch_add_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INIT_STRONG_CNT                                                           \
+    _z_atomic_store_explicit(&p.in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed); \
+    _z_atomic_store_explicit(&p.in->_weak_cnt, (unsigned int)0, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INIT_WEAK_CNT                                                             \
+    _z_atomic_store_explicit(&p.in->_strong_cnt, (unsigned int)0, _z_memory_order_relaxed); \
+    _z_atomic_store_explicit(&p.in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INCR_STRONG_CNT \
+    _z_atomic_fetch_add_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INCR_WEAK_CNT \
+    _z_atomic_fetch_add_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
 #define _ZP_RC_OP_DECR_AND_CMP \
     _z_atomic_fetch_sub_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
+#define _ZP_RC_OP_DECR_WEAK_CNT \
+    _z_atomic_fetch_sub_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_release);
+#define _ZP_RC_OP_COMP_CNT(x, y) atomic_compare_exchange_strong(&x, &y, y)
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 
 #else  // ZENOH_C_STANDARD == 99
@@ -56,11 +67,19 @@
 
 // c99 gcc sync builtin variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT                                     \
+#define _ZP_RC_OP_INIT_STRONG_CNT                              \
     __sync_fetch_and_and(&p.in->_strong_cnt, (unsigned int)0); \
-    __sync_fetch_and_add(&p.in->_strong_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INCR_CNT __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)1);
+    __sync_fetch_and_add(&p.in->_strong_cnt, (unsigned int)1); \
+    __sync_fetch_and_and(&p.in->_weak_cnt, (unsigned int)0);
+#define _ZP_RC_OP_INIT_WEAK_CNT                              \
+    __sync_fetch_and_and(&p.in->_weak_cnt, (unsigned int)0); \
+    __sync_fetch_and_add(&p.in->_weak_cnt, (unsigned int)1); \
+    __sync_fetch_and_and(&p.in->_strong_cnt, (unsigned int)0);
+#define _ZP_RC_OP_INCR_STRONG_CNT __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)1);
+#define _ZP_RC_OP_INCR_WEAK_CNT __sync_fetch_and_add(&p->in->_weak_cnt, (unsigned int)1);
 #define _ZP_RC_OP_DECR_AND_CMP __sync_fetch_and_sub(&p->in->_strong_cnt, (unsigned int)1) > (unsigned int)1
+#define _ZP_RC_OP_DECR_WEAK_CNT __sync_fetch_and_sub(&p->in->_weak_cnt, (unsigned int)1);
+#define _ZP_RC_OP_COMP_CNT(x, y) __sync_bool_compare_and_swap(&x, y, y)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 
 #else  // !ZENOH_COMPILER_GCC
@@ -68,9 +87,13 @@
 // None variant
 #error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT
-#define _ZP_RC_OP_INCR_CNT
-#define _ZP_RC_OP_DECR_AND_CMP
+#define _ZP_RC_OP_INIT_STRONG_CNT
+#define _ZP_RC_OP_INIT_WEAK_CNT
+#define _ZP_RC_OP_INCR_STRONG_CNT
+#define _ZP_RC_OP_INCR_WEAK_CNT
+#define _ZP_RC_OP_DECR_AND_CMP true
+#define _ZP_RC_OP_DECR_WEAK_CNT
+#define _ZP_RC_OP_COMP_CNT(x, y) (x == y)
 #define _ZP_RC_OP_SYNC
 
 #endif  // ZENOH_COMPILER_GCC
@@ -79,81 +102,163 @@
 
 // Single thread variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT p.in->_strong_cnt = (unsigned int)1;
-#define _ZP_RC_OP_INCR_CNT p->in->_strong_cnt += (unsigned int)1;
+#define _ZP_RC_OP_INIT_STRONG_CNT        \
+    p.in->_strong_cnt = (unsigned int)1; \
+    p.in->_weak_cnt = (unsigned int)0;
+#define _ZP_RC_OP_INIT_WEAK_CNT          \
+    p.in->_strong_cnt = (unsigned int)0; \
+    p.in->_weak_cnt = (unsigned int)1;
+#define _ZP_RC_OP_INCR_STRONG_CNT p->in->_strong_cnt += (unsigned int)1;
+#define _ZP_RC_OP_INCR_WEAK_CNT p->in->_weak_cnt += (unsigned int)1;
 #define _ZP_RC_OP_DECR_AND_CMP p->in->_strong_cnt-- > (unsigned int)1
+#define _ZP_RC_OP_DECR_WEAK_CNT p->in->_weak_cnt--;
+#define _ZP_RC_OP_COMP_CNT(x, y) (x == y)
 #define _ZP_RC_OP_SYNC
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_REFCOUNT_DEFINE(name, type)                                                    \
-    typedef struct name##_inner_rc_t {                                                    \
-        type##_t val;                                                                     \
-        _ZP_RC_CNT_TYPE _strong_cnt;                                                      \
-    } name##_inner_rc_t;                                                                  \
-    typedef struct name##_rc_t {                                                          \
-        name##_inner_rc_t *in;                                                            \
-    } name##_rc_t;                                                                        \
-    static inline name##_rc_t name##_rc_null(void) {                                      \
-        name##_rc_t p;                                                                    \
-        p.in = NULL;                                                                      \
-        return p;                                                                         \
-    }                                                                                     \
-    static inline name##_rc_t name##_rc_new(void) {                                       \
-        name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
-        if (p.in != NULL) {                                                               \
-            memset(&p.in->val, 0, sizeof(type##_t));                                      \
-            _ZP_RC_OP_INIT_CNT                                                            \
-        }                                                                                 \
-        return p;                                                                         \
-    }                                                                                     \
-    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                      \
-        name##_rc_t p;                                                                    \
-        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                  \
-        if (p.in != NULL) {                                                               \
-            p.in->val = val;                                                              \
-            _ZP_RC_OP_INIT_CNT                                                            \
-        }                                                                                 \
-        return p;                                                                         \
-    }                                                                                     \
-    static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                     \
-        name##_rc_t c;                                                                    \
-        c.in = p->in;                                                                     \
-        _ZP_RC_OP_INCR_CNT                                                                \
-        return c;                                                                         \
-    }                                                                                     \
-    static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {             \
-        name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                    \
-        if (c != NULL) {                                                                  \
-            c->in = p->in;                                                                \
-            _ZP_RC_OP_INCR_CNT                                                            \
-        }                                                                                 \
-        return c;                                                                         \
-    }                                                                                     \
-    static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {           \
-        dst->in = p->in;                                                                  \
-        _ZP_RC_OP_INCR_CNT                                                                \
-    }                                                                                     \
-    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) { \
-        return (left->in == right->in);                                                   \
-    }                                                                                     \
-    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                  \
-        if ((p == NULL) || (p->in == NULL)) {                                             \
-            return false;                                                                 \
-        }                                                                                 \
-        if (_ZP_RC_OP_DECR_AND_CMP) {                                                     \
-            return false;                                                                 \
-        }                                                                                 \
-        _ZP_RC_OP_SYNC                                                                    \
-        type##_clear(&p->in->val);                                                        \
-        z_free(p->in);                                                                    \
-        return true;                                                                      \
-    }                                                                                     \
-    static inline size_t name##_rc_size(name##_rc_t *p) {                                 \
-        _ZP_UNUSED(p);                                                                    \
-        return sizeof(name##_rc_t);                                                       \
+#define _Z_REFCOUNT_DEFINE(name, type)                                                                          \
+    typedef struct name##_inner_rc_t {                                                                          \
+        type##_t val;                                                                                           \
+        _ZP_RC_CNT_TYPE _strong_cnt;                                                                            \
+        _ZP_RC_CNT_TYPE _weak_cnt;                                                                              \
+    } name##_inner_rc_t;                                                                                        \
+    typedef struct name##_rc_t {                                                                                \
+        name##_inner_rc_t *in;                                                                                  \
+    } name##_rc_t;                                                                                              \
+    typedef struct name##_weak_t {                                                                              \
+        name##_inner_rc_t *in;                                                                                  \
+    } name##_weak_t;                                                                                            \
+    static inline name##_rc_t name##_rc_null(void) {                                                            \
+        name##_rc_t p;                                                                                          \
+        p.in = NULL;                                                                                            \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_rc_t name##_rc_new(void) {                                                             \
+        name##_rc_t p;                                                                                          \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                                        \
+        if (p.in != NULL) {                                                                                     \
+            memset(&p.in->val, 0, sizeof(type##_t));                                                            \
+            _ZP_RC_OP_INIT_STRONG_CNT                                                                           \
+        }                                                                                                       \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_rc_t name##_rc_new_from_val(type##_t val) {                                            \
+        name##_rc_t p;                                                                                          \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                                        \
+        if (p.in != NULL) {                                                                                     \
+            p.in->val = val;                                                                                    \
+            _ZP_RC_OP_INIT_STRONG_CNT                                                                           \
+        }                                                                                                       \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                                           \
+        name##_rc_t c;                                                                                          \
+        c.in = p->in;                                                                                           \
+        _ZP_RC_OP_INCR_STRONG_CNT                                                                               \
+        return c;                                                                                               \
+    }                                                                                                           \
+    static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {                                   \
+        name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                                          \
+        if (c != NULL) {                                                                                        \
+            c->in = p->in;                                                                                      \
+            _ZP_RC_OP_INCR_STRONG_CNT                                                                           \
+        }                                                                                                       \
+        return c;                                                                                               \
+    }                                                                                                           \
+    static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                                 \
+        name##_weak_t c;                                                                                        \
+        c.in = p->in;                                                                                           \
+        _ZP_RC_OP_INCR_WEAK_CNT                                                                                 \
+        return c;                                                                                               \
+    }                                                                                                           \
+    static inline name##_weak_t *name##_rc_clone_as_weak_ptr(const name##_rc_t *p) {                            \
+        name##_weak_t *c = (name##_weak_t *)z_malloc(sizeof(name##_weak_t));                                    \
+        if (c != NULL) {                                                                                        \
+            c->in = p->in;                                                                                      \
+            _ZP_RC_OP_INCR_WEAK_CNT                                                                             \
+        }                                                                                                       \
+        return c;                                                                                               \
+    }                                                                                                           \
+    static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {                                 \
+        dst->in = p->in;                                                                                        \
+        _ZP_RC_OP_INCR_STRONG_CNT                                                                               \
+    }                                                                                                           \
+    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {                       \
+        return (left->in == right->in);                                                                         \
+    }                                                                                                           \
+    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                                        \
+        if ((p == NULL) || (p->in == NULL)) {                                                                   \
+            return false;                                                                                       \
+        }                                                                                                       \
+        if (_ZP_RC_OP_DECR_AND_CMP) {                                                                           \
+            return false;                                                                                       \
+        }                                                                                                       \
+        _ZP_RC_OP_SYNC                                                                                          \
+        type##_clear(&p->in->val);                                                                              \
+        unsigned int cmp_val = 0;                                                                               \
+        if (_ZP_RC_OP_COMP_CNT(p->in->_strong_cnt, cmp_val) && _ZP_RC_OP_COMP_CNT(p->in->_weak_cnt, cmp_val)) { \
+            z_free(p->in);                                                                                      \
+        }                                                                                                       \
+        return true;                                                                                            \
+    }                                                                                                           \
+    static inline name##_weak_t name##_weak_null(void) {                                                        \
+        name##_weak_t p;                                                                                        \
+        p.in = NULL;                                                                                            \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_weak_t name##_weak_new(void) {                                                         \
+        name##_weak_t p;                                                                                        \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                                        \
+        if (p.in != NULL) {                                                                                     \
+            memset(&p.in->val, 0, sizeof(type##_t));                                                            \
+            _ZP_RC_OP_INIT_WEAK_CNT                                                                             \
+        }                                                                                                       \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_weak_t name##_weak_new_from_val(type##_t val) {                                        \
+        name##_weak_t p;                                                                                        \
+        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                                        \
+        if (p.in != NULL) {                                                                                     \
+            p.in->val = val;                                                                                    \
+            _ZP_RC_OP_INIT_WEAK_CNT                                                                             \
+        }                                                                                                       \
+        return p;                                                                                               \
+    }                                                                                                           \
+    static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                                     \
+        name##_weak_t c;                                                                                        \
+        c.in = p->in;                                                                                           \
+        _ZP_RC_OP_INCR_WEAK_CNT                                                                                 \
+        return c;                                                                                               \
+    }                                                                                                           \
+    static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) {                           \
+        dst->in = p->in;                                                                                        \
+        _ZP_RC_OP_INCR_WEAK_CNT                                                                                 \
+    }                                                                                                           \
+    static inline _Bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) {                 \
+        return (left->in == right->in);                                                                         \
+    }                                                                                                           \
+    static inline _Bool name##_weak_check(const name##_weak_t *p) {                                             \
+        unsigned int cmp_val = 0;                                                                               \
+        return (!_ZP_RC_OP_COMP_CNT(p->in->_strong_cnt, cmp_val));                                              \
+    }                                                                                                           \
+    static inline _Bool name##_weak_drop(name##_weak_t *p) {                                                    \
+        if ((p == NULL) || (p->in == NULL)) {                                                                   \
+            return false;                                                                                       \
+        }                                                                                                       \
+        _ZP_RC_OP_DECR_WEAK_CNT                                                                                 \
+        unsigned int cmp_val = 0;                                                                               \
+        if (!name##_weak_check(p) && _ZP_RC_OP_COMP_CNT(p->in->_weak_cnt, cmp_val)) {                           \
+            _ZP_RC_OP_SYNC                                                                                      \
+            z_free(p->in);                                                                                      \
+            return true;                                                                                        \
+        }                                                                                                       \
+        return false;                                                                                           \
+    }                                                                                                           \
+    static inline size_t name##_rc_size(name##_rc_t *p) {                                                       \
+        _ZP_UNUSED(p);                                                                                          \
+        return sizeof(name##_rc_t);                                                                             \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_REFCOUNT_H */
