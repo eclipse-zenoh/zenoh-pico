@@ -1205,6 +1205,10 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
+    options->priority = Z_PRIORITY_DEFAULT;
+    options->encoding = NULL;
+    options->timestamp = NULL;
+    options->is_express = false;
     options->attachment = NULL;
 }
 
@@ -1221,7 +1225,8 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
     int8_t ret =
-        _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, _z_bytes_from_owned_bytes(opts.attachment));
+        _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
+                      opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
     if (payload != NULL) {
         z_bytes_drop(payload);
     }
