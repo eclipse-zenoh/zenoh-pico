@@ -28,7 +28,7 @@ typedef struct _z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    _z_session_t *_zn;  // FIXME: Potential UB source, Issue #476
+    _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
     _z_bytes_t attachment;
     char *_parameters;
     _Bool _anyke;
@@ -50,7 +50,7 @@ typedef struct {
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1
-_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_t *zn,
+_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_rc_t *zn,
                            uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);

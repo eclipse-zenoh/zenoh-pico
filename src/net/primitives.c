@@ -314,12 +314,13 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                      const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
                      _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &query->_zn.in->val;
 
     _z_keyexpr_t q_ke;
     _z_keyexpr_t r_ke;
     if (query->_anyke == false) {
-        q_ke = _z_get_expanded_key_from_key(query->_zn, &query->_key);
-        r_ke = _z_get_expanded_key_from_key(query->_zn, &keyexpr);
+        q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
+        r_ke = _z_get_expanded_key_from_key(zn, &keyexpr);
         if (_z_keyexpr_intersects(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix)) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }
@@ -329,7 +330,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
 
     if (ret == _Z_RES_OK) {
         // Build the reply context decorator. This is NOT the final reply.
-        _z_id_t zid = ((_z_session_t *)query->_zn)->_local_zid;
+        _z_id_t zid = zn->_local_zid;
         _z_keyexpr_t ke = _z_keyexpr_alias(keyexpr);
         _z_zenoh_message_t z_msg;
         switch (kind) {
@@ -396,7 +397,7 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
             default:
                 return _Z_ERR_GENERIC;
         }
-        if (_z_send_n_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
 

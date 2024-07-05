@@ -35,8 +35,9 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
+int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
@@ -91,7 +92,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req->_body._query;
-                    ret = _z_trigger_queryables(zn, query, req->_key, (uint32_t)req->_rid,
+                    ret = _z_trigger_queryables(zsrc, query, req->_key, (uint32_t)req->_rid,
                                                 req->_body._query._ext_attachment);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");

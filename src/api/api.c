@@ -875,15 +875,16 @@ int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config) {
         z_config_drop(config);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    zs->_rc = zsrc;
     // Open session
-    int8_t ret = _z_open(&zsrc.in->val, &config->_val);
+    int8_t ret = _z_open(&zs->_rc, &config->_val);
     if (ret != _Z_RES_OK) {
-        _z_session_rc_drop(&zsrc);
+        _z_session_rc_drop(&zs->_rc);
+        z_session_null(zs);
         z_config_drop(config);
         return ret;
     }
-    // Store rc in session
-    zs->_rc = zsrc;
+    // Clean up
     z_config_drop(config);
     return _Z_RES_OK;
 }
@@ -1297,6 +1298,11 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
+    // Check session as queries can't use session rc
+    if (!_z_session_weak_check(&query->in->val._zn)) {
+        return _Z_ERR_CONNECTION_CLOSED;
+    }
+    // Set options
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     z_query_reply_options_t opts;
     if (options == NULL) {
