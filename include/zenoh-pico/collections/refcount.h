@@ -45,11 +45,8 @@
 
 // c11 atomic variant
 #define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_STRONG_CNT                                                           \
+#define _ZP_RC_OP_INIT_CNT                                                                  \
     _z_atomic_store_explicit(&p.in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed); \
-    _z_atomic_store_explicit(&p.in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INIT_WEAK_CNT                                                             \
-    _z_atomic_store_explicit(&p.in->_strong_cnt, (unsigned int)0, _z_memory_order_relaxed); \
     _z_atomic_store_explicit(&p.in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
 #define _ZP_RC_OP_INCR_STRONG_CNT \
     _z_atomic_fetch_add_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
@@ -68,15 +65,11 @@
 
 // c99 gcc sync builtin variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT                              \
+#define _ZP_RC_OP_INIT_CNT                                     \
     __sync_fetch_and_and(&p.in->_strong_cnt, (unsigned int)0); \
     __sync_fetch_and_add(&p.in->_strong_cnt, (unsigned int)1); \
     __sync_fetch_and_and(&p.in->_weak_cnt, (unsigned int)0);   \
     __sync_fetch_and_add(&p.in->_weak_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INIT_WEAK_CNT                              \
-    __sync_fetch_and_and(&p.in->_weak_cnt, (unsigned int)0); \
-    __sync_fetch_and_add(&p.in->_weak_cnt, (unsigned int)1); \
-    __sync_fetch_and_and(&p.in->_strong_cnt, (unsigned int)0);
 #define _ZP_RC_OP_INCR_STRONG_CNT __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)1);
 #define _ZP_RC_OP_INCR_WEAK_CNT __sync_fetch_and_add(&p->in->_weak_cnt, (unsigned int)1);
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG __sync_fetch_and_sub(&p->in->_strong_cnt, (unsigned int)1) > (unsigned int)1
@@ -90,8 +83,7 @@
 // None variant
 #error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT
-#define _ZP_RC_OP_INIT_WEAK_CNT
+#define _ZP_RC_OP_INIT_CNT
 #define _ZP_RC_OP_INCR_STRONG_CNT
 #define _ZP_RC_OP_INCR_WEAK_CNT
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG true
@@ -106,11 +98,8 @@
 
 // Single thread variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_STRONG_CNT        \
+#define _ZP_RC_OP_INIT_CNT               \
     p.in->_strong_cnt = (unsigned int)1; \
-    p.in->_weak_cnt = (unsigned int)1;
-#define _ZP_RC_OP_INIT_WEAK_CNT          \
-    p.in->_strong_cnt = (unsigned int)0; \
     p.in->_weak_cnt = (unsigned int)1;
 #define _ZP_RC_OP_INCR_STRONG_CNT p->in->_strong_cnt += (unsigned int)1;
 #define _ZP_RC_OP_INCR_WEAK_CNT p->in->_weak_cnt += (unsigned int)1;
@@ -148,7 +137,7 @@
         p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                        \
         if (p.in != NULL) {                                                                     \
             memset(&p.in->val, 0, sizeof(type##_t));                                            \
-            _ZP_RC_OP_INIT_STRONG_CNT                                                           \
+            _ZP_RC_OP_INIT_CNT                                                                  \
         }                                                                                       \
         return p;                                                                               \
     }                                                                                           \
@@ -157,7 +146,7 @@
         p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                        \
         if (p.in != NULL) {                                                                     \
             p.in->val = val;                                                                    \
-            _ZP_RC_OP_INIT_STRONG_CNT                                                           \
+            _ZP_RC_OP_INIT_CNT                                                                  \
         }                                                                                       \
         return p;                                                                               \
     }                                                                                           \
@@ -246,24 +235,6 @@
     static inline name##_weak_t name##_weak_null(void) {                                        \
         name##_weak_t p;                                                                        \
         p.in = NULL;                                                                            \
-        return p;                                                                               \
-    }                                                                                           \
-    static inline name##_weak_t name##_weak_new(void) {                                         \
-        name##_weak_t p;                                                                        \
-        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                        \
-        if (p.in != NULL) {                                                                     \
-            memset(&p.in->val, 0, sizeof(type##_t));                                            \
-            _ZP_RC_OP_INIT_WEAK_CNT                                                             \
-        }                                                                                       \
-        return p;                                                                               \
-    }                                                                                           \
-    static inline name##_weak_t name##_weak_new_from_val(type##_t val) {                        \
-        name##_weak_t p;                                                                        \
-        p.in = (name##_inner_rc_t *)z_malloc(sizeof(name##_inner_rc_t));                        \
-        if (p.in != NULL) {                                                                     \
-            p.in->val = val;                                                                    \
-            _ZP_RC_OP_INIT_WEAK_CNT                                                             \
-        }                                                                                       \
         return p;                                                                               \
     }                                                                                           \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                     \
