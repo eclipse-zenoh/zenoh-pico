@@ -220,10 +220,12 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    _Bool is_express;
 } z_publisher_options_t;
 
 /**
