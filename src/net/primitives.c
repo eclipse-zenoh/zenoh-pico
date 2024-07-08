@@ -129,7 +129,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                const _z_timestamp_t *timestamp, const _z_bytes_t attachment) {
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
@@ -139,7 +139,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                 ._body._push =
                     {
                         ._key = keyexpr,
-                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                        ._qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
                         ._timestamp = _z_timestamp_null(),
                         ._body._is_put = true,
                         ._body._body._put =
@@ -159,7 +159,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                 ._body._push =
                     {
                         ._key = keyexpr,
-                        ._qos = _z_n_qos_make(0, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                        ._qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
                         ._timestamp = _z_timestamp_null(),
                         ._body._is_put = false,
                         ._body._body._del = {._commons = {._timestamp =
@@ -307,7 +307,8 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
 }
 
 int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const _z_bytes_t att) {
+                     const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                     _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
     int8_t ret = _Z_RES_OK;
 
     _z_keyexpr_t q_ke;
@@ -337,14 +338,16 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                 z_msg._body._response._key = ke;
                 z_msg._body._response._ext_responder._zid = zid;
                 z_msg._body._response._ext_responder._eid = 0;
-                z_msg._body._response._ext_qos = _Z_N_QOS_DEFAULT;
+                z_msg._body._response._ext_qos =
+                    _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
                 z_msg._body._response._ext_timestamp = _z_timestamp_null();
                 z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
                 z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
                 z_msg._body._response._body._reply._body._is_put = true;
                 z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
                 z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
-                z_msg._body._response._body._reply._body._body._put._commons._timestamp = _z_timestamp_null();
+                z_msg._body._response._body._reply._body._body._put._commons._timestamp =
+                    (timestamp != NULL) ? *timestamp : _z_timestamp_null();
                 z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();
                 z_msg._body._response._body._reply._body._body._put._attachment = att;
                 break;
