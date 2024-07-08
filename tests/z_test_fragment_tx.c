@@ -84,6 +84,7 @@ int main(int argc, char **argv) {
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
         if (z_put(z_loan(s), z_loan(ke), z_move(payload), NULL) < 0) {
             printf("Oh no! Put has failed...\n");
+            return -1;
         }
         z_sleep_s(1);
     }
