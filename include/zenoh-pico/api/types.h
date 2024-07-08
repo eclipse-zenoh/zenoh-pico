@@ -107,7 +107,6 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *   - :c:func:`z_keyexpr_from_str`
  *   - :c:func:`z_keyexpr_is_initialized`
  *   - :c:func:`z_keyexpr_to_string`
- *   - :c:func:`zp_keyexpr_resolve`
  */
 _Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
 _Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
