@@ -116,10 +116,6 @@ int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *nam
 /**
  * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
  *
- * If given keyexpr contains a declared keyexpr, the resulting owned string will be uninitialized.
- * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
- * and get its full expanded representation.
- *
  * Parameters:
  *   keyexpr: Pointer to a loaned instance of :c:type:`z_keyexpr_t`.
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
@@ -128,20 +124,6 @@ int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *nam
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
-
-/**
- * Builds a null-terminated string from a :c:type:`z_loaned_keyexpr_t` for a given
- * :c:type:`z_loaned_session_t`.
- *
- * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to resolve the keyexpr.
- *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to be resolved.
- *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
- *
- * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
- */
-int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
 
 /**
  * Checks if a given keyexpr is valid.
