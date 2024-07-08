@@ -90,7 +90,7 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
 }
 
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
-    zp_keyexpr_canonize_null_terminated(name);
+    _Z_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(name));
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -109,6 +109,50 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
     }
 
     return ret;
+}
+
+int8_t z_keyexpr_concat(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const char* right, size_t len) {
+    z_keyexpr_null(key);
+    if (len == 0) {
+        return z_keyexpr_clone(key, left);
+    } else if (right == NULL) {
+        return _Z_ERR_INVALID;
+    } 
+    size_t left_len = strlen(left->_suffix);
+    if (left_len == 0) return _Z_ERR_INVALID;
+    if (left->_suffix[left_len - 1] == '*' && right[0] == '*') {
+        return _Z_ERR_INVALID;
+    }
+    
+    char* s = z_malloc(left_len + len + 1);
+    if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    s[left_len + len] = '\0';
+
+    memcpy(s, left->_suffix, left_len);
+    memcpy(s + left_len, right, len);
+    
+    key->_val = _z_rname(s);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
+}
+
+int8_t z_keyexpr_join(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
+    z_keyexpr_null(key);
+
+    size_t left_len = strlen(left->_suffix);
+    size_t right_len = strlen(right->_suffix);
+
+    char* s = z_malloc(left_len + right_len + 2);
+    if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    s[left_len + right_len + 1] = '\0';
+    s[left_len] = '/';
+    memcpy(s, left->_suffix, left_len);
+    memcpy(s + left_len + 1, right->_suffix, right_len);
+
+    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(s), z_free(s));
+    key->_val = _z_rname(s);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
 }
 
 int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
@@ -1243,7 +1287,7 @@ int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *na
     char *name_copy = _z_str_n_clone(name, len);
     if (name_copy == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 
-    zp_keyexpr_canonize_null_terminated(name_copy);
+    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(name_copy), z_free(name_copy));
     key->_val = _z_rname(name_copy);
     _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;

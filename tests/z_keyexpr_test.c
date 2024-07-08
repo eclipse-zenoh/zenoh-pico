@@ -442,11 +442,11 @@ void test_keyexpr_constructor(void) {
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/b/c"));
     z_keyexpr_drop(z_keyexpr_move(&ke));
 
-    z_keyexpr_from_str_autocanonize(&ke, "a/**/**");
+    assert(0 == z_keyexpr_from_str_autocanonize(&ke, "a/**/**"));
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**"));
     z_keyexpr_drop(z_keyexpr_move(&ke));
 
-    z_keyexpr_from_substr_autocanonize(&ke, "a/**/**/m/b/c", 9);
+    assert(0 == z_keyexpr_from_substr_autocanonize(&ke, "a/**/**/m/b/c", 9));
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**/m"));
     z_keyexpr_drop(z_keyexpr_move(&ke));
 
@@ -459,12 +459,48 @@ void test_keyexpr_constructor(void) {
     assert(keyexpr_equals_string(z_view_keyexpr_loan(&vke), "a/**"));
 }
 
+void test_concat(void) {
+    z_owned_keyexpr_t ke1, ke2;
+    z_keyexpr_from_str(&ke1, "a/b/c/*");
+    assert(0 == z_keyexpr_concat(&ke2, z_keyexpr_loan(&ke1), "/d/e/*", 4));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke2), "a/b/c/*/d/e"));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+
+    assert(0 != z_keyexpr_concat(&ke2, z_keyexpr_loan(&ke1), "*/e/*", 3));
+    assert(!z_keyexpr_check(&ke2));
+
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+}
+
+void test_join(void) {
+    z_owned_keyexpr_t ke1, ke2, ke3;
+    z_keyexpr_from_str(&ke1, "a/b/c/*");
+    z_keyexpr_from_str(&ke2, "d/e/*");
+    assert(0 == z_keyexpr_join(&ke3, z_keyexpr_loan(&ke1), z_keyexpr_loan(&ke2)));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke3), "a/b/c/*/d/e/*"));
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+    z_keyexpr_drop(z_keyexpr_move(&ke3));
+
+    z_keyexpr_from_str(&ke1, "a/*/**");
+    z_keyexpr_from_str(&ke2, "**/d/e/c");
+
+    assert(0 == z_keyexpr_join(&ke3, z_keyexpr_loan(&ke1), z_keyexpr_loan(&ke2)));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke3), "a/*/**/d/e/c"));
+   
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+    z_keyexpr_drop(z_keyexpr_move(&ke3));
+}
+
 int main(void) {
     test_intersects();
     test_includes();
     test_canonize();
     test_equals();
     test_keyexpr_constructor();
+    test_concat();
+    test_join();
 
     return 0;
 }

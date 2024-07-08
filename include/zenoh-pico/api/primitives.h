@@ -130,6 +130,38 @@ int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *nam
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
 
 /**
+ * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
+ * Returns 0 in case of success, negative error code otherwise.
+ *
+ * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this operation,
+ * as this would extremely likely cause bugs.
+ * 
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to keyexpr to concatenate to.
+ *   right: Pointer to the start of the substring that will be concatenated.
+ *   len: Length of the substring to concatenate.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_concat(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const char* right, size_t len);
+
+/**
+ * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is automatically
+ * canonized.
+ * 
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to the left part of resulting key expression.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the right part of resulting key expression.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_join(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left,  const z_loaned_keyexpr_t *right);
+
+/**
  * Builds a null-terminated string from a :c:type:`z_loaned_keyexpr_t` for a given
  * :c:type:`z_loaned_session_t`.
  *
