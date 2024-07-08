@@ -88,7 +88,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
  */
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                    z_congestion_control_t congestion_control, z_priority_t priority);
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.

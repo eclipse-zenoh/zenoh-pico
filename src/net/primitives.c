@@ -103,7 +103,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                    z_congestion_control_t congestion_control, z_priority_t priority) {
+                                    z_congestion_control_t congestion_control, z_priority_t priority,
+                                    _Bool is_express) {
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
@@ -111,6 +112,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._id = _z_get_entity_id(&zn->in->val);
     ret._congestion_control = congestion_control;
     ret._priority = priority;
+    ret._is_express = is_express;
     ret._zn = _z_session_rc_clone(zn);
     return ret;
 }

@@ -971,6 +971,7 @@ int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
 void z_publisher_options_default(z_publisher_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
+    options->is_express = false;
 }
 
 int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
@@ -995,9 +996,10 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
+        opt.is_express = options->is_express;
     }
     // Set publisher
-    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority);
+    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority, opt.is_express);
     // Create write filter
     int8_t res = _z_write_filter_create(&int_pub);
     if (res != _Z_RES_OK) {
@@ -1035,6 +1037,8 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
         opt.is_express = options->is_express;
         opt.timestamp = options->timestamp;
         opt.attachment = options->attachment;
+    } else {
+        opt.is_express = pub->_is_express;
     }
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
@@ -1060,6 +1064,8 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
     if (options != NULL) {
         opt.is_express = options->is_express;
         opt.timestamp = options->timestamp;
+    } else {
+        opt.is_express = pub->_is_express;
     }
     return _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
                     pub->_congestion_control, pub->_priority, opt.is_express, opt.timestamp, _z_bytes_null());
