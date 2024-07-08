@@ -1234,12 +1234,31 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
 }
 #endif
 
+int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name) {
+    return z_keyexpr_from_substr_autocanonize(key, name, strlen(name));
+}
+
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t len) {
+    z_keyexpr_null(key);
+    char *name_copy = _z_str_n_clone(name, len);
+    if (name_copy == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+
+    zp_keyexpr_canonize_null_terminated(name_copy);
+    key->_val = _z_rname(name_copy);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
+}
+
 int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
-    if (name != NULL) {
-        key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
-    } else {
-        key->_val = _z_keyexpr_null();
-    }
+    return z_keyexpr_from_substr(key, name, strlen(name));
+}
+
+int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len) {
+    z_keyexpr_null(key);
+    char *name_copy = _z_str_n_clone(name, len);
+    if (name_copy == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    key->_val = _z_rname(name_copy);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
 }
 

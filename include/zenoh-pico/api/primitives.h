@@ -98,7 +98,7 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
- * Builds a :c:type:`z_keyexpr_t` from a null-terminated string with auto canonization.
+ * Builds a :c:type:`z_view_keyexpr_t` from a null-terminated string with auto canonization.
  * It is a loaned key expression that aliases ``name``.
  * The string is canonized in-place before being passed to keyexpr, possibly shortening it by modifying len.
  * May SEGFAULT if `name` is NULL or lies in read-only memory (as values initialized with string litterals do).
@@ -1678,6 +1678,44 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
 int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
+
+/**
+ * Builds a new keyexpr from a substring.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   name: Pointer to the start of the substring for keyxpr.
+ *   len: Length of the substring to consider.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len);
+
+/**
+ * Builds a :c:type:`z_owned_keyexpr_t` from a null-terminated string with auto canonization.
+ *
+ * Parameters:
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name);
+
+/**
+ * Builds a :c:type:`z_owned_keyexpr_t` from a substring with auto canonization.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   name: Pointer to the start of the substring for keyxpr.
+ *   len: Length of the substring to consider.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t len);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.
