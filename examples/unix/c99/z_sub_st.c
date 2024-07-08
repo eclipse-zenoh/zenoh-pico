@@ -25,13 +25,12 @@ static int msg_nb = 0;
 
 void data_handler(const z_loaned_sample_t *sample, void *arg) {
     (void)(arg);
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
     z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_string_loan(&keystr)),
            z_string_data(z_string_loan(&value)));
-    z_string_drop(z_string_move(&keystr));
     z_string_drop(z_string_move(&value));
     msg_nb++;
 }

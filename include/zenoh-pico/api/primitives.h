@@ -114,7 +114,7 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
 
 /**
- * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
+ * Gets a null-terminated string view from a :c:type:`z_keyexpr_t`.
  *
  * If given keyexpr contains a declared keyexpr, the resulting owned string will be uninitialized.
  * In that case, the user must use :c:func:`zp_keyexpr_resolve` to resolve the nesting declarations
@@ -122,12 +122,12 @@ int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *nam
  *
  * Parameters:
  *   keyexpr: Pointer to a loaned instance of :c:type:`z_keyexpr_t`.
- *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
+ *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
+int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
 
 /**
  * Builds a null-terminated string from a :c:type:`z_loaned_keyexpr_t` for a given

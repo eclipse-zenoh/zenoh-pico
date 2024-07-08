@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
     z_null(&query);
     for (z_recv(z_loan(handler), &query); z_check(query); z_recv(z_loan(handler), &query)) {
         const z_loaned_query_t *q = z_loan(query);
-        z_owned_string_t keystr;
-        z_keyexpr_to_string(z_query_keyexpr(q), &keystr);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_query_keyexpr(q), &keystr);
         z_view_string_t params;
         z_query_parameters(q, &params);
         printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)),
@@ -122,7 +122,6 @@ int main(int argc, char **argv) {
         z_bytes_serialize_from_str(&reply_payload, value);
 
         z_query_reply(q, z_query_keyexpr(q), z_move(reply_payload), &options);
-        z_drop(z_move(keystr));
         z_drop(z_move(query));
     }
 

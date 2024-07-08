@@ -100,13 +100,10 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
     return _Z_RES_OK;
 }
 
-int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s) {
+int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
     int8_t ret = _Z_RES_OK;
     if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
-        s->_val = _z_string_make(keyexpr->_suffix);
-        if (!_z_string_check(&s->_val)) {
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-        }
+        s->_val = _z_string_wrap(keyexpr->_suffix);
     } else {
         ret = _Z_ERR_GENERIC;
     }
@@ -655,8 +652,8 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_nu
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
                               _z_keyexpr_clear)
-_Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr)
-_Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
+_Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check)
+_Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string, _z_string_check)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
 
@@ -696,7 +693,7 @@ int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) 
 _z_string_svec_t _z_string_array_null(void) { return _z_string_svec_make(0); }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
                               _z_string_array_copy, _z_string_svec_clear)
-_Z_VIEW_FUNCTIONS_IMPL(_z_string_vec_t, string_array)
+_Z_VIEW_FUNCTIONS_IMPL(_z_string_vec_t, string_array, _z_string_array_check)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty, _z_slice_copy, _z_slice_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_drop)
 

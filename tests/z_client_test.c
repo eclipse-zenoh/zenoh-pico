@@ -52,8 +52,8 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_query_keyexpr(query), &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &k_str);
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     z_view_string_t pred;
@@ -67,7 +67,6 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
-    z_drop(z_move(k_str));
     free(res);
 }
 
@@ -79,8 +78,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
-        z_owned_string_t k_str;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+        z_view_string_t k_str;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
         z_owned_string_t value;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
         assert(z_string_len(z_loan(value)) == strlen(res));
@@ -88,7 +87,6 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
         replies++;
-        z_drop(z_move(k_str));
         z_drop(z_move(value));
     } else {
         printf(">> Received an error\n");
@@ -102,8 +100,8 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     size_t payload_len = z_slice_len(z_loan(value));
@@ -111,7 +109,6 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     datas++;
-    z_drop(z_move(k_str));
     z_drop(z_move(value));
     free(res);
 }

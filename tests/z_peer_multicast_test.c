@@ -46,8 +46,8 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     assert(z_slice_len(z_loan(value)) == MSG_LEN);
@@ -56,7 +56,6 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     (void)(sample);
 
     datas++;
-    z_drop(z_move(k_str));
     z_drop(z_move(value));
     free(res);
 }

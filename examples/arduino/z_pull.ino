@@ -39,8 +39,8 @@
 
 // @TODO
 // void data_handler(const z_loaned_sample_t *sample, void *arg) {
-//     z_owned_string_t keystr;
-//     z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+//     z_view_string_t keystr;
+//     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
 //     std::string val((const char *)sample->payload.start, sample->payload.len);
 
 //     Serial.print(" >> [Subscription listener] Received (");
@@ -49,7 +49,6 @@
 //     Serial.print(val.c_str());
 //     Serial.println(")");
 
-//     z_string_drop(z_string_move(&keystr));
 // }
 
 void setup() {

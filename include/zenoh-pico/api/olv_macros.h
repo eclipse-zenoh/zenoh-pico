@@ -74,6 +74,7 @@
     void z_##name##_null(z_owned_##name##_t *obj);
 
 #define _Z_VIEW_FUNCTIONS_DEF(name)                                                 \
+    _Bool z_view_##name##_check(const z_view_##name##_t *obj);                      \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *name); \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *name);         \
     void z_view_##name##_null(z_view_##name##_t *name);
@@ -152,7 +153,8 @@
     void z_##name##_null(z_owned_##name##_t *obj) { (void)obj; }                                     \
     z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }
 
-#define _Z_VIEW_FUNCTIONS_IMPL(type, name)                                                               \
+#define _Z_VIEW_FUNCTIONS_IMPL(type, name, f_check)                                                      \
+    _Bool z_view_##name##_check(const z_view_##name##_t *obj) { return f_check((&obj->_val)); }          \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
 

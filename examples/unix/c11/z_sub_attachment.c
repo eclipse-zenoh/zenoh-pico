@@ -70,8 +70,8 @@ void drop_attachment(kv_pairs_t *kvp) {
 
 void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
     z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
     z_owned_string_t encoding;
@@ -86,7 +86,6 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
         print_attachment(&kvp);
     }
     drop_attachment(&kvp);
-    z_drop(z_move(keystr));
     z_drop(z_move(value));
     z_drop(z_move(encoding));
     msg_nb++;
