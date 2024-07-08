@@ -60,6 +60,7 @@
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK \
     _z_atomic_fetch_sub_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
 #define _ZP_RC_OP_CHECK_STRONG_CNT atomic_compare_exchange_strong(&p->in->_strong_cnt, &cmp_val, cmp_val)
+#define _ZP_RC_OP_CHECK_WEAK_CNT atomic_compare_exchange_strong(&p->in->_weak_cnt, &cmp_val, cmp_val)
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 
 #else  // ZENOH_C_STANDARD == 99
@@ -81,6 +82,7 @@
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG __sync_fetch_and_sub(&p->in->_strong_cnt, (unsigned int)1) > (unsigned int)1
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK __sync_fetch_and_sub(&p->in->_weak_cnt, (unsigned int)1) > (unsigned int)1
 #define _ZP_RC_OP_CHECK_STRONG_CNT __sync_bool_compare_and_swap(&p->in->_strong_cnt, cmp_val, cmp_val)
+#define _ZP_RC_OP_CHECK_WEAK_CNT __sync_bool_compare_and_swap(&p->in->_weak_cnt, cmp_val, cmp_val)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 
 #else  // !ZENOH_COMPILER_GCC
@@ -95,6 +97,7 @@
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG true
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK true
 #define _ZP_RC_OP_CHECK_STRONG_CNT true
+#define _ZP_RC_OP_CHECK_WEAK_CNT true
 #define _ZP_RC_OP_SYNC
 
 #endif  // ZENOH_COMPILER_GCC
@@ -114,6 +117,7 @@
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG p->in->_strong_cnt-- > (unsigned int)1
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK p->in->_weak_cnt-- > (unsigned int)1
 #define _ZP_RC_OP_CHECK_STRONG_CNT (p->in->_strong_cnt == cmp_val)
+#define _ZP_RC_OP_CHECK_WEAK_CNT (p->in->_weak_cnt == cmp_val)
 #define _ZP_RC_OP_SYNC
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -159,12 +163,21 @@
     }                                                                                           \
     static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                           \
         name##_rc_t c;                                                                          \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            c.in = NULL;                                                                        \
+            return c;                                                                           \
+        }                                                                                       \
         c.in = p->in;                                                                           \
         _ZP_RC_OP_INCR_STRONG_CNT                                                               \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {                   \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            return NULL;                                                                        \
+        }                                                                                       \
         name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                          \
         if (c != NULL) {                                                                        \
             c->in = p->in;                                                                      \
@@ -175,11 +188,20 @@
     }                                                                                           \
     static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                 \
         name##_weak_t c;                                                                        \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            c.in = NULL;                                                                        \
+            return c;                                                                           \
+        }                                                                                       \
         c.in = p->in;                                                                           \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_weak_t *name##_rc_clone_as_weak_ptr(const name##_rc_t *p) {            \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            return NULL;                                                                        \
+        }                                                                                       \
         name##_weak_t *c = (name##_weak_t *)z_malloc(sizeof(name##_weak_t));                    \
         if (c != NULL) {                                                                        \
             c->in = p->in;                                                                      \
@@ -188,6 +210,10 @@
         return c;                                                                               \
     }                                                                                           \
     static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {                 \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            return;                                                                             \
+        }                                                                                       \
         dst->in = p->in;                                                                        \
         _ZP_RC_OP_INCR_STRONG_CNT                                                               \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
@@ -242,11 +268,20 @@
     }                                                                                           \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                     \
         name##_weak_t c;                                                                        \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            c.in = NULL;                                                                        \
+            return c;                                                                           \
+        }                                                                                       \
         c.in = p->in;                                                                           \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
         return c;                                                                               \
     }                                                                                           \
     static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) {           \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            return;                                                                             \
+        }                                                                                       \
         dst->in = p->in;                                                                        \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
     }                                                                                           \
