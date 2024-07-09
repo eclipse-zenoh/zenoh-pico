@@ -791,7 +791,7 @@ void __z_hello_handler(_z_hello_t *hello, __z_hello_handler_wrapper_t *wrapped_c
     wrapped_ctx->user_call(hello, wrapped_ctx->ctx);
 }
 
-int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback) {
+int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback, const z_scout_options_t *options) {
     int8_t ret = _Z_RES_OK;
 
     void *ctx = callback->_val.context;
@@ -805,23 +805,33 @@ int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback) {
         wrapped_ctx->user_call = callback->_val.call;
         wrapped_ctx->ctx = ctx;
 
-        char *opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
-        if (opt_as_str == NULL) {
-            opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        z_what_t what;
+        if (options != NULL) {
+            what = options->what;
+        } else {
+            char *opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_WHAT_KEY);
+            if (opt_as_str == NULL) {
+                opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+            }
+            what = strtol(opt_as_str, NULL, 10);
         }
-        z_what_t what = strtol(opt_as_str, NULL, 10);
 
-        opt_as_str = _z_config_get(&config->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        char *opt_as_str = _z_config_get(&config->_val, Z_CONFIG_MULTICAST_LOCATOR_KEY);
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
         char *mcast_locator = opt_as_str;
 
-        opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-        if (opt_as_str == NULL) {
-            opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        uint32_t timeout;
+        if (options != NULL) {
+            timeout = options->timeout_ms;
+        } else {
+            opt_as_str = _z_config_get(&config->_val, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+            if (opt_as_str == NULL) {
+                opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+            }
+            timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
         }
-        uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
         _z_id_t zid = _z_id_empty();
         char *zid_str = _z_config_get(&config->_val, Z_CONFIG_SESSION_ZID_KEY);

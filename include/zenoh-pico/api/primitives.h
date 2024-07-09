@@ -1291,11 +1291,12 @@ int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
  * Parameters:
  *   config: Pointer to a moved :c:type:`z_owned_config_t` to configure the scouting with.
  *   callback: Pointer to a moved :c:type:`z_owned_closure_hello_t` callback.
+ *   options: Pointer to a :c:type:`z_scout_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback);
+int8_t z_scout(z_owned_config_t *config, z_owned_closure_hello_t *callback, const z_scout_options_t *options);
 
 /**
  * Opens a Zenoh session.
@@ -2007,6 +2008,14 @@ int8_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive
  *   options: Pointer to an uninitialized :c:type:`zp_send_join_options_t`.
  */
 void zp_send_join_options_default(zp_send_join_options_t *options);
+
+/**
+ * Builds a :c:type:`z_scout_options_t` with default value.
+ *
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_scout_options_t`.
+ */
+void z_scout_options_default(z_scout_options_t *options);
 
 /**
  * Executes a single send join procedure.

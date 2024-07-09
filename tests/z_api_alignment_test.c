@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
     printf("Testing Scouting...");
     z_owned_closure_hello_t _ret_closure_hello;
     z_closure(&_ret_closure_hello, hello_handler, NULL, NULL);
-    _ret_int8 = z_scout(z_move(_ret_sconfig), z_move(_ret_closure_hello));
+    _ret_int8 = z_scout(z_move(_ret_sconfig), z_move(_ret_closure_hello), NULL);
     assert_eq(_ret_int8, 0);
     assert(hellos >= 1);
 
