@@ -1327,7 +1327,9 @@ int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name)
 int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t *len) {
     z_keyexpr_null(key);
     char *name_copy = _z_str_n_clone(name, *len);
-    if (name_copy == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (name_copy == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
 
     _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize(name_copy, len), z_free(name_copy));
     name_copy[*len] = '\0';
@@ -1343,7 +1345,9 @@ int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
 int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len) {
     z_keyexpr_null(key);
     char *name_copy = _z_str_n_clone(name, len);
-    if (name_copy == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (name_copy == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
     key->_val = _z_rname(name_copy);
     _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
@@ -1353,7 +1357,9 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
     uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), k);
     key->_val = _z_rid_with_suffix(id, NULL);
-    if (keyexpr->_suffix) key->_val._suffix = _z_str_clone(keyexpr->_suffix);
+    if (keyexpr->_suffix) {
+        key->_val._suffix = _z_str_clone(keyexpr->_suffix);
+    }
     // we still need to store the original suffix, for user needs
     // (for example to compare keys or perform other operations on their string representation).
     // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
