@@ -51,6 +51,9 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
         case Z_SAMPLE_KIND_DELETE:
             z_query_reply_del(query, z_query_keyexpr(query), NULL);
             break;
+        default:
+            printf("Unknown reply kind\n");
+            break;
     }
     z_drop(z_move(keystr));
     msg_nb++;

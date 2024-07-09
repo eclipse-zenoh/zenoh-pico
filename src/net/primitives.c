@@ -170,6 +170,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                     },
             };
             break;
+        default:
+            return _Z_ERR_GENERIC;
     }
 
     if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
@@ -391,6 +393,8 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
                         },
                 };
                 break;
+            default:
+                return _Z_ERR_GENERIC;
         }
         if (_z_send_n_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
