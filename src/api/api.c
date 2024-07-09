@@ -228,7 +228,22 @@ _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
 
 void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); }
 
-void z_config_default(z_owned_config_t *config) { config->_val = _z_config_default(); }
+int8_t z_config_default(z_owned_config_t *config) { return _z_config_default(&config->_val); }
+
+int8_t z_config_client(z_owned_config_t *config, const char *locator) {
+    return _z_config_client(&config->_val, locator);
+}
+
+int8_t z_config_peer(z_owned_config_t *config, const char *locator) {
+    if (locator == NULL) {
+        return _Z_ERR_INVALID;
+    }
+    _Z_RETURN_IF_ERR(z_config_default(config));
+    _Z_CLEAN_RETURN_IF_ERR(zp_config_insert(&config->_val, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER),
+                           z_config_drop(config));
+    _Z_CLEAN_RETURN_IF_ERR(zp_config_insert(&config->_val, Z_CONFIG_CONNECT_KEY, locator), z_config_drop(config));
+    return _Z_RES_OK;
+}
 
 const char *zp_config_get(const z_loaned_config_t *config, uint8_t key) { return _z_config_get(config, key); }
 
