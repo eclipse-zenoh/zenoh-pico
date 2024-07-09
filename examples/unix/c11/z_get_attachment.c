@@ -102,8 +102,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
-        z_owned_string_t keystr;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
         z_owned_string_t encoding;
@@ -121,7 +121,6 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         }
         drop_attachment(&kvp);
 
-        z_drop(z_move(keystr));
         z_drop(z_move(replystr));
         z_drop(z_move(encoding));
     } else {

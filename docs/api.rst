@@ -299,7 +299,7 @@ Primitives
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
-.. autocfunction:: primitives.h::z_keyexpr_to_string
+.. autocfunction:: primitives.h::z_keyexpr_as_view_string
 .. autocfunction:: primitives.h::z_keyexpr_is_initialized
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
 .. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
@@ -311,6 +311,9 @@ Primitives
 .. autocfunction:: primitives.h::zp_keyexpr_intersect_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_equals
 .. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
+.. autocfunction:: primitives.h::z_keyexpr_relation_to
+.. autocfunction:: primitives.h::z_keyexpr_concat
+.. autocfunction:: primitives.h::z_keyexpr_join
 .. autocfunction:: primitives.h::z_config_new
 .. autocfunction:: primitives.h::z_config_default
 .. autocfunction:: primitives.h::zp_config_get
@@ -422,6 +425,9 @@ Primitives
 .. autocfunction:: primitives.h::z_query_reply_options_default
 .. autocfunction:: primitives.h::z_query_reply
 .. autocfunction:: primitives.h::z_keyexpr_from_str
+.. autocfunction:: primitives.h::z_keyexpr_from_substr
+.. autocfunction:: primitives.h::z_keyexpr_from_str_autocanonize
+.. autocfunction:: primitives.h::z_keyexpr_from_substr_autocanonize
 .. autocfunction:: primitives.h::z_declare_keyexpr
 .. autocfunction:: primitives.h::z_undeclare_keyexpr
 .. autocfunction:: primitives.h::z_subscriber_options_default

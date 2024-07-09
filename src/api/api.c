@@ -90,7 +90,7 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
 }
 
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
-    zp_keyexpr_canonize_null_terminated(name);
+    _Z_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(name));
     keyexpr->_val = _z_rname(name);
     return _Z_RES_OK;
 }
@@ -100,14 +100,76 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
     return _Z_RES_OK;
 }
 
-int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *s) {
+int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
     int8_t ret = _Z_RES_OK;
-    s->_val = _z_string_make(keyexpr->_suffix);
-    if (!_z_string_check(&s->_val)) {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
+        s->_val = _z_string_wrap(keyexpr->_suffix);
+    } else {
+        ret = _Z_ERR_GENERIC;
     }
 
     return ret;
+}
+
+int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len) {
+    z_keyexpr_null(key);
+    if (len == 0) {
+        return z_keyexpr_clone(key, left);
+    } else if (right == NULL) {
+        return _Z_ERR_INVALID;
+    }
+    size_t left_len = strlen(left->_suffix);
+    if (left_len == 0) {
+        return _Z_ERR_INVALID;
+    }
+    if (left->_suffix[left_len - 1] == '*' && right[0] == '*') {
+        return _Z_ERR_INVALID;
+    }
+
+    char *s = z_malloc(left_len + len + 1);
+    if (s == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    s[left_len + len] = '\0';
+
+    memcpy(s, left->_suffix, left_len);
+    memcpy(s + left_len, right, len);
+
+    key->_val = _z_rname(s);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
+}
+
+int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
+    z_keyexpr_null(key);
+
+    size_t left_len = strlen(left->_suffix);
+    size_t right_len = strlen(right->_suffix);
+
+    char *s = z_malloc(left_len + right_len + 2);
+    if (s == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    s[left_len + right_len + 1] = '\0';
+    s[left_len] = '/';
+    memcpy(s, left->_suffix, left_len);
+    memcpy(s + left_len + 1, right->_suffix, right_len);
+
+    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(s), z_free(s));
+    key->_val = _z_rname(s);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
+}
+
+z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
+    if (z_keyexpr_equals(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS;
+    } else if (z_keyexpr_includes(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES;
+    } else if (z_keyexpr_intersects(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS;
+    }
+    return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
 _Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr) {
@@ -127,10 +189,7 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexp
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        return zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
-    }
-    return false;
+    return zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
 }
 
 _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
@@ -141,10 +200,7 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
 }
 
 _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        return zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
-    }
-    return false;
+    return zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
 }
 
 _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
@@ -155,10 +211,7 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
 }
 
 _Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    if ((l->_id == Z_RESOURCE_ID_NONE) && (r->_id == Z_RESOURCE_ID_NONE)) {
-        return zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
-    }
-    return false;
+    return zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
 }
 
 _Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
@@ -643,8 +696,8 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_nu
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
                               _z_keyexpr_clear)
-_Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr)
-_Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string)
+_Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check)
+_Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string, _z_string_check)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
 
@@ -684,7 +737,7 @@ int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) 
 _z_string_svec_t _z_string_array_null(void) { return _z_string_svec_make(0); }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
                               _z_string_array_copy, _z_string_svec_clear)
-_Z_VIEW_FUNCTIONS_IMPL(_z_string_vec_t, string_array)
+_Z_VIEW_FUNCTIONS_IMPL(_z_string_vec_t, string_array, _z_string_array_check)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty, _z_slice_copy, _z_slice_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_drop)
 
@@ -1266,12 +1319,37 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 }
 #endif
 
-int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
-    if (name != NULL) {
-        key->_val = _z_rid_with_suffix(Z_RESOURCE_ID_NONE, name);
-    } else {
-        key->_val = _z_keyexpr_null();
+int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name) {
+    size_t len = strlen(name);
+    return z_keyexpr_from_substr_autocanonize(key, name, &len);
+}
+
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t *len) {
+    z_keyexpr_null(key);
+    char *name_copy = _z_str_n_clone(name, *len);
+    if (name_copy == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+
+    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize(name_copy, len), z_free(name_copy));
+    name_copy[*len] = '\0';
+    key->_val = _z_rname(name_copy);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    return _Z_RES_OK;
+}
+
+int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
+    return z_keyexpr_from_substr(key, name, strlen(name));
+}
+
+int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len) {
+    z_keyexpr_null(key);
+    char *name_copy = _z_str_n_clone(name, len);
+    if (name_copy == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    key->_val = _z_rname(name_copy);
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
 }
 
@@ -1279,7 +1357,9 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
     uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), k);
     key->_val = _z_rid_with_suffix(id, NULL);
-    if (keyexpr->_suffix) key->_val._suffix = _z_str_clone(keyexpr->_suffix);
+    if (keyexpr->_suffix) {
+        key->_val._suffix = _z_str_clone(keyexpr->_suffix);
+    }
     // we still need to store the original suffix, for user needs
     // (for example to compare keys or perform other operations on their string representation).
     // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
@@ -1292,7 +1372,7 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     return _Z_RES_OK;
 }
 
-int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
+int8_t z_undeclare_keyexpr(z_owned_keyexpr_t *keyexpr, const z_loaned_session_t *zs) {
     int8_t ret = _Z_RES_OK;
 
     ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val._id);

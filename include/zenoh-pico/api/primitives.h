@@ -98,7 +98,7 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
- * Builds a :c:type:`z_keyexpr_t` from a null-terminated string with auto canonization.
+ * Builds a :c:type:`z_view_keyexpr_t` from a null-terminated string with auto canonization.
  * It is a loaned key expression that aliases ``name``.
  * The string is canonized in-place before being passed to keyexpr, possibly shortening it by modifying len.
  * May SEGFAULT if `name` is NULL or lies in read-only memory (as values initialized with string litterals do).
@@ -114,16 +114,63 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
 
 /**
- * Gets a null-terminated string from a :c:type:`z_keyexpr_t`.
+ * Gets a null-terminated string view from a :c:type:`z_keyexpr_t`.
  *
  * Parameters:
  *   keyexpr: Pointer to a loaned instance of :c:type:`z_keyexpr_t`.
- *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
+ *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_to_string(const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str);
+int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
+
+/**
+ * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
+ * Returns 0 in case of success, negative error code otherwise.
+ *
+ * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this
+ * operation, as this would extremely likely cause bugs.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to keyexpr to concatenate to.
+ *   right: Pointer to the start of the substring that will be concatenated.
+ *   len: Length of the substring to concatenate.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
+
+/**
+ * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is
+ * automatically canonized.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to the left part of resulting key expression.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the right part of resulting key expression.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
+
+/**
+ * Returns the relation between `left` and `right` from `left`'s point of view.
+ *
+ * Note that this is slower than `z_keyexpr_intersects` and `keyexpr_includes`, so you should favor these methods for
+ * most applications.
+ *
+ * Parameters:
+ *  left: Pointer to :c:type:`z_loaned_keyexpr_t` representing left key expression.
+ *  right: Pointer to :c:type:`z_loaned_keyexpr_t` representing right key expression.
+ *
+ * Return:
+ *  Relation between `left` and `right` from `left`'s point of view.
+ */
+z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
  * Checks if a given keyexpr is valid.
@@ -1688,33 +1735,72 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
+ * Builds a new keyexpr from a substring.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   name: Pointer to the start of the substring for keyxpr.
+ *   len: Length of the substring to consider.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
+
+/**
+ * Builds a :c:type:`z_owned_keyexpr_t` from a null-terminated string with auto canonization.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
+
+/**
+ * Builds a :c:type:`z_owned_keyexpr_t` from a substring with auto canonization.
+ *
+ * Parameters:
+ *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
+ *   name: Pointer to the start of the substring for keyxpr.
+ *   len: Length of the substring to consider. After the function return it will be equal to the canonized key
+ * expression string length.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
+
+/**
  * Declares a keyexpr, so that it is mapped on a numerical id.
  *
  * This numerical id is used on the network to save bandwidth and ease the retrieval of the concerned resource
  * in the routing tables.
  *
  * Parameters:
- *   ke: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
+ *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the keyexpr through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the keyexpr with.
  *
  * Return:
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_keyexpr(z_owned_keyexpr_t *ke, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr);
+int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
+                         const z_loaned_keyexpr_t *keyexpr);
 
 /**
  * Undeclares a keyexpr.
  *
  * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
  *   keyexpr: Pointer to a moved :c:type:`z_owned_keyexpr_t` to undeclare.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
  *
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-// TODO(sashacmc): change parameters order?
-int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr);
+int8_t z_undeclare_keyexpr(z_owned_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
