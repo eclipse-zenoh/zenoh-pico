@@ -65,8 +65,8 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     queries++;
 
     const z_loaned_keyexpr_t *query_ke = z_query_keyexpr(query);
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(query_ke, &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(query_ke, &k_str);
     (void)arg;
     assert(z_check(k_str));
 
@@ -83,8 +83,6 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_bytes_serialize_from_str(&reply_payload, value);
 
     z_query_reply(query, query_ke, z_move(reply_payload), &_ret_qreply_opt);
-
-    z_drop(z_move(k_str));
 }
 
 volatile unsigned int replies = 0;
@@ -96,10 +94,10 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
 
-        z_owned_string_t k_str;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+        z_view_string_t k_str;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
+        (void)arg;
         assert(z_check(k_str));
-        z_drop(z_move(k_str));
     } else {
         const z_loaned_reply_err_t *_ret_zerr = z_reply_err(reply);
         (void)(_ret_zerr);
@@ -111,11 +109,10 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     printf("%s\n", __func__);
     datas++;
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
-    assert(z_check(k_str));
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     (void)arg;
-    z_drop(z_move(k_str));
+    assert(z_check(k_str));
 }
 
 int main(int argc, char **argv) {
@@ -324,7 +321,7 @@ int main(int argc, char **argv) {
     assert_eq(datas, 2);
 
     printf("Undeclaring Keyexpr...");
-    _ret_int8 = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
+    _ret_int8 = z_undeclare_keyexpr(z_move(_ret_expr), z_loan(s1));
     printf(" %02x\n", _ret_int8);
     assert_eq(_ret_int8, 0);
     assert(!z_check(_ret_expr));

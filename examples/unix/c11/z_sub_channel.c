@@ -80,12 +80,11 @@ int main(int argc, char **argv) {
     z_owned_sample_t sample;
     z_null(&sample);
     for (z_recv(z_loan(handler), &sample); z_check(sample); z_recv(z_loan(handler), &sample)) {
-        z_owned_string_t keystr;
-        z_keyexpr_to_string(z_sample_keyexpr(z_loan(sample)), &keystr);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
         z_owned_string_t value;
         z_bytes_deserialize_into_string(z_sample_payload(z_loan(sample)), &value);
         printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
-        z_drop(z_move(keystr));
         z_drop(z_move(value));
         z_drop(z_move(sample));
         z_null(&sample);

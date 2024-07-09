@@ -20,8 +20,8 @@
 #if Z_FEATURE_SUBSCRIPTION == 1
 void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
@@ -35,7 +35,6 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     }
     printf("[rx]: Received packet on %s, len: %d, validity: %d\n", z_string_data(z_loan(keystr)), (int)data_len,
            is_valid);
-    z_drop(z_move(keystr));
     z_drop(z_move(value));
 }
 

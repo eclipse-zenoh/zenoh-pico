@@ -84,6 +84,22 @@ typedef enum {
 } zp_keyexpr_canon_status_t;
 
 /**
+ * Intersection level of 2 key expressions.
+ *
+ * Enumerators:
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT: 2 key expression do not intersect.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS: 2 key expressions intersect, i.e. there exists at least one key expression
+ * that is included by both. Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES: First key expression is the superset of second one.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS: 2 key expressions are equal.
+ */
+typedef enum {
+    Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT = 0,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS = 1,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES = 2,
+    Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS = 3,
+} z_keyexpr_intersection_level_t;
+
+/**
  * Sample kind values.
  *
  * Enumerators:

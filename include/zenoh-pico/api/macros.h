@@ -139,7 +139,7 @@
 
 #define z_check(x) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_check,                 \
-                  z_view_keyexpr_t : z_keyexpr_is_initialized,         \
+                  z_view_keyexpr_t : z_view_keyexpr_check,             \
                   z_owned_reply_err_t : z_reply_err_check,             \
                   z_owned_config_t : z_config_check,                   \
                   z_owned_session_t : z_session_check,                 \
@@ -149,6 +149,7 @@
                   z_owned_reply_t : z_reply_check,                     \
                   z_owned_hello_t : z_hello_check,                     \
                   z_owned_string_t : z_string_check,                   \
+                  z_view_string_t : z_view_string_check,               \
                   z_owned_string_array_t : z_string_array_check,       \
                   z_owned_slice_t : z_slice_check,                     \
                   z_owned_bytes_t : z_bytes_check,                     \
@@ -437,6 +438,7 @@ inline void z_null(z_owned_fifo_handler_sample_t* v) { return z_fifo_handler_sam
 inline bool z_check(const z_owned_session_t& v) { return z_session_check(&v); }
 inline bool z_check(const z_owned_publisher_t& v) { return z_publisher_check(&v); }
 inline bool z_check(const z_owned_keyexpr_t& v) { return z_keyexpr_check(&v); }
+inline bool z_check(const z_view_keyexpr_t& v) { return z_view_keyexpr_check(&v); }
 inline bool z_check(const z_owned_config_t& v) { return z_config_check(&v); }
 inline bool z_check(const z_owned_subscriber_t& v) { return z_subscriber_check(&v); }
 inline bool z_check(const z_owned_queryable_t& v) { return z_queryable_check(&v); }
@@ -444,6 +446,7 @@ inline bool z_check(const z_owned_reply_t& v) { return z_reply_check(&v); }
 inline bool z_check(const z_owned_query_t& v) { return z_query_check(&v); }
 inline bool z_check(const z_owned_hello_t& v) { return z_hello_check(&v); }
 inline bool z_check(const z_owned_string_t& v) { return z_string_check(&v); }
+inline bool z_check(const z_view_string_t& v) { return z_view_string_check(&v); }
 inline bool z_check(const z_owned_sample_t& v) { return z_sample_check(&v); }
 inline bool z_check(const z_owned_bytes_t& v) { return z_bytes_check(&v); }
 inline bool z_check(const z_owned_bytes_writer_t& v) { return z_bytes_writer_check(&v); }
