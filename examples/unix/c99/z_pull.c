@@ -24,7 +24,7 @@
 //     (void)(ctx);
 //     z_view_string_t keystr;
 //     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
-//     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_string_data(z_string_loan(&keystr)),
+//     printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_string_data(z_view_string_loan(&keystr)),
 //     (int)sample->payload.len,
 //            sample->payload.start);
 // }

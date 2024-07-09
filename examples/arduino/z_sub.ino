@@ -41,7 +41,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
 
     Serial.print(" >> [Subscription listener] Received (");
-    Serial.print(z_string_data(z_string_loan(&keystr)));
+    Serial.print(z_string_data(z_view_string_loan(&keystr)));
     Serial.print(", ");
     Serial.print(z_string_data(z_string_loan(&value)));
     Serial.println(")");

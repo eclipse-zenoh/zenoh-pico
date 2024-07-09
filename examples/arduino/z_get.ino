@@ -52,7 +52,7 @@ void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
         Serial.print(" >> [Get listener] Received (");
-        Serial.print(z_string_data(z_string_loan(&keystr)));
+        Serial.print(z_string_data(z_view_string_loan(&keystr)));
         Serial.print(", ");
         Serial.print(z_string_data(z_string_loan(&replystr)));
         Serial.println(")");
