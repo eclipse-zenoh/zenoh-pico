@@ -487,10 +487,26 @@ void test_join(void) {
 
     assert(0 == z_keyexpr_join(&ke3, z_keyexpr_loan(&ke1), z_keyexpr_loan(&ke2)));
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke3), "a/*/**/d/e/c"));
-   
+
     z_keyexpr_drop(z_keyexpr_move(&ke1));
     z_keyexpr_drop(z_keyexpr_move(&ke2));
     z_keyexpr_drop(z_keyexpr_move(&ke3));
+}
+
+void test_relation_to(void) {
+    z_view_keyexpr_t foobar, foostar, barstar;
+    z_view_keyexpr_from_str(&foobar, "foo/bar");
+    z_view_keyexpr_from_str(&foostar, "foo/*");
+    z_view_keyexpr_from_str(&barstar, "bar/*");
+
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foostar), z_view_keyexpr_loan(&foobar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foobar), z_view_keyexpr_loan(&foostar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foostar), z_view_keyexpr_loan(&foostar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&barstar), z_view_keyexpr_loan(&foobar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT);
 }
 
 int main(void) {
@@ -501,6 +517,7 @@ int main(void) {
     test_keyexpr_constructor();
     test_concat();
     test_join();
+    test_relation_to();
 
     return 0;
 }

@@ -133,9 +133,9 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
  * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
  * Returns 0 in case of success, negative error code otherwise.
  *
- * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this operation,
- * as this would extremely likely cause bugs.
- * 
+ * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this
+ * operation, as this would extremely likely cause bugs.
+ *
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
  *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to keyexpr to concatenate to.
@@ -145,12 +145,12 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_concat(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const char* right, size_t len);
+int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
 
 /**
- * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is automatically
- * canonized.
- * 
+ * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is
+ * automatically canonized.
+ *
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
  *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to the left part of resulting key expression.
@@ -159,7 +159,22 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, 
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_join(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left,  const z_loaned_keyexpr_t *right);
+int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
+
+/**
+ * Returns the relation between `left` and `right` from `left`'s point of view.
+ *
+ * Note that this is slower than `z_keyexpr_intersects` and `keyexpr_includes`, so you should favor these methods for
+ * most applications.
+ *
+ * Parameters:
+ *  left: Pointer to :c:type:`z_loaned_keyexpr_t` representing left key expression.
+ *  right: Pointer to :c:type:`z_loaned_keyexpr_t` representing right key expression.
+ *
+ * Return:
+ *  Relation between `left` and `right` from `left`'s point of view.
+ */
+z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
  * Builds a null-terminated string from a :c:type:`z_loaned_keyexpr_t` for a given

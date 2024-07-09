@@ -111,38 +111,38 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
     return ret;
 }
 
-int8_t z_keyexpr_concat(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const char* right, size_t len) {
+int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len) {
     z_keyexpr_null(key);
     if (len == 0) {
         return z_keyexpr_clone(key, left);
     } else if (right == NULL) {
         return _Z_ERR_INVALID;
-    } 
+    }
     size_t left_len = strlen(left->_suffix);
     if (left_len == 0) return _Z_ERR_INVALID;
     if (left->_suffix[left_len - 1] == '*' && right[0] == '*') {
         return _Z_ERR_INVALID;
     }
-    
-    char* s = z_malloc(left_len + len + 1);
+
+    char *s = z_malloc(left_len + len + 1);
     if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     s[left_len + len] = '\0';
 
     memcpy(s, left->_suffix, left_len);
     memcpy(s + left_len, right, len);
-    
+
     key->_val = _z_rname(s);
     _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
 }
 
-int8_t z_keyexpr_join(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
+int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
     z_keyexpr_null(key);
 
     size_t left_len = strlen(left->_suffix);
     size_t right_len = strlen(right->_suffix);
 
-    char* s = z_malloc(left_len + right_len + 2);
+    char *s = z_malloc(left_len + right_len + 2);
     if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     s[left_len + right_len + 1] = '\0';
     s[left_len] = '/';
@@ -153,6 +153,13 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t* key, const z_loaned_keyexpr_t *left, co
     key->_val = _z_rname(s);
     _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
+}
+
+z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
+    if (z_keyexpr_equals(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS;
+    if (z_keyexpr_includes(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES;
+    if (z_keyexpr_intersects(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS;
+    return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
 int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
