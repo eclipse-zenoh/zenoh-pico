@@ -170,6 +170,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                     },
             };
             break;
+        default:
+            return _Z_ERR_GENERIC;
     }
 
     if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
@@ -331,28 +333,68 @@ int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_val
         _z_keyexpr_t ke = _z_keyexpr_alias(keyexpr);
         _z_zenoh_message_t z_msg;
         switch (kind) {
+            case Z_SAMPLE_KIND_PUT:
+                z_msg = (_z_zenoh_message_t){
+                    ._tag = _Z_N_RESPONSE,
+                    ._body._response =
+                        {
+                            ._request_id = query->_request_id,
+                            ._key = ke,
+                            ._ext_responder = {._zid = zid, ._eid = 0},
+                            ._ext_qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                            ._ext_timestamp = _z_timestamp_null(),
+                            ._tag = _Z_RESPONSE_BODY_REPLY,
+                            ._body._reply =
+                                {
+                                    ._consolidation = Z_CONSOLIDATION_MODE_DEFAULT,
+                                    ._body._is_put = true,
+                                    ._body._body._put =
+                                        {
+                                            ._payload = payload.payload,
+                                            ._encoding = payload.encoding,
+                                            ._commons =
+                                                {
+                                                    ._timestamp =
+                                                        (timestamp != NULL) ? *timestamp : _z_timestamp_null(),
+                                                    ._source_info = _z_source_info_null(),
+                                                },
+                                            ._attachment = att,
+                                        },
+                                },
+                        },
+                };
+                break;
+            case Z_SAMPLE_KIND_DELETE:
+                z_msg = (_z_zenoh_message_t){
+                    ._tag = _Z_N_RESPONSE,
+                    ._body._response =
+                        {
+                            ._request_id = query->_request_id,
+                            ._key = ke,
+                            ._ext_responder = {._zid = zid, ._eid = 0},
+                            ._ext_qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
+                            ._ext_timestamp = _z_timestamp_null(),
+                            ._tag = _Z_RESPONSE_BODY_REPLY,
+                            ._body._reply =
+                                {
+                                    ._consolidation = Z_CONSOLIDATION_MODE_DEFAULT,
+                                    ._body._is_put = false,
+                                    ._body._body._del =
+                                        {
+                                            ._commons =
+                                                {
+                                                    ._timestamp =
+                                                        (timestamp != NULL) ? *timestamp : _z_timestamp_null(),
+                                                    ._source_info = _z_source_info_null(),
+                                                },
+                                            ._attachment = att,
+                                        },
+                                },
+                        },
+                };
+                break;
             default:
                 return _Z_ERR_GENERIC;
-                break;
-            case Z_SAMPLE_KIND_PUT:
-                z_msg._tag = _Z_N_RESPONSE;
-                z_msg._body._response._request_id = query->_request_id;
-                z_msg._body._response._key = ke;
-                z_msg._body._response._ext_responder._zid = zid;
-                z_msg._body._response._ext_responder._eid = 0;
-                z_msg._body._response._ext_qos =
-                    _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
-                z_msg._body._response._ext_timestamp = _z_timestamp_null();
-                z_msg._body._response._tag = _Z_RESPONSE_BODY_REPLY;
-                z_msg._body._response._body._reply._consolidation = Z_CONSOLIDATION_MODE_DEFAULT;
-                z_msg._body._response._body._reply._body._is_put = true;
-                z_msg._body._response._body._reply._body._body._put._payload = payload.payload;
-                z_msg._body._response._body._reply._body._body._put._encoding = payload.encoding;
-                z_msg._body._response._body._reply._body._body._put._commons._timestamp =
-                    (timestamp != NULL) ? *timestamp : _z_timestamp_null();
-                z_msg._body._response._body._reply._body._body._put._commons._source_info = _z_source_info_null();
-                z_msg._body._response._body._reply._body._body._put._attachment = att;
-                break;
         }
         if (_z_send_n_msg(query->_zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;

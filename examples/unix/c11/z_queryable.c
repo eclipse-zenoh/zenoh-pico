@@ -22,6 +22,7 @@
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
 static int msg_nb = 0;
+static z_sample_kind_t reply_kind = Z_SAMPLE_KIND_PUT;
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
@@ -43,7 +44,17 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_owned_bytes_t reply_payload;
     z_bytes_serialize_from_str(&reply_payload, value);
 
-    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
+    switch (reply_kind) {
+        case Z_SAMPLE_KIND_PUT:
+            z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
+            break;
+        case Z_SAMPLE_KIND_DELETE:
+            z_query_reply_del(query, z_query_keyexpr(query), NULL);
+            break;
+        default:
+            printf("Unknown reply kind\n");
+            break;
+    }
     z_drop(z_move(keystr));
     msg_nb++;
 }
@@ -55,7 +66,7 @@ int main(int argc, char **argv) {
     int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:d")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -74,6 +85,9 @@ int main(int argc, char **argv) {
                 break;
             case 'n':
                 n = atoi(optarg);
+                break;
+            case 'd':
+                reply_kind = Z_SAMPLE_KIND_DELETE;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||

@@ -1639,7 +1639,6 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  *   query: Pointer to a :c:type:`z_loaned_query_t` to reply.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the reply with.
  *   payload: Pointer to the reply data.
- *   payload_len: The length of the payload.
  *   options: Pointer to a :c:type:`z_query_reply_options_t` to configure the reply.
  *
  * Return:
@@ -1647,6 +1646,33 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  */
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options);
+
+/**
+ * Builds a :c:type:`z_query_reply_del_options_t` with default values.
+ *
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_query_reply_del_options_t`.
+ */
+void z_query_reply_del_options_default(z_query_reply_del_options_t *options);
+
+/**
+ * Sends a reply delete to a query.
+ *
+ * This function must be called inside of a :c:type:`z_owned_closure_query_t` callback associated to the
+ * :c:type:`z_owned_queryable_t`, passing the received query as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply will be considered complete when the callback
+ * returns.
+ *
+ * Parameters:
+ *   query: Pointer to a :c:type:`z_loaned_query_t` to reply.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the reply with.
+ *   options: Pointer to a :c:type:`z_query_reply_del_options_t` to configure the reply.
+ *
+ * Return:
+ *   ``0`` if reply operation successful, ``negative value`` otherwise.
+ */
+int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
+                         const z_query_reply_del_options_t *options);
 #endif
 
 /**
@@ -1751,7 +1777,8 @@ void zp_task_read_options_default(zp_task_read_options_t *options);
 /**
  * Starts a task to read from the network and process the received messages.
  *
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is platform-dependent.
+ * Note that the task can be implemented in form of thread, process, etc. and its implementation is
+ * platform-dependent.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
@@ -1788,7 +1815,8 @@ void zp_task_lease_options_default(zp_task_lease_options_t *options);
  *
  * This task will send ``KeepAlive`` messages when needed and will close the session when the lease is expired.
  * When operating over a multicast transport, it also periodically sends the ``Join`` messages.
- * Note that the task can be implemented in form of thread, process, etc. and its implementation is platform-dependent.
+ * Note that the task can be implemented in form of thread, process, etc. and its implementation is
+ * platform-dependent.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the task from.
