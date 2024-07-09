@@ -1294,7 +1294,6 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->timestamp = NULL;
     options->is_express = false;
     options->attachment = NULL;
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
 }
 
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
