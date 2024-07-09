@@ -1258,8 +1258,8 @@ int8_t z_undeclare_queryable(z_owned_queryable_t *queryable) {
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
-    options->encoding = NULL;
     options->timestamp = NULL;
     options->is_express = false;
     options->attachment = NULL;
@@ -1286,6 +1286,34 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
     }
     // Clean-up
     z_encoding_drop(opts.encoding);
+    z_bytes_drop(opts.attachment);
+    return ret;
+}
+
+void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
+    options->timestamp = NULL;
+    options->is_express = false;
+    options->attachment = NULL;
+}
+
+int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
+                         const z_query_reply_del_options_t *options) {
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    z_query_reply_del_options_t opts;
+    if (options == NULL) {
+        z_query_reply_del_options_default(&opts);
+    } else {
+        opts = *options;
+    }
+
+    _z_value_t value = {.payload = _z_bytes_null(), .encoding = _z_encoding_null()};
+
+    int8_t ret =
+        _z_send_reply(&query->in->val, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE, opts.congestion_control,
+                      opts.priority, opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
+
     z_bytes_drop(opts.attachment);
     return ret;
 }

@@ -113,7 +113,7 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                     _z_msg_del_t del = req->_body._del;
                     _z_encoding_t encoding = _z_encoding_null();
                     ret = _z_trigger_subscriptions(zn, req->_key, _z_bytes_null(), &encoding, Z_SAMPLE_KIND_DELETE,
-                                                   del._commons._timestamp, req->_ext_qos, _z_bytes_null());
+                                                   del._commons._timestamp, req->_ext_qos, del._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);

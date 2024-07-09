@@ -259,6 +259,24 @@ typedef struct {
 } z_query_reply_options_t;
 
 /**
+ * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del.
+ *
+ * Members:
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
+ *   z_priority_t priority: The priority of this message when routed.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *   z_owned_bytes_t *attachment: An optional attachment to the response.
+ */
+typedef struct {
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
+    z_timestamp_t *timestamp;
+    _Bool is_express;
+    z_owned_bytes_t *attachment;
+} z_query_reply_del_options_t;
+
+/**
  * Represents the configuration used to configure a put operation sent via via :c:func:`z_put`.
  *
  * Members:

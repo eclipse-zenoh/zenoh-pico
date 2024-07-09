@@ -22,6 +22,8 @@
 static z_owned_condvar_t cond;
 static z_owned_mutex_t mutex;
 
+const char *kind_to_str(z_sample_kind_t kind);
+
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
@@ -38,7 +40,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-        printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
+        printf(">> Received %s ('%s': '%s')\n", kind_to_str(z_sample_kind(sample)), z_string_data(z_loan(keystr)),
+               z_string_data(z_loan(replystr)));
         z_drop(z_move(replystr));
     } else {
         printf(">> Received an error\n");
@@ -141,6 +144,17 @@ int main(int argc, char **argv) {
 
     z_close(z_move(s));
     return 0;
+}
+
+const char *kind_to_str(z_sample_kind_t kind) {
+    switch (kind) {
+        case Z_SAMPLE_KIND_PUT:
+            return "PUT";
+        case Z_SAMPLE_KIND_DELETE:
+            return "DELETE";
+        default:
+            return "UNKNOWN";
+    }
 }
 #else
 int main(void) {

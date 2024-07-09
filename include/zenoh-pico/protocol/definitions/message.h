@@ -66,6 +66,7 @@ typedef struct {
 
 typedef struct {
     _z_m_push_commons_t _commons;
+    _z_bytes_t _attachment;
 } _z_msg_del_t;
 static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 #define _Z_M_DEL_ID 0x02

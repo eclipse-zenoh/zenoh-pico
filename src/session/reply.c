@@ -25,11 +25,8 @@ int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key
     // TODO check id to know where to dispatch
 
 #if Z_FEATURE_QUERY == 1
-    if (reply->_body._is_put) {
-        ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put);
-    } else {
-        ret = _Z_ERR_GENERIC;
-    }
+    ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put,
+                                         (reply->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE));
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
