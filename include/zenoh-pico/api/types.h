@@ -107,7 +107,6 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *   - :c:func:`z_keyexpr_from_str`
  *   - :c:func:`z_keyexpr_is_initialized`
  *   - :c:func:`z_keyexpr_as_view_string`
- *   - :c:func:`zp_keyexpr_resolve`
  */
 _Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
 _Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
@@ -221,10 +220,12 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    _Bool is_express;
 } z_publisher_options_t;
 
 /**

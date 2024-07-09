@@ -67,13 +67,8 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     const z_loaned_keyexpr_t *query_ke = z_query_keyexpr(query);
     z_view_string_t k_str;
     z_keyexpr_as_view_string(query_ke, &k_str);
-#ifdef ZENOH_PICO
-    if (z_check(k_str) == false) {
-        z_owned_string_t owned_k_str;
-        zp_keyexpr_resolve(*(const z_loaned_session_t **)arg, z_query_keyexpr(query), &owned_k_str);
-        z_drop(z_move(owned_k_str));
-    }
-#endif
+    (void)arg;
+    assert(z_check(k_str));
 
     z_view_string_t pred;
     z_query_parameters(query, &pred);
@@ -94,19 +89,15 @@ volatile unsigned int replies = 0;
 void reply_handler(const z_loaned_reply_t *reply, void *arg) {
     printf("%s\n", __func__);
     replies++;
+    (void)arg;
 
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
 
         z_view_string_t k_str;
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
-#ifdef ZENOH_PICO
-        if (z_check(k_str) == false) {
-            z_owned_string_t owned_k_str;
-            zp_keyexpr_resolve(*(const z_loaned_session_t **)arg, z_sample_keyexpr(sample), &owned_k_str);
-            z_drop(z_move(owned_k_str));
-        }
-#endif
+        (void)arg;
+        assert(z_check(k_str));
     } else {
         const z_loaned_reply_err_t *_ret_zerr = z_reply_err(reply);
         (void)(_ret_zerr);
@@ -120,13 +111,8 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
-#ifdef ZENOH_PICO
-    if (z_check(k_str) == false) {
-        z_owned_string_t owned_k_str;
-        zp_keyexpr_resolve(*(const z_loaned_session_t **)arg, z_sample_keyexpr(sample), &owned_k_str);
-        z_drop(z_move(owned_k_str));
-    }
-#endif
+    (void)arg;
+    assert(z_check(k_str));
 }
 
 int main(int argc, char **argv) {

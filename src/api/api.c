@@ -162,14 +162,6 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
-int8_t zp_keyexpr_resolve(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_owned_string_t *str) {
-    _z_keyexpr_t ekey = _z_get_expanded_key_from_key(&_Z_RC_IN_VAL(zs), keyexpr);
-    str->_val = _z_string_make((char *)ekey._suffix);  // ekey will be out of scope so
-                                                       //  - suffix can be safely casted as non-const
-                                                       //  - suffix does not need to be copied
-    return _z_string_check(&str->_val) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-}
-
 _Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr) {
     _Bool ret = false;
 
@@ -994,12 +986,14 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
         opt.attachment = options->attachment;
     }
 
-    ret = _z_write(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+
+    ret = _z_write(&_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
                    _z_encoding_from_owned(opt.encoding), Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority,
                    opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
-    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_from_owned_bytes(payload),
+    _z_trigger_local_subscriptions(&_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
                                    _z_n_qos_make(0, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
                                    _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
@@ -1029,20 +1023,22 @@ int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
 void z_publisher_options_default(z_publisher_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
+    options->is_express = false;
 }
 
 int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                            const z_publisher_options_t *options) {
-    _z_keyexpr_t key = *keyexpr;
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
 
     pub->_val = _z_publisher_null();
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
     if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), keyexpr_aliased);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -1052,9 +1048,10 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
     if (options != NULL) {
         opt.congestion_control = options->congestion_control;
         opt.priority = options->priority;
+        opt.is_express = options->is_express;
     }
     // Set publisher
-    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority);
+    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.congestion_control, opt.priority, opt.is_express);
     // Create write filter
     int8_t res = _z_write_filter_create(&int_pub);
     if (res != _Z_RES_OK) {
@@ -1092,6 +1089,8 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_owned_bytes_t *payload
         opt.is_express = options->is_express;
         opt.timestamp = options->timestamp;
         opt.attachment = options->attachment;
+    } else {
+        opt.is_express = pub->_is_express;
     }
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
@@ -1117,6 +1116,8 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
     if (options != NULL) {
         opt.is_express = options->is_express;
         opt.timestamp = options->timestamp;
+    } else {
+        opt.is_express = pub->_is_express;
     }
     return _z_write(&pub->_zn.in->val, pub->_key, _z_bytes_null(), _z_encoding_null(), Z_SAMPLE_KIND_DELETE,
                     pub->_congestion_control, pub->_priority, opt.is_express, opt.timestamp, _z_bytes_null());
@@ -1148,6 +1149,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     void *ctx = callback->_val.context;
     callback->_val.context = NULL;
 
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+
     z_get_options_t opt;
     z_get_options_default(&opt);
     if (options != NULL) {
@@ -1170,7 +1173,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(opt.payload),
                         .encoding = _z_encoding_from_owned(opt.encoding)};
 
-    ret = _z_query(&_Z_RC_IN_VAL(zs), *keyexpr, parameters, opt.target, opt.consolidation.mode, value,
+    ret = _z_query(&_Z_RC_IN_VAL(zs), keyexpr_aliased, parameters, opt.target, opt.consolidation.mode, value,
                    callback->_val.call, callback->_val.drop, ctx, opt.timeout_ms,
                    _z_bytes_from_owned_bytes(opt.attachment));
     if (opt.payload != NULL) {
@@ -1222,15 +1225,16 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
     void *ctx = callback->_val.context;
     callback->_val.context = NULL;
 
-    _z_keyexpr_t key = *keyexpr;
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
     if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+            uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), keyexpr_aliased);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -1262,6 +1266,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     z_query_reply_options_t opts;
     if (options == NULL) {
         z_query_reply_options_default(&opts);
@@ -1273,8 +1278,8 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
     int8_t ret =
-        _z_send_reply(&query->in->val, *keyexpr, value, Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
-                      opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
+        _z_send_reply(&query->in->val, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT, opts.congestion_control,
+                      opts.priority, opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
     if (payload != NULL) {
         z_bytes_drop(payload);
     }
@@ -1314,8 +1319,19 @@ int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t le
 }
 
 int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
-    uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), *keyexpr);
+    _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
+    uint16_t id = _z_declare_resource(&_Z_RC_IN_VAL(zs), k);
     key->_val = _z_rid_with_suffix(id, NULL);
+    if (keyexpr->_suffix) key->_val._suffix = _z_str_clone(keyexpr->_suffix);
+    // we still need to store the original suffix, for user needs
+    // (for example to compare keys or perform other operations on their string representation).
+    // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
+    // since they consist of 2 disjoint sets: either they have a non-nul suffix or non-trivial id/mapping.
+    // The resulting keyexpr can be separated later into valid internal keys using _z_keyexpr_alias_from_user_defined.
+    if (key->_val._suffix == NULL && keyexpr->_suffix != NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
 }
 
@@ -1349,16 +1365,18 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     callback->_val.context = NULL;
     char *suffix = NULL;
 
-    _z_keyexpr_t key = *keyexpr;
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
+
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
     //       resource declarations are only performed on unicast transports.
     if (_Z_RC_IN_VAL(zs)._tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), keyexpr);
+        _z_resource_t *r = _z_get_resource_by_key(&_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            char *wild = strpbrk(keyexpr->_suffix, "*$");
+            char *wild = strpbrk(keyexpr_aliased._suffix, "*$");
             _Bool do_keydecl = true;
-            _z_keyexpr_t resource_key = *keyexpr;
+            _z_keyexpr_t resource_key = keyexpr_aliased;
             if (wild != NULL && wild != resource_key._suffix) {
                 wild -= 1;
                 size_t len = (size_t)(wild - resource_key._suffix);
