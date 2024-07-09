@@ -922,6 +922,11 @@ z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return sampl
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &sample->encoding; }
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return sample->qos; }
 const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) { return &sample->attachment; }
+z_congestion_control_t z_sample_congestion_control(const z_loaned_sample_t *sample) {
+    return _z_n_qos_get_congestion_control(sample->qos);
+}
+bool z_sample_express(const z_loaned_sample_t *sample) { return _z_n_qos_get_express(sample->qos); }
+z_priority_t z_sample_priority(const z_loaned_sample_t *sample) { return _z_n_qos_get_priority(sample->qos); }
 
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
 const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }

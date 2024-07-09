@@ -1430,6 +1430,39 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
 
 /**
+ * Got sample qos congestion control value.
+ *
+ * Parameters:
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the congestion control from.
+ *
+ * Return:
+ *   The congestion control wrapped as a :c:type:`z_congestion_control_t`.
+ */
+z_congestion_control_t z_sample_congestion_control(const z_loaned_sample_t *sample);
+
+/**
+ * Got whether sample qos express flag was set or not.
+ *
+ * Parameters:
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the express flag from.
+ *
+ * Return:
+ *   The express flag value.
+ */
+bool z_sample_express(const z_loaned_sample_t *sample);
+
+/**
+ *
+ * Parameters:
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos from.
+ *
+ * Return:
+ *   The qos wrapped as a :c:type:`z_qos_t`.
+ * Got sample qos priority value.
+ */
+z_priority_t z_sample_priority(const z_loaned_sample_t *sample);
+
+/**
  * Gets the attachment of a sample by aliasing it.
  *
  * Parameters:
