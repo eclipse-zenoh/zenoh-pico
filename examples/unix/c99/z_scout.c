@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     z_owned_closure_hello_t closure;
     z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
-    z_scout(z_config_move(&config), z_closure_hello_move(&closure));
+    z_scout(z_config_move(&config), z_closure_hello_move(&closure), NULL);
     sleep(1);
     return 0;
 }

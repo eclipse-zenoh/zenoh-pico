@@ -405,6 +405,18 @@ typedef struct {
 } zp_send_join_options_t;
 
 /**
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
+ *
+ * Members:
+ *   uint64_t timeout_ms: The maximum duration in ms the scouting can take.
+ *   z_what_t what: Type of entities to scout for.
+ */
+typedef struct {
+    uint32_t timeout_ms;
+    z_what_t what;
+} z_scout_options_t;
+
+/**
  * QoS settings of a zenoh message.
  */
 typedef _z_qos_t z_qos_t;
