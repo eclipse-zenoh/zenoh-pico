@@ -18,7 +18,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
+
+#define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
 
 #if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
@@ -56,27 +59,27 @@
     _z_atomic_store_explicit(&p.in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
 #define _ZP_RC_OP_INCR_STRONG_CNT \
     _z_atomic_fetch_add_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_INCR_WEAK_CNT \
-    _z_atomic_fetch_add_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG \
-    _z_atomic_fetch_sub_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK \
-    _z_atomic_fetch_sub_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
-#define _ZP_RC_OP_CHECK_STRONG_CNT _z_atomic_compare_exchange_strong(&p->in->_strong_cnt, &cmp_val, cmp_val)
-#define _ZP_RC_OP_CHECK_WEAK_CNT _z_atomic_compare_exchange_strong(&p->in->_weak_cnt, &cmp_val, cmp_val)
+#define _ZP_RC_OP_INCR_AND_CMP_WEAK(x) \
+    _z_atomic_fetch_add_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed) >= x
+#define _ZP_RC_OP_DECR_AND_CMP_STRONG(x) \
+    _z_atomic_fetch_sub_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)x
+#define _ZP_RC_OP_DECR_AND_CMP_WEAK(x) \
+    _z_atomic_fetch_sub_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)x
+#define _ZP_RC_OP_CHECK_STRONG_CNT(x) _z_atomic_compare_exchange_strong(&p->in->_strong_cnt, &x, x)
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                              \
-    unsigned int prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                  \
-    while ((prev != 0) && (prev < UINT32_MAX)) {                                                                \
-        unsigned int next = prev + 1;                                                                           \
-        if (_z_atomic_compare_exchange_weak_explicit(&p->in->_strong_cnt, &prev, next, _z_memory_order_acquire, \
-                                                     _z_memory_order_relaxed)) {                                \
-            _ZP_RC_OP_INCR_WEAK_CNT                                                                             \
-            c.in = p->in;                                                                                       \
-            return c;                                                                                           \
-        } else {                                                                                                \
-            prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                       \
-        }                                                                                                       \
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                                  \
+    unsigned int prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                      \
+    while ((prev != 0) && (prev < UINT32_MAX)) {                                                                    \
+        if (_z_atomic_compare_exchange_weak_explicit(&p->in->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire, \
+                                                     _z_memory_order_relaxed)) {                                    \
+            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                                     \
+                _Z_ERROR("Rc weak count overflow");                                                                 \
+                c.in = NULL;                                                                                        \
+                return c;                                                                                           \
+            }                                                                                                       \
+            c.in = p->in;                                                                                           \
+            return c;                                                                                               \
+        }                                                                                                           \
     }
 
 #else  // ZENOH_C_STANDARD == 99
@@ -90,18 +93,20 @@
     __sync_fetch_and_and(&p.in->_weak_cnt, (unsigned int)0);   \
     __sync_fetch_and_add(&p.in->_weak_cnt, (unsigned int)1);
 #define _ZP_RC_OP_INCR_STRONG_CNT __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)1);
-#define _ZP_RC_OP_INCR_WEAK_CNT __sync_fetch_and_add(&p->in->_weak_cnt, (unsigned int)1);
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG __sync_fetch_and_sub(&p->in->_strong_cnt, (unsigned int)1) > (unsigned int)1
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK __sync_fetch_and_sub(&p->in->_weak_cnt, (unsigned int)1) > (unsigned int)1
-#define _ZP_RC_OP_CHECK_STRONG_CNT __sync_bool_compare_and_swap(&p->in->_strong_cnt, cmp_val, cmp_val)
-#define _ZP_RC_OP_CHECK_WEAK_CNT __sync_bool_compare_and_swap(&p->in->_weak_cnt, cmp_val, cmp_val)
+#define _ZP_RC_OP_INCR_AND_CMP_WEAK(x) __sync_fetch_and_add(&p->in->_weak_cnt, (unsigned int)1) >= x
+#define _ZP_RC_OP_DECR_AND_CMP_STRONG(x) __sync_fetch_and_sub(&p->in->_strong_cnt, (unsigned int)1) > (unsigned int)x
+#define _ZP_RC_OP_DECR_AND_CMP_WEAK(x) __sync_fetch_and_sub(&p->in->_weak_cnt, (unsigned int)1) > (unsigned int)x
+#define _ZP_RC_OP_CHECK_STRONG_CNT(x) __sync_bool_compare_and_swap(&p->in->_strong_cnt, x, x)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                  \
     unsigned int prev = __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)0); \
-    while ((prev != 0) && (prev < UINT32_MAX)) {                                    \
-        unsigned int next = prev + 1;                                               \
-        if (__sync_bool_compare_and_swap(&p->in->_strong_cnt, prev, next)) {        \
-            _ZP_RC_OP_INCR_WEAK_CNT                                                 \
+    while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                               \
+        if (__sync_bool_compare_and_swap(&p->in->_strong_cnt, prev, prev + 1)) {    \
+            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                     \
+                _Z_ERROR("Rc weak count overflow");                                 \
+                c.in = NULL;                                                        \
+                return c;                                                           \
+            }                                                                       \
             c.in = p->in;                                                           \
             return c;                                                               \
         } else {                                                                    \
@@ -116,13 +121,12 @@
 #define _ZP_RC_CNT_TYPE unsigned int
 #define _ZP_RC_OP_INIT_CNT
 #define _ZP_RC_OP_INCR_STRONG_CNT
-#define _ZP_RC_OP_INCR_WEAK_CNT
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG true
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK true
-#define _ZP_RC_OP_CHECK_STRONG_CNT true
-#define _ZP_RC_OP_CHECK_WEAK_CNT true
+#define _ZP_RC_OP_INCR_AND_CMP_WEAK(x) (x == 0)
+#define _ZP_RC_OP_DECR_AND_CMP_STRONG(x) (x == 0)
+#define _ZP_RC_OP_DECR_AND_CMP_WEAK(x) (x == 0)
+#define _ZP_RC_OP_CHECK_STRONG_CNT(x) (x == 0) && (p != NULL)
 #define _ZP_RC_OP_SYNC
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP (void)p;
 
 #endif  // ZENOH_COMPILER_GCC
 #endif  // ZENOH_C_STANDARD != 99
@@ -133,19 +137,22 @@
 #define _ZP_RC_OP_INIT_CNT               \
     p.in->_strong_cnt = (unsigned int)1; \
     p.in->_weak_cnt = (unsigned int)1;
-#define _ZP_RC_OP_INCR_STRONG_CNT p->in->_strong_cnt += (unsigned int)1;
-#define _ZP_RC_OP_INCR_WEAK_CNT p->in->_weak_cnt += (unsigned int)1;
-#define _ZP_RC_OP_DECR_AND_CMP_STRONG p->in->_strong_cnt-- > (unsigned int)1
-#define _ZP_RC_OP_DECR_AND_CMP_WEAK p->in->_weak_cnt-- > (unsigned int)1
-#define _ZP_RC_OP_CHECK_STRONG_CNT (p->in->_strong_cnt == cmp_val)
-#define _ZP_RC_OP_CHECK_WEAK_CNT (p->in->_weak_cnt == cmp_val)
+#define _ZP_RC_OP_INCR_STRONG_CNT p->in->_strong_cnt++;
+#define _ZP_RC_OP_INCR_AND_CMP_WEAK(x) p->in->_weak_cnt++ >= x
+#define _ZP_RC_OP_DECR_AND_CMP_STRONG(x) p->in->_strong_cnt-- > (unsigned int)x
+#define _ZP_RC_OP_DECR_AND_CMP_WEAK(x) p->in->_weak_cnt-- > (unsigned int)x
+#define _ZP_RC_OP_CHECK_STRONG_CNT(x) (p->in->_strong_cnt == x)
 #define _ZP_RC_OP_SYNC
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                        \
-    if ((p->in->_strong_cnt != 0) && (p->in->_strong_cnt < UINT32_MAX)) { \
-        _ZP_RC_OP_INCR_STRONG_CNT                                         \
-        _ZP_RC_OP_INCR_WEAK_CNT                                           \
-        c.in = p->in;                                                     \
-        return c;                                                         \
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                             \
+    if ((p->in->_strong_cnt != 0) && (p->in->_strong_cnt < _Z_RC_MAX_COUNT)) { \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                    \
+            _Z_ERROR("Rc weak count overflow");                                \
+            c.in = NULL;                                                       \
+            return c;                                                          \
+        }                                                                      \
+        _ZP_RC_OP_INCR_STRONG_CNT                                              \
+        c.in = p->in;                                                          \
+        return c;                                                              \
     }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -191,60 +198,58 @@
     }                                                                                           \
     static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                           \
         name##_rc_t c;                                                                          \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                     \
+            _Z_ERROR("Rc weak count overflow");                                                 \
             c.in = NULL;                                                                        \
             return c;                                                                           \
         }                                                                                       \
-        c.in = p->in;                                                                           \
         _ZP_RC_OP_INCR_STRONG_CNT                                                               \
-        _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
+        c.in = p->in;                                                                           \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {                   \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
-            return NULL;                                                                        \
-        }                                                                                       \
         name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                          \
         if (c != NULL) {                                                                        \
-            c->in = p->in;                                                                      \
+            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                 \
+                _Z_ERROR("Rc weak count overflow");                                             \
+                z_free(c);                                                                      \
+                return NULL;                                                                    \
+            }                                                                                   \
             _ZP_RC_OP_INCR_STRONG_CNT                                                           \
-            _ZP_RC_OP_INCR_WEAK_CNT                                                             \
+            c->in = p->in;                                                                      \
         }                                                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                 \
         name##_weak_t c;                                                                        \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                     \
+            _Z_ERROR("Rc weak count overflow");                                                 \
             c.in = NULL;                                                                        \
             return c;                                                                           \
         }                                                                                       \
         c.in = p->in;                                                                           \
-        _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
         return c;                                                                               \
     }                                                                                           \
     static inline name##_weak_t *name##_rc_clone_as_weak_ptr(const name##_rc_t *p) {            \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
-            return NULL;                                                                        \
-        }                                                                                       \
         name##_weak_t *c = (name##_weak_t *)z_malloc(sizeof(name##_weak_t));                    \
         if (c != NULL) {                                                                        \
+            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                 \
+                _Z_ERROR("Rc weak count overflow");                                             \
+                z_free(c);                                                                      \
+                return NULL;                                                                    \
+            }                                                                                   \
             c->in = p->in;                                                                      \
-            _ZP_RC_OP_INCR_WEAK_CNT                                                             \
         }                                                                                       \
         return c;                                                                               \
     }                                                                                           \
     static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {                 \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                     \
+            _Z_ERROR("Rc weak count overflow");                                                 \
+            dst->in = NULL;                                                                     \
             return;                                                                             \
         }                                                                                       \
-        dst->in = p->in;                                                                        \
         _ZP_RC_OP_INCR_STRONG_CNT                                                               \
-        _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
+        dst->in = p->in;                                                                        \
     }                                                                                           \
     static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {       \
         return (left->in == right->in);                                                         \
@@ -253,8 +258,8 @@
         if ((p == NULL) || (p->in == NULL)) {                                                   \
             return false;                                                                       \
         }                                                                                       \
-        if (_ZP_RC_OP_DECR_AND_CMP_STRONG) {                                                    \
-            if (_ZP_RC_OP_DECR_AND_CMP_WEAK) {                                                  \
+        if (_ZP_RC_OP_DECR_AND_CMP_STRONG(1)) {                                                 \
+            if (_ZP_RC_OP_DECR_AND_CMP_WEAK(1)) {                                               \
                 return false;                                                                   \
             }                                                                                   \
             _ZP_RC_OP_SYNC                                                                      \
@@ -264,7 +269,7 @@
         _ZP_RC_OP_SYNC                                                                          \
         type##_clear(&p->in->val);                                                              \
                                                                                                 \
-        if (_ZP_RC_OP_DECR_AND_CMP_WEAK) {                                                      \
+        if (_ZP_RC_OP_DECR_AND_CMP_WEAK(1)) {                                                   \
             return false;                                                                       \
         }                                                                                       \
         _ZP_RC_OP_SYNC                                                                          \
@@ -278,30 +283,24 @@
     }                                                                                           \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                     \
         name##_weak_t c;                                                                        \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                     \
+            _Z_ERROR("Rc weak count overflow");                                                 \
             c.in = NULL;                                                                        \
             return c;                                                                           \
         }                                                                                       \
         c.in = p->in;                                                                           \
-        _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
         return c;                                                                               \
     }                                                                                           \
     static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) {           \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+        if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                     \
+            _Z_ERROR("Rc weak count overflow");                                                 \
+            dst->in = NULL;                                                                     \
             return;                                                                             \
         }                                                                                       \
         dst->in = p->in;                                                                        \
-        _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
     }                                                                                           \
     static inline name##_rc_t name##_weak_upgrade(name##_weak_t *p) {                           \
         name##_rc_t c;                                                                          \
-        unsigned int cmp_val = UINT32_MAX;                                                      \
-        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
-            c.in = NULL;                                                                        \
-            return c;                                                                           \
-        }                                                                                       \
         _ZP_RC_OP_UPGRADE_CAS_LOOP                                                              \
         c.in = NULL;                                                                            \
         return c;                                                                               \
@@ -311,13 +310,13 @@
     }                                                                                           \
     static inline _Bool name##_weak_check(const name##_weak_t *p) {                             \
         unsigned int cmp_val = 0;                                                               \
-        return !_ZP_RC_OP_CHECK_STRONG_CNT;                                                     \
+        return !_ZP_RC_OP_CHECK_STRONG_CNT(cmp_val);                                            \
     }                                                                                           \
     static inline _Bool name##_weak_drop(name##_weak_t *p) {                                    \
         if ((p == NULL) || (p->in == NULL)) {                                                   \
             return false;                                                                       \
         }                                                                                       \
-        if (_ZP_RC_OP_DECR_AND_CMP_WEAK) {                                                      \
+        if (_ZP_RC_OP_DECR_AND_CMP_WEAK(1)) {                                                   \
             return false;                                                                       \
         }                                                                                       \
         _ZP_RC_OP_SYNC                                                                          \
