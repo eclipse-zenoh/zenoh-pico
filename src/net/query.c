@@ -28,14 +28,16 @@ _z_query_t _z_query_null(void) {
 }
 
 void _z_query_clear(_z_query_t *q) {
-    // Check session as queries can't use session rc
-    if (_z_session_weak_check(&q->_zn)) {
+    // Try to upgrade session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&q->_zn);
+    if (sess_rc.in != NULL) {
         // Send REPLY_FINAL message
         _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
         if (_z_send_n_msg(&q->_zn.in->val, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             _Z_ERROR("Query send REPLY_FINAL transport failure !");
         }
         _z_msg_clear(&z_msg);
+        _z_session_rc_drop(&sess_rc);
     }
     // Clean up memory
     z_free(q->_parameters);

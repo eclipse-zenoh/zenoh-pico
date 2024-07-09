@@ -1298,8 +1298,9 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
-    // Check session as queries can't use session rc
-    if (!_z_session_weak_check(&query->in->val._zn)) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->in->val._zn);
+    if (sess_rc.in == NULL) {
         return _Z_ERR_CONNECTION_CLOSED;
     }
     // Set options
@@ -1321,6 +1322,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
         z_bytes_drop(payload);
     }
     // Clean-up
+    _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
     z_bytes_drop(opts.attachment);
     return ret;

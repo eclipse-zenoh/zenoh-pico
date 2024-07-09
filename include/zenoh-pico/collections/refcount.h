@@ -308,10 +308,6 @@
     static inline _Bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) { \
         return (left->in == right->in);                                                         \
     }                                                                                           \
-    static inline _Bool name##_weak_check(const name##_weak_t *p) {                             \
-        unsigned int cmp_val = 0;                                                               \
-        return !_ZP_RC_OP_CHECK_STRONG_CNT(cmp_val);                                            \
-    }                                                                                           \
     static inline _Bool name##_weak_drop(name##_weak_t *p) {                                    \
         if ((p == NULL) || (p->in == NULL)) {                                                   \
             return false;                                                                       \

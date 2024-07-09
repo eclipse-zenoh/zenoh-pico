@@ -128,13 +128,11 @@ void test_rc_clone_as_weak(void) {
     assert(dwk1.in != NULL);
     assert(dwk1.in->_strong_cnt == 1);
     assert(dwk1.in->_weak_cnt == 2);
-    assert(_dummy_weak_check(&dwk1));
 
     assert(dwk1.in->val.foo == 0);
     assert(!_dummy_rc_drop(&drc1));
     assert(dwk1.in->_strong_cnt == 0);
     assert(dwk1.in->_weak_cnt == 1);
-    assert(!_dummy_weak_check(&dwk1));
     assert(dwk1.in->val.foo == FOO_CLEARED_VALUE);
     assert(_dummy_weak_drop(&dwk1));
 }
@@ -146,12 +144,10 @@ void test_rc_clone_as_weak_ptr(void) {
     assert(dwk1->in != NULL);
     assert(dwk1->in->_strong_cnt == 1);
     assert(dwk1->in->_weak_cnt == 2);
-    assert(_dummy_weak_check(dwk1));
 
     assert(!_dummy_rc_drop(&drc1));
     assert(dwk1->in->_strong_cnt == 0);
     assert(dwk1->in->_weak_cnt == 1);
-    assert(!_dummy_weak_check(dwk1));
     assert(_dummy_weak_drop(dwk1));
     z_free(dwk1);
 }
