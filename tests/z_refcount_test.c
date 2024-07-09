@@ -214,6 +214,18 @@ void test_weak_upgrade(void) {
     assert(_dummy_weak_drop(&dwk1));
 }
 
+void test_overflow(void) {
+    _dummy_rc_t drc1 = _dummy_rc_new();
+    // Artificially set weak count to max value
+    drc1.in->_weak_cnt = INT32_MAX;
+
+    _dummy_rc_t drc2 = _dummy_rc_clone(&drc1);
+    assert(drc2.in == NULL);
+
+    _dummy_weak_t dwk1 = _dummy_rc_clone_as_weak(&drc1);
+    assert(dwk1.in == NULL);
+}
+
 int main(void) {
     test_rc_null();
     test_rc_size();
@@ -230,5 +242,6 @@ int main(void) {
     test_weak_clone();
     test_weak_copy();
     test_weak_upgrade();
+    test_overflow();
     return 0;
 }
