@@ -119,13 +119,17 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, 
         return _Z_ERR_INVALID;
     }
     size_t left_len = strlen(left->_suffix);
-    if (left_len == 0) return _Z_ERR_INVALID;
+    if (left_len == 0) {
+        return _Z_ERR_INVALID;
+    }
     if (left->_suffix[left_len - 1] == '*' && right[0] == '*') {
         return _Z_ERR_INVALID;
     }
 
     char *s = z_malloc(left_len + len + 1);
-    if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (s == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
     s[left_len + len] = '\0';
 
     memcpy(s, left->_suffix, left_len);
@@ -143,7 +147,9 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
     size_t right_len = strlen(right->_suffix);
 
     char *s = z_malloc(left_len + right_len + 2);
-    if (s == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (s == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
     s[left_len + right_len + 1] = '\0';
     s[left_len] = '/';
     memcpy(s, left->_suffix, left_len);
@@ -156,9 +162,13 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
 }
 
 z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
-    if (z_keyexpr_equals(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS;
-    if (z_keyexpr_includes(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES;
-    if (z_keyexpr_intersects(left, right)) return Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS;
+    if (z_keyexpr_equals(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS;
+    } else if (z_keyexpr_includes(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES;
+    } else if (z_keyexpr_intersects(left, right)) {
+        return Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS;
+    }
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
@@ -1328,7 +1338,7 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     return _Z_RES_OK;
 }
 
-int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr) {
+int8_t z_undeclare_keyexpr(z_owned_keyexpr_t *keyexpr, const z_loaned_session_t *zs) {
     int8_t ret = _Z_RES_OK;
 
     ret = _z_undeclare_resource(&_Z_RC_IN_VAL(zs), keyexpr->_val._id);

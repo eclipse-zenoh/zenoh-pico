@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         printf("Oh no! Put has failed...\n");
     }
     // Clean up
-    z_undeclare_keyexpr(z_loan(s), z_move(ke));
+    z_undeclare_keyexpr(z_move(ke), z_loan(s));
     zp_stop_read_task(z_loan_mut(s));
     zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));

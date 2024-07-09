@@ -376,14 +376,14 @@ int main(int argc, char **argv) {
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])->_id);
-        z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
+        z_undeclare_keyexpr(z_move(rids1[i]), z_loan(s1));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])->_id);
-        z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
+        z_undeclare_keyexpr(z_move(rids2[i]), z_loan(s2));
     }
 
     z_sleep_s(SLEEP);

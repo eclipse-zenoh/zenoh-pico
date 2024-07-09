@@ -1719,19 +1719,19 @@ int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len);
+int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a null-terminated string with auto canonization.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name);
+int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a substring with auto canonization.
@@ -1745,7 +1745,7 @@ int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name)
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t *len);
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.
@@ -1754,27 +1754,27 @@ int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *na
  * in the routing tables.
  *
  * Parameters:
- *   ke: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
+ *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the keyexpr through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the keyexpr with.
  *
  * Return:
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_keyexpr(z_owned_keyexpr_t *ke, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr);
+int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
+                         const z_loaned_keyexpr_t *keyexpr);
 
 /**
  * Undeclares a keyexpr.
  *
  * Parameters:
- *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
  *   keyexpr: Pointer to a moved :c:type:`z_owned_keyexpr_t` to undeclare.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
  *
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-// TODO(sashacmc): change parameters order?
-int8_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *keyexpr);
+int8_t z_undeclare_keyexpr(z_owned_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
