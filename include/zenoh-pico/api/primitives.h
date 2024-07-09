@@ -1739,12 +1739,13 @@ int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name)
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
  *   name: Pointer to the start of the substring for keyxpr.
- *   len: Length of the substring to consider.
+ *   len: Length of the substring to consider. After the function return it will be equal to the canonized key
+ * expression string length.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t len);
+int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t *len);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.

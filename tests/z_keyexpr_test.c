@@ -446,8 +446,10 @@ void test_keyexpr_constructor(void) {
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**"));
     z_keyexpr_drop(z_keyexpr_move(&ke));
 
-    assert(0 == z_keyexpr_from_substr_autocanonize(&ke, "a/**/**/m/b/c", 9));
+    size_t len = 9;
+    assert(0 == z_keyexpr_from_substr_autocanonize(&ke, "a/**/**/m/b/c", &len));
     assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**/m"));
+    assert(len == 6);
     z_keyexpr_drop(z_keyexpr_move(&ke));
 
     z_view_keyexpr_t vke;
