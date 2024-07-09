@@ -29,6 +29,9 @@
 #define _z_atomic_store_explicit atomic_store_explicit
 #define _z_atomic_fetch_add_explicit atomic_fetch_add_explicit
 #define _z_atomic_fetch_sub_explicit atomic_fetch_sub_explicit
+#define _z_atomic_load_explicit atomic_load_explicit
+#define _z_atomic_compare_exchange_strong atomic_compare_exchange_strong
+#define _z_atomic_compare_exchange_weak_explicit atomic_compare_exchange_weak_explicit
 #define _z_memory_order_acquire memory_order_acquire
 #define _z_memory_order_release memory_order_release
 #define _z_memory_order_relaxed memory_order_relaxed
@@ -38,6 +41,9 @@
 #define _z_atomic_store_explicit std::atomic_store_explicit
 #define _z_atomic_fetch_add_explicit std::atomic_fetch_add_explicit
 #define _z_atomic_fetch_sub_explicit std::atomic_fetch_sub_explicit
+#define _z_atomic_load_explicit std::atomic_load_explicit
+#define _z_atomic_compare_exchange_strong std::atomic_compare_exchange_strong
+#define _z_atomic_compare_exchange_weak_explicit std::atomic_compare_exchange_weak_explicit
 #define _z_memory_order_acquire std::memory_order_acquire
 #define _z_memory_order_release std::memory_order_release
 #define _z_memory_order_relaxed std::memory_order_relaxed
@@ -56,9 +62,22 @@
     _z_atomic_fetch_sub_explicit(&p->in->_strong_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK \
     _z_atomic_fetch_sub_explicit(&p->in->_weak_cnt, (unsigned int)1, _z_memory_order_release) > (unsigned int)1
-#define _ZP_RC_OP_CHECK_STRONG_CNT atomic_compare_exchange_strong(&p->in->_strong_cnt, &cmp_val, cmp_val)
-#define _ZP_RC_OP_CHECK_WEAK_CNT atomic_compare_exchange_strong(&p->in->_weak_cnt, &cmp_val, cmp_val)
+#define _ZP_RC_OP_CHECK_STRONG_CNT _z_atomic_compare_exchange_strong(&p->in->_strong_cnt, &cmp_val, cmp_val)
+#define _ZP_RC_OP_CHECK_WEAK_CNT _z_atomic_compare_exchange_strong(&p->in->_weak_cnt, &cmp_val, cmp_val)
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                              \
+    unsigned int prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                  \
+    while ((prev != 0) && (prev < UINT32_MAX)) {                                                                \
+        unsigned int next = prev + 1;                                                                           \
+        if (_z_atomic_compare_exchange_weak_explicit(&p->in->_strong_cnt, &prev, next, _z_memory_order_acquire, \
+                                                     _z_memory_order_relaxed)) {                                \
+            _ZP_RC_OP_INCR_WEAK_CNT                                                                             \
+            c.in = p->in;                                                                                       \
+            return c;                                                                                           \
+        } else {                                                                                                \
+            prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                       \
+        }                                                                                                       \
+    }
 
 #else  // ZENOH_C_STANDARD == 99
 #ifdef ZENOH_COMPILER_GCC
@@ -77,6 +96,18 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT __sync_bool_compare_and_swap(&p->in->_strong_cnt, cmp_val, cmp_val)
 #define _ZP_RC_OP_CHECK_WEAK_CNT __sync_bool_compare_and_swap(&p->in->_weak_cnt, cmp_val, cmp_val)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                  \
+    unsigned int prev = __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)0); \
+    while ((prev != 0) && (prev < UINT32_MAX)) {                                    \
+        unsigned int next = prev + 1;                                               \
+        if (__sync_bool_compare_and_swap(&p->in->_strong_cnt, prev, next)) {        \
+            _ZP_RC_OP_INCR_WEAK_CNT                                                 \
+            c.in = p->in;                                                           \
+            return c;                                                               \
+        } else {                                                                    \
+            prev = __sync_fetch_and_add(&p->in->_strong_cnt, (unsigned int)0);      \
+        }                                                                           \
+    }
 
 #else  // !ZENOH_COMPILER_GCC
 
@@ -91,6 +122,7 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT true
 #define _ZP_RC_OP_CHECK_WEAK_CNT true
 #define _ZP_RC_OP_SYNC
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP
 
 #endif  // ZENOH_COMPILER_GCC
 #endif  // ZENOH_C_STANDARD != 99
@@ -108,6 +140,13 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT (p->in->_strong_cnt == cmp_val)
 #define _ZP_RC_OP_CHECK_WEAK_CNT (p->in->_weak_cnt == cmp_val)
 #define _ZP_RC_OP_SYNC
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                        \
+    if ((p->in->_strong_cnt != 0) && (p->in->_strong_cnt < UINT32_MAX)) { \
+        _ZP_RC_OP_INCR_STRONG_CNT                                         \
+        _ZP_RC_OP_INCR_WEAK_CNT                                           \
+        c.in = p->in;                                                     \
+        return c;                                                         \
+    }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
@@ -255,6 +294,17 @@
         }                                                                                       \
         dst->in = p->in;                                                                        \
         _ZP_RC_OP_INCR_WEAK_CNT                                                                 \
+    }                                                                                           \
+    static inline name##_rc_t name##_weak_upgrade(name##_weak_t *p) {                           \
+        name##_rc_t c;                                                                          \
+        unsigned int cmp_val = UINT32_MAX;                                                      \
+        if (_ZP_RC_OP_CHECK_WEAK_CNT) {                                                         \
+            c.in = NULL;                                                                        \
+            return c;                                                                           \
+        }                                                                                       \
+        _ZP_RC_OP_UPGRADE_CAS_LOOP                                                              \
+        c.in = NULL;                                                                            \
+        return c;                                                                               \
     }                                                                                           \
     static inline _Bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) { \
         return (left->in == right->in);                                                         \
