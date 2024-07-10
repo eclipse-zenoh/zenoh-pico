@@ -14,9 +14,6 @@
 #ifndef INCLUDE_ZENOH_PICO_API_HANDLERS_H
 #define INCLUDE_ZENOH_PICO_API_HANDLERS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdint.h>
 
 #include "zenoh-pico/api/primitives.h"
@@ -25,6 +22,10 @@ extern "C" {
 #include "zenoh-pico/collections/fifo_mt.h"
 #include "zenoh-pico/collections/ring_mt.h"
 #include "zenoh-pico/utils/logging.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // -- Channel
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,          \
