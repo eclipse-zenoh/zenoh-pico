@@ -768,7 +768,54 @@ template <>
 struct z_loaned_to_owned_type_t<z_loaned_closure_zid_t> {
     typedef z_owned_closure_zid_t type;
 };
-
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_fifo_handler_query_t> {
+    typedef z_owned_fifo_handler_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_fifo_handler_query_t> {
+    typedef z_loaned_fifo_handler_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_fifo_handler_reply_t> {
+    typedef z_owned_fifo_handler_reply_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_fifo_handler_reply_t> {
+    typedef z_loaned_fifo_handler_reply_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_fifo_handler_sample_t> {
+    typedef z_owned_fifo_handler_sample_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_fifo_handler_sample_t> {
+    typedef z_loaned_fifo_handler_sample_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_ring_handler_query_t> {
+    typedef z_owned_ring_handler_query_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_ring_handler_query_t> {
+    typedef z_loaned_ring_handler_query_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_ring_handler_reply_t> {
+    typedef z_owned_ring_handler_reply_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_ring_handler_reply_t> {
+    typedef z_loaned_ring_handler_reply_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_ring_handler_sample_t> {
+    typedef z_owned_ring_handler_sample_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_ring_handler_sample_t> {
+    typedef z_loaned_ring_handler_sample_t type;
+};
 #endif
 
 #endif /* ZENOH_C_STANDARD != 99 */

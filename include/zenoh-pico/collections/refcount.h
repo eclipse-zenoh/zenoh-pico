@@ -39,6 +39,7 @@
 #define _z_memory_order_release memory_order_release
 #define _z_memory_order_relaxed memory_order_relaxed
 #else
+extern "C++" {
 #include <atomic>
 #define _z_atomic(X) std::atomic<X>
 #define _z_atomic_store_explicit std::atomic_store_explicit
@@ -323,5 +324,9 @@
         _ZP_UNUSED(p);                                                                          \
         return sizeof(name##_rc_t);                                                             \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_REFCOUNT_H */

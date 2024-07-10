@@ -14,6 +14,9 @@
 #ifndef INCLUDE_ZENOH_PICO_API_HANDLERS_H
 #define INCLUDE_ZENOH_PICO_API_HANDLERS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdint.h>
 
 #include "zenoh-pico/api/primitives.h"
@@ -187,4 +190,7 @@ _Z_CHANNEL_DEFINE_DUMMY(reply, ring)
 _Z_CHANNEL_DEFINE_DUMMY(reply, fifo)
 #endif  // Z_FEATURE_QUERY
 
+#ifdef __cplusplus
+}
+#endif
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H
