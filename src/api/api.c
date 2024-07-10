@@ -1356,14 +1356,13 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 
 void z_query_reply_err_options_default(z_query_reply_err_options_t *options) { options->encoding = NULL; }
 
-int8_t z_query_reply_err(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+int8_t z_query_reply_err(const z_loaned_query_t *query, z_owned_bytes_t *payload,
                          const z_query_reply_err_options_t *options) {
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->in->val._zn);
     if (sess_rc.in == NULL) {
         return _Z_ERR_CONNECTION_CLOSED;
     }
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     z_query_reply_err_options_t opts;
     if (options == NULL) {
         z_query_reply_err_options_default(&opts);
@@ -1374,7 +1373,7 @@ int8_t z_query_reply_err(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(payload),
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
-    int8_t ret = _z_send_reply_err(&query->in->val, &sess_rc, keyexpr_aliased, value);
+    int8_t ret = _z_send_reply_err(&query->in->val, &sess_rc, value);
     if (payload != NULL) {
         z_bytes_drop(payload);
     }

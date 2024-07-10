@@ -1806,7 +1806,7 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_err(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+int8_t z_query_reply_err(const z_loaned_query_t *query, z_owned_bytes_t *payload,
                          const z_query_reply_err_options_t *options);
 
 #endif
