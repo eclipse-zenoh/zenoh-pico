@@ -20,6 +20,10 @@
 #include "zenoh-pico/collections/fifo.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- Fifo Buffer Multithreaded --------*/
 typedef struct {
     _z_fifo_t _fifo;
@@ -42,5 +46,9 @@ int8_t _z_fifo_mt_push(const void *src, void *context, z_element_free_f element_
 
 int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move);
 int8_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_move);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // ZENOH_PICO_COLLECTIONS_FIFO_MT_H
