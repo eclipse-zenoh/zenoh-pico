@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -26,11 +26,11 @@
 #include "zenoh-pico/protocol/codec/declarations.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/codec/interest.h"
+#include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/message.h"
-#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"

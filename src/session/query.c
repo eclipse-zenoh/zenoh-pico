@@ -112,7 +112,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     }
 
     // Build the reply
-    _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
+    _z_reply_t reply = _z_reply_create(expanded_ke, _Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
                                        &msg->_commons._timestamp, &msg->_encoding, kind, msg->_attachment);
 
     _Bool drop = false;

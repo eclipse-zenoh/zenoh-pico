@@ -25,7 +25,7 @@ _z_reply_data_t _z_reply_data_null(void) {
 }
 
 _z_reply_t _z_reply_null(void) {
-    _z_reply_t r = {._tag = Z_REPLY_TAG_DATA, .data = _z_reply_data_null()};
+    _z_reply_t r = {._tag = _Z_REPLY_TAG_DATA, .data = _z_reply_data_null()};
     return r;
 }
 
@@ -97,7 +97,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_reply_tag_t tag, _z_id_t id,
                            const _z_bytes_t attachment) {
     _z_reply_t reply = _z_reply_null();
     reply._tag = tag;
-    if (tag == Z_REPLY_TAG_DATA) {
+    if (tag == _Z_REPLY_TAG_DATA) {
         reply.data.replier_id = id;
         // Create reply sample
         reply.data.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
@@ -112,7 +112,7 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_reply_tag_t tag, _z_id_t id,
 
 _z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding) {
     _z_reply_t reply = _z_reply_null();
-    reply._tag = Z_REPLY_TAG_ERROR;
+    reply._tag = _Z_REPLY_TAG_ERROR;
     _z_bytes_copy(&reply.data.error.payload, &payload);
     _z_encoding_move(&reply.data.error.encoding, encoding);
     return reply;

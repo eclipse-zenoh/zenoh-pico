@@ -1799,7 +1799,6 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  *
  * Parameters:
  *   query: Pointer to a :c:type:`z_loaned_query_t` to reply.
- *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the reply with.
  *   payload: Pointer to the reply error data.
  *   options: Pointer to a :c:type:`z_query_reply_err_options_t` to configure the reply error.
  *

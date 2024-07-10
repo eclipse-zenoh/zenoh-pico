@@ -1218,7 +1218,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->_tag != Z_REPLY_TAG_ERROR; }
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->_tag != _Z_REPLY_TAG_ERROR; }
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data.sample; }
 

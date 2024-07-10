@@ -48,12 +48,12 @@ _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
  * Reply tag values.
  *
  * Enumerators:
- *     Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
- *     Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
+ *     _Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
+ *     _Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
  *         replies for this query.
- *     Z_REPLY_TAG_ERROR: Tag identifying that the reply contains error
+ *     _Z_REPLY_TAG_ERROR: Tag identifying that the reply contains error
  */
-typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1, Z_REPLY_TAG_ERROR = 2 } _z_reply_tag_t;
+typedef enum { _Z_REPLY_TAG_DATA = 0, _Z_REPLY_TAG_FINAL = 1, _Z_REPLY_TAG_ERROR = 2 } _z_reply_tag_t;
 
 /**
  * An reply to a :c:func:`z_query`.
@@ -61,7 +61,7 @@ typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1, Z_REPLY_TAG_ERROR = 
  * Members:
  *   _z_reply_t_Tag tag: Indicates if the reply contains data or if it's a FINAL reply.
  *   _z_reply_data_t data: The reply data if :c:member:`_z_reply_t.tag` equals
- * :c:member:`_z_reply_t_Tag.Z_REPLY_TAG_DATA`.
+ * :c:member:`_z_reply_t_Tag._Z_REPLY_TAG_DATA`.
  *
  */
 typedef struct _z_reply_t {
