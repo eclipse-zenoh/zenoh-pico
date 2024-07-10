@@ -1338,6 +1338,11 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
 
 int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
                          const z_query_reply_del_options_t *options) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->in->val._zn);
+    if (sess_rc.in == NULL) {
+        return _Z_ERR_CONNECTION_CLOSED;
+    }
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     z_query_reply_del_options_t opts;
     if (options == NULL) {
@@ -1351,7 +1356,8 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     int8_t ret =
         _z_send_reply(&query->in->val, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE, opts.congestion_control,
                       opts.priority, opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
-
+    // Clean-up
+    _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);
     return ret;
 }

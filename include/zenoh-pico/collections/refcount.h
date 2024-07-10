@@ -69,7 +69,7 @@
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                                  \
     unsigned int prev = _z_atomic_load_explicit(&p->in->_strong_cnt, _z_memory_order_relaxed);                      \
-    while ((prev != 0) && (prev < UINT32_MAX)) {                                                                    \
+    while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                                                               \
         if (_z_atomic_compare_exchange_weak_explicit(&p->in->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire, \
                                                      _z_memory_order_relaxed)) {                                    \
             if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                                                     \
