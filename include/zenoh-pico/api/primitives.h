@@ -334,8 +334,34 @@ void z_config_new(z_owned_config_t *config);
  *
  * Parameters:
  *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
+ *
+ * Return:
+ *   `0`` in case of success, or a ``negative value`` otherwise.
  */
-void z_config_default(z_owned_config_t *config);
+int8_t z_config_default(z_owned_config_t *config);
+
+/**
+ * Builds a new, zenoh-allocated, client configuration.
+ *
+ * Parameters:
+ *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
+ *   locator: Zenoh router locator string, if null multicast scouting will be performed.
+ *
+ * Return:
+ *   `0`` in case of success, or a ``negative value`` otherwise.
+ */
+int8_t z_config_client(z_owned_config_t *config, const char *locator);
+/**
+ * Builds a new, zenoh-allocated, peer configuration.
+ *
+ * Parameters:
+ *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
+ *   locator: Multicast address for peer-to-peer communication.
+ *
+ * Return:
+ *   `0`` in case of success, or a ``negative value`` otherwise.
+ */
+int8_t z_config_peer(z_owned_config_t *config, const char *locator);
 
 /**
  * Gets the property with the given integer key from the configuration.

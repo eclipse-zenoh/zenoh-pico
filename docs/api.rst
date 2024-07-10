@@ -316,6 +316,8 @@ Primitives
 .. autocfunction:: primitives.h::z_keyexpr_join
 .. autocfunction:: primitives.h::z_config_new
 .. autocfunction:: primitives.h::z_config_default
+.. autocfunction:: primitives.h::z_config_client
+.. autocfunction:: primitives.h::z_config_peer
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert
 .. autocfunction:: primitives.h::z_encoding_from_str
