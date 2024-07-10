@@ -228,16 +228,6 @@ typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_rel
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
 
 /**
- * Reply tag values.
- *
- * Enumerators:
- *     Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
- *     Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
- *         replies for this query.
- */
-typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
-
-/**
  * Congestion control values.
  *
  * Enumerators:

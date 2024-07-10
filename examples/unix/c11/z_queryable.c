@@ -21,8 +21,10 @@
 #if Z_FEATURE_QUERYABLE == 1
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
+const char *error = "Demo error";
 static int msg_nb = 0;
-static z_sample_kind_t reply_kind = Z_SAMPLE_KIND_PUT;
+static enum { REPLY_DATA, REPLY_DELETE, REPLY_ERR } reply_kind = REPLY_DATA;
+bool reply_err = false;
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
@@ -40,20 +42,27 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     }
     z_drop(z_move(payload_string));
 
-    // Reply value encoding
-    z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, value);
-
     switch (reply_kind) {
-        case Z_SAMPLE_KIND_PUT:
+        case REPLY_DATA: {
+            // Reply value encoding
+            z_owned_bytes_t reply_payload;
+            z_bytes_serialize_from_str(&reply_payload, value);
+
             z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
             break;
-        case Z_SAMPLE_KIND_DELETE:
+        }
+        case REPLY_DELETE: {
             z_query_reply_del(query, z_query_keyexpr(query), NULL);
             break;
-        default:
-            printf("Unknown reply kind\n");
+        }
+        case REPLY_ERR: {
+            // Reply error encoding
+            z_owned_bytes_t reply_payload;
+            z_bytes_serialize_from_str(&reply_payload, error);
+
+            z_query_reply_err(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
             break;
+        }
     }
     msg_nb++;
 }
@@ -65,7 +74,7 @@ int main(int argc, char **argv) {
     int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:d")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:df")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -86,7 +95,10 @@ int main(int argc, char **argv) {
                 n = atoi(optarg);
                 break;
             case 'd':
-                reply_kind = Z_SAMPLE_KIND_DELETE;
+                reply_kind = REPLY_DELETE;
+                break;
+            case 'f':
+                reply_kind = REPLY_ERR;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||

@@ -27,7 +27,6 @@ Enums
 .. autocenum:: constants.h::z_sample_kind_t
 .. autocenum:: constants.h::z_consolidation_mode_t
 .. autocenum:: constants.h::z_reliability_t
-.. autocenum:: constants.h::z_reply_tag_t
 .. autocenum:: constants.h::z_congestion_control_t
 .. autocenum:: constants.h::z_priority_t
 .. autocenum:: constants.h::z_query_target_t
@@ -426,6 +425,10 @@ Primitives
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_query_reply_options_default
 .. autocfunction:: primitives.h::z_query_reply
+.. autocfunction:: primitives.h::z_query_reply_del_options_default
+.. autocfunction:: primitives.h::z_query_reply_del
+.. autocfunction:: primitives.h::z_query_reply_err_options_default
+.. autocfunction:: primitives.h::z_query_reply_err
 .. autocfunction:: primitives.h::z_keyexpr_from_str
 .. autocfunction:: primitives.h::z_keyexpr_from_substr
 .. autocfunction:: primitives.h::z_keyexpr_from_str_autocanonize

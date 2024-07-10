@@ -24,6 +24,8 @@
 
 int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key, _z_msg_reply_t *reply);
 
+int8_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error);
+
 int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final);
 
 #endif /* ZENOH_PICO_SESSION_REPLY_H */

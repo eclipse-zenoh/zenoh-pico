@@ -1266,14 +1266,14 @@ void query_message(void) {
 _z_msg_err_t gen_err(void) {
     size_t len = 1 + gen_uint8();
     return (_z_msg_err_t){
-        .encoding = gen_encoding(),
+        ._encoding = gen_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
         ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
-    assert_eq_encoding(&left->encoding, &right->encoding);
+    assert_eq_encoding(&left->_encoding, &right->_encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
     assert_eq_bytes(&left->_payload, &right->_payload);
 }

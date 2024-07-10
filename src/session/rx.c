@@ -132,12 +132,8 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
                     ret = _z_trigger_reply_partial(zn, response->_request_id, response->_key, reply);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
-                    // @TODO: expose zenoh errors to the user
-                    _z_msg_err_t error = response->_body._err;
-                    _z_slice_t payload = _z_bytes_try_get_contiguous(&error._payload);
-                    _ZP_UNUSED(payload);  // Unused when logs are deactivated
-                    _Z_ERROR("Received Err for query %zu: message=%.*s", response->_request_id, (int)payload.len,
-                             payload.start);
+                    _z_msg_err_t *error = &response->_body._err;
+                    ret = _z_trigger_reply_err(zn, response->_request_id, error);
                 } break;
             }
         } break;

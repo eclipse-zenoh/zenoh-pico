@@ -1218,19 +1218,11 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply) {
-    _ZP_UNUSED(reply);
-    // For the moment always return TRUE.
-    // FIXME: The support for reply errors will come in the next release.
-    return true;
-}
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->_tag != Z_REPLY_TAG_ERROR; }
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data.sample; }
 
-const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) {
-    _ZP_UNUSED(reply);
-    return NULL;
-}
+const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data.error; }
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
@@ -1359,6 +1351,35 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);
+    return ret;
+}
+
+void z_query_reply_err_options_default(z_query_reply_err_options_t *options) { options->encoding = NULL; }
+
+int8_t z_query_reply_err(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
+                         const z_query_reply_err_options_t *options) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->in->val._zn);
+    if (sess_rc.in == NULL) {
+        return _Z_ERR_CONNECTION_CLOSED;
+    }
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    z_query_reply_err_options_t opts;
+    if (options == NULL) {
+        z_query_reply_err_options_default(&opts);
+    } else {
+        opts = *options;
+    }
+    // Set value
+    _z_value_t value = {.payload = _z_bytes_from_owned_bytes(payload),
+                        .encoding = _z_encoding_from_owned(opts.encoding)};
+
+    int8_t ret = _z_send_reply_err(&query->in->val, &sess_rc, keyexpr_aliased, value);
+    if (payload != NULL) {
+        z_bytes_drop(payload);
+    }
+    // Clean-up
+    z_encoding_drop(opts.encoding);
     return ret;
 }
 #endif

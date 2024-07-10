@@ -532,7 +532,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     uint8_t header = _Z_MID_Z_ERR;
 
     // Encode header
-    _Bool has_encoding = _z_encoding_check(&err->encoding);
+    _Bool has_encoding = _z_encoding_check(&err->_encoding);
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }
@@ -544,7 +544,7 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Encode encoding
     if (has_encoding) {
-        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &err->encoding));
+        _Z_RETURN_IF_ERR(_z_encoding_encode(wbf, &err->_encoding));
     }
     // Encode extensions
     if (has_sinfo_ext) {
@@ -576,7 +576,7 @@ int8_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
     *err = (_z_msg_err_t){0};
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_E_E)) {
-        _Z_RETURN_IF_ERR(_z_encoding_decode(&err->encoding, zbf));
+        _Z_RETURN_IF_ERR(_z_encoding_decode(&err->_encoding, zbf));
     }
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_err_decode_extension, err));

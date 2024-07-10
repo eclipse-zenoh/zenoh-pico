@@ -36,6 +36,21 @@ int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key
     return ret;
 }
 
+int8_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error) {
+    int8_t ret = _Z_RES_OK;
+
+    // TODO check id to know where to dispatch
+
+#if Z_FEATURE_QUERY == 1
+    ret = _z_trigger_query_reply_err(zn, id, error);
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(error);
+#endif
+    return ret;
+}
+
 int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final) {
     int8_t ret = _Z_RES_OK;
 

@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/protocol/codec/network.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -26,11 +26,11 @@
 #include "zenoh-pico/protocol/codec/declarations.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/protocol/codec/interest.h"
-#include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/message.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"
@@ -373,7 +373,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
 /*------------------ Response Final Message ------------------*/
 int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE_FINAL");
     uint8_t header = _Z_MID_N_RESPONSE_FINAL;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_request_id));
