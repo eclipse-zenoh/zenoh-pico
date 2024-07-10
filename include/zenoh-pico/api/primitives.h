@@ -1780,6 +1780,34 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options);
  */
 int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
                          const z_query_reply_del_options_t *options);
+
+/**
+ * Builds a :c:type:`z_query_reply_err_options_t` with default values.
+ *
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_query_reply_err_options_t`.
+ */
+void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
+
+/**
+ * Sends a reply error to a query.
+ *
+ * This function must be called inside of a :c:type:`z_owned_closure_query_t` callback associated to the
+ * :c:type:`z_owned_queryable_t`, passing the received query as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply will be considered complete when the callback
+ * returns.
+ *
+ * Parameters:
+ *   query: Pointer to a :c:type:`z_loaned_query_t` to reply.
+ *   payload: Pointer to the reply error data.
+ *   options: Pointer to a :c:type:`z_query_reply_err_options_t` to configure the reply error.
+ *
+ * Return:
+ *   ``0`` if reply operation successful, ``negative value`` otherwise.
+ */
+int8_t z_query_reply_err(const z_loaned_query_t *query, z_owned_bytes_t *payload,
+                         const z_query_reply_err_options_t *options);
+
 #endif
 
 /**

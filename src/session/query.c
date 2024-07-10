@@ -112,7 +112,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     }
 
     // Build the reply
-    _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
+    _z_reply_t reply = _z_reply_create(expanded_ke, _Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
                                        &msg->_commons._timestamp, &msg->_encoding, kind, msg->_attachment);
 
     _Bool drop = false;
@@ -171,6 +171,36 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     }
     // Other cases
     if (drop || (ret != _Z_RES_OK)) {
+        _z_reply_clear(&reply);
+    }
+
+    return ret;
+}
+
+int8_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
+    int8_t ret = _Z_RES_OK;
+
+    _zp_session_lock_mutex(zn);
+
+    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
+    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
+        ret = _Z_ERR_ENTITY_UNKNOWN;
+    }
+
+    // Build the reply
+    _z_reply_t reply = _z_reply_err_create(msg->_payload, &msg->_encoding);
+
+    _zp_session_unlock_mutex(zn);
+
+    // Trigger the user callback
+    if (ret == _Z_RES_OK) {
+        _z_reply_t cb_reply = _z_reply_null();
+        cb_reply = _z_reply_move(&reply);
+        pen_qry->_callback(&cb_reply, pen_qry->_arg);
+        _z_reply_clear(&cb_reply);
+    }
+
+    if (ret != _Z_RES_OK) {
         _z_reply_clear(&reply);
     }
 

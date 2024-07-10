@@ -53,7 +53,7 @@
 ///  +---------------+
 #define _Z_FLAG_Z_E_E 0x40
 typedef struct {
-    _z_encoding_t encoding;
+    _z_encoding_t _encoding;
     _z_source_info_t _ext_source_info;
     _z_bytes_t _payload;
 } _z_msg_err_t;

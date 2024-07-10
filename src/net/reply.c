@@ -25,7 +25,7 @@ _z_reply_data_t _z_reply_data_null(void) {
 }
 
 _z_reply_t _z_reply_null(void) {
-    _z_reply_t r = {._tag = Z_REPLY_TAG_DATA, .data = _z_reply_data_null()};
+    _z_reply_t r = {._tag = _Z_REPLY_TAG_DATA, .data = _z_reply_data_null()};
     return r;
 }
 
@@ -92,12 +92,12 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_timestamp_clear(&pr->_tstamp);
 }
 
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
                            const _z_bytes_t attachment) {
     _z_reply_t reply = _z_reply_null();
     reply._tag = tag;
-    if (tag == Z_REPLY_TAG_DATA) {
+    if (tag == _Z_REPLY_TAG_DATA) {
         reply.data.replier_id = id;
         // Create reply sample
         reply.data.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
@@ -109,8 +109,16 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     }
     return reply;
 }
+
+_z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding) {
+    _z_reply_t reply = _z_reply_null();
+    reply._tag = _Z_REPLY_TAG_ERROR;
+    _z_bytes_copy(&reply.data.error.payload, &payload);
+    _z_encoding_move(&reply.data.error.encoding, encoding);
+    return reply;
+}
 #else
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
                            const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
                            const _z_bytes_t attachment) {
     _ZP_UNUSED(keyexpr);
@@ -121,6 +129,12 @@ _z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, 
     _ZP_UNUSED(encoding);
     _ZP_UNUSED(kind);
     _ZP_UNUSED(attachment);
+    return _z_reply_null();
+}
+
+_z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding) {
+    _ZP_UNUSED(payload);
+    _ZP_UNUSED(encoding);
     return _z_reply_null();
 }
 #endif

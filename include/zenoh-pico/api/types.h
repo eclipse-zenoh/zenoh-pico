@@ -277,6 +277,16 @@ typedef struct {
 } z_query_reply_del_options_t;
 
 /**
+ * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err.
+ *
+ * Members:
+ *   z_owned_encoding_t *encoding: The encoding of the payload.
+ */
+typedef struct {
+    z_owned_encoding_t *encoding;
+} z_query_reply_err_options_t;
+
+/**
  * Represents the configuration used to configure a put operation sent via via :c:func:`z_put`.
  *
  * Members:

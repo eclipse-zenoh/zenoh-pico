@@ -204,6 +204,20 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const
                      const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                      z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp,
                      const _z_bytes_t attachment);
+/**
+ * Send a reply error to a query.
+ *
+ * This function must be called inside of a Queryable callback passing the
+ * query received as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply
+ * will be considered complete when the Queryable callback returns.
+ *
+ * Parameters:
+ *     query: The query to reply to. The caller keeps its ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
+ *     payload: The value of this reply, the caller keeps ownership.
+ */
+int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
 #endif
 
 #if Z_FEATURE_QUERY == 1

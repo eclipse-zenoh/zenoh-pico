@@ -44,7 +44,11 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
                z_string_data(z_loan(replystr)));
         z_drop(z_move(replystr));
     } else {
-        printf(">> Received an error\n");
+        const z_loaned_reply_err_t *err = z_reply_err(reply);
+        z_owned_string_t errstr;
+        z_bytes_deserialize_into_string(z_reply_err_payload(err), &errstr);
+        printf(">> Received an error: %s\n", z_string_data(z_loan(errstr)));
+        z_drop(z_move(errstr));
     }
 }
 

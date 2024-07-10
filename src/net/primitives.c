@@ -406,6 +406,36 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
 
     return ret;
 }
+
+int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload) {
+    int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
+
+    // Build the reply context decorator. This is NOT the final reply.
+    _z_id_t zid = zn->_local_zid;
+    _z_zenoh_message_t msg = {
+        ._tag = _Z_N_RESPONSE,
+        ._body._response =
+            {
+                ._request_id = query->_request_id,
+                ._ext_responder = {._zid = zid, ._eid = 0},
+                ._ext_qos = _z_n_qos_make(false, true, Z_PRIORITY_DEFAULT),
+                ._ext_timestamp = _z_timestamp_null(),
+                ._tag = _Z_RESPONSE_BODY_ERR,
+                ._body._err =
+                    {
+                        ._payload = payload.payload,
+                        ._encoding = payload.encoding,
+                        ._ext_source_info = _z_source_info_null(),
+                    },
+            },
+    };
+    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+
+    return ret;
+}
 #endif
 
 #if Z_FEATURE_QUERY == 1
