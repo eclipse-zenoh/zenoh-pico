@@ -122,9 +122,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
     msg._body._init._zid = zid;
     msg._body._init._seq_num_res = Z_SN_RESOLUTION;
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
-    msg._body._init._batch_size = (Z_BATCH_UNICAST_SIZE + _Z_MSG_LEN_ENC_SIZE > UINT16_MAX)
-                                      ? Z_BATCH_UNICAST_SIZE
-                                      : Z_BATCH_UNICAST_SIZE + _Z_MSG_LEN_ENC_SIZE;
+    msg._body._init._batch_size = Z_BATCH_UNICAST_SIZE;
     _z_slice_reset(&msg._body._init._cookie);
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_UNICAST_BATCH_SIZE) ||
