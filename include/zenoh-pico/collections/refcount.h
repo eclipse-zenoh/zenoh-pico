@@ -23,6 +23,9 @@
 
 #define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
 
+#ifdef __cplusplus
+extern "C++" {
+#endif
 #if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
 
@@ -39,7 +42,6 @@
 #define _z_memory_order_release memory_order_release
 #define _z_memory_order_relaxed memory_order_relaxed
 #else
-extern "C++" {
 #include <atomic>
 #define _z_atomic(X) std::atomic<X>
 #define _z_atomic_store_explicit std::atomic_store_explicit
