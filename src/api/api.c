@@ -1316,7 +1316,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
                         .encoding = _z_encoding_from_owned(opts.encoding)};
 
     int8_t ret =
-        _z_send_reply(&query->in->val, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT, opts.congestion_control,
+        _z_send_reply(&query->in->val, &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT, opts.congestion_control,
                       opts.priority, opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
     if (payload != NULL) {
         z_bytes_drop(payload);
@@ -1354,7 +1354,7 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     _z_value_t value = {.payload = _z_bytes_null(), .encoding = _z_encoding_null()};
 
     int8_t ret =
-        _z_send_reply(&query->in->val, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE, opts.congestion_control,
+        _z_send_reply(&query->in->val, &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE, opts.congestion_control,
                       opts.priority, opts.is_express, opts.timestamp, _z_bytes_from_owned_bytes(opts.attachment));
     // Clean-up
     _z_session_rc_drop(&sess_rc);

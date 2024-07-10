@@ -310,11 +310,11 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return _Z_RES_OK;
 }
 
-int8_t _z_send_reply(const _z_query_t *query, _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                     _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
+int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
+                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
     int8_t ret = _Z_RES_OK;
-    _z_session_t *zn = &query->_zn.in->val;
+    _z_session_t *zn = &zsrc->in->val;
 
     _z_keyexpr_t q_ke;
     _z_keyexpr_t r_ke;

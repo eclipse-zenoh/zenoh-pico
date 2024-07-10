@@ -200,9 +200,10 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
  */
-int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                     _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment);
+int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp,
+                     const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_QUERY == 1
