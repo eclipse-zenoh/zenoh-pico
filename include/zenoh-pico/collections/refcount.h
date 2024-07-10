@@ -23,6 +23,9 @@
 
 #define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
 
+#ifdef __cplusplus
+extern "C++" {
+#endif
 #if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
 
@@ -323,5 +326,9 @@
         _ZP_UNUSED(p);                                                                          \
         return sizeof(name##_rc_t);                                                             \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_REFCOUNT_H */

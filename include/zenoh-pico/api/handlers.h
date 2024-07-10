@@ -23,6 +23,10 @@
 #include "zenoh-pico/collections/ring_mt.h"
 #include "zenoh-pico/utils/logging.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // -- Channel
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,          \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,                \
@@ -187,4 +191,7 @@ _Z_CHANNEL_DEFINE_DUMMY(reply, ring)
 _Z_CHANNEL_DEFINE_DUMMY(reply, fifo)
 #endif  // Z_FEATURE_QUERY
 
+#ifdef __cplusplus
+}
+#endif
 #endif  // INCLUDE_ZENOH_PICO_API_HANDLERS_H

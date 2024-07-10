@@ -944,7 +944,13 @@ z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)._local
 const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &sample->keyexpr; }
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return sample->kind; }
 const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &sample->payload; }
-z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample) { return sample->timestamp; }
+const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample) {
+    if (_z_timestamp_check(&sample->timestamp)) {
+        return &sample->timestamp;
+    } else {
+        return NULL;
+    }
+}
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &sample->encoding; }
 z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return sample->qos; }
 const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) { return &sample->attachment; }

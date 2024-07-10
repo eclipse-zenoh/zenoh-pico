@@ -1419,9 +1419,9 @@ const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the timestamp from.
  *
  * Return:
- *   The timestamp wrapped as a :c:type:`z_timestamp_t`.
+ *   The pointer to timestamp wrapped as a :c:type:`z_timestamp_t`. Returns NULL if no timestamp was set.
  */
-z_timestamp_t z_sample_timestamp(const z_loaned_sample_t *sample);
+const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample);
 
 /**
  * Gets the encoding of a sample by aliasing it.
