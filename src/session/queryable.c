@@ -132,9 +132,10 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_t *zn, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
+int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
                              const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
 
     _zp_session_lock_mutex(zn);
 
@@ -146,7 +147,7 @@ int8_t _z_trigger_queryables(_z_session_t *zn, _z_msg_query_t *msgq, const _z_ke
 
         // Build the z_query
         _z_query_rc_t query = _z_query_rc_new();
-        query.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zn, qid, attachment);
+        query.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, attachment);
         // Parse session_queryable list
         _z_session_queryable_rc_list_t *xs = qles;
         while (xs != NULL) {

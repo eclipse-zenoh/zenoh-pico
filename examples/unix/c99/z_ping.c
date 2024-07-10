@@ -22,7 +22,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/system/platform.h"
 
-#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_MULTI_THREAD == 1
 
 #define DEFAULT_PKT_SIZE 8
 #define DEFAULT_PING_NB 100
@@ -190,8 +190,8 @@ struct args_t parse_args(int argc, char** argv) {
 #else
 int main(void) {
     printf(
-        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION but this example "
-        "requires them.\n");
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION or Z_FEATURE_PUBLICATION or "
+        "Z_FEATURE_MULTI_THREAD but this example requires them.\n");
     return -2;
 }
 #endif

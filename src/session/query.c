@@ -115,10 +115,10 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     _z_reply_t reply = _z_reply_create(expanded_ke, Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
                                        &msg->_commons._timestamp, &msg->_encoding, kind, msg->_attachment);
 
+    _Bool drop = false;
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
                                (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC))) {
-        _Bool drop = false;
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
         while (pen_rps != NULL) {
@@ -167,9 +167,10 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
         cb_reply = _z_reply_move(&reply);
         pen_qry->_callback(&cb_reply, pen_qry->_arg);
         _z_reply_clear(&cb_reply);
+        return ret;
     }
-
-    if (ret != _Z_RES_OK) {
+    // Other cases
+    if (drop || (ret != _Z_RES_OK)) {
         _z_reply_clear(&reply);
     }
 

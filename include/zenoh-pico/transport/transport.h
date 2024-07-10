@@ -56,7 +56,7 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
                                                                     _z_transport_peer_entry_t *entry);
 
 // Forward type declaration to avoid cyclical include
-typedef struct _z_session_t _z_session_t;
+typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
 // Forward declaration to be used in _zp_f_send_tmsg*
 typedef struct _z_transport_multicast_t _z_transport_multicast_t;
@@ -65,7 +65,7 @@ typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_trans
 
 typedef struct {
     // Session associated to the transport
-    _z_session_t *_session;
+    _z_session_rc_ref_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
@@ -108,7 +108,7 @@ typedef struct {
 
 typedef struct _z_transport_multicast_t {
     // Session associated to the transport
-    _z_session_t *_session;
+    _z_session_rc_ref_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes

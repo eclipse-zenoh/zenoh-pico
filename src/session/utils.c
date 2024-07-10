@@ -51,8 +51,9 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
+int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
@@ -85,13 +86,13 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     // Note session in transport
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._session = zn;
+            zn->_tp._transport._unicast._session = zsrc;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._session = zn;
+            zn->_tp._transport._multicast._session = zsrc;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._session = zn;
+            zn->_tp._transport._raweth._session = zsrc;
             break;
         default:
             break;

@@ -69,7 +69,7 @@ typedef struct _z_session_t {
 #endif
 } _z_session_t;
 
-extern void _z_session_clear(_z_session_t *zn);  // Forward type declaration to avoid cyclical include
+extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid cyclical include
 
 _Z_REFCOUNT_DEFINE(_z_session, _z_session)
 
@@ -84,7 +84,7 @@ _Z_REFCOUNT_DEFINE(_z_session, _z_session)
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  *
  */
-int8_t _z_open(_z_session_t *zn, _z_config_t *config);
+int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.
