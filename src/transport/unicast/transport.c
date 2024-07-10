@@ -51,25 +51,14 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
         size_t dbuf_size = 0;
-        size_t wbuf_size = 0;
-        size_t zbuf_size = 0;
+        size_t wbuf_size = mtu;
+        size_t zbuf_size = param->_batch_size;
         _Bool expandable = false;
 
-        switch (zl->_cap._flow) {
-            case Z_LINK_CAP_FLOW_STREAM:
-                // Add stream length field to buffer size (Still needed?)
-                wbuf_size = mtu;
-                zbuf_size = param->_batch_size;
-                expandable = true;
-                break;
-            case Z_LINK_CAP_FLOW_DATAGRAM:
-            default:
-                wbuf_size = mtu;
-                zbuf_size = param->_batch_size;
-                expandable = false;
-                break;
+        // Set expandable on stream link
+        if (zl->_cap._flow == Z_LINK_CAP_FLOW_STREAM) {
+            expandable = true;
         }
-
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
