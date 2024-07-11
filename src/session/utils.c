@@ -38,11 +38,7 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->time = 0;
 }
 
-_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
-    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
-        if (stamp->id.id[i]) return true;
-    return false;
-}
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;

@@ -31,11 +31,11 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push) {
     if (push->_body._is_put) {
         ret =
             _z_trigger_subscriptions(zn, push->_key, push->_body._body._put._payload, &push->_body._body._put._encoding,
-                                     kind, push->_timestamp, push->_qos, push->_body._body._put._attachment);
+                                     kind, &push->_timestamp, push->_qos, push->_body._body._put._attachment);
     } else {
         _z_encoding_t encoding = _z_encoding_null();
         _z_bytes_t payload = _z_bytes_null();
-        ret = _z_trigger_subscriptions(zn, push->_key, payload, &encoding, kind, push->_timestamp, push->_qos,
+        ret = _z_trigger_subscriptions(zn, push->_key, payload, &encoding, kind, &push->_timestamp, push->_qos,
                                        push->_body._body._put._attachment);
     }
 #else

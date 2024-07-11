@@ -13,6 +13,7 @@
 //
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -79,6 +80,12 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
 
     printf(">> [Subscriber] Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(value)));
     printf("    with encoding: %s\n", z_string_data(z_loan(encoding)));
+
+    // Check timestamp
+    const z_timestamp_t *ts = z_sample_timestamp(sample);
+    if (ts != NULL) {
+        printf("    with timestamp: %" PRIu64 "\n", z_timestamp_npt64_time(ts));
+    }
     // Check attachment
     kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};
     parse_attachment(&kvp, z_sample_attachment(sample));

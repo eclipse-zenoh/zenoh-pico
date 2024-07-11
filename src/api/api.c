@@ -623,8 +623,8 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
     return _z_bytes_writer_write(writer, src, len);
 }
 
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_id_t *zid, uint64_t npt64_time) {
-    ts->id = *zid;
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs, uint64_t npt64_time) {
+    ts->id = zs->in->val._local_zid;
     ts->time = npt64_time;
     return _Z_RES_OK;
 }
