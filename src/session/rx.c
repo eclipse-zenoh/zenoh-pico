@@ -102,7 +102,7 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
 #if Z_FEATURE_SUBSCRIPTION == 1
                     _z_msg_put_t put = req->_body._put;
                     ret = _z_trigger_subscriptions(zn, req->_key, put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, req->_ext_qos, put._attachment);
+                                                   &put._commons._timestamp, req->_ext_qos, put._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
@@ -114,7 +114,7 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
                     _z_msg_del_t del = req->_body._del;
                     _z_encoding_t encoding = _z_encoding_null();
                     ret = _z_trigger_subscriptions(zn, req->_key, _z_bytes_null(), &encoding, Z_SAMPLE_KIND_DELETE,
-                                                   del._commons._timestamp, req->_ext_qos, del._attachment);
+                                                   &del._commons._timestamp, req->_ext_qos, del._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
                         _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);

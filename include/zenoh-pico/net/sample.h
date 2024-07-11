@@ -54,7 +54,7 @@ void _z_sample_free(_z_sample_t **sample);
 int8_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
-_z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, _z_timestamp_t timestamp,
+_z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
                              _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos,
                              const _z_bytes_t attachment);
 
