@@ -88,7 +88,6 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const 
     _z_sample_t s = _z_sample_null();
     s.keyexpr = _z_keyexpr_steal(key);
     s.kind = kind;
-    s.timestamp = timestamp;
     s.timestamp = _z_timestamp_duplicate(timestamp);
     s.qos = qos;
     _z_bytes_copy(&s.payload, &payload);
