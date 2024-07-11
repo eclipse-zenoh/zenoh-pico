@@ -101,14 +101,9 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 }
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    int8_t ret = _Z_RES_OK;
-    if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
-        s->_val = _z_string_wrap(keyexpr->_suffix);
-    } else {
-        ret = _Z_ERR_GENERIC;
-    }
+    s->_val = _z_string_wrap(keyexpr->_suffix);
 
-    return ret;
+    return _Z_RES_OK;
 }
 
 int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len) {
