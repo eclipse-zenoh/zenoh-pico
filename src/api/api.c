@@ -102,7 +102,6 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
     s->_val = _z_string_wrap(keyexpr->_suffix);
-
     return _Z_RES_OK;
 }
 
