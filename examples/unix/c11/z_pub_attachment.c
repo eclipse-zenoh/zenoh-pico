@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
     // Create timestamp
     z_timestamp_t ts;
     time_t now = time(NULL);
-    z_timestamp_new(&ts, z_loan(s), now);
+    z_timestamp_new(&ts, z_loan(s), (uint64_t)now);
 
     // Publish data
     printf("Press CTRL-C to quit...\n");
