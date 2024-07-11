@@ -1687,6 +1687,17 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  *   The error reply content wrapped as a :c:type:`z_loaned_reply_err_t`.
  */
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
+
+/**
+ * Gets the id of the zenoh instance that answered this Reply.
+ *
+ * Parameters:
+ *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
+ *
+ * Return:
+ * 	`true` if id is present
+ */
+_Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1

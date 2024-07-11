@@ -1229,6 +1229,14 @@ _Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->_tag != _Z_RE
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data.sample; }
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data.error; }
+
+_Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
+    if (_z_id_check(reply->data.replier_id)) {
+        *out_id = reply->data.replier_id;
+        return true;
+    }
+    return false;
+}
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
