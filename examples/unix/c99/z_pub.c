@@ -110,8 +110,6 @@ int main(int argc, char **argv) {
     }
     // Clean up
     z_undeclare_publisher(z_publisher_move(&pub));
-    zp_stop_read_task(z_session_loan_mut(&s));
-    zp_stop_lease_task(z_session_loan_mut(&s));
     z_close(z_session_move(&s));
     return 0;
 }

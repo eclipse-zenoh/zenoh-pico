@@ -893,7 +893,6 @@ int8_t z_close(z_owned_session_t *zs) {
     if (zs == NULL || !z_session_check(zs)) {
         return _Z_RES_OK;
     }
-    _z_close(&_Z_OWNED_RC_IN_VAL(zs));
     z_session_drop(zs);
     return _Z_RES_OK;
 }

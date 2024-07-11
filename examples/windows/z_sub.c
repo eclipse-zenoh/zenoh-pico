@@ -75,10 +75,6 @@ int main(int argc, char **argv) {
 
     z_undeclare_subscriber(z_move(sub));
 
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
-
     z_close(z_move(s));
 
     return 0;

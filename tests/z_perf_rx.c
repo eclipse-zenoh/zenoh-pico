@@ -120,8 +120,6 @@ int main(int argc, char **argv) {
     z_sleep_s(1);
     // Clean up
     z_undeclare_subscriber(z_move(sub));
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     exit(0);
 }
