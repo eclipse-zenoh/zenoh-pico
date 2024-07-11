@@ -136,11 +136,20 @@ void z_task_free(z_task_t **task) {
 
 /*------------------ Mutex ------------------*/
 int8_t z_mutex_init(z_mutex_t *m) {
+    if (m == NULL) {
+        return -1;
+    }
     *m = xSemaphoreCreateRecursiveMutex();
     return *m == NULL ? -1 : 0;
 }
 
 int8_t z_mutex_free(z_mutex_t *m) {
+    if (m == NULL) {
+        return -1;
+    }
+    if (*m == NULL) {
+        return 0;
+    }
     z_free(*m);
     return 0;
 }
