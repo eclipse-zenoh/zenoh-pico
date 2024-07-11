@@ -144,6 +144,11 @@ int main(int argc, char **argv) {
     // Create encoding
     z_owned_encoding_t encoding;
 
+    // Create timestamp
+    z_timestamp_t ts;
+    time_t now = time(NULL);
+    z_timestamp_new(&ts, z_loan(s), now);
+
     // Publish data
     printf("Press CTRL-C to quit...\n");
     char buf[256];
@@ -166,6 +171,9 @@ int main(int argc, char **argv) {
         // Add encoding value
         z_encoding_from_str(&encoding, "zenoh/string;utf8");
         options.encoding = z_move(encoding);
+
+        // Add timestamp
+        options.timestamp = &ts;
 
         z_publisher_put(z_loan(pub), z_move(payload), &options);
     }
