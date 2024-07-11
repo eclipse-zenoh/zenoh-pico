@@ -60,7 +60,6 @@ int8_t _z_id_encode_as_slice(_z_wbuf_t *wbf, const _z_id_t *id) {
     uint8_t len = _z_id_len(*id);
 
     if (len != 0) {
-        printf("ZIDLEN: %d\n", len);
         _z_slice_t buf = _z_slice_wrap(id->id, len);
         ret = _z_slice_encode(wbf, &buf);
     } else {
@@ -325,42 +324,39 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 
 int8_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t header) {
     int8_t ret = _Z_RES_OK;
-    if (ret == _Z_RES_OK) {
-        switch (_Z_MID(header)) {
-            case _Z_MID_Z_PUT: {
-                pshb->_is_put = true;
-                pshb->_body._put = (_z_msg_put_t){0};
-                if (_Z_HAS_FLAG(header, _Z_FLAG_Z_P_T)) {
-                    _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
-                }
-                if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_P_E)) {
-                    _Z_RETURN_IF_ERR(_z_encoding_decode(&pshb->_body._put._encoding, zbf));
-                }
-                if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
-                    _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
-                }
-                if (ret == _Z_RES_OK) {
-                    _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf));
-                }
-                break;
+    switch (_Z_MID(header)) {
+        case _Z_MID_Z_PUT: {
+            pshb->_is_put = true;
+            pshb->_body._put = (_z_msg_put_t){0};
+            if (_Z_HAS_FLAG(header, _Z_FLAG_Z_P_T)) {
+                _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
             }
-            case _Z_MID_Z_DEL: {
-                pshb->_is_put = false;
-                pshb->_body._del = (_z_msg_del_t){0};
-                if (_Z_HAS_FLAG(header, _Z_FLAG_Z_D_T)) {
-                    _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
-                }
-                if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
-                    _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
-                }
-                break;
+            if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_P_E)) {
+                _Z_RETURN_IF_ERR(_z_encoding_decode(&pshb->_body._put._encoding, zbf));
             }
-            default: {
-                ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
+            if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+                _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
             }
+            if (ret == _Z_RES_OK) {
+                _Z_RETURN_IF_ERR(_z_bytes_decode(&pshb->_body._put._payload, zbf));
+            }
+            break;
+        }
+        case _Z_MID_Z_DEL: {
+            pshb->_is_put = false;
+            pshb->_body._del = (_z_msg_del_t){0};
+            if (_Z_HAS_FLAG(header, _Z_FLAG_Z_D_T)) {
+                _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
+            }
+            if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
+                _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_push_body_decode_extensions, pshb));
+            }
+            break;
+        }
+        default: {
+            ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
         }
     }
-
     return ret;
 }
 
