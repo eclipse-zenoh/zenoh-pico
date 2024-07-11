@@ -39,8 +39,11 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
 }
 
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
-    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
-        if (stamp->id.id[i]) return true;
+    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i) {
+        if (stamp->id.id[i] != 0) {
+            return true;
+        }
+    }
     return false;
 }
 
