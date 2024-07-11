@@ -90,9 +90,6 @@ int main(int argc, char **argv) {
     z_view_keyexpr_from_str(&vke, keyexpr);
     z_owned_keyexpr_t ke;
     if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
-        printf("Unable to declare key expression!\n");
-        zp_stop_read_task(z_loan_mut(s));
-        zp_stop_lease_task(z_loan_mut(s));
         z_close(z_move(s));
         return -1;
     }
@@ -107,8 +104,6 @@ int main(int argc, char **argv) {
     }
     // Clean up
     z_undeclare_keyexpr(z_move(ke), z_loan(s));
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
     z_close(z_move(s));
     return 0;
 }

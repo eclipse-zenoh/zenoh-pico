@@ -90,10 +90,6 @@ int main(int argc, char **argv) {
     // z_undeclare_pull_subscriber(z_pull_subscriber_move(&sub));
     printf("Pull Subscriber not supported... exiting\n");
 
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan_mut(&s));
-    zp_stop_lease_task(z_session_loan_mut(&s));
-
     z_close(z_session_move(&s));
     printf("OK!\n");
 

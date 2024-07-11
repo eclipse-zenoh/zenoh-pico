@@ -101,8 +101,12 @@ int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 }
 
 void _z_session_clear(_z_session_t *zn) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _zp_stop_read_task(zn);
+    _zp_stop_lease_task(zn);
+#endif
+    _z_close(zn);
     // Clear Zenoh PID
-
     // Clean up transports
     _z_transport_clear(&zn->_tp);
 

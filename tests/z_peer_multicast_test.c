@@ -177,15 +177,6 @@ int main(int argc, char **argv) {
 
     z_sleep_s(SLEEP);
 
-    // Stop both sessions
-    printf("Stopping threads on session 1\n");
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s1));
-
-    printf("Stopping threads on session 2\n");
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s2));
-
     // Close both sessions
     printf("Closing session 1\n");
     z_close(z_move(s1));
