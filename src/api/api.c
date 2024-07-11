@@ -101,14 +101,9 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 }
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    int8_t ret = _Z_RES_OK;
-    if (keyexpr->_id == Z_RESOURCE_ID_NONE) {
-        s->_val = _z_string_wrap(keyexpr->_suffix);
-    } else {
-        ret = _Z_ERR_GENERIC;
-    }
+    s->_val = _z_string_wrap(keyexpr->_suffix);
 
-    return ret;
+    return _Z_RES_OK;
 }
 
 int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len) {
@@ -705,7 +700,7 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_config_t, config, _z_config_check, _z_c
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
 
 _Bool _z_value_check(const _z_value_t *value) {
-    return _z_string_check(&value->encoding.schema) && value->encoding.id == _Z_ENCODING_ID_DEFAULT;
+    return _z_encoding_check(&value->encoding) || _z_bytes_check(&value->payload);
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
 
@@ -1168,6 +1163,14 @@ z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
 #endif
 
 #if Z_FEATURE_QUERY == 1
+_Bool _z_reply_check(const _z_reply_t *reply) {
+    if (reply->data._tag == _Z_REPLY_TAG_DATA) {
+        return _z_sample_check(&reply->data._result.sample);
+    } else if (reply->data._tag == _Z_REPLY_TAG_ERROR) {
+        return _z_value_check(&reply->data._result.error);
+    }
+    return false;
+}
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, _z_reply_copy, _z_reply_clear)
 
 void z_get_options_default(z_get_options_t *options) {
@@ -1223,11 +1226,11 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->_tag != _Z_REPLY_TAG_ERROR; }
+_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
 
-const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data.sample; }
+const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data._result.sample; }
 
-const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data.error; }
+const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data._result.error; }
 
 _Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     if (_z_id_check(reply->data.replier_id)) {

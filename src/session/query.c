@@ -112,8 +112,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     }
 
     // Build the reply
-    _z_reply_t reply = _z_reply_create(expanded_ke, _Z_REPLY_TAG_DATA, zn->_local_zid, msg->_payload,
-                                       &msg->_commons._timestamp, &msg->_encoding, kind, msg->_attachment);
+    _z_reply_t reply = _z_reply_create(expanded_ke, zn->_local_zid, msg->_payload, &msg->_commons._timestamp,
+                                       &msg->_encoding, kind, msg->_attachment);
 
     _Bool drop = false;
     // Verify if this is a newer reply, free the old one in case it is
@@ -125,7 +125,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply.data.sample.keyexpr._suffix, reply.data.sample.keyexpr._suffix) == true) {
+            if (_z_str_eq(pen_rep->_reply.data._result.sample.keyexpr._suffix,
+                          reply.data._result.sample.keyexpr._suffix) == true) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -146,7 +147,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
                     _z_reply_t partial_reply;
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialized values on the reply
-                    partial_reply.data.sample.keyexpr = _z_keyexpr_duplicate(reply.data.sample.keyexpr);
+                    partial_reply.data._tag = _Z_REPLY_TAG_DATA;
+                    partial_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(reply.data._result.sample.keyexpr);
                     pen_rep->_reply = partial_reply;
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode
