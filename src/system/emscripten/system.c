@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -135,8 +135,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) 
 
 int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
     double date = emscripten_date_now();
-    gettimeofday(&now, NULL);
     t->secs = (uint32_t)(date / 1000);
-    t->nanos = (uint32_t)((date  - t->secs * 1000) * 1000000);
+    t->nanos = (uint32_t)((date - t->secs * 1000) * 1000000);
     return 0;
 }

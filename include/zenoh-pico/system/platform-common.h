@@ -137,7 +137,6 @@ unsigned long z_time_elapsed_us(z_time_t *time);
 unsigned long z_time_elapsed_ms(z_time_t *time);
 unsigned long z_time_elapsed_s(z_time_t *time);
 
-
 typedef struct {
     uint32_t secs;
     uint32_t nanos;
