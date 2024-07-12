@@ -70,6 +70,7 @@ _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
  * The product of:

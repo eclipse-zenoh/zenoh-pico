@@ -18,6 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+#include <ctime>
+#else
+#include <time.h>
+#endif
+
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
@@ -617,13 +623,23 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
     return _z_bytes_writer_write(writer, src, len);
 }
 
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs, uint64_t npt64_time) {
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
+#if ZENOH_C_STANDARD != 99
+    struct timespec now;
+    timespec_get(&now, TIME_UTC);
+    ts->time = _z_timestamp_ntp64_from_time(now.tv_sec, now.tv_nsec);
+#else
+    // we can only get number of seconds since epoch :(
+    time_t now = time(NULL);
+    uint32_t seconds = (uint32_t)difftime(now, 0);
+    z_time_now();
+    ts->time = _z_timestamp_ntp64_from_time((uint32_t)difftime(now, 0), 0);
+#endif
     ts->id = zs->in->val._local_zid;
-    ts->time = npt64_time;
     return _Z_RES_OK;
 }
 
-uint64_t z_timestamp_npt64_time(const z_timestamp_t *ts) { return ts->time; }
+uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts) { return ts->time; }
 
 z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
 

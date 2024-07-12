@@ -949,17 +949,16 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
  * Parameters:
  *   ts: An uninitialized :c:type:`z_timestamp_t`.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to get the id from.
- *   npt64_time: NPT64 time.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs, uint64_t npt64_time);
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
 
 /**
- * Returns NPT64 time associated with this timestamp.
+ * Returns NTP64 time associated with this timestamp.
  */
-uint64_t z_timestamp_npt64_time(const z_timestamp_t *ts);
+uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts);
 
 /**
  * Returns id associated with this timestamp.
