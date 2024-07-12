@@ -624,10 +624,10 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
 }
 
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
-#if ZENOH_C_STANDARD != 99
+#if ZENOH_C_STANDARD != 99 || defined(ZENOH_ZEPHYR) || defined(ZENOH_ESPIDF)
     struct timespec now;
     timespec_get(&now, TIME_UTC);
-    ts->time = _z_timestamp_ntp64_from_time(now.tv_sec, now.tv_nsec);
+    ts->time = _z_timestamp_ntp64_from_time((uint32_t)now.tv_sec, (uint32_t)now.tv_nsec);
 #else
     // we can only get number of seconds since epoch :(
     time_t now = time(NULL);
