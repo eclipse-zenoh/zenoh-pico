@@ -36,6 +36,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/system/platform-common.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/unicast.h"
@@ -617,13 +618,16 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
     return _z_bytes_writer_write(writer, src, len);
 }
 
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs, uint64_t npt64_time) {
+int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
+    *ts = _z_timestamp_null();
+    zp_time_since_epoch t;
+    _Z_RETURN_IF_ERR(zp_get_time_since_epoch(&t));
+    ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
     ts->id = zs->in->val._local_zid;
-    ts->time = npt64_time;
     return _Z_RES_OK;
 }
 
-uint64_t z_timestamp_npt64_time(const z_timestamp_t *ts) { return ts->time; }
+uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts) { return ts->time; }
 
 z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
 

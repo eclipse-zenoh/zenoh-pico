@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
 #define _Z_ID_LEN (16)
@@ -69,6 +70,15 @@ _z_source_info_t _z_source_info_null(void) {
     return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
 }
 _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
+
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
+    const uint64_t FRAC_PER_SEC = (uint64_t)1 << 32;
+    const uint64_t NANOS_PER_SEC = 1000000000;
+
+    uint32_t fractions = (uint32_t)((uint64_t)nanos * FRAC_PER_SEC / NANOS_PER_SEC + 1);
+    return ((uint64_t)seconds << 32) | fractions;
+}
+
 _z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_null(), .encoding = _z_encoding_null()}; }
 _z_value_t _z_value_steal(_z_value_t *value) {
     _z_value_t ret = *value;
