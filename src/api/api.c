@@ -633,7 +633,7 @@ int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
     time_t now = time(NULL);
     uint32_t seconds = (uint32_t)difftime(now, 0);
     z_time_now();
-    ts->time = _z_timestamp_ntp64_from_time((uint32_t)difftime(now, 0), 0);
+    ts->time = _z_timestamp_ntp64_from_time(seconds, 0);
 #endif
     ts->id = zs->in->val._local_zid;
     return _Z_RES_OK;
