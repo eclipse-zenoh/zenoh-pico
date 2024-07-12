@@ -951,7 +951,7 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to get the id from.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if encode successful, ``negative value`` otherwise (for example if RTC is not available on the system).
  */
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
 

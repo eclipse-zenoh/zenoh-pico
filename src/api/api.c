@@ -18,12 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __cplusplus
-#include <ctime>
-#else
-#include <time.h>
-#endif
-
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
@@ -49,6 +43,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
+#include "zenoh-pico/system/platform-common.h"
 
 /********* Data Types Handlers *********/
 
@@ -624,17 +619,10 @@ int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src,
 }
 
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
-#if ZENOH_C_STANDARD != 99 && !defined(ZENOH_ZEPHYR) && !defined(ZENOH_ESPIDF)
-    struct timespec now;
-    timespec_get(&now, TIME_UTC);
-    ts->time = _z_timestamp_ntp64_from_time((uint32_t)now.tv_sec, (uint32_t)now.tv_nsec);
-#else
-    // we can only get number of seconds since epoch :(
-    time_t now = time(NULL);
-    uint32_t seconds = (uint32_t)difftime(now, 0);
-    z_time_now();
-    ts->time = _z_timestamp_ntp64_from_time(seconds, 0);
-#endif
+    *ts = _z_timestamp_null();
+    zp_time_since_epoch t;
+    _Z_RETURN_IF_ERR(zp_get_time_since_epoch(&t));
+    ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
     ts->id = zs->in->val._local_zid;
     return _Z_RES_OK;
 }

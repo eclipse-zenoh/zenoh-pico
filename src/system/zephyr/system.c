@@ -218,3 +218,11 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
 }
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+    t->secs = now.tv_sec;
+    t->nanos = now.tv_usec * 1000;
+    return 0;
+}
