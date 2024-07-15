@@ -138,7 +138,8 @@ void _z_n_msg_free(_z_network_message_t **msg) {
 
 _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                      z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
-                                     uint32_t timeout_ms, _z_bytes_t attachment) {
+                                     uint32_t timeout_ms, _z_bytes_t attachment, z_congestion_control_t cong_ctrl,
+                                     z_priority_t priority, _Bool is_express) {
     return (_z_zenoh_message_t){
         ._tag = _Z_N_REQUEST,
         ._body._request =
@@ -155,7 +156,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice
                         ._ext_attachment = attachment,
                     },
                 ._ext_budget = 0,
-                ._ext_qos = _Z_N_QOS_DEFAULT,
+                ._ext_qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
                 ._ext_target = Z_QUERY_TARGET_BEST_MATCHING,
                 ._ext_timeout_ms = timeout_ms,
                 ._ext_timestamp = _z_timestamp_null(),
