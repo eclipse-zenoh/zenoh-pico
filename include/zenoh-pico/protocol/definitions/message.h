@@ -53,7 +53,7 @@
 ///  +---------------+
 #define _Z_FLAG_Z_E_E 0x40
 typedef struct {
-    _z_encoding_t encoding;
+    _z_encoding_t _encoding;
     _z_source_info_t _ext_source_info;
     _z_bytes_t _payload;
 } _z_msg_err_t;
@@ -66,6 +66,7 @@ typedef struct {
 
 typedef struct {
     _z_m_push_commons_t _commons;
+    _z_bytes_t _attachment;
 } _z_msg_del_t;
 static inline void _z_msg_del_clear(_z_msg_del_t *del) { (void)del; }
 #define _Z_M_DEL_ID 0x02

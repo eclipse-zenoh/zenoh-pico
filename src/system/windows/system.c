@@ -82,7 +82,7 @@ int8_t _z_task_cancel(_z_task_t *task) {
     return ret;
 }
 
-void _z_task_drop(_z_task_t **task) {
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     CloseHandle(*ptr);
     z_free(ptr);
@@ -138,6 +138,12 @@ int8_t _z_condvar_drop(_z_condvar_t *cv) {
 int8_t _z_condvar_signal(_z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
     WakeConditionVariable(cv);
+    return ret;
+}
+
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    int8_t ret = _Z_RES_OK;
+    WakeAllConditionVariable(cv);
     return ret;
 }
 
@@ -256,4 +262,12 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 
     unsigned long elapsed = (unsigned long)(now.time - time->time);
     return elapsed;
+}
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+    z_time_t now;
+    ftime(&now);
+    t->secs = (uint32_t)now.time;
+    t->nanos = (uint32_t)(now.millitm * 1000000);
+    return 0;
 }

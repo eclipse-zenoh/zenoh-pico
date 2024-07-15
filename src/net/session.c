@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
+int8_t __z_open_inner(_z_session_rc_t *zn, char *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -46,7 +46,7 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
+    ret = _z_new_transport(&zn->in->val._tp, &local_zid, locator, mode);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;
@@ -55,7 +55,7 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     return ret;
 }
 
-int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
+int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
     _z_id_t zid = _z_id_empty();
@@ -91,7 +91,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_string_svec_copy(&locators, &hello->locators);
+                _z_string_svec_copy(&locators, &hello->_locators);
             }
             _z_hello_list_free(&hellos);
         } else {

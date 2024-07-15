@@ -291,7 +291,6 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_ext_responder._zid.id, 0, zidlen));
         _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_responder._eid));
     }
-
     switch (msg->_tag) {
         case _Z_RESPONSE_BODY_REPLY: {
             _Z_RETURN_IF_ERR(_z_reply_encode(wbf, &msg->_body._reply));
@@ -302,9 +301,9 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
             break;
         }
     }
-
     return ret;
 }
+
 int8_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     int8_t ret = _Z_RES_OK;
     _z_n_msg_response_t *msg = (_z_n_msg_response_t *)ctx;
@@ -374,7 +373,7 @@ int8_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t head
 /*------------------ Response Final Message ------------------*/
 int8_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t *msg) {
     int8_t ret = _Z_RES_OK;
-    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
+    _Z_DEBUG("Encoding _Z_MID_N_RESPONSE_FINAL");
     uint8_t header = _Z_MID_N_RESPONSE_FINAL;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_request_id));

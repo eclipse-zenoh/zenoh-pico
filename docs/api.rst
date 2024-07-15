@@ -27,7 +27,6 @@ Enums
 .. autocenum:: constants.h::z_sample_kind_t
 .. autocenum:: constants.h::z_consolidation_mode_t
 .. autocenum:: constants.h::z_reliability_t
-.. autocenum:: constants.h::z_reply_tag_t
 .. autocenum:: constants.h::z_congestion_control_t
 .. autocenum:: constants.h::z_priority_t
 .. autocenum:: constants.h::z_query_target_t
@@ -293,11 +292,13 @@ Macros
 Primitives
 ~~~~~~~~~~
 
+.. autocfunction:: primitives.h::z_view_string_empty
 .. autocfunction:: primitives.h::z_view_string_wrap
+.. autocfunction:: primitives.h::z_view_string_from_substring
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
-.. autocfunction:: primitives.h::z_keyexpr_to_string
-.. autocfunction:: primitives.h::zp_keyexpr_resolve
+.. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
+.. autocfunction:: primitives.h::z_keyexpr_as_view_string
 .. autocfunction:: primitives.h::z_keyexpr_is_initialized
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
 .. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
@@ -309,11 +310,17 @@ Primitives
 .. autocfunction:: primitives.h::zp_keyexpr_intersect_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_equals
 .. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
+.. autocfunction:: primitives.h::z_keyexpr_relation_to
+.. autocfunction:: primitives.h::z_keyexpr_concat
+.. autocfunction:: primitives.h::z_keyexpr_join
 .. autocfunction:: primitives.h::z_config_new
 .. autocfunction:: primitives.h::z_config_default
+.. autocfunction:: primitives.h::z_config_client
+.. autocfunction:: primitives.h::z_config_peer
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert
 .. autocfunction:: primitives.h::z_encoding_from_str
+.. autocfunction:: primitives.h::z_encoding_from_substr
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
@@ -376,6 +383,14 @@ Primitives
 .. autocfunction:: primitives.h::z_sample_loan
 .. autocfunction:: primitives.h::z_string_data
 .. autocfunction:: primitives.h::z_string_len
+.. autocfunction:: primitives.h::z_string_from_str
+.. autocfunction:: primitives.h::z_string_from_substr
+.. autocfunction:: primitives.h::z_string_empty
+.. autocfunction:: primitives.h::z_string_is_empty
+.. autocfunction:: primitives.h::z_hello_zid
+.. autocfunction:: primitives.h::z_hello_whatami
+.. autocfunction:: primitives.h::z_hello_locators
+.. autocfunction:: primitives.h::z_whatami_to_view_string
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
@@ -410,7 +425,14 @@ Primitives
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_query_reply_options_default
 .. autocfunction:: primitives.h::z_query_reply
-.. autocfunction:: primitives.h::z_keyexpr_new
+.. autocfunction:: primitives.h::z_query_reply_del_options_default
+.. autocfunction:: primitives.h::z_query_reply_del
+.. autocfunction:: primitives.h::z_query_reply_err_options_default
+.. autocfunction:: primitives.h::z_query_reply_err
+.. autocfunction:: primitives.h::z_keyexpr_from_str
+.. autocfunction:: primitives.h::z_keyexpr_from_substr
+.. autocfunction:: primitives.h::z_keyexpr_from_str_autocanonize
+.. autocfunction:: primitives.h::z_keyexpr_from_substr_autocanonize
 .. autocfunction:: primitives.h::z_declare_keyexpr
 .. autocfunction:: primitives.h::z_undeclare_keyexpr
 .. autocfunction:: primitives.h::z_subscriber_options_default

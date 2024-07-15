@@ -30,6 +30,8 @@ typedef int8_t z_error_t;
 /*------------------ Result Enums ------------------*/
 typedef enum {
     _Z_RES_OK = 0,
+    Z_OK = 0,
+    _Z_RES_CHANNEL_CLOSED = 1,
 
     _Z_ERR_MESSAGE_DESERIALIZATION_FAILED = -119,
     _Z_ERR_MESSAGE_SERIALIZATION_FAILED = -118,
@@ -69,6 +71,8 @@ typedef enum {
     _Z_ERR_CONNECTION_CLOSED = -77,
 
     _Z_ERR_DID_NOT_READ = -76,
+    _Z_ERR_INVALID = -75,
+    Z_EINVAL = -75,
 
     _Z_ERR_GENERIC = -128
 } _z_res_t;

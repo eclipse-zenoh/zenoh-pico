@@ -36,14 +36,13 @@ void reply_dropper(void *ctx) { printf(" >> Received query final notification\n"
 void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
     if (z_reply_is_ok(oreply)) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
-        z_owned_string_t keystr;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-        printf(" >> Received ('%s': '%s')\n", z_string_data(z_string_loan(&keystr)),
+        printf(" >> Received ('%s': '%s')\n", z_string_data(z_view_string_loan(&keystr)),
                z_string_data(z_string_loan(&replystr)));
-        z_string_drop(z_string_move(&keystr));
         z_string_drop(z_string_move(&replystr));
     } else {
         printf(" >> Received an error\n");
@@ -100,9 +99,6 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan_mut(&s));
-    zp_stop_lease_task(z_session_loan_mut(&s));
 
     z_close(z_session_move(&s));
     printf("OK!\n");

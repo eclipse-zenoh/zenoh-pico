@@ -21,12 +21,15 @@
 #if Z_FEATURE_QUERYABLE == 1
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
+const char *error = "Demo error";
 static int msg_nb = 0;
+static enum { REPLY_DATA, REPLY_DELETE, REPLY_ERR } reply_kind = REPLY_DATA;
+bool reply_err = false;
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)), (int)z_loan(params)->len,
@@ -39,12 +42,28 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     }
     z_drop(z_move(payload_string));
 
-    // Reply value encoding
-    z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, value);
+    switch (reply_kind) {
+        case REPLY_DATA: {
+            // Reply value encoding
+            z_owned_bytes_t reply_payload;
+            z_bytes_serialize_from_str(&reply_payload, value);
 
-    z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
-    z_drop(z_move(keystr));
+            z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
+            break;
+        }
+        case REPLY_DELETE: {
+            z_query_reply_del(query, z_query_keyexpr(query), NULL);
+            break;
+        }
+        case REPLY_ERR: {
+            // Reply error encoding
+            z_owned_bytes_t reply_payload;
+            z_bytes_serialize_from_str(&reply_payload, error);
+
+            z_query_reply_err(query, z_move(reply_payload), NULL);
+            break;
+        }
+    }
     msg_nb++;
 }
 
@@ -55,7 +74,7 @@ int main(int argc, char **argv) {
     int n = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:df")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -74,6 +93,12 @@ int main(int argc, char **argv) {
                 break;
             case 'n':
                 n = atoi(optarg);
+                break;
+            case 'd':
+                reply_kind = REPLY_DELETE;
+                break;
+            case 'f':
+                reply_kind = REPLY_ERR;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
@@ -136,10 +161,6 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_queryable(z_move(qable));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
 
     z_close(z_move(s));
 

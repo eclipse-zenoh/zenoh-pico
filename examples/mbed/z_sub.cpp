@@ -31,13 +31,12 @@
 #define KEYEXPR "demo/example/**"
 
 void data_handler(const z_loaned_sample_t *sample, void *arg) {
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
     z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
-    printf(" >> [Subscriber handler] Received ('%s': '%s')\n", z_string_data(z_string_loan(&keystr)),
+    printf(" >> [Subscriber handler] Received ('%s': '%s')\n", z_string_data(z_view_string_loan(&keystr)),
            z_string_data(z_string_loan(&value)));
-    z_string_drop(z_string_move(&keystr));
     z_string_drop(z_string_move(&value));
 }
 
@@ -88,10 +87,6 @@ int main(int argc, char **argv) {
 
     printf("Closing Zenoh Session...");
     z_undeclare_subscriber(z_subscriber_move(&sub));
-
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan_mut(&s));
-    zp_stop_lease_task(z_session_loan_mut(&s));
 
     z_close(z_session_move(&s));
     printf("OK!\n");

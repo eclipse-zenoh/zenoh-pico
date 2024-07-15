@@ -70,6 +70,7 @@ _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
  * The product of:
@@ -168,6 +169,7 @@ typedef struct {
 _z_value_t _z_value_null(void);
 _z_value_t _z_value_steal(_z_value_t *value);
 int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+void _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 
@@ -180,10 +182,10 @@ void _z_value_free(_z_value_t **hello);
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_id_t zid;
-    _z_string_svec_t locators;
-    z_whatami_t whatami;
-    uint8_t version;
+    _z_id_t _zid;
+    _z_string_svec_t _locators;
+    z_whatami_t _whatami;
+    uint8_t _version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);

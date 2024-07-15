@@ -105,8 +105,8 @@ void drop_attachment(kv_pairs_rx_t *kvp) {
 
 void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_string_t keystr;
-    z_keyexpr_to_string(z_query_keyexpr(query), &keystr);
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
     printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)), (int)z_loan(params)->len,
@@ -154,7 +154,6 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     options.encoding = z_move(reply_encoding);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), &options);
-    z_drop(z_move(keystr));
     msg_nb++;
 }
 
@@ -246,10 +245,6 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_queryable(z_move(qable));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
 
     z_close(z_move(s));
 

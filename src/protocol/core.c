@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
 #define _Z_ID_LEN (16)
@@ -69,6 +70,15 @@ _z_source_info_t _z_source_info_null(void) {
     return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
 }
 _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
+
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
+    const uint64_t FRAC_PER_SEC = (uint64_t)1 << 32;
+    const uint64_t NANOS_PER_SEC = 1000000000;
+
+    uint32_t fractions = (uint32_t)((uint64_t)nanos * FRAC_PER_SEC / NANOS_PER_SEC + 1);
+    return ((uint64_t)seconds << 32) | fractions;
+}
+
 _z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_null(), .encoding = _z_encoding_null()}; }
 _z_value_t _z_value_steal(_z_value_t *value) {
     _z_value_t ret = *value;
@@ -84,13 +94,18 @@ int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
 
 int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     *dst = _z_hello_null();
-    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->locators, &src->locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    dst->version = src->version;
-    dst->whatami = src->whatami;
-    memcpy(&dst->zid.id, &src->zid.id, _Z_ID_LEN);
+    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->_locators, &src->_locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    dst->_version = src->_version;
+    dst->_whatami = src->_whatami;
+    memcpy(&dst->_zid.id, &src->_zid.id, _Z_ID_LEN);
     return _Z_RES_OK;
 }
 
 _z_hello_t _z_hello_null(void) {
-    return (_z_hello_t){.zid = _z_id_empty(), .version = 0, .whatami = 0x0, .locators = _z_string_svec_make(0)};
+    return (_z_hello_t){._zid = _z_id_empty(), ._version = 0, ._whatami = 0x0, ._locators = _z_string_svec_make(0)};
+}
+
+void _z_value_move(_z_value_t *dst, _z_value_t *src) {
+    _z_encoding_move(&dst->encoding, &src->encoding);
+    _z_bytes_move(&dst->payload, &src->payload);
 }

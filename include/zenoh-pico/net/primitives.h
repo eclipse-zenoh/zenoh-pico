@@ -85,10 +85,10 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  *              of any allocated value.
  *
  * Returns:
- *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
+ *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
  */
-_z_publisher_t *_z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                     z_congestion_control_t congestion_control, z_priority_t priority);
+_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -114,13 +114,15 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *     kind: The kind of the value.
  *     cong_ctrl: The congestion control of this write. Possible values defined
  *                in :c:type:`_z_congestion_control_t`.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *     timestamp: The timestamp of this write. The API level timestamp (e.g. of the data when it was created).
  *     attachment: An optional attachment to this write.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                const _z_bytes_t attachment);
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -137,10 +139,10 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload
  * received. arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
+ *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t *_z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                       _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -167,10 +169,10 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
+ *    The created :c:type:`_z_queryable_t` (in null state if the declaration failed)..
  */
-_z_queryable_t *_z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
-                                     _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+                                    _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -198,8 +200,24 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
  */
-int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload,
-                     const z_sample_kind_t kind, const _z_bytes_t attachment);
+int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp,
+                     const _z_bytes_t attachment);
+/**
+ * Send a reply error to a query.
+ *
+ * This function must be called inside of a Queryable callback passing the
+ * query received as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply
+ * will be considered complete when the Queryable callback returns.
+ *
+ * Parameters:
+ *     query: The query to reply to. The caller keeps its ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
+ *     payload: The value of this reply, the caller keeps ownership.
+ */
+int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
 #endif
 
 #if Z_FEATURE_QUERY == 1

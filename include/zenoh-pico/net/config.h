@@ -29,20 +29,25 @@ _z_config_t _z_config_empty(void);
 /**
  * Create a default set of properties for zenoh-net session configuration.
  *
+ * Parameters:
+ *   config:  A :c:type:`_z_config_t` where a default configuration for client mode will be constructed.
+ *
  * Returns:
- *     A :c:type:`_z_config_t` containing a default configuration.
+ *   `0`` in case of success, or a ``negative value`` otherwise.
  */
-_z_config_t _z_config_default(void);
+int8_t _z_config_default(_z_config_t *config);
 
 /**
  * Create a default set of properties for client mode zenoh-net session configuration.
  * If peer is not null, it is added to the configuration as remote peer.
  *
  * Parameters:
+ *   config:  A :c:type:`_z_config_t` where a default configuration for client mode will be constructed.
  *   locator: An optional peer locator. The caller keeps its ownership.
+ *
  * Returns:
- *     A :c:type:`_z_config_t` containing a default configuration for client mode.
+ *     `0`` in case of success, or a ``negative value`` otherwise.
  */
-_z_config_t _z_config_client(const char *locator);
+int8_t _z_config_client(_z_config_t *config, const char *locator);
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

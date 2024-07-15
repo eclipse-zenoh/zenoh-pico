@@ -85,10 +85,6 @@ int main(int argc, char **argv) {
     printf("Closing Zenoh Session...");
     z_undeclare_publisher(z_publisher_move(&pub));
 
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_session_loan_mut(&s));
-    zp_stop_lease_task(z_session_loan_mut(&s));
-
     z_close(z_session_move(&s));
     printf("OK!\n");
 

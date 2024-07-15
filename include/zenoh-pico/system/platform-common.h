@@ -73,15 +73,14 @@ typedef void *z_task_attr_t;
 int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 int8_t _z_task_join(_z_task_t *task);
 int8_t _z_task_cancel(_z_task_t *task);
-void _z_task_drop(_z_task_t **task);
+void _z_task_free(_z_task_t **task);
 
 _Z_OWNED_TYPE_VALUE(_z_task_t, task)
 _Z_LOANED_TYPE(_z_task_t, task)
 _Z_OWNED_FUNCTIONS_SYSTEM_DEF(task)
 
 int8_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t z_task_join(z_loaned_task_t *task);
-void z_task_drop(z_owned_task_t *task);
+int8_t z_task_join(z_owned_task_t *task);
 
 /*------------------ Mutex ------------------*/
 int8_t _z_mutex_init(_z_mutex_t *m);
@@ -107,6 +106,7 @@ int8_t _z_condvar_init(_z_condvar_t *cv);
 int8_t _z_condvar_drop(_z_condvar_t *cv);
 
 int8_t _z_condvar_signal(_z_condvar_t *cv);
+int8_t _z_condvar_signal_all(_z_condvar_t *cv);
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
 
 _Z_OWNED_TYPE_VALUE(_z_condvar_t, condvar)
@@ -137,6 +137,12 @@ unsigned long z_time_elapsed_us(z_time_t *time);
 unsigned long z_time_elapsed_ms(z_time_t *time);
 unsigned long z_time_elapsed_s(z_time_t *time);
 
+typedef struct {
+    uint32_t secs;
+    uint32_t nanos;
+} zp_time_since_epoch;
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t);
 #ifdef __cplusplus
 }
 #endif

@@ -33,6 +33,9 @@ int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf);
 int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en);
 int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf);
 
+uint8_t _z_whatami_to_uint8(z_whatami_t whatami);
+z_whatami_t _z_whatami_from_uint8(uint8_t b);
+
 int8_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
 int8_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *buf);
 

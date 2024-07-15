@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ int8_t _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }
 
 int8_t _z_task_cancel(_z_task_t *task) { return pthread_cancel(*task); }
 
-void _z_task_drop(_z_task_t **task) {
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
@@ -75,6 +75,8 @@ int8_t _z_condvar_init(_z_condvar_t *cv) { return pthread_cond_init(cv, 0); }
 int8_t _z_condvar_drop(_z_condvar_t *cv) { return pthread_cond_destroy(cv); }
 
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return pthread_cond_signal(cv); }
+
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return pthread_cond_broadcast(cv); }
 
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -130,3 +132,10 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
 }
 
 unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+    double date = emscripten_date_now();
+    t->secs = (uint32_t)(date / 1000);
+    t->nanos = (uint32_t)((date - t->secs * 1000) * 1000000);
+    return 0;
+}

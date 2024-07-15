@@ -57,8 +57,6 @@ void app_main(void) {
     z_view_keyexpr_from_str_unchecked(&vke, KEYEXPR);
     if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
-        zp_stop_read_task(z_loan_mut(s));
-        zp_stop_lease_task(z_loan_mut(s));
         z_close(z_move(s));
         return;
     }
@@ -80,9 +78,7 @@ void app_main(void) {
     }
 
     // Clean up
-    z_undeclare_keyexpr(z_loan(s), z_move(ke));
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
+    z_undeclare_keyexpr(z_move(ke), z_loan(s));
     z_close(z_move(s));
 }
 #else

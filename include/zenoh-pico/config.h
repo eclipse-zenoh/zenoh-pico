@@ -75,10 +75,10 @@
 /**
  * In client mode, the period dedicated to scouting a router before failing.
  * Accepted values : `<int in milliseconds>`.
- * Default value : `"3000"`.
+ * Default value : `"1000"`.
  */
 #define Z_CONFIG_SCOUTING_TIMEOUT_KEY 0x47
-#define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "3000"
+#define Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT "1000"
 
 /**
  * The entities to find in the multicast scouting, defined as a bitwise value.

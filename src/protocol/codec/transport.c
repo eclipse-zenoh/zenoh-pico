@@ -27,6 +27,15 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
+
+uint8_t _z_whatami_to_uint8(z_whatami_t whatami) {
+    return (whatami >> 1) & 0x03;  // get set bit index; only first 3 bits can be set
+}
+
+z_whatami_t _z_whatami_from_uint8(uint8_t b) {
+    return 1 << (b & 0x03);  // convert set bit idx into bitmask
+}
+
 /*------------------ Join Message ------------------*/
 int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg) {
     int8_t ret = _Z_RES_OK;
@@ -35,7 +44,7 @@ int8_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version));
 
     uint8_t cbyte = 0;
-    cbyte |= (msg->_whatami & 0x03);
+    cbyte |= _z_whatami_to_uint8(msg->_whatami);
     uint8_t zidlen = _z_id_len(msg->_zid);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
@@ -103,7 +112,7 @@ int8_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
     uint8_t cbyte = 0;
     ret |= _z_uint8_decode(&cbyte, zbf);
-    msg->_whatami = cbyte & 0x03;
+    msg->_whatami = _z_whatami_from_uint8(cbyte);
 
     uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
     msg->_zid = _z_id_empty();
@@ -153,7 +162,7 @@ int8_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t *msg
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_version))
 
     uint8_t cbyte = 0;
-    cbyte |= (msg->_whatami & 0x03);
+    cbyte |= _z_whatami_to_uint8(msg->_whatami);
     uint8_t zidlen = _z_id_len(msg->_zid);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);  // TODO[protocol]: check if ZID > 0 && <= 16
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
@@ -186,7 +195,7 @@ int8_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     msg->_zid = _z_id_empty();
 
     if (ret == _Z_RES_OK) {
-        msg->_whatami = cbyte & 0x03;
+        msg->_whatami = _z_whatami_from_uint8(cbyte);
         uint8_t zidlen = ((cbyte & 0xF0) >> 4) + (uint8_t)1;
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);

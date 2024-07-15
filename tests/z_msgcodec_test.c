@@ -1266,14 +1266,14 @@ void query_message(void) {
 _z_msg_err_t gen_err(void) {
     size_t len = 1 + gen_uint8();
     return (_z_msg_err_t){
-        .encoding = gen_encoding(),
+        ._encoding = gen_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
         ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
-    assert_eq_encoding(&left->encoding, &right->encoding);
+    assert_eq_encoding(&left->_encoding, &right->_encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
     assert_eq_bytes(&left->_payload, &right->_payload);
 }
@@ -1515,7 +1515,7 @@ _z_transport_message_t gen_join(void) {
         conduit._val._plain._best_effort = gen_uint64();
         conduit._val._plain._reliable = gen_uint64();
     }
-    return _z_t_msg_make_join(gen_uint8() % 3, gen_uint64(), gen_zid(), conduit);
+    return _z_t_msg_make_join(_z_whatami_from_uint8((gen_uint8() % 3)), gen_uint64(), gen_zid(), conduit);
 }
 void assert_eq_join(const _z_t_msg_join_t *left, const _z_t_msg_join_t *right) {
     assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
@@ -1554,9 +1554,9 @@ void join_message(void) {
 
 _z_transport_message_t gen_init(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_init_syn(gen_uint8() % 3, gen_zid());
+        return _z_t_msg_make_init_syn(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid());
     } else {
-        return _z_t_msg_make_init_ack(gen_uint8() % 3, gen_zid(), gen_slice(16));
+        return _z_t_msg_make_init_ack(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(), gen_slice(16));
     }
 }
 void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
@@ -1835,9 +1835,10 @@ void transport_message(void) {
 
 _z_scouting_message_t gen_scouting(void) {
     if (gen_bool()) {
-        return _z_s_msg_make_scout(gen_uint8() % 3, gen_zid());
+        return _z_s_msg_make_scout((z_what_t)_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid());
     } else {
-        return _z_s_msg_make_hello(gen_uint8() % 3, gen_zid(), gen_locator_array((gen_uint8() % 16) + 1));
+        return _z_s_msg_make_hello(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(),
+                                   gen_locator_array((gen_uint8() % 16) + 1));
     }
 }
 void assert_eq_scouting(const _z_scouting_message_t *left, const _z_scouting_message_t *right) {

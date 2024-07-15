@@ -89,6 +89,18 @@ _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
     return alias;
 }
 
+_z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, _Bool try_declared) {
+    if ((try_declared && src._id != Z_RESOURCE_ID_NONE) || src._suffix == NULL) {
+        return (_z_keyexpr_t){
+            ._id = src._id,
+            ._mapping = src._mapping,
+            ._suffix = NULL,
+        };
+    } else {
+        return _z_rname(src._suffix);
+    }
+}
+
 /*------------------ Canonize helpers ------------------*/
 zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;

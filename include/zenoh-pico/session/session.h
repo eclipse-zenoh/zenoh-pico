@@ -123,7 +123,6 @@ typedef struct {
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
-    char *_parameters;
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;

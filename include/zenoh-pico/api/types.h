@@ -104,10 +104,9 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *
  * Members are private and operations must be done using the provided functions:
  *
- *   - :c:func:`z_keyexpr_new`
+ *   - :c:func:`z_keyexpr_from_str`
  *   - :c:func:`z_keyexpr_is_initialized`
- *   - :c:func:`z_keyexpr_to_string`
- *   - :c:func:`zp_keyexpr_resolve`
+ *   - :c:func:`z_keyexpr_as_view_string`
  */
 _Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
 _Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
@@ -140,7 +139,7 @@ _Z_LOANED_TYPE(_z_session_rc_t, session)
  *   - :c:func:`z_declare_subscriber`
  *   - :c:func:`z_undeclare_subscriber`
  */
-_Z_OWNED_TYPE_PTR(_z_subscriber_t, subscriber)
+_Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 _Z_LOANED_TYPE(_z_subscriber_t, subscriber)
 
 /**
@@ -153,7 +152,7 @@ _Z_LOANED_TYPE(_z_subscriber_t, subscriber)
  *   - :c:func:`z_publisher_put`
  *   - :c:func:`z_publisher_delete`
  */
-_Z_OWNED_TYPE_PTR(_z_publisher_t, publisher)
+_Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 _Z_LOANED_TYPE(_z_publisher_t, publisher)
 
 /**
@@ -164,7 +163,7 @@ _Z_LOANED_TYPE(_z_publisher_t, publisher)
  *   - :c:func:`z_declare_queryable`
  *   - :c:func:`z_undeclare_queryable`
  */
-_Z_OWNED_TYPE_PTR(_z_queryable_t, queryable)
+_Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
 _Z_LOANED_TYPE(_z_queryable_t, queryable)
 
 /**
@@ -221,10 +220,12 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    _Bool is_express;
 } z_publisher_options_t;
 
 /**
@@ -242,12 +243,48 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
+ *   z_priority_t priority: The priority of this message when routed.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
  *   z_owned_bytes_t *attachment: An optional attachment to the response.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
+    z_timestamp_t *timestamp;
+    _Bool is_express;
     z_owned_bytes_t *attachment;
 } z_query_reply_options_t;
+
+/**
+ * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del.
+ *
+ * Members:
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
+ *   z_priority_t priority: The priority of this message when routed.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *   z_owned_bytes_t *attachment: An optional attachment to the response.
+ */
+typedef struct {
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
+    z_timestamp_t *timestamp;
+    _Bool is_express;
+    z_owned_bytes_t *attachment;
+} z_query_reply_del_options_t;
+
+/**
+ * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err.
+ *
+ * Members:
+ *   z_owned_encoding_t *encoding: The encoding of the payload.
+ */
+typedef struct {
+    z_owned_encoding_t *encoding;
+} z_query_reply_err_options_t;
 
 /**
  * Represents the configuration used to configure a put operation sent via via :c:func:`z_put`.
@@ -256,12 +293,16 @@ typedef struct {
  *   z_owned_encoding_t *encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
  *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    z_timestamp_t *timestamp;
+    _Bool is_express;
     z_owned_bytes_t *attachment;
 } z_put_options_t;
 
@@ -271,10 +312,14 @@ typedef struct {
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when router.
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    _Bool is_express;
+    z_timestamp_t *timestamp;
 } z_delete_options_t;
 
 /**
@@ -283,19 +328,28 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
+    _Bool is_express;
+    z_timestamp_t *timestamp;
     z_owned_bytes_t *attachment;
 } z_publisher_put_options_t;
 
 /**
  * Represents the configuration used to configure a delete operation by a previously declared publisher,
  * sent via :c:func:`z_publisher_delete`.
+ *
+ * Members:
+ *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+    _Bool is_express;
+    z_timestamp_t *timestamp;
 } z_publisher_delete_options_t;
 
 /**
@@ -361,6 +415,18 @@ typedef struct {
 } zp_send_join_options_t;
 
 /**
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
+ *
+ * Members:
+ *   uint64_t timeout_ms: The maximum duration in ms the scouting can take.
+ *   z_what_t what: Type of entities to scout for.
+ */
+typedef struct {
+    uint32_t timeout_ms;
+    z_what_t what;
+} z_scout_options_t;
+
+/**
  * QoS settings of a zenoh message.
  */
 typedef _z_qos_t z_qos_t;
@@ -395,15 +461,8 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *
  * A sample is the value associated to a given key-expression at a given point in time.
  *
- * Members:
- *   z_keyexpr_t keyexpr: The keyexpr of this data sample.
- *   z_loaned_bytes_t* payload: The value of this data sample.
- *   z_loaned_encoding_t encoding: The encoding of the value of this data sample.
- *   z_sample_kind_t kind: The kind of this data sample (PUT or DELETE).
- *   z_timestamp_t timestamp: The timestamp of this data sample.
- *   z_qos_t qos: Quality of service settings used to deliver this sample.
  */
-_Z_OWNED_TYPE_PTR(_z_sample_t, sample)
+_Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
 _Z_LOANED_TYPE(_z_sample_t, sample)
 
 /**
@@ -420,7 +479,7 @@ _Z_LOANED_TYPE(_z_hello_t, hello)
 /**
  * Represents the reply to a query.
  */
-_Z_OWNED_TYPE_PTR(_z_reply_t, reply)
+_Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 _Z_LOANED_TYPE(_z_reply_t, reply)
 
 /**

@@ -20,7 +20,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-int main(void) {
+void test_intersects(void) {
     assert(_z_keyexpr_intersects("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_intersects("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(_z_keyexpr_intersects("*", strlen("*"), "abc", strlen("abc")));
@@ -199,7 +199,9 @@ int main(void) {
     assert((zp_keyexpr_intersect_null_terminated("@a/@b/**", "@a/@b")));
     assert((zp_keyexpr_intersect_null_terminated("@a/**/@c/@b", "@a/**/@c/**/@b")));
     assert((zp_keyexpr_intersect_null_terminated("@a/**/@c/**/@b", "@a/**/@c/@b")));
+}
 
+void test_includes(void) {
     assert(_z_keyexpr_includes("a", strlen("a"), "a", strlen("a")));
     assert(_z_keyexpr_includes("a/b", strlen("a/b"), "a/b", strlen("a/b")));
     assert(_z_keyexpr_includes("*", strlen("*"), "a", strlen("a")));
@@ -282,7 +284,9 @@ int main(void) {
     assert(!zp_keyexpr_includes_null_terminated("@a/**", "@a/@b"));
     assert((zp_keyexpr_includes_null_terminated("@a/**/@b", "@a/@b")));
     assert((zp_keyexpr_includes_null_terminated("@a/@b/**", "@a/@b")));
+}
 
+void test_canonize(void) {
     // clang-format off
 
 #define N 31
@@ -414,10 +418,108 @@ int main(void) {
         }
         printf("\n");
     }
+}
 
+void test_equals(void) {
     assert(!zp_keyexpr_equals_null_terminated("a/**/$*b", "a/cb"));
     assert(!zp_keyexpr_equals_null_terminated("a/bc", "a/cb"));
     assert(zp_keyexpr_equals_null_terminated("greetings/hello/there", "greetings/hello/there"));
+}
+
+_Bool keyexpr_equals_string(const z_loaned_keyexpr_t *ke, const char *s) {
+    z_view_string_t vs;
+    z_keyexpr_as_view_string(ke, &vs);
+    return strncmp(z_string_data(z_view_string_loan(&vs)), s, z_string_len(z_view_string_loan(&vs))) == 0;
+}
+
+void test_keyexpr_constructor(void) {
+    z_owned_keyexpr_t ke;
+    z_keyexpr_from_str(&ke, "a/b/c");
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/b/c"));
+    z_keyexpr_drop(z_keyexpr_move(&ke));
+
+    z_keyexpr_from_substr(&ke, "a/b/c/d/e", 5);
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/b/c"));
+    z_keyexpr_drop(z_keyexpr_move(&ke));
+
+    assert(0 == z_keyexpr_from_str_autocanonize(&ke, "a/**/**"));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**"));
+    z_keyexpr_drop(z_keyexpr_move(&ke));
+
+    size_t len = 9;
+    assert(0 == z_keyexpr_from_substr_autocanonize(&ke, "a/**/**/m/b/c", &len));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke), "a/**/m"));
+    assert(len == 6);
+    z_keyexpr_drop(z_keyexpr_move(&ke));
+
+    z_view_keyexpr_t vke;
+    z_view_keyexpr_from_str(&vke, "a/b/c");
+    assert(keyexpr_equals_string(z_view_keyexpr_loan(&vke), "a/b/c"));
+
+    char s[] = "a/**/**";
+    z_view_keyexpr_from_str_autocanonize(&vke, s);
+    assert(keyexpr_equals_string(z_view_keyexpr_loan(&vke), "a/**"));
+}
+
+void test_concat(void) {
+    z_owned_keyexpr_t ke1, ke2;
+    z_keyexpr_from_str(&ke1, "a/b/c/*");
+    assert(0 == z_keyexpr_concat(&ke2, z_keyexpr_loan(&ke1), "/d/e/*", 4));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke2), "a/b/c/*/d/e"));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+
+    assert(0 != z_keyexpr_concat(&ke2, z_keyexpr_loan(&ke1), "*/e/*", 3));
+    assert(!z_keyexpr_check(&ke2));
+
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+}
+
+void test_join(void) {
+    z_owned_keyexpr_t ke1, ke2, ke3;
+    z_keyexpr_from_str(&ke1, "a/b/c/*");
+    z_keyexpr_from_str(&ke2, "d/e/*");
+    assert(0 == z_keyexpr_join(&ke3, z_keyexpr_loan(&ke1), z_keyexpr_loan(&ke2)));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke3), "a/b/c/*/d/e/*"));
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+    z_keyexpr_drop(z_keyexpr_move(&ke3));
+
+    z_keyexpr_from_str(&ke1, "a/*/**");
+    z_keyexpr_from_str(&ke2, "**/d/e/c");
+
+    assert(0 == z_keyexpr_join(&ke3, z_keyexpr_loan(&ke1), z_keyexpr_loan(&ke2)));
+    assert(keyexpr_equals_string(z_keyexpr_loan(&ke3), "a/*/**/d/e/c"));
+
+    z_keyexpr_drop(z_keyexpr_move(&ke1));
+    z_keyexpr_drop(z_keyexpr_move(&ke2));
+    z_keyexpr_drop(z_keyexpr_move(&ke3));
+}
+
+void test_relation_to(void) {
+    z_view_keyexpr_t foobar, foostar, barstar;
+    z_view_keyexpr_from_str(&foobar, "foo/bar");
+    z_view_keyexpr_from_str(&foostar, "foo/*");
+    z_view_keyexpr_from_str(&barstar, "bar/*");
+
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foostar), z_view_keyexpr_loan(&foobar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foobar), z_view_keyexpr_loan(&foostar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&foostar), z_view_keyexpr_loan(&foostar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS);
+    assert(z_keyexpr_relation_to(z_view_keyexpr_loan(&barstar), z_view_keyexpr_loan(&foobar)) ==
+           Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT);
+}
+
+int main(void) {
+    test_intersects();
+    test_includes();
+    test_canonize();
+    test_equals();
+    test_keyexpr_constructor();
+    test_concat();
+    test_join();
+    test_relation_to();
 
     return 0;
 }

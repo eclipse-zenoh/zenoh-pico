@@ -44,14 +44,10 @@ void fprintzid(z_id_t zid) {
     }
 }
 
-void fprintwhatami(unsigned int whatami) {
-    if (whatami == Z_WHATAMI_ROUTER) {
-        Serial.print("'Router'");
-    } else if (whatami == Z_WHATAMI_PEER) {
-        Serial.print("'Peer'");
-    } else {
-        Serial.print("'Other'");
-    }
+void fprintwhatami(z_whatami_t whatami) {
+    z_view_string_t s;
+    z_whatami_to_view_string(whatami, &s);
+    Serial.write(z_string_data(z_view_string_loan(&s)), z_string_len(z_view_string_loan(&s)));
 }
 
 void fprintlocators(const z_loaned_string_array_t *locs) {
@@ -71,11 +67,11 @@ void fprintlocators(const z_loaned_string_array_t *locs) {
 
 void fprinthello(const z_loaned_hello_t *hello) {
     Serial.print(" >> Hello { zid: ");
-    fprintzid(hello->zid);
+    fprintzid(z_hello_zid(hello));
     Serial.print(", whatami: ");
-    fprintwhatami(hello->whatami);
+    fprintwhatami(z_hello_whatami(hello));
     Serial.print(", locators: ");
-    fprintlocators(&hello->locators);
+    fprintlocators(z_hello_locators(hello));
     Serial.println(" }");
 }
 
@@ -120,5 +116,5 @@ void loop() {
     z_owned_closure_hello_t closure;
     z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
-    z_scout(z_config_move(&config), z_closure_hello_move(&closure));
+    z_scout(z_config_move(&config), z_closure_hello_move(&closure), NULL);
 }

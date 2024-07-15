@@ -24,6 +24,23 @@
 #include "zenoh-pico/session/session.h"
 
 /**
+ * Reply tag values.
+ *
+ * Enumerators:
+ *     _Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
+ *     _Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
+ *         replies for this query.
+ *     _Z_REPLY_TAG_ERROR: Tag identifying that the reply contains error.
+ *     _Z_REPLY_TAG_NONE: Tag identifying empty reply.
+ */
+typedef enum {
+    _Z_REPLY_TAG_DATA = 0,
+    _Z_REPLY_TAG_FINAL = 1,
+    _Z_REPLY_TAG_ERROR = 2,
+    _Z_REPLY_TAG_NONE = 3
+} _z_reply_tag_t;
+
+/**
  * An reply to a :c:func:`z_query`.
  *
  * Members:
@@ -32,13 +49,16 @@
  *
  */
 typedef struct _z_reply_data_t {
-    _z_sample_t sample;
+    union {
+        _z_value_t error;
+        _z_sample_t sample;
+    } _result;
     _z_id_t replier_id;
+    _z_reply_tag_t _tag;
 } _z_reply_data_t;
 
 void _z_reply_data_clear(_z_reply_data_t *rd);
-void _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
-_z_reply_t _z_reply_move(_z_reply_t *src_reply);
+int8_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
 
 _Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
@@ -49,21 +69,22 @@ _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
  * Members:
  *   _z_reply_t_Tag tag: Indicates if the reply contains data or if it's a FINAL reply.
  *   _z_reply_data_t data: The reply data if :c:member:`_z_reply_t.tag` equals
- * :c:member:`_z_reply_t_Tag.Z_REPLY_TAG_DATA`.
+ * :c:member:`_z_reply_t_Tag._Z_REPLY_TAG_DATA`.
  *
  */
 typedef struct _z_reply_t {
     _z_reply_data_t data;
-    z_reply_tag_t _tag;
 } _z_reply_t;
+
+_z_reply_t _z_reply_move(_z_reply_t *src_reply);
 
 _z_reply_t _z_reply_null(void);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
-void _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, z_reply_tag_t tag, _z_id_t id, const _z_bytes_t payload,
-                           const _z_timestamp_t *timestamp, _z_encoding_t encoding, z_sample_kind_t kind,
-                           const _z_bytes_t attachment);
+int8_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_id_t id, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
+                           _z_encoding_t *encoding, z_sample_kind_t kind, const _z_bytes_t attachment);
+_z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding);
 
 typedef struct _z_pending_reply_t {
     _z_reply_t _reply;

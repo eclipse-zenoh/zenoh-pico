@@ -89,7 +89,7 @@ int8_t _z_task_join(_z_task_t* task) {
 
 int8_t _z_task_cancel(_z_task_t* task) { return -1; }
 
-void _z_task_drop(_z_task_t** task) {
+void _z_task_free(_z_task_t** task) {
     if (task == NULL || *task == NULL) {
         return;
     }
@@ -146,6 +146,8 @@ int8_t _z_condvar_init(_z_condvar_t* cv) { return -1; }
 int8_t _z_condvar_drop(_z_condvar_t* cv) { return -1; }
 
 int8_t _z_condvar_signal(_z_condvar_t* cv) { return -1; }
+
+int8_t _z_condvar_signal_all(_z_condvar_t* cv) { return -1; }
 
 int8_t _z_condvar_wait(_z_condvar_t* cv, _z_mutex_t* m) { return -1; }
 
@@ -293,3 +295,5 @@ struct tm* localtime(const time_t* timep) {
     static struct tm t;
     return &t;
 }
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch* t) { return -1; }

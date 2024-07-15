@@ -87,7 +87,7 @@ int8_t _z_task_join(_z_task_t *task) { return pthread_join(*task, NULL); }
 
 int8_t _z_task_cancel(_z_task_t *task) { return pthread_cancel(*task); }
 
-void _z_task_drop(_z_task_t **task) {
+void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
     *task = NULL;
@@ -110,6 +110,8 @@ int8_t _z_condvar_init(_z_condvar_t *cv) { return pthread_cond_init(cv, 0); }
 int8_t _z_condvar_drop(_z_condvar_t *cv) { return pthread_cond_destroy(cv); }
 
 int8_t _z_condvar_signal(_z_condvar_t *cv) { return pthread_cond_signal(cv); }
+
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return pthread_cond_broadcast(cv); }
 
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return pthread_cond_wait(cv, m); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -215,4 +217,12 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 
     unsigned long elapsed = now.tv_sec - time->tv_sec;
     return elapsed;
+}
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+    t->secs = now.tv_sec;
+    t->nanos = now.tv_usec * 1000;
+    return 0;
 }

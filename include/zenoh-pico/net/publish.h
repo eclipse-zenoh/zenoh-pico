@@ -28,6 +28,7 @@ typedef struct _z_publisher_t {
     _z_session_rc_t _zn;
     z_congestion_control_t _congestion_control;
     z_priority_t _priority;
+    _Bool _is_express;
 #if Z_FEATURE_INTEREST == 1
     _z_write_filter_t _filter;
 #endif
@@ -36,6 +37,8 @@ typedef struct _z_publisher_t {
 #if Z_FEATURE_PUBLICATION == 1
 void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
+_Bool _z_publisher_check(const _z_publisher_t *publisher);
+_z_publisher_t _z_publisher_null(void);
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

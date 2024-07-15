@@ -35,34 +35,35 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
+int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
             _Z_DEBUG("Handling _Z_N_DECLARE");
-            _z_n_msg_declare_t decl = msg->_body._declare;
-            switch (decl._decl._tag) {
+            _z_n_msg_declare_t *decl = &msg->_body._declare;
+            switch (decl->_decl._tag) {
                 case _Z_DECL_KEXPR: {
-                    if (_z_register_resource(zn, decl._decl._body._decl_kexpr._keyexpr,
-                                             decl._decl._body._decl_kexpr._id, local_peer_id) == 0) {
+                    if (_z_register_resource(zn, decl->_decl._body._decl_kexpr._keyexpr,
+                                             decl->_decl._body._decl_kexpr._id, local_peer_id) == 0) {
                         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
                     }
                 } break;
                 case _Z_UNDECL_KEXPR: {
-                    _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
+                    _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, local_peer_id);
                 } break;
                 case _Z_DECL_SUBSCRIBER: {
-                    _z_interest_process_declares(zn, &decl._decl);
+                    _z_interest_process_declares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_QUERYABLE: {
-                    _z_interest_process_declares(zn, &decl._decl);
+                    _z_interest_process_declares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_SUBSCRIBER: {
-                    _z_interest_process_undeclares(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
-                    _z_interest_process_undeclares(zn, &decl._decl);
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_TOKEN: {
                     // TODO: add support or explicitly discard
@@ -72,10 +73,10 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 } break;
                 case _Z_DECL_FINAL: {
                     // Check that interest id is valid
-                    if (!decl.has_interest_id) {
+                    if (!decl->has_interest_id) {
                         return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
                     }
-                    _z_interest_process_declare_final(zn, decl._interest_id);
+                    _z_interest_process_declare_final(zn, decl->_interest_id);
                 } break;
             }
         } break;
@@ -86,37 +87,37 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
         } break;
         case _Z_N_REQUEST: {
             _Z_DEBUG("Handling _Z_N_REQUEST");
-            _z_n_msg_request_t req = msg->_body._request;
-            switch (req._tag) {
+            _z_n_msg_request_t *req = &msg->_body._request;
+            switch (req->_tag) {
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
-                    _z_msg_query_t *query = &req._body._query;
-                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid,
-                                                req._body._query._ext_attachment);
+                    _z_msg_query_t *query = &req->_body._query;
+                    ret = _z_trigger_queryables(zsrc, query, req->_key, (uint32_t)req->_rid,
+                                                req->_body._query._ext_attachment);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif
                 } break;
                 case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
-                    _z_msg_put_t put = req._body._put;
-                    ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, req._ext_qos, put._attachment);
+                    _z_msg_put_t put = req->_body._put;
+                    ret = _z_trigger_subscriptions(zn, req->_key, put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
+                                                   &put._commons._timestamp, req->_ext_qos, put._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
+                        _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
                 } break;
                 case _Z_REQUEST_DEL: {
 #if Z_FEATURE_SUBSCRIPTION == 1
-                    _z_msg_del_t del = req._body._del;
-                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_null(), _z_encoding_null(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos,
-                                                   _z_bytes_null());
+                    _z_msg_del_t del = req->_body._del;
+                    _z_encoding_t encoding = _z_encoding_null();
+                    ret = _z_trigger_subscriptions(zn, req->_key, _z_bytes_null(), &encoding, Z_SAMPLE_KIND_DELETE,
+                                                   &del._commons._timestamp, req->_ext_qos, del._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
+                        _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
                 } break;
@@ -124,19 +125,15 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
         } break;
         case _Z_N_RESPONSE: {
             _Z_DEBUG("Handling _Z_N_RESPONSE");
-            _z_n_msg_response_t response = msg->_body._response;
-            switch (response._tag) {
+            _z_n_msg_response_t *response = &msg->_body._response;
+            switch (response->_tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
-                    _z_msg_reply_t *reply = &response._body._reply;
-                    ret = _z_trigger_reply_partial(zn, response._request_id, response._key, reply);
+                    _z_msg_reply_t *reply = &response->_body._reply;
+                    ret = _z_trigger_reply_partial(zn, response->_request_id, response->_key, reply);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
-                    // @TODO: expose zenoh errors to the user
-                    _z_msg_err_t error = response._body._err;
-                    _z_slice_t payload = _z_bytes_try_get_contiguous(&error._payload);
-                    _ZP_UNUSED(payload);  // Unused when logs are deactivated
-                    _Z_ERROR("Received Err for query %zu: message=%.*s", response._request_id, (int)payload.len,
-                             payload.start);
+                    _z_msg_err_t *error = &response->_body._err;
+                    ret = _z_trigger_reply_err(zn, response->_request_id, error);
                 } break;
             }
         } break;

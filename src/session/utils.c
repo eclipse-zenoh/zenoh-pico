@@ -38,11 +38,7 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->time = 0;
 }
 
-_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
-    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
-        if (stamp->id.id[i]) return true;
-    return false;
-}
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;
@@ -51,8 +47,9 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
+int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = &zsrc->in->val;
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
@@ -85,13 +82,13 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     // Note session in transport
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._session = zn;
+            zn->_tp._transport._unicast._session = zsrc;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._session = zn;
+            zn->_tp._transport._multicast._session = zsrc;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._session = zn;
+            zn->_tp._transport._raweth._session = zsrc;
             break;
         default:
             break;
@@ -100,8 +97,12 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 }
 
 void _z_session_clear(_z_session_t *zn) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _zp_stop_read_task(zn);
+    _zp_stop_lease_task(zn);
+#endif
+    _z_close(zn);
     // Clear Zenoh PID
-
     // Clean up transports
     _z_transport_clear(&zn->_tp);
 

@@ -99,14 +99,10 @@ void fprintzid(FILE *stream, z_id_t zid) {
     }
 }
 
-void fprintwhatami(FILE *stream, unsigned int whatami) {
-    if (whatami == Z_WHATAMI_ROUTER) {
-        fprintf(stream, "\"Router\"");
-    } else if (whatami == Z_WHATAMI_PEER) {
-        fprintf(stream, "\"Peer\"");
-    } else {
-        fprintf(stream, "\"Other\"");
-    }
+void fprintwhatami(FILE *stream, z_whatami_t whatami) {
+    z_view_string_t s;
+    z_whatami_to_view_string(whatami, &s);
+    fprintf(stream, "\"%.*s\"", (int)z_string_len(z_loan(s)), z_string_data(z_loan(s)));
 }
 
 void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
@@ -125,11 +121,11 @@ void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
 
 void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, "Hello { zid: ");
-    fprintzid(stream, hello->zid);
+    fprintzid(stream, z_hello_zid(hello));
     fprintf(stream, ", whatami: ");
-    fprintwhatami(stream, hello->whatami);
+    fprintwhatami(stream, z_hello_whatami(hello));
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, &hello->locators);
+    fprintlocators(stream, z_hello_locators(hello));
     fprintf(stream, " }");
 }
 
@@ -173,5 +169,5 @@ void app_main() {
     z_owned_closure_hello_t closure;
     z_closure_hello(&closure, callback, drop, context);
     printf("Scouting...\n");
-    z_scout(z_config_move(&config), z_closure_hello_move(&closure));
+    z_scout(z_config_move(&config), z_closure_hello_move(&closure), NULL);
 }

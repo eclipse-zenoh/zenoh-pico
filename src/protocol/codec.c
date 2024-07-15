@@ -46,14 +46,14 @@ int8_t _z_query_target_decode(z_query_target_t *en, _z_zbuf_t *zbf) {
     return ret;
 }
 
-int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en) { return _z_zsize_encode(wbf, en); }
+int8_t _z_whatami_encode(_z_wbuf_t *wbf, z_whatami_t en) { return _z_zsize_encode(wbf, _z_whatami_to_uint8(en)); }
 
 int8_t _z_whatami_decode(z_whatami_t *en, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     _z_zint_t tmp;
     ret |= _z_zsize_decode(&tmp, zbf);
-    *en = tmp;
+    *en = _z_whatami_from_uint8((uint8_t)tmp);
 
     return ret;
 }

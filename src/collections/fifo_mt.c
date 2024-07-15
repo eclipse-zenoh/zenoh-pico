@@ -21,6 +21,7 @@
 /*-------- Fifo Buffer Multithreaded --------*/
 int8_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity) {
     _Z_RETURN_IF_ERR(_z_fifo_init(&fifo->_fifo, capacity))
+    fifo->is_closed = false;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&fifo->_mutex))
@@ -89,6 +90,18 @@ int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element
     return _Z_RES_OK;
 }
 
+int8_t _z_fifo_mt_close(_z_fifo_mt_t *fifo) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _Z_RETURN_IF_ERR(_z_mutex_lock(&fifo->_mutex))
+    fifo->is_closed = true;
+    _Z_RETURN_IF_ERR(_z_condvar_signal_all(&fifo->_cv_not_empty))
+    _Z_RETURN_IF_ERR(_z_mutex_unlock(&fifo->_mutex))
+#else
+    fifo->is_closed = true;
+#endif
+    return _Z_RES_OK;
+}
+
 int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) {
     _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
 
@@ -98,17 +111,21 @@ int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) 
     while (src == NULL) {
         src = _z_fifo_pull(&f->_fifo);
         if (src == NULL) {
+            if (f->is_closed) break;
             _Z_RETURN_IF_ERR(_z_condvar_wait(&f->_cv_not_empty, &f->_mutex))
         } else {
             _Z_RETURN_IF_ERR(_z_condvar_signal(&f->_cv_not_full))
         }
     }
     _Z_RETURN_IF_ERR(_z_mutex_unlock(&f->_mutex))
+    if (f->is_closed && src == NULL) return _Z_RES_CHANNEL_CLOSED;
     element_move(dst, src);
 #else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_fifo_pull(&f->_fifo);
     if (src != NULL) {
         element_move(dst, src);
+    } else if (f->is_closed) {
+        return _Z_RES_CHANNEL_CLOSED;
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
@@ -132,6 +149,8 @@ int8_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_mo
 
     if (src != NULL) {
         element_move(dst, src);
+    } else if (f->is_closed) {
+        return _Z_RES_CHANNEL_CLOSED;
     }
 
     return _Z_RES_OK;

@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 /**
- * What values.
+ * What bitmask for scouting.
  *
  * Enumerators:
  *     Z_WHAT_ROUTER: Router.
@@ -32,7 +32,11 @@ extern "C" {
 typedef enum {
     Z_WHAT_ROUTER = 0x01,  // Router
     Z_WHAT_PEER = 0x02,    // Peer
-    Z_WHAT_CLIENT = 0x03   // Client
+    Z_WHAT_CLIENT = 0x04,  // Client
+    Z_WHAT_ROUTER_PEER = (0x01 | 0x02),
+    Z_WHAT_ROUTER_CLIENT = (0x01 | 0x04),
+    Z_WHAT_PEER_CLIENT = (0x02 | 0x04),
+    Z_WHAT_ROUTER_PEER_CLIENT = ((0x01 | 0x02) | 0x04),
 } z_what_t;
 
 /**
@@ -43,8 +47,12 @@ typedef enum {
  *     Z_WHATAMI_PEER: Bitmask to filter for Zenoh peers.
  *     Z_WHATAMI_CLIENT: Bitmask to filter for Zenoh clients.
  */
-typedef enum { Z_WHATAMI_ROUTER = 0x00, Z_WHATAMI_PEER = 0x01, Z_WHATAMI_CLIENT = 0x02 } z_whatami_t;
-#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
+typedef enum z_whatami_t {
+    Z_WHATAMI_ROUTER = 0x01,
+    Z_WHATAMI_PEER = 0x02,
+    Z_WHATAMI_CLIENT = 0x04,
+} z_whatami_t;
+#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER;
 
 /**
  * Status values for keyexpr canonization operation.
@@ -74,6 +82,22 @@ typedef enum {
     Z_KEYEXPR_CANON_CONTAINS_SHARP_OR_QMARK = -7,
     Z_KEYEXPR_CANON_CONTAINS_UNBOUND_DOLLAR = -8
 } zp_keyexpr_canon_status_t;
+
+/**
+ * Intersection level of 2 key expressions.
+ *
+ * Enumerators:
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT: 2 key expression do not intersect.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS: 2 key expressions intersect, i.e. there exists at least one key expression
+ * that is included by both. Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES: First key expression is the superset of second one.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS: 2 key expressions are equal.
+ */
+typedef enum {
+    Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT = 0,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS = 1,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES = 2,
+    Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS = 3,
+} z_keyexpr_intersection_level_t;
 
 /**
  * Sample kind values.
@@ -202,16 +226,6 @@ typedef enum {
  */
 typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
-
-/**
- * Reply tag values.
- *
- * Enumerators:
- *     Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
- *     Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
- *         replies for this query.
- */
-typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
 
 /**
  * Congestion control values.

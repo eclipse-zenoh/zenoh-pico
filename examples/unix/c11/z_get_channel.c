@@ -109,13 +109,12 @@ int main(int argc, char **argv) {
     for (z_recv(z_loan(handler), &reply); z_check(reply); z_recv(z_loan(handler), &reply)) {
         if (z_reply_is_ok(z_loan(reply))) {
             const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
-            z_owned_string_t keystr;
-            z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+            z_view_string_t keystr;
+            z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
             z_owned_string_t replystr;
             z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
             printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
-            z_drop(z_move(keystr));
             z_drop(z_move(replystr));
         } else {
             printf(">> Received an error\n");
@@ -123,10 +122,6 @@ int main(int argc, char **argv) {
     }
 
     z_drop(z_move(handler));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
 
     z_close(z_move(s));
 

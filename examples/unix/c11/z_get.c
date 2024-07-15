@@ -22,6 +22,8 @@
 static z_owned_condvar_t cond;
 static z_owned_mutex_t mutex;
 
+const char *kind_to_str(z_sample_kind_t kind);
+
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
@@ -33,16 +35,20 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
-        z_owned_string_t keystr;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &keystr);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-        printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
-        z_drop(z_move(keystr));
+        printf(">> Received %s ('%s': '%s')\n", kind_to_str(z_sample_kind(sample)), z_string_data(z_loan(keystr)),
+               z_string_data(z_loan(replystr)));
         z_drop(z_move(replystr));
     } else {
-        printf(">> Received an error\n");
+        const z_loaned_reply_err_t *err = z_reply_err(reply);
+        z_owned_string_t errstr;
+        z_bytes_deserialize_into_string(z_reply_err_payload(err), &errstr);
+        printf(">> Received an error: %s\n", z_string_data(z_loan(errstr)));
+        z_drop(z_move(errstr));
     }
 }
 
@@ -136,12 +142,19 @@ int main(int argc, char **argv) {
     z_condvar_wait(z_loan_mut(cond), z_loan_mut(mutex));
     z_mutex_unlock(z_loan_mut(mutex));
 
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan_mut(s));
-    zp_stop_lease_task(z_loan_mut(s));
-
     z_close(z_move(s));
     return 0;
+}
+
+const char *kind_to_str(z_sample_kind_t kind) {
+    switch (kind) {
+        case Z_SAMPLE_KIND_PUT:
+            return "PUT";
+        case Z_SAMPLE_KIND_DELETE:
+            return "DELETE";
+        default:
+            return "UNKNOWN";
+    }
 }
 #else
 int main(void) {

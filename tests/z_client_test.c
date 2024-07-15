@@ -52,8 +52,8 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received query: %s\t(%u/%u)\n", res, queries, total);
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_query_keyexpr(query), &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &k_str);
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     z_view_string_t pred;
@@ -67,7 +67,6 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
-    z_drop(z_move(k_str));
     free(res);
 }
 
@@ -79,8 +78,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         const z_loaned_sample_t *sample = z_reply_ok(reply);
         printf(">> Received reply data: %s\t(%u/%u)\n", res, replies, total);
 
-        z_owned_string_t k_str;
-        z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+        z_view_string_t k_str;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
         z_owned_string_t value;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
         assert(z_string_len(z_loan(value)) == strlen(res));
@@ -88,7 +87,6 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
         replies++;
-        z_drop(z_move(k_str));
         z_drop(z_move(value));
     } else {
         printf(">> Received an error\n");
@@ -102,8 +100,8 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    z_owned_string_t k_str;
-    z_keyexpr_to_string(z_sample_keyexpr(sample), &k_str);
+    z_view_string_t k_str;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     size_t payload_len = z_slice_len(z_loan(value));
@@ -111,7 +109,6 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     assert(_z_str_eq(z_loan(k_str)->val, res) == true);
 
     datas++;
-    z_drop(z_move(k_str));
     z_drop(z_move(value));
     free(res);
 }
@@ -212,7 +209,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         assert(z_declare_queryable(qle, z_loan(s2), z_loan(ke), &callback, NULL) == _Z_RES_OK);
-        printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val->_entity_id, (z_zint_t)0, s1_res);
+        printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val._entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
 
@@ -360,7 +357,7 @@ int main(int argc, char **argv) {
     // Undeclare subscribers and queryables on second session
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
-        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_val->_entity_id);
+        printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_val._entity_id);
         z_undeclare_subscriber(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
@@ -369,7 +366,7 @@ int main(int argc, char **argv) {
 
     while (qles2) {
         z_owned_queryable_t *qle = _z_list_head(qles2);
-        printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_val->_entity_id);
+        printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_val._entity_id);
         z_undeclare_queryable(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free, NULL);
     }
@@ -379,26 +376,17 @@ int main(int argc, char **argv) {
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])->_id);
-        z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
+        z_undeclare_keyexpr(z_move(rids1[i]), z_loan(s1));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])->_id);
-        z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
+        z_undeclare_keyexpr(z_move(rids2[i]), z_loan(s2));
     }
 
     z_sleep_s(SLEEP);
-
-    // Stop both sessions
-    printf("Stopping threads on session 1\n");
-    zp_stop_read_task(z_loan_mut(s1));
-    zp_stop_lease_task(z_loan_mut(s1));
-
-    printf("Stopping threads on session 2\n");
-    zp_stop_read_task(z_loan_mut(s2));
-    zp_stop_lease_task(z_loan_mut(s2));
 
     // Close both sessions
     printf("Closing session 1\n");
