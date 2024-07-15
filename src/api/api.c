@@ -1179,6 +1179,8 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
     options->encoding = NULL;
     options->payload = NULL;
     options->attachment = NULL;
@@ -1202,6 +1204,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
         opt.encoding = options->encoding;
         opt.payload = z_bytes_move(options->payload);
         opt.attachment = options->attachment;
+        opt.congestion_control = options->congestion_control;
+        opt.priority = options->priority;
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -1218,7 +1222,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
 
     ret = _z_query(&_Z_RC_IN_VAL(zs), keyexpr_aliased, parameters, opt.target, opt.consolidation.mode, value,
                    callback->_val.call, callback->_val.drop, ctx, opt.timeout_ms,
-                   _z_bytes_from_owned_bytes(opt.attachment));
+                   _z_bytes_from_owned_bytes(opt.attachment), opt.congestion_control, opt.priority);
     if (opt.payload != NULL) {
         z_bytes_drop(opt.payload);
     }

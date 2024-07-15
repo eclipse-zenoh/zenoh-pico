@@ -442,7 +442,8 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
 /*------------------ Query ------------------*/
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment) {
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment,
+                z_congestion_control_t cong_ctrl, z_priority_t priority) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object
@@ -461,10 +462,10 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
             _z_slice_t params = _z_slice_wrap((uint8_t *)parameters, strlen(parameters));
-            _z_zenoh_message_t z_msg =
-                _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value, timeout_ms, attachment);
+            _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
+                                                         timeout_ms, attachment, cong_ctrl, priority, false);
 
-            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }

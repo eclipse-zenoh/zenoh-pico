@@ -237,12 +237,14 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
  *     arg: A pointer that will be passed to the **callback** on each call.
  *     timeout_ms: The timeout value of this query.
  *     attachment: An optional attachment to this query.
- *
+ *     cong_ctrl: The congestion control to apply when routing the query.
+ *     priority: The priority of the query.
  *
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment);
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment,
+                z_congestion_control_t cong_ctrl, z_priority_t priority);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

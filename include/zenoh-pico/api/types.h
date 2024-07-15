@@ -359,6 +359,8 @@ typedef struct {
  *   z_owned_bytes_t payload: The payload to include in the query.
  *   z_owned_encoding_t *encoding: Payload encoding.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing the query.
+ *   z_priority_t priority: The priority of the query.
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_owned_bytes_t *attachment: An optional attachment to the query.
  */
@@ -366,6 +368,8 @@ typedef struct {
     z_owned_bytes_t *payload;
     z_owned_encoding_t *encoding;
     z_query_consolidation_t consolidation;
+    z_congestion_control_t congestion_control;
+    z_priority_t priority;
     z_query_target_t target;
     uint32_t timeout_ms;
     z_owned_bytes_t *attachment;
