@@ -167,16 +167,6 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
-_Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr) {
-    _Bool ret = false;
-
-    if ((keyexpr->_id != Z_RESOURCE_ID_NONE) || (keyexpr->_suffix != NULL)) {
-        ret = true;
-    }
-
-    return ret;
-}
-
 int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
 
 int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexpr_is_canon(start, strlen(start)); }
