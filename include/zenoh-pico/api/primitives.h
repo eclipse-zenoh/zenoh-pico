@@ -173,17 +173,6 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
 z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
- * Checks if a given keyexpr is valid.
- *
- * Parameters:
- *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to be checked.
- *
- * Return:
- *   ``true`` if keyexpr is valid, or ``false`` otherwise.
- */
-_Bool z_keyexpr_is_initialized(const z_loaned_keyexpr_t *keyexpr);
-
-/**
  * Checks if a given keyexpr is valid and in canonical form.
  *
  * Parameters:
