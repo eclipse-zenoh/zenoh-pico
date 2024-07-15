@@ -113,16 +113,23 @@
     void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
         if (obj != NULL) f_drop((&obj->_val));                                                       \
     }
-
-#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(type, name, f_check, f_null, f_drop)                   \
-    _Bool z_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }          \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
-    void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                          \
-    z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                     \
-    void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
-        if (obj != NULL) f_drop((&obj->_val));                                                       \
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, attribute)            \
+    attribute _Bool z_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }          \
+    attribute const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
+    attribute z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
+    attribute void z_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                          \
+    attribute z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return obj; }                     \
+    attribute void z_##name##_drop(z_owned_##name##_t *obj) {                                                  \
+        if (obj != NULL) f_drop((&obj->_val));                                                                 \
     }
+
+#define _ZP_NOTHING
+
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(type, name, f_check, f_null, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, _ZP_NOTHING)
+
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(type, name, f_check, f_null, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, static inline)
 
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                            \
     _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
