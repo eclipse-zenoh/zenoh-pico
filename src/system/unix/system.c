@@ -231,7 +231,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
     z_time_t now;
     gettimeofday(&now, NULL);
-    t->secs = now.tv_sec;
-    t->nanos = now.tv_usec * 1000;
+    t->secs = (uint32_t)now.tv_sec;
+    t->nanos = (uint32_t)now.tv_usec * 1000;
     return 0;
 }
