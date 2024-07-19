@@ -67,7 +67,7 @@ size_t _z_rc_strong_count(void *cnt);
         return p;                                                                                            \
     }                                                                                                        \
     static inline name##_rc_t name##_rc_new_from_val(const type##_t *val) {                                  \
-        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));                                                            \
+        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));                                                \
         if (v == NULL) {                                                                                     \
             return name##_rc_null();                                                                         \
         }                                                                                                    \

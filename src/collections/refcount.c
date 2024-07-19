@@ -101,8 +101,8 @@
                 if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                     \
                     return false;                                                       \
                 }                                                                       \
-                \ 
-            break;                                                                      \
+                                                                                        \
+                break;                                                                  \
             } else {                                                                    \
                 prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);        \
             }                                                                           \
