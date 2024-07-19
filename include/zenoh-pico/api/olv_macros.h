@@ -149,7 +149,7 @@
     int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
         int8_t ret = _Z_RES_OK;                                                                     \
         obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
-        if (_Z_RC_IS_NULL(&val->_rc)) {                                                             \
+        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                             \
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
         }                                                                                           \
         return ret;                                                                                 \
