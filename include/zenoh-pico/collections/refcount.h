@@ -279,6 +279,22 @@ extern "C++" {
         z_free(p->in);                                                                          \
         return true;                                                                            \
     }                                                                                           \
+    static inline _Bool name##_rc_decr(name##_rc_t *p) {                                        \
+        if (_ZP_RC_OP_DECR_AND_CMP_STRONG(1)) {                                                 \
+            if (_ZP_RC_OP_DECR_AND_CMP_WEAK(1)) {                                               \
+                return false;                                                                   \
+            }                                                                                   \
+            _ZP_RC_OP_SYNC                                                                      \
+            z_free(p->in);                                                                      \
+            return true;                                                                        \
+        }                                                                                       \
+        if (_ZP_RC_OP_DECR_AND_CMP_WEAK(1)) {                                                   \
+            return false;                                                                       \
+        }                                                                                       \
+        _ZP_RC_OP_SYNC                                                                          \
+        z_free(p->in);                                                                          \
+        return true;                                                                            \
+    }                                                                                           \
     static inline name##_weak_t name##_weak_null(void) {                                        \
         name##_weak_t p;                                                                        \
         p.in = NULL;                                                                            \

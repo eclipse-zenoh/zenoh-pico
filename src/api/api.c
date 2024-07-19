@@ -867,7 +867,7 @@ int8_t z_open(z_owned_session_t *zs, z_owned_config_t *config) {
     // Open session
     int8_t ret = _z_open(&zs->_rc, &config->_val);
     if (ret != _Z_RES_OK) {
-        _z_session_rc_drop(&zs->_rc);
+        _z_session_rc_decr(&zs->_rc);
         z_session_null(zs);
         z_config_drop(config);
         return ret;
