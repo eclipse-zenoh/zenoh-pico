@@ -222,6 +222,13 @@ void test_overflow(void) {
     assert(dwk1.in == NULL);
 }
 
+void test_decr(void) {
+    _dummy_rc_t drc1 = _dummy_rc_new();
+    _dummy_rc_t drc2 = _dummy_rc_clone(&drc1);
+    assert(!_dummy_rc_decr(&drc2));
+    assert(_dummy_rc_decr(&drc1));
+}
+
 int main(void) {
     test_rc_null();
     test_rc_size();
@@ -239,5 +246,6 @@ int main(void) {
     test_weak_copy();
     test_weak_upgrade();
     test_overflow();
+    test_decr();
     return 0;
 }

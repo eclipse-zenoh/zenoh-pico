@@ -228,3 +228,17 @@ jobs:
       - name: Kill Zenoh router
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  no_routeur:
+    name: Test examples without router
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build & test pico
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/no_router.py
+        timeout-minutes: 5
