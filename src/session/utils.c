@@ -49,7 +49,7 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 /*------------------ Init/Free/Close session ------------------*/
 int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
-    _z_session_t *zn = &zsrc->in->val;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
