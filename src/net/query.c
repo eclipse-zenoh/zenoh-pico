@@ -39,7 +39,7 @@ void _z_query_clear_inner(_z_query_t *q) {
 void _z_query_clear(_z_query_t *q) {
     // Try to upgrade session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&q->_zn);
-    if (_Z_RC_IS_NULL(&sess_rc)) {
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
         // Send REPLY_FINAL message
         _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
         if (_z_send_n_msg(_Z_RC_IN_VAL(&q->_zn), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
