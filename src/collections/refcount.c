@@ -93,22 +93,22 @@
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) __sync_fetch_and_sub(&(p)->_weak_cnt, (unsigned int)1) > (unsigned int)x
 #define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) __sync_bool_compare_and_swap(&(p)->_strong_cnt, x, x)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                      \
-    _Bool _upgrade(_z_inner_rc_t* cnt) {                                                \
-        \ unsigned int prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0); \
-        while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                               \
-            if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {      \
-                if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                     \
-                    return false;                                                       \
-                }                                                                       \
-                                                                                        \
-                break;                                                                  \
-            } else {                                                                    \
-                prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);        \
-            }                                                                           \
-        }
-return true;
-}
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                    \
+    _Bool _upgrade(_z_inner_rc_t* cnt) {                                              \
+        unsigned int prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0); \
+        while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                             \
+            if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {    \
+                if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {              \
+                    return false;                                                     \
+                }                                                                     \
+                                                                                      \
+                break;                                                                \
+            } else {                                                                  \
+                prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);      \
+            }                                                                         \
+        }                                                                             \
+        return true;                                                                  \
+    }
 
 #else  // !ZENOH_COMPILER_GCC
 
@@ -146,7 +146,7 @@ return true;
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                             \
     _Bool _upgrade(_z_inner_rc_t* cnt) {                                       \
         if ((cnt->_strong_cnt != 0) && (cnt->_strong_cnt < _Z_RC_MAX_COUNT)) { \
-            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(_Z_RC_MAX_COUNT)) {                \
+            if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {           \
                 return false;                                                  \
             }                                                                  \
             _ZP_RC_OP_INCR_STRONG_CNT                                          \
