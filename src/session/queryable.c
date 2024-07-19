@@ -45,7 +45,7 @@ _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_queryable_
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (id == qle->_val->_id) {
+        if (id == _Z_RC_IN_VAL(qle)->_id) {
             ret = qle;
             break;
         }
@@ -63,7 +63,7 @@ _z_session_queryable_rc_list_t *__z_get_session_queryable_by_key(_z_session_quer
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (_z_keyexpr_intersects(qle->_val->_key._suffix, strlen(qle->_val->_key._suffix), key._suffix,
+        if (_z_keyexpr_intersects(_Z_RC_IN_VAL(qle)->_key._suffix, strlen(_Z_RC_IN_VAL(qle)->_key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
             ret = _z_session_queryable_rc_list_push(ret, _z_session_queryable_rc_clone_as_ptr(qle));
         }
@@ -152,7 +152,7 @@ int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const 
         _z_session_queryable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-            qle->_val->_callback(&query, qle->_val->_arg);
+            _Z_RC_IN_VAL(qle)->_callback(&query, _Z_RC_IN_VAL(qle)->_arg);
             xs = _z_session_queryable_rc_list_tail(xs);
         }
         // Clean up

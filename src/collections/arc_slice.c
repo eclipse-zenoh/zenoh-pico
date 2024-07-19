@@ -29,16 +29,10 @@ _z_arc_slice_t _z_arc_slice_empty(void) {
 
 _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len) {
     assert(offset + len <= s.len);
-    _z_slice_t* sc = z_malloc(sizeof(_z_slice_t));
-    if (sc == NULL) {
-        return _z_arc_slice_empty();
-    }
-    *sc = s;
     _z_arc_slice_t arc_s;
 
-    arc_s.slice = _z_slice_rc_new(sc);
+    arc_s.slice = _z_slice_rc_new_from_val(&s);
     if (_Z_RC_IS_NULL(&arc_s.slice)) {
-        z_free(sc);
         return _z_arc_slice_empty();
     }
     arc_s.len = len;
@@ -64,7 +58,7 @@ size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
 
 _Bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 
-const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) { return s->slice._val->start + s->start; }
+const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) { return _Z_RC_IN_VAL(&s->slice)->start + s->start; }
 
 int8_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src) {
     _z_slice_rc_copy(&dst->slice, &src->slice);

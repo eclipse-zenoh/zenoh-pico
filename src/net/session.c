@@ -46,7 +46,7 @@ int8_t __z_open_inner(_z_session_rc_t *zn, char *locator, z_whatami_t mode) {
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&zn->_val->_tp, &local_zid, locator, mode);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;

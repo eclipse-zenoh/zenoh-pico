@@ -231,10 +231,10 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (sub->_zn._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&sub->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
     } else {
-        declaration = _z_make_undecl_subscriber(sub->_entity_id, &s->_val->_key);
+        declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(_Z_RC_IN_VAL(&sub->_zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
@@ -243,7 +243,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local subscription state can be removed
-    _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), s->_val->_key_id);
+    _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, s);
     _z_session_rc_drop(&sub->_zn);
     return _Z_RES_OK;
@@ -295,10 +295,10 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (qle->_zn._val->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&qle->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
     } else {
-        declaration = _z_make_undecl_queryable(qle->_entity_id, &q->_val->_key);
+        declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(_Z_RC_IN_VAL(&qle->_zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
@@ -514,7 +514,7 @@ int8_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire
-    _z_interest_t interest = _z_make_interest_final(sintr->_val->_id);
+    _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
     _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
     if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;

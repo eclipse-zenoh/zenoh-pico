@@ -613,7 +613,7 @@ int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
     zp_time_since_epoch t;
     _Z_RETURN_IF_ERR(zp_get_time_since_epoch(&t));
     ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
-    ts->id = zs->_val->_local_zid;
+    ts->id = _Z_RC_IN_VAL(zs)->_local_zid;
     return _Z_RES_OK;
 }
 
@@ -644,16 +644,16 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val.val = query->_val->_parameters;
-    parameters->_val.len = strlen(query->_val->_parameters);
+    parameters->_val.val = _Z_RC_IN_VAL(query)->_parameters;
+    parameters->_val.len = strlen(_Z_RC_IN_VAL(query)->_parameters);
 }
 
-const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->_val->attachment; }
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->attachment; }
 
-const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->_val->_key; }
+const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_key; }
 
-const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->_val->_value.payload; }
-const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->_val->_value.encoding; }
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.payload; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.encoding; }
 
 void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
@@ -1310,7 +1310,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_owned_bytes_t *payload,
                      const z_query_reply_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->_val->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_CONNECTION_CLOSED;
     }
@@ -1350,7 +1350,7 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
 int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
                          const z_query_reply_del_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->_val->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_CONNECTION_CLOSED;
     }
@@ -1378,7 +1378,7 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options) { o
 int8_t z_query_reply_err(const z_loaned_query_t *query, z_owned_bytes_t *payload,
                          const z_query_reply_err_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&query->_val->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_CONNECTION_CLOSED;
     }
@@ -1545,11 +1545,11 @@ int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *s
         return _Z_ERR_GENERIC;
     }
     uint32_t lookup = sub->_entity_id;
-    _z_subscription_rc_list_t *tail = sub->_zn._val->_local_subscriptions;
+    _z_subscription_rc_list_t *tail = _Z_RC_IN_VAL(&sub->_zn)->_local_subscriptions;
     while (tail != NULL && !z_keyexpr_check(keyexpr)) {
         _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
-        if (head->_val->_id == lookup) {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr->_val, &head->_val->_key));
+        if (_Z_RC_IN_VAL(head)->_id == lookup) {
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr->_val, &_Z_RC_IN_VAL(head)->_key));
         }
         tail = _z_subscription_rc_list_tail(tail);
     }
