@@ -140,7 +140,7 @@ void test_rc_clone_as_weak(void) {
     assert(_z_rc_strong_count(dwk1._cnt) == 1);
     assert(_z_rc_weak_count(dwk1._cnt) == 2);
 
-    assert(dwk1._val->foo == 0);
+    assert(dwk1._val->foo == 42);
     assert(!_dummy_rc_drop(&drc1));
     assert(_z_rc_strong_count(dwk1._cnt) == 0);
     assert(_z_rc_weak_count(dwk1._cnt) == 1);
@@ -214,8 +214,8 @@ void test_weak_upgrade(void) {
     // Valid upgrade
     _dummy_rc_t drc2 = _dummy_weak_upgrade(&dwk1);
     assert(!_Z_RC_IS_NULL(&drc2));
-    assert(_z_rc_strong_count(drc2._cnt) == 1);
-    assert(_z_rc_weak_count(drc2._cnt) == 2);
+    assert(_z_rc_strong_count(drc2._cnt) == 2);
+    assert(_z_rc_weak_count(drc2._cnt) == 3);
     assert(!_dummy_rc_drop(&drc1));
     assert(!_dummy_rc_drop(&drc2));
 

@@ -63,18 +63,19 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) _z_atomic_compare_exchange_strong(&(p)->_strong_cnt, &x, x)
 #define _ZP_RC_OP_SYNC atomic_thread_fence(_z_memory_order_acquire);
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                                    \
-    _Bool _upgrade(_z_inner_rc_t* cnt) {                                                                              \
+    int8_t _upgrade(_z_inner_rc_t* cnt) {                                                                             \
         unsigned int prev = _z_atomic_load_explicit(&cnt->_strong_cnt, _z_memory_order_relaxed);                      \
         while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                                                             \
             if (_z_atomic_compare_exchange_weak_explicit(&cnt->_strong_cnt, &prev, prev + 1, _z_memory_order_acquire, \
                                                          _z_memory_order_relaxed)) {                                  \
                 if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {                                              \
-                    return false;                                                                                     \
+                    _Z_ERROR("Rc weak count overflow");                                                               \
+                    return _Z_ERR_OVERFLOW;                                                                           \
                 }                                                                                                     \
-                break;                                                                                                \
+                return _Z_RES_OK;                                                                                     \
             }                                                                                                         \
         }                                                                                                             \
-        return true;                                                                                                  \
+        return _Z_ERR_INVALID;                                                                                        \
     }
 
 #else  // ZENOH_C_STANDARD == 99
@@ -94,20 +95,21 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) __sync_bool_compare_and_swap(&(p)->_strong_cnt, x, x)
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                    \
-    _Bool _upgrade(_z_inner_rc_t* cnt) {                                              \
+    int8_t _upgrade(_z_inner_rc_t* cnt) {                                             \
         unsigned int prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0); \
         while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                             \
             if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {    \
                 if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {              \
-                    return false;                                                     \
+                    _Z_ERROR("Rc weak count overflow");                               \
+                    return _Z_ERR_OVERFLOW;                                           \
                 }                                                                     \
                                                                                       \
-                break;                                                                \
+                return _Z_RES_OK;                                                     \
             } else {                                                                  \
                 prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);      \
             }                                                                         \
         }                                                                             \
-        return true;                                                                  \
+        return _Z_ERR_INVALID;                                                        \
     }
 
 #else  // !ZENOH_COMPILER_GCC
@@ -122,10 +124,10 @@
 #define _ZP_RC_OP_DECR_AND_CMP_WEAK(p, x) (x == 0)
 #define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) (x == 0) && (p != NULL)
 #define _ZP_RC_OP_SYNC
-#define _ZP_RC_OP_UPGRADE_CAS_LOOP       \
-    _Bool _upgrade(_z_inner_rc_t* cnt) { \
-        (void)cnt;                       \
-        return true;                     \
+#define _ZP_RC_OP_UPGRADE_CAS_LOOP        \
+    int8_t _upgrade(_z_inner_rc_t* cnt) { \
+        (void)cnt;                        \
+        return _Z_ERR_INVALID;            \
     }
 
 #endif  // ZENOH_COMPILER_GCC
@@ -144,14 +146,16 @@
 #define _ZP_RC_OP_CHECK_STRONG_CNT(p, x) (p->_strong_cnt == x)
 #define _ZP_RC_OP_SYNC
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                             \
-    _Bool _upgrade(_z_inner_rc_t* cnt) {                                       \
+    int8_t _upgrade(_z_inner_rc_t* cnt) {                                      \
         if ((cnt->_strong_cnt != 0) && (cnt->_strong_cnt < _Z_RC_MAX_COUNT)) { \
             if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {           \
-                return false;                                                  \
+                _Z_ERROR("Rc weak count overflow");                            \
+                return _Z_ERR_OVERFLOW;                                        \
             }                                                                  \
             _ZP_RC_OP_INCR_STRONG_CNT(cnt)                                     \
+            return _Z_RES_OK;                                                  \
         }                                                                      \
-        return true;                                                           \
+        return _Z_ERR_OVERFLOW;                                                \
     }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -194,9 +198,6 @@ _Bool _z_rc_decrease_strong(void** cnt) {
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return _z_rc_decrease_weak(cnt);
     }
-    if (_ZP_RC_OP_DECR_AND_CMP_WEAK(c, 1)) {
-        return false;
-    }
     return _z_rc_decrease_weak(cnt);
 }
 
@@ -213,13 +214,7 @@ _Bool _z_rc_decrease_weak(void** cnt) {
 
 _ZP_RC_OP_UPGRADE_CAS_LOOP
 
-int8_t _z_rc_weak_upgrade(void* cnt) {
-    if (!_upgrade((_z_inner_rc_t*)cnt)) {
-        _Z_ERROR("Rc weak count overflow");
-        return _Z_ERR_OVERFLOW;
-    }
-    return _Z_RES_OK;
-}
+int8_t _z_rc_weak_upgrade(void* cnt) { return _upgrade((_z_inner_rc_t*)cnt); }
 
 size_t _z_rc_weak_count(void* cnt) { return ((_z_inner_rc_t*)cnt)->_weak_cnt; }
 
