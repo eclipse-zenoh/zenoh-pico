@@ -149,9 +149,9 @@
             if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {           \
                 return false;                                                  \
             }                                                                  \
-            _ZP_RC_OP_INCR_STRONG_CNT                                          \
-            return true;                                                       \
+            _ZP_RC_OP_INCR_STRONG_CNT(cnt)                                     \
         }                                                                      \
+        return true;                                                           \
     }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
