@@ -199,7 +199,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
     _zp_session_lock_mutex(zn);
     ret = (_z_session_interest_rc_t *)z_malloc(sizeof(_z_session_interest_rc_t));
     if (ret != NULL) {
-        *ret = _z_session_interest_rc_new_from_val(*intr);
+        *ret = _z_session_interest_rc_new_from_val(intr);
         zn->_local_interests = _z_session_interest_rc_list_push(zn->_local_interests, ret);
     }
     _zp_session_unlock_mutex(zn);
