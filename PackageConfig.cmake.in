@@ -33,6 +33,7 @@ else()
     add_library(__zenohpico_static STATIC IMPORTED GLOBAL)
     add_library(zenohpico::lib ALIAS __zenohpico_static)
     set_property(TARGET __zenohpico_static PROPERTY IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@LIBNAME@")
+    target_include_directories(__zenohpico_static INTERFACE "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
   endif()
 endif()
 
