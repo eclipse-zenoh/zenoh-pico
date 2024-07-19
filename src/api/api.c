@@ -653,7 +653,9 @@ const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { retu
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_key; }
 
 const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.payload; }
-const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.encoding; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) {
+    return &_Z_RC_IN_VAL(query)->_value.encoding;
+}
 
 void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
     if (closure->call != NULL) {

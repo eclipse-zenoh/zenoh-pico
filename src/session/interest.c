@@ -63,8 +63,8 @@ static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_sessi
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
         if ((_Z_RC_IN_VAL(intr)->_flags & flags) != 0) {
-            if (_z_keyexpr_intersects(_Z_RC_IN_VAL(intr)->_key._suffix, strlen(_Z_RC_IN_VAL(intr)->_key._suffix), key._suffix,
-                                      strlen(key._suffix))) {
+            if (_z_keyexpr_intersects(_Z_RC_IN_VAL(intr)->_key._suffix, strlen(_Z_RC_IN_VAL(intr)->_key._suffix),
+                                      key._suffix, strlen(key._suffix))) {
                 ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
             }
         }
@@ -125,8 +125,8 @@ static int8_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t intere
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
         _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(sub)->_key);
-        _z_declaration_t declaration =
-            _z_make_decl_subscriber(&key, _Z_RC_IN_VAL(sub)->_id, _Z_RC_IN_VAL(sub)->_info.reliability == Z_RELIABILITY_RELIABLE);
+        _z_declaration_t declaration = _z_make_decl_subscriber(
+            &key, _Z_RC_IN_VAL(sub)->_id, _Z_RC_IN_VAL(sub)->_info.reliability == Z_RELIABILITY_RELIABLE);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -155,8 +155,8 @@ static int8_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interes
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
         // Build the declare message to send on the wire
         _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(qle)->_key);
-        _z_declaration_t declaration =
-            _z_make_decl_queryable(&key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_declaration_t declaration = _z_make_decl_queryable(
+            &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
