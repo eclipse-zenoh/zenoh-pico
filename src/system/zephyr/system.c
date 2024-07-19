@@ -96,7 +96,12 @@ void z_task_free(z_task_t **task) {
 /*------------------ Mutex ------------------*/
 int8_t z_mutex_init(z_mutex_t *m) { return pthread_mutex_init(m, 0); }
 
-int8_t z_mutex_free(z_mutex_t *m) { return pthread_mutex_destroy(m); }
+int8_t z_mutex_free(z_mutex_t *m) {
+    if (*m == NULL) {
+        return 0;
+    }
+    return pthread_mutex_destroy(m);
+}
 
 int8_t z_mutex_lock(z_mutex_t *m) { return pthread_mutex_lock(m); }
 
