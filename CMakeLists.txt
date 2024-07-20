@@ -26,11 +26,7 @@ set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
 set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
 set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
 set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
-  @ONLY
-)
+
 set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 if(NOT DEFINED PROJECT_VERSION_TWEAK)
 	set(project_version "${project_version}")
@@ -171,12 +167,6 @@ endif()
 
 add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
-if(FRAG_MAX_SIZE)
-  add_definition(Z_FRAG_MAX_SIZE=${FRAG_MAX_SIZE})
-endif()
-if (BATCH_UNICAST_SIZE)
-  add_definition(Z_BATCH_UNICAST_SIZE=${BATCH_UNICAST_SIZE})
-endif()
 
 # Zenoh pico feature configuration options
 set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread feature")
@@ -186,13 +176,6 @@ set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
 set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
 set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interest feature")
-add_definition(Z_FEATURE_MULTI_THREAD=${Z_FEATURE_MULTI_THREAD})
-add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
-add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
-add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
-add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
-add_definition(Z_FEATURE_RAWETH_TRANSPORT=${Z_FEATURE_RAWETH_TRANSPORT})
-add_definition(Z_FEATURE_INTEREST=${Z_FEATURE_INTEREST})
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
@@ -202,6 +185,12 @@ message(STATUS "Building with feature confing:\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
 * INTEREST: ${Z_FEATURE_INTEREST}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  @ONLY
+)
 
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
