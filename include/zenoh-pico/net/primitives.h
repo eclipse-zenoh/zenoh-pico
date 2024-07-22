@@ -114,7 +114,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *     kind: The kind of the value.
  *     cong_ctrl: The congestion control of this write. Possible values defined
  *                in :c:type:`_z_congestion_control_t`.
- *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwith.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *     timestamp: The timestamp of this write. The API level timestamp (e.g. of the data when it was created).
  *     attachment: An optional attachment to this write.
  * Returns:
