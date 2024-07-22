@@ -14,6 +14,15 @@
 #ifndef INCLUDE_ZENOH_PICO_API_OLV_MACROS_H
 #define INCLUDE_ZENOH_PICO_API_OLV_MACROS_H
 
+// Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)
+#define _Z_RC_IN_VAL(arg) ((arg)->_val)
+
+// Checks if refcounted type is initialized
+#define _Z_RC_IS_NULL(arg) ((arg)->_cnt == NULL)
+
+// Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
+#define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc._val)
+
 // Owned/Loaned/View type macros
 //
 // !!! FOR INTERNAL USAGE ONLY !!!
@@ -132,24 +141,22 @@
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, static inline)
 
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                            \
-    _Bool z_##name##_check(const z_owned_##name##_t *val) { return val->_rc.in != NULL; }           \
+    _Bool z_##name##_check(const z_owned_##name##_t *val) { return !_Z_RC_IS_NULL(&val->_rc); }     \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
     z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }         \
-    void z_##name##_null(z_owned_##name##_t *val) { val->_rc.in = NULL; }                           \
+    void z_##name##_null(z_owned_##name##_t *val) { val->_rc = _z_##name##_rc_null(); }             \
     z_owned_##name##_t *z_##name##_move(z_owned_##name##_t *val) { return val; }                    \
     int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
         int8_t ret = _Z_RES_OK;                                                                     \
         obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
-        if (obj->_rc.in == NULL) {                                                                  \
+        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                             \
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
         }                                                                                           \
         return ret;                                                                                 \
     }                                                                                               \
     void z_##name##_drop(z_owned_##name##_t *val) {                                                 \
-        if (val->_rc.in != NULL) {                                                                  \
-            if (_z_##name##_rc_drop(&val->_rc)) {                                                   \
-                val->_rc.in = NULL;                                                                 \
-            }                                                                                       \
+        if (!_Z_RC_IS_NULL(&val->_rc)) {                                                            \
+            _z_##name##_rc_drop(&val->_rc);                                                         \
         }                                                                                           \
     }
 
@@ -196,14 +203,5 @@
                                                                                                      \
         return _Z_RES_OK;                                                                            \
     }
-
-// Gets internal value from refcounted type (e.g. z_loaned_session_t, z_query_t)
-#define _Z_RC_IN_VAL(arg) ((arg)->in->val)
-
-// Checks if refcounted type is initialized
-#define _Z_RC_IS_NULL(arg) ((arg)->in == NULL)
-
-// Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
-#define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc.in->val)
 
 #endif /* INCLUDE_ZENOH_PICO_API_OLV_MACROS_H */

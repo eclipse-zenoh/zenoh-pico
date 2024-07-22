@@ -37,7 +37,7 @@
 /*------------------ Handle message ------------------*/
 int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
-    _z_session_t *zn = &zsrc->in->val;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {

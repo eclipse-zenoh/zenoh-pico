@@ -23,15 +23,18 @@ _z_arc_slice_t _z_arc_slice_empty(void) {
     _z_arc_slice_t s;
     s.len = 0;
     s.start = 0;
-    s.slice.in = NULL;
+    s.slice = _z_slice_rc_null();
     return s;
 }
 
 _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len) {
     assert(offset + len <= s.len);
-
     _z_arc_slice_t arc_s;
-    arc_s.slice = _z_slice_rc_new_from_val(s);
+
+    arc_s.slice = _z_slice_rc_new_from_val(&s);
+    if (_Z_RC_IS_NULL(&arc_s.slice)) {
+        return _z_arc_slice_empty();
+    }
     arc_s.len = len;
     arc_s.start = offset;
     return arc_s;
@@ -39,18 +42,15 @@ _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len) {
 
 _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset, size_t len) {
     assert(offset + len <= s->len);
-    assert(s->slice.in != NULL || (len == 0 && offset == 0));
+    assert(!_Z_RC_IS_NULL(&s->slice) || (len == 0 && offset == 0));
 
-    _z_arc_slice_t out;
-    if (s->slice.in == NULL) {
-        out.slice.in = NULL;
-        out.start = 0;
-        out.len = 0;
-    } else {
-        out.slice = _z_slice_rc_clone(&s->slice);
-        out.len = len;
-        out.start = s->start + offset;
+    if (_Z_RC_IS_NULL(&s->slice)) {
+        return _z_arc_slice_empty();
     }
+    _z_arc_slice_t out;
+    out.slice = _z_slice_rc_clone(&s->slice);
+    out.len = len;
+    out.start = s->start + offset;
     return out;
 }
 
@@ -58,7 +58,7 @@ size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
 
 _Bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 
-const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) { return s->slice.in->val.start + s->start; }
+const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) { return _Z_RC_IN_VAL(&s->slice)->start + s->start; }
 
 int8_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src) {
     _z_slice_rc_copy(&dst->slice, &src->slice);
@@ -73,7 +73,7 @@ int8_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src) {
     dst->start = src->start;
     src->len = 0;
     src->start = 0;
-    src->slice.in = NULL;
+    src->slice = _z_slice_rc_null();
     return _Z_RES_OK;
 }
 

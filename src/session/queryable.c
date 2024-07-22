@@ -45,7 +45,7 @@ _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_queryable_
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (id == qle->in->val._id) {
+        if (id == _Z_RC_IN_VAL(qle)->_id) {
             ret = qle;
             break;
         }
@@ -63,7 +63,7 @@ _z_session_queryable_rc_list_t *__z_get_session_queryable_by_key(_z_session_quer
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (_z_keyexpr_intersects(qle->in->val._key._suffix, strlen(qle->in->val._key._suffix), key._suffix,
+        if (_z_keyexpr_intersects(_Z_RC_IN_VAL(qle)->_key._suffix, strlen(_Z_RC_IN_VAL(qle)->_key._suffix), key._suffix,
                                   strlen(key._suffix)) == true) {
             ret = _z_session_queryable_rc_list_push(ret, _z_session_queryable_rc_clone_as_ptr(qle));
         }
@@ -123,7 +123,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
 
     ret = (_z_session_queryable_rc_t *)z_malloc(sizeof(_z_session_queryable_rc_t));
     if (ret != NULL) {
-        *ret = _z_session_queryable_rc_new_from_val(*q);
+        *ret = _z_session_queryable_rc_new_from_val(q);
         zn->_local_queryable = _z_session_queryable_rc_list_push(zn->_local_queryable, ret);
     }
 
@@ -135,7 +135,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
 int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
                              const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
-    _z_session_t *zn = &zsrc->in->val;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     _zp_session_lock_mutex(zn);
 
@@ -146,13 +146,13 @@ int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const 
         _zp_session_unlock_mutex(zn);
 
         // Build the z_query
-        _z_query_rc_t query = _z_query_rc_new();
-        query.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, attachment);
+        _z_query_t q = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, attachment);
+        _z_query_rc_t query = _z_query_rc_new_from_val(&q);
         // Parse session_queryable list
         _z_session_queryable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-            qle->in->val._callback(&query, qle->in->val._arg);
+            _Z_RC_IN_VAL(qle)->_callback(&query, _Z_RC_IN_VAL(qle)->_arg);
             xs = _z_session_queryable_rc_list_tail(xs);
         }
         // Clean up

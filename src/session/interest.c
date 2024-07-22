@@ -47,7 +47,7 @@ static _z_session_interest_rc_t *__z_get_interest_by_id(_z_session_interest_rc_l
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if (id == intr->in->val._id) {
+        if (id == _Z_RC_IN_VAL(intr)->_id) {
             ret = intr;
             break;
         }
@@ -62,9 +62,9 @@ static _z_session_interest_rc_list_t *__z_get_interest_by_key_and_flags(_z_sessi
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if ((intr->in->val._flags & flags) != 0) {
-            if (_z_keyexpr_intersects(intr->in->val._key._suffix, strlen(intr->in->val._key._suffix), key._suffix,
-                                      strlen(key._suffix))) {
+        if ((_Z_RC_IN_VAL(intr)->_flags & flags) != 0) {
+            if (_z_keyexpr_intersects(_Z_RC_IN_VAL(intr)->_key._suffix, strlen(_Z_RC_IN_VAL(intr)->_key._suffix),
+                                      key._suffix, strlen(key._suffix))) {
                 ret = _z_session_interest_rc_list_push(ret, _z_session_interest_rc_clone_as_ptr(intr));
             }
         }
@@ -124,9 +124,9 @@ static int8_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t intere
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(sub->in->val._key);
-        _z_declaration_t declaration =
-            _z_make_decl_subscriber(&key, sub->in->val._id, sub->in->val._info.reliability == Z_RELIABILITY_RELIABLE);
+        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(sub)->_key);
+        _z_declaration_t declaration = _z_make_decl_subscriber(
+            &key, _Z_RC_IN_VAL(sub)->_id, _Z_RC_IN_VAL(sub)->_info.reliability == Z_RELIABILITY_RELIABLE);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -154,9 +154,9 @@ static int8_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interes
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(qle->in->val._key);
-        _z_declaration_t declaration =
-            _z_make_decl_queryable(&key, qle->in->val._id, qle->in->val._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(qle)->_key);
+        _z_declaration_t declaration = _z_make_decl_queryable(
+            &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
@@ -199,7 +199,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
     _zp_session_lock_mutex(zn);
     ret = (_z_session_interest_rc_t *)z_malloc(sizeof(_z_session_interest_rc_t));
     if (ret != NULL) {
-        *ret = _z_session_interest_rc_new_from_val(*intr);
+        *ret = _z_session_interest_rc_new_from_val(intr);
         zn->_local_interests = _z_session_interest_rc_list_push(zn->_local_interests, ret);
     }
     _zp_session_unlock_mutex(zn);
@@ -285,8 +285,8 @@ int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *de
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if (intr->in->val._callback != NULL) {
-            intr->in->val._callback(&msg, intr->in->val._arg);
+        if (_Z_RC_IN_VAL(intr)->_callback != NULL) {
+            _Z_RC_IN_VAL(intr)->_callback(&msg, _Z_RC_IN_VAL(intr)->_arg);
         }
         xs = _z_session_interest_rc_list_tail(xs);
     }
@@ -332,8 +332,8 @@ int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_list_head(xs);
-        if (intr->in->val._callback != NULL) {
-            intr->in->val._callback(&msg, intr->in->val._arg);
+        if (_Z_RC_IN_VAL(intr)->_callback != NULL) {
+            _Z_RC_IN_VAL(intr)->_callback(&msg, _Z_RC_IN_VAL(intr)->_arg);
         }
         xs = _z_session_interest_rc_list_tail(xs);
     }
@@ -367,8 +367,8 @@ int8_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id) {
         return _Z_RES_OK;
     }
     // Trigger callback
-    if (intr->in->val._callback != NULL) {
-        intr->in->val._callback(&msg, intr->in->val._arg);
+    if (_Z_RC_IN_VAL(intr)->_callback != NULL) {
+        _Z_RC_IN_VAL(intr)->_callback(&msg, _Z_RC_IN_VAL(intr)->_arg);
     }
     return _Z_RES_OK;
 }
