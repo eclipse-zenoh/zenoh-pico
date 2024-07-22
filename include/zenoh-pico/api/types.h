@@ -369,6 +369,7 @@ typedef struct {
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
+    _Bool is_express;
     z_query_target_t target;
     uint32_t timeout_ms;
     z_owned_bytes_t *attachment;
