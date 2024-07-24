@@ -4,6 +4,7 @@ from signal import SIGINT
 import subprocess
 import sys
 import time
+import re
 
 # Specify the directory for the binaries
 DIR_EXAMPLES = "build/examples"
@@ -31,26 +32,31 @@ Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit...
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   0] Pub from Pico!')
     with encoding: zenoh/string;utf8
+    with timestamp: 
     with attachment:
      0: source, C
      1: index, 0
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   1] Pub from Pico!')
     with encoding: zenoh/string;utf8
+    with timestamp: 
     with attachment:
      0: source, C
      1: index, 1
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   2] Pub from Pico!')
     with encoding: zenoh/string;utf8
+    with timestamp: 
     with attachment:
      0: source, C
      1: index, 2
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   3] Pub from Pico!')
     with encoding: zenoh/string;utf8
+    with timestamp: 
     with attachment:
      0: source, C
      1: index, 3
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   4] Pub from Pico!')
     with encoding: zenoh/string;utf8
+    with timestamp: 
     with attachment:
      0: source, C
      1: index, 4'''
@@ -115,7 +121,7 @@ Press CTRL-C to quit...
         test_status = 1
 
     # Check output of z_sub
-    z_sub_output = z_sub_process.stdout.read()
+    z_sub_output = re.sub(r'    with timestamp: \d+\n', '    with timestamp: \n', z_sub_process.stdout.read())
     if z_sub_expected_output in z_sub_output:
         print("z_sub output valid")
     else:
