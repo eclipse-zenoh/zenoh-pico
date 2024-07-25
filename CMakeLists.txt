@@ -479,7 +479,11 @@ if(PACKAGING)
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
-      set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
+      execute_process(
+        COMMAND dpkg --print-architecture
+        OUTPUT_VARIABLE DEBARCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
     endif()
 
     message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")
