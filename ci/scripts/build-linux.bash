@@ -5,7 +5,7 @@ set -xeo pipefail
 # Repository
 readonly repo=${REPO:?input REPO is required}
 # Release number
-readonly version=${VERSION:?input TARGET is required}
+readonly version=${VERSION:?input VERSION is required}
 # Build target
 readonly target=${TARGET:?input TARGET is required}
 
