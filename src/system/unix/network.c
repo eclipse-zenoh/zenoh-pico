@@ -388,9 +388,11 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) < 0)) {
                 ret = _Z_ERR_GENERIC;
             }
+#ifdef SO_REUSEPORT
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEPORT, &value, sizeof(value)) < 0)) {
                 ret = _Z_ERR_GENERIC;
             }
+#endif
 
             if (rep._iptcp->ai_family == AF_INET) {
                 struct sockaddr_in address;
