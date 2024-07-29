@@ -306,7 +306,7 @@ int8_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x03: {  // Attachment
             _z_slice_t s;
-            if (extension->_body._zbuf._val._is_alloc) {
+            if (_z_slice_is_alloced(&extension->_body._zbuf._val)) {
                 s = _z_slice_steal(&extension->_body._zbuf._val);
             } else {
                 _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
@@ -447,7 +447,7 @@ int8_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         }
         case _Z_MSG_EXT_ENC_ZBUF | 0x05: {  // Attachment
             _z_slice_t s;
-            if (extension->_body._zbuf._val._is_alloc) {
+            if (_z_slice_is_alloced(&extension->_body._zbuf._val)) {
                 s = _z_slice_steal(&extension->_body._zbuf._val);
             } else {
                 _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
@@ -637,7 +637,8 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     cbyte |= _z_whatami_to_uint8(msg->_whatami);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
-    _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &(_z_slice_t){.start = msg->_zid.id, .len = zidlen, ._is_alloc = false}));
+    _z_slice_t s = _z_slice_wrap(msg->_zid.id, zidlen);
+    _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &s));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {
         _Z_RETURN_IF_ERR(_z_locators_encode(wbf, &msg->_locators))
