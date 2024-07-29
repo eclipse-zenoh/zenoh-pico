@@ -19,6 +19,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct {
+    void (*deleter)(void *data, void *context);
+    void *context;
+} _z_delete_context;
+
+_z_delete_context _z_delete_context_null(void);
+_Bool _z_delete_context_is_null(const _z_delete_context *c);
+_z_delete_context _z_delete_context_create(void (*deleter)(void *context, void *data), void *context);
+_z_delete_context _z_delete_context_default(void);
+void _z_delete_context_delete(_z_delete_context *c, void *data);
+
 /*-------- Slice --------*/
 /**
  * An array of bytes.
@@ -26,12 +37,12 @@
  * Members:
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
- *   _Bool _is_alloc: Indicates if memory has been allocated by this module
+ *   _z_delete_context delete_context - context used to delete the data.
  */
 typedef struct {
     size_t len;
     const uint8_t *start;
-    _Bool _is_alloc;
+    _z_delete_context _delete_context;
 } _z_slice_t;
 
 _z_slice_t _z_slice_empty(void);
@@ -39,6 +50,7 @@ inline static _Bool _z_slice_check(const _z_slice_t *slice) { return slice->star
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_wrap(const uint8_t *bs, size_t len);
+_z_slice_t _z_slice_wrap_custom_deleter(const uint8_t *p, size_t len, _z_delete_context dc);
 _z_slice_t _z_slice_wrap_copy(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
 int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
@@ -49,5 +61,6 @@ _Bool _z_slice_is_empty(const _z_slice_t *bs);
 _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
+_Bool _z_slice_is_alloced(const _z_slice_t *s);
 
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */

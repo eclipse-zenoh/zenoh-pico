@@ -21,8 +21,31 @@
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/result.h"
 
+void _z_default_deleter(void *data, void *context) {
+    _ZP_UNUSED(context);
+    z_free(data);
+}
+
+_z_delete_context _z_delete_context_null(void) { return _z_delete_context_create(NULL, NULL); }
+
+_Bool _z_delete_context_is_null(const _z_delete_context *c) { return c->deleter == NULL; }
+
+_z_delete_context _z_delete_context_create(void (*deleter)(void *data, void *context), void *context) {
+    return (_z_delete_context){.deleter = deleter, .context = context};
+}
+
+_z_delete_context _z_delete_context_default(void) { return _z_delete_context_create(_z_default_deleter, NULL); }
+
+void _z_delete_context_delete(_z_delete_context *c, void *data) {
+    if (!_z_delete_context_is_null(c)) {
+        c->deleter(data, c->context);
+    }
+}
+
 /*-------- Slice --------*/
-_z_slice_t _z_slice_empty(void) { return (_z_slice_t){.start = NULL, .len = 0, ._is_alloc = false}; }
+_z_slice_t _z_slice_empty(void) {
+    return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
+}
 
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
     int8_t ret = _Z_RES_OK;
@@ -30,10 +53,10 @@ int8_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
     bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
     if (bs->start != NULL) {
         bs->len = capacity;
-        bs->_is_alloc = true;
+        bs->_delete_context = _z_delete_context_default();
     } else {
         bs->len = 0;
-        bs->_is_alloc = false;
+        bs->_delete_context = _z_delete_context_null();
     }
 
     if (bs->len != capacity) {
@@ -49,12 +72,16 @@ _z_slice_t _z_slice_make(size_t capacity) {
     return bs;
 }
 
-_z_slice_t _z_slice_wrap(const uint8_t *p, size_t len) {
+_z_slice_t _z_slice_wrap_custom_deleter(const uint8_t *p, size_t len, _z_delete_context dc) {
     _z_slice_t bs;
     bs.start = p;
     bs.len = len;
-    bs._is_alloc = false;
+    bs._delete_context = dc;
     return bs;
+}
+
+_z_slice_t _z_slice_wrap(const uint8_t *p, size_t len) {
+    return _z_slice_wrap_custom_deleter(p, len, _z_delete_context_null());
 }
 
 _z_slice_t _z_slice_wrap_copy(const uint8_t *p, size_t len) {
@@ -65,12 +92,12 @@ _z_slice_t _z_slice_wrap_copy(const uint8_t *p, size_t len) {
 void _z_slice_reset(_z_slice_t *bs) {
     bs->start = NULL;
     bs->len = 0;
-    bs->_is_alloc = false;
+    bs->_delete_context = _z_delete_context_null();
 }
 
 void _z_slice_clear(_z_slice_t *bs) {
-    if ((bs->_is_alloc == true) && (bs->start != NULL)) {
-        z_free((uint8_t *)bs->start);
+    if ((bs->start != NULL)) {
+        _z_delete_context_delete(&bs->_delete_context, (void *)bs->start);
     }
     _z_slice_reset(bs);
 }
@@ -98,7 +125,7 @@ int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
     dst->start = src->start;
     dst->len = src->len;
-    dst->_is_alloc = src->_is_alloc;
+    dst->_delete_context = src->_delete_context;
 
     _z_slice_reset(src);
 }
@@ -119,3 +146,5 @@ _z_slice_t _z_slice_steal(_z_slice_t *b) {
 _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
     return left->len == right->len && memcmp(left->start, right->start, left->len) == 0;
 }
+
+_Bool _z_slice_is_alloced(const _z_slice_t *s) { return _z_delete_context_is_null(&s->_delete_context); }

@@ -171,18 +171,15 @@ _z_wbuf_t gen_wbuf(size_t len) {
 }
 
 _z_slice_t gen_slice(size_t len) {
-    _z_slice_t arr;
-    arr._is_alloc = true;
-    arr.len = len;
-    arr.start = NULL;
-    if (len == 0) return arr;
-
-    arr.start = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
-    for (_z_zint_t i = 0; i < len; i++) {
-        ((uint8_t *)arr.start)[i] = gen_uint8() & 0x7f;  // 0b01111111
+    if (len == 0) {
+        return _z_slice_empty();
     }
 
-    return arr;
+    uint8_t *p = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
+    for (_z_zint_t i = 0; i < len; i++) {
+        ((uint8_t *)p)[i] = gen_uint8() & 0x7f;  // 0b01111111
+    }
+    return _z_slice_wrap_custom_deleter(p, len, _z_delete_context_default());
 }
 
 _z_bytes_t gen_payload(size_t len) {

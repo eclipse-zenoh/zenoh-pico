@@ -48,8 +48,7 @@ void entry_list_test(void) {
     _z_transport_peer_entry_list_free(&root);
 }
 
-int main(void) {
-    entry_list_test();
+void str_vec_list_intmap_test(void) {
     char *s = (char *)malloc(64);
     size_t len = 128;
 
@@ -140,6 +139,34 @@ int main(void) {
 
     _z_str_intmap_clear(&map);
     assert(_z_str_intmap_is_empty(&map) == true);
+}
+
+void _z_slice_custom_deleter(void *data, void *context) {
+    _ZP_UNUSED(data);
+    size_t *cnt = (size_t *)context;
+    (*cnt)++;
+}
+
+void z_slice_custom_delete_test(void) {
+    size_t counter = 0;
+    uint8_t data[5] = {1, 2, 3, 4, 5};
+    _z_delete_context dc = (_z_delete_context){.deleter = _z_slice_custom_deleter, .context = &counter};
+    _z_slice_t s1 = _z_slice_wrap_custom_deleter(data, 5, dc);
+    _z_slice_t s2 = _z_slice_wrap_custom_deleter(data, 5, dc);
+    _z_slice_t s3 = _z_slice_wrap_copy(data, 5);
+    _z_slice_t s4 = _z_slice_wrap(data, 5);
+
+    _z_slice_clear(&s1);
+    _z_slice_clear(&s2);
+    _z_slice_clear(&s3);
+    _z_slice_clear(&s4);
+    assert(counter == 2);
+}
+
+int main(void) {
+    entry_list_test();
+    str_vec_list_intmap_test();
+    z_slice_custom_delete_test();
 
     return 0;
 }
