@@ -147,4 +147,4 @@ _Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
     return left->len == right->len && memcmp(left->start, right->start, left->len) == 0;
 }
 
-_Bool _z_slice_is_alloced(const _z_slice_t *s) { return _z_delete_context_is_null(&s->_delete_context); }
+_Bool _z_slice_is_alloced(const _z_slice_t *s) { return !_z_delete_context_is_null(&s->_delete_context); }

@@ -155,6 +155,10 @@ void z_slice_custom_delete_test(void) {
     _z_slice_t s2 = _z_slice_wrap_custom_deleter(data, 5, dc);
     _z_slice_t s3 = _z_slice_wrap_copy(data, 5);
     _z_slice_t s4 = _z_slice_wrap(data, 5);
+    assert(_z_slice_is_alloced(&s1));
+    assert(_z_slice_is_alloced(&s2));
+    assert(_z_slice_is_alloced(&s3));
+    assert(!_z_slice_is_alloced(&s4));
 
     _z_slice_clear(&s1);
     _z_slice_clear(&s2);
