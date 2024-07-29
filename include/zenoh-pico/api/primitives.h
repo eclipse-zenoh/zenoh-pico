@@ -54,15 +54,15 @@ int8_t z_view_string_empty(z_view_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_string_wrap(z_view_string_t *str, const char *value);
+int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a substring specified by ``const char *`` and length `len`.
  *
  * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
  *   value: Pointer to a string.
  *   len: String size.
- *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
@@ -437,6 +437,19 @@ const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_er
 const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err);
 
 /**
+ * Builds a :c:type:`z_owned_slice_t` by copying a buffer into it.
+ *
+ * Parameters:
+ *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
+ *   data: Pointer to the data that will be copied into slice.
+ *   len: Number of bytes to copy.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
+
+/**
  * Gets date pointer of a bytes array.
  *
  * Parameters:
@@ -736,52 +749,59 @@ int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
 int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
 
 /**
- * Encodes a slice into a :c:type:`z_owned_bytes_t` by aliasing
+ * Encodes a slice into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
- *   str: Pointer to the slice to encode.
+ *   slice: Pointer to the slice to encode. The slice will be consumed upon function return.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice);
 
 /**
- * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying
+ * Encodes a raw ptr with length into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
- *   str: Pointer to the slice to encode.
+ *   data: Pointer the data to encode. Ownership is transferred to the `bytes`.
+ *   len: Number of bytes to encode.
+ *   deleter: A thread-safe delete function to free the `data`. Will called once when `bytes` is dropped. It is possible
+ * to pass NULL, in case if s is allocated in static memory. context: An optional context to be passed to the `deleter`.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
+                                  void (*deleter)(void *data, void *context), void *context);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t` by aliasing
+ * Encodes a string into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   s: Pointer to the string to encode.
+ *   s: Pointer to the string to encode. The string will be consumed upon function return.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t` by copying
+ * Encodes a string into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   str: Pointer to the string to encode.
+ *   s: Pointer to the string to encode. Ownership is transferred to the `bytes`.
+ *   deleter: A thread-safe delete function to free the `s`. Will called once when `bytes` is dropped. It is possible to
+ * pass NULL, in case if s is allocated in static memory. context: An optional context to be passed to the `deleter`.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_str_copy(z_owned_bytes_t *bytes, const char *s);
+int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s, void (*deleter)(void *data, void *context),
+                                  void *context);
 
 /**
  * Constructs payload from an iterator to `z_owned_bytes_t`.

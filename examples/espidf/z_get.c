@@ -164,7 +164,7 @@ void app_main() {
         // Value encoding
         z_owned_bytes_t payload;
         if (strcmp(VALUE, "") != 0) {
-            z_bytes_serialize_from_str(&payload, VALUE);
+            z_bytes_serialize_from_str(&payload, VALUE, NULL, NULL);
             opts.payload = &payload;
         }
         z_owned_closure_reply_t callback;

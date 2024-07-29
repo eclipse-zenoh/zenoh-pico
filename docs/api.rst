@@ -293,7 +293,7 @@ Primitives
 ~~~~~~~~~~
 
 .. autocfunction:: primitives.h::z_view_string_empty
-.. autocfunction:: primitives.h::z_view_string_wrap
+.. autocfunction:: primitives.h::z_view_string_from_str
 .. autocfunction:: primitives.h::z_view_string_from_substring
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
@@ -323,6 +323,7 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
+.. autocfunction:: primitives.h::z_slice_from_buf
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
@@ -348,9 +349,9 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_serialize_from_float
 .. autocfunction:: primitives.h::z_bytes_serialize_from_double
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice
-.. autocfunction:: primitives.h::z_bytes_serialize_from_slice_copy
+.. autocfunction:: primitives.h::z_bytes_serialize_from_buf
+.. autocfunction:: primitives.h::z_bytes_serialize_from_string
 .. autocfunction:: primitives.h::z_bytes_serialize_from_str
-.. autocfunction:: primitives.h::z_bytes_serialize_from_str_copy
 .. autocfunction:: primitives.h::z_bytes_empty
 .. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_is_empty

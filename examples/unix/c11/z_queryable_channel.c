@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
         z_query_reply_options_default(&options);
         // Reply value encoding
         z_owned_bytes_t reply_payload;
-        z_bytes_serialize_from_str(&reply_payload, value);
+        z_bytes_serialize_from_str(&reply_payload, value, NULL, NULL);
 
         z_query_reply(q, z_query_keyexpr(q), z_move(reply_payload), &options);
         z_drop(z_move(query));

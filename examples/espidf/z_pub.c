@@ -157,7 +157,7 @@ void app_main() {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_serialize_from_str(&payload, buf, NULL, NULL);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }

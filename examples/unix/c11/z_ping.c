@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
         while (elapsed_us < args.warmup_ms * 1000) {
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, data, args.size);
+            z_bytes_serialize_from_buf(&payload, data, args.size, NULL, NULL);
 
             z_publisher_put(z_loan(pub), z_move(payload), NULL);
             z_condvar_wait(z_loan_mut(cond), z_loan_mut(mutex));
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
         z_clock_t measure_start = z_clock_now();
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_slice(&payload, data, args.size);
+        z_bytes_serialize_from_buf(&payload, data, args.size, NULL, NULL);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
         z_condvar_wait(z_loan_mut(cond), z_loan_mut(mutex));

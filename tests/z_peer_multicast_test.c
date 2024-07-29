@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
 
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, value, len);
+            z_bytes_serialize_from_buf(&payload, value, len, NULL, NULL);
 
             z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);

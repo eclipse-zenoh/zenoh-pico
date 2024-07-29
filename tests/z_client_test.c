@@ -63,7 +63,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, res);
+    z_bytes_serialize_from_str(&reply_payload, res, NULL, NULL);
 
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
     queries++;
@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, value, len);
+            z_bytes_serialize_from_buf(&payload, value, len, NULL, NULL);
 
             z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
             printf("Wrote data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len, n * SET + (i + 1),
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
 
                 // Create payload
                 z_owned_bytes_t payload;
-                z_bytes_serialize_from_slice(&payload, value, len);
+                z_bytes_serialize_from_buf(&payload, value, len, NULL, NULL);
 
                 z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
                 printf("Wrote fragment data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len,

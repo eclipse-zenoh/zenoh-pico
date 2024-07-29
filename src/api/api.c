@@ -53,7 +53,7 @@ int8_t z_view_string_empty(z_view_string_t *str) {
     return _Z_RES_OK;
 }
 
-int8_t z_view_string_wrap(z_view_string_t *str, const char *value) {
+int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
     str->_val = _z_string_wrap((char *)value);
     return _Z_RES_OK;
 }
@@ -413,6 +413,15 @@ int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_
     return _Z_RES_OK;
 }
 
+int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
+    slice->_val = _z_slice_wrap(data, len);
+    if (slice->_val.start == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    } else {
+        return _Z_RES_OK;
+    }
+}
+
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
@@ -526,33 +535,32 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
     return _z_bytes_from_double(&bytes->_val, val);
 }
 
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice) {
     z_bytes_empty(bytes);
-    _z_slice_t s = _z_slice_wrap((uint8_t *)data, len);
-    return _z_bytes_from_slice(&bytes->_val, s);
-}
-
-int8_t z_bytes_serialize_from_slice_copy(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
-    // Allocate bytes
-    _z_slice_t s = _z_slice_wrap_copy((uint8_t *)data, len);
-    if (!_z_slice_check(&s) && len > 0) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    z_bytes_empty(bytes);
+    _z_slice_t s = _z_slice_steal(&slice->_val);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, s), _z_slice_clear(&s));
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s) {
-    // Encode string without null terminator
-    size_t len = strlen(s);
-    return z_bytes_serialize_from_slice(bytes, (uint8_t *)s, len);
+int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
+                                  void (*deleter)(void *data, void *context), void *context) {
+    z_owned_slice_t s;
+    s._val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    return z_bytes_serialize_from_slice(bytes, &s);
 }
 
-int8_t z_bytes_serialize_from_str_copy(z_owned_bytes_t *bytes, const char *s) {
-    // Encode string without null terminator
+int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s) {
+    // TODO, verify that string is a valid UTF-8 ?
+    z_owned_slice_t slice;
+    slice._val = _z_slice_wrap_custom_deleter((uint8_t *)s->_val.val, s->_val.len, _z_delete_context_default());
+    z_string_null(s);
+    return z_bytes_serialize_from_slice(bytes, &slice);
+}
+
+int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s, void (*deleter)(void *data, void *context),
+                                  void *context) {
     size_t len = strlen(s);
-    return z_bytes_serialize_from_slice_copy(bytes, (uint8_t *)s, len);
+    return z_bytes_serialize_from_buf(bytes, (uint8_t *)s, len, deleter, context);
 }
 
 int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
@@ -726,10 +734,10 @@ static const char *WHAT_AM_I_TO_STRING_MAP[8] = {
 int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out) {
     uint8_t idx = (uint8_t)whatami;
     if (idx >= _ZP_ARRAY_SIZE(WHAT_AM_I_TO_STRING_MAP) || idx == 0) {
-        z_view_string_wrap(str_out, WHAT_AM_I_TO_STRING_MAP[0]);
+        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[0]);
         return _Z_ERR_INVALID;
     } else {
-        z_view_string_wrap(str_out, WHAT_AM_I_TO_STRING_MAP[idx]);
+        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[idx]);
     }
     return _Z_RES_OK;
 }

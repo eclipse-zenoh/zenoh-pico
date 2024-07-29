@@ -67,7 +67,7 @@ void app_main(void) {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_str(&payload, VALUE);
+    z_bytes_serialize_from_str(&payload, VALUE, NULL, NULL);
 
     if (z_put(z_loan(s), z_loan(ke), z_move(payload), &options) < 0) {
         printf("Oh no! Put has failed...\n");

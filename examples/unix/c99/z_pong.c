@@ -19,16 +19,11 @@
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
 void callback(const z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_publisher_loan((z_owned_publisher_t*)context);
-    z_owned_slice_t value;
-    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
-
-    // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_slice(&payload, z_slice_data(z_slice_loan(&value)), z_slice_len(z_slice_loan(&value)));
-
+    z_bytes_clone(&payload, z_sample_payload(sample));
     z_publisher_put(pub, z_bytes_move(&payload), NULL);
-    z_slice_drop(z_slice_move(&value));
 }
+
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
     z_undeclare_publisher(pub);

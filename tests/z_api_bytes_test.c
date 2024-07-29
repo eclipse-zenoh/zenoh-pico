@@ -26,7 +26,7 @@ void test_reader_seek(void) {
     uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_slice(&payload, data, 10);
+    z_bytes_serialize_from_buf(&payload, data, 10, NULL, NULL);
 
     z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
     assert(z_bytes_reader_tell(&reader) == 0);
@@ -57,7 +57,7 @@ void test_reader_read(void) {
     uint8_t data_out[10] = {0};
 
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_slice(&payload, data, 10);
+    z_bytes_serialize_from_buf(&payload, data, 10, NULL, NULL);
     z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
 
     assert(5 == z_bytes_reader_read(&reader, data_out, 5));
@@ -102,27 +102,36 @@ void test_writer(void) {
     z_bytes_drop(z_bytes_move(&payload));
 }
 
+void custom_deleter(void *data, void *context) {
+    (void)data;
+    size_t *cnt = (size_t *)context;
+    (*cnt)++;
+}
+
 void test_slice(void) {
     uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
+    size_t cnt = 0;
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_slice(&payload, data, 10);
+    z_bytes_serialize_from_buf(&payload, data, 10, custom_deleter, (void *)&cnt);
 
     z_owned_slice_t out;
-    data[5] = 0;
     z_bytes_deserialize_into_slice(z_bytes_loan(&payload), &out);
+
+    assert(cnt == 0);
+    z_bytes_drop(z_bytes_move(&payload));
+    assert(cnt == 1);
 
     assert(!memcmp(data, z_slice_data(z_slice_loan(&out)), 10));
 
     z_owned_bytes_t payload2;
-    z_bytes_serialize_from_slice_copy(&payload2, data, 10);
-    data[5] = 5;
+    z_owned_slice_t s;
+    z_slice_from_buf(&s, data, 10);
+    z_bytes_serialize_from_slice(&payload2, z_slice_move(&s));
     z_owned_slice_t out2;
     z_bytes_deserialize_into_slice(z_bytes_loan(&payload2), &out2);
-    data[5] = 0;
     assert(!memcmp(data, z_slice_data(z_slice_loan(&out2)), 10));
 
-    z_bytes_drop(z_bytes_move(&payload));
     z_bytes_drop(z_bytes_move(&payload2));
     z_slice_drop(z_slice_move(&out));
     z_slice_drop(z_slice_move(&out2));
@@ -153,8 +162,8 @@ void test_arithmetic(void) {
     TEST_ARITHMETIC(double, double, -105.001);
 }
 
-bool iter_body(z_owned_bytes_t* b, void* context) {
-    uint8_t* val = (uint8_t*)context;
+bool iter_body(z_owned_bytes_t *b, void *context) {
+    uint8_t *val = (uint8_t *)context;
     if (*val >= 10) {
         return false;
     } else {
@@ -169,7 +178,7 @@ void test_iter(void) {
 
     z_owned_bytes_t payload;
     uint8_t context = 0;
-    z_bytes_serialize_from_iter(&payload, iter_body, (void*)(&context));
+    z_bytes_serialize_from_iter(&payload, iter_body, (void *)(&context));
 
     z_bytes_iterator_t it = z_bytes_get_iterator(z_bytes_loan(&payload));
 

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     while (1) {
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, (char *)value);
+        z_bytes_serialize_from_str(&payload, (char *)value, NULL, NULL);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }

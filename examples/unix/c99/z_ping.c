@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         while (elapsed_us < args.warmup_ms * 1000) {
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, data, args.size);
+            z_bytes_serialize_from_buf(&payload, data, args.size, NULL, NULL);
 
             z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
             z_condvar_wait(z_condvar_loan_mut(&cond), z_mutex_loan_mut(&mutex));
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_slice(&payload, data, args.size);
+        z_bytes_serialize_from_buf(&payload, data, args.size, NULL, NULL);
 
         z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
         z_condvar_wait(z_condvar_loan_mut(&cond), z_mutex_loan_mut(&mutex));
