@@ -761,14 +761,15 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
 int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice);
 
 /**
- * Encodes a raw ptr with length into a :c:type:`z_owned_bytes_t`
+ * Encodes data into a :c:type:`z_owned_bytes_t`
  *
  * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
- *   data: Pointer the data to encode. Ownership is transferred to the `bytes`.
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
+ *   data: Pointer to the data to encode. Ownership is transferred to the `bytes`.
  *   len: Number of bytes to encode.
- *   deleter: A thread-safe delete function to free the `data`. Will called once when `bytes` is dropped. It is possible
- * to pass NULL, in case if s is allocated in static memory. context: An optional context to be passed to the `deleter`.
+ *   deleter: A thread-safe delete function to free the `data`. Will be called once when `bytes` is dropped. Can be
+ * NULL, in case if `data` is allocated in static memory.
+ *    context: An optional context to be passed to the `deleter`.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
@@ -789,13 +790,14 @@ int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t 
 int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t`.
+ * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
  *   s: Pointer to the string to encode. Ownership is transferred to the `bytes`.
- *   deleter: A thread-safe delete function to free the `s`. Will called once when `bytes` is dropped. It is possible to
- * pass NULL, in case if s is allocated in static memory. context: An optional context to be passed to the `deleter`.
+ *   deleter: A thread-safe delete function to free the `s`. Will be called once when `bytes` is dropped. Can be NULL,
+ * in case if `s` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
