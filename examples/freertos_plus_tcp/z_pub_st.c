@@ -65,7 +65,7 @@ void app_main(void) {
 
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_from_str(&payload, buf, (char *)NULL, NULL);
+            z_bytes_serialize_from_str(&payload, buf);
 
             z_publisher_put(z_loan(pub), z_move(payload), NULL);
             ++idx;

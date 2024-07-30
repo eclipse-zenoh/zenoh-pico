@@ -64,8 +64,8 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_from_str(&k, (char *)kvs->data[kvs->current_idx].key, NULL, NULL);
-        z_bytes_from_str(&v, (char *)kvs->data[kvs->current_idx].value, NULL, NULL);
+        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
+        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
         z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;

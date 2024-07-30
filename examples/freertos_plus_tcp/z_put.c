@@ -67,7 +67,7 @@ void app_main(void) {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_from_str(&payload, VALUE, (char *)NULL, NULL);
+    z_bytes_from_str(&payload, (char *)VALUE, NULL, NULL);
 
     if (z_put(z_loan(s), z_loan(ke), z_move(payload), &options) < 0) {
         printf("Oh no! Put has failed...\n");
