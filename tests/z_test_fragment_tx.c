@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 5; i++) {
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_buf(&payload, value, size, NULL, NULL);
+        z_bytes_from_buf(&payload, value, size, NULL, NULL);
 
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
         if (z_put(z_loan(s), z_loan(ke), z_move(payload), NULL) < 0) {

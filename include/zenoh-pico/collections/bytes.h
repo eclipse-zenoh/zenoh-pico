@@ -74,7 +74,7 @@ int8_t _z_bytes_from_float(_z_bytes_t *b, float val);
 int8_t _z_bytes_from_double(_z_bytes_t *b, double val);
 size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len);
 int8_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len);
-int8_t _z_bytes_serialize_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second);
+int8_t _z_bytes_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second);
 int8_t _z_bytes_deserialize_into_pair(const _z_bytes_t *bs, _z_bytes_t *first_out, _z_bytes_t *second_out);
 _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs);
 

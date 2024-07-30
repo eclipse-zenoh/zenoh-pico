@@ -64,9 +64,9 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key, NULL, NULL);
-        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value, NULL, NULL);
-        z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
+        z_bytes_from_str(&k, (char *)kvs->data[kvs->current_idx].key, NULL, NULL);
+        z_bytes_from_str(&v, (char *)kvs->data[kvs->current_idx].value, NULL, NULL);
+        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
     }
@@ -135,7 +135,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply payload
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, value, NULL, NULL);
+    z_bytes_from_str(&reply_payload, (char *)value, NULL, NULL);
 
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
@@ -145,7 +145,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
     kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
+    z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
     options.attachment = z_move(attachment);
 
     // Reply encoding

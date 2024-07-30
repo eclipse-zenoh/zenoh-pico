@@ -154,7 +154,7 @@ int8_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
     return res;
 }
 
-int8_t _z_bytes_serialize_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second) {
+int8_t _z_bytes_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second) {
     *out = _z_bytes_null();
     _z_bytes_iterator_writer_t writer = _z_bytes_get_iterator_writer(out);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&writer, first), _z_bytes_drop(second));

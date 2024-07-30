@@ -46,7 +46,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
         case REPLY_DATA: {
             // Reply value encoding
             z_owned_bytes_t reply_payload;
-            z_bytes_serialize_from_str(&reply_payload, value, NULL, NULL);
+            z_bytes_from_str(&reply_payload, (char *)value, NULL, NULL);
 
             z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
             break;
@@ -58,7 +58,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
         case REPLY_ERR: {
             // Reply error encoding
             z_owned_bytes_t reply_payload;
-            z_bytes_serialize_from_str(&reply_payload, error, NULL, NULL);
+            z_bytes_from_str(&reply_payload, (char *)error, NULL, NULL);
 
             z_query_reply_err(query, z_move(reply_payload), NULL);
             break;

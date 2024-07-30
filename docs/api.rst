@@ -347,10 +347,12 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_serialize_from_uint64
 .. autocfunction:: primitives.h::z_bytes_serialize_from_float
 .. autocfunction:: primitives.h::z_bytes_serialize_from_double
+.. autocfunction:: primitives.h::z_bytes_from_slice
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice
-.. autocfunction:: primitives.h::z_bytes_serialize_from_buf
+.. autocfunction:: primitives.h::z_bytes_from_buf
+.. autocfunction:: primitives.h::z_bytes_from_string
 .. autocfunction:: primitives.h::z_bytes_serialize_from_string
-.. autocfunction:: primitives.h::z_bytes_serialize_from_str
+.. autocfunction:: primitives.h::z_bytes_from_str
 .. autocfunction:: primitives.h::z_bytes_empty
 .. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_is_empty

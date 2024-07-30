@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_str(&payload, value, NULL, NULL);
+    z_bytes_from_str(&payload, (char *)value, NULL, NULL);
 
     printf("Putting Data ('%s': '%s')...\n", keyexpr, value);
     if (z_put(z_session_loan(&s), z_keyexpr_loan(&ke), z_bytes_move(&payload), NULL) < 0) {

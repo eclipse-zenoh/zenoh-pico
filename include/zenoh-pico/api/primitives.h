@@ -736,6 +736,18 @@ int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
 int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
 
 /**
+ * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
+ *   slice: Pointer to the slice to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
+
+/**
  * Encodes a slice into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
@@ -745,7 +757,7 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice);
+int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice);
 
 /**
  * Encodes data into a :c:type:`z_owned_bytes_t`
@@ -761,8 +773,20 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *sli
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
-                                  void (*deleter)(void *data, void *context), void *context);
+int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+                        void *context);
+
+/**
+ * Encodes a string into a :c:type:`z_owned_bytes_t` by copying.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   s: Pointer to the string to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t`.
@@ -774,7 +798,7 @@ int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t 
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
+int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
 
 /**
  * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t`.
@@ -789,8 +813,7 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s, void (*deleter)(void *data, void *context),
-                                  void *context);
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *s, void (*deleter)(void *data, void *context), void *context);
 
 /**
  * Constructs payload from an iterator to `z_owned_bytes_t`.
@@ -802,8 +825,8 @@ int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s, void (*
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
-                                   void *context);
+int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+                         void *context);
 
 /**
  * Append a pair of `z_owned_bytes` objects which are consumed in the process.
@@ -816,7 +839,7 @@ int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
+int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
 
 /**
  * Parameters:

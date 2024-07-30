@@ -52,9 +52,9 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     if (kvs->current_idx >= kvs->len) {
         return false;
     } else {
-        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key, NULL, NULL);
-        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value, NULL, NULL);
-        z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
+        z_bytes_from_str(&k, (char *)kvs->data[kvs->current_idx].key, NULL, NULL);
+        z_bytes_from_str(&v, (char *)kvs->data[kvs->current_idx].value, NULL, NULL);
+        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
     }
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
     // Value encoding
     z_owned_bytes_t payload;
     if (value != NULL) {
-        z_bytes_serialize_from_str(&payload, value, NULL, NULL);
+        z_bytes_from_str(&payload, (char *)value, NULL, NULL);
         opts.payload = &payload;
     }
 
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
     kvs[0] = (kv_pair_t){.key = "test_key", .value = "test_value"};
     kv_pairs_tx_t ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
+    z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
     opts.attachment = z_move(attachment);
 
     // Add encoding value

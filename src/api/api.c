@@ -528,37 +528,48 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
     return _z_bytes_from_double(&bytes->_val, val);
 }
 
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice) {
+int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_owned_slice_t *slice) {
     z_bytes_empty(bytes);
     _z_slice_t s = _z_slice_steal(&slice->_val);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, s), _z_slice_clear(&s));
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
-                                  void (*deleter)(void *data, void *context), void *context) {
+int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice) {
     z_owned_slice_t s;
-    s._val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
-    return z_bytes_serialize_from_slice(bytes, &s);
+    _Z_RETURN_IF_ERR(z_slice_clone(&s, slice));
+    return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s) {
+int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+                        void *context) {
+    z_owned_slice_t s;
+    s._val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    return z_bytes_from_slice(bytes, z_slice_move(&s));
+}
+
+int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s) {
     // TODO, verify that string is a valid UTF-8 ?
     z_owned_slice_t slice;
     size_t str_len = _z_string_len(&s->_val);
     slice._val = _z_slice_steal(&s->_val._slice);
     slice._val.len = str_len;
-    return z_bytes_serialize_from_slice(bytes, &slice);
+    return z_bytes_from_slice(bytes, z_slice_move(&slice));
 }
 
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *s, void (*deleter)(void *data, void *context),
-                                  void *context) {
+int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s) {
+    z_owned_string_t s_copy;
+    _Z_RETURN_IF_ERR(z_string_clone(&s_copy, s));
+    return z_bytes_from_string(bytes, z_string_move(&s_copy));
+}
+
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *s, void (*deleter)(void *data, void *context), void *context) {
     size_t len = strlen(s);
-    return z_bytes_serialize_from_buf(bytes, (uint8_t *)s, len, deleter, context);
+    return z_bytes_from_buf(bytes, (uint8_t *)s, len, deleter, context);
 }
 
-int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
-                                   void *context) {
+int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+                         void *context) {
     z_bytes_empty(bytes);
     z_owned_bytes_t data;
     _z_bytes_iterator_writer_t iter_writer = _z_bytes_get_iterator_writer(&bytes->_val);
@@ -568,9 +579,9 @@ int8_t z_bytes_serialize_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body
     return _Z_RES_OK;
 }
 
-int8_t z_bytes_serialize_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
+int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second) {
     z_bytes_empty(bytes);
-    return _z_bytes_serialize_from_pair(&bytes->_val, &first->_val, &second->_val);
+    return _z_bytes_from_pair(&bytes->_val, &first->_val, &second->_val);
 }
 
 void z_bytes_empty(z_owned_bytes_t *bytes) { bytes->_val = _z_bytes_null(); }
