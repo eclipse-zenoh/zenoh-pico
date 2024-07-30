@@ -58,8 +58,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     z_view_string_t pred;
     z_query_parameters(query, &pred);
-    assert(z_string_len(z_loan(pred)) == strlen(""));
-    assert(strncmp(z_string_len(z_loan(pred)), "", strlen("")) == 0);
+    assert(z_string_len(z_loan(pred)) == 0);
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
