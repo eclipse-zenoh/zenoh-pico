@@ -35,11 +35,11 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
-    z_view_string_t pred;
-    z_query_parameters(query, &pred);
+    z_view_string_t params;
+    z_query_parameters(query, &params);
     printf(" >> [Queryable handler] Received Query '%.*s%.*s'\n", 
-        (int)z_string_len(z_string_loan(&keystr)), z_string_data(z_string_loan(&keystr)), 
-        (int)z_string_len(z_string_loan(&params)), z_string_data(z_string_loan(&params))
+        (int)z_string_len(z_view_string_loan(&keystr)), z_string_data(z_view_string_loan(&keystr)), 
+        (int)z_string_len(z_view_string_loan(&params)), z_string_data(z_view_string_loan(&params))
     );
     // Process value
     z_owned_string_t payload_string;
