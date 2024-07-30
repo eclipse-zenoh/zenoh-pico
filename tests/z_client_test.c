@@ -54,12 +54,12 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &k_str);
-    assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+    assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
     z_view_string_t pred;
     z_query_parameters(query, &pred);
-    assert(z_loan(pred)->len == strlen(""));
-    assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
+    assert(z_string_len(z_loan(pred)) == strlen(""));
+    assert(strncmp(z_string_len(z_loan(pred)), "", strlen("")) == 0);
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
@@ -84,7 +84,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
         assert(z_string_len(z_loan(value)) == strlen(res));
         assert(strncmp(res, z_string_data(z_loan(value)), strlen(res)) == 0);
-        assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+        assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
         replies++;
         z_drop(z_move(value));
@@ -106,7 +106,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     size_t payload_len = z_slice_len(z_loan(value));
     assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
-    assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+    assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
     datas++;
     z_drop(z_move(value));
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     z_open(&s1, z_move(config));
     assert(z_check(s1));
     _z_string_t zid1 = format_id(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
-    printf("Session 1 with PID: %s\n", zid1.val);
+    printf("Session 1 with PID: %s\n", _z_string_data(&zid1));
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     z_open(&s2, z_move(config));
     assert(z_check(s2));
     _z_string_t zid2 = format_id(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
-    printf("Session 2 with PID: %s\n", zid2.val);
+    printf("Session 2 with PID: %s\n", _z_string_data(&zid2));
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops

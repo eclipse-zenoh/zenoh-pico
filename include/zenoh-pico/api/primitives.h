@@ -57,19 +57,6 @@ int8_t z_view_string_empty(z_view_string_t *str);
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
 
 /**
- * Builds a :c:type:`z_view_string_t` by wrapping a substring specified by ``const char *`` and length `len`.
- *
- * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
- *   value: Pointer to a string.
- *   len: String size.
- *
- * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
- */
-int8_t z_view_string_from_substring(z_view_string_t *str, const char *value, size_t len);
-
-/**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
  * It is a loaned key expression that aliases ``name``.
  * Unlike it's counterpart in zenoh-c, this function does not test passed expression to correctness.

@@ -24,7 +24,7 @@ int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema
     // Clone schema
     if (schema != NULL) {
         encoding->schema = _z_string_n_make(schema, len);
-        if (encoding->schema.len != len) {
+        if (_z_string_len(&encoding->schema) != len) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     } else {

@@ -48,19 +48,12 @@
 /********* Data Types Handlers *********/
 
 int8_t z_view_string_empty(z_view_string_t *str) {
-    str->_val.val = NULL;
-    str->_val.len = 0;
+    str->_val = _z_string_null();
     return _Z_RES_OK;
 }
 
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
     str->_val = _z_string_wrap((char *)value);
-    return _Z_RES_OK;
-}
-
-int8_t z_view_string_from_substring(z_view_string_t *str, const char *value, size_t len) {
-    str->_val.val = (char *)value;
-    str->_val.len = len;
     return _Z_RES_OK;
 }
 
@@ -344,9 +337,9 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         prefix = ENCODING_VALUES_ID_TO_STR[encoding->id];
         prefix_len = strlen(prefix);
     }
-    _Bool has_schema = encoding->schema.len > 0;
+    _Bool has_schema = _z_string_len(&encoding->schema) > 0;
     // Size include null terminator
-    size_t total_len = prefix_len + encoding->schema.len + 1;
+    size_t total_len = prefix_len + _z_string_len(&encoding->schema) + 1;
     // Check for schema separator
     if (has_schema) {
         total_len += 1;
@@ -363,7 +356,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
     // Copy schema and separator
     if (has_schema) {
         (void)strncat(value, &sep, 1);
-        (void)strncat(value, encoding->schema.val, encoding->schema.len);
+        (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
     s->_val = _z_string_wrap(value);
@@ -477,8 +470,8 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
     // Convert bytes to string
     size_t len = _z_bytes_len(bytes);
     s->_val = _z_string_preallocate(len);
-    if (s->_val.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _z_bytes_to_buf(bytes, (uint8_t *)s->_val.val, len);
+    if (_z_string_len(&s->_val) != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    _z_bytes_to_buf(bytes, (uint8_t *)_z_string_data(&s->_val), len);
     return _Z_RES_OK;
 }
 
@@ -552,8 +545,9 @@ int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t 
 int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s) {
     // TODO, verify that string is a valid UTF-8 ?
     z_owned_slice_t slice;
-    slice._val = _z_slice_wrap_custom_deleter((uint8_t *)s->_val.val, s->_val.len, _z_delete_context_default());
-    z_string_null(s);
+    size_t str_len = _z_string_len(&s->_val);
+    slice._val = _z_slice_steal(&s->_val._slice);
+    slice._val.len = str_len;
     return z_bytes_serialize_from_slice(bytes, &slice);
 }
 
@@ -652,8 +646,7 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val.val = _Z_RC_IN_VAL(query)->_parameters;
-    parameters->_val.len = strlen(_Z_RC_IN_VAL(query)->_parameters);
+    parameters->_val = _z_string_wrap(_Z_RC_IN_VAL(query)->_parameters);
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->attachment; }
@@ -966,8 +959,8 @@ z_priority_t z_sample_priority(const z_loaned_sample_t *sample) { return _z_n_qo
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err) { return &reply_err->payload; }
 const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *reply_err) { return &reply_err->encoding; }
 
-const char *z_string_data(const z_loaned_string_t *str) { return str->val; }
-size_t z_string_len(const z_loaned_string_t *str) { return str->len; }
+const char *z_string_data(const z_loaned_string_t *str) { return _z_string_data(str); }
+size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
 int8_t z_string_from_str(z_owned_string_t *str, const char *value) {
     str->_val = _z_string_make(value);
@@ -981,7 +974,7 @@ int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len
     return _Z_RES_OK;
 }
 
-bool z_string_is_empty(const z_loaned_string_t *str) { return str->val == NULL; }
+bool z_string_is_empty(const z_loaned_string_t *str) { return _z_string_is_empty(str); }
 
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_undeclare_and_clear_publisher(_z_publisher_t *pub) {

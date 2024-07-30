@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         z_view_string_t params;
         z_query_parameters(q, &params);
         printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)),
-               (int)z_loan(params)->len, z_loan(params)->val);
+               (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
         // Process value
         z_owned_string_t payload_string;
         z_bytes_deserialize_into_string(z_query_payload(z_loan(query)), &payload_string);

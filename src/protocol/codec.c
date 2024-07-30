@@ -338,9 +338,9 @@ int8_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
 }
 
 int8_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, s->len))
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, _z_string_len(s)))
     // Note that this does not put the string terminator on the wire.
-    return _z_wbuf_write_bytes(wbf, (const uint8_t *)s->val, 0, s->len);
+    return _z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(s), 0, _z_string_len(s));
 }
 
 int8_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
@@ -354,15 +354,12 @@ int8_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
         return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
     // Allocate space for the string terminator
-    str->val = (char *)z_malloc(len + (size_t)1);
-    if (str->val == NULL) {
+    *str = _z_string_preallocate(len);
+    if (str->_slice.start == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    str->len = len;
-    // Add null terminator
-    str->val[len] = '\0';
     // Read bytes
-    _z_zbuf_read_bytes(zbf, (uint8_t *)str->val, 0, len);
+    _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(str), 0, len);
     return _Z_RES_OK;
 }
 
@@ -372,7 +369,7 @@ int8_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
 size_t _z_encoding_len(const _z_encoding_t *en) {
     size_t en_len = _z_zint_len((uint32_t)(en->id) << 1);
     if (_z_string_check(&en->schema)) {
-        en_len += _z_zint_len(en->schema.len) + en->schema.len;
+        en_len += _z_zint_len(_z_string_len(&en->schema)) + _z_string_len(&en->schema);
     }
     return en_len;
 }

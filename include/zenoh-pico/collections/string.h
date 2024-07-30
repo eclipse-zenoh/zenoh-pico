@@ -61,23 +61,22 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
 /**
  * A string with no terminator.
  *
- * Members:
- *   size_t len: The length of the string.
- *   const char *val: A pointer to the string.
  */
 typedef struct {
-    size_t len;
-    char *val;
+    _z_slice_t _slice;
 } _z_string_t;
 
 _z_string_t _z_string_null(void);
 _Bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_make(const char *value);
 _z_string_t _z_string_n_make(const char *value, size_t len);
-_z_string_t _z_string_wrap(char *value);
+_z_string_t _z_string_wrap(const char *value);
+_z_string_t _z_string_wrap_custom_deleter(char *value, _z_delete_context_t c);
 _z_string_t *_z_string_make_as_ptr(const char *value);
+_Bool _z_string_is_empty(const _z_string_t *s);
 
-size_t _z_string_size(const _z_string_t *s);
+size_t _z_string_len(const _z_string_t *s);
+const char *_z_string_data(const _z_string_t *s);
 int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
@@ -86,10 +85,9 @@ void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 _z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
-_z_string_t _z_string_from_bytes(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
 
-_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_size, _z_string_clear, _z_string_copy)
+_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy)
 
 static inline void _z_string_elem_move(void *dst, void *src) { _z_string_move((_z_string_t *)dst, (_z_string_t *)src); }
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
