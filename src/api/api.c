@@ -407,12 +407,18 @@ int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_
 }
 
 int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
-    slice->_val = _z_slice_wrap(data, len);
+    slice->_val = _z_slice_wrap_copy(data, len);
     if (slice->_val.start == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     } else {
         return _Z_RES_OK;
     }
+}
+
+int8_t z_slice_wrap(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+                    void *context) {
+    slice->_val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    return _Z_RES_OK;
 }
 
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
@@ -975,6 +981,14 @@ size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
 int8_t z_string_from_str(z_owned_string_t *str, const char *value) {
     str->_val = _z_string_make(value);
+    if (str->_val._slice.start == NULL && value != NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
+}
+
+int8_t z_string_wrap(z_owned_string_t *str, char *value, void (*deleter)(void *data, void *context), void *context) {
+    str->_val = _z_string_wrap_custom_deleter(value, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 

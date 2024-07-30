@@ -437,6 +437,23 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
 int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
+ * Builds a :c:type:`z_owned_slice_t` by transferring ownership over a data to it.
+ *
+ * Parameters:
+ *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
+ *   data: Pointer to the data to be owned by `slice`.
+ *   len: Number of bytes in `data`.
+ *  deleter: A thread-safe delete function to free the `data`. Will be called once when `slice` is dropped. Can be
+ * NULL, in case if `data` is allocated in static memory.
+ *    context: An optional context to be passed to the `deleter`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_slice_wrap(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+                    void *context);
+
+/**
  * Gets date pointer of a bytes array.
  *
  * Parameters:
@@ -1245,11 +1262,11 @@ const char *z_string_data(const z_loaned_string_t *str);
 size_t z_string_len(const z_loaned_string_t *str);
 
 /**
- * Builds a :c:type:`z_string_t` by wrapping a ``const char *`` string.
+ * Builds a :c:type:`z_string_t` by copying a ``const char *`` string.
  *
  * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_string_t`.
- *   value: Pointer to a null terminated string.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
+ *   value: Pointer to a null terminated string to be copied.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
@@ -1257,7 +1274,22 @@ size_t z_string_len(const z_loaned_string_t *str);
 int8_t z_string_from_str(z_owned_string_t *str, const char *value);
 
 /**
- * Builds an empty :c:type:`z_string_t`.
+ * Builds a :c:type:`z_owned_string_t` by transferring ownership over a null-terminated string to it.
+ *
+ * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
+ *   value: Pointer to a null terminated string to be owned by `str`.
+ *   deleter: A thread-safe delete function to free the `value`. Will be called once when `str` is dropped. Can be
+ * NULL, in case if `value` is allocated in static memory.
+ *    context: An optional context to be passed to the `deleter`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_string_wrap(z_owned_string_t *str, char *value, void (*deleter)(void *data, void *context), void *context);
+
+/**
+ * Builds an empty :c:type:`z_owned_string_t`.
  *
  * Parameters:
  *   str: Pointer to an uninitialized :c:type:`z_string_t`.
