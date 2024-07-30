@@ -56,7 +56,7 @@ void fprintlocators(const z_loaned_string_array_t *locs) {
     for (unsigned int i = 0; i < len; i++) {
         Serial.print("'");
         const z_loaned_string_t *str = z_string_array_get(locs, i);
-        Serial.print(str->val);
+        Serial.write(z_string_data(str), z_string_len(str));
         Serial.print("'");
         if (i < len - 1) {
             Serial.print(", ");

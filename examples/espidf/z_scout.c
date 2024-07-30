@@ -110,7 +110,7 @@ void fprintlocators(FILE *stream, const z_loaned_string_array_t *locs) {
     for (unsigned int i = 0; i < z_string_array_len(locs); i++) {
         fprintf(stream, "\"");
         const z_loaned_string_t *str = z_string_array_get(locs, i);
-        fprintf(stream, "%.*s", (int)str->len, str->val);
+        fprintf(stream, "%.*s", (int)z_string_len(str), z_string_data(str));
         fprintf(stream, "\"");
         if (i < z_string_array_len(locs) - 1) {
             fprintf(stream, ", ");
