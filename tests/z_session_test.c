@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "zenoh-pico.h"
+#include "zenoh-pico/api/macros.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -42,6 +43,10 @@ int main(void) {
 
     // Commented out wait for 1 second. Stopping should work without it.
     // z_sleep_ms(1000);
+
+    // Stop read and lease tasks for zenoh-pico
+    zp_stop_read_task(z_loan_mut(s));
+    zp_stop_lease_task(z_loan_mut(s));
 
     // Immediately close the session
     z_close(&s);
