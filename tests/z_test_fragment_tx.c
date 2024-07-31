@@ -76,13 +76,19 @@ int main(int argc, char **argv) {
     // Put data
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
+
+    z_put_options_t options;
+    z_put_options_default(&options);
+    options.priority = Z_PRIORITY_DATA_HIGH;
+    options.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
+
     for (int i = 0; i < 5; i++) {
         // Create payload
         z_owned_bytes_t payload;
         z_bytes_serialize_from_slice(&payload, value, size);
 
         printf("[tx]: Sending packet on %s, len: %d\n", keyexpr, (int)size);
-        if (z_put(z_loan(s), z_loan(ke), z_move(payload), NULL) < 0) {
+        if (z_put(z_loan(s), z_loan(ke), z_move(payload), &options) < 0) {
             printf("Oh no! Put has failed...\n");
             return -1;
         }
