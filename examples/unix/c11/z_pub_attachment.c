@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_from_str(&payload, buf, NULL, NULL);
+        z_bytes_serialize_from_str(&payload, buf);
 
         // Add attachment value
         sprintf(buf_ind, "%d", idx);

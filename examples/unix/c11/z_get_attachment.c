@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
     // Value encoding
     z_owned_bytes_t payload;
     if (value != NULL) {
-        z_bytes_from_str(&payload, (char *)value, NULL, NULL);
+        z_bytes_from_static_str(&payload, value);
         opts.payload = &payload;
     }
 

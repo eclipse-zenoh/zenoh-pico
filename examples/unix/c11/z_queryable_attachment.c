@@ -135,7 +135,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply payload
     z_owned_bytes_t reply_payload;
-    z_bytes_from_str(&reply_payload, (char *)value, NULL, NULL);
+    z_bytes_from_static_str(&reply_payload, value);
 
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);

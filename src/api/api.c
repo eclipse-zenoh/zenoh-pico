@@ -554,6 +554,12 @@ int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void 
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
+int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+    z_owned_slice_t s;
+    s._val = _z_slice_wrap(data, len);
+    return z_bytes_from_slice(bytes, z_slice_move(&s));
+}
+
 int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
     _Z_RETURN_IF_ERR(z_slice_from_buf(&s, data, len));
@@ -579,6 +585,12 @@ int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(voi
                         void *context) {
     z_owned_string_t s;
     s._val = _z_string_wrap_custom_deleter(value, _z_delete_context_create(deleter, context));
+    return z_bytes_from_string(bytes, z_string_move(&s));
+}
+
+int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
+    z_owned_string_t s;
+    s._val = _z_string_wrap(value);
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 

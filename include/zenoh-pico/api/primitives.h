@@ -794,6 +794,19 @@ int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void 
                         void *context);
 
 /**
+ * Encodes statically allocated constant data into a :c:type:`z_owned_bytes_t` by aliasing.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
+ *   data: Pointer to the the statically allocated constant data to encode.
+ *   len: Number of bytes to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+
+/**
  * Encodes data into a :c:type:`z_owned_bytes_t` by copying.
  *
  * Parameters:
@@ -844,6 +857,17 @@ int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
  */
 int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *data, void *context), void *context);
 
+/**
+ * Encodes a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
+ *   value: Pointer to the the statically allocated constant string to encode.
+ *
+ * Return:
+ *   ``0`` if encode successful, ``negative value`` otherwise.
+ */
+int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
 /**
  * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t` by copying.
  *
