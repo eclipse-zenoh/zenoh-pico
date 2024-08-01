@@ -54,12 +54,11 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &k_str);
-    assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+    assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
     z_view_string_t pred;
     z_query_parameters(query, &pred);
-    assert(z_loan(pred)->len == strlen(""));
-    assert(strncmp((const char *)z_loan(pred)->val, "", strlen("")) == 0);
+    assert(z_string_len(z_loan(pred)) == 0);
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
@@ -84,7 +83,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
         assert(z_string_len(z_loan(value)) == strlen(res));
         assert(strncmp(res, z_string_data(z_loan(value)), strlen(res)) == 0);
-        assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+        assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
         replies++;
         z_drop(z_move(value));
@@ -106,7 +105,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     size_t payload_len = z_slice_len(z_loan(value));
     assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
-    assert(_z_str_eq(z_loan(k_str)->val, res) == true);
+    assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
 
     datas++;
     z_drop(z_move(value));
@@ -114,7 +113,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 }
 
 _z_string_t format_id(const z_id_t *id) {
-    _z_slice_t id_as_bytes = _z_slice_wrap(id->id, _z_id_len(*id));
+    _z_slice_t id_as_bytes = _z_slice_from_buf(id->id, _z_id_len(*id));
     return _z_string_convert_bytes(&id_as_bytes);
 }
 
@@ -136,7 +135,7 @@ int main(int argc, char **argv) {
     z_open(&s1, z_move(config));
     assert(z_check(s1));
     _z_string_t zid1 = format_id(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
-    printf("Session 1 with PID: %s\n", zid1.val);
+    printf("Session 1 with PID: %s\n", _z_string_data(&zid1));
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
@@ -152,7 +151,7 @@ int main(int argc, char **argv) {
     z_open(&s2, z_move(config));
     assert(z_check(s2));
     _z_string_t zid2 = format_id(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
-    printf("Session 2 with PID: %s\n", zid2.val);
+    printf("Session 2 with PID: %s\n", _z_string_data(&zid2));
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops
@@ -240,7 +239,7 @@ int main(int argc, char **argv) {
 
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, value, len);
+            z_bytes_from_buf(&payload, value, len, NULL, NULL);
 
             z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
             printf("Wrote data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len, n * SET + (i + 1),
@@ -280,7 +279,7 @@ int main(int argc, char **argv) {
 
                 // Create payload
                 z_owned_bytes_t payload;
-                z_bytes_serialize_from_slice(&payload, value, len);
+                z_bytes_from_buf(&payload, value, len, NULL, NULL);
 
                 z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
                 printf("Wrote fragment data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len,

@@ -28,7 +28,7 @@ int send_packets(unsigned long pkt_len, z_owned_publisher_t *pub, uint8_t *value
     while (elapsed_us < TEST_DURATION_US) {
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_slice(&payload, value, pkt_len);
+        z_bytes_from_buf(&payload, value, pkt_len, NULL, NULL);
 
         z_publisher_put(z_loan(*pub), z_move(payload), NULL);
         elapsed_us = z_clock_elapsed_us(&test_start);
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     printf("Sending end pkt\n");
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_slice(&payload, value, 1);
+    z_bytes_from_buf(&payload, value, 1, NULL, NULL);
 
     z_publisher_put(z_loan(pub), z_move(payload), NULL);
     // Clean up

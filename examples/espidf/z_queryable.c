@@ -107,12 +107,12 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)), (int)z_loan(params)->len,
-           z_loan(params)->val);
+    printf(" >> [Queryable handler] Received Query '%.*s%.*s'\n", (int)z_string_len(z_loan(keystr)),
+           z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process value
     z_owned_string_t payload_string;
     z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
-    if (z_string_len(z_loan(payload_string)) > 1) {
+    if (z_string_len(z_loan(payload_string)) > 0) {
         printf("     with value '%s'\n", z_string_data(z_loan(payload_string)));
     }
     z_drop(z_move(payload_string));
@@ -122,7 +122,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, VALUE);
+    z_bytes_from_static_str(&reply_payload, VALUE);
 
     z_query_reply(query, z_loan(ke), z_move(reply_payload), NULL);
 }

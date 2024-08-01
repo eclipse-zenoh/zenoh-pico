@@ -179,7 +179,7 @@ _z_slice_t gen_slice(size_t len) {
     for (_z_zint_t i = 0; i < len; i++) {
         ((uint8_t *)p)[i] = gen_uint8() & 0x7f;  // 0b01111111
     }
-    return _z_slice_wrap_custom_deleter(p, len, _z_delete_context_default());
+    return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_default());
 }
 
 _z_bytes_t gen_payload(size_t len) {
@@ -231,7 +231,7 @@ _z_string_svec_t gen_str_array(size_t size) {
     return sa;
 }
 
-_z_string_t gen_string(size_t len) { return _z_string_wrap(gen_str(len)); }
+_z_string_t gen_string(size_t len) { return _z_string_from_str(gen_str(len)); }
 
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);
@@ -315,8 +315,8 @@ void assert_eq_str_array(_z_string_svec_t *left, _z_string_svec_t *right) {
     assert(left->_len == right->_len);
     printf("Content (");
     for (size_t i = 0; i < left->_len; i++) {
-        const char *l = _z_string_svec_get(left, i)->val;
-        const char *r = _z_string_svec_get(right, i)->val;
+        const char *l = _z_string_data(_z_string_svec_get(left, i));
+        const char *r = _z_string_data(_z_string_svec_get(right, i));
 
         printf("%s:%s", l, r);
         if (i < left->_len - 1) printf(" ");
@@ -339,7 +339,7 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         _z_string_t ls = _z_locator_to_string(l);
         _z_string_t rs = _z_locator_to_string(r);
 
-        printf("%s:%s", ls.val, rs.val);
+        printf("%s:%s", _z_string_data(&ls), _z_string_data(&rs));
         if (i < left->_len - 1) printf(" ");
 
         _z_string_clear(&ls);
@@ -508,9 +508,9 @@ void zbuf_extension(void) {
 void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
 
 void assert_eq_string(const _z_string_t *left, const _z_string_t *right) {
-    assert(left->len == right->len);
-    if (left->len > 0) {
-        assert(_z_str_eq(left->val, right->val) == true);
+    assert(_z_string_len(left) == _z_string_len(right));
+    if (_z_string_len(left) > 0) {
+        assert(_z_str_eq(_z_string_data(left), _z_string_data(right)) == true);
     }
 }
 

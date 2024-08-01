@@ -293,8 +293,7 @@ Primitives
 ~~~~~~~~~~
 
 .. autocfunction:: primitives.h::z_view_string_empty
-.. autocfunction:: primitives.h::z_view_string_wrap
-.. autocfunction:: primitives.h::z_view_string_from_substring
+.. autocfunction:: primitives.h::z_view_string_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
@@ -323,6 +322,8 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
+.. autocfunction:: primitives.h::z_slice_from_buf
+.. autocfunction:: primitives.h::z_slice_copy_from_buf
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
@@ -347,10 +348,16 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_serialize_from_uint64
 .. autocfunction:: primitives.h::z_bytes_serialize_from_float
 .. autocfunction:: primitives.h::z_bytes_serialize_from_double
+.. autocfunction:: primitives.h::z_bytes_from_slice
 .. autocfunction:: primitives.h::z_bytes_serialize_from_slice
-.. autocfunction:: primitives.h::z_bytes_serialize_from_slice_copy
+.. autocfunction:: primitives.h::z_bytes_from_buf
+.. autocfunction:: primitives.h::z_bytes_serialize_from_buf
+.. autocfunction:: primitives.h::z_bytes_from_static_buf
+.. autocfunction:: primitives.h::z_bytes_from_string
+.. autocfunction:: primitives.h::z_bytes_serialize_from_string
+.. autocfunction:: primitives.h::z_bytes_from_str
 .. autocfunction:: primitives.h::z_bytes_serialize_from_str
-.. autocfunction:: primitives.h::z_bytes_serialize_from_str_copy
+.. autocfunction:: primitives.h::z_bytes_from_static_str
 .. autocfunction:: primitives.h::z_bytes_empty
 .. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_is_empty
@@ -383,7 +390,8 @@ Primitives
 .. autocfunction:: primitives.h::z_string_data
 .. autocfunction:: primitives.h::z_string_len
 .. autocfunction:: primitives.h::z_string_from_str
-.. autocfunction:: primitives.h::z_string_from_substr
+.. autocfunction:: primitives.h::z_string_copy_from_str
+.. autocfunction:: primitives.h::z_string_copy_from_substr
 .. autocfunction:: primitives.h::z_string_empty
 .. autocfunction:: primitives.h::z_string_is_empty
 .. autocfunction:: primitives.h::z_hello_zid

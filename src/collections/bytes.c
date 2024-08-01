@@ -109,7 +109,7 @@ int8_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
 
 int8_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
     *b = _z_bytes_null();
-    _z_slice_t s = _z_slice_wrap_copy(src, len);
+    _z_slice_t s = _z_slice_copy_from_buf(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     return _z_bytes_from_slice(b, s);
 }
@@ -154,7 +154,7 @@ int8_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
     return res;
 }
 
-int8_t _z_bytes_serialize_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second) {
+int8_t _z_bytes_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second) {
     *out = _z_bytes_null();
     _z_bytes_iterator_writer_t writer = _z_bytes_get_iterator_writer(out);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&writer, first), _z_bytes_drop(second));
@@ -246,7 +246,7 @@ int8_t _z_bytes_from_double(_z_bytes_t *b, double val) { return _z_bytes_from_bu
 _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
     if (_z_bytes_num_slices(bs) == 1) {
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, 0);
-        return _z_slice_wrap(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
+        return _z_slice_from_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
     }
     return _z_slice_empty();
 }
@@ -454,7 +454,7 @@ int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
 
 int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
     if (writer->cache_size == 0) {  // no cache - append data as a single slice
-        _z_slice_t s = _z_slice_wrap_copy(src, len);
+        _z_slice_t s = _z_slice_copy_from_buf(src, len);
         if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, len);
         if _Z_RC_IS_NULL (&arc_s.slice) {

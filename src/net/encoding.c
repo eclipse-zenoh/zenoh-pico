@@ -24,7 +24,7 @@ int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema
     // Clone schema
     if (schema != NULL) {
         encoding->schema = _z_string_n_make(schema, len);
-        if (encoding->schema.len != len) {
+        if (_z_string_len(&encoding->schema) != len) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     } else {
@@ -34,7 +34,8 @@ int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema
 }
 
 _z_encoding_t _z_encoding_wrap(uint16_t id, const char *schema) {
-    return (_z_encoding_t){.id = id, .schema = (schema == NULL) ? _z_string_null() : _z_string_wrap((char *)schema)};
+    return (_z_encoding_t){.id = id,
+                           .schema = (schema == NULL) ? _z_string_null() : _z_string_from_str((char *)schema)};
 }
 
 _z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(_Z_ENCODING_ID_DEFAULT, NULL); }

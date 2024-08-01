@@ -132,7 +132,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             }
 
             if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, locator->val, mode);
+                ret = __z_open_inner(zn, (char *)_z_string_data(locator), mode);
                 if (ret == _Z_RES_OK) {
                     break;
                 }
@@ -155,10 +155,12 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _z_slice_t local_zid = _z_slice_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
+        _z_slice_t local_zid = _z_slice_from_buf(zn->_local_zid.id, _z_id_len(zn->_local_zid));
         // TODO(sasahcmc): is it zero terminated???
         // rework it!!!
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_convert_bytes(&local_zid).val);
+        _z_string_t s = _z_string_convert_bytes(&local_zid);
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_data(&s));
+        _z_string_clear(&s);
 
         switch (zn->_tp._type) {
             case _Z_TRANSPORT_UNICAST_TYPE:

@@ -19,6 +19,12 @@
 #include "zenoh-pico.h"
 
 #if Z_FEATURE_PUBLICATION == 1
+
+void z_free_with_context(void *ptr, void *context) {
+    (void)context;
+    z_free(ptr);
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         printf("USAGE:\n\tz_pub_thr <payload-size> [<zenoh-locator>]\n\n");
@@ -59,18 +65,19 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
+    z_owned_bytes_t payload;
+    z_bytes_from_buf(&payload, value, len, z_free_with_context, NULL);
     // Send packets
     while (1) {
-        // Create payload
-        z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, (char *)value);
-
-        z_publisher_put(z_loan(pub), z_move(payload), NULL);
+        // Clone payload
+        z_owned_bytes_t p;
+        z_bytes_clone(&p, z_loan(payload));
+        z_publisher_put(z_loan(pub), z_move(p), NULL);
     }
     // Clean up
     z_undeclare_publisher(z_move(pub));
     z_close(z_move(s));
-    z_free(value);
+    z_drop(z_move(payload));
     exit(0);
 }
 #else

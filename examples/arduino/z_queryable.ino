@@ -57,7 +57,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
 
     // Reply value encoding
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, VALUE);
+    z_bytes_from_static_str(&reply_payload, VALUE);
 
     z_query_reply(query, z_view_keyexpr_loan(&ke), z_bytes_move(&reply_payload), NULL);
 }

@@ -22,13 +22,13 @@
 typedef struct {
     void (*deleter)(void *data, void *context);
     void *context;
-} _z_delete_context;
+} _z_delete_context_t;
 
-_z_delete_context _z_delete_context_null(void);
-_Bool _z_delete_context_is_null(const _z_delete_context *c);
-_z_delete_context _z_delete_context_create(void (*deleter)(void *context, void *data), void *context);
-_z_delete_context _z_delete_context_default(void);
-void _z_delete_context_delete(_z_delete_context *c, void *data);
+_z_delete_context_t _z_delete_context_null(void);
+_Bool _z_delete_context_is_null(const _z_delete_context_t *c);
+_z_delete_context_t _z_delete_context_create(void (*deleter)(void *context, void *data), void *context);
+_z_delete_context_t _z_delete_context_default(void);
+void _z_delete_context_delete(_z_delete_context_t *c, void *data);
 
 /*-------- Slice --------*/
 /**
@@ -37,21 +37,21 @@ void _z_delete_context_delete(_z_delete_context *c, void *data);
  * Members:
  *   size_t len: The length of the bytes array.
  *   uint8_t *start: A pointer to the bytes array.
- *   _z_delete_context delete_context - context used to delete the data.
+ *   _z_delete_context_t delete_context - context used to delete the data.
  */
 typedef struct {
     size_t len;
     const uint8_t *start;
-    _z_delete_context _delete_context;
+    _z_delete_context_t _delete_context;
 } _z_slice_t;
 
 _z_slice_t _z_slice_empty(void);
 inline static _Bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
-_z_slice_t _z_slice_wrap(const uint8_t *bs, size_t len);
-_z_slice_t _z_slice_wrap_custom_deleter(const uint8_t *p, size_t len, _z_delete_context dc);
-_z_slice_t _z_slice_wrap_copy(const uint8_t *bs, size_t len);
+_z_slice_t _z_slice_from_buf(const uint8_t *bs, size_t len);
+_z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc);
+_z_slice_t _z_slice_copy_from_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
 int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);

@@ -117,7 +117,7 @@ void loop() {
     // Value encoding
     z_owned_bytes_t payload;
     if (strcmp(VALUE, "") != 0) {
-        z_bytes_serialize_from_str(&payload, VALUE);
+        z_bytes_from_static_str(&payload, VALUE);
         opts.payload = &payload;
     }
     z_owned_closure_reply_t callback;

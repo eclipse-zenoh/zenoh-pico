@@ -51,8 +51,8 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     assert(z_slice_len(z_loan(value)) == MSG_LEN);
-    assert(z_loan(k_str)->len == strlen(res));
-    assert(strncmp(res, z_loan(k_str)->val, strlen(res)) == 0);
+    assert(z_string_len(z_loan(k_str)) == strlen(res));
+    assert(strncmp(res, z_string_data(z_loan(k_str)), strlen(res)) == 0);
     (void)(sample);
 
     datas++;
@@ -79,9 +79,9 @@ int main(int argc, char **argv) {
     z_open(&s1, z_move(config));
     assert(z_check(s1));
     _z_slice_t id_as_bytes =
-        _z_slice_wrap(_Z_RC_IN_VAL(z_loan(s1))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
+        _z_slice_from_buf(_Z_RC_IN_VAL(z_loan(s1))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
     _z_string_t zid1 = _z_string_convert_bytes(&id_as_bytes);
-    printf("Session 1 with PID: %s\n", zid1.val);
+    printf("Session 1 with PID: %s\n", z_string_data(&zid1));
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
@@ -98,9 +98,9 @@ int main(int argc, char **argv) {
     z_open(&s2, z_move(config));
     assert(z_check(s2));
     id_as_bytes =
-        _z_slice_wrap(_Z_RC_IN_VAL(z_loan(s2))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
+        _z_slice_from_buf(_Z_RC_IN_VAL(z_loan(s2))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
     _z_string_t zid2 = _z_string_convert_bytes(&id_as_bytes);
-    printf("Session 2 with PID: %s\n", zid2.val);
+    printf("Session 2 with PID: %s\n", z_string_data(&zid2));
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
 
             // Create payload
             z_owned_bytes_t payload;
-            z_bytes_serialize_from_slice(&payload, value, len);
+            z_bytes_from_buf(&payload, value, len, NULL, NULL);
 
             z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt);
             printf("Wrote data from session 1: %s %zu b\t(%u/%u)\n", s1_res, len, n * SET + (i + 1), total);

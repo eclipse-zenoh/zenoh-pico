@@ -66,7 +66,7 @@ _Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     } else {
         z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
         z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
-        z_bytes_serialize_from_pair(kv_pair, z_move(k), z_move(v));
+        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
         kvs->current_idx++;
         return true;
     }
@@ -109,8 +109,8 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)), (int)z_loan(params)->len,
-           z_loan(params)->val);
+    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)),
+           (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process encoding
     z_owned_string_t encoding;
     z_encoding_to_string(z_query_encoding(query), &encoding);
@@ -119,7 +119,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     // Process value
     z_owned_string_t payload_string;
     z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
-    if (z_string_len(z_loan(payload_string)) > 1) {
+    if (z_string_len(z_loan(payload_string)) > 0) {
         printf("    with value '%s'\n", z_string_data(z_loan(payload_string)));
     }
     // Check attachment
@@ -135,7 +135,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
 
     // Reply payload
     z_owned_bytes_t reply_payload;
-    z_bytes_serialize_from_str(&reply_payload, value);
+    z_bytes_from_static_str(&reply_payload, value);
 
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
@@ -145,7 +145,7 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
     kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
     z_owned_bytes_t attachment;
-    z_bytes_serialize_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
+    z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
     options.attachment = z_move(attachment);
 
     // Reply encoding
