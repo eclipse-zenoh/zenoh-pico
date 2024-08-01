@@ -33,7 +33,7 @@ void test_null_bytes(void) {
 void test_slice(void) {
     uint8_t data[5] = {1, 2, 3, 4, 5};
     uint8_t data_out[5] = {0};
-    _z_slice_t s = _z_slice_wrap_copy(data, 5);
+    _z_slice_t s = _z_slice_copy_from_buf(data, 5);
     _z_bytes_t b;
     _z_bytes_from_slice(&b, s);
 
@@ -55,9 +55,9 @@ void test_append(void) {
     uint8_t data3[3] = {3, 9, 10};
     uint8_t data_in[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     uint8_t data_out[10] = {0};
-    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
-    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
-    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
+    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data1, 5), 0, 5);
+    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data2, 5), 2, 3);
+    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data3, 3), 1, 2);
 
     _z_bytes_t b = _z_bytes_null();
 
@@ -85,9 +85,9 @@ void test_reader_read(void) {
     uint8_t data3[3] = {3, 9, 10};
     uint8_t data_in[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     uint8_t data_out[10] = {0};
-    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
-    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
-    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
+    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data1, 5), 0, 5);
+    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data2, 5), 2, 3);
+    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data3, 3), 1, 2);
 
     _z_bytes_t b = _z_bytes_null();
 
@@ -118,9 +118,9 @@ void test_reader_seek(void) {
     uint8_t data1[5] = {1, 2, 3, 4, 5};
     uint8_t data2[5] = {1, 2, 6, 7, 8};
     uint8_t data3[3] = {3, 9, 10};
-    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_wrap_copy(data1, 5), 0, 5);
-    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_wrap_copy(data2, 5), 2, 3);
-    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_wrap_copy(data3, 3), 1, 2);
+    _z_arc_slice_t s1 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data1, 5), 0, 5);
+    _z_arc_slice_t s2 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data2, 5), 2, 3);
+    _z_arc_slice_t s3 = _z_arc_slice_wrap(_z_slice_copy_from_buf(data3, 3), 1, 2);
 
     _z_bytes_t b = _z_bytes_null();
 

@@ -72,7 +72,7 @@ _z_slice_t _z_slice_make(size_t capacity) {
     return bs;
 }
 
-_z_slice_t _z_slice_wrap_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc) {
+_z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc) {
     _z_slice_t bs;
     bs.start = p;
     bs.len = len;
@@ -80,12 +80,12 @@ _z_slice_t _z_slice_wrap_custom_deleter(const uint8_t *p, size_t len, _z_delete_
     return bs;
 }
 
-_z_slice_t _z_slice_wrap(const uint8_t *p, size_t len) {
-    return _z_slice_wrap_custom_deleter(p, len, _z_delete_context_null());
+_z_slice_t _z_slice_from_buf(const uint8_t *p, size_t len) {
+    return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_null());
 }
 
-_z_slice_t _z_slice_wrap_copy(const uint8_t *p, size_t len) {
-    _z_slice_t bs = _z_slice_wrap(p, len);
+_z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
+    _z_slice_t bs = _z_slice_from_buf(p, len);
     return _z_slice_duplicate(&bs);
 }
 

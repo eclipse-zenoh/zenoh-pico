@@ -27,7 +27,7 @@ _Bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&val
 
 _z_string_t _z_string_make(const char *value) {
     _z_string_t s;
-    s._slice = _z_slice_wrap_copy((uint8_t *)value, strlen(value) + 1);
+    s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value) + 1);
     return s;
 }
 
@@ -38,20 +38,20 @@ _z_string_t _z_string_n_make(const char *value, size_t len) {
     if (c == NULL) {
         return _z_string_null();
     } else {
-        s._slice = _z_slice_wrap_custom_deleter((const uint8_t *)c, len + 1, _z_delete_context_default());
+        s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)c, len + 1, _z_delete_context_default());
         return s;
     }
 }
 
-_z_string_t _z_string_wrap(const char *value) {
+_z_string_t _z_string_from_str(const char *value) {
     _z_string_t s;
-    s._slice = _z_slice_wrap((const uint8_t *)(value), strlen(value) + 1);
+    s._slice = _z_slice_from_buf((const uint8_t *)(value), strlen(value) + 1);
     return s;
 }
 
-_z_string_t _z_string_wrap_custom_deleter(char *value, _z_delete_context_t c) {
+_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
     _z_string_t s;
-    s._slice = _z_slice_wrap_custom_deleter((const uint8_t *)(value), strlen(value) + 1, c);
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value) + 1, c);
     return s;
 }
 
@@ -77,7 +77,7 @@ _z_string_t _z_string_steal(_z_string_t *str) {
     return ret;
 }
 
-void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_wrap(src); }
+void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_from_str(src); }
 
 void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
 
@@ -111,7 +111,7 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     } else {
         len = 0;
     }
-    s._slice = _z_slice_wrap_custom_deleter((const uint8_t *)s_val, len + 1, _z_delete_context_default());
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len + 1, _z_delete_context_default());
 
     return s;
 }

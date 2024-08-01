@@ -322,8 +322,8 @@ Primitives
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
-.. autocfunction:: primitives.h::z_slice_wrap
 .. autocfunction:: primitives.h::z_slice_from_buf
+.. autocfunction:: primitives.h::z_slice_copy_from_buf
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
@@ -389,9 +389,9 @@ Primitives
 .. autocfunction:: primitives.h::z_sample_loan
 .. autocfunction:: primitives.h::z_string_data
 .. autocfunction:: primitives.h::z_string_len
-.. autocfunction:: primitives.h::z_string_wrap
 .. autocfunction:: primitives.h::z_string_from_str
-.. autocfunction:: primitives.h::z_string_from_substr
+.. autocfunction:: primitives.h::z_string_copy_from_str
+.. autocfunction:: primitives.h::z_string_copy_from_substr
 .. autocfunction:: primitives.h::z_string_empty
 .. autocfunction:: primitives.h::z_string_is_empty
 .. autocfunction:: primitives.h::z_hello_zid

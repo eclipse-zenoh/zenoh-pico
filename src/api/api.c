@@ -53,7 +53,7 @@ int8_t z_view_string_empty(z_view_string_t *str) {
 }
 
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
-    str->_val = _z_string_wrap((char *)value);
+    str->_val = _z_string_from_str((char *)value);
     return _Z_RES_OK;
 }
 
@@ -95,7 +95,7 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 }
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    s->_val = _z_string_wrap(keyexpr->_suffix);
+    s->_val = _z_string_from_str(keyexpr->_suffix);
     return _Z_RES_OK;
 }
 
@@ -359,7 +359,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
-    s->_val = _z_string_wrap(value);
+    s->_val = _z_string_from_str(value);
     return _Z_RES_OK;
 }
 
@@ -406,8 +406,8 @@ int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_
     return _Z_RES_OK;
 }
 
-int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
-    slice->_val = _z_slice_wrap_copy(data, len);
+int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
+    slice->_val = _z_slice_copy_from_buf(data, len);
     if (slice->_val.start == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     } else {
@@ -415,9 +415,9 @@ int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len)
     }
 }
 
-int8_t z_slice_wrap(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                     void *context) {
-    slice->_val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    slice->_val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 
@@ -550,19 +550,19 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice
 int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                         void *context) {
     z_owned_slice_t s;
-    s._val = _z_slice_wrap_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    s._val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
 int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    s._val = _z_slice_wrap(data, len);
+    s._val = _z_slice_from_buf(data, len);
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
 int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    _Z_RETURN_IF_ERR(z_slice_from_buf(&s, data, len));
+    _Z_RETURN_IF_ERR(z_slice_copy_from_buf(&s, data, len));
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
@@ -581,22 +581,22 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_stri
     return z_bytes_from_string(bytes, z_string_move(&s_copy));
 }
 
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *data, void *context),
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
                         void *context) {
     z_owned_string_t s;
-    s._val = _z_string_wrap_custom_deleter(value, _z_delete_context_create(deleter, context));
+    s._val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
 int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    s._val = _z_string_wrap(value);
+    s._val = _z_string_from_str(value);
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
 int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    _Z_RETURN_IF_ERR(z_string_from_str(&s, value));
+    _Z_RETURN_IF_ERR(z_string_copy_from_str(&s, value));
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
@@ -689,7 +689,7 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val = _z_string_wrap(_Z_RC_IN_VAL(query)->_parameters);
+    parameters->_val = _z_string_from_str(_Z_RC_IN_VAL(query)->_parameters);
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->attachment; }
@@ -1005,7 +1005,7 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
 const char *z_string_data(const z_loaned_string_t *str) { return _z_string_data(str); }
 size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
-int8_t z_string_from_str(z_owned_string_t *str, const char *value) {
+int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
     str->_val = _z_string_make(value);
     if (str->_val._slice.start == NULL && value != NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -1013,14 +1013,14 @@ int8_t z_string_from_str(z_owned_string_t *str, const char *value) {
     return _Z_RES_OK;
 }
 
-int8_t z_string_wrap(z_owned_string_t *str, char *value, void (*deleter)(void *data, void *context), void *context) {
-    str->_val = _z_string_wrap_custom_deleter(value, _z_delete_context_create(deleter, context));
+int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context), void *context) {
+    str->_val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 
 void z_string_empty(z_owned_string_t *str) { str->_val = _z_string_null(); }
 
-int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len) {
+int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len) {
     str->_val = _z_string_n_make(value, len);
     return _Z_RES_OK;
 }

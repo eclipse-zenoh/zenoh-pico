@@ -434,7 +434,7 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
+int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_slice_t` by transferring ownership over a data to it.
@@ -450,8 +450,8 @@ int8_t z_slice_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len)
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_slice_wrap(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                    void *context);
+int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
+                        void *context);
 
 /**
  * Gets date pointer of a bytes array.
@@ -798,7 +798,7 @@ int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void 
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
- *   data: Pointer to the the statically allocated constant data to encode.
+ *   data: Pointer to the statically allocated constant data to encode.
  *   len: Number of bytes to encode.
  *
  * Return:
@@ -855,14 +855,14 @@ int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *data, void *context), void *context);
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context), void *context);
 
 /**
  * Encodes a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   value: Pointer to the the statically allocated constant string to encode.
+ *   value: Pointer to the statically allocated constant string to encode.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
@@ -1319,7 +1319,7 @@ size_t z_string_len(const z_loaned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_str(z_owned_string_t *str, const char *value);
+int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_owned_string_t` by transferring ownership over a null-terminated string to it.
@@ -1334,7 +1334,7 @@ int8_t z_string_from_str(z_owned_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_wrap(z_owned_string_t *str, char *value, void (*deleter)(void *data, void *context), void *context);
+int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context), void *context);
 
 /**
  * Builds an empty :c:type:`z_owned_string_t`.
@@ -1355,7 +1355,7 @@ void z_string_empty(z_owned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_substr(z_owned_string_t *str, const char *value, size_t len);
+int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len);
 
 /**
  * Checks if string is empty
