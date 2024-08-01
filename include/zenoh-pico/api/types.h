@@ -216,12 +216,14 @@ typedef struct {
  * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
+ *   z_owned_encoding_t *encoding: Default encoding for messages put by this publisher.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  */
 typedef struct {
+    z_owned_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
@@ -303,6 +305,7 @@ typedef struct {
     z_timestamp_t *timestamp;
     _Bool is_express;
     z_owned_bytes_t *attachment;
+
 } z_put_options_t;
 
 /**
@@ -327,13 +330,11 @@ typedef struct {
  *
  * Members:
  *   z_owned_encoding_t *encoding: The encoding of the payload.
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_owned_bytes_t *attachment: An optional attachment to the publication.
  */
 typedef struct {
     z_owned_encoding_t *encoding;
-    _Bool is_express;
     z_timestamp_t *timestamp;
     z_owned_bytes_t *attachment;
 } z_publisher_put_options_t;
@@ -343,11 +344,9 @@ typedef struct {
  * sent via :c:func:`z_publisher_delete`.
  *
  * Members:
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  */
 typedef struct {
-    _Bool is_express;
     z_timestamp_t *timestamp;
 } z_publisher_delete_options_t;
 

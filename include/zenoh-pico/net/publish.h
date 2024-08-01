@@ -26,6 +26,7 @@ typedef struct _z_publisher_t {
     _z_keyexpr_t _key;
     _z_zint_t _id;
     _z_session_rc_t _zn;
+    _z_encoding_t _encoding;
     z_congestion_control_t _congestion_control;
     z_priority_t _priority;
     _Bool _is_express;

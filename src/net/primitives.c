@@ -102,7 +102,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
-_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
                                     z_congestion_control_t congestion_control, z_priority_t priority,
                                     _Bool is_express) {
     // Allocate publisher
@@ -114,6 +114,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._priority = priority;
     ret._is_express = is_express;
     ret._zn = _z_session_rc_clone(zn);
+    ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     return ret;
 }
 
@@ -129,7 +130,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t encoding,
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t *encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
                 _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
@@ -149,7 +150,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
                                 ._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
                                              ._source_info = _z_source_info_null()},
                                 ._payload = payload,
-                                ._encoding = encoding,
+                                ._encoding = encoding == NULL ? _z_encoding_null() : *encoding,
                                 ._attachment = attachment,
                             },
                     },
