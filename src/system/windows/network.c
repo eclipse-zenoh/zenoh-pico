@@ -64,9 +64,7 @@ int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
 
     sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
     if (sock->_sock._fd != INVALID_SOCKET) {
-        z_time_t tv;
-        tv.time = tout / (uint32_t)1000;
-        tv.millitm = tout % (uint32_t)1000;
+        DWORD tv = tout;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
@@ -200,9 +198,7 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
 
     sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
     if (sock->_sock._fd != INVALID_SOCKET) {
-        z_time_t tv;
-        tv.time = tout / (uint32_t)1000;
-        tv.millitm = tout % (uint32_t)1000;
+        DWORD tv = tout;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
@@ -326,9 +322,7 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
     if (addrlen != 0U) {
         sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
         if (sock->_sock._fd != INVALID_SOCKET) {
-            z_time_t tv;
-            tv.time = tout / (uint32_t)1000;
-            tv.millitm = tout % (uint32_t)1000;
+            DWORD tv = tout;
             if ((ret == _Z_RES_OK) &&
                 (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 ret = _Z_ERR_GENERIC;
@@ -430,9 +424,7 @@ int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     if (addrlen != 0U) {
         sock->_sock._fd = socket(rep._ep._iptcp->ai_family, rep._ep._iptcp->ai_socktype, rep._ep._iptcp->ai_protocol);
         if (sock->_sock._fd != INVALID_SOCKET) {
-            z_time_t tv;
-            tv.time = tout / (uint32_t)1000;
-            tv.millitm = tout % (uint32_t)1000;
+            DWORD tv = tout;
             if ((ret == _Z_RES_OK) &&
                 (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
                 ret = _Z_ERR_GENERIC;

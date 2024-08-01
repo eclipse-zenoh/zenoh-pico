@@ -27,6 +27,12 @@ set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
 set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
 set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  @ONLY
+)
+
 set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 if(NOT DEFINED PROJECT_VERSION_TWEAK)
 	set(project_version "${project_version}")

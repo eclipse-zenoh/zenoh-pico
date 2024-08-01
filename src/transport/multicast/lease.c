@@ -189,13 +189,14 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 int8_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
-    // Init task
+    ztm->_lease_task_running = true;  // Init before z_task_init for concurrency issue
+                                      // Init task
     if (_z_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
+        ztm->_lease_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
     ztm->_lease_task = task;
-    ztm->_lease_task_running = true;
     return _Z_RES_OK;
 }
 

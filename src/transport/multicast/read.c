@@ -130,13 +130,14 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
-    // Init task
+    zt->_transport._multicast._read_task_running = true;  // Init before z_task_init for concurrency issue
+                                                          // Init task
     if (_z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
+        zt->_transport._multicast._read_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
     zt->_transport._multicast._read_task = task;
-    zt->_transport._multicast._read_task_running = true;
     return _Z_RES_OK;
 }
 
