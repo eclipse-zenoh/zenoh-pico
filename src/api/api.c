@@ -397,6 +397,21 @@ int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_
     }
     return _Z_RES_OK;
 }
+int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema) {
+    return z_encoding_set_schema_from_substr(encoding, schema, strlen(schema));
+}
+
+int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len) {
+    _z_string_clear(&encoding->schema);
+    if (schema == NULL && len > 0) {
+        return _Z_ERR_INVALID;
+    }
+    encoding->schema = _z_string_n_make(schema, len);
+    if (_z_string_len(&encoding->schema) != len) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
+}
 
 int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
     // Init owned string
