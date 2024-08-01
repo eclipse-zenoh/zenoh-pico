@@ -416,7 +416,7 @@ int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t
 }
 
 int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                    void *context) {
+                        void *context) {
     slice->_val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
@@ -1013,7 +1013,8 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
     return _Z_RES_OK;
 }
 
-int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context), void *context) {
+int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
+                         void *context) {
     str->_val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }

@@ -855,7 +855,8 @@ int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_owned_string_t *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context), void *context);
+int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
+                        void *context);
 
 /**
  * Encodes a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
@@ -1334,7 +1335,8 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context), void *context);
+int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
+                         void *context);
 
 /**
  * Builds an empty :c:type:`z_owned_string_t`.
