@@ -113,6 +113,12 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     (void)arg;
     assert(z_check(k_str));
+    const char *encoding_expected =
+        z_sample_kind(sample) == Z_SAMPLE_KIND_PUT ? "zenoh/bytes;test_encoding" : "zenoh/bytes";
+    z_owned_string_t encoding;
+    z_encoding_to_string(z_sample_encoding(sample), &encoding);
+    printf("%s\n", z_string_data(z_loan(encoding)));
+    assert(strncmp(encoding_expected, z_string_data(z_loan(encoding)), strlen(encoding_expected)) == 0);
 }
 
 int main(int argc, char **argv) {
@@ -122,9 +128,13 @@ int main(int argc, char **argv) {
 
 #ifdef ZENOH_C
     zc_init_logger();
+    const char *encoding_expected =
+        z_sample_kind(sample) == Z_SAMPLE_KIND_PUT ? "zenoh/bytes" : "zenoh/bytes;test_encoding";
+    z_pu
 #endif
 
-    z_view_keyexpr_t key_demo_example, key_demo_example_a, key_demo_example_starstar;
+        z_view_keyexpr_t key_demo_example,
+        key_demo_example_a, key_demo_example_starstar;
     z_view_keyexpr_from_str(&key_demo_example, "demo/example");
     z_view_keyexpr_from_str(&key_demo_example_a, "demo/example/a");
     z_view_keyexpr_from_str(&key_demo_example_starstar, "demo/example/**");
@@ -296,6 +306,9 @@ int main(int argc, char **argv) {
     printf("Session Put...");
     z_put_options_t _ret_put_opt;
     z_put_options_default(&_ret_put_opt);
+    z_owned_encoding_t encoding;
+    z_encoding_from_str(&encoding, "test_encoding");
+    _ret_put_opt.encoding = z_move(encoding);
     _ret_put_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
 
     // Create payload
@@ -304,6 +317,7 @@ int main(int argc, char **argv) {
 
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), z_move(payload), &_ret_put_opt);
     assert_eq(_ret_int8, 0);
+    assert(!z_check(encoding));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);
@@ -330,10 +344,13 @@ int main(int argc, char **argv) {
     printf("Declaring Publisher...");
     z_publisher_options_t _ret_pub_opt;
     z_publisher_options_default(&_ret_pub_opt);
+    z_encoding_from_str(&encoding, "test_encoding");
+    _ret_pub_opt.encoding = z_move(encoding);
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_owned_publisher_t _ret_pub;
     _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
     assert(_ret_int8 == _Z_RES_OK);
+    assert(!z_check(encoding));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);

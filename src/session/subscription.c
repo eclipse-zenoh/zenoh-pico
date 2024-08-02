@@ -139,11 +139,10 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
 }
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    const _z_n_qos_t qos, const _z_bytes_t attachment) {
-    _z_encoding_t encoding = _z_encoding_null();
-    _z_timestamp_t timestamp = _z_timestamp_null();
+                                    _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                                    const _z_bytes_t attachment) {
     int8_t ret =
-        _z_trigger_subscriptions(zn, keyexpr, payload, &encoding, Z_SAMPLE_KIND_PUT, &timestamp, qos, attachment);
+        _z_trigger_subscriptions(zn, keyexpr, payload, encoding, Z_SAMPLE_KIND_PUT, timestamp, qos, attachment);
     (void)ret;
 }
 
@@ -208,11 +207,12 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    _z_n_qos_t qos, const _z_bytes_t attachment) {
+                                    _z_n_qos_t qos, const _z_timestampt_t *timestamp, const _z_bytes_t attachment) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
     _ZP_UNUSED(qos);
+    _ZP_UNUSED(timestamp);
     _ZP_UNUSED(attachment);
 }
 
