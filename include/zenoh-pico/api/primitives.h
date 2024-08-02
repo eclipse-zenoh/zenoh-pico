@@ -390,6 +390,31 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
 int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
 
 /**
+ * Sets a schema to this encoding from a null-terminated string. Zenoh does not define what a schema is and its
+ * semantics is left to the implementer. E.g. a common schema for `text/plain` encoding is `utf-8`.
+ *
+ * Parameters:
+ *   encoding: Pointer to initialized :c:type:`z_loaned_encoding_t`.
+ *   schema: Pointer to the null terminated string to use as a schema.
+ * Return:
+ *   ``0`` in case of success,``negative value`` otherwise.
+ */
+int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema);
+
+/**
+ * Sets a schema to this encoding from a substring. Zenoh does not define what a schema is and its semantics is left
+ * to the implementer. E.g. a common schema for `text/plain` encoding is `utf-8`.
+ *
+ * Parameters:
+ *   encoding: Pointer to initialized :c:type:`z_loaned_encoding_t`.
+ *   schema: Pointer to the substring start.
+ *   len: Number of characters to consider.
+ * Return:
+ *   ``0`` if in case of success,``negative value`` otherwise.
+ */
+int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len);
+
+/**
  * Builds a string from a :c:type:`z_loaned_encoding_t`.
  *
  * Parameters:

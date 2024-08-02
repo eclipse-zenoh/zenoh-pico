@@ -319,6 +319,8 @@ Primitives
 .. autocfunction:: primitives.h::zp_config_insert
 .. autocfunction:: primitives.h::z_encoding_from_str
 .. autocfunction:: primitives.h::z_encoding_from_substr
+.. autocfunction:: primitives.h::z_encoding_set_schema_from_str
+.. autocfunction:: primitives.h::z_encoding_set_schema_from_substr
 .. autocfunction:: primitives.h::z_encoding_to_string
 .. autocfunction:: primitives.h::z_reply_err_payload
 .. autocfunction:: primitives.h::z_reply_err_encoding
