@@ -1053,7 +1053,7 @@ void z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer)
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
+int8_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Create timestamp

@@ -105,7 +105,7 @@ typedef struct {
 } _z_bytes_writer_t;
 
 _z_bytes_writer_t _z_bytes_get_writer(_z_bytes_t *bytes, size_t cache_size);
-int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+int8_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
 int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer);
 
 typedef struct {
