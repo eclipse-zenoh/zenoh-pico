@@ -88,7 +88,8 @@ int main(int argc, char **argv) {
     z_owned_sample_t sample;
     z_null(&sample);
     while (true) {
-        for (z_try_recv(z_loan(handler), &sample); z_check(sample); z_try_recv(z_loan(handler), &sample)) {
+        z_result_t res;
+        for (res = z_try_recv(z_loan(handler), &sample); res == Z_OK; res = z_try_recv(z_loan(handler), &sample)) {
             z_view_string_t keystr;
             z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
             z_owned_string_t value;
@@ -98,8 +99,12 @@ int main(int argc, char **argv) {
             z_drop(z_move(value));
             z_drop(z_move(sample));
         }
-        printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", interval);
-        z_sleep_ms(interval);
+        if (res == Z_CHANNEL_NODATA) {
+            printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", interval);
+            z_sleep_ms(interval);
+        } else {
+            break;
+        }
     }
 
     z_undeclare_subscriber(z_move(sub));

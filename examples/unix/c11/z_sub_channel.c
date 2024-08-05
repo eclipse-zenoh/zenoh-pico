@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
     z_owned_sample_t sample;
     z_null(&sample);
-    for (z_recv(z_loan(handler), &sample); z_check(sample); z_recv(z_loan(handler), &sample)) {
+    for (z_result_t res = z_recv(z_loan(handler), &sample); res == Z_OK; res = z_recv(z_loan(handler), &sample)) {
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
         z_owned_string_t value;

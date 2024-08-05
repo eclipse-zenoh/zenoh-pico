@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
 
     z_owned_reply_t reply;
     z_null(&reply);
-    for (z_recv(z_loan(handler), &reply); z_check(reply); z_recv(z_loan(handler), &reply)) {
+    for (z_result_t res = z_recv(z_loan(handler), &reply); res == Z_OK; res = z_recv(z_loan(handler), &reply)) {
         if (z_reply_is_ok(z_loan(reply))) {
             const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
             z_view_string_t keystr;

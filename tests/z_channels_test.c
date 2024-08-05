@@ -39,25 +39,24 @@
         z_call(*z_loan(closure), &sample);                                                          \
     } while (0);
 
-#define _RECV(handler, method, buf)                                                       \
-    do {                                                                                  \
-        z_owned_sample_t sample;                                                          \
-        z_sample_null(&sample);                                                           \
-        if (!method(z_loan(handler), &sample)) {                                          \
-            strcpy(buf, "closed");                                                        \
-        } else {                                                                          \
-            if (z_check(sample)) {                                                        \
-                z_owned_slice_t value;                                                    \
-                z_bytes_deserialize_into_slice(z_sample_payload(z_loan(sample)), &value); \
-                size_t value_len = z_slice_len(z_loan(value));                            \
-                strncpy(buf, (const char *)z_slice_data(z_loan(value)), value_len);       \
-                buf[value_len] = '\0';                                                    \
-                z_drop(z_move(sample));                                                   \
-                z_drop(z_move(value));                                                    \
-            } else {                                                                      \
-                buf[0] = '\0';                                                            \
-            }                                                                             \
-        }                                                                                 \
+#define _RECV(handler, method, buf)                                                   \
+    do {                                                                              \
+        z_owned_sample_t sample;                                                      \
+        z_sample_null(&sample);                                                       \
+        int8_t res = method(z_loan(handler), &sample);                                \
+        if (res == Z_CHANNEL_DISCONNECTED) {                                          \
+            strcpy(buf, "closed");                                                    \
+        } else if (res == Z_OK) {                                                     \
+            z_owned_slice_t value;                                                    \
+            z_bytes_deserialize_into_slice(z_sample_payload(z_loan(sample)), &value); \
+            size_t value_len = z_slice_len(z_loan(value));                            \
+            strncpy(buf, (const char *)z_slice_data(z_loan(value)), value_len);       \
+            buf[value_len] = '\0';                                                    \
+            z_drop(z_move(sample));                                                   \
+            z_drop(z_move(value));                                                    \
+        } else if (res == Z_CHANNEL_NODATA) {                                         \
+            strcpy(buf, "nodata");                                                    \
+        }                                                                             \
     } while (0);
 
 #define RECV(handler, buf) _RECV(handler, z_recv, buf)
@@ -84,8 +83,12 @@ void sample_fifo_channel_test(void) {
     RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
 
-    z_drop(z_move(handler));
     z_drop(z_move(closure));
+
+    RECV(handler, buf)
+    assert(strcmp(buf, "closed") == 0);
+
+    z_drop(z_move(handler));
 }
 
 void sample_fifo_channel_test_try_recv(void) {
@@ -96,7 +99,7 @@ void sample_fifo_channel_test_try_recv(void) {
     char buf[100];
 
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
 
     SEND(closure, "v1")
     SEND(closure, "v22")
@@ -112,10 +115,13 @@ void sample_fifo_channel_test_try_recv(void) {
     TRY_RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
+
+    z_drop(z_move(closure));
+    TRY_RECV(handler, buf)
+    assert(strcmp(buf, "closed") == 0);
 
     z_drop(z_move(handler));
-    z_drop(z_move(closure));
 }
 
 void sample_ring_channel_test_in_size(void) {
@@ -126,7 +132,7 @@ void sample_ring_channel_test_in_size(void) {
     char buf[100];
 
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
 
     SEND(closure, "v1")
     SEND(closure, "v22")
@@ -142,13 +148,13 @@ void sample_ring_channel_test_in_size(void) {
     RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
+
     z_drop(z_move(closure));
     RECV(handler, buf)
     assert(strcmp(buf, "closed") == 0);
 
     z_drop(z_move(handler));
-    z_drop(z_move(closure));
 }
 
 void sample_ring_channel_test_over_size(void) {
@@ -158,7 +164,7 @@ void sample_ring_channel_test_over_size(void) {
 
     char buf[100];
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
 
     SEND(closure, "v1")
     SEND(closure, "v22")
@@ -172,7 +178,7 @@ void sample_ring_channel_test_over_size(void) {
     RECV(handler, buf)
     assert(strcmp(buf, "v4444") == 0);
     TRY_RECV(handler, buf)
-    assert(strcmp(buf, "") == 0);
+    assert(strcmp(buf, "nodata") == 0);
     z_drop(z_move(closure));
     TRY_RECV(handler, buf)
     assert(strcmp(buf, "closed") == 0);

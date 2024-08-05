@@ -517,42 +517,42 @@ inline void z_closure(
     closure->_val.call = call;
 };
 
-inline bool z_try_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
+inline z_result_t z_try_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
     return z_fifo_handler_query_try_recv(this_, query);
 };
-inline bool z_try_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
+inline z_result_t z_try_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
     return z_fifo_handler_reply_try_recv(this_, reply);
 };
-inline bool z_try_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
+inline z_result_t z_try_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
     return z_fifo_handler_sample_try_recv(this_, sample);
 };
-inline bool z_try_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
+inline z_result_t z_try_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
     return z_ring_handler_query_try_recv(this_, query);
 };
-inline bool z_try_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
+inline z_result_t z_try_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
     return z_ring_handler_reply_try_recv(this_, reply);
 };
-inline bool z_try_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
+inline z_result_t z_try_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
     return z_ring_handler_sample_try_recv(this_, sample);
 };
 
 
-inline bool z_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
+inline z_result_t z_recv(const z_loaned_fifo_handler_query_t* this_, z_owned_query_t* query) {
     return z_fifo_handler_query_recv(this_, query);
 };
-inline bool z_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
+inline z_result_t z_recv(const z_loaned_fifo_handler_reply_t* this_, z_owned_reply_t* reply) {
     return z_fifo_handler_reply_recv(this_, reply);
 };
-inline bool z_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
+inline z_result_t z_recv(const z_loaned_fifo_handler_sample_t* this_, z_owned_sample_t* sample) {
     return z_fifo_handler_sample_recv(this_, sample);
 };
-inline bool z_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
+inline z_result_t z_recv(const z_loaned_ring_handler_query_t* this_, z_owned_query_t* query) {
     return z_ring_handler_query_recv(this_, query);
 };
-inline bool z_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
+inline z_result_t z_recv(const z_loaned_ring_handler_reply_t* this_, z_owned_reply_t* reply) {
     return z_ring_handler_reply_recv(this_, reply);
 };
-inline bool z_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
+inline z_result_t z_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sample_t* sample) {
     return z_ring_handler_sample_recv(this_, sample);
 };
 

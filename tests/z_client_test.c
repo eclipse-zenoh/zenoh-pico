@@ -132,8 +132,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
     z_owned_session_t s1;
-    z_open(&s1, z_move(config));
-    assert(z_check(s1));
+    assert(z_open(&s1, z_move(config)) == Z_OK);
     _z_string_t zid1 = format_id(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
     printf("Session 1 with PID: %s\n", _z_string_data(&zid1));
     _z_string_clear(&zid1);
@@ -148,7 +147,7 @@ int main(int argc, char **argv) {
     zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]);
 
     z_owned_session_t s2;
-    z_open(&s2, z_move(config));
+    assert(z_open(&s2, z_move(config)) == Z_OK);
     assert(z_check(s2));
     _z_string_t zid2 = format_id(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
     printf("Session 2 with PID: %s\n", _z_string_data(&zid2));
