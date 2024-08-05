@@ -169,13 +169,13 @@ void test_writer_no_cache(void) {
     _z_bytes_t b = _z_bytes_null();
     _z_bytes_writer_t writer = _z_bytes_get_writer(&b, 0);
 
-    _z_bytes_writer_write(&writer, data1, 5);
+    _z_bytes_writer_write_all(&writer, data1, 5);
     assert(_z_bytes_len(&b) == 5);
     assert(_z_bytes_num_slices(&b) == 1);
-    _z_bytes_writer_write(&writer, data2, 5);
+    _z_bytes_writer_write_all(&writer, data2, 5);
     assert(_z_bytes_len(&b) == 10);
     assert(_z_bytes_num_slices(&b) == 2);
-    _z_bytes_writer_write(&writer, data3, 3);
+    _z_bytes_writer_write_all(&writer, data3, 3);
     assert(_z_bytes_len(&b) == 13);
     assert(_z_bytes_num_slices(&b) == 3);
 
@@ -195,13 +195,13 @@ void test_writer_with_cache(void) {
     _z_bytes_t b = _z_bytes_null();
     _z_bytes_writer_t writer = _z_bytes_get_writer(&b, 7);
 
-    _z_bytes_writer_write(&writer, data1, 5);
+    _z_bytes_writer_write_all(&writer, data1, 5);
     assert(_z_bytes_len(&b) == 5);
     assert(_z_bytes_num_slices(&b) == 1);
-    _z_bytes_writer_write(&writer, data2, 5);
+    _z_bytes_writer_write_all(&writer, data2, 5);
     assert(_z_bytes_len(&b) == 10);
     assert(_z_bytes_num_slices(&b) == 2);
-    _z_bytes_writer_write(&writer, data3, 3);
+    _z_bytes_writer_write_all(&writer, data3, 3);
     assert(_z_bytes_len(&b) == 13);
     assert(_z_bytes_num_slices(&b) == 2);
 

@@ -452,7 +452,7 @@ int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
     return _Z_RES_OK;
 }
 
-int8_t _z_bytes_writer_write(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
+int8_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
     if (writer->cache_size == 0) {  // no cache - append data as a single slice
         _z_slice_t s = _z_slice_copy_from_buf(src, len);
         if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -484,7 +484,7 @@ _z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes) {
 int8_t _z_bytes_iterator_writer_write(_z_bytes_iterator_writer_t *writer, _z_bytes_t *src) {
     uint8_t l_buf[16];
     size_t l_len = _z_zsize_encode_buf(l_buf, _z_bytes_len(src));
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_write(&writer->writer, l_buf, l_len), _z_bytes_drop(src));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_write_all(&writer->writer, l_buf, l_len), _z_bytes_drop(src));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(writer->writer.bytes, src), _z_bytes_drop(src));
 
     return _Z_RES_OK;

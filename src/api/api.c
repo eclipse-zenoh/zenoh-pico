@@ -664,8 +664,8 @@ void z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer)
     writer->_val = _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE);
 }
 
-int8_t z_bytes_writer_write(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    return _z_bytes_writer_write(writer, src, len);
+int8_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
+    return _z_bytes_writer_write_all(writer, src, len);
 }
 
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {

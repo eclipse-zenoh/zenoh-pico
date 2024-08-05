@@ -370,7 +370,7 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
 .. autocfunction:: primitives.h::z_bytes_get_writer
-.. autocfunction:: primitives.h::z_bytes_writer_write
+.. autocfunction:: primitives.h::z_bytes_writer_write_all
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto
