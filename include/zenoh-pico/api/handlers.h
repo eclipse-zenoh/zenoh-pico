@@ -31,7 +31,7 @@ extern "C" {
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,          \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,                \
                                collection_pull_f, collection_try_pull_f, collection_close_f, elem_owned_type,          \
-                               elem_loaned_type, elem_clone_f, elem_drop_f, elem_null_f)                               \
+                               elem_loaned_type, elem_clone_f, elem_move_f, elem_drop_f, elem_null_f)                  \
     typedef struct {                                                                                                   \
         collection_type *collection;                                                                                   \
     } handler_type;                                                                                                    \
@@ -40,7 +40,7 @@ extern "C" {
     _Z_LOANED_TYPE(handler_type, handler_name)                                                                         \
                                                                                                                        \
     static inline void _z_##handler_name##_elem_free(void **elem) {                                                    \
-        elem_drop_f((elem_owned_type *)*elem);                                                                         \
+        elem_drop_f(elem_move_f((elem_owned_type *)*elem));                                                            \
         z_free(*elem);                                                                                                 \
         *elem = NULL;                                                                                                  \
     }                                                                                                                  \
@@ -137,6 +137,7 @@ extern "C" {
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
                            /* elem_clone_f                     */ z_##item_name##_clone,                    \
+                           /* elem_move_f                     */ z_##item_name##_move,                      \
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
                            /* elem_null                       */ z_##item_name##_null)
 

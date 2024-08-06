@@ -96,35 +96,35 @@
  *   x: The instance to drop.
  */
 #define z_drop(x) _Generic((x), \
-                  z_owned_keyexpr_t * : z_keyexpr_drop,                             \
-                  z_owned_config_t * : z_config_drop,                               \
-                  z_owned_session_t * : z_session_drop,                             \
-                  z_owned_subscriber_t * : z_subscriber_drop,                       \
-                  z_owned_publisher_t * : z_publisher_drop,                         \
-                  z_owned_queryable_t * : z_queryable_drop,                         \
-                  z_owned_reply_t * : z_reply_drop,                                 \
-                  z_owned_hello_t * : z_hello_drop,                                 \
-                  z_owned_string_t * : z_string_drop,                               \
-                  z_owned_string_array_t * : z_string_array_drop,                   \
-                  z_owned_sample_t * : z_sample_drop,                               \
-                  z_owned_query_t * : z_query_drop,                                 \
-                  z_owned_encoding_t * : z_encoding_drop,                           \
-                  z_owned_slice_t  *: z_slice_drop,                                 \
-                  z_owned_bytes_t  *: z_bytes_drop,                                 \
-                  z_owned_closure_sample_t * : z_closure_sample_drop,               \
-                  z_owned_closure_query_t * : z_closure_query_drop,                 \
-                  z_owned_closure_reply_t * : z_closure_reply_drop,                 \
-                  z_owned_closure_hello_t * : z_closure_hello_drop,                 \
-                  z_owned_closure_zid_t * : z_closure_zid_drop,                     \
-                  z_owned_mutex_t *: z_mutex_drop,                                  \
-                  z_owned_condvar_t *: z_condvar_drop,                              \
-                  z_owned_fifo_handler_query_t * : z_fifo_handler_query_drop,       \
-                  z_owned_fifo_handler_reply_t * : z_fifo_handler_reply_drop,       \
-                  z_owned_fifo_handler_sample_t * : z_fifo_handler_sample_drop,     \
-                  z_owned_ring_handler_query_t * : z_ring_handler_query_drop,       \
-                  z_owned_ring_handler_reply_t * : z_ring_handler_reply_drop,       \
-                  z_owned_ring_handler_sample_t * : z_ring_handler_sample_drop,     \
-                  z_owned_reply_err_t * : z_reply_err_drop                          \
+                  z_moved_keyexpr_t : z_keyexpr_drop,                             \
+                  z_moved_config_t : z_config_drop,                               \
+                  z_moved_session_t : z_session_drop,                             \
+                  z_moved_subscriber_t : z_subscriber_drop,                       \
+                  z_moved_publisher_t : z_publisher_drop,                         \
+                  z_moved_queryable_t : z_queryable_drop,                         \
+                  z_moved_reply_t : z_reply_drop,                                 \
+                  z_moved_hello_t : z_hello_drop,                                 \
+                  z_moved_string_t : z_string_drop,                               \
+                  z_moved_string_array_t : z_string_array_drop,                   \
+                  z_moved_sample_t : z_sample_drop,                               \
+                  z_moved_query_t : z_query_drop,                                 \
+                  z_moved_encoding_t : z_encoding_drop,                           \
+                  z_moved_slice_t : z_slice_drop,                                 \
+                  z_moved_bytes_t : z_bytes_drop,                                 \
+                  z_moved_closure_sample_t : z_closure_sample_drop,               \
+                  z_moved_closure_query_t : z_closure_query_drop,                 \
+                  z_moved_closure_reply_t : z_closure_reply_drop,                 \
+                  z_moved_closure_hello_t : z_closure_hello_drop,                 \
+                  z_moved_closure_zid_t : z_closure_zid_drop,                     \
+                  z_moved_mutex_t : z_mutex_drop,                                 \
+                  z_moved_condvar_t : z_condvar_drop,                             \
+                  z_moved_fifo_handler_query_t : z_fifo_handler_query_drop,       \
+                  z_moved_fifo_handler_reply_t : z_fifo_handler_reply_drop,       \
+                  z_moved_fifo_handler_sample_t : z_fifo_handler_sample_drop,     \
+                  z_moved_ring_handler_query_t : z_ring_handler_query_drop,       \
+                  z_moved_ring_handler_reply_t : z_ring_handler_reply_drop,       \
+                  z_moved_ring_handler_sample_t : z_ring_handler_sample_drop,     \
+                  z_moved_reply_err_t : z_reply_err_drop                          \
             )(x)
 
 /**
