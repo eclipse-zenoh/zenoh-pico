@@ -24,7 +24,7 @@ void callback(const z_loaned_sample_t* sample, void* context) {
 }
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
-    z_drop(pub);
+    z_drop(z_move(pub));
     // A note on lifetimes:
     //  here, `sub` takes ownership of `pub` and will drop it before returning from its own `drop`,
     //  which makes passing a pointer to the stack safe as long as `sub` is dropped in a scope where `pub` is still
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     z_view_keyexpr_t ping;
     z_view_keyexpr_from_str_unchecked(&ping, "test/ping");
     z_owned_closure_sample_t respond;
-    z_closure(&respond, callback, drop, (void*)z_move(pub));
+    z_closure(&respond, callback, drop, (void*)(&pub));
     z_owned_subscriber_t sub;
     if (z_declare_subscriber(&sub, z_loan(session), z_loan(ping), z_move(respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
