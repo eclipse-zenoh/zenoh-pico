@@ -27,31 +27,44 @@
 //
 // !!! FOR INTERNAL USAGE ONLY !!!
 
+#define _Z_MOVED_TYPE(name)       \
+    typedef struct {              \
+        z_owned_##name##_t *_ptr; \
+    } z_moved_##name##_t;
+
+#define _Z_LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
+
 // For pointer types
 #define _Z_OWNED_TYPE_PTR(type, name) \
     typedef struct {                  \
         type *_val;                   \
-    } z_owned_##name##_t;
+    } z_owned_##name##_t;             \
+    _Z_LOANED_TYPE(type, name)        \
+    _Z_MOVED_TYPE(name)
 
 // For value types
 #define _Z_OWNED_TYPE_VALUE(type, name) \
     typedef struct {                    \
         type _val;                      \
-    } z_owned_##name##_t;
+    } z_owned_##name##_t;               \
+    _Z_LOANED_TYPE(type, name)          \
+    _Z_MOVED_TYPE(name)
 
 // For value types
 #define _Z_OWNED_TYPE_VALUE(type, name) \
     typedef struct {                    \
         type _val;                      \
-    } z_owned_##name##_t;
+    } z_owned_##name##_t;               \
+    _Z_LOANED_TYPE(type, name)          \
+    _Z_MOVED_TYPE(name)
 
 // For refcounted types
 #define _Z_OWNED_TYPE_RC(type, name) \
     typedef struct {                 \
         type _rc;                    \
-    } z_owned_##name##_t;
-
-#define _Z_LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
+    } z_owned_##name##_t;            \
+    _Z_LOANED_TYPE(type, name)       \
+    _Z_MOVED_TYPE(name)
 
 #define _Z_VIEW_TYPE(type, name) \
     typedef struct {             \

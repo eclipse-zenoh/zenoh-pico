@@ -26,8 +26,8 @@ void config_client(void) {
     z_owned_config_t config;
     assert(0 == z_config_client(&config, locator));
     assert(z_config_check(&config));
-    strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_MODE_KEY), Z_CONFIG_MODE_CLIENT);
-    strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_CONNECT_KEY), locator);
+    assert(strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_MODE_KEY), Z_CONFIG_MODE_CLIENT) == 0);
+    assert(strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_CONNECT_KEY), locator) == 0);
     z_config_drop(&config);
 }
 
@@ -36,8 +36,8 @@ void config_peer(void) {
     z_owned_config_t config;
     assert(0 == z_config_peer(&config, locator));
     assert(z_config_check(&config));
-    strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_MODE_KEY), Z_CONFIG_MODE_PEER);
-    strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_CONNECT_KEY), locator);
+    assert(strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_MODE_KEY), Z_CONFIG_MODE_PEER) == 0);
+    assert(strcmp(zp_config_get(z_config_loan(&config), Z_CONFIG_CONNECT_KEY), locator) == 0);
     z_config_drop(&config);
     assert(0 != z_config_peer(&config, NULL));
     assert(!z_config_check(&config));

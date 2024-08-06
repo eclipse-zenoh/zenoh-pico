@@ -64,19 +64,16 @@ typedef _z_timestamp_t z_timestamp_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 _Z_OWNED_TYPE_VALUE(_z_slice_t, slice)
-_Z_LOANED_TYPE(_z_slice_t, slice)
 
 /**
  * Represents a container for slices.
  */
 _Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
-_Z_LOANED_TYPE(_z_bytes_t, bytes)
 
 /**
  * Represents a writer for serialized data.
  */
 _Z_OWNED_TYPE_VALUE(_z_bytes_writer_t, bytes_writer)
-_Z_LOANED_TYPE(_z_bytes_writer_t, bytes_writer)
 
 /**
  * An iterator over multi-element serialized data.
@@ -96,7 +93,6 @@ typedef _z_bytes_reader_t z_bytes_reader_t;
  *   const char *val: A pointer to the string.
  */
 _Z_OWNED_TYPE_VALUE(_z_string_t, string)
-_Z_LOANED_TYPE(_z_string_t, string)
 _Z_VIEW_TYPE(_z_string_t, string)
 
 /**
@@ -108,7 +104,6 @@ _Z_VIEW_TYPE(_z_string_t, string)
  *   - :c:func:`z_keyexpr_as_view_string`
  */
 _Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
-_Z_LOANED_TYPE(_z_keyexpr_t, keyexpr)
 _Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
 
 /**
@@ -122,13 +117,11 @@ _Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
  *   - :c:func:`zp_config_insert`
  */
 _Z_OWNED_TYPE_VALUE(_z_config_t, config)
-_Z_LOANED_TYPE(_z_config_t, config)
 
 /**
  * Represents a Zenoh Session.
  */
 _Z_OWNED_TYPE_RC(_z_session_rc_t, session)
-_Z_LOANED_TYPE(_z_session_rc_t, session)
 
 /**
  * Represents a Zenoh Subscriber entity.
@@ -139,7 +132,6 @@ _Z_LOANED_TYPE(_z_session_rc_t, session)
  *   - :c:func:`z_undeclare_subscriber`
  */
 _Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
-_Z_LOANED_TYPE(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
@@ -152,7 +144,6 @@ _Z_LOANED_TYPE(_z_subscriber_t, subscriber)
  *   - :c:func:`z_publisher_delete`
  */
 _Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
-_Z_LOANED_TYPE(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
@@ -163,14 +154,12 @@ _Z_LOANED_TYPE(_z_publisher_t, publisher)
  *   - :c:func:`z_undeclare_queryable`
  */
 _Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
-_Z_LOANED_TYPE(_z_queryable_t, queryable)
 
 /**
  * Represents a Zenoh Query entity, received by Zenoh Queryable entities.
  *
  */
 _Z_OWNED_TYPE_RC(_z_query_rc_t, query)
-_Z_LOANED_TYPE(_z_query_rc_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
@@ -180,7 +169,6 @@ _Z_LOANED_TYPE(_z_query_rc_t, query)
  *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
 _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
-_Z_LOANED_TYPE(_z_encoding_t, encoding)
 
 /**
  * Represents a Zenoh reply error.
@@ -190,7 +178,6 @@ _Z_LOANED_TYPE(_z_encoding_t, encoding)
  *   z_loaned_bytes_t* payload: The payload of this zenoh reply error.
  */
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
-_Z_LOANED_TYPE(_z_value_t, reply_err)
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
@@ -467,7 +454,6 @@ static inline z_qos_t z_qos_default(void) { return _Z_N_QOS_DEFAULT; }
  *
  */
 _Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
-_Z_LOANED_TYPE(_z_sample_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
@@ -478,13 +464,11 @@ _Z_LOANED_TYPE(_z_sample_t, sample)
  *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
 _Z_OWNED_TYPE_VALUE(_z_hello_t, hello)
-_Z_LOANED_TYPE(_z_hello_t, hello)
 
 /**
  * Represents the reply to a query.
  */
 _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
-_Z_LOANED_TYPE(_z_reply_t, reply)
 
 /**
  * Represents an array of non null-terminated string.
@@ -496,7 +480,6 @@ _Z_LOANED_TYPE(_z_reply_t, reply)
  *   - :c:func:`z_str_array_array_is_empty`
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
-_Z_LOANED_TYPE(_z_string_svec_t, string_array)
 _Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
@@ -522,7 +505,6 @@ typedef struct {
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
-_Z_LOANED_TYPE(_z_closure_sample_t, closure_sample)
 
 void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample);
 
@@ -546,7 +528,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
-_Z_LOANED_TYPE(_z_closure_query_t, closure_query)
 
 void z_closure_query_call(const z_loaned_closure_query_t *closure, const z_loaned_query_t *query);
 
@@ -570,7 +551,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
-_Z_LOANED_TYPE(_z_closure_reply_t, closure_reply)
 
 void z_closure_reply_call(const z_loaned_closure_reply_t *closure, const z_loaned_reply_t *reply);
 
@@ -594,7 +574,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
-_Z_LOANED_TYPE(_z_closure_hello_t, closure_hello)
 
 void z_closure_hello_call(const z_loaned_closure_hello_t *closure, const z_loaned_hello_t *hello);
 
@@ -617,7 +596,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
-_Z_LOANED_TYPE(_z_closure_zid_t, closure_zid)
 
 void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
