@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/fifo_mt.h"
 #include "zenoh-pico/collections/ring_mt.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,31 +66,33 @@ extern "C" {
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                        \
         }                                                                                                              \
     }                                                                                                                  \
-    static inline _Bool z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler, elem_owned_type *elem) {   \
+    static inline int8_t z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler, elem_owned_type *elem) {  \
         elem_null_f(elem);                                                                                             \
         int8_t ret = collection_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);   \
         if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                            \
-            return false;                                                                                              \
+            return Z_CHANNEL_DISCONNECTED;                                                                             \
         }                                                                                                              \
         if (ret != _Z_RES_OK) {                                                                                        \
             _Z_ERROR("%s failed: %i", #collection_pull_f, ret);                                                        \
-            return false;                                                                                              \
+            return ret;                                                                                                \
         }                                                                                                              \
-        return true;                                                                                                   \
+        return _Z_RES_OK;                                                                                              \
     }                                                                                                                  \
-    static inline _Bool z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                        \
-                                                    elem_owned_type *elem) {                                           \
+    static inline int8_t z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                       \
+                                                     elem_owned_type *elem) {                                          \
         elem_null_f(elem);                                                                                             \
         int8_t ret =                                                                                                   \
             collection_try_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);        \
         if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                            \
-            return false;                                                                                              \
+            return Z_CHANNEL_DISCONNECTED;                                                                             \
+        } else if (ret == _Z_RES_CHANNEL_NODATA) {                                                                     \
+            return Z_CHANNEL_NODATA;                                                                                   \
         }                                                                                                              \
         if (ret != _Z_RES_OK) {                                                                                        \
             _Z_ERROR("%s failed: %i", #collection_try_pull_f, ret);                                                    \
-            return false;                                                                                              \
+            return ret;                                                                                                \
         }                                                                                                              \
-        return true;                                                                                                   \
+        return _Z_RES_OK;                                                                                              \
     }                                                                                                                  \
                                                                                                                        \
     static inline void _z_##handler_name##_clear(handler_type *handler) {                                              \

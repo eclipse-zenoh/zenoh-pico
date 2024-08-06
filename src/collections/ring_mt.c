@@ -136,6 +136,8 @@ int8_t _z_ring_mt_try_pull(void *dst, void *context, z_element_move_f element_mo
         element_move(dst, src);
     } else if (r->is_closed) {
         return _Z_RES_CHANNEL_CLOSED;
+    } else {
+        return _Z_RES_CHANNEL_NODATA;
     }
     return _Z_RES_OK;
 }

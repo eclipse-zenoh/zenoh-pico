@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     z_owned_query_t query;
     z_null(&query);
-    for (z_recv(z_loan(handler), &query); z_check(query); z_recv(z_loan(handler), &query)) {
+    for (z_result_t res = z_recv(z_loan(handler), &query); res == Z_OK; res = z_recv(z_loan(handler), &query)) {
         const z_loaned_query_t *q = z_loan(query);
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_query_keyexpr(q), &keystr);

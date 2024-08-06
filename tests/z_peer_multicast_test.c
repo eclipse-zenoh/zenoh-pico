@@ -76,8 +76,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
     z_owned_session_t s1;
-    z_open(&s1, z_move(config));
-    assert(z_check(s1));
+    assert(z_open(&s1, z_move(config)) == Z_OK);
     _z_slice_t id_as_bytes =
         _z_slice_from_buf(_Z_RC_IN_VAL(z_loan(s1))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
     _z_string_t zid1 = _z_string_convert_bytes(&id_as_bytes);
@@ -95,8 +94,8 @@ int main(int argc, char **argv) {
     zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]);
 
     z_owned_session_t s2;
-    z_open(&s2, z_move(config));
-    assert(z_check(s2));
+    assert(z_open(&s2, z_move(config)) == Z_OK);
+
     id_as_bytes =
         _z_slice_from_buf(_Z_RC_IN_VAL(z_loan(s2))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
     _z_string_t zid2 = _z_string_convert_bytes(&id_as_bytes);
