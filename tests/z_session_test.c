@@ -49,5 +49,5 @@ int main(void) {
     zp_stop_lease_task(z_loan_mut(s));
 
     // Immediately close the session
-    z_close(&s);
+    z_close(z_move(s));
 }
