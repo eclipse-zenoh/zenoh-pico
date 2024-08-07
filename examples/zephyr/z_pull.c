@@ -29,14 +29,8 @@
 
 #define KEYEXPR "demo/example/**"
 
-// @TODO
-// void data_handler(const z_loaned_sample_t *sample, void *arg) {
-//     z_view_string_t keystr;
-//     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
-//     printf(" >> [Subscriber handler] Received ('%s': '%.*s')\n", z_string_data(z_loan(keystr)),
-//     (int)sample->payload.len,
-//            sample->payload.start);
-// }
+const size_t INTERVAL = 5000;
+const size_t SIZE = 3;
 
 int main(int argc, char **argv) {
     sleep(5);
@@ -58,31 +52,49 @@ int main(int argc, char **argv) {
     }
     printf("OK\n");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan_mut(s), NULL);
-    zp_start_lease_task(z_loan_mut(s), NULL);
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
+        exit(-1);
+    }
 
-    // @TODO
-    // z_owned_closure_sample_t callback;
-    // z_closure(&callback, data_handler);
-    printf("Declaring Subscriber on '%s'...", KEYEXPR);
-    // @TODO
-    // z_owned_pull_subscriber_t sub = z_declare_pull_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL);
-    // if (!z_check(sub)) {
-    //     printf("Unable to declare subscriber.\n");
-    //     exit(-1);
-    // }
-    // printf("OK!\n");
+    printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
+    z_owned_closure_sample_t closure;
+    z_owned_ring_handler_sample_t handler;
+    z_ring_channel_sample_new(&closure, &handler, SIZE);
+    z_owned_subscriber_t sub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
+        printf("Unable to declare subscriber.\n");
+        exit(-1);
+    }
 
-    // while (1) {
-    //     sleep(5);
-    //     printf("Pulling data from '%s'...\n", KEYEXPR);
-    //     z_subscriber_pull(z_loan(sub));
-    // }
+    printf("Pulling data every %zu ms... Ring size: %zd\n", INTERVAL, SIZE);
+    z_owned_sample_t sample;
+    while (true) {
+        z_result_t res;
+        for (res = z_try_recv(z_loan(handler), &sample); res == Z_OK; res = z_try_recv(z_loan(handler), &sample)) {
+            z_view_string_t keystr;
+            z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
+            z_owned_string_t value;
+            z_bytes_deserialize_into_string(z_sample_payload(z_loan(sample)), &value);
+            printf(">> [Subscriber] Pulled ('%s': '%s')\n", z_string_data(z_loan(keystr)),
+                   z_string_data(z_loan(value)));
+            z_drop(z_move(value));
+            z_drop(z_move(sample));
+        }
+        if (res == Z_CHANNEL_NODATA) {
+            printf(">> [Subscriber] Nothing to pull... sleep for %zu ms\n", INTERVAL);
+            z_sleep_ms(INTERVAL);
+        } else {
+            break;
+        }
+    }
 
-    // printf("Closing Zenoh Session...");
-    // z_undeclare_pull_subscriber(z_move(sub));
-    printf("Pull Subscriber not supported... exiting\n");
+    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(handler));
 
     z_close(z_move(s));
     printf("OK!\n");

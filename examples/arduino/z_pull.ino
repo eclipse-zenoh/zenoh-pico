@@ -34,22 +34,10 @@
 
 #define KEYEXPR "demo/example/**"
 
-// @TODO
-// z_owned_pull_subscriber_t sub;
+const size_t INTERVAL = 5000;
+const size_t SIZE = 3;
 
-// @TODO
-// void data_handler(const z_loaned_sample_t *sample, void *arg) {
-//     z_view_string_t keystr;
-//     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
-//     std::string val((const char *)sample->payload.start, sample->payload.len);
-
-//     Serial.print(" >> [Subscription listener] Received (");
-//     Serial.print(z_string_data(z_view_string_loan(&keystr)));
-//     Serial.print(", ");
-//     Serial.print(val.c_str());
-//     Serial.println(")");
-
-// }
+z_owned_ring_handler_sample_t handler;
 
 void setup() {
     // Initialize Serial for debug
@@ -86,37 +74,51 @@ void setup() {
     }
     Serial.println("OK");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan_mut(&s), NULL);
-    zp_start_lease_task(z_session_loan_mut(&s), NULL);
+    if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
+        printf("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s));
+        return;
+    }
 
-    // Declare Zenoh subscriber
-    Serial.print("Declaring Subscriber on ");
-    Serial.print(KEYEXPR);
-    Serial.println(" ...");
-    // @TODO
-    // z_owned_closure_sample_t callback;
-    // z_closure_sample(&callback, data_handler, NULL, NULL);
-    // @TODO
-    // z_view_keyexpr_t ke;
-    // z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    // sub = z_declare_pull_subscriber(z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback),
-    // NULL); if (!z_pull_subscriber_check(&sub)) {
-    //     Serial.println("Unable to declare subscriber.");
-    //     while (1) {
-    //         ;
-    //     }
-    // }
-    // Serial.println("OK");
-    // Serial.println("Zenoh setup finished!");
-    Serial.println("Pull Subscriber not supported... exiting");
+    printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
+    z_owned_closure_sample_t closure;
+    z_ring_channel_sample_new(&closure, &handler, SIZE);
+    z_owned_subscriber_t sub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    if (z_declare_subscriber(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),
+                             NULL) < 0) {
+        Serial.println("Unable to declare subscriber.");
+        return;
+    }
+
+    Serial.println("OK");
+    Serial.println("Zenoh setup finished!");
 
     delay(300);
 }
 
 void loop() {
-    delay(5000);
-    // z_subscriber_pull(z_pull_subscriber_loan(&sub));
+    z_owned_sample_t sample;
+    z_result_t res;
+    for (res = z_ring_handler_sample_try_recv(z_ring_handler_sample_loan(&handler), &sample); res == Z_OK;
+         res = z_ring_handler_sample_try_recv(z_ring_handler_sample_loan(&handler), &sample)) {
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(z_sample_loan(&sample)), &keystr);
+        z_owned_string_t value;
+        z_bytes_deserialize_into_string(z_sample_payload(z_sample_loan(&sample)), &value);
+        Serial.print(">> [Subscriber] Pulled (");
+        Serial.print(z_string_data(z_view_string_loan(&keystr)));
+        Serial.print(": ");
+        Serial.print(z_string_data(z_string_loan(&value)));
+        Serial.println(")");
+
+        z_string_drop(z_string_move(&value));
+        z_sample_drop(z_sample_move(&sample));
+    }
+    if (res == Z_CHANNEL_NODATA) {
+        delay(INTERVAL);
+    }
 }
 #else
 void setup() {
