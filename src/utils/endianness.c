@@ -35,18 +35,17 @@ uint64_t _z_le_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 32) | ((uint64_t)src[5] << 40) | ((uint64_t)src[6] << 48) | ((uint64_t)src[7] << 56);
 }
 
-#define _Z_LE_STORE_IMPL(SIZE)                                         \
-    size_t _z_le_store##SIZE(const uint##SIZE##_t val, uint8_t *dst) { \
-        size_t len = 1;                                                \
-        uint##SIZE##_t tmp_val = val;                                  \
-        for (size_t i = 0; i < sizeof(val); ++i) {                     \
-            if (tmp_val != 0) {                                        \
-                len = i + 1;                                           \
-            }                                                          \
-            dst[i] = (uint8_t)tmp_val;                                 \
-            tmp_val = tmp_val >> 8;                                    \
-        }                                                              \
-        return len;                                                    \
+#define _Z_LE_STORE_IMPL(SIZE)                                   \
+    size_t _z_le_store##SIZE(uint##SIZE##_t val, uint8_t *dst) { \
+        size_t len = 1;                                          \
+        for (size_t i = 0; i < sizeof(val); ++i) {               \
+            if (val != 0) {                                      \
+                len = i + 1;                                     \
+            }                                                    \
+            dst[i] = (uint8_t)val;                               \
+            val = val >> 8;                                      \
+        }                                                        \
+        return len;                                              \
     }
 
 _Z_LE_STORE_IMPL(16)
@@ -65,18 +64,17 @@ uint64_t _z_be_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 24) | ((uint64_t)src[5] << 16) | ((uint64_t)src[6] << 8) | ((uint64_t)src[7] << 0);
 }
 
-#define _Z_BE_STORE_IMPL(SIZE)                                         \
-    size_t _z_be_store##SIZE(const uint##SIZE##_t val, uint8_t *dst) { \
-        size_t len = 1;                                                \
-        uint##SIZE##_t tmp_val = val;                                  \
-        for (size_t i = 0; i < sizeof(val); ++i) {                     \
-            if (tmp_val != 0) {                                        \
-                len = i + 1;                                           \
-            }                                                          \
-            dst[sizeof(val) - 1 - i] = (uint8_t)tmp_val;               \
-            tmp_val = tmp_val >> 8;                                    \
-        }                                                              \
-        return len;                                                    \
+#define _Z_BE_STORE_IMPL(SIZE)                                   \
+    size_t _z_be_store##SIZE(uint##SIZE##_t val, uint8_t *dst) { \
+        size_t len = 1;                                          \
+        for (size_t i = 0; i < sizeof(val); ++i) {               \
+            if (val != 0) {                                      \
+                len = i + 1;                                     \
+            }                                                    \
+            dst[sizeof(val) - 1 - i] = (uint8_t)val;             \
+            val = val >> 8;                                      \
+        }                                                        \
+        return len;                                              \
     }
 
 _Z_BE_STORE_IMPL(16)
