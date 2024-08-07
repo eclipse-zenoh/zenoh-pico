@@ -24,7 +24,7 @@ void callback(const z_loaned_sample_t* sample, void* context) {
 }
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
-    z_drop(z_move(pub));
+    z_drop(z_move(*pub));
     // A note on lifetimes:
     //  here, `sub` takes ownership of `pub` and will drop it before returning from its own `drop`,
     //  which makes passing a pointer to the stack safe as long as `sub` is dropped in a scope where `pub` is still
