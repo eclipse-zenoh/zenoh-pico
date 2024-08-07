@@ -35,38 +35,43 @@ uint64_t _z_le_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 32) | ((uint64_t)src[5] << 40) | ((uint64_t)src[6] << 48) | ((uint64_t)src[7] << 56);
 }
 
-static size_t _z_le_calc_vle_len(size_t size, uint8_t *buff) {
-    size_t vle_len = size;
-    while (vle_len > 1 && buff[vle_len - 1] == 0) {
-        --vle_len;
-    }
-    return vle_len;
-}
-
 size_t _z_le_store16(const uint16_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-    return _z_le_calc_vle_len(2, dst);
+    size_t len = 1;
+    uint16_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 size_t _z_le_store32(const uint32_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-    dst[2] = (uint8_t)(val >> 16);
-    dst[3] = (uint8_t)(val >> 24);
-    return _z_le_calc_vle_len(4, dst);
+    size_t len = 1;
+    uint32_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 size_t _z_le_store64(const uint64_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-    dst[2] = (uint8_t)(val >> 16);
-    dst[3] = (uint8_t)(val >> 24);
-    dst[4] = (uint8_t)(val >> 32);
-    dst[5] = (uint8_t)(val >> 40);
-    dst[6] = (uint8_t)(val >> 48);
-    dst[7] = (uint8_t)(val >> 56);
-    return _z_le_calc_vle_len(8, dst);
+    size_t len = 1;
+    uint64_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 // *** Big endian ***
@@ -81,38 +86,43 @@ uint64_t _z_be_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 24) | ((uint64_t)src[5] << 16) | ((uint64_t)src[6] << 8) | ((uint64_t)src[7] << 0);
 }
 
-static size_t _z_be_calc_vle_len(size_t size, uint8_t *buff) {
-    size_t vle_len = size;
-    while (vle_len > 1 && buff[size - vle_len] == 0) {
-        --vle_len;
-    }
-    return vle_len;
-}
-
 size_t _z_be_store16(const uint16_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 8);
-    dst[1] = (uint8_t)(val >> 0);
-    return _z_be_calc_vle_len(2, dst);
+    size_t len = 1;
+    uint16_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[sizeof(val) - 1 - i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 size_t _z_be_store32(const uint32_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 24);
-    dst[1] = (uint8_t)(val >> 16);
-    dst[2] = (uint8_t)(val >> 8);
-    dst[3] = (uint8_t)(val >> 0);
-    return _z_be_calc_vle_len(4, dst);
+    size_t len = 1;
+    uint32_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[sizeof(val) - 1 - i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 size_t _z_be_store64(const uint64_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 56);
-    dst[1] = (uint8_t)(val >> 48);
-    dst[2] = (uint8_t)(val >> 40);
-    dst[3] = (uint8_t)(val >> 32);
-    dst[4] = (uint8_t)(val >> 24);
-    dst[5] = (uint8_t)(val >> 16);
-    dst[6] = (uint8_t)(val >> 8);
-    dst[7] = (uint8_t)(val >> 0);
-    return _z_be_calc_vle_len(8, dst);
+    size_t len = 1;
+    uint64_t tmp_val = val;
+    for (size_t i = 0; i < sizeof(val); ++i) {
+        if (tmp_val != 0) {
+            len = i + 1;
+        }
+        dst[sizeof(val) - 1 - i] = (uint8_t)tmp_val;
+        tmp_val = tmp_val >> 8;
+    }
+    return len;
 }
 
 // *** Host ***
