@@ -116,6 +116,7 @@
                   z_moved_closure_reply_t : z_closure_reply_drop,                 \
                   z_moved_closure_hello_t : z_closure_hello_drop,                 \
                   z_moved_closure_zid_t : z_closure_zid_drop,                     \
+                  z_moved_task_t : z_task_join,                                   \
                   z_moved_mutex_t : z_mutex_drop,                                 \
                   z_moved_condvar_t : z_condvar_drop,                             \
                   z_moved_fifo_handler_query_t : z_fifo_handler_query_drop,       \
@@ -151,11 +152,19 @@
                   z_owned_string_t : z_string_check,                   \
                   z_view_string_t : z_view_string_check,               \
                   z_owned_string_array_t : z_string_array_check,       \
+                  z_owned_closure_sample_t : z_closure_sample_check,   \
+                  z_owned_closure_query_t : z_closure_query_check,     \
+                  z_owned_closure_reply_t : z_closure_reply_check,     \
+                  z_owned_closure_hello_t : z_closure_hello_check,     \
+                  z_owned_closure_zid_t : z_closure_zid_check,         \
                   z_owned_slice_t : z_slice_check,                     \
                   z_owned_bytes_t : z_bytes_check,                     \
                   z_owned_sample_t : z_sample_check,                   \
                   z_owned_query_t : z_query_check,                     \
-                  z_owned_encoding_t : z_encoding_check                \
+                  z_owned_encoding_t : z_encoding_check,               \
+                  z_owned_task_t : z_task_check,                       \
+                  z_owned_mutex_t : z_mutex_check,                     \
+                  z_owned_condvar_t : z_condvar_check                  \
             )(&x)
 
 /**
@@ -278,6 +287,7 @@
                   z_owned_reply_t * : z_reply_null,                                 \
                   z_owned_hello_t * : z_hello_null,                                 \
                   z_owned_string_t * : z_string_null,                               \
+                  z_owned_string_array_t * : z_string_array_null,                   \
                   z_owned_slice_t  *: z_slice_null,                                 \
                   z_owned_bytes_t  *: z_bytes_null,                                 \
                   z_owned_closure_sample_t * : z_closure_sample_null,               \
@@ -287,7 +297,10 @@
                   z_owned_closure_zid_t * : z_closure_zid_null,                     \
                   z_owned_sample_t * : z_sample_null,                               \
                   z_owned_encoding_t * : z_encoding_null,                           \
-                  z_owned_reply_err_t * : z_reply_err_null                          \
+                  z_owned_reply_err_t * : z_reply_err_null,                         \
+                  z_owned_task_t * : z_task_null,                                   \
+                  z_owned_mutex_t * : z_mutex_null,                                 \
+                  z_owned_condvar_t *: z_condvar_null                               \
             )(x)
 
 // clang-format on
