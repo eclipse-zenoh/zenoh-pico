@@ -33,6 +33,12 @@ configure_file(
   @ONLY
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
+  @ONLY
+)
+
 set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 if(NOT DEFINED PROJECT_VERSION_TWEAK)
 	set(project_version "${project_version}")
