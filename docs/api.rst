@@ -55,6 +55,7 @@ Data Structures
 .. autoctype:: types.h::z_qos_t
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_iterator_t
+.. autoctype:: types.h::z_owned_bytes_writer_t
   
 
 Owned Types
@@ -126,10 +127,6 @@ TODO: owned type description
 
   Represents an array of non null-terminated string.
 
-.. c:type:: z_owned_bytes_writer_t
-
-  Represents a writer for serialized data.
-
 Loaned Types
 ~~~~~~~~~~~
 
@@ -198,10 +195,6 @@ TODO: loaned type description
 .. c:type:: z_loaned_string_array_t
 
   Represents an array of non null-terminated string.
-
-.. c:type:: z_loaned_bytes_writer_t
-
-  Represents a writer for serialized data.
 
 View Types
 ~~~~~~~~~~~
@@ -367,10 +360,13 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_iterator_next
 .. autocfunction:: primitives.h::z_bytes_get_reader
 .. autocfunction:: primitives.h::z_bytes_reader_read
+.. autocfunction:: primitives.h::z_bytes_reader_read_bounded
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
 .. autocfunction:: primitives.h::z_bytes_get_writer
 .. autocfunction:: primitives.h::z_bytes_writer_write_all
+.. autocfunction:: primitives.h::z_bytes_writer_append
+.. autocfunction:: primitives.h::z_bytes_writer_append_bounded
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

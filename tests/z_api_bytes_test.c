@@ -85,19 +85,85 @@ void test_writer(void) {
     z_owned_bytes_t payload;
     z_bytes_empty(&payload);
 
-    z_owned_bytes_writer_t writer;
-    z_bytes_get_writer(z_bytes_loan_mut(&payload), &writer);
+    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&payload));
 
-    assert(z_bytes_writer_write_all(z_bytes_writer_loan_mut(&writer), data, 3) == 0);
-    assert(z_bytes_writer_write_all(z_bytes_writer_loan_mut(&writer), data + 3, 5) == 0);
-    assert(z_bytes_writer_write_all(z_bytes_writer_loan_mut(&writer), data + 8, 2) == 0);
-
-    z_bytes_writer_drop(z_bytes_writer_move(&writer));
+    assert(z_bytes_writer_write_all(&writer, data, 3) == 0);
+    assert(z_bytes_writer_write_all(&writer, data + 3, 5) == 0);
+    assert(z_bytes_writer_write_all(&writer, data + 8, 2) == 0);
 
     z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
 
     assert(10 == z_bytes_reader_read(&reader, data_out, 10));
     assert(0 == memcmp(data, data_out, 10));
+
+    z_bytes_drop(z_bytes_move(&payload));
+}
+
+void test_bounded(void) {
+    uint32_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    uint32_t data_out[10] = {0};
+
+    z_owned_bytes_t payload;
+    z_bytes_empty(&payload);
+
+    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&payload));
+    for (size_t i = 0; i < 10; ++i) {
+        z_owned_bytes_t b;
+        z_bytes_serialize_from_uint32(&b, data[i]);
+        assert(z_bytes_writer_append_bounded(&writer, z_bytes_move(&b)) == 0);
+    }
+    {
+        z_owned_bytes_t b;
+        z_bytes_serialize_from_str(&b, "test");
+        assert(z_bytes_writer_append_bounded(&writer, z_bytes_move(&b)) == 0);
+    }
+
+    z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
+
+    for (size_t i = 0; i < 10; ++i) {
+        z_owned_bytes_t b;
+        assert(z_bytes_reader_read_bounded(&reader, &b) == 0);
+        assert(z_bytes_deserialize_into_uint32(z_bytes_loan(&b), &data_out[i]) == 0);
+        z_bytes_drop(z_bytes_move(&b));
+    }
+    assert(!memcmp(data, data_out, 10));
+    {
+        z_owned_string_t s;
+        z_owned_bytes_t b;
+        assert(z_bytes_reader_read_bounded(&reader, &b) == 0);
+        z_bytes_deserialize_into_string(z_bytes_loan(&b), &s);
+        assert(strncmp("test", z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s))) == 0);
+        z_bytes_drop(z_bytes_move(&b));
+        z_string_drop(z_string_move(&s));
+    }
+    uint8_t d;
+    assert(0 == z_bytes_reader_read(&reader, &d, 1));  // we reached the end of the payload
+
+    z_bytes_drop(z_bytes_move(&payload));
+}
+
+void test_append(void) {
+    uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    uint8_t data_out[10] = {0};
+
+    z_owned_bytes_t payload;
+    z_bytes_empty(&payload);
+
+    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&payload));
+    z_bytes_writer_write_all(&writer, data, 5);
+    {
+        z_owned_bytes_t b;
+        z_bytes_serialize_from_buf(&b, data + 5, 5);
+        assert(z_bytes_writer_append(&writer, z_bytes_move(&b)) == 0);
+    }
+
+    z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
+    z_bytes_reader_read(&reader, data_out, 10);
+
+    assert(!memcmp(data, data_out, 10));
+
+    uint8_t d;
+    assert(0 == z_bytes_reader_read(&reader, &d, 1));  // we reached the end of the payload
 
     z_bytes_drop(z_bytes_move(&payload));
 }
@@ -239,6 +305,8 @@ int main(void) {
     test_writer();
     test_slice();
     test_arithmetic();
+    test_bounded();
+    test_append();
     test_iter();
     test_pair();
 }
