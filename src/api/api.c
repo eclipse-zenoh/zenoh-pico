@@ -1088,13 +1088,14 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
     }
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload), &opt.encoding->_val,
-                   Z_SAMPLE_KIND_PUT, opt.congestion_control, opt.priority, opt.is_express, opt.timestamp,
-                   _z_bytes_from_owned_bytes(opt.attachment));
+    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
+                   opt.encoding == NULL ? NULL : &opt.encoding->_val, Z_SAMPLE_KIND_PUT, opt.congestion_control,
+                   opt.priority, opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
 
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(
-        _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload), &opt.encoding->_val,
+        _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
+        opt.encoding == NULL ? NULL : &opt.encoding->_val,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
         opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
     // Clean-up
@@ -1151,8 +1152,8 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
         opt = *options;
     }
     // Set publisher
-    _z_publisher_t int_pub =
-        _z_declare_publisher(zs, key, &opt.encoding->_val, opt.congestion_control, opt.priority, opt.is_express);
+    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_val,
+                                                  opt.congestion_control, opt.priority, opt.is_express);
     // Create write filter
     int8_t res = _z_write_filter_create(&int_pub);
     if (res != _Z_RES_OK) {
