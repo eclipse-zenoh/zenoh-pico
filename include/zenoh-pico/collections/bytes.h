@@ -106,12 +106,13 @@ typedef struct {
 
 _z_bytes_writer_t _z_bytes_get_writer(_z_bytes_t *bytes, size_t cache_size);
 int8_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+int8_t _z_bytes_writer_append(_z_bytes_writer_t *writer, _z_bytes_t *bytes);
 int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer);
 
 typedef struct {
     _z_bytes_writer_t writer;
 } _z_bytes_iterator_writer_t;
 
-_z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes);
+_z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes, size_t cache_size);
 int8_t _z_bytes_iterator_writer_write(_z_bytes_iterator_writer_t *writer, _z_bytes_t *bytes);
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

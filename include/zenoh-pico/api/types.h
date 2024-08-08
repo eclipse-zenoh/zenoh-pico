@@ -75,8 +75,7 @@ _Z_LOANED_TYPE(_z_bytes_t, bytes)
 /**
  * Represents a writer for serialized data.
  */
-_Z_OWNED_TYPE_VALUE(_z_bytes_writer_t, bytes_writer)
-_Z_LOANED_TYPE(_z_bytes_writer_t, bytes_writer)
+typedef _z_bytes_iterator_writer_t z_bytes_writer_t;
 
 /**
  * An iterator over multi-element serialized data.
@@ -86,7 +85,7 @@ typedef _z_bytes_iterator_t z_bytes_iterator_t;
 /**
  * A reader for serialized data.
  */
-typedef _z_bytes_reader_t z_bytes_reader_t;
+typedef _z_bytes_iterator_t z_bytes_reader_t;
 
 /**
  * Represents a string without null-terminator.

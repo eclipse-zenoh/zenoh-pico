@@ -619,7 +619,7 @@ int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_
                          void *context) {
     z_bytes_empty(bytes);
     z_owned_bytes_t data;
-    _z_bytes_iterator_writer_t iter_writer = _z_bytes_get_iterator_writer(&bytes->_val);
+    _z_bytes_iterator_writer_t iter_writer = _z_bytes_get_iterator_writer(&bytes->_val, 0);
     while (iterator_body(&data, context)) {
         _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&iter_writer, &data._val), z_bytes_drop(bytes));
     }
@@ -637,17 +637,21 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); 
 
 _Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
 
-z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_reader(bytes); }
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
 size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len) {
-    return _z_bytes_reader_read(reader, dst, len);
+    return _z_bytes_reader_read(&reader->_reader, dst, len);
+}
+
+int8_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst) {
+    return _z_bytes_iterator_next(reader, &dst->_val);
 }
 
 int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin) {
-    return _z_bytes_reader_seek(reader, offset, origin);
+    return _z_bytes_reader_seek(&reader->_reader, offset, origin);
 }
 
-int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(reader); }
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(&reader->_reader); }
 
 z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
@@ -660,12 +664,20 @@ _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
     return true;
 }
 
-void z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer) {
-    writer->_val = _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE);
+z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes) {
+    return _z_bytes_get_iterator_writer(bytes, Z_IOSLICE_SIZE);
 }
 
-int8_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    return _z_bytes_writer_write_all(writer, src, len);
+int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
+    return _z_bytes_writer_write_all(&writer->writer, src, len);
+}
+
+int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes) {
+    return _z_bytes_writer_append(&writer->writer, &bytes->_val);
+}
+
+int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_owned_bytes_t *bytes) {
+    return _z_bytes_iterator_writer_write(writer, &bytes->_val);
 }
 
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
@@ -804,18 +816,6 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_ch
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_vec_t, string_array, _z_string_array_check)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty, _z_slice_copy, _z_slice_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_drop)
-
-_Bool _z_bytes_writer_check(const _z_bytes_writer_t *w) { return w->bytes == NULL; }
-_z_bytes_writer_t _z_bytes_writer_null(void) {
-    return (_z_bytes_writer_t){.cache = NULL, .cache_size = 0, .bytes = NULL};
-}
-int8_t _z_bytes_writer_copy(_z_bytes_writer_t *dst, const _z_bytes_writer_t *src) {
-    *dst = _z_bytes_get_writer(src->bytes, src->cache_size);
-    return _Z_RES_OK;
-}
-void _z_bytes_writer_drop(_z_bytes_writer_t *w) { *w = _z_bytes_writer_null(); }
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_writer_check, _z_bytes_writer_null,
-                              _z_bytes_writer_copy, _z_bytes_writer_drop)
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
