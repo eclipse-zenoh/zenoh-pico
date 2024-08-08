@@ -314,20 +314,20 @@
  * Default maximum batch size possible to be received or sent.
  */
 #ifndef Z_BATCH_UNICAST_SIZE
-#define Z_BATCH_UNICAST_SIZE 65535
+#define Z_BATCH_UNICAST_SIZE 2048
 #endif
 /**
  * Default maximum batch size possible to be received or sent.
  */
 #ifndef Z_BATCH_MULTICAST_SIZE
-#define Z_BATCH_MULTICAST_SIZE 8192
+#define Z_BATCH_MULTICAST_SIZE 2048
 #endif
 
 /**
  * Default maximum size for fragmented messages.
  */
 #ifndef Z_FRAG_MAX_SIZE
-#define Z_FRAG_MAX_SIZE 300000
+#define Z_FRAG_MAX_SIZE 4096
 #endif
 
 /**
