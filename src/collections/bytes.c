@@ -181,8 +181,8 @@ int8_t _z_bytes_to_uint8(const _z_bytes_t *bs, uint8_t *val) {
 
 int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint16_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint16_t)) != sizeof(uint16_t)) {
+    uint8_t buf[sizeof(uint16_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint16_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load16(buf);
@@ -191,8 +191,8 @@ int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *val) {
 
 int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint32_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint32_t)) != sizeof(uint32_t)) {
+    uint8_t buf[sizeof(uint32_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint32_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load32(buf);
@@ -201,8 +201,8 @@ int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *val) {
 
 int8_t _z_bytes_to_uint64(const _z_bytes_t *bs, uint64_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint64_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint64_t)) != sizeof(uint64_t)) {
+    uint8_t buf[sizeof(uint64_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint64_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load64(buf);
@@ -223,20 +223,20 @@ int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) { return _z_bytes_from_bu
 
 int8_t _z_bytes_from_uint16(_z_bytes_t *b, uint16_t val) {
     uint8_t buf[sizeof(uint16_t)];
-    _z_host_le_store16(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint16_t));
+    size_t len = _z_host_le_store16(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_uint32(_z_bytes_t *b, uint32_t val) {
     uint8_t buf[sizeof(uint32_t)];
-    _z_host_le_store32(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint32_t));
+    size_t len = _z_host_le_store32(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_uint64(_z_bytes_t *b, uint64_t val) {
     uint8_t buf[sizeof(uint64_t)];
-    _z_host_le_store64(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint64_t));
+    size_t len = _z_host_le_store64(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_float(_z_bytes_t *b, float val) { return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val)); }

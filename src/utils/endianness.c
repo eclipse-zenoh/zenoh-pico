@@ -35,28 +35,22 @@ uint64_t _z_le_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 32) | ((uint64_t)src[5] << 40) | ((uint64_t)src[6] << 48) | ((uint64_t)src[7] << 56);
 }
 
-void _z_le_store16(const uint16_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-}
+#define _Z_LE_STORE_IMPL(SIZE)                                   \
+    size_t _z_le_store##SIZE(uint##SIZE##_t val, uint8_t *dst) { \
+        size_t len = 1;                                          \
+        for (size_t i = 0; i < sizeof(val); ++i) {               \
+            if (val != 0) {                                      \
+                len = i + 1;                                     \
+            }                                                    \
+            dst[i] = (uint8_t)val;                               \
+            val = val >> 8;                                      \
+        }                                                        \
+        return len;                                              \
+    }
 
-void _z_le_store32(const uint32_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-    dst[2] = (uint8_t)(val >> 16);
-    dst[3] = (uint8_t)(val >> 24);
-}
-
-void _z_le_store64(const uint64_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 0);
-    dst[1] = (uint8_t)(val >> 8);
-    dst[2] = (uint8_t)(val >> 16);
-    dst[3] = (uint8_t)(val >> 24);
-    dst[4] = (uint8_t)(val >> 32);
-    dst[5] = (uint8_t)(val >> 40);
-    dst[6] = (uint8_t)(val >> 48);
-    dst[7] = (uint8_t)(val >> 56);
-}
+_Z_LE_STORE_IMPL(16)
+_Z_LE_STORE_IMPL(32)
+_Z_LE_STORE_IMPL(64)
 
 // *** Big endian ***
 uint16_t _z_be_load16(const uint8_t *src) { return (uint16_t)(src[0] << 8) | (uint16_t)(src[1] << 0); }
@@ -70,28 +64,22 @@ uint64_t _z_be_load64(const uint8_t *src) {
            ((uint64_t)src[4] << 24) | ((uint64_t)src[5] << 16) | ((uint64_t)src[6] << 8) | ((uint64_t)src[7] << 0);
 }
 
-void _z_be_store16(const uint16_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 8);
-    dst[1] = (uint8_t)(val >> 0);
-}
+#define _Z_BE_STORE_IMPL(SIZE)                                   \
+    size_t _z_be_store##SIZE(uint##SIZE##_t val, uint8_t *dst) { \
+        size_t len = 1;                                          \
+        for (size_t i = 0; i < sizeof(val); ++i) {               \
+            if (val != 0) {                                      \
+                len = i + 1;                                     \
+            }                                                    \
+            dst[sizeof(val) - 1 - i] = (uint8_t)val;             \
+            val = val >> 8;                                      \
+        }                                                        \
+        return len;                                              \
+    }
 
-void _z_be_store32(const uint32_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 24);
-    dst[1] = (uint8_t)(val >> 16);
-    dst[2] = (uint8_t)(val >> 8);
-    dst[3] = (uint8_t)(val >> 0);
-}
-
-void _z_be_store64(const uint64_t val, uint8_t *dst) {
-    dst[0] = (uint8_t)(val >> 56);
-    dst[1] = (uint8_t)(val >> 48);
-    dst[2] = (uint8_t)(val >> 40);
-    dst[3] = (uint8_t)(val >> 32);
-    dst[4] = (uint8_t)(val >> 24);
-    dst[5] = (uint8_t)(val >> 16);
-    dst[6] = (uint8_t)(val >> 8);
-    dst[7] = (uint8_t)(val >> 0);
-}
+_Z_BE_STORE_IMPL(16)
+_Z_BE_STORE_IMPL(32)
+_Z_BE_STORE_IMPL(64)
 
 // *** Host ***
 uint16_t _z_host_le_load16(const uint8_t *src) {
@@ -118,26 +106,26 @@ uint64_t _z_host_le_load64(const uint8_t *src) {
 #endif
 }
 
-void _z_host_le_store16(const uint16_t val, uint8_t *dst) {
+size_t _z_host_le_store16(const uint16_t val, uint8_t *dst) {
 #if defined(ZENOH_ENDIANNNESS_BIG)
-    _z_be_store16(val, dst);
+    return _z_be_store16(val, dst);
 #elif defined(ZENOH_ENDIANNNESS_LITTLE)
-    _z_le_store16(val, dst);
+    return _z_le_store16(val, dst);
 #endif
 }
-void _z_host_le_store32(const uint32_t val, uint8_t *dst) {
+size_t _z_host_le_store32(const uint32_t val, uint8_t *dst) {
 #if defined(ZENOH_ENDIANNNESS_BIG)
-    _z_be_store32(val, dst);
+    return _z_be_store32(val, dst);
 #elif defined(ZENOH_ENDIANNNESS_LITTLE)
-    _z_le_store32(val, dst);
+    return _z_le_store32(val, dst);
 #endif
 }
 
-void _z_host_le_store64(const uint64_t val, uint8_t *dst) {
+size_t _z_host_le_store64(const uint64_t val, uint8_t *dst) {
 #if defined(ZENOH_ENDIANNNESS_BIG)
-    _z_be_store64(val, dst);
+    return _z_be_store64(val, dst);
 #elif defined(ZENOH_ENDIANNNESS_LITTLE)
-    _z_le_store64(val, dst);
+    return _z_le_store64(val, dst);
 #endif
 }
 
