@@ -1000,8 +1000,9 @@ z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
  *
  * Parameters:
  *  reader: Data reader to read from.
- *  dst: An uninitialized memory location where a new piece of data will be read. Note that it does not involve a copy, but only increases reference count.
- * 
+ *  dst: An uninitialized memory location where a new piece of data will be read. Note that it does not involve a copy,
+ * but only increases reference count.
+ *
  * Return:
  *  ​0​ upon success, negative error code otherwise.
  */
@@ -1070,25 +1071,26 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
 
 /**
  * Appends bytes.
- * This allows to compose a serialized data out of multiple `z_owned_bytes_t` that may point to different memory regions.
- * Said in other terms, it allows to create a linear view on different memory regions without copy.
- * 
+ * This allows to compose a serialized data out of multiple `z_owned_bytes_t` that may point to different memory
+ * regions. Said in other terms, it allows to create a linear view on different memory regions without copy.
+ *
  * Parameters:
  *   writer: A data writer.
  *   bytes: A data to append.
- * 
+ *
  * Return:
  *  0 in case of success, negative error code otherwise
  */
 int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
 
 /**
- * Appends bytes, with boundaries information. It would allow to read the same piece of data using :c:func:`z_bytes_reader_read_bounded`.
- * 
+ * Appends bytes, with boundaries information. It would allow to read the same piece of data using
+ * :c:func:`z_bytes_reader_read_bounded`.
+ *
  * Parameters:
  *   writer: A data writer.
  *   bytes: A data to append.
- * 
+ *
  * Return:
  *  0 in case of success, negative error code otherwise
  */

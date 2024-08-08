@@ -55,7 +55,7 @@ Data Structures
 .. autoctype:: types.h::z_qos_t
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_iterator_t
-.. autoctype:: types.h::z_owned_bytes_writer_t
+.. autoctype:: types.h::z_bytes_writer_t
   
 
 Owned Types
