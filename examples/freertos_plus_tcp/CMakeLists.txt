@@ -61,15 +61,6 @@ target_link_libraries(zenohpico
   freertos_kernel
   freertos_plus_tcp
 )
-target_compile_definitions(zenohpico
-  PUBLIC
-    Z_FEATURE_MULTI_THREAD=1
-    Z_FEATURE_LINK_TCP=1
-    Z_FEATURE_SCOUTING_UDP=1
-    Z_FEATURE_LINK_UDP_UNICAST=1
-    Z_FEATURE_LINK_UDP_MULTICAST=0
-    Z_CONFIG_SOCKET_TIMEOUT=1000
-)
 
 add_library(main OBJECT main.c)
 target_link_libraries(main

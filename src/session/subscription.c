@@ -207,10 +207,12 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    _z_n_qos_t qos, const _z_timestampt_t *timestamp, const _z_bytes_t attachment) {
+                                    _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                                    const _z_bytes_t attachment) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
+    _ZP_UNUSED(encoding);
     _ZP_UNUSED(qos);
     _ZP_UNUSED(timestamp);
     _ZP_UNUSED(attachment);

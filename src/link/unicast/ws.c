@@ -94,7 +94,7 @@ int8_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
         if (s_port == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
-            uint32_t port = strtoul(s_port, NULL, 10);
+            uint32_t port = (uint32_t)strtoul(s_port, NULL, 10);
             if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
@@ -111,7 +111,7 @@ int8_t _z_f_link_open_ws(_z_link_t *zl) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&zl->_endpoint._config, WS_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
-        tout = strtoul(tout_as_str, NULL, 10);
+        tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
     ret = _z_open_ws(&zl->_socket._ws._sock, zl->_socket._ws._rep, tout);

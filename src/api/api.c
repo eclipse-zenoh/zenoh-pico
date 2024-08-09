@@ -826,7 +826,9 @@ static _z_bytes_t _z_bytes_from_owned_bytes(z_owned_bytes_t *bytes) {
         return _z_bytes_null();
     }
 }
+#endif
 
+#if Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
 static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) {
     if (encoding == NULL) {

@@ -57,8 +57,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 set(ZENOH_DEBUG 0 CACHE STRING "Use this to set the ZENOH_DEBUG variable")
-set(FRAG_MAX_SIZE 0 CACHE STRING "Use this to override the maximum size for fragmented messages")
-set(BATCH_UNICAST_SIZE 0 CACHE STRING "Use this to override the maximum unicast batch size")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -181,13 +179,33 @@ add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
 
 # Zenoh pico feature configuration options
-set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread feature")
+set(FRAG_MAX_SIZE 4096 CACHE STRING "Use this to override the maximum size for fragmented messages")
+set(BATCH_UNICAST_SIZE 2048 CACHE STRING "Use this to override the maximum unicast batch size")
+set(BATCH_MULTICAST_SIZE 2048 CACHE STRING "Use this to override the maximum multicast batch size")
+set(Z_CONFIG_SOCKET_TIMEOUT 100 CACHE STRING "Default socket timeout in milliseconds")
+
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
-set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
+set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interests")
+set(Z_FEATURE_FRAGMENTATION 1 CACHE STRING "Toggle fragmentation")
+set(Z_FEATURE_ENCODING_VALUES 1 CACHE STRING "Toggle encoding values")
+set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread")
+set(Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION 0 CACHE STRING "Toggle dynamic memory allocation")
+
+set(Z_FEATURE_LINK_TCP 1 CACHE STRING "Toggle TCP links")
+set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
+set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
+set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
+set(Z_FEATURE_SCOUTING_UDP 1 CACHE STRING "Toggle UDP scouting")
+set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
+set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
+set(Z_FEATURE_MULTICAST_TRANSPORT 1 CACHE STRING "Toggle multicast transport")
+set(Z_FEATURE_UNICAST_TRANSPORT 1 CACHE STRING "Toggle unicast transport")
+set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport")
 set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interest feature")
+
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
@@ -204,16 +222,19 @@ configure_file(
   @ONLY
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  @ONLY
+)
+
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
-if(FRAG_MAX_SIZE)
-  message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
-endif()
-if(BATCH_UNICAST_SIZE)
-  message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
-endif()
+message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
+message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
+message(STATUS "Multicast batch max size: ${BATCH_MULTICAST_SIZE}")
 message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
 message(STATUS "Build for FreeRTOS-Plus-TCP: ${WITH_FREERTOS_PLUS_TCP}")
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
