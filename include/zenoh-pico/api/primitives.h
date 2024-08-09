@@ -1000,6 +1000,19 @@ z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
  *
  * Parameters:
  *  reader: Data reader to read from.
+ *  dst: An uninitialized memory location where a new piece of data will be read. Note that it does not involve a copy,
+ * but only increases reference count.
+ *
+ * Return:
+ *  ​0​ upon success, negative error code otherwise.
+ */
+int8_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst);
+
+/**
+ * Reads data into specified destination.
+ *
+ * Parameters:
+ *  reader: Data reader to read from.
  *  dst: Buffer where the read data is written.
  *  len: Maximum number of bytes to read.
  *
@@ -1007,6 +1020,7 @@ z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
  *  Number of bytes read. If return value is smaller than `len`, it means that the end of the data was reached.
  */
 size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
+
 /**
  * Sets the `reader` position indicator for the payload to the value pointed to by offset.
  * The new position is exactly `offset` bytes measured from the beginning of the payload if origin is `SEEK_SET`,
@@ -1040,23 +1054,50 @@ int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
  *   writer: Uninitialized memory location where writer is to be constructed.
  *
  */
-void z_bytes_get_writer(z_loaned_bytes_t *bytes, z_owned_bytes_writer_t *writer);
+z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
 
 /**
  * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
  *
  * Parameters:
- *   writer: A data writer
+ *   writer: A data writer.
  *   src: Buffer to write from.
  *   len: Number of bytes to write.
  *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
+int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
- * Create timestamp
+ * Appends bytes.
+ * This allows to compose a serialized data out of multiple `z_owned_bytes_t` that may point to different memory
+ * regions. Said in other terms, it allows to create a linear view on different memory regions without copy.
+ *
+ * Parameters:
+ *   writer: A data writer.
+ *   bytes: A data to append.
+ *
+ * Return:
+ *  0 in case of success, negative error code otherwise
+ */
+int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
+
+/**
+ * Appends bytes, with boundaries information. It would allow to read the same piece of data using
+ * :c:func:`z_bytes_reader_read_bounded`.
+ *
+ * Parameters:
+ *   writer: A data writer.
+ *   bytes: A data to append.
+ *
+ * Return:
+ *  0 in case of success, negative error code otherwise
+ */
+int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
+
+/**
+ * Create timestamp.
  *
  * Parameters:
  *   ts: An uninitialized :c:type:`z_timestamp_t`.
@@ -1289,7 +1330,6 @@ _Z_OWNED_FUNCTIONS_DEF(sample)
 _Z_OWNED_FUNCTIONS_DEF(query)
 _Z_OWNED_FUNCTIONS_DEF(slice)
 _Z_OWNED_FUNCTIONS_DEF(bytes)
-_Z_OWNED_FUNCTIONS_DEF(bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(reply_err)
 _Z_OWNED_FUNCTIONS_DEF(encoding)
 

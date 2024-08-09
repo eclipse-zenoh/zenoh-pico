@@ -112,6 +112,9 @@ extern "C" {
                                                                                                                        \
     static inline int8_t handler_new_f_name(callback_type *callback, z_owned_##handler_name##_t *handler,              \
                                             size_t capacity) {                                                         \
+        if (capacity < 1) {                                                                                            \
+            return _Z_ERR_INVALID;                                                                                     \
+        }                                                                                                              \
         handler->_val.collection = collection_new_f(capacity);                                                         \
         if (handler->_val.collection == NULL) {                                                                        \
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                        \

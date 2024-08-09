@@ -156,7 +156,7 @@ int8_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
 
 int8_t _z_bytes_from_pair(_z_bytes_t *out, _z_bytes_t *first, _z_bytes_t *second) {
     *out = _z_bytes_null();
-    _z_bytes_iterator_writer_t writer = _z_bytes_get_iterator_writer(out);
+    _z_bytes_iterator_writer_t writer = _z_bytes_get_iterator_writer(out, 0);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&writer, first), _z_bytes_drop(second));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&writer, second), _z_bytes_drop(out));
 
@@ -181,8 +181,8 @@ int8_t _z_bytes_to_uint8(const _z_bytes_t *bs, uint8_t *val) {
 
 int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint16_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint16_t)) != sizeof(uint16_t)) {
+    uint8_t buf[sizeof(uint16_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint16_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load16(buf);
@@ -191,8 +191,8 @@ int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *val) {
 
 int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint32_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint32_t)) != sizeof(uint32_t)) {
+    uint8_t buf[sizeof(uint32_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint32_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load32(buf);
@@ -201,8 +201,8 @@ int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *val) {
 
 int8_t _z_bytes_to_uint64(const _z_bytes_t *bs, uint64_t *val) {
     *val = 0;
-    uint8_t buf[sizeof(uint64_t)];
-    if (_z_bytes_to_buf(bs, buf, sizeof(uint64_t)) != sizeof(uint64_t)) {
+    uint8_t buf[sizeof(uint64_t)] = {0};
+    if (_z_bytes_to_buf(bs, buf, sizeof(uint64_t)) == 0) {
         return _Z_ERR_DID_NOT_READ;
     }
     *val = _z_host_le_load64(buf);
@@ -223,20 +223,20 @@ int8_t _z_bytes_from_uint8(_z_bytes_t *b, uint8_t val) { return _z_bytes_from_bu
 
 int8_t _z_bytes_from_uint16(_z_bytes_t *b, uint16_t val) {
     uint8_t buf[sizeof(uint16_t)];
-    _z_host_le_store16(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint16_t));
+    size_t len = _z_host_le_store16(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_uint32(_z_bytes_t *b, uint32_t val) {
     uint8_t buf[sizeof(uint32_t)];
-    _z_host_le_store32(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint32_t));
+    size_t len = _z_host_le_store32(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_uint64(_z_bytes_t *b, uint64_t val) {
     uint8_t buf[sizeof(uint64_t)];
-    _z_host_le_store64(val, buf);
-    return _z_bytes_from_buf(b, buf, sizeof(uint64_t));
+    size_t len = _z_host_le_store64(val, buf);
+    return _z_bytes_from_buf(b, buf, len);
 }
 
 int8_t _z_bytes_from_float(_z_bytes_t *b, float val) { return _z_bytes_from_buf(b, (uint8_t *)&val, sizeof(val)); }
@@ -433,8 +433,7 @@ int8_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
     if (writer->cache != NULL) {
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(writer->bytes, _z_bytes_num_slices(writer->bytes) - 1);
         if (_Z_RC_IN_VAL(&arc_s->slice)->start + arc_s->len == writer->cache) {
-            size_t remaining_in_cache = _Z_RC_IN_VAL(&arc_s->slice)->len - arc_s->len;
-            if (remaining_in_cache > 0) return _Z_RES_OK;
+            if (_Z_RC_IN_VAL(&arc_s->slice)->len > arc_s->len) return _Z_RES_OK;
         }
     }
     // otherwise we allocate a new cache
@@ -457,7 +456,7 @@ int8_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, 
         _z_slice_t s = _z_slice_copy_from_buf(src, len);
         if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, len);
-        if _Z_RC_IS_NULL (&arc_s.slice) {
+        if (_Z_RC_IS_NULL(&arc_s.slice)) {
             _z_slice_clear(&s);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
@@ -478,14 +477,19 @@ int8_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, 
     return _Z_RES_OK;
 }
 
-_z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes) {
-    return (_z_bytes_iterator_writer_t){.writer = _z_bytes_get_writer(bytes, 0)};
+int8_t _z_bytes_writer_append(_z_bytes_writer_t *writer, _z_bytes_t *src) {
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(writer->bytes, src), _z_bytes_drop(src));
+    writer->cache = NULL;
+    return _Z_RES_OK;
 }
+
+_z_bytes_iterator_writer_t _z_bytes_get_iterator_writer(_z_bytes_t *bytes, size_t cache_size) {
+    return (_z_bytes_iterator_writer_t){.writer = _z_bytes_get_writer(bytes, cache_size)};
+}
+
 int8_t _z_bytes_iterator_writer_write(_z_bytes_iterator_writer_t *writer, _z_bytes_t *src) {
     uint8_t l_buf[16];
     size_t l_len = _z_zsize_encode_buf(l_buf, _z_bytes_len(src));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_writer_write_all(&writer->writer, l_buf, l_len), _z_bytes_drop(src));
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_append_bytes(writer->writer.bytes, src), _z_bytes_drop(src));
-
-    return _Z_RES_OK;
+    return _z_bytes_writer_append(&writer->writer, src);
 }

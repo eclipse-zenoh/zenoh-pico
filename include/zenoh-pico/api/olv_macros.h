@@ -34,22 +34,6 @@
 
 #define _Z_LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
 
-// For pointer types
-#define _Z_OWNED_TYPE_PTR(type, name) \
-    typedef struct {                  \
-        type *_val;                   \
-    } z_owned_##name##_t;             \
-    _Z_LOANED_TYPE(type, name)        \
-    _Z_MOVED_TYPE(name)
-
-// For value types
-#define _Z_OWNED_TYPE_VALUE(type, name) \
-    typedef struct {                    \
-        type _val;                      \
-    } z_owned_##name##_t;               \
-    _Z_LOANED_TYPE(type, name)          \
-    _Z_MOVED_TYPE(name)
-
 // For value types
 #define _Z_OWNED_TYPE_VALUE(type, name) \
     typedef struct {                    \
@@ -91,7 +75,6 @@
     void z_##name##_null(z_owned_##name##_t *obj);
 
 #define _Z_OWNED_FUNCTIONS_SYSTEM_DEF(name)                                    \
-    _Bool z_##name##_check(const z_owned_##name##_t *obj);                     \
     const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj); \
     z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);         \
     z_moved_##name##_t z_##name##_move(z_owned_##name##_t *obj);               \
