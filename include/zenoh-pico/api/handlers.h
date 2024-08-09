@@ -157,6 +157,7 @@ extern "C" {
     void *z_##kind_name##_handler_##item_name##_move(void);  \
     void *z_##kind_name##_handler_##item_name##_drop(void);  \
     void *z_##kind_name##_handler_##item_name##_recv(void);  \
+    void *z_##kind_name##_handler_##item_name##_take(void);  \
     void *z_##kind_name##_handler_##item_name##_try_recv(void);
 
 // This macro defines:
