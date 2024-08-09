@@ -158,7 +158,6 @@
  */
 #define Z_JOIN_INTERVAL 2500
 
-
 #define Z_SN_RESOLUTION 0x02
 #define Z_REQ_RESOLUTION 0x02
 
