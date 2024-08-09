@@ -205,6 +205,12 @@ configure_file(
   @ONLY
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  @ONLY
+)
+
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
