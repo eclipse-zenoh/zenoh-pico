@@ -151,29 +151,24 @@
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(type, name, f_check, f_null, f_drop) \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, static inline)
 
-#define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                              \
-    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                           \
-    _Bool z_##name##_check(const z_owned_##name##_t *val) { return !_Z_RC_IS_NULL(&val->_rc); }       \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; }   \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }           \
-    void z_##name##_null(z_owned_##name##_t *val) { val->_rc = _z_##name##_rc_null(); }               \
-    z_moved_##name##_t z_##name##_move(z_owned_##name##_t *val) { return (z_moved_##name##_t){val}; } \
-    void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t src) {                           \
-        obj->_rc = src._ptr->_rc;                                                                     \
-        src._ptr->_rc = _z_##name##_rc_null();                                                        \
-    }                                                                                                 \
-    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {                \
-        int8_t ret = _Z_RES_OK;                                                                       \
-        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                  \
-        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                               \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                        \
-        }                                                                                             \
-        return ret;                                                                                   \
-    }                                                                                                 \
-    void z_##name##_drop(z_moved_##name##_t val) {                                                    \
-        if (!_Z_RC_IS_NULL(&val._ptr->_rc)) {                                                         \
-            _z_##name##_rc_drop(&val._ptr->_rc);                                                      \
-        }                                                                                             \
+#define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                            \
+    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                         \
+    _Bool z_##name##_check(const z_owned_##name##_t *val) { return !_Z_RC_IS_NULL(&val->_rc); }     \
+    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; } \
+    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }         \
+    void z_##name##_null(z_owned_##name##_t *val) { val->_rc = _z_##name##_rc_null(); }             \
+    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
+        int8_t ret = _Z_RES_OK;                                                                     \
+        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                \
+        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                             \
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
+        }                                                                                           \
+        return ret;                                                                                 \
+    }                                                                                               \
+    void z_##name##_drop(z_moved_##name##_t val) {                                                  \
+        if (!_Z_RC_IS_NULL(&val._ptr->_rc)) {                                                       \
+            _z_##name##_rc_drop(&val._ptr->_rc);                                                    \
+        }                                                                                           \
     }
 
 #define _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(type, name)                                                   \

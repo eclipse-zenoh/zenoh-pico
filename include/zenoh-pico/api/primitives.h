@@ -1081,7 +1081,7 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
+int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t bytes);
 
 /**
  * Appends bytes, with boundaries information. It would allow to read the same piece of data using
@@ -1094,7 +1094,7 @@ int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_owned_bytes_t *bytes);
+int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t bytes);
 
 /**
  * Create timestamp.

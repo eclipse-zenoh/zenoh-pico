@@ -674,12 +674,12 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
     return _z_bytes_writer_write_all(&writer->writer, src, len);
 }
 
-int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_owned_bytes_t *bytes) {
-    return _z_bytes_writer_append(&writer->writer, &bytes->_val);
+int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t bytes) {
+    return _z_bytes_writer_append(&writer->writer, &bytes._ptr->_val);
 }
 
-int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_owned_bytes_t *bytes) {
-    return _z_bytes_iterator_writer_write(writer, &bytes->_val);
+int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t bytes) {
+    return _z_bytes_iterator_writer_write(writer, &bytes._ptr->_val);
 }
 
 int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
@@ -1090,14 +1090,15 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
     }
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
-                   opt.encoding == NULL ? NULL : &opt.encoding->_val, Z_SAMPLE_KIND_PUT, opt.congestion_control,
-                   opt.priority, opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment));
+    ret =
+        _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload._ptr),
+                 opt.encoding._ptr == NULL ? NULL : &opt.encoding._ptr->_val, Z_SAMPLE_KIND_PUT, opt.congestion_control,
+                 opt.priority, opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment._ptr));
 
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(
-        _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload),
-        opt.encoding == NULL ? NULL : &opt.encoding->_val,
+        _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(payload._ptr),
+        opt.encoding._ptr == NULL ? NULL : &opt.encoding._ptr->_val,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
         opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment._ptr));
     // Clean-up
@@ -1154,7 +1155,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
         opt = *options;
     }
     // Set publisher
-    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_val,
+    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding._ptr == NULL ? NULL : &opt.encoding._ptr->_val,
                                                   opt.congestion_control, opt.priority, opt.is_express);
     // Create write filter
     int8_t res = _z_write_filter_create(&int_pub);

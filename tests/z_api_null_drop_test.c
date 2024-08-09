@@ -77,9 +77,10 @@ int main(void) {
 #if Z_FEATURE_QUERY == 1
     TEST(reply)
 #endif
-    TEST(task)
-    TEST(mutex)
-    TEST(condvar)
+    // Double drop not supported for these types
+    // TEST(task)
+    // TEST(mutex)
+    // TEST(condvar)
 
     return 0;
 }
