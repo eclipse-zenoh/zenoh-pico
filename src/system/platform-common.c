@@ -14,6 +14,9 @@
 #include "zenoh-pico/system/platform-common.h"
 
 #include "zenoh-pico/api/olv_macros.h"
+#include "zenoh-pico/utils/logging.h"
+
+void _z_report_system_error(int errcode) { _Z_ERROR("System error: %i", errcode); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
