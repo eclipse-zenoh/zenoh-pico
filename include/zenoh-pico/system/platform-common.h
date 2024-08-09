@@ -15,10 +15,12 @@
 #ifndef ZENOH_PICO_SYSTEM_PLATFORM_COMMON_H
 #define ZENOH_PICO_SYSTEM_PLATFORM_COMMON_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/result.h"
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
@@ -48,6 +50,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void _z_report_system_error(int errcode);
+
+#define _Z_CHECK_SYS_ERR(expr)             \
+    do {                                   \
+        int __res = expr;                  \
+        if (__res != 0) {                  \
+            _z_report_system_error(__res); \
+            return _Z_ERR_SYSTEM_GENERIC;  \
+        }                                  \
+        return _Z_RES_OK;                  \
+    } while (false)
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void);

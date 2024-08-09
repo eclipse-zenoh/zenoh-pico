@@ -102,12 +102,12 @@ void z_free(void *ptr) { free(ptr); }
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
 int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    return (int8_t)pthread_create(task, attr, fun, arg);
+    _Z_CHECK_SYS_ERR(pthread_create(task, attr, fun, arg));
 }
 
-int8_t _z_task_join(_z_task_t *task) { return (int8_t)pthread_join(*task, NULL); }
+int8_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
 
-int8_t _z_task_cancel(_z_task_t *task) { return (int8_t)pthread_cancel(*task); }
+int8_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
 
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
@@ -116,26 +116,26 @@ void _z_task_free(_z_task_t **task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) { return (int8_t)pthread_mutex_init(m, 0); }
+int8_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, 0)); }
 
-int8_t _z_mutex_drop(_z_mutex_t *m) { return (int8_t)pthread_mutex_destroy(m); }
+int8_t _z_mutex_drop(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_destroy(m)); }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { return (int8_t)pthread_mutex_lock(m); }
+int8_t _z_mutex_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_lock(m)); }
 
-int8_t _z_mutex_try_lock(_z_mutex_t *m) { return (int8_t)pthread_mutex_trylock(m); }
+int8_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_trylock(m)); }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { return (int8_t)pthread_mutex_unlock(m); }
+int8_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) { return (int8_t)pthread_cond_init(cv, 0); }
+int8_t _z_condvar_init(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_init(cv, 0)); }
 
-int8_t _z_condvar_drop(_z_condvar_t *cv) { return (int8_t)pthread_cond_destroy(cv); }
+int8_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
 
-int8_t _z_condvar_signal(_z_condvar_t *cv) { return (int8_t)pthread_cond_signal(cv); }
+int8_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signal(cv)); }
 
-int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return (int8_t)pthread_cond_broadcast(cv); }
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
 
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return (int8_t)pthread_cond_wait(cv, m); }
+int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
