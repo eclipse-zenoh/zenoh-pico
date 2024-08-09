@@ -19,6 +19,7 @@
 #define Z_FRAG_MAX_SIZE 300000
 #define Z_BATCH_UNICAST_SIZE 65535
 #define Z_BATCH_MULTICAST_SIZE 8096
+#define Z_CONFIG_SOCKET_TIMEOUT 100
 
 #define Z_FEATURE_MULTI_THREAD 1
 #define Z_FEATURE_PUBLICATION 1
@@ -156,11 +157,6 @@
  * Default multicast session join interval in milliseconds.
  */
 #define Z_JOIN_INTERVAL 2500
-
-/**
- * Default socket timeout in milliseconds.
- */
-#define Z_CONFIG_SOCKET_TIMEOUT 100
 
 #define Z_SN_RESOLUTION 0x02
 #define Z_REQ_RESOLUTION 0x02
