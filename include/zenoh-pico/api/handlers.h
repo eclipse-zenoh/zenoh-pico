@@ -31,16 +31,15 @@ extern "C" {
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,          \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,                \
                                collection_pull_f, collection_try_pull_f, collection_close_f, elem_owned_type,          \
-                               elem_loaned_type, elem_clone_f, elem_drop_f, elem_null_f)                               \
+                               elem_loaned_type, elem_clone_f, elem_move_f, elem_drop_f, elem_null_f)                  \
     typedef struct {                                                                                                   \
         collection_type *collection;                                                                                   \
     } handler_type;                                                                                                    \
                                                                                                                        \
     _Z_OWNED_TYPE_VALUE(handler_type, handler_name)                                                                    \
-    _Z_LOANED_TYPE(handler_type, handler_name)                                                                         \
                                                                                                                        \
     static inline void _z_##handler_name##_elem_free(void **elem) {                                                    \
-        elem_drop_f((elem_owned_type *)*elem);                                                                         \
+        elem_drop_f(elem_move_f((elem_owned_type *)*elem));                                                            \
         z_free(*elem);                                                                                                 \
         *elem = NULL;                                                                                                  \
     }                                                                                                                  \
@@ -140,20 +139,25 @@ extern "C" {
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
                            /* elem_clone_f                     */ z_##item_name##_clone,                    \
+                           /* elem_move_f                     */ z_##item_name##_move,                      \
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
                            /* elem_null                       */ z_##item_name##_null)
 
-#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)       \
-    typedef struct {                                        \
-        uint8_t _foo;                                       \
-    } z_owned_##kind_name##_handler_##item_name##_t;        \
-    typedef struct {                                        \
-        uint8_t _foo;                                       \
-    } z_loaned_##kind_name##_handler_##item_name##_t;       \
-    void *z_##kind_name##_handler_##item_name##_loan(void); \
-    void *z_##kind_name##_handler_##item_name##_move(void); \
-    void *z_##kind_name##_handler_##item_name##_drop(void); \
-    void *z_##kind_name##_handler_##item_name##_recv(void); \
+#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)        \
+    typedef struct {                                         \
+        uint8_t _foo;                                        \
+    } z_owned_##kind_name##_handler_##item_name##_t;         \
+    typedef struct {                                         \
+        uint8_t _foo;                                        \
+    } z_loaned_##kind_name##_handler_##item_name##_t;        \
+    typedef struct {                                         \
+        z_owned_##kind_name##_handler_##item_name##_t *_ptr; \
+    } z_moved_##kind_name##_handler_##item_name##_t;         \
+    void *z_##kind_name##_handler_##item_name##_loan(void);  \
+    void *z_##kind_name##_handler_##item_name##_move(void);  \
+    void *z_##kind_name##_handler_##item_name##_drop(void);  \
+    void *z_##kind_name##_handler_##item_name##_recv(void);  \
+    void *z_##kind_name##_handler_##item_name##_take(void);  \
     void *z_##kind_name##_handler_##item_name##_try_recv(void);
 
 // This macro defines:

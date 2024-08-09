@@ -79,7 +79,7 @@ void app_main(void) {
     z_view_keyexpr_t ke;
     if (z_view_keyexpr_from_str(&ke, KEYEXPR) < 0) {
         printf("%s is not a valid key expression", KEYEXPR);
-        return -1;
+        return;
     }
 
     printf("Creating Queryable on '%s'...\n", KEYEXPR);
