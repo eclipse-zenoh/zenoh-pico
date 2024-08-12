@@ -90,7 +90,8 @@ void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
 void print_attachment(kv_pairs_rx_t *kvp) {
     printf("    with attachment:\n");
     for (uint32_t i = 0; i < kvp->current_idx; i++) {
-        printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
+        printf("     %d: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp->data[i].key)),
+               z_string_data(z_loan(kvp->data[i].key)), (int)z_string_len(z_loan(kvp->data[i].value)),
                z_string_data(z_loan(kvp->data[i].value)));
     }
 }
@@ -109,18 +110,19 @@ void query_handler(const z_loaned_query_t *query, void *ctx) {
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
-    printf(" >> [Queryable handler] Received Query '%s%.*s'\n", z_string_data(z_loan(keystr)),
-           (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
+    printf(" >> [Queryable handler] Received Query '%.*s%.*s'\n", (int)z_string_len(z_loan(keystr)),
+           z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process encoding
     z_owned_string_t encoding;
     z_encoding_to_string(z_query_encoding(query), &encoding);
-    printf("    with encoding: %s\n", z_string_data(z_loan(encoding)));
+    printf("    with encoding: %.*s\n", (int)z_string_len(z_loan(encoding)), z_string_data(z_loan(encoding)));
 
     // Process value
     z_owned_string_t payload_string;
     z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 0) {
-        printf("    with value '%s'\n", z_string_data(z_loan(payload_string)));
+        printf("    with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
+               z_string_data(z_loan(payload_string)));
     }
     // Check attachment
     kv_pairs_rx_t kvp = {

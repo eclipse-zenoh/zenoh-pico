@@ -38,7 +38,8 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-        printf(">> Received ('%s': '%s')\n", z_string_data(z_view_string_loan(&keystr)),
+        printf(">> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_view_string_loan(&keystr)),
+               z_string_data(z_view_string_loan(&keystr)), (int)z_string_len(z_string_loan(&replystr)),
                z_string_data(z_string_loan(&replystr)));
         z_string_drop(z_string_move(&replystr));
     } else {

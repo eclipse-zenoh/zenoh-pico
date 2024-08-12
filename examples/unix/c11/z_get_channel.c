@@ -114,7 +114,8 @@ int main(int argc, char **argv) {
             z_owned_string_t replystr;
             z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-            printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
+            printf(">> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)),
+                   (int)z_string_len(z_loan(replystr)), z_string_data(z_loan(replystr)));
             z_drop(z_move(replystr));
         } else {
             printf(">> Received an error\n");

@@ -40,14 +40,15 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_owned_string_t replystr;
         z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
-        printf(">> Received %s ('%s': '%s')\n", kind_to_str(z_sample_kind(sample)), z_string_data(z_loan(keystr)),
+        printf(">> Received %s ('%.*s': '%.*s')\n", kind_to_str(z_sample_kind(sample)),
+               (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(replystr)),
                z_string_data(z_loan(replystr)));
         z_drop(z_move(replystr));
     } else {
         const z_loaned_reply_err_t *err = z_reply_err(reply);
         z_owned_string_t errstr;
         z_bytes_deserialize_into_string(z_reply_err_payload(err), &errstr);
-        printf(">> Received an error: %s\n", z_string_data(z_loan(errstr)));
+        printf(">> Received an error: %.*s\n", (int)z_string_len(z_loan(errstr)), z_string_data(z_loan(errstr)));
         z_drop(z_move(errstr));
     }
 }

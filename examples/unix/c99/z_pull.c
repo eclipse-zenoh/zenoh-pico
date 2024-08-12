@@ -97,7 +97,8 @@ int main(int argc, char **argv) {
             z_keyexpr_as_view_string(z_sample_keyexpr(z_sample_loan(&sample)), &keystr);
             z_owned_string_t value;
             z_bytes_deserialize_into_string(z_sample_payload(z_sample_loan(&sample)), &value);
-            printf(">> [Subscriber] Pulled ('%s': '%s')\n", z_string_data(z_view_string_loan(&keystr)),
+            printf(">> [Subscriber] Pulled ('%.*s': '%.*s')\n", (int)z_string_len(z_view_string_loan(&keystr)),
+                   z_string_data(z_view_string_loan(&keystr)), (int)z_string_len(z_string_loan(&value)),
                    z_string_data(z_string_loan(&value)));
             z_string_drop(z_string_move(&value));
             z_sample_drop(z_sample_move(&sample));

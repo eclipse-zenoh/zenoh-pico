@@ -78,7 +78,8 @@ void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
 void print_attachment(kv_pairs_rx_t *kvp) {
     printf("    with attachment:\n");
     for (uint32_t i = 0; i < kvp->current_idx; i++) {
-        printf("     %d: %s, %s\n", i, z_string_data(z_loan(kvp->data[i].key)),
+        printf("     %d: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp->data[i].key)),
+               z_string_data(z_loan(kvp->data[i].key)), (int)z_string_len(z_loan(kvp->data[i].value)),
                z_string_data(z_loan(kvp->data[i].value)));
     }
 }
@@ -109,8 +110,9 @@ void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
         z_owned_string_t encoding;
         z_encoding_to_string(z_sample_encoding(sample), &encoding);
 
-        printf(">> Received ('%s': '%s')\n", z_string_data(z_loan(keystr)), z_string_data(z_loan(replystr)));
-        printf("    with encoding: %s\n", z_string_data(z_loan(encoding)));
+        printf(">> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)),
+               (int)z_string_len(z_loan(replystr)), z_string_data(z_loan(replystr)));
+        printf("    with encoding: %.*s\n", (int)z_string_len(z_loan(encoding)), z_string_data(z_loan(encoding)));
 
         // Check attachment
         kv_pairs_rx_t kvp = {
