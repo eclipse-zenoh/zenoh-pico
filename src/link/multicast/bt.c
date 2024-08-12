@@ -14,6 +14,7 @@
 #include "zenoh-pico/link/config/bt.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"
@@ -50,7 +51,7 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
-        tout = strtoul(tout_as_str, NULL, 10);
+        tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
@@ -69,7 +70,7 @@ int8_t _z_f_link_listen_bt(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
-        tout = strtoul(tout_as_str, NULL, 10);
+        tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
     self->_socket._bt._gname = self->_endpoint._locator._address;
@@ -80,7 +81,7 @@ int8_t _z_f_link_listen_bt(_z_link_t *self) {
 
 void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(&self->_socket._bt._sock); }
 
-void _z_f_link_free_bt(_z_link_t *self) {}
+void _z_f_link_free_bt(_z_link_t *self) { _ZP_UNUSED(self); }
 
 size_t _z_f_link_write_bt(const _z_link_t *self, const uint8_t *ptr, size_t len) {
     return _z_send_bt(self->_socket._bt._sock, ptr, len);

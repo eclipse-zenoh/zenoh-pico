@@ -55,13 +55,13 @@ int8_t _z_f_link_open_serial(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
-    uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
+    uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
 
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     if (p_dot != NULL) {
-        uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
+        uint32_t txpin = (uint32_t)strtoul(self->_endpoint._locator._address, &p_dot, 10);
         p_dot = _z_ptr_char_offset(p_dot, 1);
-        uint32_t rxpin = strtoul(p_dot, NULL, 10);
+        uint32_t rxpin = (uint32_t)strtoul(p_dot, NULL, 10);
         ret = _z_open_serial_from_pins(&self->_socket._serial._sock, txpin, rxpin, baudrate);
     } else {
         ret = _z_open_serial_from_dev(&self->_socket._serial._sock, self->_endpoint._locator._address, baudrate);
@@ -74,13 +74,13 @@ int8_t _z_f_link_listen_serial(_z_link_t *self) {
     int8_t ret = _Z_RES_OK;
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
-    uint32_t baudrate = strtoul(baudrate_str, NULL, 10);
+    uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
 
     char *p_dot = strchr(self->_endpoint._locator._address, '.');
     if (p_dot != NULL) {
-        uint32_t txpin = strtoul(self->_endpoint._locator._address, &p_dot, 10);
+        uint32_t txpin = (uint32_t)strtoul(self->_endpoint._locator._address, &p_dot, 10);
         p_dot = _z_ptr_char_offset(p_dot, 1);
-        uint32_t rxpin = strtoul(p_dot, NULL, 10);
+        uint32_t rxpin = (uint32_t)strtoul(p_dot, NULL, 10);
         ret = _z_listen_serial_from_pins(&self->_socket._serial._sock, txpin, rxpin, baudrate);
     } else {
         ret = _z_listen_serial_from_dev(&self->_socket._serial._sock, self->_endpoint._locator._address, baudrate);

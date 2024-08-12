@@ -23,21 +23,11 @@
 #define ZENOH_PICO_PATCH 0
 #define ZENOH_PICO_TWEAK 0
 
-/* #undef Z_FRAG_MAX_SIZE */
-/* #undef Z_BATCH_UNICAST_SIZE */
-
-#define Z_FEATURE_MULTI_THREAD 1
-#define Z_FEATURE_PUBLICATION 1
-#define Z_FEATURE_SUBSCRIPTION 1
-#define Z_FEATURE_QUERY 1
-#define Z_FEATURE_QUERYABLE 1
-#define Z_FEATURE_RAWETH_TRANSPORT 0
-#define Z_FEATURE_INTEREST 1
-
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/handlers.h"
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/config.h"
 
 #endif /* ZENOH_PICO_H */
