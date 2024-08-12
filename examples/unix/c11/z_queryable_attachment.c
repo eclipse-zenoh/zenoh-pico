@@ -80,9 +80,9 @@ void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
         z_bytes_deserialize_into_pair(z_loan(kv), &first, &second);
         z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
         z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
-        z_bytes_drop(&first);
-        z_bytes_drop(&second);
-        z_bytes_drop(&kv);
+        z_bytes_drop(z_bytes_move(&first));
+        z_bytes_drop(z_bytes_move(&second));
+        z_bytes_drop(z_bytes_move(&kv));
         kvp->current_idx++;
     }
 }
@@ -97,8 +97,8 @@ void print_attachment(kv_pairs_rx_t *kvp) {
 
 void drop_attachment(kv_pairs_rx_t *kvp) {
     for (size_t i = 0; i < kvp->current_idx; i++) {
-        z_string_drop(&kvp->data[i].key);
-        z_string_drop(&kvp->data[i].value);
+        z_string_drop(z_string_move(&kvp->data[i].key));
+        z_string_drop(z_string_move(&kvp->data[i].value));
     }
     z_free(kvp->data);
 }

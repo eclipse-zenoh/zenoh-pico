@@ -206,7 +206,7 @@ void test_slice(void) {
     z_slice_copy_from_buf(&s, data, 10);
     z_bytes_serialize_from_slice(&payload2, z_slice_loan(&s));
     assert(z_slice_check(&s));
-    z_slice_drop(&s);
+    z_slice_drop(z_slice_move(&s));
     assert(z_check_and_drop_payload(&payload2, data, 10));
 
     z_owned_bytes_t payload3;

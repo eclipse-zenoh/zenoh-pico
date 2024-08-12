@@ -285,7 +285,6 @@ Macros
 Primitives
 ~~~~~~~~~~
 
-.. autocfunction:: primitives.h::z_view_string_empty
 .. autocfunction:: primitives.h::z_view_string_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_unchecked

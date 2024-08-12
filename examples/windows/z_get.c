@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
     z_owned_bytes_t payload;
     if (value != NULL) {
         z_bytes_from_static_str(&payload, value);
-        opts.payload = &payload;
+        opts.payload = z_move(payload);
     }
     z_owned_closure_reply_t callback;
     z_closure(&callback, reply_handler, reply_dropper);
