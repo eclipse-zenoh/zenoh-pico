@@ -1223,10 +1223,8 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
                     pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null());
 }
 
-z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher) {
-    z_owned_keyexpr_t ret;
-    ret._val = _z_keyexpr_duplicate(publisher->_key);
-    return ret;
+const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher) {
+    return (const z_loaned_keyexpr_t *)&publisher->_key;
 }
 #endif
 
@@ -1608,22 +1606,18 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
 
 int8_t z_undeclare_subscriber(z_moved_subscriber_t sub) { return _z_undeclare_and_clear_subscriber(&sub._ptr->_val); }
 
-int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *sub) {
-    // Init keyexpr
-    z_keyexpr_null(keyexpr);
-    if ((keyexpr == NULL) || (sub == NULL)) {
-        return _Z_ERR_GENERIC;
-    }
+const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
+    // Retrieve keyexpr from session
     uint32_t lookup = sub->_entity_id;
     _z_subscription_rc_list_t *tail = _Z_RC_IN_VAL(&sub->_zn)->_local_subscriptions;
-    while (tail != NULL && !z_keyexpr_check(keyexpr)) {
+    while (tail != NULL) {
         _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
         if (_Z_RC_IN_VAL(head)->_id == lookup) {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr->_val, &_Z_RC_IN_VAL(head)->_key));
+            return (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(head)->_key;
         }
         tail = _z_subscription_rc_list_tail(tail);
     }
-    return _Z_RES_OK;
+    return NULL;
 }
 #endif
 
