@@ -68,7 +68,7 @@ void query_handler(const z_loaned_query_t *query, void *arg) {
     z_view_string_t k_str;
     z_keyexpr_as_view_string(query_ke, &k_str);
     (void)arg;
-    assert(!z_view_string_is_empty(k_str));
+    assert(!z_view_string_is_empty(&k_str));
 
     z_view_string_t pred;
     z_query_parameters(query, &pred);
@@ -97,7 +97,7 @@ void reply_handler(const z_loaned_reply_t *reply, void *arg) {
         z_view_string_t k_str;
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
         (void)arg;
-        assert(!z_view_string_is_empty(k_str));
+        assert(!z_view_string_is_empty(&k_str));
     } else {
         const z_loaned_reply_err_t *_ret_zerr = z_reply_err(reply);
         (void)(_ret_zerr);
@@ -112,7 +112,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     (void)arg;
-    assert(!z_view_string_is_empty(k_str));
+    assert(!z_view_string_is_empty(&k_str));
     const char *encoding_expected =
         z_sample_kind(sample) == Z_SAMPLE_KIND_PUT ? "zenoh/bytes;test_encoding" : "zenoh/bytes";
     z_owned_string_t encoding;
