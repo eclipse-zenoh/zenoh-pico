@@ -82,10 +82,10 @@
     void z_##name##_null(z_owned_##name##_t *obj);
 
 #define _Z_VIEW_FUNCTIONS_DEF(name)                                                 \
-    _Bool z_view_##name##_check(const z_view_##name##_t *obj);                      \
+    _Bool z_view_##name##_is_empty(const z_view_##name##_t *obj);                   \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *name); \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *name);         \
-    void z_view_##name##_null(z_view_##name##_t *name);
+    void z_view_##name##_empty(z_view_##name##_t *name);
 
 #define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                       \
     z_moved_##name##_t z_##name##_move(z_owned_##name##_t *obj) { return (z_moved_##name##_t){obj}; } \
@@ -178,10 +178,11 @@
     z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
     void z_##name##_null(z_owned_##name##_t *obj) { (void)obj; }
 
-#define _Z_VIEW_FUNCTIONS_IMPL(type, name, f_check)                                                      \
-    _Bool z_view_##name##_check(const z_view_##name##_t *obj) { return f_check((&obj->_val)); }          \
+#define _Z_VIEW_FUNCTIONS_IMPL(type, name, f_check, f_null)                                              \
+    _Bool z_view_##name##_is_empty(const z_view_##name##_t *obj) { return !f_check((&obj->_val)); }      \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *obj) { return &obj->_val; } \
-    z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }
+    z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }         \
+    void z_view_##name##_empty(z_view_##name##_t *obj) { obj->_val = f_null(); }
 
 #define _Z_OWNED_FUNCTIONS_CLOSURE_DEF(name)                                   \
     _Bool z_##name##_check(const z_owned_##name##_t *val);                     \

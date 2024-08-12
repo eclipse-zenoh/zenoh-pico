@@ -32,18 +32,6 @@
 extern "C" {
 #endif
 
-/********* Data Types Handlers *********/
-/**
- * Builds an empty :c:type:`z_view_string_t`.
- *
- * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
- *
- * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
- */
-int8_t z_view_string_empty(z_view_string_t *str);
-
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` string.
  *
