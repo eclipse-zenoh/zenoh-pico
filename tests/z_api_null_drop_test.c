@@ -58,7 +58,6 @@ int main(void) {
     TEST(string)
     TEST(string_array)
     TEST(sample)
-    TEST(query)
     TEST(slice)
     TEST(bytes)
     TEST(encoding)
@@ -69,6 +68,7 @@ int main(void) {
     TEST(subscriber)
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+    TEST(query)
     TEST(queryable)
 #endif
 #if Z_FEATURE_QUERY == 1
