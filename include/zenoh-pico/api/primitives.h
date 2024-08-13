@@ -467,6 +467,14 @@ int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void 
                         void *context);
 
 /**
+ * Builds an empty :c:type:`z_owned_slice_t`.
+ *
+ * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
+ */
+void z_slice_empty(z_owned_slice_t *slice);
+
+/**
  * Gets date pointer of a bytes array.
  *
  * Parameters:
@@ -487,6 +495,16 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
  *    The number of bytes.
  */
 size_t z_slice_len(const z_loaned_slice_t *slice);
+
+/**
+ * Checks if slice is empty
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_slice_t` to check.
+ * Return:
+ *  ``true`` if conainer is empty, ``false`` otherwise.
+ */
+bool z_slice_is_empty(const z_loaned_slice_t *slice);
 
 /**
  * Decodes data into a `int8_t` signed integer.
@@ -1395,7 +1413,7 @@ int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(voi
  * Builds an empty :c:type:`z_owned_string_t`.
  *
  * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_string_t`.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  */
 void z_string_empty(z_owned_string_t *str);
 
@@ -1405,7 +1423,7 @@ void z_string_empty(z_owned_string_t *str);
  * Parameters:
  *   value: Pointer to a string.
  *   len: String size.
- *   str: Pointer to an uninitialized :c:type:`z_string_t`.
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.

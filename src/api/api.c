@@ -436,6 +436,10 @@ const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start
 
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
 
+void z_slice_empty(z_owned_slice_t *slice) { slice->_val = _z_slice_empty(); }
+
+bool z_slice_is_empty(const z_loaned_slice_t *slice) { return _z_slice_is_empty(slice); }
+
 int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst) {
     return _z_bytes_to_uint8(bytes, (uint8_t *)dst);
 }
