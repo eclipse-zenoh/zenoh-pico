@@ -1737,8 +1737,6 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
  */
 int8_t z_undeclare_publisher(z_moved_publisher_t pub);
 
-z_owned_keyexpr_t z_publisher_keyexpr(z_loaned_publisher_t *publisher);
-
 /**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
  *
@@ -1780,6 +1778,17 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t payload,
  *   ``0`` if delete operation successful, ``negative value`` otherwise.
  */
 int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
+
+/**
+ * Gets the keyexpr from a publisher.
+ *
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_publisher_t` to get the keyexpr from.
+ *
+ * Return:
+ *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
+ */
+const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -2093,16 +2102,15 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
 int8_t z_undeclare_subscriber(z_moved_subscriber_t sub);
 
 /**
- * Copies the keyexpr of a subscriber
+ * Gets the keyexpr from a subscriber.
  *
  * Parameters:
- *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the keyexpr.
- *   sub: Pointer to a :c:type:`z_loaned_subscriber_t` to copy the keyexpr from.
+ *   subscriber: Pointer to a :c:type:`z_loaned_subscriber_t` to get the keyexpr from.
  *
  * Return:
- *   ``0`` if copy successful, ``negative value`` otherwise.
+ *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
-int8_t z_subscriber_keyexpr(z_owned_keyexpr_t *keyexpr, z_loaned_subscriber_t *sub);
+const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
 #endif
 
 /************* Multi Thread Tasks helpers **************/
