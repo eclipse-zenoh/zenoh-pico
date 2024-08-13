@@ -1141,7 +1141,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), keyexpr_aliased);
-            key = _z_rid_with_suffix(id, NULL);
+            key = _z_rid_with_suffix(id, keyexpr_aliased._suffix);
         }
     }
     // Set options
