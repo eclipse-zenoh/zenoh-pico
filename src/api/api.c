@@ -1192,17 +1192,22 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t payload,
     } else {
         encoding = _z_encoding_steal(&opt.encoding._ptr->_val);
     }
+    // Remove potentially redundant ke suffix
+    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
+    if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
+        pub_keyexpr._suffix = NULL;
+    }
 
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
         // Write value
-        ret = _z_write(_Z_RC_IN_VAL(&pub->_zn), pub->_key, _z_bytes_from_owned_bytes(payload._ptr), &encoding,
+        ret = _z_write(_Z_RC_IN_VAL(&pub->_zn), pub_keyexpr, _z_bytes_from_owned_bytes(payload._ptr), &encoding,
                        Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
                        _z_bytes_from_owned_bytes(opt.attachment._ptr));
     }
     // Trigger local subscriptions
     _z_trigger_local_subscriptions(
-        _Z_RC_IN_VAL(&pub->_zn), pub->_key, _z_bytes_from_owned_bytes(payload._ptr), &encoding,
+        _Z_RC_IN_VAL(&pub->_zn), pub_keyexpr, _z_bytes_from_owned_bytes(payload._ptr), &encoding,
         _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
         opt.timestamp, _z_bytes_from_owned_bytes(opt.attachment._ptr));
     // Clean-up
@@ -1219,7 +1224,13 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
     if (options != NULL) {
         opt.timestamp = options->timestamp;
     }
-    return _z_write(_Z_RC_IN_VAL(&pub->_zn), pub->_key, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
+    // Remove potentially redundant ke suffix
+    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
+    if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
+        pub_keyexpr._suffix = NULL;
+    }
+
+    return _z_write(_Z_RC_IN_VAL(&pub->_zn), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
                     pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null());
 }
 
