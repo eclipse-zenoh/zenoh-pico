@@ -320,6 +320,8 @@ Primitives
 .. autocfunction:: primitives.h::z_slice_copy_from_buf
 .. autocfunction:: primitives.h::z_slice_data
 .. autocfunction:: primitives.h::z_slice_len
+.. autocfunction:: primitives.h::z_slice_empty
+.. autocfunction:: primitives.h::z_slice_is_empty
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int16
 .. autocfunction:: primitives.h::z_bytes_deserialize_into_int32
