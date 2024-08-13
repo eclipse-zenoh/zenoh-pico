@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2;
     assert(z_open(&s2, z_move(config)) == Z_OK);
-    assert(z_check(s2));
+    assert(_z_check(s2));
     _z_string_t zid2 = format_id(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
     printf("Session 2 with PID: %s\n", _z_string_data(&zid2));
     _z_string_clear(&zid2);

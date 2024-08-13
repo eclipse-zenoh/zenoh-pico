@@ -34,15 +34,15 @@
     {                              \
         z_owned_##name##_t v;      \
         memset(&v, -1, sizeof(v)); \
-        z_null(&v);                \
-        assert(!z_check(v));       \
+        _z_null(&v);               \
+        assert(!_z_check(v));      \
         z_drop(z_move(v));         \
         z_drop(z_move(v));         \
         z_owned_##name##_t v1;     \
-        z_null(&v1);               \
+        _z_null(&v1);              \
         memset(&v, -1, sizeof(v)); \
         z_take(&v1, z_move(v));    \
-        assert(!z_check(v));       \
+        assert(!_z_check(v));      \
     }
 
 int main(void) {
