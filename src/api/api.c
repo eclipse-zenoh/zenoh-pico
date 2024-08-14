@@ -1008,7 +1008,6 @@ const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample) {
     }
 }
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample) { return &sample->encoding; }
-z_qos_t z_sample_qos(const z_loaned_sample_t *sample) { return sample->qos; }
 const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample) { return &sample->attachment; }
 z_congestion_control_t z_sample_congestion_control(const z_loaned_sample_t *sample) {
     return _z_n_qos_get_congestion_control(sample->qos);
