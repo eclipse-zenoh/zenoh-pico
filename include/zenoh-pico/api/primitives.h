@@ -1619,17 +1619,6 @@ const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 
 /**
- * Gets the qos value of a sample by aliasing it.
- *
- * Parameters:
- *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos from.
- *
- * Return:
- *   The qos wrapped as a :c:type:`z_qos_t`.
- */
-z_qos_t z_sample_qos(const z_loaned_sample_t *sample);
-
-/**
  * Got sample qos congestion control value.
  *
  * Parameters:
@@ -1657,7 +1646,7 @@ bool z_sample_express(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos from.
  *
  * Return:
- *   The qos wrapped as a :c:type:`z_qos_t`.
+ *   The priority wrapped as a :c:type:`z_priority_t`.
  * Got sample qos priority value.
  */
 z_priority_t z_sample_priority(const z_loaned_sample_t *sample);

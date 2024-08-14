@@ -52,7 +52,6 @@ Data Structures
 .. autoctype:: types.h::zp_read_options_t
 .. autoctype:: types.h::zp_send_keep_alive_options_t
 .. autoctype:: types.h::zp_send_join_options_t
-.. autoctype:: types.h::z_qos_t
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_iterator_t
 .. autoctype:: types.h::z_bytes_writer_t
@@ -408,7 +407,6 @@ Primitives
 .. autocfunction:: primitives.h::z_sample_timestamp
 .. autocfunction:: primitives.h::z_sample_encoding
 .. autocfunction:: primitives.h::z_sample_kind
-.. autocfunction:: primitives.h::z_sample_qos
 .. autocfunction:: primitives.h::z_sample_attachment
 .. autocfunction:: primitives.h::z_put_options_default
 .. autocfunction:: primitives.h::z_delete_options_default
