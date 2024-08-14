@@ -39,8 +39,7 @@ int main(int argc, char** argv) {
     z_owned_config_t config;
     z_config_default(&config);
     z_owned_session_t session;
-    z_open(&session, z_config_move(&config));
-    if (!z_session_check(&session)) {
+    if (z_open(&session, z_config_move(&config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }

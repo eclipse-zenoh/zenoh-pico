@@ -186,10 +186,10 @@ int main(int argc, char **argv) {
     printf("Testing Configs...");
     z_owned_config_t _ret_config;
     z_config_new(&_ret_config);
-    assert(!z_check(_ret_config));  // null config corresponds to empty one
+    assert(!_z_check(_ret_config));  // null config corresponds to empty one
     z_drop(z_move(_ret_config));
     z_config_default(&_ret_config);
-    assert(z_check(_ret_config));
+    assert(_z_check(_ret_config));
 #ifdef ZENOH_PICO
     _ret_int8 = zp_config_insert(z_loan_mut(_ret_config), Z_CONFIG_CONNECT_KEY, argv[1]);
     assert_eq(_ret_int8, 0);
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 
     z_owned_config_t _ret_sconfig;
     z_config_default(&_ret_sconfig);
-    assert(z_check(_ret_sconfig));
+    assert(_z_check(_ret_sconfig));
 
     printf("Ok\n");
     z_sleep_s(SLEEP);
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1;
     z_open(&s1, z_move(_ret_config));
-    assert(z_check(s1));
+    assert(_z_check(s1));
     z_id_t _ret_zid = z_info_zid(z_loan(s1));
     printf("Session 1 with PID: 0x");
     for (unsigned long i = 0; i < sizeof(_ret_zid); i++) {
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s2;
     z_open(&s2, z_move(_ret_config));
-    assert(z_check(s2));
+    assert(_z_check(s2));
     _ret_zid = z_info_zid(z_loan(s2));
     printf("Session 2 with PID: 0x");
     for (unsigned long i = 0; i < sizeof(_ret_zid); i++) {
@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_from_str(&s1_key, s1_res);
     z_owned_keyexpr_t _ret_expr;
     z_declare_keyexpr(&_ret_expr, z_loan(s1), z_loan(s1_key));
-    assert(z_check(_ret_expr));
+    assert(_z_check(_ret_expr));
     printf("Ok\n");
 
     printf("Session Put...");
@@ -317,7 +317,7 @@ int main(int argc, char **argv) {
 
     _ret_int8 = z_put(z_loan(s1), z_loan(_ret_expr), z_move(payload), &_ret_put_opt);
     assert_eq(_ret_int8, 0);
-    assert(!z_check(encoding));
+    assert(!_z_check(encoding));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);
@@ -338,7 +338,7 @@ int main(int argc, char **argv) {
     _ret_int8 = z_undeclare_keyexpr(z_move(_ret_expr), z_loan(s1));
     printf(" %02x\n", _ret_int8);
     assert_eq(_ret_int8, 0);
-    assert(!z_check(_ret_expr));
+    assert(!_z_check(_ret_expr));
     printf("Ok\n");
 
     printf("Declaring Publisher...");
@@ -350,7 +350,7 @@ int main(int argc, char **argv) {
     z_owned_publisher_t _ret_pub;
     _ret_int8 = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
     assert(_ret_int8 == _Z_RES_OK);
-    assert(!z_check(encoding));
+    assert(!_z_check(encoding));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);
@@ -381,7 +381,7 @@ int main(int argc, char **argv) {
     printf("Undeclaring Publisher...");
     _ret_int8 = z_undeclare_publisher(z_move(_ret_pub));
     assert_eq(_ret_int8, 0);
-    assert(!z_check(_ret_pub));
+    assert(!_z_check(_ret_pub));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);
@@ -389,7 +389,7 @@ int main(int argc, char **argv) {
     printf("Undeclaring Subscriber...");
     _ret_int8 = z_undeclare_subscriber(z_move(_ret_sub));
     assert_eq(_ret_int8, 0);
-    assert(!z_check(_ret_sub));
+    assert(!_z_check(_ret_sub));
     printf("Ok\n");
 
     z_sleep_s(SLEEP);

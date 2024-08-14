@@ -469,7 +469,7 @@ void test_concat(void) {
     z_keyexpr_drop(z_keyexpr_move(&ke2));
 
     assert(0 != z_keyexpr_concat(&ke2, z_keyexpr_loan(&ke1), "*/e/*", 3));
-    assert(!z_keyexpr_check(&ke2));
+    assert(!_z_owned_keyexpr_check(&ke2));
 
     z_keyexpr_drop(z_keyexpr_move(&ke1));
 }

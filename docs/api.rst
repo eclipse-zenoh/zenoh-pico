@@ -276,11 +276,9 @@ Macros
 ~~~~~~
 .. autocmacro:: macros.h::z_loan
 .. autocmacro:: macros.h::z_move
-.. autocmacro:: macros.h::z_check
 .. autocmacro:: macros.h::z_clone
 .. autocmacro:: macros.h::z_drop
 .. autocmacro:: macros.h::z_closure
-.. autocmacro:: macros.h::z_null
 
 Primitives
 ~~~~~~~~~~

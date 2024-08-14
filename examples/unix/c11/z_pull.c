@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
 
     printf("Pulling data every %zu ms... Ring size: %zd\n", interval, size);
     z_owned_sample_t sample;
-    z_null(&sample);
     while (true) {
         z_result_t res;
         for (res = z_try_recv(z_loan(handler), &sample); res == Z_OK; res = z_try_recv(z_loan(handler), &sample)) {
