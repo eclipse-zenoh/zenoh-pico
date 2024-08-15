@@ -336,6 +336,7 @@ install(
   CONFIGURATIONS ${configurations}
   COMPONENT dev)
 
+# Generate <Package>Targets.cmake
 install(
   EXPORT zenohpicoTargets
   NAMESPACE zenohpico::
