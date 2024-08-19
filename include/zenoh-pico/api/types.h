@@ -210,7 +210,7 @@ typedef struct {
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  */
 typedef struct {
-    z_moved_encoding_t encoding;
+    z_moved_encoding_t* encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
@@ -230,20 +230,20 @@ typedef struct {
  * Represents the configuration used to configure a query reply sent via :c:func:`z_query_reply.
  *
  * Members:
- *   z_moved_encoding_t encoding: The encoding of the payload.
+ *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
- *   z_moved_bytes_t attachment: An optional attachment to the response.
+ *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
-    z_moved_encoding_t encoding;
+    z_moved_encoding_t* encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
     _Bool is_express;
-    z_moved_bytes_t attachment;
+    z_moved_bytes_t* attachment;
 } z_query_reply_options_t;
 
 /**
@@ -254,45 +254,44 @@ typedef struct {
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
- *   z_moved_bytes_t attachment: An optional attachment to the response.
+ *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
     _Bool is_express;
-    z_moved_bytes_t attachment;
+    z_moved_bytes_t* attachment;
 } z_query_reply_del_options_t;
 
 /**
  * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err.
  *
  * Members:
- *   z_moved_encoding_t encoding: The encoding of the payload.
+ *   z_moved_encoding_t* encoding: The encoding of the payload.
  */
 typedef struct {
-    z_moved_encoding_t encoding;
+    z_moved_encoding_t* encoding;
 } z_query_reply_err_options_t;
 
 /**
  * Represents the configuration used to configure a put operation sent via via :c:func:`z_put`.
  *
  * Members:
- *   z_moved_encoding_t encoding: The encoding of the payload.
+ *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
- *   z_moved_bytes_t attachment: An optional attachment to the publication.
+ *   z_moved_bytes_t* attachment: An optional attachment to the publication.
  */
 typedef struct {
-    z_moved_encoding_t encoding;
+    z_moved_encoding_t* encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
     _Bool is_express;
-    z_moved_bytes_t attachment;
-
+    z_moved_bytes_t* attachment;
 } z_put_options_t;
 
 /**
@@ -316,14 +315,14 @@ typedef struct {
  * sent via :c:func:`z_publisher_put`.
  *
  * Members:
- *   z_moved_encoding_t encoding: The encoding of the payload.
+ *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   z_moved_bytes_t attachment: An optional attachment to the publication.
+ *   z_moved_bytes_t* attachment: An optional attachment to the publication.
  */
 typedef struct {
-    z_moved_encoding_t encoding;
+    z_moved_encoding_t* encoding;
     z_timestamp_t *timestamp;
-    z_moved_bytes_t attachment;
+    z_moved_bytes_t* attachment;
 } z_publisher_put_options_t;
 
 /**
@@ -341,25 +340,25 @@ typedef struct {
  * Represents the configuration used to configure a get operation sent via :c:func:`z_get`.
  *
  * Members:
- *   z_moved_bytes_t payload: The payload to include in the query.
- *   z_moved_encoding_t encoding: Payload encoding.
+ *   z_moved_bytes_t* payload: The payload to include in the query.
+ *   z_moved_encoding_t* encoding: Payload encoding.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing the query.
  *   z_priority_t priority: The priority of the query.
  *  _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
- *   z_moved_bytes_t attachment: An optional attachment to the query.
+ *   z_moved_bytes_t* attachment: An optional attachment to the query.
  */
 typedef struct {
-    z_moved_bytes_t payload;
-    z_moved_encoding_t encoding;
+    z_moved_bytes_t* payload;
+    z_moved_encoding_t* encoding;
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
     z_query_target_t target;
     uint32_t timeout_ms;
-    z_moved_bytes_t attachment;
+    z_moved_bytes_t* attachment;
 } z_get_options_t;
 
 /**
