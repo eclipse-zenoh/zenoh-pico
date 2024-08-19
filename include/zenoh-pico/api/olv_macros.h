@@ -126,7 +126,7 @@
         return f_copy((&obj->_val), src);                                                            \
     }                                                                                                \
     void z_##name##_drop(z_moved_##name##_t *obj) {                                                  \
-        if (obj != NULL) f_drop((& obj->_this._val));                                                 \
+        if (obj != NULL) f_drop((&obj->_this._val));                                                 \
     }
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, attribute)                \
@@ -140,7 +140,7 @@
         _z_owned_##name##_null(&src->_this);                                                                       \
     }                                                                                                              \
     attribute void z_##name##_drop(z_moved_##name##_t *obj) {                                                      \
-        if (obj != NULL) f_drop((&obj->_this._val));                                                                \
+        if (obj != NULL) f_drop((&obj->_this._val));                                                               \
     }
 
 #define _ZP_NOTHING
@@ -202,7 +202,7 @@
     void z_##name##_drop(z_moved_##name##_t *obj) {                                                  \
         if (obj->_this._val.drop != NULL) {                                                          \
             (obj->_this._val.drop)(obj->_this._val.context);                                         \
-            obj->_this._val.drop = NULL;                                                              \
+            obj->_this._val.drop = NULL;                                                             \
         }                                                                                            \
         obj->_this._val.call = NULL;                                                                 \
         obj->_this._val.context = NULL;                                                              \
