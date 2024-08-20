@@ -25,21 +25,21 @@
 void test_keyexpr(void) {
     z_owned_keyexpr_t keyexpr;
     z_keyexpr_from_str(&keyexpr, URL);
-    assert(_z_check(keyexpr));
+    assert(z_internal_check(keyexpr));
     z_drop(z_move(keyexpr));
-    assert(!_z_check(keyexpr));
+    assert(!z_internal_check(keyexpr));
     z_drop(z_move(keyexpr));
-    assert(!_z_check(keyexpr));
+    assert(!z_internal_check(keyexpr));
 }
 
 void test_config(void) {
     z_owned_config_t config;
     z_config_default(&config);
-    assert(_z_check(config));
+    assert(z_internal_check(config));
     z_drop(z_move(config));
-    assert(!_z_check(config));
+    assert(!z_internal_check(config));
     z_drop(z_move(config));
-    assert(!_z_check(config));
+    assert(!z_internal_check(config));
 }
 
 int main(void) {
