@@ -16,9 +16,9 @@
 #define INCLUDE_ZENOH_PICO_CONFIG_H
 
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
-#define Z_FRAG_MAX_SIZE 300000
-#define Z_BATCH_UNICAST_SIZE 65535
-#define Z_BATCH_MULTICAST_SIZE 8096
+#define Z_FRAG_MAX_SIZE 4096
+#define Z_BATCH_UNICAST_SIZE 2048
+#define Z_BATCH_MULTICAST_SIZE 2048
 #define Z_CONFIG_SOCKET_TIMEOUT 100
 
 #define Z_FEATURE_MULTI_THREAD 1

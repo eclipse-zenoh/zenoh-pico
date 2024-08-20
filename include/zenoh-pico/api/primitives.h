@@ -805,7 +805,7 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t slice);
+int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
 
 /**
  * Encodes data into a :c:type:`z_owned_bytes_t`.
@@ -872,7 +872,7 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_stri
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t s);
+int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
 
 /**
  * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t`.
@@ -936,7 +936,7 @@ int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t first, z_moved_bytes_t second);
+int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t *first, z_moved_bytes_t *second);
 
 /**
  * Parameters:
@@ -1087,7 +1087,7 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t bytes);
+int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Appends bytes, with boundaries information. It would allow to read the same piece of data using
@@ -1100,7 +1100,7 @@ int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t bytes);
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t bytes);
+int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Create timestamp.
@@ -1495,7 +1495,7 @@ int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
  * Return:
  *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_scout(z_moved_config_t config, z_moved_closure_hello_t callback, const z_scout_options_t *options);
+int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
 
 /**
  * Opens a Zenoh session.
@@ -1507,7 +1507,7 @@ int8_t z_scout(z_moved_config_t config, z_moved_closure_hello_t callback, const 
  * Return:
  *   ``0`` if open successful, ``negative value`` otherwise.
  */
-int8_t z_open(z_owned_session_t *zs, z_moved_config_t config);
+int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config);
 
 /**
  * Closes a Zenoh session.
@@ -1518,7 +1518,7 @@ int8_t z_open(z_owned_session_t *zs, z_moved_config_t config);
  * Return:
  *   ``0`` if close successful, ``negative value`` otherwise.
  */
-int8_t z_close(z_moved_session_t zs);
+int8_t z_close(z_moved_session_t *zs);
 
 /**
  * Fetches Zenoh IDs of all connected peers.
@@ -1533,7 +1533,7 @@ int8_t z_close(z_moved_session_t zs);
  * Return:
  *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t callback);
+int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Fetches Zenoh IDs of all connected routers.
@@ -1548,7 +1548,7 @@ int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t call
  * Return:
  *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t callback);
+int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Gets the local Zenoh ID associated to a given Zenoh session.
@@ -1692,7 +1692,7 @@ void z_delete_options_default(z_delete_options_t *options);
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t payload,
+int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
              const z_put_options_t *options);
 
 /**
@@ -1742,7 +1742,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_publisher(z_moved_publisher_t pub);
+int8_t z_undeclare_publisher(z_moved_publisher_t *pub);
 
 /**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
@@ -1771,7 +1771,7 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t payload,
+int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
                        const z_publisher_put_options_t *options);
 
 /**
@@ -1821,7 +1821,7 @@ void z_get_options_default(z_get_options_t *options);
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
 int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
-             z_moved_closure_reply_t callback, z_get_options_t *options);
+             z_moved_closure_reply_t *callback, z_get_options_t *options);
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *
@@ -1894,7 +1894,7 @@ void z_queryable_options_default(z_queryable_options_t *options);
  *   ``0`` if declare operation successful, ``negative value`` otherwise.
  */
 int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
-                           const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t callback,
+                           const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                            const z_queryable_options_t *options);
 
 /**
@@ -1906,7 +1906,7 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
  * Return:
  *   ``0`` if undeclare operation successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_queryable(z_moved_queryable_t queryable);
+int8_t z_undeclare_queryable(z_moved_queryable_t *queryable);
 
 /**
  * Builds a :c:type:`z_query_reply_options_t` with default values.
@@ -1933,7 +1933,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t payload,
+int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
                      const z_query_reply_options_t *options);
 
 /**
@@ -1987,7 +1987,7 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t payload,
+int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
                          const z_query_reply_err_options_t *options);
 
 #endif
@@ -2070,7 +2070,7 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_ses
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_keyexpr(z_moved_keyexpr_t keyexpr, const z_loaned_session_t *zs);
+int8_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
@@ -2095,7 +2095,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
 int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
-                            z_moved_closure_sample_t callback, const z_subscriber_options_t *options);
+                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**
  * Undeclares the subscriber.
@@ -2106,7 +2106,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_subscriber(z_moved_subscriber_t sub);
+int8_t z_undeclare_subscriber(z_moved_subscriber_t *sub);
 
 /**
  * Gets the keyexpr from a subscriber.
