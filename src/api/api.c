@@ -1306,7 +1306,8 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     z_bytes_drop(opt.payload);
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
-    z_internal_closure_reply_null(&callback->_this);  // call and drop passed to _z_query, so we nullify the closure here
+    z_internal_closure_reply_null(
+        &callback->_this);  // call and drop passed to _z_query, so we nullify the closure here
     return ret;
 }
 
