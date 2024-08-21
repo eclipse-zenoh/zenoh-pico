@@ -89,6 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        feature_unstable_api: [1, 0]
         feature_publication: [1, 0]
         feature_subscription: [1, 0]
         feature_queryable: [1, 0]
@@ -115,9 +116,10 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/modularity.py --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
+          python3 ./build/tests/modularity.py --unstable $Z_FEATURE_UNSTABLE_API  --pub $Z_FEATURE_PUBLICATION --sub $Z_FEATURE_SUBSCRIPTION --queryable $Z_FEATURE_QUERYABLE --query $Z_FEATURE_QUERY
         timeout-minutes: 5
         env:
+          Z_FEATURE_UNSTABLE_API: ${{ matrix.feature_unstable_api }}
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
           Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
           Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}

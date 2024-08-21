@@ -183,10 +183,14 @@ _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
  *
  * Members:
- *   z_reliability_t reliability: The subscription reliability value.
+ *   (unstable) z_reliability_t reliability: The subscription reliability value.
  */
 typedef struct {
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
+#else
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#endif
 } z_subscriber_options_t;
 
 /**
