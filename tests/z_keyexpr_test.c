@@ -322,13 +322,13 @@ void test_canonize(void) {
         memset(canon, 0, 128);
         strncpy(canon, ke, 128);
         size_t canon_len = strlen(canon);
-        zp_keyexpr_canon_status_t status = zp_keyexpr_canonize_null_terminated(canon);
+        zp_keyexpr_canon_status_t status = z_keyexpr_canonize(canon, &canon_len);
         printf("%s ", ke);
         printf("  Status: %d : %d", status, expected[i]);
         assert(status == expected[i]);
         if (status == Z_KEYEXPR_CANON_SUCCESS) {
             printf("  Match: %.*s : %s", (int)canon_len, canon, canonized[i]);
-            assert(strcmp(canonized[i], canon) == 0);
+            assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
         printf("\n");
     }

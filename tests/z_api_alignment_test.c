@@ -154,18 +154,9 @@ int main(int argc, char **argv) {
     int8_t _ret_int8 = z_keyexpr_is_canon(keyexpr_str, keyexpr_len);
     assert(_ret_int8 < 0);
 
-#ifdef ZENOH_PICO
-    _ret_int8 = zp_keyexpr_is_canon_null_terminated(keyexpr_str);
-    assert(_ret_int8 < 0);
-#endif
     _ret_int8 = z_keyexpr_canonize(keyexpr_str, &keyexpr_len);
     assert_eq(_ret_int8, 0);
     assert_eq(strlen(URI), keyexpr_len);
-#ifdef ZENOH_PICO
-    _ret_int8 = zp_keyexpr_canonize_null_terminated(keyexpr_str);
-    assert_eq(_ret_int8, 0);
-    assert_eq(strlen(URI), keyexpr_len);
-#endif
 
     printf("Ok\n");
     z_sleep_s(SLEEP);

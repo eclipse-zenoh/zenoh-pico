@@ -161,19 +161,6 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
 int8_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
- * Checks if a given keyexpr is valid and in canonical form.
- *
- * Parameters:
- *   start: Pointer to the keyexpr in its string representation as a null terminated string.
- *   len: Number of characters in ``start``.
- *
- * Return:
- *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
- */
-int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
-
-/**
  * Canonizes of a given keyexpr in string representation.
  * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
  *
@@ -186,20 +173,6 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t z_keyexpr_canonize(char *start, size_t *len);
-
-/**
- * Canonizes a given keyexpr in string representation.
- * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
- *
- * Parameters:
- *   start: Pointer to the keyexpr in its string representation as a null terminated string.
- *   len: Number of characters in ``start``.
- *
- * Return:
- *   ``0`` if canonization successful, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
- */
-int8_t zp_keyexpr_canonize_null_terminated(char *start);
 
 /**
  * Checks if a given keyexpr contains another keyexpr in its set.

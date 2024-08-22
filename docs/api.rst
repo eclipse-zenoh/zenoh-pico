@@ -288,9 +288,7 @@ Primitives
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
 .. autocfunction:: primitives.h::z_keyexpr_as_view_string
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
-.. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_canonize
-.. autocfunction:: primitives.h::zp_keyexpr_canonize_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_includes
 .. autocfunction:: primitives.h::z_keyexpr_intersects
 .. autocfunction:: primitives.h::z_keyexpr_equals

@@ -61,18 +61,9 @@ size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_s
 
 _Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_svec_is_empty(a); }
 
-int8_t zp_keyexpr_canonize_null_terminated(char *start) {
-    zp_keyexpr_canon_status_t ret = Z_KEYEXPR_CANON_SUCCESS;
+int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
 
-    size_t len = strlen(start);
-    size_t newlen = len;
-    ret = _z_keyexpr_canonize(start, &newlen);
-    if (newlen < len) {
-        start[newlen] = '\0';
-    }
-
-    return ret;
-}
+int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
 int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
     keyexpr->_val = _z_rname(name);
@@ -80,8 +71,10 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
 }
 
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
-    _Z_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(name));
-    keyexpr->_val = _z_rname(name);
+    size_t name_len = strlen(name);
+    _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, &name_len));
+    keyexpr->_val = _z_rname(NULL);
+    keyexpr->_val._suffix = _z_string_from_substr(name, name_len);
     return _Z_RES_OK;
 }
 
@@ -138,7 +131,6 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
     memcpy(curr_ptr, _z_string_data(&left->_suffix), left_len);
     curr_ptr[left_len] = '/';
     memcpy(curr_ptr + left_len + 1, _z_string_data(&right->_suffix), right_len);
-    // FIXME: z_keyexpr_canonize should accept z_string
     _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize((char *)curr_ptr, &key->_val._suffix._slice.len), z_free(curr_ptr));
     return _Z_RES_OK;
 }
@@ -153,12 +145,6 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
     }
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
-
-int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
-
-int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexpr_is_canon(start, strlen(start)); }
-
-int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     return _z_keyexpr_suffix_includes(l, r);
@@ -1469,7 +1455,6 @@ int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *na
     }
     memcpy((char *)_z_string_data(&key->_val._suffix), name, _z_string_len(&key->_val._suffix));
     // Canonize the suffix
-    // FIXME: z_keyexpr_canonize should accept z_string
     _Z_CLEAN_RETURN_IF_ERR(
         z_keyexpr_canonize((char *)_z_string_data(&key->_val._suffix), &key->_val._suffix._slice.len),
         _z_keyexpr_clear(&key->_val));
