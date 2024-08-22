@@ -113,7 +113,7 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, 
     }
 
     key->_val._suffix = _z_string_preallocate(left_len + len);
-    if (!_z_string_check(&key->_val._suffix)) {
+    if (!_z_keyexpr_has_suffix(&key->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Copy data
@@ -130,7 +130,7 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
     size_t right_len = _z_string_len(&right->_suffix);
 
     key->_val._suffix = _z_string_preallocate(left_len + right_len + 1);
-    if (!_z_string_check(&key->_val._suffix)) {
+    if (!_z_keyexpr_has_suffix(&key->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Copy data
@@ -1497,7 +1497,7 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
     // since they consist of 2 disjoint sets: either they have a non-nul suffix or non-trivial id/mapping.
     // The resulting keyexpr can be separated later into valid internal keys using _z_keyexpr_alias_from_user_defined.
-    if (_z_string_check(&keyexpr->_suffix)) {  // FIXME: _z_keyexpr_has_suffix
+    if (_z_keyexpr_has_suffix(keyexpr)) {
         _Z_RETURN_IF_ERR(_z_string_copy(&key->_val._suffix, &keyexpr->_suffix));
     }
     _z_keyexpr_set_owns_suffix(&key->_val, true);
@@ -1546,12 +1546,12 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
             _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
             // Remove wild
             char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
-            if ((wild != NULL) && _z_string_check(&keyexpr_aliased._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+            if ((wild != NULL) && _z_keyexpr_has_suffix(&keyexpr_aliased)) {
                 wild = _z_ptr_char_offset(wild, -1);
                 size_t len = _z_ptr_char_diff(wild, _z_string_data(&keyexpr_aliased._suffix));
                 resource_key._suffix = _z_string_preallocate(len);
 
-                if (!_z_string_check(&resource_key._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+                if (!_z_keyexpr_has_suffix(&resource_key)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
                 memcpy((char *)_z_string_data(&resource_key._suffix), _z_string_data(&keyexpr_aliased._suffix), len);

@@ -272,7 +272,7 @@ int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *de
     // Retrieve key
     _zp_session_lock_mutex(zn);
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
-    if (!_z_string_check(&key._suffix)) {  // FIXME: _z_keyexpr_has_suffix
+    if (!_z_keyexpr_has_suffix(&key)) {
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
@@ -319,7 +319,7 @@ int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *
     _zp_session_lock_mutex(zn);
     // Retrieve declare data
     _z_keyexpr_t key = _unsafe_z_get_key_from_declare(zn, msg.id, decl_type);
-    if (!_z_string_check(&key._suffix)) {  // FIXME: _z_keyexpr_has_suffix
+    if (!_z_keyexpr_has_suffix(&key)) {
         _zp_session_unlock_mutex(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }

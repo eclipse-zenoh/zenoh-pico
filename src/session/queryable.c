@@ -140,7 +140,7 @@ int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const 
     _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
-    if (_z_string_check(&key._suffix)) {  // FIXME: _z_keyexpr_has_suffix
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
         _zp_session_unlock_mutex(zn);

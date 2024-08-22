@@ -36,7 +36,7 @@
 int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(ke) ? _z_string_len(&ke._suffix) : 0);
+    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(&ke) ? _z_string_len(&ke._suffix) : 0);
     header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
@@ -49,7 +49,7 @@ int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_nex
 
 int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
     uint8_t header = _Z_DECL_KEXPR_MID;
-    int has_kesuffix = _z_keyexpr_has_suffix(decl->_keyexpr);
+    int has_kesuffix = _z_keyexpr_has_suffix(&decl->_keyexpr);
     if (has_kesuffix) {
         header |= _Z_DECL_KEXPR_FLAG_N;
     }
@@ -61,7 +61,7 @@ int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
 }
 
 int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensions, uint32_t id, _z_keyexpr_t keyexpr) {
-    _Bool has_kesuffix = _z_keyexpr_has_suffix(keyexpr);
+    _Bool has_kesuffix = _z_keyexpr_has_suffix(&keyexpr);
     if (has_extensions) {
         header |= _Z_FLAG_Z_Z;
     }
@@ -205,7 +205,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
                 ke->_suffix = _z_string_preallocate(len);
-                if (!_z_string_check(&ke->_suffix)) {
+                if (!_z_keyexpr_has_suffix(ke)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
                 ke->_mapping = _z_keyexpr_mapping(mapping, true);
@@ -241,7 +241,7 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
         ke->_suffix = _z_string_preallocate(len);
-        if (!_z_string_check(&ke->_suffix)) {
+        if (!_z_keyexpr_has_suffix(ke)) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         ke->_mapping = _z_keyexpr_mapping(mapping, true);

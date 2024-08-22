@@ -157,7 +157,7 @@ int8_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, co
              _z_string_data(&keyexpr._suffix), _z_keyexpr_mapping_id(&keyexpr));
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
     _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
-    if (_z_string_check(&key._suffix)) {  // FIXME: _z_keyexpr_has_suffix
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
 
         _zp_session_unlock_mutex(zn);

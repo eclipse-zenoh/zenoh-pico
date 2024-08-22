@@ -97,7 +97,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (_z_string_check(&keyexpr->_suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+    if (_z_keyexpr_has_suffix(keyexpr)) {
         len = len + _z_string_len(&keyexpr->_suffix);
         strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);  // Warning: list must be release with
                                                                              //   _z_list_free(&strs, _z_noop_free);
@@ -113,7 +113,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             len = 0;
             break;
         }
-        if (_z_string_check(&res->_key._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+        if (_z_keyexpr_has_suffix(&res->_key)) {
             len = len + _z_string_len(&res->_key._suffix);
             strs = _z_string_list_push(strs, &res->_key._suffix);  // Warning: list must be release with
                                                                    //   _z_list_free(&strs, _z_noop_free);
@@ -124,7 +124,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     // Copy the data
     if (len != (size_t)0) {
         ret._suffix = _z_string_preallocate(len);
-        if (_z_string_check(&ret._suffix)) {
+        if (_z_keyexpr_has_suffix(&ret)) {
             char *curr_ptr = (char *)_z_string_data(&ret._suffix);
 
             // Concatenate all the partial resource names
@@ -182,7 +182,7 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    if (!_z_string_check(&keyexpr->_suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+    if (!_z_keyexpr_has_suffix(keyexpr)) {
         return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
     }
     _zp_session_lock_mutex(zn);
@@ -221,7 +221,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
         }
     }
     ret = key._id;
-    if (_z_string_check(&key._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;

@@ -676,10 +676,10 @@ void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     printf("ResKey -> ");
     printf("ID (%u:%u), ", left->_id, right->_id);
     assert(left->_id == right->_id);
-    assert(_z_keyexpr_has_suffix(*left) == _z_keyexpr_has_suffix(*right));
+    assert(_z_keyexpr_has_suffix(left) == _z_keyexpr_has_suffix(right));
 
     printf("Name (");
-    if (_z_keyexpr_has_suffix(*left)) {
+    if (_z_keyexpr_has_suffix(left)) {
         printf("%.*s:%.*s", (int)_z_string_len(&left->_suffix), _z_string_data(&left->_suffix),
                (int)_z_string_len(&right->_suffix), _z_string_data(&right->_suffix));
         assert(_z_string_equals(&left->_suffix, &right->_suffix) == true);
@@ -697,7 +697,7 @@ void keyexpr_field(void) {
     _z_keyexpr_t e_rk = gen_keyexpr();
 
     // Encode
-    uint8_t header = (_z_string_check(&e_rk._suffix)) ? _Z_FLAG_Z_K : 0;
+    uint8_t header = (_z_keyexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
     int8_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);

@@ -123,8 +123,8 @@ static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffi
     ke->_mapping._val &= 0x7fff;
     ke->_mapping._val |= owns_suffix ? 0x8000 : 0;
 }
-static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return _z_string_check(&ke._suffix); }
-static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(*ke); }
+static inline _Bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
+static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
 
 /**
  * Create a resource key from a resource name.

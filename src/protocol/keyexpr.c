@@ -45,7 +45,7 @@ int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     dst->_id = src->_id;
     dst->_mapping = src->_mapping;
 
-    if (_z_string_check(&src->_suffix)) {
+    if (_z_keyexpr_has_suffix(src)) {
         _Z_RETURN_IF_ERR(_z_string_copy(&dst->_suffix, &src->_suffix));
     }
     return _Z_RES_OK;
@@ -75,7 +75,7 @@ void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (_z_string_check(&rk->_suffix)) {
+    if (_z_keyexpr_has_suffix(rk)) {
         _z_string_clear(&rk->_suffix);
     }
     rk->_suffix = _z_string_null();
@@ -112,7 +112,7 @@ _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
 }
 
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, _Bool try_declared) {
-    if ((try_declared && src._id != Z_RESOURCE_ID_NONE) || !_z_string_check(&src._suffix)) {
+    if ((try_declared && src._id != Z_RESOURCE_ID_NONE) || !_z_keyexpr_has_suffix(&src)) {
         return (_z_keyexpr_t){
             ._id = src._id,
             ._mapping = src._mapping,
