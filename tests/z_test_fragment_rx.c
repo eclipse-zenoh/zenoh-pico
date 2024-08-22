@@ -33,9 +33,9 @@ void data_handler(const z_loaned_sample_t *sample, void *ctx) {
             break;
         }
     }
-    printf("[rx]: Received packet on %s, len: %d, validity: %d, qos {priority: %d, cong_ctrl: %d}\n",
-           z_string_data(z_loan(keystr)), (int)data_len, is_valid, z_sample_priority(sample),
-           z_sample_congestion_control(sample));
+    printf("[rx]: Received packet on %.*s, len: %d, validity: %d, qos {priority: %d, cong_ctrl: %d}\n",
+           (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)), (int)data_len, is_valid,
+           z_sample_priority(sample), z_sample_congestion_control(sample));
     z_drop(z_move(value));
 }
 

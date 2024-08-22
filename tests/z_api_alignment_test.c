@@ -141,23 +141,10 @@ int main(int argc, char **argv) {
 
     _Bool _ret_bool = z_keyexpr_includes(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
     assert(_ret_bool);
-#ifdef ZENOH_PICO
-    _ret_bool = zp_keyexpr_includes_null_terminated("demo/example/**", "demo/example/a");
-    assert(_ret_bool);
-#endif
     _ret_bool = z_keyexpr_intersects(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
     assert(_ret_bool);
-#ifdef ZENOH_PICO
-    _ret_bool = zp_keyexpr_intersect_null_terminated("demo/example/**", "demo/example/a");
-    assert(_ret_bool);
-#endif
     _ret_bool = z_keyexpr_equals(z_loan(key_demo_example_starstar), z_loan(key_demo_example));
     assert(!_ret_bool);
-#ifdef ZENOH_PICO
-    _ret_bool = zp_keyexpr_equals_null_terminated("demo/example/**", "demo/example");
-    assert(!_ret_bool);
-#endif
-
     z_sleep_s(SLEEP);
 
     size_t keyexpr_len = strlen(URI);
