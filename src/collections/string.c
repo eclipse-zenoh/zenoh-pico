@@ -51,6 +51,12 @@ _z_string_t _z_string_from_str(const char *value) {
     return s;
 }
 
+_z_string_t _z_string_from_substr(const char *value, size_t len) {
+    _z_string_t s;
+    s._slice = _z_slice_from_buf((const uint8_t *)(value), len);
+    return s;
+}
+
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
     _z_string_t s;
     s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);

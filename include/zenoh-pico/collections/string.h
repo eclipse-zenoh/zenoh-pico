@@ -71,6 +71,7 @@ _Bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_make(const char *value);
 _z_string_t _z_string_n_make(const char *value, size_t len);
 _z_string_t _z_string_from_str(const char *value);
+_z_string_t _z_string_from_substr(const char *value, size_t len);
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
 _z_string_t *_z_string_make_as_ptr(const char *value);
 _Bool _z_string_is_empty(const _z_string_t *s);
