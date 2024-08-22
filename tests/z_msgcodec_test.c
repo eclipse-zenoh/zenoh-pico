@@ -664,10 +664,12 @@ _z_keyexpr_t gen_keyexpr(void) {
     _Bool is_numerical = gen_bool();
     if (is_numerical == true) {
         key._suffix = _z_string_null();
-        _z_keyexpr_set_owns_suffix(&key, false);
     } else {
-        key._suffix = _z_string_from_str(gen_str(gen_zint() % 16));
-        _z_keyexpr_set_owns_suffix(&key, true);
+        size_t len = gen_zint() % 16;
+        key._suffix = _z_string_preallocate(len);
+        char *suffix = gen_str(len);
+        memcpy((char *)_z_string_data(&key._suffix), suffix, len);
+        z_free(suffix);
     }
     return key;
 }

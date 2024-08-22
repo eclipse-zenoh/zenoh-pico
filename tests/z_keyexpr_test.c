@@ -344,7 +344,8 @@ void test_equals(void) {
 _Bool keyexpr_equals_string(const z_loaned_keyexpr_t *ke, const char *s) {
     z_view_string_t vs;
     z_keyexpr_as_view_string(ke, &vs);
-    return strncmp(z_string_data(z_view_string_loan(&vs)), s, z_string_len(z_view_string_loan(&vs))) == 0;
+    _z_string_t str = _z_string_from_str(s);
+    return _z_string_equals(z_view_string_loan(&vs), &str);
 }
 
 void test_keyexpr_constructor(void) {

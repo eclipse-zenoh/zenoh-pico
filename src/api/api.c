@@ -138,8 +138,8 @@ int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, co
     memcpy(curr_ptr, _z_string_data(&left->_suffix), left_len);
     curr_ptr[left_len] = '/';
     memcpy(curr_ptr + left_len + 1, _z_string_data(&right->_suffix), right_len);
-
-    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated((char *)curr_ptr), z_free(curr_ptr));
+    // FIXME: z_keyexpr_canonize should accept z_string
+    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize((char *)curr_ptr, &key->_val._suffix._slice.len), z_free(curr_ptr));
     return _Z_RES_OK;
 }
 
@@ -1461,15 +1461,19 @@ int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name)
 
 int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char *name, size_t *len) {
     z_internal_keyexpr_null(key);
-    char *name_copy = _z_str_n_clone(name, *len);
-    if (name_copy == NULL) {
+
+    // Copy the suffix
+    key->_val._suffix = _z_string_preallocate(*len);
+    if (!_z_keyexpr_has_suffix(&key->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-
-    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize(name_copy, len), z_free(name_copy));
-    name_copy[*len] = '\0';
-    key->_val = _z_rname(name_copy);
-    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    memcpy((char *)_z_string_data(&key->_val._suffix), name, _z_string_len(&key->_val._suffix));
+    // Canonize the suffix
+    // FIXME: z_keyexpr_canonize should accept z_string
+    _Z_CLEAN_RETURN_IF_ERR(
+        z_keyexpr_canonize((char *)_z_string_data(&key->_val._suffix), &key->_val._suffix._slice.len),
+        _z_keyexpr_clear(&key->_val));
+    *len = _z_string_len(&key->_val._suffix);
     return _Z_RES_OK;
 }
 
@@ -1479,12 +1483,11 @@ int8_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
 
 int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len) {
     z_internal_keyexpr_null(key);
-    char *name_copy = _z_str_n_clone(name, len);
-    if (name_copy == NULL) {
+    key->_val._suffix = _z_string_preallocate(len);
+    if (!_z_keyexpr_has_suffix(&key->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    key->_val = _z_rname(name_copy);
-    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    memcpy((char *)_z_string_data(&key->_val._suffix), name, _z_string_len(&key->_val._suffix));
     return _Z_RES_OK;
 }
 
@@ -1500,7 +1503,6 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     if (_z_keyexpr_has_suffix(keyexpr)) {
         _Z_RETURN_IF_ERR(_z_string_copy(&key->_val._suffix, &keyexpr->_suffix));
     }
-    _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
 }
 
@@ -1555,7 +1557,6 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
                 memcpy((char *)_z_string_data(&resource_key._suffix), _z_string_data(&keyexpr_aliased._suffix), len);
-                _z_keyexpr_set_owns_suffix(&resource_key, false);  // FIXME: remove set own suffix mechanism
             }
             // Declare resource
             if (do_keydecl) {

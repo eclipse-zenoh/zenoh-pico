@@ -27,7 +27,7 @@ _z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); 
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL, false),
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
         ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_from_str(suffix),
     };
 }
@@ -35,7 +35,7 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL, false),
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
         ._suffix = (_z_string_check(str)) ? _z_string_alias(str) : _z_string_null(),
     };
 }
@@ -55,10 +55,6 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
     _z_keyexpr_t dst;
     _z_keyexpr_copy(&dst, &src);
     return dst;
-}
-
-_z_keyexpr_t _z_keyexpr_to_owned(_z_keyexpr_t src) {
-    return _z_keyexpr_owns_suffix(&src) ? src : _z_keyexpr_duplicate(src);
 }
 
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {

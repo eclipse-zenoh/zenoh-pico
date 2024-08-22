@@ -208,10 +208,10 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 if (!_z_keyexpr_has_suffix(ke)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->_mapping = _z_keyexpr_mapping(mapping, true);
+                ke->_mapping = _z_keyexpr_mapping(mapping);
                 _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
             } else {
-                ke->_mapping = _z_keyexpr_mapping(mapping, false);
+                ke->_mapping = _z_keyexpr_mapping(mapping);
             }
         } break;
         default:
@@ -244,11 +244,11 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (!_z_keyexpr_has_suffix(ke)) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->_mapping = _z_keyexpr_mapping(mapping, true);
+        ke->_mapping = _z_keyexpr_mapping(mapping);
         _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
     } else {
         ke->_suffix = _z_string_null();
-        ke->_mapping = _z_keyexpr_mapping(mapping, false);
+        ke->_mapping = _z_keyexpr_mapping(mapping);
     }
     return _Z_RES_OK;
 }

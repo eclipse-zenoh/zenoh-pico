@@ -131,10 +131,10 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
         ret |= _z_string_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
             ke->_suffix = str;
-            ke->_mapping = _z_keyexpr_mapping(0, true);
+            ke->_mapping = _z_keyexpr_mapping(0);
         } else {
             ke->_suffix = _z_string_null();
-            ke->_mapping = _z_keyexpr_mapping(0, false);
+            ke->_mapping = _z_keyexpr_mapping(0);
         }
     } else {
         ke->_suffix = _z_string_null();
