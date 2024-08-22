@@ -127,6 +127,19 @@ jobs:
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
+  unstable_build:
+    name: Check compilation with unstable API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with unstable
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
+
+
   st_build:
     needs: zenoh_build
     name: Build and test in single thread on ubuntu-latest

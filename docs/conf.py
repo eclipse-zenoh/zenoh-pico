@@ -30,6 +30,7 @@ extensions = ['sphinx_c_autodoc', 'sphinx_c_autodoc.napoleon']
 language = 'c'
 c_autodoc_roots = ['../include/zenoh-pico/api/']
 c_autodoc_compilation_args = [
+    "-DZ_FEATURE_UNSTABLE_API=1",
     "-DZ_FEATURE_PUBLICATION=1",
     "-DZ_FEATURE_SUBSCRIPTION=1",
     "-DZ_FEATURE_QUERY=1",
