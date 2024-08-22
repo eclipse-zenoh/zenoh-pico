@@ -276,14 +276,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="This script runs zenoh-pico examples" " and checks them according to the given configuration"
     )
-    parser.add_argument("--unstable", type=int, choices=[0, 1], help="Z_FEATURE_UNSTABLE_API (0 or 1)")
     parser.add_argument("--pub", type=int, choices=[0, 1], help="Z_FEATURE_PUBLICATION (0 or 1)")
     parser.add_argument("--sub", type=int, choices=[0, 1], help="Z_FEATURE_SUBSCRIPTION (0 or 1)")
     parser.add_argument("--queryable", type=int, choices=[0, 1], help="Z_FEATURE_QUERYABLE (0 or 1)")
     parser.add_argument("--query", type=int, choices=[0, 1], help="Z_FEATURE_QUERY (0 or 1)")
     EXIT_STATUS = 0
     prog_args = parser.parse_args()
-    print(f"Args value, unstable:{prog_args.unstable},  pub:{prog_args.pub}, sub:{prog_args.sub}, " f"queryable:{prog_args.queryable}, query:{prog_args.query}")
+    print(f"Args value, pub:{prog_args.pub}, sub:{prog_args.sub}, " f"queryable:{prog_args.queryable}, query:{prog_args.query}")
 
     # Test pub and sub examples
     if pub_and_sub(prog_args) == 1:
