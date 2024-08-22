@@ -96,36 +96,36 @@
  *   x: The instance to drop.
  */
 #define z_drop(x) _Generic((x), \
-                  z_moved_keyexpr_t : z_keyexpr_drop,                             \
-                  z_moved_config_t : z_config_drop,                               \
-                  z_moved_session_t : z_session_drop,                             \
-                  z_moved_subscriber_t : z_subscriber_drop,                       \
-                  z_moved_publisher_t : z_publisher_drop,                         \
-                  z_moved_queryable_t : z_queryable_drop,                         \
-                  z_moved_reply_t : z_reply_drop,                                 \
-                  z_moved_hello_t : z_hello_drop,                                 \
-                  z_moved_string_t : z_string_drop,                               \
-                  z_moved_string_array_t : z_string_array_drop,                   \
-                  z_moved_sample_t : z_sample_drop,                               \
-                  z_moved_query_t : z_query_drop,                                 \
-                  z_moved_encoding_t : z_encoding_drop,                           \
-                  z_moved_slice_t : z_slice_drop,                                 \
-                  z_moved_bytes_t : z_bytes_drop,                                 \
-                  z_moved_closure_sample_t : z_closure_sample_drop,               \
-                  z_moved_closure_query_t : z_closure_query_drop,                 \
-                  z_moved_closure_reply_t : z_closure_reply_drop,                 \
-                  z_moved_closure_hello_t : z_closure_hello_drop,                 \
-                  z_moved_closure_zid_t : z_closure_zid_drop,                     \
-                  z_moved_task_t : z_task_join,                                   \
-                  z_moved_mutex_t : z_mutex_drop,                                 \
-                  z_moved_condvar_t : z_condvar_drop,                             \
-                  z_moved_fifo_handler_query_t : z_fifo_handler_query_drop,       \
-                  z_moved_fifo_handler_reply_t : z_fifo_handler_reply_drop,       \
-                  z_moved_fifo_handler_sample_t : z_fifo_handler_sample_drop,     \
-                  z_moved_ring_handler_query_t : z_ring_handler_query_drop,       \
-                  z_moved_ring_handler_reply_t : z_ring_handler_reply_drop,       \
-                  z_moved_ring_handler_sample_t : z_ring_handler_sample_drop,     \
-                  z_moved_reply_err_t : z_reply_err_drop                          \
+                  z_moved_keyexpr_t* : z_keyexpr_drop,                             \
+                  z_moved_config_t* : z_config_drop,                               \
+                  z_moved_session_t* : z_session_drop,                             \
+                  z_moved_subscriber_t* : z_subscriber_drop,                       \
+                  z_moved_publisher_t* : z_publisher_drop,                         \
+                  z_moved_queryable_t* : z_queryable_drop,                         \
+                  z_moved_reply_t* : z_reply_drop,                                 \
+                  z_moved_hello_t* : z_hello_drop,                                 \
+                  z_moved_string_t* : z_string_drop,                               \
+                  z_moved_string_array_t* : z_string_array_drop,                   \
+                  z_moved_sample_t* : z_sample_drop,                               \
+                  z_moved_query_t* : z_query_drop,                                 \
+                  z_moved_encoding_t* : z_encoding_drop,                           \
+                  z_moved_slice_t* : z_slice_drop,                                 \
+                  z_moved_bytes_t* : z_bytes_drop,                                 \
+                  z_moved_closure_sample_t* : z_closure_sample_drop,               \
+                  z_moved_closure_query_t* : z_closure_query_drop,                 \
+                  z_moved_closure_reply_t* : z_closure_reply_drop,                 \
+                  z_moved_closure_hello_t* : z_closure_hello_drop,                 \
+                  z_moved_closure_zid_t* : z_closure_zid_drop,                     \
+                  z_moved_task_t* : z_task_join,                                   \
+                  z_moved_mutex_t* : z_mutex_drop,                                 \
+                  z_moved_condvar_t* : z_condvar_drop,                             \
+                  z_moved_fifo_handler_query_t* : z_fifo_handler_query_drop,       \
+                  z_moved_fifo_handler_reply_t* : z_fifo_handler_reply_drop,       \
+                  z_moved_fifo_handler_sample_t* : z_fifo_handler_sample_drop,     \
+                  z_moved_ring_handler_query_t* : z_ring_handler_query_drop,       \
+                  z_moved_ring_handler_reply_t* : z_ring_handler_reply_drop,       \
+                  z_moved_ring_handler_sample_t* : z_ring_handler_sample_drop,     \
+                  z_moved_reply_err_t* : z_reply_err_drop                          \
             )(x)
 
 /**
@@ -138,28 +138,28 @@
  *   Returns ``true`` if valid, or ``false`` otherwise.
  */
 
-#define _z_check(x) _Generic((x), \
-                  z_owned_keyexpr_t : _z_owned_keyexpr_check,                 \
-                  z_owned_reply_err_t : _z_owned_reply_err_check,             \
-                  z_owned_config_t : _z_owned_config_check,                   \
-                  z_owned_session_t : _z_owned_session_check,                 \
-                  z_owned_subscriber_t : _z_owned_subscriber_check,           \
-                  z_owned_publisher_t : _z_owned_publisher_check,             \
-                  z_owned_queryable_t : _z_owned_queryable_check,             \
-                  z_owned_reply_t : _z_owned_reply_check,                     \
-                  z_owned_hello_t : _z_owned_hello_check,                     \
-                  z_owned_string_t : _z_owned_string_check,                   \
-                  z_owned_string_array_t : _z_owned_string_array_check,       \
-                  z_owned_closure_sample_t : _z_owned_closure_sample_check,   \
-                  z_owned_closure_query_t : _z_owned_closure_query_check,     \
-                  z_owned_closure_reply_t : _z_owned_closure_reply_check,     \
-                  z_owned_closure_hello_t : _z_owned_closure_hello_check,     \
-                  z_owned_closure_zid_t : _z_owned_closure_zid_check,         \
-                  z_owned_slice_t : _z_owned_slice_check,                     \
-                  z_owned_bytes_t : _z_owned_bytes_check,                     \
-                  z_owned_sample_t : _z_owned_sample_check,                   \
-                  z_owned_query_t : _z_owned_query_check,                     \
-                  z_owned_encoding_t : _z_owned_encoding_check                \
+#define z_internal_check(x) _Generic((x), \
+                  z_owned_keyexpr_t : z_internal_keyexpr_check,                 \
+                  z_owned_reply_err_t : z_internal_reply_err_check,             \
+                  z_owned_config_t : z_internal_config_check,                   \
+                  z_owned_session_t : z_internal_session_check,                 \
+                  z_owned_subscriber_t : z_internal_subscriber_check,           \
+                  z_owned_publisher_t : z_internal_publisher_check,             \
+                  z_owned_queryable_t : z_internal_queryable_check,             \
+                  z_owned_reply_t : z_internal_reply_check,                     \
+                  z_owned_hello_t : z_internal_hello_check,                     \
+                  z_owned_string_t : z_internal_string_check,                   \
+                  z_owned_string_array_t : z_internal_string_array_check,       \
+                  z_owned_closure_sample_t : z_internal_closure_sample_check,   \
+                  z_owned_closure_query_t : z_internal_closure_query_check,     \
+                  z_owned_closure_reply_t : z_internal_closure_reply_check,     \
+                  z_owned_closure_hello_t : z_internal_closure_hello_check,     \
+                  z_owned_closure_zid_t : z_internal_closure_zid_check,         \
+                  z_owned_slice_t : z_internal_slice_check,                     \
+                  z_owned_bytes_t : z_internal_bytes_check,                     \
+                  z_owned_sample_t : z_internal_sample_check,                   \
+                  z_owned_query_t : z_internal_query_check,                     \
+                  z_owned_encoding_t : z_internal_encoding_check                \
             )(&x)
 
 /**
@@ -314,28 +314,28 @@
  * Parameters:
  *   x: The instance to nullify.
  */
-#define _z_null(x) _Generic((x), \
-                  z_owned_session_t * : _z_owned_session_null,                             \
-                  z_owned_publisher_t * : _z_owned_publisher_null,                         \
-                  z_owned_keyexpr_t * : _z_owned_keyexpr_null,                             \
-                  z_owned_config_t * : _z_owned_config_null,                               \
-                  z_owned_subscriber_t * : _z_owned_subscriber_null,                       \
-                  z_owned_queryable_t * : _z_owned_queryable_null,                         \
-                  z_owned_query_t * : _z_owned_query_null,                                 \
-                  z_owned_reply_t * : _z_owned_reply_null,                                 \
-                  z_owned_hello_t * : _z_owned_hello_null,                                 \
-                  z_owned_string_t * : _z_owned_string_null,                               \
-                  z_owned_string_array_t * : _z_owned_string_array_null,                   \
-                  z_owned_slice_t  *: _z_owned_slice_null,                                 \
-                  z_owned_bytes_t  *: _z_owned_bytes_null,                                 \
-                  z_owned_closure_sample_t * : _z_owned_closure_sample_null,               \
-                  z_owned_closure_query_t * : _z_owned_closure_query_null,                 \
-                  z_owned_closure_reply_t * : _z_owned_closure_reply_null,                 \
-                  z_owned_closure_hello_t * : _z_owned_closure_hello_null,                 \
-                  z_owned_closure_zid_t * : _z_owned_closure_zid_null,                     \
-                  z_owned_sample_t * : _z_owned_sample_null,                               \
-                  z_owned_encoding_t * : _z_owned_encoding_null,                           \
-                  z_owned_reply_err_t * : _z_owned_reply_err_null                         \
+#define z_internal_null(x) _Generic((x), \
+                  z_owned_session_t * : z_internal_session_null,                             \
+                  z_owned_publisher_t * : z_internal_publisher_null,                         \
+                  z_owned_keyexpr_t * : z_internal_keyexpr_null,                             \
+                  z_owned_config_t * : z_internal_config_null,                               \
+                  z_owned_subscriber_t * : z_internal_subscriber_null,                       \
+                  z_owned_queryable_t * : z_internal_queryable_null,                         \
+                  z_owned_query_t * : z_internal_query_null,                                 \
+                  z_owned_reply_t * : z_internal_reply_null,                                 \
+                  z_owned_hello_t * : z_internal_hello_null,                                 \
+                  z_owned_string_t * : z_internal_string_null,                               \
+                  z_owned_string_array_t * : z_internal_string_array_null,                   \
+                  z_owned_slice_t  *: z_internal_slice_null,                                 \
+                  z_owned_bytes_t  *: z_internal_bytes_null,                                 \
+                  z_owned_closure_sample_t * : z_internal_closure_sample_null,               \
+                  z_owned_closure_query_t * : z_internal_closure_query_null,                 \
+                  z_owned_closure_reply_t * : z_internal_closure_reply_null,                 \
+                  z_owned_closure_hello_t * : z_internal_closure_hello_null,                 \
+                  z_owned_closure_zid_t * : z_internal_closure_zid_null,                     \
+                  z_owned_sample_t * : z_internal_sample_null,                               \
+                  z_owned_encoding_t * : z_internal_encoding_null,                           \
+                  z_owned_reply_err_t * : z_internal_reply_err_null                         \
             )(x)
 
 // clang-format on
@@ -451,54 +451,54 @@ inline void z_drop(z_owned_fifo_handler_query_t* v) { z_fifo_handler_query_drop(
 inline void z_drop(z_owned_ring_handler_reply_t* v) { z_ring_handler_reply_drop(v); }
 inline void z_drop(z_owned_fifo_handler_reply_t* v) { z_fifo_handler_reply_drop(v); }
 
-// _z_null definition
-inline void _z_null(z_owned_session_t* v) { _z_owned_session_null(v); }
-inline void _z_null(z_owned_publisher_t* v) { _z_owned_publisher_null(v); }
-inline void _z_null(z_owned_keyexpr_t* v) { _z_owned_keyexpr_null(v); }
-inline void _z_null(z_owned_config_t* v) { _z_owned_config_null(v); }
-inline void _z_null(z_owned_subscriber_t* v) { _z_owned_subscriber_null(v); }
-inline void _z_null(z_owned_queryable_t* v) { _z_owned_queryable_null(v); }
-inline void _z_null(z_owned_query_t* v) { _z_owned_query_null(v); }
-inline void _z_null(z_owned_sample_t* v) { _z_owned_sample_null(v); }
-inline void _z_null(z_owned_reply_t* v) { _z_owned_reply_null(v); }
-inline void _z_null(z_owned_hello_t* v) { _z_owned_hello_null(v); }
-inline void _z_null(z_owned_string_t* v) { _z_owned_string_null(v); }
-inline void _z_null(z_owned_bytes_t* v) { _z_owned_bytes_null(v); }
-inline void _z_null(z_owned_encoding_t* v) { _z_owned_encoding_null(v); }
-inline void _z_null(z_owned_reply_err_t* v) { _z_owned_reply_err_null(v); }
-inline void _z_null(z_owned_closure_sample_t* v) { _z_owned_closure_sample_null(v); }
-inline void _z_null(z_owned_closure_query_t* v) { _z_owned_closure_query_null(v); }
-inline void _z_null(z_owned_closure_reply_t* v) { _z_owned_closure_reply_null(v); }
-inline void _z_null(z_owned_closure_hello_t* v) { _z_owned_closure_hello_null(v); }
-inline void _z_null(z_owned_closure_zid_t* v) { _z_owned_closure_zid_null(v); }
-inline void _z_null(z_owned_ring_handler_query_t* v) { return _z_owned_ring_handler_query_null(v); };
-inline void _z_null(z_owned_ring_handler_reply_t* v) { return _z_owned_ring_handler_reply_null(v); };
-inline void _z_null(z_owned_ring_handler_sample_t* v) { return _z_owned_ring_handler_sample_null(v); };
-inline void _z_null(z_owned_fifo_handler_query_t* v) { return _z_owned_fifo_handler_query_null(v); };
-inline void _z_null(z_owned_fifo_handler_reply_t* v) { return _z_owned_fifo_handler_reply_null(v); };
-inline void _z_null(z_owned_fifo_handler_sample_t* v) { return _z_owned_fifo_handler_sample_null(v); };
+// z_internal_null definition
+inline void z_internal_null(z_owned_session_t* v) { z_internal_session_null(v); }
+inline void z_internal_null(z_owned_publisher_t* v) { z_internal_publisher_null(v); }
+inline void z_internal_null(z_owned_keyexpr_t* v) { z_internal_keyexpr_null(v); }
+inline void z_internal_null(z_owned_config_t* v) { z_internal_config_null(v); }
+inline void z_internal_null(z_owned_subscriber_t* v) { z_internal_subscriber_null(v); }
+inline void z_internal_null(z_owned_queryable_t* v) { z_internal_queryable_null(v); }
+inline void z_internal_null(z_owned_query_t* v) { z_internal_query_null(v); }
+inline void z_internal_null(z_owned_sample_t* v) { z_internal_sample_null(v); }
+inline void z_internal_null(z_owned_reply_t* v) { z_internal_reply_null(v); }
+inline void z_internal_null(z_owned_hello_t* v) { z_internal_hello_null(v); }
+inline void z_internal_null(z_owned_string_t* v) { z_internal_string_null(v); }
+inline void z_internal_null(z_owned_bytes_t* v) { z_internal_bytes_null(v); }
+inline void z_internal_null(z_owned_encoding_t* v) { z_internal_encoding_null(v); }
+inline void z_internal_null(z_owned_reply_err_t* v) { z_internal_reply_err_null(v); }
+inline void z_internal_null(z_owned_closure_sample_t* v) { z_internal_closure_sample_null(v); }
+inline void z_internal_null(z_owned_closure_query_t* v) { z_internal_closure_query_null(v); }
+inline void z_internal_null(z_owned_closure_reply_t* v) { z_internal_closure_reply_null(v); }
+inline void z_internal_null(z_owned_closure_hello_t* v) { z_internal_closure_hello_null(v); }
+inline void z_internal_null(z_owned_closure_zid_t* v) { z_internal_closure_zid_null(v); }
+inline void z_internal_null(z_owned_ring_handler_query_t* v) { return z_internal_ring_handler_query_null(v); };
+inline void z_internal_null(z_owned_ring_handler_reply_t* v) { return z_internal_ring_handler_reply_null(v); };
+inline void z_internal_null(z_owned_ring_handler_sample_t* v) { return z_internal_ring_handler_sample_null(v); };
+inline void z_internal_null(z_owned_fifo_handler_query_t* v) { return z_internal_fifo_handler_query_null(v); };
+inline void z_internal_null(z_owned_fifo_handler_reply_t* v) { return z_internal_fifo_handler_reply_null(v); };
+inline void z_internal_null(z_owned_fifo_handler_sample_t* v) { return z_internal_fifo_handler_sample_null(v); };
 
-// _z_check definition
-inline bool _z_check(const z_owned_session_t& v) { return _z_owned_session_check(&v); }
-inline bool _z_check(const z_owned_publisher_t& v) { return _z_owned_publisher_check(&v); }
-inline bool _z_check(const z_owned_keyexpr_t& v) { return _z_owned_keyexpr_check(&v); }
-inline bool _z_check(const z_owned_config_t& v) { return _z_owned_config_check(&v); }
-inline bool _z_check(const z_owned_subscriber_t& v) { return _z_owned_subscriber_check(&v); }
-inline bool _z_check(const z_owned_queryable_t& v) { return _z_owned_queryable_check(&v); }
-inline bool _z_check(const z_owned_reply_t& v) { return _z_owned_reply_check(&v); }
-inline bool _z_check(const z_owned_query_t& v) { return _z_owned_query_check(&v); }
-inline bool _z_check(const z_owned_hello_t& v) { return _z_owned_hello_check(&v); }
-inline bool _z_check(const z_owned_string_t& v) { return _z_owned_string_check(&v); }
-inline bool _z_check(const z_owned_sample_t& v) { return _z_owned_sample_check(&v); }
-inline bool _z_check(const z_owned_bytes_t& v) { return _z_owned_bytes_check(&v); }
-inline bool _z_check(const z_owned_encoding_t& v) { return _z_owned_encoding_check(&v); }
-inline bool _z_check(const z_owned_reply_err_t& v) { return _z_owned_reply_err_check(&v); }
-inline bool _z_check(const z_owned_fifo_handler_query_t& v) { return _z_owned_fifo_handler_query_check(&v); };
-inline bool _z_check(const z_owned_fifo_handler_reply_t& v) { return _z_owned_fifo_handler_reply_check(&v); };
-inline bool _z_check(const z_owned_fifo_handler_sample_t& v) { return _z_owned_fifo_handler_sample_check(&v); };
-inline bool _z_check(const z_owned_ring_handler_query_t& v) { return _z_owned_ring_handler_query_check(&v); };
-inline bool _z_check(const z_owned_ring_handler_reply_t& v) { return _z_owned_ring_handler_reply_check(&v); };
-inline bool _z_check(const z_owned_ring_handler_sample_t& v) { return _z_owned_ring_handler_sample_check(&v); };
+// z_internal_check definition
+inline bool z_internal_check(const z_owned_session_t& v) { return z_internal_session_check(&v); }
+inline bool z_internal_check(const z_owned_publisher_t& v) { return z_internal_publisher_check(&v); }
+inline bool z_internal_check(const z_owned_keyexpr_t& v) { return z_internal_keyexpr_check(&v); }
+inline bool z_internal_check(const z_owned_config_t& v) { return z_internal_config_check(&v); }
+inline bool z_internal_check(const z_owned_subscriber_t& v) { return z_internal_subscriber_check(&v); }
+inline bool z_internal_check(const z_owned_queryable_t& v) { return z_internal_queryable_check(&v); }
+inline bool z_internal_check(const z_owned_reply_t& v) { return z_internal_reply_check(&v); }
+inline bool z_internal_check(const z_owned_query_t& v) { return z_internal_query_check(&v); }
+inline bool z_internal_check(const z_owned_hello_t& v) { return z_internal_hello_check(&v); }
+inline bool z_internal_check(const z_owned_string_t& v) { return z_internal_string_check(&v); }
+inline bool z_internal_check(const z_owned_sample_t& v) { return z_internal_sample_check(&v); }
+inline bool z_internal_check(const z_owned_bytes_t& v) { return z_internal_bytes_check(&v); }
+inline bool z_internal_check(const z_owned_encoding_t& v) { return z_internal_encoding_check(&v); }
+inline bool z_internal_check(const z_owned_reply_err_t& v) { return z_internal_reply_err_check(&v); }
+inline bool z_internal_check(const z_owned_fifo_handler_query_t& v) { return z_internal_fifo_handler_query_check(&v); };
+inline bool z_internal_check(const z_owned_fifo_handler_reply_t& v) { return z_internal_fifo_handler_reply_check(&v); };
+inline bool z_internal_check(const z_owned_fifo_handler_sample_t& v) { return z_internal_fifo_handler_sample_check(&v); };
+inline bool z_internal_check(const z_owned_ring_handler_query_t& v) { return z_internal_ring_handler_query_check(&v); };
+inline bool z_internal_check(const z_owned_ring_handler_reply_t& v) { return z_internal_ring_handler_reply_check(&v); };
+inline bool z_internal_check(const z_owned_ring_handler_sample_t& v) { return z_internal_ring_handler_sample_check(&v); };
 
 // z_call definition
 inline void z_call(const z_loaned_closure_sample_t &closure, const z_loaned_sample_t *sample) 

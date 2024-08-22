@@ -141,7 +141,7 @@ extern "C" {
                            /* elem_clone_f                     */ z_##item_name##_clone,                    \
                            /* elem_move_f                     */ z_##item_name##_move,                      \
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
-                           /* elem_null                       */ _z_owned_##item_name##_null)
+                           /* elem_null                       */ z_internal_##item_name##_null)
 
 #define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)        \
     typedef struct {                                         \
