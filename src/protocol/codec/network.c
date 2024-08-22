@@ -262,7 +262,7 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_request_id));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_key._id));
     if (has_suffix) {
-        _Z_RETURN_IF_ERR(_z_str_encode(wbf, msg->_key._suffix))
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &msg->_key._suffix))
     }
     if (has_qos_ext) {
         n_ext -= 1;

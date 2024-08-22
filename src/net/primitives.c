@@ -324,7 +324,7 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
         r_ke = _z_get_expanded_key_from_key(zn, &keyexpr);
-        if (_z_keyexpr_intersects(q_ke._suffix, strlen(q_ke._suffix), r_ke._suffix, strlen(r_ke._suffix)) == false) {
+        if (_z_keyexpr_suffix_intersects(&q_ke, &r_ke) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }
         _z_keyexpr_clear(&q_ke);

@@ -77,7 +77,8 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
 int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
     int8_t ret = _Z_RES_OK;
 
-    _Z_DEBUG(">>> Allocating query for (%ju:%s)", (uintmax_t)pen_qry->_key._id, pen_qry->_key._suffix);
+    _Z_DEBUG(">>> Allocating query for (%ju:%.*s)", (uintmax_t)pen_qry->_key._id,
+             (int)_z_string_len(&pen_qry->_key._suffix), _z_string_data(&pen_qry->_key._suffix));
 
     _zp_session_lock_mutex(zn);
 
@@ -106,8 +107,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
 
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
     if ((ret == _Z_RES_OK) &&
-        ((pen_qry->_anykey == false) && (_z_keyexpr_intersects(pen_qry->_key._suffix, strlen(pen_qry->_key._suffix),
-                                                               keyexpr._suffix, strlen(keyexpr._suffix)) == false))) {
+        ((pen_qry->_anykey == false) && (_z_keyexpr_suffix_intersects(&pen_qry->_key, &keyexpr) == false))) {
         ret = _Z_ERR_QUERY_NOT_MATCH;
     }
 
@@ -125,8 +125,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
             pen_rep = _z_pending_reply_list_head(pen_rps);
 
             // Check if this is the same resource key
-            if (_z_str_eq(pen_rep->_reply.data._result.sample.keyexpr._suffix,
-                          reply.data._result.sample.keyexpr._suffix) == true) {
+            if (_z_string_equals(&pen_rep->_reply.data._result.sample.keyexpr._suffix,
+                                 &reply.data._result.sample.keyexpr._suffix) == true) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {

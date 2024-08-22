@@ -42,6 +42,7 @@
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
@@ -90,7 +91,7 @@ int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *
 }
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    s->_val = _z_string_from_str(keyexpr->_suffix);
+    s->_val = keyexpr->_suffix;
     return _Z_RES_OK;
 }
 
@@ -101,46 +102,44 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, 
     } else if (right == NULL) {
         return _Z_ERR_INVALID;
     }
-    size_t left_len = strlen(left->_suffix);
+    size_t left_len = _z_string_len(&left->_suffix);
     if (left_len == 0) {
         return _Z_ERR_INVALID;
     }
-    if (left->_suffix[left_len - 1] == '*' && right[0] == '*') {
+    const char *left_data = _z_string_data(&left->_suffix);
+
+    if (left_data[left_len - 1] == '*' && right[0] == '*') {
         return _Z_ERR_INVALID;
     }
 
-    char *s = z_malloc(left_len + len + 1);
-    if (s == NULL) {
+    key->_val._suffix = _z_string_preallocate(left_len + len);
+    if (!_z_string_check(&key->_val._suffix)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    s[left_len + len] = '\0';
-
-    memcpy(s, left->_suffix, left_len);
-    memcpy(s + left_len, right, len);
-
-    key->_val = _z_rname(s);
-    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    // Copy data
+    uint8_t *curr_ptr = (uint8_t *)_z_string_data(&key->_val._suffix);
+    memcpy(curr_ptr, _z_string_data(&left->_suffix), left_len);
+    memcpy(curr_ptr + left_len, right, len);
     return _Z_RES_OK;
 }
 
 int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
     z_internal_keyexpr_null(key);
 
-    size_t left_len = strlen(left->_suffix);
-    size_t right_len = strlen(right->_suffix);
+    size_t left_len = _z_string_len(&left->_suffix);
+    size_t right_len = _z_string_len(&right->_suffix);
 
-    char *s = z_malloc(left_len + right_len + 2);
-    if (s == NULL) {
+    key->_val._suffix = _z_string_preallocate(left_len + right_len + 1);
+    if (!_z_string_check(&key->_val._suffix)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    s[left_len + right_len + 1] = '\0';
-    s[left_len] = '/';
-    memcpy(s, left->_suffix, left_len);
-    memcpy(s + left_len + 1, right->_suffix, right_len);
+    // Copy data
+    uint8_t *curr_ptr = (uint8_t *)_z_string_data(&key->_val._suffix);
+    memcpy(curr_ptr, _z_string_data(&left->_suffix), left_len);
+    curr_ptr[left_len] = '/';
+    memcpy(curr_ptr + left_len + 1, _z_string_data(&right->_suffix), right_len);
 
-    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated(s), z_free(s));
-    key->_val = _z_rname(s);
-    _z_keyexpr_set_owns_suffix(&key->_val, true);
+    _Z_CLEAN_RETURN_IF_ERR(zp_keyexpr_canonize_null_terminated((char *)curr_ptr), z_free(curr_ptr));
     return _Z_RES_OK;
 }
 
@@ -1143,7 +1142,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), keyexpr_aliased);
-            key = _z_rid_with_suffix(id, keyexpr_aliased._suffix);
+            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
         }
     }
     // Set options
@@ -1197,7 +1196,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
     if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
-        pub_keyexpr._suffix = NULL;
+        pub_keyexpr._suffix = _z_string_null();
     }
 
     // Check if write filter is active before writing
@@ -1229,7 +1228,7 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
     if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
-        pub_keyexpr._suffix = NULL;
+        pub_keyexpr._suffix = _z_string_null();
     }
 
     return _z_write(_Z_RC_IN_VAL(&pub->_zn), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
@@ -1519,16 +1518,13 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, c
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
     uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), k);
     key->_val = _z_rid_with_suffix(id, NULL);
-    if (keyexpr->_suffix) {
-        key->_val._suffix = _z_str_clone(keyexpr->_suffix);
-    }
     // we still need to store the original suffix, for user needs
     // (for example to compare keys or perform other operations on their string representation).
     // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
     // since they consist of 2 disjoint sets: either they have a non-nul suffix or non-trivial id/mapping.
     // The resulting keyexpr can be separated later into valid internal keys using _z_keyexpr_alias_from_user_defined.
-    if (key->_val._suffix == NULL && keyexpr->_suffix != NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    if (_z_string_check(&keyexpr->_suffix)) {  // FIXME: _z_keyexpr_has_suffix
+        _Z_RETURN_IF_ERR(_z_string_copy(&key->_val._suffix, &keyexpr->_suffix));
     }
     _z_keyexpr_set_owns_suffix(&key->_val, true);
     return _Z_RES_OK;
@@ -1562,10 +1558,9 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
                             z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
-    char *suffix = NULL;
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = keyexpr_aliased;
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr_aliased);
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
@@ -1573,22 +1568,22 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            char *wild = strpbrk(keyexpr_aliased._suffix, "*$");
             _Bool do_keydecl = true;
-            _z_keyexpr_t resource_key = keyexpr_aliased;
-            if (wild != NULL && wild != resource_key._suffix) {
-                wild -= 1;
-                size_t len = (size_t)(wild - resource_key._suffix);
-                suffix = z_malloc(len + 1);
-                if (suffix != NULL) {
-                    memcpy(suffix, resource_key._suffix, len);
-                    suffix[len] = 0;
-                    resource_key._suffix = suffix;
-                    _z_keyexpr_set_owns_suffix(&resource_key, false);
-                } else {
-                    do_keydecl = false;
+            _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
+            // Remove wild
+            char *wild = strpbrk(_z_string_data(&keyexpr_aliased._suffix), "*$");  // FIXME: replace, z_string unsafe
+            if ((wild != NULL) && _z_string_check(&keyexpr_aliased._suffix)) {     // FIXME: _z_keyexpr_has_suffix()
+                wild = _z_ptr_char_offset(wild, -1);
+                size_t len = _z_ptr_char_diff(wild, _z_string_data(&keyexpr_aliased._suffix));
+                resource_key._suffix = _z_string_preallocate(len);
+
+                if (!_z_string_check(&resource_key._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
+                    return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
+                memcpy((char *)_z_string_data(&resource_key._suffix), _z_string_data(&keyexpr_aliased._suffix), len);
+                _z_keyexpr_set_owns_suffix(&resource_key, false);  // FIXME: remove set own suffix mechanism
             }
+            // Declare resource
             if (do_keydecl) {
                 uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), resource_key);
                 key = _z_rid_with_suffix(id, wild);
@@ -1603,9 +1598,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     }
     _z_subscriber_t int_sub =
         _z_declare_subscriber(zs, key, subinfo, callback->_this._val.call, callback->_this._val.drop, ctx);
-    if (suffix != NULL) {
-        z_free(suffix);
-    }
+
     z_internal_closure_sample_null(&callback->_this);
     sub->_val = int_sub;
 

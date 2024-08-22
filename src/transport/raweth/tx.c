@@ -40,7 +40,7 @@ static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_sock
     for (size_t i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
-        if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, entry->_keyexpr._suffix) != _Z_RES_OK) {
+        if (z_keyexpr_intersects(keyexpr, &entry->_keyexpr) != _Z_RES_OK) {
             continue;
         }
         return (int)i;
@@ -69,7 +69,8 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
         // Key not found case
         if (idx < 0) {
             idx = 0;  // Set to default entry
-            _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
+            _Z_DEBUG("Key '%.*s' wasn't found in config mapping, sending to default address",
+                     (int)_z_string_len(&keyexpr->_suffix), _z_string_data(&keyexpr->_suffix));
         }
         // Store data into socket
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, (size_t)idx);
