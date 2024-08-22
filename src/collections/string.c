@@ -165,6 +165,20 @@ const char *_z_string_rchr(_z_string_t *str, char filter) {
     return ret;
 }
 
+char *_z_string_pbrk(_z_string_t *str, const char *filter) {
+    const char *data = _z_string_data(str);
+    for (size_t idx = 0; idx < _z_string_len(str); idx++) {
+        const char *curr_char = filter;
+        while (*curr_char != '\0') {
+            if (data[idx] == *curr_char) {
+                return (char *)&data[idx];
+            }
+            curr_char++;
+        }
+    }
+    return NULL;
+}
+
 /*-------- str --------*/
 size_t _z_str_size(const char *src) { return strlen(src) + (size_t)1; }
 

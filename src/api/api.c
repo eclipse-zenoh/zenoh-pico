@@ -1545,8 +1545,8 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
             _Bool do_keydecl = true;
             _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
             // Remove wild
-            char *wild = strpbrk(_z_string_data(&keyexpr_aliased._suffix), "*$");  // FIXME: replace, z_string unsafe
-            if ((wild != NULL) && _z_string_check(&keyexpr_aliased._suffix)) {     // FIXME: _z_keyexpr_has_suffix()
+            char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
+            if ((wild != NULL) && _z_string_check(&keyexpr_aliased._suffix)) {  // FIXME: _z_keyexpr_has_suffix()
                 wild = _z_ptr_char_offset(wild, -1);
                 size_t len = _z_ptr_char_diff(wild, _z_string_data(&keyexpr_aliased._suffix));
                 resource_key._suffix = _z_string_preallocate(len);

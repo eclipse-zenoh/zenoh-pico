@@ -121,8 +121,8 @@ void _z_slice_free(_z_slice_t **bs) {
 }
 
 int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
-    int8_t ret =
-        _z_slice_init(dst, src->len);  // FIXME: it should check if dst is already initialized. Otherwise it will leak
+    // Make sure dst slice is not init beforehand, or suffer memory leak
+    int8_t ret = _z_slice_init(dst, src->len);
     if (ret == _Z_RES_OK) {
         (void)memcpy((uint8_t *)dst->start, src->start, src->len);
     }
@@ -131,7 +131,7 @@ int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
 
 int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
     assert(offset + len <= src->len);
-    // Make sure slice is not init beforehand
+    // Make sure dst slice is not init beforehand, or suffer memory leak
     int8_t ret = _z_slice_init(dst, len);
     if (ret == _Z_RES_OK) {
         const uint8_t *start = _z_cptr_u8_offset(src->start, (ptrdiff_t)offset);
