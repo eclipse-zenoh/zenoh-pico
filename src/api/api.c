@@ -161,41 +161,15 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start) { return _z_keyexp
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    return zp_keyexpr_includes_null_terminated(l->_suffix, r->_suffix);
-}
-
-_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r) {
-    if (l != NULL && r != NULL) {
-        return _z_keyexpr_includes(l, strlen(l), r, strlen(r));
-    }
-    return false;
+    return _z_keyexpr_suffix_includes(l, r);
 }
 
 _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    return zp_keyexpr_intersect_null_terminated(l->_suffix, r->_suffix);
-}
-
-_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r) {
-    if (l != NULL && r != NULL) {
-        return _z_keyexpr_intersects(l, strlen(l), r, strlen(r));
-    }
-    return false;
+    return _z_keyexpr_suffix_intersects(l, r);
 }
 
 _Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    return zp_keyexpr_equals_null_terminated(l->_suffix, r->_suffix);
-}
-
-_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r) {
-    if (l != NULL && r != NULL) {
-        size_t llen = strlen(l);
-        if (llen == strlen(r)) {
-            if (strncmp(l, r, llen) == 0) {
-                return true;
-            }
-        }
-    }
-    return false;
+    return _z_keyexpr_suffix_equals(l, r);
 }
 
 void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); }
