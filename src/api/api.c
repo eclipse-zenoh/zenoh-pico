@@ -886,7 +886,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
-        char *mcast_locator = opt_as_str;
+        _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
 
         uint32_t timeout;
         if (options != NULL) {
@@ -905,7 +905,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
             _z_uuid_to_bytes(zid.id, zid_str);
         }
 
-        _z_scout(what, zid, mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->_this._val.drop, ctx);
+        _z_scout(what, zid, &mcast_locator, timeout, __z_hello_handler, wrapped_ctx, callback->_this._val.drop, ctx);
 
         z_free(wrapped_ctx);
         z_config_drop(config);

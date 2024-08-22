@@ -23,7 +23,7 @@
 #include "zenoh-pico/protocol/core.h"
 
 /*------------------ Session ------------------*/
-_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t id, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t id, _z_string_t *locator, const uint32_t timeout,
                                 const _Bool exit_on_first);
 
 int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid);

@@ -42,15 +42,15 @@
 #define LOCATOR_METADATA_SEPARATOR '?'
 typedef struct {
     _z_str_intmap_t _metadata;
-    char *_protocol;
-    char *_address;
+    _z_string_t _protocol;
+    _z_string_t _address;
 } _z_locator_t;
 
 _Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
 
 void _z_locator_init(_z_locator_t *locator);
 _z_string_t _z_locator_to_string(const _z_locator_t *loc);
-int8_t _z_locator_from_str(_z_locator_t *lc, const char *s);
+int8_t _z_locator_from_string(_z_locator_t *lc, _z_string_t *s);
 
 size_t _z_locator_size(_z_locator_t *lc);
 void _z_locator_clear(_z_locator_t *lc);
@@ -67,8 +67,8 @@ typedef struct {
     _z_str_intmap_t _config;
 } _z_endpoint_t;
 
-char *_z_endpoint_to_str(const _z_endpoint_t *e);
-int8_t _z_endpoint_from_str(_z_endpoint_t *ep, const char *s);
+_z_string_t _z_endpoint_to_string(const _z_endpoint_t *e);
+int8_t _z_endpoint_from_string(_z_endpoint_t *ep, _z_string_t *s);
 void _z_endpoint_clear(_z_endpoint_t *ep);
 void _z_endpoint_free(_z_endpoint_t **ep);
 

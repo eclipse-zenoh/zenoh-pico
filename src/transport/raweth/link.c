@@ -63,7 +63,7 @@ const uint16_t _ZP_RAWETH_DEFAULT_ETHTYPE = 0x72e0;
 const char *_ZP_RAWETH_DEFAULT_INTERFACE = "lo";
 const uint8_t _ZP_RAWETH_DEFAULT_SMAC[_ZP_MAC_ADDR_LENGTH] = {0x30, 0x03, 0xc8, 0x37, 0x25, 0xa1};
 const _zp_raweth_mapping_entry_t _ZP_RAWETH_DEFAULT_MAPPING = {
-    {0, {0}, ""}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false};
+    {0, {0}, {{0, NULL, {NULL, NULL}}}}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false};
 
 static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config);
 static const char *_z_get_iface_raweth(_z_str_intmap_t *config);
@@ -75,6 +75,7 @@ static size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config);
 static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitelist_array_t *array, size_t size);
 static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *storage);
 static _Bool _z_valid_mapping_entry(char *entry);
+static _Bool _z_valid_address_raweth_inner(const _z_string_t *address);
 static _Bool _z_valid_address_raweth(const char *address);
 static uint8_t *_z_parse_address_raweth(const char *address);
 static int8_t _z_f_link_open_raweth(_z_link_t *self);
@@ -310,28 +311,34 @@ static _Bool _z_valid_mapping_entry(char *entry) {
     return true;
 }
 
-static _Bool _z_valid_address_raweth(const char *address) {
+static _Bool _z_valid_address_raweth_inner(const _z_string_t *address) {
     // Check if the string has the correct length
-    size_t len = strlen(address);
+    size_t len = _z_string_len(address);
+    const char *str_data = _z_string_data(address);
     if (len != 17) {  // 6 pairs of hexadecimal digits and 5 colons
         return false;
     }
     // Check if the colons are at the correct positions
     for (size_t i = 2; i < len; i += 3) {
-        if (address[i] != ':') {
+        if (str_data[i] != ':') {
             return false;
         }
     }
     // Check if each character is a valid hexadecimal digit
     for (size_t i = 0; i < len; ++i) {
         if (i % 3 != 2) {
-            char c = address[i];
+            char c = str_data[i];
             if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) {
                 return false;
             }
         }
     }
     return true;
+}
+
+static _Bool _z_valid_address_raweth(const char *address) {
+    _z_string_t addr_str = _z_string_from_str(address);
+    return _z_valid_address_raweth_inner(&addr_str);
 }
 
 static uint8_t *_z_parse_address_raweth(const char *address) {
@@ -356,8 +363,8 @@ static int8_t _z_f_link_open_raweth(_z_link_t *self) {
     self->_socket._raweth._mapping = _zp_raweth_mapping_array_empty();
     self->_socket._raweth._whitelist = _zp_raweth_whitelist_array_empty();
     // Init socket smac
-    if (_z_valid_address_raweth(self->_endpoint._locator._address)) {
-        uint8_t *addr = _z_parse_address_raweth(self->_endpoint._locator._address);
+    if (_z_valid_address_raweth_inner(&self->_endpoint._locator._address)) {
+        uint8_t *addr = _z_parse_address_raweth(_z_string_data(&self->_endpoint._locator._address));
         memcpy(&self->_socket._raweth._smac, addr, _ZP_MAC_ADDR_LENGTH);
         z_free(addr);
     } else {
@@ -452,7 +459,8 @@ int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
     // Check the root
-    if (!_z_str_eq(endpoint->_locator._protocol, RAWETH_SCHEMA)) {
+    _z_string_t str_cmp = _z_string_from_str(RAWETH_SCHEMA);
+    if (!_z_string_equals(&endpoint->_locator._protocol, &str_cmp)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
     return ret;

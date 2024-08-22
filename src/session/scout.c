@@ -25,16 +25,17 @@
 #error "Scouting UDP requires UDP unicast links to be enabled (Z_FEATURE_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsigned long period, _Bool exit_on_first) {
+_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, _Bool exit_on_first) {
     // Define an empty array
     _z_hello_list_t *ret = NULL;
     int8_t err = _Z_RES_OK;
 
     _z_endpoint_t ep;
-    err = _z_endpoint_from_str(&ep, locator);
+    err = _z_endpoint_from_string(&ep, locator);
 
 #if Z_FEATURE_SCOUTING_UDP == 1
-    if ((err == _Z_RES_OK) && (_z_str_eq(ep._locator._protocol, UDP_SCHEMA) == true)) {
+    _z_string_t cmp_str = _z_string_from_str(UDP_SCHEMA);
+    if ((err == _Z_RES_OK) && _z_string_equals(&ep._locator._protocol, &cmp_str)) {
         _z_endpoint_clear(&ep);
     } else
 #endif
@@ -128,7 +129,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
                                 const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 

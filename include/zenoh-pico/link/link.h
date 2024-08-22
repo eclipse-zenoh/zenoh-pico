@@ -137,8 +137,8 @@ typedef struct _z_link_t {
 
 void _z_link_clear(_z_link_t *zl);
 void _z_link_free(_z_link_t **zl);
-int8_t _z_open_link(_z_link_t *zl, const char *locator);
-int8_t _z_listen_link(_z_link_t *zl, const char *locator);
+int8_t _z_open_link(_z_link_t *zl, _z_string_t *locator);
+int8_t _z_listen_link(_z_link_t *zl, _z_string_t *locator);
 
 int8_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);

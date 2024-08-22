@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-int8_t __z_open_inner(_z_session_rc_t *zn, char *locator, z_whatami_t mode) {
+int8_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -79,7 +79,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
             }
-            char *mcast_locator = opt_as_str;
+            _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
             if (opt_as_str == NULL) {
@@ -88,7 +88,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
+            _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
                 _z_string_svec_copy(&locators, &hello->_locators);
@@ -132,7 +132,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             }
 
             if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, (char *)_z_string_data(locator), mode);
+                ret = __z_open_inner(zn, locator, mode);
                 if (ret == _Z_RES_OK) {
                     break;
                 }
