@@ -17,6 +17,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/pointers.h"
+
 /*-------- string --------*/
 _z_string_t _z_string_null(void) {
     _z_string_t s = {._slice = _z_slice_empty()};
@@ -69,12 +71,21 @@ size_t _z_string_len(const _z_string_t *s) { return s->_slice.len == 0 ? 0 : s->
 
 int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) { return _z_slice_copy(&dst->_slice, &src->_slice); }
 
+int8_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len) {
+    return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
+}
+
 void _z_string_move(_z_string_t *dst, _z_string_t *src) { *dst = _z_string_steal(src); }
 
 _z_string_t _z_string_steal(_z_string_t *str) {
     _z_string_t ret;
     ret._slice = _z_slice_steal(&str->_slice);
     return ret;
+}
+
+_z_string_t _z_string_alias(const _z_string_t *str) {
+    _z_string_t alias = {._slice = _z_slice_alias(&str->_slice)};
+    return alias;
 }
 
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_from_str(src); }
@@ -91,6 +102,13 @@ void _z_string_free(_z_string_t **str) {
         z_free(ptr);
         *str = NULL;
     }
+}
+
+_Bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
+    if (_z_string_len(left) != _z_string_len(right)) {
+        return false;
+    }
+    return (strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(left)) == 0);
 }
 
 _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
@@ -129,6 +147,27 @@ _z_string_t _z_string_preallocate(size_t len) {
 const char *_z_string_data(const _z_string_t *s) { return (const char *)s->_slice.start; }
 
 _Bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len <= 1; }
+
+const char *_z_string_rchr(_z_string_t *str, char filter) {
+    const char *curr_res = NULL;
+    const char *ret = NULL;
+    const char *curr_addr = _z_string_data(str);
+    size_t curr_len = _z_string_len(str);
+    do {
+        curr_res = (char *)memchr(curr_addr, (int)filter, curr_len);
+        if (curr_res != NULL) {
+            ret = curr_res;
+            curr_addr = curr_res + 1;
+            curr_len = _z_ptr_char_diff(curr_addr, _z_string_data(str));
+            if (curr_len >= _z_string_len(str)) {
+                break;
+            }
+            curr_len = _z_string_len(str) - curr_len;
+        }
+    } while (curr_res != NULL);
+    return ret;
+}
+
 /*-------- str --------*/
 size_t _z_str_size(const char *src) { return strlen(src) + (size_t)1; }
 

@@ -14,11 +14,13 @@
 
 #include "zenoh-pico/collections/slice.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/endianness.h"
+#include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
 void _z_default_deleter(void *data, void *context) {
@@ -80,6 +82,11 @@ _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_del
     return bs;
 }
 
+_z_slice_t _z_slice_alias(const _z_slice_t *bs) {
+    _z_slice_t alias = {.len = bs->len, .start = bs->start, ._delete_context = _z_delete_context_null()};
+    return alias;
+}
+
 _z_slice_t _z_slice_from_buf(const uint8_t *p, size_t len) {
     return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_null());
 }
@@ -118,6 +125,17 @@ int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
         _z_slice_init(dst, src->len);  // FIXME: it should check if dst is already initialized. Otherwise it will leak
     if (ret == _Z_RES_OK) {
         (void)memcpy((uint8_t *)dst->start, src->start, src->len);
+    }
+    return ret;
+}
+
+int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
+    assert(offset + len <= src->len);
+    // Make sure slice is not init beforehand
+    int8_t ret = _z_slice_init(dst, len);
+    if (ret == _Z_RES_OK) {
+        const uint8_t *start = _z_cptr_u8_offset(src->start, (ptrdiff_t)offset);
+        (void)memcpy((uint8_t *)dst->start, start, len);
     }
     return ret;
 }
