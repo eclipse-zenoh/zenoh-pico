@@ -27,6 +27,7 @@ _Bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *rig
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str);
+_z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len);
 int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);

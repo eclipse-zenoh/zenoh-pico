@@ -40,6 +40,14 @@ _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
     };
 }
 
+_z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len) {
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._suffix = (str != NULL) ? _z_string_alias_substr(str, len) : _z_string_null(),
+    };
+}
+
 int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     *dst = _z_keyexpr_null();
     dst->_id = src->_id;
