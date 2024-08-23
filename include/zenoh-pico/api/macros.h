@@ -622,10 +622,14 @@ inline z_moved_string_t* z_move(z_owned_string_t& x) { return z_string_move(&x);
 inline z_moved_subscriber_t* z_move(z_owned_subscriber_t& x) { return z_subscriber_move(&x); };
 inline z_moved_fifo_handler_query_t* z_move(z_owned_fifo_handler_query_t& x) { return z_fifo_handler_query_move(&x); };
 inline z_moved_fifo_handler_reply_t* z_move(z_owned_fifo_handler_reply_t& x) { return z_fifo_handler_reply_move(&x); };
-inline z_moved_fifo_handler_sample_t* z_move(z_owned_fifo_handler_sample_t& x) { return z_fifo_handler_sample_move(&x); };
+inline z_moved_fifo_handler_sample_t* z_move(z_owned_fifo_handler_sample_t& x) {
+    return z_fifo_handler_sample_move(&x);
+};
 inline z_moved_ring_handler_query_t* z_move(z_owned_ring_handler_query_t& x) { return z_ring_handler_query_move(&x); };
 inline z_moved_ring_handler_reply_t* z_move(z_owned_ring_handler_reply_t& x) { return z_ring_handler_reply_move(&x); };
-inline z_moved_ring_handler_sample_t* z_move(z_owned_ring_handler_sample_t& x) { return z_ring_handler_sample_move(&x); };
+inline z_moved_ring_handler_sample_t* z_move(z_owned_ring_handler_sample_t& x) {
+    return z_ring_handler_sample_move(&x);
+};
 
 // z_take definition
 inline void z_take(z_owned_session_t* this_, z_moved_session_t* v) { return z_session_take(this_, v); }
@@ -651,12 +655,24 @@ inline void z_take(z_owned_closure_query_t* this_, z_moved_closure_query_t* v) {
 inline void z_take(z_owned_closure_reply_t* this_, z_moved_closure_reply_t* v) { z_closure_reply_take(this_, v); }
 inline void z_take(z_owned_closure_hello_t* this_, z_moved_closure_hello_t* v) { z_closure_hello_take(this_, v); }
 inline void z_take(z_owned_closure_zid_t* this_, z_moved_closure_zid_t* v) { z_closure_zid_take(this_, v); }
-inline void z_take(z_owned_ring_handler_sample_t* this_, z_moved_ring_handler_sample_t* v) { z_ring_handler_sample_take(this_, v); }
-inline void z_take(z_owned_fifo_handler_sample_t* this_, z_moved_fifo_handler_sample_t* v) { z_fifo_handler_sample_take(this_, v); }
-inline void z_take(z_owned_ring_handler_query_t* this_, z_moved_ring_handler_query_t* v) { z_ring_handler_query_take(this_, v); }
-inline void z_take(z_owned_fifo_handler_query_t* this_, z_moved_fifo_handler_query_t* v) { z_fifo_handler_query_take(this_, v); }
-inline void z_take(z_owned_ring_handler_reply_t* this_, z_moved_ring_handler_reply_t* v) { z_ring_handler_reply_take(this_, v); }
-inline void z_take(z_owned_fifo_handler_reply_t* this_, z_moved_fifo_handler_reply_t* v) { z_fifo_handler_reply_take(this_, v); }
+inline void z_take(z_owned_ring_handler_sample_t* this_, z_moved_ring_handler_sample_t* v) {
+    z_ring_handler_sample_take(this_, v);
+}
+inline void z_take(z_owned_fifo_handler_sample_t* this_, z_moved_fifo_handler_sample_t* v) {
+    z_fifo_handler_sample_take(this_, v);
+}
+inline void z_take(z_owned_ring_handler_query_t* this_, z_moved_ring_handler_query_t* v) {
+    z_ring_handler_query_take(this_, v);
+}
+inline void z_take(z_owned_fifo_handler_query_t* this_, z_moved_fifo_handler_query_t* v) {
+    z_fifo_handler_query_take(this_, v);
+}
+inline void z_take(z_owned_ring_handler_reply_t* this_, z_moved_ring_handler_reply_t* v) {
+    z_ring_handler_reply_take(this_, v);
+}
+inline void z_take(z_owned_fifo_handler_reply_t* this_, z_moved_fifo_handler_reply_t* v) {
+    z_fifo_handler_reply_take(this_, v);
+}
 
 template <class T>
 struct z_loaned_to_owned_type_t {};
