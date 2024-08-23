@@ -421,35 +421,35 @@ inline z_loaned_condvar_t* z_loan_mut(z_owned_condvar_t& x) { return z_condvar_l
 inline z_loaned_reply_err_t* z_loan_mut(z_owned_reply_err_t& x) { return z_reply_err_loan_mut(&x); }
 
 // z_drop definition
-inline int8_t z_drop(z_owned_session_t* v) { return z_close(v); }
-inline int8_t z_drop(z_owned_publisher_t* v) { return z_undeclare_publisher(v); }
-inline void z_drop(z_owned_keyexpr_t* v) { z_keyexpr_drop(v); }
-inline void z_drop(z_owned_config_t* v) { z_config_drop(v); }
-inline int8_t z_drop(z_owned_subscriber_t* v) { return z_undeclare_subscriber(v); }
-inline int8_t z_drop(z_owned_queryable_t* v) { return z_undeclare_queryable(v); }
-inline void z_drop(z_owned_reply_t* v) { z_reply_drop(v); }
-inline void z_drop(z_owned_hello_t* v) { z_hello_drop(v); }
-inline void z_drop(z_owned_string_t* v) { z_string_drop(v); }
-inline void z_drop(z_owned_slice_t* v) { z_slice_drop(v); }
-inline void z_drop(z_owned_string_array_t* v) { z_string_array_drop(v); }
-inline void z_drop(z_owned_sample_t* v) { z_sample_drop(v); }
-inline void z_drop(z_owned_query_t* v) { z_query_drop(v); }
-inline void z_drop(z_owned_bytes_t* v) { z_bytes_drop(v); }
-inline void z_drop(z_owned_encoding_t* v) { z_encoding_drop(v); }
-inline void z_drop(z_owned_mutex_t* v) { z_mutex_drop(v); }
-inline void z_drop(z_owned_condvar_t* v) { z_condvar_drop(v); }
-inline void z_drop(z_owned_reply_err_t* v) { z_reply_err_drop(v); }
-inline void z_drop(z_owned_closure_sample_t* v) { z_closure_sample_drop(v); }
-inline void z_drop(z_owned_closure_query_t* v) { z_closure_query_drop(v); }
-inline void z_drop(z_owned_closure_reply_t* v) { z_closure_reply_drop(v); }
-inline void z_drop(z_owned_closure_hello_t* v) { z_closure_hello_drop(v); }
-inline void z_drop(z_owned_closure_zid_t* v) { z_closure_zid_drop(v); }
-inline void z_drop(z_owned_ring_handler_sample_t* v) { z_ring_handler_sample_drop(v); }
-inline void z_drop(z_owned_fifo_handler_sample_t* v) { z_fifo_handler_sample_drop(v); }
-inline void z_drop(z_owned_ring_handler_query_t* v) { z_ring_handler_query_drop(v); }
-inline void z_drop(z_owned_fifo_handler_query_t* v) { z_fifo_handler_query_drop(v); }
-inline void z_drop(z_owned_ring_handler_reply_t* v) { z_ring_handler_reply_drop(v); }
-inline void z_drop(z_owned_fifo_handler_reply_t* v) { z_fifo_handler_reply_drop(v); }
+inline int8_t z_drop(z_moved_session_t* v) { return z_close(v); }
+inline int8_t z_drop(z_moved_publisher_t* v) { return z_undeclare_publisher(v); }
+inline void z_drop(z_moved_keyexpr_t* v) { z_keyexpr_drop(v); }
+inline void z_drop(z_moved_config_t* v) { z_config_drop(v); }
+inline int8_t z_drop(z_moved_subscriber_t* v) { return z_undeclare_subscriber(v); }
+inline int8_t z_drop(z_moved_queryable_t* v) { return z_undeclare_queryable(v); }
+inline void z_drop(z_moved_reply_t* v) { z_reply_drop(v); }
+inline void z_drop(z_moved_hello_t* v) { z_hello_drop(v); }
+inline void z_drop(z_moved_string_t* v) { z_string_drop(v); }
+inline void z_drop(z_moved_slice_t* v) { z_slice_drop(v); }
+inline void z_drop(z_moved_string_array_t* v) { z_string_array_drop(v); }
+inline void z_drop(z_moved_sample_t* v) { z_sample_drop(v); }
+inline void z_drop(z_moved_query_t* v) { z_query_drop(v); }
+inline void z_drop(z_moved_bytes_t* v) { z_bytes_drop(v); }
+inline void z_drop(z_moved_encoding_t* v) { z_encoding_drop(v); }
+inline void z_drop(z_moved_mutex_t* v) { z_mutex_drop(v); }
+inline void z_drop(z_moved_condvar_t* v) { z_condvar_drop(v); }
+inline void z_drop(z_moved_reply_err_t* v) { z_reply_err_drop(v); }
+inline void z_drop(z_moved_closure_sample_t* v) { z_closure_sample_drop(v); }
+inline void z_drop(z_moved_closure_query_t* v) { z_closure_query_drop(v); }
+inline void z_drop(z_moved_closure_reply_t* v) { z_closure_reply_drop(v); }
+inline void z_drop(z_moved_closure_hello_t* v) { z_closure_hello_drop(v); }
+inline void z_drop(z_moved_closure_zid_t* v) { z_closure_zid_drop(v); }
+inline void z_drop(z_moved_ring_handler_sample_t* v) { z_ring_handler_sample_drop(v); }
+inline void z_drop(z_moved_fifo_handler_sample_t* v) { z_fifo_handler_sample_drop(v); }
+inline void z_drop(z_moved_ring_handler_query_t* v) { z_ring_handler_query_drop(v); }
+inline void z_drop(z_moved_fifo_handler_query_t* v) { z_fifo_handler_query_drop(v); }
+inline void z_drop(z_moved_ring_handler_reply_t* v) { z_ring_handler_reply_drop(v); }
+inline void z_drop(z_moved_fifo_handler_reply_t* v) { z_fifo_handler_reply_drop(v); }
 
 // z_internal_null definition
 inline void z_internal_null(z_owned_session_t* v) { z_internal_session_null(v); }
@@ -599,33 +599,64 @@ inline z_result_t z_recv(const z_loaned_ring_handler_sample_t* this_, z_owned_sa
 
 // clang-format on
 
-inline z_owned_bytes_t* z_move(z_owned_bytes_t& x) { return z_bytes_move(&x); };
-inline z_owned_closure_hello_t* z_move(z_owned_closure_hello_t& closure) { return z_closure_hello_move(&closure); };
-inline z_owned_closure_query_t* z_move(z_owned_closure_query_t& closure) { return z_closure_query_move(&closure); };
-inline z_owned_closure_reply_t* z_move(z_owned_closure_reply_t& closure) { return z_closure_reply_move(&closure); };
-inline z_owned_closure_sample_t* z_move(z_owned_closure_sample_t& closure) { return z_closure_sample_move(&closure); };
-inline z_owned_closure_zid_t* z_move(z_owned_closure_zid_t& closure) { return z_closure_zid_move(&closure); };
-inline z_owned_config_t* z_move(z_owned_config_t& x) { return z_config_move(&x); };
-inline z_owned_encoding_t* z_move(z_owned_encoding_t& x) { return z_encoding_move(&x); };
-inline z_owned_reply_err_t* z_move(z_owned_reply_err_t& x) { return z_reply_err_move(&x); };
-inline z_owned_hello_t* z_move(z_owned_hello_t& x) { return z_hello_move(&x); };
-inline z_owned_keyexpr_t* z_move(z_owned_keyexpr_t& x) { return z_keyexpr_move(&x); };
-inline z_owned_publisher_t* z_move(z_owned_publisher_t& x) { return z_publisher_move(&x); };
-inline z_owned_query_t* z_move(z_owned_query_t& x) { return z_query_move(&x); };
-inline z_owned_queryable_t* z_move(z_owned_queryable_t& x) { return z_queryable_move(&x); };
-inline z_owned_reply_t* z_move(z_owned_reply_t& x) { return z_reply_move(&x); };
-inline z_owned_sample_t* z_move(z_owned_sample_t& x) { return z_sample_move(&x); };
-inline z_owned_session_t* z_move(z_owned_session_t& x) { return z_session_move(&x); };
-inline z_owned_slice_t* z_move(z_owned_slice_t& x) { return z_slice_move(&x); };
-inline z_owned_string_array_t* z_move(z_owned_string_array_t& x) { return z_string_array_move(&x); };
-inline z_owned_string_t* z_move(z_owned_string_t& x) { return z_string_move(&x); };
-inline z_owned_subscriber_t* z_move(z_owned_subscriber_t& x) { return z_subscriber_move(&x); };
-inline z_owned_fifo_handler_query_t* z_move(z_owned_fifo_handler_query_t& x) { return (&x); };
-inline z_owned_fifo_handler_reply_t* z_move(z_owned_fifo_handler_reply_t& x) { return (&x); };
-inline z_owned_fifo_handler_sample_t* z_move(z_owned_fifo_handler_sample_t& x) { return (&x); };
-inline z_owned_ring_handler_query_t* z_move(z_owned_ring_handler_query_t& x) { return (&x); };
-inline z_owned_ring_handler_reply_t* z_move(z_owned_ring_handler_reply_t& x) { return (&x); };
-inline z_owned_ring_handler_sample_t* z_move(z_owned_ring_handler_sample_t& x) { return (&x); };
+inline z_moved_bytes_t* z_move(z_owned_bytes_t& x) { return z_bytes_move(&x); };
+inline z_moved_closure_hello_t* z_move(z_owned_closure_hello_t& closure) { return z_closure_hello_move(&closure); };
+inline z_moved_closure_query_t* z_move(z_owned_closure_query_t& closure) { return z_closure_query_move(&closure); };
+inline z_moved_closure_reply_t* z_move(z_owned_closure_reply_t& closure) { return z_closure_reply_move(&closure); };
+inline z_moved_closure_sample_t* z_move(z_owned_closure_sample_t& closure) { return z_closure_sample_move(&closure); };
+inline z_moved_closure_zid_t* z_move(z_owned_closure_zid_t& closure) { return z_closure_zid_move(&closure); };
+inline z_moved_config_t* z_move(z_owned_config_t& x) { return z_config_move(&x); };
+inline z_moved_encoding_t* z_move(z_owned_encoding_t& x) { return z_encoding_move(&x); };
+inline z_moved_reply_err_t* z_move(z_owned_reply_err_t& x) { return z_reply_err_move(&x); };
+inline z_moved_hello_t* z_move(z_owned_hello_t& x) { return z_hello_move(&x); };
+inline z_moved_keyexpr_t* z_move(z_owned_keyexpr_t& x) { return z_keyexpr_move(&x); };
+inline z_moved_publisher_t* z_move(z_owned_publisher_t& x) { return z_publisher_move(&x); };
+inline z_moved_query_t* z_move(z_owned_query_t& x) { return z_query_move(&x); };
+inline z_moved_queryable_t* z_move(z_owned_queryable_t& x) { return z_queryable_move(&x); };
+inline z_moved_reply_t* z_move(z_owned_reply_t& x) { return z_reply_move(&x); };
+inline z_moved_sample_t* z_move(z_owned_sample_t& x) { return z_sample_move(&x); };
+inline z_moved_session_t* z_move(z_owned_session_t& x) { return z_session_move(&x); };
+inline z_moved_slice_t* z_move(z_owned_slice_t& x) { return z_slice_move(&x); };
+inline z_moved_string_array_t* z_move(z_owned_string_array_t& x) { return z_string_array_move(&x); };
+inline z_moved_string_t* z_move(z_owned_string_t& x) { return z_string_move(&x); };
+inline z_moved_subscriber_t* z_move(z_owned_subscriber_t& x) { return z_subscriber_move(&x); };
+inline z_moved_fifo_handler_query_t* z_move(z_owned_fifo_handler_query_t& x) { return z_fifo_handler_query_move(&x); };
+inline z_moved_fifo_handler_reply_t* z_move(z_owned_fifo_handler_reply_t& x) { return z_fifo_handler_reply_move(&x); };
+inline z_moved_fifo_handler_sample_t* z_move(z_owned_fifo_handler_sample_t& x) { return z_fifo_handler_sample_move(&x); };
+inline z_moved_ring_handler_query_t* z_move(z_owned_ring_handler_query_t& x) { return z_ring_handler_query_move(&x); };
+inline z_moved_ring_handler_reply_t* z_move(z_owned_ring_handler_reply_t& x) { return z_ring_handler_reply_move(&x); };
+inline z_moved_ring_handler_sample_t* z_move(z_owned_ring_handler_sample_t& x) { return z_ring_handler_sample_move(&x); };
+
+// z_take definition
+inline void z_take(z_owned_session_t* this_, z_moved_session_t* v) { return z_session_take(this_, v); }
+inline void z_take(z_owned_publisher_t* this_, z_moved_publisher_t* v) { return z_publisher_take(this_, v); }
+inline void z_take(z_owned_keyexpr_t* this_, z_moved_keyexpr_t* v) { z_keyexpr_take(this_, v); }
+inline void z_take(z_owned_config_t* this_, z_moved_config_t* v) { z_config_take(this_, v); }
+inline void z_take(z_owned_subscriber_t* this_, z_moved_subscriber_t* v) { return z_subscriber_take(this_, v); }
+inline void z_take(z_owned_queryable_t* this_, z_moved_queryable_t* v) { return z_queryable_take(this_, v); }
+inline void z_take(z_owned_reply_t* this_, z_moved_reply_t* v) { z_reply_take(this_, v); }
+inline void z_take(z_owned_hello_t* this_, z_moved_hello_t* v) { z_hello_take(this_, v); }
+inline void z_take(z_owned_string_t* this_, z_moved_string_t* v) { z_string_take(this_, v); }
+inline void z_take(z_owned_slice_t* this_, z_moved_slice_t* v) { z_slice_take(this_, v); }
+inline void z_take(z_owned_string_array_t* this_, z_moved_string_array_t* v) { z_string_array_take(this_, v); }
+inline void z_take(z_owned_sample_t* this_, z_moved_sample_t* v) { z_sample_take(this_, v); }
+inline void z_take(z_owned_query_t* this_, z_moved_query_t* v) { z_query_take(this_, v); }
+inline void z_take(z_owned_bytes_t* this_, z_moved_bytes_t* v) { z_bytes_take(this_, v); }
+inline void z_take(z_owned_encoding_t* this_, z_moved_encoding_t* v) { z_encoding_take(this_, v); }
+inline void z_take(z_owned_mutex_t* this_, z_moved_mutex_t* v) { z_mutex_take(this_, v); }
+inline void z_take(z_owned_condvar_t* this_, z_moved_condvar_t* v) { z_condvar_take(this_, v); }
+inline void z_take(z_owned_reply_err_t* this_, z_moved_reply_err_t* v) { z_reply_err_take(this_, v); }
+inline void z_take(z_owned_closure_sample_t* this_, z_moved_closure_sample_t* v) { z_closure_sample_take(this_, v); }
+inline void z_take(z_owned_closure_query_t* this_, z_moved_closure_query_t* v) { z_closure_query_take(this_, v); }
+inline void z_take(z_owned_closure_reply_t* this_, z_moved_closure_reply_t* v) { z_closure_reply_take(this_, v); }
+inline void z_take(z_owned_closure_hello_t* this_, z_moved_closure_hello_t* v) { z_closure_hello_take(this_, v); }
+inline void z_take(z_owned_closure_zid_t* this_, z_moved_closure_zid_t* v) { z_closure_zid_take(this_, v); }
+inline void z_take(z_owned_ring_handler_sample_t* this_, z_moved_ring_handler_sample_t* v) { z_ring_handler_sample_take(this_, v); }
+inline void z_take(z_owned_fifo_handler_sample_t* this_, z_moved_fifo_handler_sample_t* v) { z_fifo_handler_sample_take(this_, v); }
+inline void z_take(z_owned_ring_handler_query_t* this_, z_moved_ring_handler_query_t* v) { z_ring_handler_query_take(this_, v); }
+inline void z_take(z_owned_fifo_handler_query_t* this_, z_moved_fifo_handler_query_t* v) { z_fifo_handler_query_take(this_, v); }
+inline void z_take(z_owned_ring_handler_reply_t* this_, z_moved_ring_handler_reply_t* v) { z_ring_handler_reply_take(this_, v); }
+inline void z_take(z_owned_fifo_handler_reply_t* this_, z_moved_fifo_handler_reply_t* v) { z_fifo_handler_reply_take(this_, v); }
 
 template <class T>
 struct z_loaned_to_owned_type_t {};
