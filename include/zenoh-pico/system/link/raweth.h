@@ -32,7 +32,7 @@
 // Max frame size
 #define _ZP_MAX_ETH_FRAME_SIZE 1514
 
-// Endpoing config types
+// Endpoint config types
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian

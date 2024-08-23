@@ -237,8 +237,8 @@ _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);
     for (size_t i = 0; i < size; i++) {
         _z_locator_t *val = &la._val[i];
-        val->_protocol = gen_str(3);
-        val->_address = gen_str(12);
+        val->_protocol = gen_string(3);
+        val->_address = gen_string(12);
         val->_metadata = _z_str_intmap_make();  // @TODO: generate metadata
     }
 
@@ -308,7 +308,7 @@ void assert_eq_uint8_array(const _z_slice_t *left, const _z_slice_t *right) {
     printf(")");
 }
 
-void assert_eq_str_array(_z_string_svec_t *left, _z_string_svec_t *right) {
+void assert_eq_string_array(_z_string_svec_t *left, _z_string_svec_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->_len, right->_len);
 
@@ -317,11 +317,13 @@ void assert_eq_str_array(_z_string_svec_t *left, _z_string_svec_t *right) {
     for (size_t i = 0; i < left->_len; i++) {
         const char *l = _z_string_data(_z_string_svec_get(left, i));
         const char *r = _z_string_data(_z_string_svec_get(right, i));
+        size_t l_len = _z_string_len(_z_string_svec_get(left, i));
+        size_t r_len = _z_string_len(_z_string_svec_get(right, i));
 
-        printf("%s:%s", l, r);
+        printf("%.*s:%.*s", (int)l_len, l, (int)r_len, r);
         if (i < left->_len - 1) printf(" ");
 
-        assert(_z_str_eq(l, r) == true);
+        assert(_z_string_equals(_z_string_svec_get(left, i), _z_string_svec_get(right, i)));
     }
     printf(")");
 }
@@ -510,7 +512,7 @@ void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_e
 void assert_eq_string(const _z_string_t *left, const _z_string_t *right) {
     assert(_z_string_len(left) == _z_string_len(right));
     if (_z_string_len(left) > 0) {
-        assert(_z_str_eq(_z_string_data(left), _z_string_data(right)) == true);
+        assert(_z_string_equals(left, right));
     }
 }
 
@@ -661,11 +663,13 @@ _z_keyexpr_t gen_keyexpr(void) {
     key._mapping._val = gen_uint8();
     _Bool is_numerical = gen_bool();
     if (is_numerical == true) {
-        key._suffix = NULL;
-        _z_keyexpr_set_owns_suffix(&key, false);
+        key._suffix = _z_string_null();
     } else {
-        key._suffix = gen_str(gen_zint() % 16);
-        _z_keyexpr_set_owns_suffix(&key, true);
+        size_t len = gen_zint() % 16;
+        key._suffix = _z_string_preallocate(len);
+        char *suffix = gen_str(len);
+        memcpy((char *)_z_string_data(&key._suffix), suffix, len);
+        z_free(suffix);
     }
     return key;
 }
@@ -674,12 +678,13 @@ void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     printf("ResKey -> ");
     printf("ID (%u:%u), ", left->_id, right->_id);
     assert(left->_id == right->_id);
-    assert(!(_z_keyexpr_has_suffix(*left) ^ _z_keyexpr_has_suffix(*right)));
+    assert(_z_keyexpr_has_suffix(left) == _z_keyexpr_has_suffix(right));
 
     printf("Name (");
-    if (_z_keyexpr_has_suffix(*left)) {
-        printf("%s:%s", left->_suffix, right->_suffix);
-        assert(_z_str_eq(left->_suffix, right->_suffix) == true);
+    if (_z_keyexpr_has_suffix(left)) {
+        printf("%.*s:%.*s", (int)_z_string_len(&left->_suffix), _z_string_data(&left->_suffix),
+               (int)_z_string_len(&right->_suffix), _z_string_data(&right->_suffix));
+        assert(_z_string_equals(&left->_suffix, &right->_suffix) == true);
     } else {
         printf("NULL:NULL");
     }
@@ -694,7 +699,7 @@ void keyexpr_field(void) {
     _z_keyexpr_t e_rk = gen_keyexpr();
 
     // Encode
-    uint8_t header = (e_rk._suffix) ? _Z_FLAG_Z_K : 0;
+    uint8_t header = (_z_keyexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
     int8_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);
@@ -929,7 +934,6 @@ void forget_subscriber_declaration(void) {
     _z_uint8_decode(&e_hdr, &zbf);
     res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr);
     assert(res == _Z_RES_OK);
-
     printf("   ");
     assert_eq_forget_subscriber_declaration(&e_fsd, &d_fsd);
     printf("\n");
@@ -1137,9 +1141,10 @@ _z_network_message_t gen_interest_message(void) {
 
 void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
     printf("Interest: 0x%x, 0x%x, %u, %u\n", left->flags, right->flags, left->_id, right->_id);
-    printf("Interest ke: %d, %d, %d, %d, %s, %s\n", left->_keyexpr._id, right->_keyexpr._id,
-           left->_keyexpr._mapping._val, right->_keyexpr._mapping._val, left->_keyexpr._suffix,
-           right->_keyexpr._suffix);
+    printf("Interest ke: %d, %d, %d, %d, %.*s, %.*s\n", left->_keyexpr._id, right->_keyexpr._id,
+           left->_keyexpr._mapping._val, right->_keyexpr._mapping._val, (int)_z_string_len(&left->_keyexpr._suffix),
+           _z_string_data(&left->_keyexpr._suffix), (int)_z_string_len(&right->_keyexpr._suffix),
+           _z_string_data(&right->_keyexpr._suffix));
     assert(left->flags == right->flags);
     assert(left->_id == right->_id);
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);

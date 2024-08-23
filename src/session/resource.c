@@ -25,6 +25,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 
 _Bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { return this_->_id == other->_id; }
 
@@ -72,13 +73,10 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uint16_t mapping, 
 
 _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_t *keyexpr) {
     _z_resource_t *ret = NULL;
-    uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
-
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if ((r->_key._id == keyexpr->_id) && _z_keyexpr_mapping_id(&r->_key) == mapping &&
-            (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == true)) {
+        if (_z_keyexpr_equals(&r->_key, keyexpr)) {
             ret = r;
             break;
         }
@@ -90,19 +88,19 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
 }
 
 _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
-    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = NULL, ._mapping = _z_keyexpr_mapping(0, true)};
+    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = _z_string_null(), ._mapping = _z_keyexpr_mapping(0)};
 
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
-    _z_str_list_t *strs = NULL;
-    size_t len = 1;  // Start with space for the null-terminator
+    _z_string_list_t *strs = NULL;
+    size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (keyexpr->_suffix != NULL) {
-        len = len + strlen(keyexpr->_suffix);
-        strs = _z_str_list_push(strs, (char *)keyexpr->_suffix);  // Warning: list must be release with
-                                                                  //   _z_list_free(&strs, _z_noop_free);
-                                                                  //   or will release the suffix as well
+    if (_z_keyexpr_has_suffix(keyexpr)) {
+        len = len + _z_string_len(&keyexpr->_suffix);
+        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);  // Warning: list must be release with
+                                                                             //   _z_list_free(&strs, _z_noop_free);
+                                                                             //   or will release the suffix as well
     }
 
     // Recursively go through all the RIDs
@@ -114,39 +112,31 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             len = 0;
             break;
         }
-
-        if (res->_key._suffix != NULL) {
-            len = len + strlen(res->_key._suffix);
-            strs = _z_str_list_push(strs, (char *)res->_key._suffix);  // Warning: list must be release with
-                                                                       //   _z_list_free(&strs, _z_noop_free);
-                                                                       //   or will release the suffix as well
+        if (_z_keyexpr_has_suffix(&res->_key)) {
+            len = len + _z_string_len(&res->_key._suffix);
+            strs = _z_string_list_push(strs, &res->_key._suffix);  // Warning: list must be release with
+                                                                   //   _z_list_free(&strs, _z_noop_free);
+                                                                   //   or will release the suffix as well
         }
         id = res->_key._id;
     }
-
+    // Copy the data
     if (len != (size_t)0) {
-        char *rname = NULL;
-        rname = (char *)z_malloc(len);
-        if (rname != NULL) {
-            rname[0] = '\0';  // NULL terminator must be set (required to strcat)
-            len = len - (size_t)1;
+        ret._suffix = _z_string_preallocate(len);
+        if (_z_keyexpr_has_suffix(&ret)) {
+            char *curr_ptr = (char *)_z_string_data(&ret._suffix);
 
             // Concatenate all the partial resource names
-            _z_str_list_t *xstr = strs;
+            _z_string_list_t *xstr = strs;
             while (xstr != NULL) {
-                char *s = _z_str_list_head(xstr);
-                if (len > (size_t)0) {
-                    (void)strncat(rname, s, len);
-                    len = len - strlen(s);
-                }
-                xstr = _z_str_list_tail(xstr);
+                _z_string_t *s = _z_string_list_head(xstr);
+                memcpy(curr_ptr, _z_string_data(s), _z_string_len(s));
+                curr_ptr = _z_ptr_char_offset(curr_ptr, (ptrdiff_t)_z_string_len(s));
+                xstr = _z_string_list_tail(xstr);
             }
-            ret._suffix = rname;
         }
     }
-
     _z_list_free(&strs, _z_noop_free);
-
     return ret;
 }
 
@@ -191,7 +181,7 @@ _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    if (keyexpr->_suffix == NULL) {
+    if (!_z_keyexpr_has_suffix(keyexpr)) {
         return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
     }
     _zp_session_lock_mutex(zn);
@@ -230,13 +220,13 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
         }
     }
     ret = key._id;
-    if ((key._suffix != NULL)) {
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;
         } else {
             res->_refcount = 1;
-            res->_key = _z_keyexpr_to_owned(key);
+            res->_key = _z_keyexpr_duplicate(key);
             ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
             res->_id = ret;
             // Register the resource

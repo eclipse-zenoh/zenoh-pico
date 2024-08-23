@@ -37,7 +37,7 @@
  *     locator: The locator where to scout.
  *     timeout: The time that should be spent scouting before returning the results.
  */
-void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const uint32_t timeout,
+void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/

@@ -161,19 +161,6 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
 int8_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
- * Checks if a given keyexpr is valid and in canonical form.
- *
- * Parameters:
- *   start: Pointer to the keyexpr in its string representation as a null terminated string.
- *   len: Number of characters in ``start``.
- *
- * Return:
- *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
- */
-int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
-
-/**
  * Canonizes of a given keyexpr in string representation.
  * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
  *
@@ -186,20 +173,6 @@ int8_t zp_keyexpr_is_canon_null_terminated(const char *start);
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
 int8_t z_keyexpr_canonize(char *start, size_t *len);
-
-/**
- * Canonizes a given keyexpr in string representation.
- * The canonization is performed over the passed string, possibly shortening it by modifying ``len``.
- *
- * Parameters:
- *   start: Pointer to the keyexpr in its string representation as a null terminated string.
- *   len: Number of characters in ``start``.
- *
- * Return:
- *   ``0`` if canonization successful, or a ``negative value`` otherwise.
- *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
- */
-int8_t zp_keyexpr_canonize_null_terminated(char *start);
 
 /**
  * Checks if a given keyexpr contains another keyexpr in its set.
@@ -215,21 +188,6 @@ int8_t zp_keyexpr_canonize_null_terminated(char *start);
 _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Checks if a given keyexpr contains another keyexpr in its set.
- *
- * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a null terminated string.
- *   rlen: Number of characters in ``r``.
- *
- * Return:
- *   ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, returns ``false``.
- */
-_Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
-
-/**
  * Checks if a given keyexpr intersects with another keyexpr.
  *
  * Parameters:
@@ -243,21 +201,6 @@ _Bool zp_keyexpr_includes_null_terminated(const char *l, const char *r);
 _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Checks if a given keyexpr intersects with another keyexpr.
- *
- * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a null terminated string.
- *   rlen: Number of characters in ``r``.
- *
- * Return:
- *   ``true`` if keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
- */
-_Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
-
-/**
  * Checks if two keyexpr are equal.
  *
  * Parameters:
@@ -268,20 +211,6 @@ _Bool zp_keyexpr_intersect_null_terminated(const char *l, const char *r);
  *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
  */
 _Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
-
-/**
- * Checks if two keyexpr as null terminated string are equal.
- *
- * Parameters:
- *   l: Pointer to the keyexpr in its string representation as a null terminated string.
- *   llen: Number of characters in ``l``.
- *   r: Pointer to the keyexpr in its string representation as a null terminated string.
- *   rlen: Number of characters in ``r``.
- *
- * Return:
- *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, it returns ``false``.
- */
-_Bool zp_keyexpr_equals_null_terminated(const char *l, const char *r);
 
 /**
  * Builds a new, zenoh-allocated, empty configuration.

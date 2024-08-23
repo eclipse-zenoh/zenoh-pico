@@ -115,7 +115,7 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *f
 
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, fld->_id))
     if (has_suffix == true) {
-        _Z_RETURN_IF_ERR(_z_str_encode(wbf, fld->_suffix))
+        _Z_RETURN_IF_ERR(_z_string_encode(wbf, &fld->_suffix))
     }
 
     return ret;
@@ -127,17 +127,17 @@ int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
 
     ret |= _z_zint16_decode(&ke->_id, zbf);
     if (has_suffix == true) {
-        char *str = NULL;
-        ret |= _z_str_decode(&str, zbf);
+        _z_string_t str = _z_string_null();
+        ret |= _z_string_decode(&str, zbf);
         if (ret == _Z_RES_OK) {
             ke->_suffix = str;
-            ke->_mapping = _z_keyexpr_mapping(0, true);
+            ke->_mapping = _z_keyexpr_mapping(0);
         } else {
-            ke->_suffix = NULL;
-            ke->_mapping = _z_keyexpr_mapping(0, false);
+            ke->_suffix = _z_string_null();
+            ke->_mapping = _z_keyexpr_mapping(0);
         }
     } else {
-        ke->_suffix = NULL;
+        ke->_suffix = _z_string_null();
     }
 
     return ret;
@@ -168,12 +168,12 @@ int8_t _z_locators_decode_na(_z_locator_array_t *a_loc, _z_zbuf_t *zbf) {
 
         // Decode the elements
         for (size_t i = 0; i < len; i++) {
-            char *str = NULL;
-            ret |= _z_str_decode(&str, zbf);
+            _z_string_t str = _z_string_null();
+            ret |= _z_string_decode(&str, zbf);
             if (ret == _Z_RES_OK) {
                 _z_locator_init(&a_loc->_val[i]);
-                ret |= _z_locator_from_str(&a_loc->_val[i], str);
-                z_free(str);
+                ret |= _z_locator_from_string(&a_loc->_val[i], &str);
+                _z_string_clear(&str);
             } else {
                 a_loc->_len = i;
             }

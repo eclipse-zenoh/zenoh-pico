@@ -52,7 +52,7 @@ int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, _Bool i
     // Process restricted flag
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
         // Set Named & Mapping flags
-        _Bool has_kesuffix = _z_keyexpr_has_suffix(interest->_keyexpr);
+        _Bool has_kesuffix = _z_keyexpr_has_suffix(&interest->_keyexpr);
         if (has_kesuffix) {
             _Z_SET_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N);
         }

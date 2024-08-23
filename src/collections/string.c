@@ -17,6 +17,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/pointers.h"
+
 /*-------- string --------*/
 _z_string_t _z_string_null(void) {
     _z_string_t s = {._slice = _z_slice_empty()};
@@ -27,7 +29,7 @@ _Bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&val
 
 _z_string_t _z_string_make(const char *value) {
     _z_string_t s;
-    s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value) + 1);
+    s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value));
     return s;
 }
 
@@ -38,20 +40,26 @@ _z_string_t _z_string_n_make(const char *value, size_t len) {
     if (c == NULL) {
         return _z_string_null();
     } else {
-        s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)c, len + 1, _z_delete_context_default());
+        s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)c, len, _z_delete_context_default());
         return s;
     }
 }
 
 _z_string_t _z_string_from_str(const char *value) {
     _z_string_t s;
-    s._slice = _z_slice_from_buf((const uint8_t *)(value), strlen(value) + 1);
+    s._slice = _z_slice_from_buf((const uint8_t *)(value), strlen(value));
+    return s;
+}
+
+_z_string_t _z_string_from_substr(const char *value, size_t len) {
+    _z_string_t s;
+    s._slice = _z_slice_from_buf((const uint8_t *)(value), len);
     return s;
 }
 
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
     _z_string_t s;
-    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value) + 1, c);
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
     return s;
 }
 
@@ -65,9 +73,13 @@ _z_string_t *_z_string_make_as_ptr(const char *value) {
     return s;
 }
 
-size_t _z_string_len(const _z_string_t *s) { return s->_slice.len == 0 ? 0 : s->_slice.len - 1; }
+size_t _z_string_len(const _z_string_t *s) { return s->_slice.len; }
 
 int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) { return _z_slice_copy(&dst->_slice, &src->_slice); }
+
+int8_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len) {
+    return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
+}
 
 void _z_string_move(_z_string_t *dst, _z_string_t *src) { *dst = _z_string_steal(src); }
 
@@ -75,6 +87,11 @@ _z_string_t _z_string_steal(_z_string_t *str) {
     _z_string_t ret;
     ret._slice = _z_slice_steal(&str->_slice);
     return ret;
+}
+
+_z_string_t _z_string_alias(const _z_string_t *str) {
+    _z_string_t alias = {._slice = _z_slice_alias(&str->_slice)};
+    return alias;
 }
 
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_from_str(src); }
@@ -93,10 +110,17 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
+_Bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
+    if (_z_string_len(left) != _z_string_len(right)) {
+        return false;
+    }
+    return (strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(left)) == 0);
+}
+
 _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     _z_string_t s = _z_string_null();
     size_t len = bs->len * (size_t)2;
-    char *s_val = (char *)z_malloc((len + (size_t)1) * sizeof(char));
+    char *s_val = (char *)z_malloc((len) * sizeof(char));
     if (s_val == NULL) {
         return s;
     }
@@ -105,30 +129,62 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
         const char c[] = "0123456789ABCDEF";
         for (size_t i = 0; i < bs->len; i++) {
             s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
-            s_val[(i * (size_t)2) + (size_t)1] = c[bs->start[i] & (uint8_t)0x0F];
+            s_val[(i * (size_t)2)] = c[bs->start[i] & (uint8_t)0x0F];
         }
-        s_val[len] = '\0';
     } else {
         len = 0;
     }
-    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len + 1, _z_delete_context_default());
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
 
     return s;
 }
 
 _z_string_t _z_string_preallocate(size_t len) {
     _z_string_t s = _z_string_null();
-    _z_slice_init(&s._slice, len + 1);
+    _z_slice_init(&s._slice, len);
     if (_z_slice_is_empty(&s._slice)) {
         return _z_string_null();
     }
-    char *ss = (char *)s._slice.start;
-    ss[len] = '\0';
     return s;
 }
 const char *_z_string_data(const _z_string_t *s) { return (const char *)s->_slice.start; }
 
 _Bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len <= 1; }
+
+const char *_z_string_rchr(_z_string_t *str, char filter) {
+    const char *curr_res = NULL;
+    const char *ret = NULL;
+    const char *curr_addr = _z_string_data(str);
+    size_t curr_len = _z_string_len(str);
+    do {
+        curr_res = (char *)memchr(curr_addr, (int)filter, curr_len);
+        if (curr_res != NULL) {
+            ret = curr_res;
+            curr_addr = curr_res + 1;
+            curr_len = _z_ptr_char_diff(curr_addr, _z_string_data(str));
+            if (curr_len >= _z_string_len(str)) {
+                break;
+            }
+            curr_len = _z_string_len(str) - curr_len;
+        }
+    } while (curr_res != NULL);
+    return ret;
+}
+
+char *_z_string_pbrk(_z_string_t *str, const char *filter) {
+    const char *data = _z_string_data(str);
+    for (size_t idx = 0; idx < _z_string_len(str); idx++) {
+        const char *curr_char = filter;
+        while (*curr_char != '\0') {
+            if (data[idx] == *curr_char) {
+                return (char *)&data[idx];
+            }
+            curr_char++;
+        }
+    }
+    return NULL;
+}
+
 /*-------- str --------*/
 size_t _z_str_size(const char *src) { return strlen(src) + (size_t)1; }
 

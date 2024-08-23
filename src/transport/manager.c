@@ -20,7 +20,7 @@
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 
-int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local_zid) {
+int8_t _z_new_transport_client(_z_transport_t *zt, _z_string_t *locator, _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
     // Init link
     _z_link_t zl;
@@ -62,7 +62,7 @@ int8_t _z_new_transport_client(_z_transport_t *zt, char *locator, _z_id_t *local
     return ret;
 }
 
-int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_zid) {
+int8_t _z_new_transport_peer(_z_transport_t *zt, _z_string_t *locator, _z_id_t *local_zid) {
     int8_t ret = _Z_RES_OK;
     // Init link
     _z_link_t zl;
@@ -101,7 +101,7 @@ int8_t _z_new_transport_peer(_z_transport_t *zt, char *locator, _z_id_t *local_z
     return ret;
 }
 
-int8_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, char *locator, z_whatami_t mode) {
+int8_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, _z_string_t *locator, z_whatami_t mode) {
     int8_t ret;
 
     if (mode == Z_WHATAMI_CLIENT) {

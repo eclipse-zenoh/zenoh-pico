@@ -87,25 +87,26 @@ typedef struct {
 #define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE 0x7fff
 
 /**
- * A zenoh-net resource key.
+ * A zenoh key-expression.
  *
  * Members:
- *   _z_zint_t: The resource ID.
- *   char *val: A pointer to the string containing the resource name.
+ *   uint16_t _id: The resource ID of the ke.
+ *   _z_mapping_t _mapping: The resource mapping of the ke.
+ *   _z_string_t _suffix: The string value of the ke.
  */
 typedef struct {
     uint16_t _id;
     _z_mapping_t _mapping;
-    char *_suffix;
+    _z_string_t _suffix;
 } _z_keyexpr_t;
-static inline _Bool _z_keyexpr_owns_suffix(const _z_keyexpr_t *key) { return (key->_mapping._val & 0x8000) != 0; }
+
 static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
 static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
     return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
 }
-static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id, _Bool owns_suffix) {
+static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id) {
     assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-    _z_mapping_t mapping = {(uint16_t)((owns_suffix ? 0x8000 : 0) | id)};
+    _z_mapping_t mapping = {id};
     return mapping;
 }
 static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
@@ -118,12 +119,8 @@ static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
         _z_keyexpr_set_mapping(ke, id);
     }
 }
-static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffix) {
-    ke->_mapping._val &= 0x7fff;
-    ke->_mapping._val |= owns_suffix ? 0x8000 : 0;
-}
-static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
-static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(*ke); }
+static inline _Bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
+static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
 
 /**
  * Create a resource key from a resource name.

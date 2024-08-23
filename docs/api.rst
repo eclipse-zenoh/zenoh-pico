@@ -288,15 +288,10 @@ Primitives
 .. autocfunction:: primitives.h::z_view_keyexpr_from_str_autocanonize
 .. autocfunction:: primitives.h::z_keyexpr_as_view_string
 .. autocfunction:: primitives.h::z_keyexpr_is_canon
-.. autocfunction:: primitives.h::zp_keyexpr_is_canon_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_canonize
-.. autocfunction:: primitives.h::zp_keyexpr_canonize_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_includes
-.. autocfunction:: primitives.h::zp_keyexpr_includes_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_intersects
-.. autocfunction:: primitives.h::zp_keyexpr_intersect_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_equals
-.. autocfunction:: primitives.h::zp_keyexpr_equals_null_terminated
 .. autocfunction:: primitives.h::z_keyexpr_relation_to
 .. autocfunction:: primitives.h::z_keyexpr_concat
 .. autocfunction:: primitives.h::z_keyexpr_join

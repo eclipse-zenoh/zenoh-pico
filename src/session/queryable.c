@@ -63,8 +63,7 @@ _z_session_queryable_rc_list_t *__z_get_session_queryable_by_key(_z_session_quer
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (_z_keyexpr_intersects(_Z_RC_IN_VAL(qle)->_key._suffix, strlen(_Z_RC_IN_VAL(qle)->_key._suffix), key._suffix,
-                                  strlen(key._suffix)) == true) {
+        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(qle)->_key, &key) == true) {
             ret = _z_session_queryable_rc_list_push(ret, _z_session_queryable_rc_clone_as_ptr(qle));
         }
 
@@ -116,7 +115,8 @@ _z_session_queryable_rc_list_t *_z_get_session_queryable_by_key(_z_session_t *zn
 }
 
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q) {
-    _Z_DEBUG(">>> Allocating queryable for (%ju:%s)", (uintmax_t)q->_key._id, q->_key._suffix);
+    _Z_DEBUG(">>> Allocating queryable for (%ju:%.*s)", (uintmax_t)q->_key._id, (int)_z_string_len(&q->_key._suffix),
+             _z_string_data(&q->_key._suffix));
     _z_session_queryable_rc_t *ret = NULL;
 
     _zp_session_lock_mutex(zn);
@@ -140,7 +140,7 @@ int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const 
     _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
-    if (key._suffix != NULL) {
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
         _zp_session_unlock_mutex(zn);

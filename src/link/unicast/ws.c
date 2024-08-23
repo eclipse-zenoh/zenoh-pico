@@ -26,14 +26,14 @@
 
 #if Z_FEATURE_LINK_WS == 1
 
-char *__z_parse_port_segment_ws(char *address) {
+char *__z_parse_port_segment_ws(_z_string_t *address) {
     char *ret = NULL;
 
-    const char *p_start = strrchr(address, ':');
+    const char *p_start = _z_string_rchr(address, ':');
     if (p_start != NULL) {
         p_start = _z_cptr_char_offset(p_start, 1);
 
-        const char *p_end = &address[strlen(address)];
+        const char *p_end = _z_cptr_char_offset(_z_string_data(address), (ptrdiff_t)_z_string_len(address));
 
         size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
         ret = (char *)z_malloc(len);
@@ -45,11 +45,11 @@ char *__z_parse_port_segment_ws(char *address) {
     return ret;
 }
 
-char *__z_parse_address_segment_ws(char *address) {
+char *__z_parse_address_segment_ws(_z_string_t *address) {
     char *ret = NULL;
 
-    const char *p_start = &address[0];
-    const char *p_end = strrchr(address, ':');
+    const char *p_start = _z_string_data(address);
+    const char *p_end = _z_string_rchr(address, ':');
 
     // IPv6
     if ((p_start[0] == '[') && (p_end[-1] == ']')) {
@@ -76,12 +76,13 @@ char *__z_parse_address_segment_ws(char *address) {
 int8_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    if (_z_str_eq(endpoint->_locator._protocol, WS_SCHEMA) != true) {
+    _z_string_t str = _z_string_from_str(WS_SCHEMA);
+    if (_z_string_equals(&endpoint->_locator._protocol, &str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
-        char *s_addr = __z_parse_address_segment_ws(endpoint->_locator._address);
+        char *s_addr = __z_parse_address_segment_ws(&endpoint->_locator._address);
         if (s_addr == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
@@ -90,7 +91,7 @@ int8_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
     }
 
     if (ret == _Z_RES_OK) {
-        char *s_port = __z_parse_port_segment_ws(endpoint->_locator._address);
+        char *s_port = __z_parse_port_segment_ws(&endpoint->_locator._address);
         if (s_port == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
@@ -164,8 +165,8 @@ int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_mtu = _z_get_link_mtu_ws();
 
     zl->_endpoint = *endpoint;
-    char *s_addr = __z_parse_address_segment_ws(endpoint->_locator._address);
-    char *s_port = __z_parse_port_segment_ws(endpoint->_locator._address);
+    char *s_addr = __z_parse_address_segment_ws(&endpoint->_locator._address);
+    char *s_port = __z_parse_port_segment_ws(&endpoint->_locator._address);
     ret = _z_create_endpoint_ws(&zl->_socket._ws._rep, s_addr, s_port);
     z_free(s_addr);
     z_free(s_port);

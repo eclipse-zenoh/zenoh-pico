@@ -21,11 +21,11 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-int8_t _z_open_link(_z_link_t *zl, const char *locator) {
+int8_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
     int8_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
-    ret = _z_endpoint_from_str(&ep, locator);
+    ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
         // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
@@ -74,11 +74,11 @@ int8_t _z_open_link(_z_link_t *zl, const char *locator) {
     return ret;
 }
 
-int8_t _z_listen_link(_z_link_t *zl, const char *locator) {
+int8_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
     int8_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
-    ret = _z_endpoint_from_str(&ep, locator);
+    ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
         // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link

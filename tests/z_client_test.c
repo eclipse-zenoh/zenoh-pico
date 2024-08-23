@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -99,13 +100,14 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
+    _z_string_t res_str = _z_string_from_str(res);
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
     size_t payload_len = z_slice_len(z_loan(value));
     assert((payload_len == MSG_LEN) || (payload_len == FRAGMENT_MSG_LEN));
-    assert(_z_str_eq(z_string_data(z_loan(k_str)), res) == true);
+    assert(_z_string_equals(z_loan(k_str), &res_str));
 
     datas++;
     z_drop(z_move(value));
@@ -167,7 +169,8 @@ int main(int argc, char **argv) {
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(&expr, z_loan(s1), z_loan(ke));
-        printf("Declared resource on session 1: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
+        printf("Declared resource on session 1: %u %.*s\n", z_loan(expr)->_id,
+               (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids1[i] = expr;
     }
 
@@ -179,7 +182,8 @@ int main(int argc, char **argv) {
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(&expr, z_loan(s2), z_loan(ke));
-        printf("Declared resource on session 2: %u %s\n", z_loan(expr)->_id, z_loan(expr)->_suffix);
+        printf("Declared resource on session 2: %u %.*s\n", z_loan(expr)->_id,
+               (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids2[i] = expr;
     }
 

@@ -36,20 +36,20 @@
 int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(ke) ? strlen(ke._suffix) : 0);
+    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(&ke) ? _z_string_len(&ke._suffix) : 0);
     header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ke._id));
     if (kelen) {
-        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)ke._suffix, 0, kelen))
+        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(&ke._suffix), 0, kelen))
     }
     return _Z_RES_OK;
 }
 
 int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
     uint8_t header = _Z_DECL_KEXPR_MID;
-    int has_kesuffix = _z_keyexpr_has_suffix(decl->_keyexpr);
+    int has_kesuffix = _z_keyexpr_has_suffix(&decl->_keyexpr);
     if (has_kesuffix) {
         header |= _Z_DECL_KEXPR_FLAG_N;
     }
@@ -61,7 +61,7 @@ int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
 }
 
 int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensions, uint32_t id, _z_keyexpr_t keyexpr) {
-    _Bool has_kesuffix = _z_keyexpr_has_suffix(keyexpr);
+    _Bool has_kesuffix = _z_keyexpr_has_suffix(&keyexpr);
     if (has_extensions) {
         header |= _Z_FLAG_Z_Z;
     }
@@ -204,15 +204,14 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
-                ke->_suffix = z_malloc(len + 1);
-                if (!ke->_suffix) {
+                ke->_suffix = _z_string_preallocate(len);
+                if (!_z_keyexpr_has_suffix(ke)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->_mapping = _z_keyexpr_mapping(mapping, true);
-                _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
-                ke->_suffix[len] = 0;
+                ke->_mapping = _z_keyexpr_mapping(mapping);
+                _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
             } else {
-                ke->_mapping = _z_keyexpr_mapping(mapping, false);
+                ke->_mapping = _z_keyexpr_mapping(mapping);
             }
         } break;
         default:
@@ -241,16 +240,15 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
         if (_z_zbuf_len(zbf) < len) {
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-        ke->_suffix = z_malloc(len + 1);
-        if (ke->_suffix == NULL) {
+        ke->_suffix = _z_string_preallocate(len);
+        if (!_z_keyexpr_has_suffix(ke)) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->_mapping = _z_keyexpr_mapping(mapping, true);
-        _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
-        ke->_suffix[len] = 0;
+        ke->_mapping = _z_keyexpr_mapping(mapping);
+        _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
     } else {
-        ke->_suffix = NULL;
-        ke->_mapping = _z_keyexpr_mapping(mapping, false);
+        ke->_suffix = _z_string_null();
+        ke->_mapping = _z_keyexpr_mapping(mapping);
     }
     return _Z_RES_OK;
 }
