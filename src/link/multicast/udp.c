@@ -83,7 +83,7 @@ static char *__z_parse_address_segment_udp_multicast(_z_string_t *address) {
 int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    _z_string_t udp_str = _z_string_from_str(UDP_SCHEMA);
+    _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }

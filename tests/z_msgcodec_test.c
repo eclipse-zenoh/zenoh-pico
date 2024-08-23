@@ -231,7 +231,7 @@ _z_string_svec_t gen_str_array(size_t size) {
     return sa;
 }
 
-_z_string_t gen_string(size_t len) { return _z_string_from_str(gen_str(len)); }
+_z_string_t gen_string(size_t len) { return _z_string_alias_str(gen_str(len)); }
 
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);

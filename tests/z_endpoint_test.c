@@ -30,36 +30,36 @@ int main(void) {
 
     _z_locator_t lc;
 
-    _z_string_t str = _z_string_from_str("tcp/127.0.0.1:7447");
+    _z_string_t str = _z_string_alias_str("tcp/127.0.0.1:7447");
     assert(_z_locator_from_string(&lc, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("tcp");
+    str = _z_string_alias_str("tcp");
     assert(_z_string_equals(&lc._protocol, &str) == true);
-    str = _z_string_from_str("127.0.0.1:7447");
+    str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_string_equals(&lc._address, &str) == true);
     assert(_z_str_intmap_is_empty(&lc._metadata) == true);
     _z_locator_clear(&lc);
 
-    str = _z_string_from_str("");
+    str = _z_string_alias_str("");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("/");
+    str = _z_string_alias_str("/");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp");
+    str = _z_string_alias_str("tcp");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp/");
+    str = _z_string_alias_str("tcp/");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("127.0.0.1:7447");
+    str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp/127.0.0.1:7447?");
+    str = _z_string_alias_str("tcp/127.0.0.1:7447?");
     assert(_z_locator_from_string(&lc, &str) == _Z_RES_OK);
 
     // No metadata defined so far... but this is a valid syntax in principle
-    str = _z_string_from_str("tcp/127.0.0.1:7447?invalid=ctrl");
+    str = _z_string_alias_str("tcp/127.0.0.1:7447?invalid=ctrl");
     assert(_z_locator_from_string(&lc, &str) == _Z_RES_OK);
 
     // Endpoint
@@ -67,45 +67,45 @@ int main(void) {
 
     _z_endpoint_t ep;
 
-    str = _z_string_from_str("tcp/127.0.0.1:7447");
+    str = _z_string_alias_str("tcp/127.0.0.1:7447");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("tcp");
+    str = _z_string_alias_str("tcp");
     assert(_z_string_equals(&ep._locator._protocol, &str) == true);
-    str = _z_string_from_str("127.0.0.1:7447");
+    str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_string_equals(&ep._locator._address, &str) == true);
     assert(_z_str_intmap_is_empty(&ep._locator._metadata) == true);
     assert(_z_str_intmap_is_empty(&ep._config) == true);
     _z_endpoint_clear(&ep);
 
-    str = _z_string_from_str("");
+    str = _z_string_alias_str("");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("/");
+    str = _z_string_alias_str("/");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp");
+    str = _z_string_alias_str("tcp");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp/");
+    str = _z_string_alias_str("tcp/");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("127.0.0.1:7447");
+    str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
 
-    str = _z_string_from_str("tcp/127.0.0.1:7447?");
+    str = _z_string_alias_str("tcp/127.0.0.1:7447?");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
     // No metadata defined so far... but this is a valid syntax in principle
-    str = _z_string_from_str("tcp/127.0.0.1:7447?invalid=ctrl");
+    str = _z_string_alias_str("tcp/127.0.0.1:7447?invalid=ctrl");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("udp/127.0.0.1:7447#iface=eth0");
+    str = _z_string_alias_str("udp/127.0.0.1:7447#iface=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("udp");
+    str = _z_string_alias_str("udp");
     assert(_z_string_equals(&ep._locator._protocol, &str) == true);
-    str = _z_string_from_str("127.0.0.1:7447");
+    str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_string_equals(&ep._locator._address, &str) == true);
     assert(_z_str_intmap_is_empty(&ep._locator._metadata) == true);
     assert(_z_str_intmap_len(&ep._config) == 1);
@@ -114,13 +114,13 @@ int main(void) {
     (void)(p);
     _z_endpoint_clear(&ep);
 
-    str = _z_string_from_str("udp/127.0.0.1:7447#invalid=eth0");
+    str = _z_string_alias_str("udp/127.0.0.1:7447#invalid=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("udp/127.0.0.1:7447?invalid=ctrl#iface=eth0");
+    str = _z_string_alias_str("udp/127.0.0.1:7447?invalid=ctrl#iface=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
-    str = _z_string_from_str("udp/127.0.0.1:7447?invalid=ctrl#invalid=eth0");
+    str = _z_string_alias_str("udp/127.0.0.1:7447?invalid=ctrl#invalid=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
 
     return 0;

@@ -79,7 +79,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
             }
-            _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
+            _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
             if (opt_as_str == NULL) {

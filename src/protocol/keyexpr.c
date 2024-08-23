@@ -28,7 +28,7 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
         ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
-        ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_from_str(suffix),
+        ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_alias_str(suffix),
     };
 }
 

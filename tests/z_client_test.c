@@ -100,7 +100,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    _z_string_t res_str = _z_string_from_str(res);
+    _z_string_t res_str = _z_string_alias_str(res);
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;

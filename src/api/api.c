@@ -49,7 +49,7 @@
 /********* Data Types Handlers *********/
 
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
-    str->_val = _z_string_from_str((char *)value);
+    str->_val = _z_string_alias_str((char *)value);
     return _Z_RES_OK;
 }
 
@@ -314,7 +314,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
-    s->_val = _z_string_from_str(value);
+    s->_val = _z_string_alias_str(value);
     return _Z_RES_OK;
 }
 
@@ -558,13 +558,13 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_stri
 int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
                         void *context) {
     z_owned_string_t s;
-    s._val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
+    s._val = _z_string_alias_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
 int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    s._val = _z_string_from_str(value);
+    s._val = _z_string_alias_str(value);
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
@@ -676,7 +676,7 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val = _z_string_from_str(_Z_RC_IN_VAL(query)->_parameters);
+    parameters->_val = _z_string_alias_str(_Z_RC_IN_VAL(query)->_parameters);
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->attachment; }
@@ -845,7 +845,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
-        _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
+        _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
 
         uint32_t timeout;
         if (options != NULL) {
@@ -990,7 +990,7 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
 
 int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
                          void *context) {
-    str->_val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
+    str->_val = _z_string_alias_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 
