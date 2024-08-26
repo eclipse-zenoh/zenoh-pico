@@ -162,6 +162,8 @@ void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); 
 
 int8_t z_config_default(z_owned_config_t *config) { return _z_config_default(&config->_val); }
 
+void z_config_clone(z_owned_config_t *config, const z_loaned_config_t *src) { config->_val = _z_config_clone(src); }
+
 int8_t z_config_client(z_owned_config_t *config, const char *locator) {
     return _z_config_client(&config->_val, locator);
 }
