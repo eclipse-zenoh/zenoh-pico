@@ -119,17 +119,12 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
         return s;
     }
 
-    if (s_val != NULL) {
-        const char c[] = "0123456789ABCDEF";
-        for (size_t i = 0; i < bs->len; i++) {
-            s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
-            s_val[(i * (size_t)2)] = c[bs->start[i] & (uint8_t)0x0F];
-        }
-    } else {
-        len = 0;
+    const char c[] = "0123456789ABCDEF";
+    for (size_t i = 0; i < bs->len; i++) {
+        s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
+        s_val[(i * (size_t)2) + 1] = c[bs->start[i] & (uint8_t)0x0F];
     }
     s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
-
     return s;
 }
 
