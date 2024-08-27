@@ -65,22 +65,6 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_
 
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
-int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
-    size_t name_len = strlen(name);
-    if (_z_keyexpr_is_canon(name, name_len) != Z_KEYEXPR_CANON_SUCCESS) {
-        return Z_EINVAL;
-    }
-    keyexpr->_val = _z_keyexpr_from_substr(0, name, name_len);
-    return _Z_RES_OK;
-}
-
-int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
-    size_t name_len = strlen(name);
-    _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, &name_len));
-    keyexpr->_val = _z_keyexpr_from_substr(0, name, name_len);
-    return _Z_RES_OK;
-}
-
 void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) { keyexpr->_val = _z_rname(name); }
 
 z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
@@ -91,10 +75,20 @@ z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *nam
     return _Z_RES_OK;
 }
 
+int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
+    size_t name_len = strlen(name);
+    return z_view_keyexpr_from_substr(keyexpr, name, name_len);
+}
+
 z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, char *name, size_t *len) {
     _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, len));
     keyexpr->_val = _z_keyexpr_from_substr(0, name, *len);
     return _Z_RES_OK;
+}
+
+int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
+    size_t name_len = strlen(name);
+    return z_view_keyexpr_from_substr_autocanonize(keyexpr, name, &name_len);
 }
 
 void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
