@@ -1154,10 +1154,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload
         encoding = _z_encoding_steal(&opt.encoding->_this._val);
     }
     // Remove potentially redundant ke suffix
-    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
-    if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
-        pub_keyexpr._suffix = _z_string_null();
-    }
+    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
     // Check if write filter is active before writing
     if (!_z_write_filter_active(pub)) {
@@ -1186,10 +1183,7 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
         opt.timestamp = options->timestamp;
     }
     // Remove potentially redundant ke suffix
-    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias(pub->_key);
-    if (pub_keyexpr._id != Z_RESOURCE_ID_NONE) {
-        pub_keyexpr._suffix = _z_string_null();
-    }
+    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
     return _z_write(_Z_RC_IN_VAL(&pub->_zn), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
                     pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null());

@@ -32,7 +32,7 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
 /// Returns either keyexpr defined by id + mapping with null suffix if try_declared is true and id is non-zero,
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
-/// keyexpr in user api to properly separate declard keyexpr from its suffix.
+/// keyexpr in user api to properly separate declared keyexpr from its suffix.
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, _Bool try_declared);
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
 static inline _z_keyexpr_t _z_keyexpr_null(void) {
