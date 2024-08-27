@@ -969,7 +969,7 @@ int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *c
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
 
 z_result_t z_id_to_string(z_owned_string_t *str, z_id_t *id) {
-    _z_slice_t buf = _z_slice_from_buf(id->id, sizeof(id->id));
+    _z_slice_t buf = _z_slice_alias_buf(id->id, sizeof(id->id));
     str->_val = _z_string_convert_bytes(&buf);
     if (!_z_string_check(&str->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
