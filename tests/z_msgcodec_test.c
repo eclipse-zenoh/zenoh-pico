@@ -224,14 +224,14 @@ char *gen_str(size_t size) {
 _z_string_svec_t gen_str_array(size_t size) {
     _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
-        _z_string_t s = _z_string_make(gen_str(16));
+        _z_string_t s = _z_string_copy_from_str(gen_str(16));
         _z_string_svec_append(&sa, &s);
     }
 
     return sa;
 }
 
-_z_string_t gen_string(size_t len) { return _z_string_from_str(gen_str(len)); }
+_z_string_t gen_string(size_t len) { return _z_string_alias_str(gen_str(len)); }
 
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);

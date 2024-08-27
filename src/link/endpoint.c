@@ -292,36 +292,36 @@ int8_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, _z_string_t *str,
         // Call the right configuration parser depending on the protocol
         _z_string_t cmp_str = _z_string_null();
 #if Z_FEATURE_LINK_TCP == 1
-        cmp_str = _z_string_from_str(TCP_SCHEMA);
+        cmp_str = _z_string_alias_str(TCP_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_tcp_config_from_str(strint, p_start);
         }
 #endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-        cmp_str = _z_string_from_str(UDP_SCHEMA);
+        cmp_str = _z_string_alias_str(UDP_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_udp_config_from_str(strint, p_start);
         }
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-        cmp_str = _z_string_from_str(BT_SCHEMA);
+        cmp_str = _z_string_alias_str(BT_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_bt_config_from_str(strint, p_start);
         }
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        cmp_str = _z_string_from_str(SERIAL_SCHEMA);
+        cmp_str = _z_string_alias_str(SERIAL_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_serial_config_from_str(strint, p_start);
         }
 #endif
 #if Z_FEATURE_LINK_WS == 1
-        cmp_str = _z_string_from_str(WS_SCHEMA);
+        cmp_str = _z_string_alias_str(WS_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_ws_config_from_str(strint, p_start);
         }
 #endif
-        cmp_str = _z_string_from_str(RAWETH_SCHEMA);
+        cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_raweth_config_from_str(strint, p_start);
         }
@@ -333,36 +333,36 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, _z_string_t *proto) {
     // Call the right configuration parser depending on the protocol
     _z_string_t cmp_str = _z_string_null();
 #if Z_FEATURE_LINK_TCP == 1
-    cmp_str = _z_string_from_str(TCP_SCHEMA);
+    cmp_str = _z_string_alias_str(TCP_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_tcp_config_strlen(s);
     }
 #endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-    cmp_str = _z_string_from_str(UDP_SCHEMA);
+    cmp_str = _z_string_alias_str(UDP_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_udp_config_strlen(s);
     }
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-    cmp_str = _z_string_from_str(BT_SCHEMA);
+    cmp_str = _z_string_alias_str(BT_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_bt_config_strlen(s);
     }
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-    cmp_str = _z_string_from_str(SERIAL_SCHEMA);
+    cmp_str = _z_string_alias_str(SERIAL_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_serial_config_strlen(s);
     }
 #endif
 #if Z_FEATURE_LINK_WS == 1
-    cmp_str = _z_string_from_str(WS_SCHEMA);
+    cmp_str = _z_string_alias_str(WS_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_ws_config_strlen(s);
     }
 #endif
-    cmp_str = _z_string_from_str(RAWETH_SCHEMA);
+    cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_raweth_config_strlen(s);
     }
@@ -374,36 +374,36 @@ char *_z_endpoint_config_to_string(const _z_str_intmap_t *s, const _z_string_t *
     _z_string_t cmp_str = _z_string_null();
 
 #if Z_FEATURE_LINK_TCP == 1
-    cmp_str = _z_string_from_str(TCP_SCHEMA);
+    cmp_str = _z_string_alias_str(TCP_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_tcp_config_to_str(s);
     }
 #endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
-    cmp_str = _z_string_from_str(UDP_SCHEMA);
+    cmp_str = _z_string_alias_str(UDP_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_udp_config_to_str(s);
     }
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-    cmp_str = _z_string_from_str(BT_SCHEMA);
+    cmp_str = _z_string_alias_str(BT_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_bt_config_to_str(s);
     }
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-    cmp_str = _z_string_from_str(SERIAL_SCHEMA);
+    cmp_str = _z_string_alias_str(SERIAL_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_serial_config_to_str(s);
     }
 #endif
 #if Z_FEATURE_LINK_WS == 1
-    cmp_str = _z_string_from_str(WS_SCHEMA);
+    cmp_str = _z_string_alias_str(WS_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_ws_config_to_str(s);
     }
 #endif
-    cmp_str = _z_string_from_str(RAWETH_SCHEMA);
+    cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_raweth_config_to_str(s);
     }

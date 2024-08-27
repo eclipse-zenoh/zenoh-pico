@@ -60,7 +60,7 @@ int8_t _z_id_encode_as_slice(_z_wbuf_t *wbf, const _z_id_t *id) {
     uint8_t len = _z_id_len(*id);
 
     if (len != 0) {
-        _z_slice_t buf = _z_slice_from_buf(id->id, len);
+        _z_slice_t buf = _z_slice_alias_buf(id->id, len);
         ret = _z_slice_encode(wbf, &buf);
     } else {
         _Z_DEBUG("Attempted to encode invalid ID 0");
@@ -225,7 +225,7 @@ int8_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     int8_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_id);
     ret |= _z_uint8_encode(wbf, zidlen << 4);
-    _z_slice_t zid = _z_slice_from_buf(info->_id.id, zidlen);
+    _z_slice_t zid = _z_slice_alias_buf(info->_id.id, zidlen);
     ret |= _z_slice_val_encode(wbf, &zid);
     ret |= _z_zsize_encode(wbf, info->_entity_id);
     ret |= _z_zsize_encode(wbf, info->_source_sn);
@@ -237,7 +237,7 @@ int8_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     size_t ext_size = 1u + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
-    _z_slice_t zid = _z_slice_from_buf(info->_id.id, zidlen);
+    _z_slice_t zid = _z_slice_alias_buf(info->_id.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_entity_id));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_sn));
@@ -637,7 +637,7 @@ int8_t _z_hello_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_hello_t *m
     cbyte |= _z_whatami_to_uint8(msg->_whatami);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
-    _z_slice_t s = _z_slice_from_buf(msg->_zid.id, zidlen);
+    _z_slice_t s = _z_slice_alias_buf(msg->_zid.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &s));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_HELLO_L) == true) {

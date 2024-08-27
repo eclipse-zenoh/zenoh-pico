@@ -464,7 +464,7 @@ int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, 
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
-            _z_slice_t params = _z_slice_from_buf((uint8_t *)parameters, strlen(parameters));
+            _z_slice_t params = _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
             _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
                                                          timeout_ms, attachment, cong_ctrl, priority, is_express);
 

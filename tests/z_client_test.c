@@ -100,7 +100,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);
 
-    _z_string_t res_str = _z_string_from_str(res);
+    _z_string_t res_str = _z_string_alias_str(res);
     z_view_string_t k_str;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &k_str);
     z_owned_slice_t value;
@@ -115,7 +115,7 @@ void data_handler(const z_loaned_sample_t *sample, void *arg) {
 }
 
 _z_string_t format_id(const z_id_t *id) {
-    _z_slice_t id_as_bytes = _z_slice_from_buf(id->id, _z_id_len(*id));
+    _z_slice_t id_as_bytes = _z_slice_alias_buf(id->id, _z_id_len(*id));
     return _z_string_convert_bytes(&id_as_bytes);
 }
 

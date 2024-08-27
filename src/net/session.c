@@ -79,7 +79,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
             }
-            _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
+            _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
             if (opt_as_str == NULL) {
@@ -105,7 +105,7 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
                 }
             }
             locators = _z_string_svec_make(1);
-            _z_string_t s = _z_string_make(_z_config_get(config, key));
+            _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
             _z_string_svec_append(&locators, &s);
         }
 
@@ -155,7 +155,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _z_slice_t local_zid = _z_slice_from_buf(zn->_local_zid.id, _z_id_len(zn->_local_zid));
+        _z_slice_t local_zid = _z_slice_alias_buf(zn->_local_zid.id, _z_id_len(zn->_local_zid));
         // TODO(sasahcmc): is it zero terminated???
         // rework it!!!
         _z_string_t s = _z_string_convert_bytes(&local_zid);

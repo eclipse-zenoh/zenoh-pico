@@ -81,7 +81,7 @@ static char *__z_parse_address_segment_tcp(_z_string_t *address) {
 int8_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    _z_string_t tcp_str = _z_string_from_str(TCP_SCHEMA);
+    _z_string_t tcp_str = _z_string_alias_str(TCP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &tcp_str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }

@@ -27,33 +27,27 @@ _z_string_t _z_string_null(void) {
 
 _Bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
 
-_z_string_t _z_string_make(const char *value) {
+_z_string_t _z_string_copy_from_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value));
     return s;
 }
 
-_z_string_t _z_string_n_make(const char *value, size_t len) {
+_z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     _z_string_t s;
-    char *c = _z_str_n_clone(value, len);
-
-    if (c == NULL) {
-        return _z_string_null();
-    } else {
-        s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)c, len, _z_delete_context_default());
-        return s;
-    }
-}
-
-_z_string_t _z_string_from_str(const char *value) {
-    _z_string_t s;
-    s._slice = _z_slice_from_buf((const uint8_t *)(value), strlen(value));
+    s._slice = _z_slice_copy_from_buf((uint8_t *)value, len);
     return s;
 }
 
-_z_string_t _z_string_from_substr(const char *value, size_t len) {
+_z_string_t _z_string_alias_str(const char *value) {
     _z_string_t s;
-    s._slice = _z_slice_from_buf((const uint8_t *)(value), len);
+    s._slice = _z_slice_alias_buf((const uint8_t *)(value), strlen(value));
+    return s;
+}
+
+_z_string_t _z_string_alias_substr(const char *value, size_t len) {
+    _z_string_t s;
+    s._slice = _z_slice_alias_buf((const uint8_t *)(value), len);
     return s;
 }
 
@@ -63,9 +57,9 @@ _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c
     return s;
 }
 
-_z_string_t *_z_string_make_as_ptr(const char *value) {
+_z_string_t *_z_string_copy_from_str_as_ptr(const char *value) {
     _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
-    *s = _z_string_make(value);
+    *s = _z_string_copy_from_str(value);
     if (_z_slice_is_empty(&s->_slice) && value != NULL) {
         z_free(s);
         return NULL;
@@ -94,7 +88,7 @@ _z_string_t _z_string_alias(const _z_string_t *str) {
     return alias;
 }
 
-void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_from_str(src); }
+void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_alias_str(src); }
 
 void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
 

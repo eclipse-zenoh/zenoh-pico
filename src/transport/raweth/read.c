@@ -52,7 +52,7 @@ int8_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
 void *_zp_raweth_read_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
     _z_transport_message_t t_msg;
-    _z_slice_t addr = _z_slice_from_buf(NULL, 0);
+    _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
 
     // Task loop
     while (ztm->_read_task_running == true) {

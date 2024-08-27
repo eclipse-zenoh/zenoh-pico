@@ -337,7 +337,7 @@ static _Bool _z_valid_address_raweth_inner(const _z_string_t *address) {
 }
 
 static _Bool _z_valid_address_raweth(const char *address) {
-    _z_string_t addr_str = _z_string_from_str(address);
+    _z_string_t addr_str = _z_string_alias_str(address);
     return _z_valid_address_raweth_inner(&addr_str);
 }
 
@@ -459,7 +459,7 @@ int8_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
     // Check the root
-    _z_string_t str_cmp = _z_string_from_str(RAWETH_SCHEMA);
+    _z_string_t str_cmp = _z_string_alias_str(RAWETH_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &str_cmp)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }

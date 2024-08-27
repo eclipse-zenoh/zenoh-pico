@@ -251,9 +251,9 @@ int8_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
 
     if (ret == _Z_RES_OK) {
-        if (_z_zbuf_len(zbf) >= bs->len) {                            // Check if we have enough bytes to read
-            *bs = _z_slice_from_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
-            _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);   // Move the read position
+        if (_z_zbuf_len(zbf) >= bs->len) {                             // Check if we have enough bytes to read
+            *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
+            _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
         } else {
             _Z_DEBUG("WARNING: Not enough bytes to read");
             bs->len = 0;

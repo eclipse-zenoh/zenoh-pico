@@ -49,7 +49,7 @@
 /********* Data Types Handlers *********/
 
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
-    str->_val = _z_string_from_str((char *)value);
+    str->_val = _z_string_alias_str((char *)value);
     return _Z_RES_OK;
 }
 
@@ -65,22 +65,34 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_
 
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
+void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) { keyexpr->_val = _z_rname(name); }
+
+z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
+    if (_z_keyexpr_is_canon(name, len) != Z_KEYEXPR_CANON_SUCCESS) {
+        return Z_EINVAL;
+    }
+    keyexpr->_val = _z_keyexpr_from_substr(0, name, len);
+    return _Z_RES_OK;
+}
+
 int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) {
-    keyexpr->_val = _z_rname(name);
+    size_t name_len = strlen(name);
+    return z_view_keyexpr_from_substr(keyexpr, name, name_len);
+}
+
+z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, char *name, size_t *len) {
+    _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, len));
+    keyexpr->_val = _z_keyexpr_from_substr(0, name, *len);
     return _Z_RES_OK;
 }
 
 int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name) {
     size_t name_len = strlen(name);
-    _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, &name_len));
-    keyexpr->_val = _z_rname(NULL);
-    keyexpr->_val._suffix = _z_string_from_substr(name, name_len);
-    return _Z_RES_OK;
+    return z_view_keyexpr_from_substr_autocanonize(keyexpr, name, &name_len);
 }
 
-int8_t z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
-    keyexpr->_val = _z_rname(name);
-    return _Z_RES_OK;
+void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
+    keyexpr->_val = _z_keyexpr_from_substr(0, name, len);
 }
 
 int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
@@ -314,7 +326,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
-    s->_val = _z_string_from_str(value);
+    s->_val = _z_string_alias_str(value);
     return _Z_RES_OK;
 }
 
@@ -361,7 +373,7 @@ int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const ch
     if (schema == NULL && len > 0) {
         return _Z_ERR_INVALID;
     }
-    encoding->schema = _z_string_n_make(schema, len);
+    encoding->schema = _z_string_copy_from_substr(schema, len);
     if (_z_string_len(&encoding->schema) != len) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -530,7 +542,7 @@ int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void 
 
 int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    s._val = _z_slice_from_buf(data, len);
+    s._val = _z_slice_alias_buf(data, len);
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
@@ -564,7 +576,7 @@ int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(voi
 
 int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    s._val = _z_string_from_str(value);
+    s._val = _z_string_alias_str(value);
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
@@ -676,7 +688,7 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val = _z_string_from_str(_Z_RC_IN_VAL(query)->_parameters);
+    parameters->_val = _z_string_alias_str(_Z_RC_IN_VAL(query)->_parameters);
 }
 
 const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->attachment; }
@@ -845,7 +857,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
         if (opt_as_str == NULL) {
             opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
         }
-        _z_string_t mcast_locator = _z_string_from_str(opt_as_str);
+        _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
 
         uint32_t timeout;
         if (options != NULL) {
@@ -981,7 +993,7 @@ const char *z_string_data(const z_loaned_string_t *str) { return _z_string_data(
 size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
 int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
-    str->_val = _z_string_make(value);
+    str->_val = _z_string_copy_from_str(value);
     if (str->_val._slice.start == NULL && value != NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -997,7 +1009,7 @@ int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(voi
 void z_string_empty(z_owned_string_t *str) { str->_val = _z_string_null(); }
 
 int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len) {
-    str->_val = _z_string_n_make(value, len);
+    str->_val = _z_string_copy_from_substr(value, len);
     return _Z_RES_OK;
 }
 

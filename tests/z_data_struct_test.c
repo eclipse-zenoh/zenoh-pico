@@ -154,7 +154,7 @@ void z_slice_custom_delete_test(void) {
     _z_slice_t s1 = _z_slice_from_buf_custom_deleter(data, 5, dc);
     _z_slice_t s2 = _z_slice_from_buf_custom_deleter(data, 5, dc);
     _z_slice_t s3 = _z_slice_copy_from_buf(data, 5);
-    _z_slice_t s4 = _z_slice_from_buf(data, 5);
+    _z_slice_t s4 = _z_slice_alias_buf(data, 5);
     assert(_z_slice_is_alloced(&s1));
     assert(_z_slice_is_alloced(&s2));
     assert(_z_slice_is_alloced(&s3));

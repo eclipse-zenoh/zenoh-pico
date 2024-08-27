@@ -34,7 +34,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
     err = _z_endpoint_from_string(&ep, locator);
 
 #if Z_FEATURE_SCOUTING_UDP == 1
-    _z_string_t cmp_str = _z_string_from_str(UDP_SCHEMA);
+    _z_string_t cmp_str = _z_string_alias_str(UDP_SCHEMA);
     if ((err == _Z_RES_OK) && _z_string_equals(&ep._locator._protocol, &cmp_str)) {
         _z_endpoint_clear(&ep);
     } else
