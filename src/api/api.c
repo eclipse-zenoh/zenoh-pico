@@ -379,7 +379,7 @@ int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const ch
     if (schema == NULL && len > 0) {
         return _Z_ERR_INVALID;
     }
-    encoding->schema = _z_string_n_make(schema, len);
+    encoding->schema = _z_string_copy_from_substr(schema, len);
     if (_z_string_len(&encoding->schema) != len) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -405,7 +405,7 @@ int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t
 
 int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                         void *context) {
-    slice->_val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    slice->_val = _z_slice_alias_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 
@@ -542,13 +542,13 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice
 int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                         void *context) {
     z_owned_slice_t s;
-    s._val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    s._val = _z_slice_alias_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
 int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    s._val = _z_slice_from_buf(data, len);
+    s._val = _z_slice_alias_buf(data, len);
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
@@ -999,7 +999,7 @@ const char *z_string_data(const z_loaned_string_t *str) { return _z_string_data(
 size_t z_string_len(const z_loaned_string_t *str) { return _z_string_len(str); }
 
 int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
-    str->_val = _z_string_make(value);
+    str->_val = _z_string_copy_from_str(value);
     if (str->_val._slice.start == NULL && value != NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -1015,7 +1015,7 @@ int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(voi
 void z_string_empty(z_owned_string_t *str) { str->_val = _z_string_null(); }
 
 int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len) {
-    str->_val = _z_string_n_make(value, len);
+    str->_val = _z_string_copy_from_substr(value, len);
     return _Z_RES_OK;
 }
 

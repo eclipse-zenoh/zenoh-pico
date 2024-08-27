@@ -246,7 +246,7 @@ int8_t _z_bytes_from_double(_z_bytes_t *b, double val) { return _z_bytes_from_bu
 _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
     if (_z_bytes_num_slices(bs) == 1) {
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, 0);
-        return _z_slice_from_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
+        return _z_slice_alias_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
     }
     return _z_slice_empty();
 }

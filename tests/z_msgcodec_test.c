@@ -179,7 +179,7 @@ _z_slice_t gen_slice(size_t len) {
     for (_z_zint_t i = 0; i < len; i++) {
         ((uint8_t *)p)[i] = gen_uint8() & 0x7f;  // 0b01111111
     }
-    return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_default());
+    return _z_slice_alias_buf_custom_deleter(p, len, _z_delete_context_default());
 }
 
 _z_bytes_t gen_payload(size_t len) {
@@ -224,7 +224,7 @@ char *gen_str(size_t size) {
 _z_string_svec_t gen_str_array(size_t size) {
     _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
-        _z_string_t s = _z_string_make(gen_str(16));
+        _z_string_t s = _z_string_copy_from_str(gen_str(16));
         _z_string_svec_append(&sa, &s);
     }
 

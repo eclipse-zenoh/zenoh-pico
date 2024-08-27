@@ -409,7 +409,7 @@ int8_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t head
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
     }
 
-    _z_slice_t slice = _z_slice_from_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
+    _z_slice_t slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
     _z_slice_copy(&msg->_payload, &slice);
     zbf->_ios._r_pos = zbf->_ios._w_pos;
 

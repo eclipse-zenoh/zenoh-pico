@@ -151,10 +151,10 @@ void z_slice_custom_delete_test(void) {
     size_t counter = 0;
     uint8_t data[5] = {1, 2, 3, 4, 5};
     _z_delete_context_t dc = (_z_delete_context_t){.deleter = _z_slice_custom_deleter, .context = &counter};
-    _z_slice_t s1 = _z_slice_from_buf_custom_deleter(data, 5, dc);
-    _z_slice_t s2 = _z_slice_from_buf_custom_deleter(data, 5, dc);
+    _z_slice_t s1 = _z_slice_alias_buf_custom_deleter(data, 5, dc);
+    _z_slice_t s2 = _z_slice_alias_buf_custom_deleter(data, 5, dc);
     _z_slice_t s3 = _z_slice_copy_from_buf(data, 5);
-    _z_slice_t s4 = _z_slice_from_buf(data, 5);
+    _z_slice_t s4 = _z_slice_alias_buf(data, 5);
     assert(_z_slice_is_alloced(&s1));
     assert(_z_slice_is_alloced(&s2));
     assert(_z_slice_is_alloced(&s3));

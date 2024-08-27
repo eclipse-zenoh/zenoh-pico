@@ -57,7 +57,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_slice_t addr = _z_slice_from_buf(NULL, 0);
+    _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
     while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
