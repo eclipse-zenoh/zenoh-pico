@@ -405,7 +405,7 @@ int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t
 
 int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                         void *context) {
-    slice->_val = _z_slice_alias_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    slice->_val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 
@@ -542,7 +542,7 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice
 int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
                         void *context) {
     z_owned_slice_t s;
-    s._val = _z_slice_alias_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
+    s._val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_create(deleter, context));
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
@@ -576,7 +576,7 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_stri
 int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
                         void *context) {
     z_owned_string_t s;
-    s._val = _z_string_alias_str_custom_deleter(value, _z_delete_context_create(deleter, context));
+    s._val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
@@ -1008,7 +1008,7 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value) {
 
 int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
                          void *context) {
-    str->_val = _z_string_alias_str_custom_deleter(value, _z_delete_context_create(deleter, context));
+    str->_val = _z_string_from_str_custom_deleter(value, _z_delete_context_create(deleter, context));
     return _Z_RES_OK;
 }
 

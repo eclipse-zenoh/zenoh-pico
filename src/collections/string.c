@@ -51,9 +51,9 @@ _z_string_t _z_string_alias_substr(const char *value, size_t len) {
     return s;
 }
 
-_z_string_t _z_string_alias_str_custom_deleter(char *value, _z_delete_context_t c) {
+_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
     _z_string_t s;
-    s._slice = _z_slice_alias_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
     return s;
 }
 
@@ -128,7 +128,7 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     } else {
         len = 0;
     }
-    s._slice = _z_slice_alias_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
 
     return s;
 }

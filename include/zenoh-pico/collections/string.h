@@ -73,7 +73,7 @@ _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
 _z_string_t _z_string_alias_str(const char *value);
 _z_string_t _z_string_alias_substr(const char *value, size_t len);
-_z_string_t _z_string_alias_str_custom_deleter(char *value, _z_delete_context_t c);
+_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
 _Bool _z_string_is_empty(const _z_string_t *s);
 const char *_z_string_rchr(_z_string_t *str, char filter);
 char *_z_string_pbrk(_z_string_t *str, const char *filter);
