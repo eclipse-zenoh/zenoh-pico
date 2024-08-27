@@ -35,14 +35,8 @@ _z_string_t _z_string_copy_from_str(const char *value) {
 
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     _z_string_t s;
-    char *c = _z_str_n_clone(value, len);
-
-    if (c == NULL) {
-        return _z_string_null();
-    } else {
-        s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)c, len, _z_delete_context_default());
-        return s;
-    }
+    s._slice = _z_slice_copy_from_buf((uint8_t *)value, len);
+    return s;
 }
 
 _z_string_t _z_string_alias_str(const char *value) {
