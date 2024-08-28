@@ -71,6 +71,17 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key);
 #define _z_config_len _z_str_intmap_len
 
 /**
+ * Clone a config.
+ *
+ * Parameters:
+ *     m: A pointer to the config to clone.
+ *
+ * Returns:
+ *     The clone of the config.
+ */
+#define _z_config_clone _z_str_intmap_clone
+
+/**
  * Get the length of the given properties map.
  *
  * Parameters:
