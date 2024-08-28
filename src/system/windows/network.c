@@ -202,7 +202,6 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
-
         if (ret != _Z_RES_OK) {
             closesocket(sock->_sock._fd);
             WSACleanup();
