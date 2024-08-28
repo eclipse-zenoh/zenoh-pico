@@ -19,23 +19,29 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
-z_condvar_t cond;
-z_mutex_t mutex;
+z_owned_condvar_t cond;
+z_owned_mutex_t mutex;
 
 void reply_dropper(void *ctx) {
     (void)(ctx);
     printf(">> Received query final notification\n");
-    z_condvar_signal(&cond);
-    z_condvar_free(&cond);
+    z_condvar_signal(z_condvar_loan_mut(&cond));
+    z_condvar_drop(z_condvar_move(&cond));
 }
 
-void reply_handler(z_owned_reply_t *reply, void *ctx) {
+void reply_handler(const z_loaned_reply_t *reply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(reply)) {
-        z_sample_t sample = z_reply_ok(reply);
-        z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
-        printf(">> Received ('%s': '%.*s')\n", z_str_loan(&keystr), (int)sample.payload.len, sample.payload.start);
-        z_str_drop(z_str_move(&keystr));
+        const z_loaned_sample_t *sample = z_reply_ok(reply);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
+        z_owned_string_t replystr;
+        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+
+        printf(">> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_view_string_loan(&keystr)),
+               z_string_data(z_view_string_loan(&keystr)), (int)z_string_len(z_string_loan(&replystr)),
+               z_string_data(z_string_loan(&replystr)));
+        z_string_drop(z_string_move(&replystr));
     } else {
         printf(">> Received an error\n");
     }
@@ -81,52 +87,54 @@ int main(int argc, char **argv) {
     z_mutex_init(&mutex);
     z_condvar_init(&cond);
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, mode);
     if (clocator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_LISTEN_KEY, llocator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_session_loan(&s), NULL) < 0 || zp_start_lease_task(z_session_loan(&s), NULL) < 0) {
+    if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return -1;
     }
 
-    z_keyexpr_t ke = z_keyexpr(keyexpr);
-    if (!z_keyexpr_is_initialized(&ke)) {
+    z_view_keyexpr_t ke;
+    if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
         printf("%s is not a valid key expression", keyexpr);
         return -1;
     }
 
-    z_mutex_lock(&mutex);
+    z_mutex_lock(z_mutex_loan_mut(&mutex));
     printf("Sending Query '%s'...\n", keyexpr);
-    z_get_options_t opts = z_get_options_default();
+    z_get_options_t opts;
+    z_get_options_default(&opts);
+    // Value encoding
+    z_owned_bytes_t payload;
     if (value != NULL) {
-        opts.value.payload = _z_bytes_wrap((const uint8_t *)value, strlen(value));
+        z_bytes_from_static_str(&payload, value);
+        opts.payload = z_bytes_move(&payload);
     }
-    z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-    if (z_get(z_session_loan(&s), ke, "", z_closure_reply_move(&callback), &opts) < 0) {
+    z_owned_closure_reply_t callback;
+    z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
+    if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;
     }
-    z_condvar_wait(&cond, &mutex);
-    z_mutex_unlock(&mutex);
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_session_loan(&s));
-    zp_stop_lease_task(z_session_loan(&s));
+    z_condvar_wait(z_condvar_loan_mut(&cond), z_mutex_loan_mut(&mutex));
+    z_mutex_unlock(z_mutex_loan_mut(&mutex));
 
     z_close(z_session_move(&s));
 

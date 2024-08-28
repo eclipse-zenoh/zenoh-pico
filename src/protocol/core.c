@@ -19,13 +19,16 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
+#define _Z_ID_LEN (16)
+
 uint8_t _z_id_len(_z_id_t id) {
-    uint8_t len = 16;
+    uint8_t len = _Z_ID_LEN;
     while (len > 0) {
         --len;
         if (id.id[len] != 0) {
@@ -37,12 +40,12 @@ uint8_t _z_id_len(_z_id_t id) {
 }
 _Bool _z_id_check(_z_id_t id) {
     _Bool ret = false;
-    for (int i = 0; !ret && i < 16; i++) {
+    for (int i = 0; !ret && i < _Z_ID_LEN; i++) {
         ret |= id.id[i] != 0;
     }
     return ret;
 }
-_z_id_t _z_id_empty() {
+_z_id_t _z_id_empty(void) {
     return (_z_id_t){.id = {
                          0,
                          0,
@@ -62,82 +65,47 @@ _z_id_t _z_id_empty() {
                          0,
                      }};
 }
-_z_source_info_t _z_source_info_null() {
+
+_z_source_info_t _z_source_info_null(void) {
     return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
 }
-_z_timestamp_t _z_timestamp_null() { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
-_z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_empty(), .encoding = z_encoding_default()}; }
+_z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
+
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
+    const uint64_t FRAC_PER_SEC = (uint64_t)1 << 32;
+    const uint64_t NANOS_PER_SEC = 1000000000;
+
+    uint32_t fractions = (uint32_t)((uint64_t)nanos * FRAC_PER_SEC / NANOS_PER_SEC + 1);
+    return ((uint64_t)seconds << 32) | fractions;
+}
+
+_z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_null(), .encoding = _z_encoding_null()}; }
 _z_value_t _z_value_steal(_z_value_t *value) {
     _z_value_t ret = *value;
     *value = _z_value_null();
     return ret;
 }
-void _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
-    dst->encoding.prefix = src->encoding.prefix;
-    _z_bytes_copy(&dst->encoding.suffix, &src->encoding.suffix);
-    _z_bytes_copy(&dst->payload, &src->payload);
+int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
+    *dst = _z_value_null();
+    _Z_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_encoding_clear(&dst->encoding));
+    return _Z_RES_OK;
 }
 
-#if Z_FEATURE_ATTACHMENT == 1
-struct _z_seeker_t {
-    _z_bytes_t key;
-    _z_bytes_t value;
-};
-int8_t _z_attachment_get_seeker(_z_bytes_t key, _z_bytes_t value, void *ctx) {
-    struct _z_seeker_t *seeker = (struct _z_seeker_t *)ctx;
-    _z_bytes_t seeked = seeker->key;
-    if (key.len == seeked.len && memcmp(key.start, seeked.start, seeked.len)) {
-        seeker->value = (_z_bytes_t){.start = value.start, .len = value.len, ._is_alloc = false};
-        return 1;
-    }
-    return 0;
-}
-_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key) {
-    struct _z_seeker_t seeker = {.value = {0}, .key = key};
-    z_attachment_iterate(this_, _z_attachment_get_seeker, (void *)&seeker);
-    return seeker.value;
-}
-int8_t _z_attachment_estimate_length_body(_z_bytes_t key, _z_bytes_t value, void *ctx) {
-    size_t *len = (size_t *)ctx;
-    *len += _z_zint_len(key.len) + key.len + _z_zint_len(value.len) + value.len;
-    return 0;
-}
-size_t _z_attachment_estimate_length(z_attachment_t att) {
-    size_t len = 0;
-    z_attachment_iterate(att, _z_attachment_estimate_length_body, &len);
-    return len;
+int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
+    *dst = _z_hello_null();
+    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->_locators, &src->_locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    dst->_version = src->_version;
+    dst->_whatami = src->_whatami;
+    memcpy(&dst->_zid.id, &src->_zid.id, _Z_ID_LEN);
+    return _Z_RES_OK;
 }
 
-int8_t _z_encoded_attachment_iteration_driver(const void *this_, z_attachment_iter_body_t body, void *ctx) {
-    _z_zbuf_t data = _z_zbytes_as_zbuf(*(_z_bytes_t *)this_);
-    while (_z_zbuf_can_read(&data)) {
-        _z_bytes_t key = _z_bytes_empty();
-        _z_bytes_t value = _z_bytes_empty();
-        _z_bytes_decode(&key, &data);
-        _z_bytes_decode(&value, &data);
-        int8_t ret = body(key, value, ctx);
-        if (ret != 0) {
-            return ret;
-        }
-    }
-    return 0;
+_z_hello_t _z_hello_null(void) {
+    return (_z_hello_t){._zid = _z_id_empty(), ._version = 0, ._whatami = 0x0, ._locators = _z_string_svec_make(0)};
 }
 
-z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att) {
-    if (att->is_encoded) {
-        return (z_attachment_t){.data = &att->body.encoded, .iteration_driver = _z_encoded_attachment_iteration_driver};
-    } else {
-        return att->body.decoded;
-    }
+void _z_value_move(_z_value_t *dst, _z_value_t *src) {
+    _z_encoding_move(&dst->encoding, &src->encoding);
+    _z_bytes_move(&dst->payload, &src->payload);
 }
-void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att) {
-    if (att->is_encoded) {
-        _z_bytes_clear(&att->body.encoded);
-    }
-}
-_Bool z_attachment_check(const z_attachment_t *attachment) { return attachment->iteration_driver != NULL; }
-int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx) {
-    return this_.iteration_driver(this_.data, body, ctx);
-}
-z_attachment_t z_attachment_null(void) { return (z_attachment_t){.data = NULL, .iteration_driver = NULL}; }
-#endif

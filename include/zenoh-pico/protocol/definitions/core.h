@@ -44,5 +44,6 @@
 #define _Z_FLAGS(h) (_Z_FLAGS_MASK & (h))
 #define _Z_HAS_FLAG(h, f) (((h) & (f)) != 0)
 #define _Z_SET_FLAG(h, f) (h |= f)
+#define _Z_CLEAR_FLAG(h, f) (h &= (uint8_t)(~(f)))
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_CORE_H */

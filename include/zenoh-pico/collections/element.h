@@ -19,12 +19,14 @@
 #include <stddef.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/result.h"
 
 /*-------- element functions --------*/
 typedef size_t (*z_element_size_f)(void *e);
 typedef void (*z_element_clear_f)(void *e);
 typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
+typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
 typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
 
@@ -61,8 +63,13 @@ static inline void _z_noop_clear(void *s) { (void)(s); }
 static inline void _z_noop_free(void **s) { (void)(s); }
 
 static inline void _z_noop_copy(void *dst, const void *src) {
-    (void)(dst);
-    (void)(src);
+    _ZP_UNUSED(dst);
+    _ZP_UNUSED(src);
+}
+
+static inline void _z_noop_move(void *dst, void *src) {
+    _ZP_UNUSED(dst);
+    _ZP_UNUSED(src);
 }
 
 _Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy)

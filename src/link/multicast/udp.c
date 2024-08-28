@@ -15,6 +15,7 @@
 #include "zenoh-pico/link/config/udp.h"
 
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,30 +26,37 @@
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
 
-char *__z_parse_port_segment_udp_multicast(const char *address) {
+static char *__z_parse_port_segment_udp_multicast(_z_string_t *address) {
     char *ret = NULL;
 
-    const char *p_start = strrchr(address, ':');
-    if (p_start != NULL) {
-        p_start = _z_cptr_char_offset(p_start, 1);
+    const char *p_start = _z_string_rchr(address, ':');
+    if (p_start == NULL) {
+        return ret;
+    }
+    p_start = _z_cptr_char_offset(p_start, 1);
+    const char *p_end = _z_cptr_char_offset(_z_string_data(address), (ptrdiff_t)_z_string_len(address));
 
-        const char *p_end = &address[strlen(address)];
-
-        size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-        ret = (char *)z_malloc(len);
-        if (ret != NULL) {
-            _z_str_n_copy(ret, p_start, len);
-        }
+    if (p_start >= p_end) {
+        return ret;
+    }
+    size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
+    ret = (char *)z_malloc(len);
+    if (ret != NULL) {
+        _z_str_n_copy(ret, p_start, len);
     }
 
     return ret;
 }
 
-char *__z_parse_address_segment_udp_multicast(const char *address) {
+static char *__z_parse_address_segment_udp_multicast(_z_string_t *address) {
     char *ret = NULL;
 
-    const char *p_start = &address[0];
-    const char *p_end = strrchr(address, ':');
+    const char *p_start = _z_string_data(address);
+    const char *p_end = _z_string_rchr(address, ':');
+
+    if ((p_start == NULL) || (p_end == NULL)) {
+        return ret;
+    }
 
     // IPv6
     if ((p_start[0] == '[') && (p_end[-1] == ']')) {
@@ -63,7 +71,7 @@ char *__z_parse_address_segment_udp_multicast(const char *address) {
     // IPv4
     else {
         size_t len = _z_ptr_char_diff(p_end, p_start) + (size_t)1;
-        ret = (char *)z_malloc(len);
+        ret = (char *)z_malloc(len + 1);
         if (ret != NULL) {
             _z_str_n_copy(ret, p_start, len);
         }
@@ -75,12 +83,13 @@ char *__z_parse_address_segment_udp_multicast(const char *address) {
 int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    if (_z_str_eq(endpoint->_locator._protocol, UDP_SCHEMA) != true) {
+    _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
+    if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
-        char *s_address = __z_parse_address_segment_udp_multicast(endpoint->_locator._address);
+        char *s_address = __z_parse_address_segment_udp_multicast(&endpoint->_locator._address);
         if (s_address == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
@@ -89,11 +98,11 @@ int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
     }
 
     if (ret == _Z_RES_OK) {
-        char *s_port = __z_parse_port_segment_udp_multicast(endpoint->_locator._address);
+        char *s_port = __z_parse_port_segment_udp_multicast(&endpoint->_locator._address);
         if (s_port == NULL) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
-            uint32_t port = strtoul(s_port, NULL, 10);
+            uint32_t port = (uint32_t)strtoul(s_port, NULL, 10);
             if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
@@ -115,7 +124,7 @@ int8_t _z_f_link_open_udp_multicast(_z_link_t *self) {
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
     if (tout_as_str != NULL) {
-        tout = strtoul(tout_as_str, NULL, 10);
+        tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
@@ -156,11 +165,11 @@ size_t _z_f_link_write_all_udp_multicast(const _z_link_t *self, const uint8_t *p
     return _z_send_udp_multicast(self->_socket._udp._msock, ptr, len, self->_socket._udp._rep);
 }
 
-size_t _z_f_link_read_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     return _z_read_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
 }
 
-size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr) {
+size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     return _z_read_exact_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
 }
 
@@ -179,8 +188,8 @@ int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_mtu = _z_get_link_mtu_udp_multicast();
 
     zl->_endpoint = endpoint;
-    char *s_address = __z_parse_address_segment_udp_multicast(endpoint._locator._address);
-    char *s_port = __z_parse_port_segment_udp_multicast(endpoint._locator._address);
+    char *s_address = __z_parse_address_segment_udp_multicast(&endpoint._locator._address);
+    char *s_port = __z_parse_port_segment_udp_multicast(&endpoint._locator._address);
     ret = _z_create_endpoint_udp(&zl->_socket._udp._rep, s_address, s_port);
     memset(&zl->_socket._udp._lep, 0, sizeof(zl->_socket._udp._lep));
     z_free(s_address);

@@ -17,6 +17,8 @@
 
 #include <stdio.h>
 
+#include "zenoh-pico/system/platform-common.h"
+
 // Logging values
 #define _Z_LOG_LVL_ERROR 1
 #define _Z_LOG_LVL_INFO 2

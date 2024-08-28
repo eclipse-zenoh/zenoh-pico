@@ -101,13 +101,31 @@ void wifi_init_sta(void) {
     vEventGroupDelete(s_event_group_handler);
 }
 
-void query_handler(z_query_t *query, void *ctx) {
+void query_handler(const z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
-    z_bytes_t pred = z_query_parameters(query);
-    printf(">> [Queryable handler] Received Query '%s%.*s'\n", z_loan(keystr), (int)pred.len, pred.start);
-    z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
-    z_drop(z_move(keystr));
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
+    z_view_string_t params;
+    z_query_parameters(query, &params);
+    printf(" >> [Queryable handler] Received Query '%.*s%.*s'\n", (int)z_string_len(z_loan(keystr)),
+           z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
+    // Process value
+    z_owned_string_t payload_string;
+    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    if (z_string_len(z_loan(payload_string)) > 0) {
+        printf("     with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
+               z_string_data(z_loan(payload_string)));
+    }
+    z_drop(z_move(payload_string));
+
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+
+    // Reply value encoding
+    z_owned_bytes_t reply_payload;
+    z_bytes_from_static_str(&reply_payload, VALUE);
+
+    z_query_reply(query, z_loan(ke), z_move(reply_payload), NULL);
 }
 
 void app_main() {
@@ -128,30 +146,34 @@ void app_main() {
     printf("OK!\n");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     printf("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     printf("OK\n");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_loan(s), NULL);
-    zp_start_lease_task(z_loan(s), NULL);
+    zp_start_read_task(z_loan_mut(s), NULL);
+    zp_start_lease_task(z_loan_mut(s), NULL);
 
     // Declare Zenoh queryable
     printf("Declaring Queryable on %s...", KEYEXPR);
-    z_owned_closure_query_t callback = z_closure(query_handler);
-    z_owned_queryable_t qable = z_declare_queryable(z_loan(s), z_keyexpr(KEYEXPR), z_move(callback), NULL);
-    if (!z_check(qable)) {
+    z_owned_closure_query_t callback;
+    z_closure(&callback, query_handler);
+    z_owned_queryable_t qable;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare queryable.\n");
         exit(-1);
     }
@@ -164,10 +186,6 @@ void app_main() {
 
     printf("Closing Zenoh Session...");
     z_undeclare_queryable(z_move(qable));
-
-    // Stop the receive and the session lease loop for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
 
     z_close(z_move(s));
     printf("OK!\n");

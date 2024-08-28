@@ -25,8 +25,28 @@ int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key
     // TODO check id to know where to dispatch
 
 #if Z_FEATURE_QUERY == 1
-    ret = _z_trigger_query_reply_partial(zn, id, key, reply->_value.payload, reply->_value.encoding, Z_SAMPLE_KIND_PUT,
-                                         reply->_timestamp);
+    ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put,
+                                         (reply->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE));
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(key);
+    _ZP_UNUSED(reply);
+#endif
+    return ret;
+}
+
+int8_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error) {
+    int8_t ret = _Z_RES_OK;
+
+    // TODO check id to know where to dispatch
+
+#if Z_FEATURE_QUERY == 1
+    ret = _z_trigger_query_reply_err(zn, id, error);
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(id);
+    _ZP_UNUSED(error);
 #endif
     return ret;
 }
@@ -39,6 +59,7 @@ int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final
     _z_zint_t id = final->_request_id;
     _z_trigger_query_reply_final(zn, id);
 #else
+    _ZP_UNUSED(zn);
     _ZP_UNUSED(final);
 #endif
     return ret;

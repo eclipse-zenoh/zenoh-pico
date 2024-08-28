@@ -23,35 +23,27 @@
 #define URL "demo/example"
 
 void test_keyexpr(void) {
-    z_owned_keyexpr_t keyexpr = z_keyexpr_new(URL);
-    assert(z_check(keyexpr));
+    z_owned_keyexpr_t keyexpr;
+    z_keyexpr_from_str(&keyexpr, URL);
+    assert(z_internal_check(keyexpr));
     z_drop(z_move(keyexpr));
-    assert(!z_check(keyexpr));
+    assert(!z_internal_check(keyexpr));
     z_drop(z_move(keyexpr));
-    assert(!z_check(keyexpr));
+    assert(!z_internal_check(keyexpr));
 }
 
 void test_config(void) {
-    z_owned_config_t config = z_config_default();
-    assert(z_check(config));
+    z_owned_config_t config;
+    z_config_default(&config);
+    assert(z_internal_check(config));
     z_drop(z_move(config));
-    assert(!z_check(config));
+    assert(!z_internal_check(config));
     z_drop(z_move(config));
-    assert(!z_check(config));
-}
-
-void test_scouting_config(void) {
-    z_owned_scouting_config_t config = z_scouting_config_default();
-    assert(z_check(config));
-    z_drop(z_move(config));
-    assert(!z_check(config));
-    z_drop(z_move(config));
-    assert(!z_check(config));
+    assert(!z_internal_check(config));
 }
 
 int main(void) {
     test_keyexpr();
     test_config();
-    test_scouting_config();
     return 0;
 }

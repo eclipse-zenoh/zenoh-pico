@@ -399,3 +399,26 @@ And on another shell, do:
 $ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
 ```
 A publisher will start publishing over UDP multicast and the **zenoh** router will take care of forwarding data from the Zenoh-Pico publisher to the Zenoh-Pico subscriber.
+
+## Troubleshooting
+
+### Activate debug logs
+By default debug logs are deactivated but if you're encountering issues they can help you finding the cause. To activate them you need to pass the build flag value: `-DZENOH_DEBUG=3`
+
+### Error when opening a session on a microcontroller
+If you get an error when opening the session even though everything is setup correctly, it might be because the default buffer sizes are too large for the limited memory available on your system.
+
+The first thing to try is to reduce the values of the following configuration options (found in `CMakeLists.txt`):
+* BATCH_UNICAST_SIZE: The maximum size of a packet in client mode.
+* BATCH_MULTICAST_SIZE: The maximum size of a packet in peer mode.
+* FRAG_MAX_SIZE: The maximum size of a message that can be fragmented into multiple packets.
+
+Until you find values that suits both your app requirements and your system memory constraints.
+
+These values can also be passed directly as cmake args. For example, in a `platformio.ini` you might write:
+```
+board_build.cmake_extra_args=
+	-DBATCH_UNICAST_SIZE=1024
+	-DFRAG_MAX_SIZE=2048
+```
+

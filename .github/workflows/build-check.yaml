@@ -65,7 +65,6 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           Z_FEATURE_RAWETH_TRANSPORT=1 CMAKE_GENERATOR=Ninja make
-        
 
   zenoh_build:
     name: Build Zenoh from source
@@ -78,7 +77,7 @@ jobs:
         uses: eclipse-zenoh/ci/build-crates-standalone@main
         with:
           repo: eclipse-zenoh/zenoh
-          branch: main
+          branch: dev/1.0.0
           artifact-patterns: |
             ^zenohd$
             ^libzenoh_plugin_rest.so$
@@ -127,6 +126,19 @@ jobs:
       - name: Kill Zenoh router
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  unstable_build:
+    name: Check compilation with unstable API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with unstable
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
+
 
   st_build:
     needs: zenoh_build
@@ -196,3 +208,50 @@ jobs:
       - name: Kill Zenoh router
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  attachment_test:
+    needs: zenoh_build
+    name: Test attachments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          RUST_LOG=debug ./zenoh-standalone/zenohd &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
+
+      - name: Build project and run test
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/attachment.py
+        timeout-minutes: 5
+
+      - name: Kill Zenoh router
+        if: always()
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+  no_routeur:
+    name: Test examples without router
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build & test pico
+        run: |
+          sudo apt install -y ninja-build
+          CMAKE_GENERATOR=Ninja make
+          python3 ./build/tests/no_router.py
+        timeout-minutes: 5

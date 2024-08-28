@@ -60,7 +60,7 @@ void z_free(void *ptr) { free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     (void)(attr);
     int8_t ret = _Z_RES_OK;
     *task = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, arg, 0, NULL);
@@ -70,45 +70,45 @@ int8_t z_task_init(z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), vo
     return ret;
 }
 
-int8_t z_task_join(z_task_t *task) {
+int8_t _z_task_join(_z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     WaitForSingleObject(*task, INFINITE);
     return ret;
 }
 
-int8_t zp_task_cancel(z_task_t *task) {
+int8_t _z_task_cancel(_z_task_t *task) {
     int8_t ret = _Z_RES_OK;
     TerminateThread(*task, 0);
     return ret;
 }
 
-void z_task_free(z_task_t **task) {
-    z_task_t *ptr = *task;
+void _z_task_free(_z_task_t **task) {
+    _z_task_t *ptr = *task;
     CloseHandle(*ptr);
     z_free(ptr);
     *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/
-int8_t z_mutex_init(z_mutex_t *m) {
+int8_t _z_mutex_init(_z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     InitializeSRWLock(m);
     return ret;
 }
 
-int8_t z_mutex_free(z_mutex_t *m) {
+int8_t _z_mutex_drop(_z_mutex_t *m) {
     (void)(m);
     int8_t ret = _Z_RES_OK;
     return ret;
 }
 
-int8_t z_mutex_lock(z_mutex_t *m) {
+int8_t _z_mutex_lock(_z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     AcquireSRWLockExclusive(m);
     return ret;
 }
 
-int8_t z_mutex_trylock(z_mutex_t *m) {
+int8_t _z_mutex_try_lock(_z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     if (TryAcquireSRWLockExclusive(m) == 0) {
         ret = _Z_ERR_GENERIC;
@@ -116,32 +116,38 @@ int8_t z_mutex_trylock(z_mutex_t *m) {
     return ret;
 }
 
-int8_t z_mutex_unlock(z_mutex_t *m) {
+int8_t _z_mutex_unlock(_z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     ReleaseSRWLockExclusive(m);
     return ret;
 }
 
 /*------------------ Condvar ------------------*/
-int8_t z_condvar_init(z_condvar_t *cv) {
+int8_t _z_condvar_init(_z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
     InitializeConditionVariable(cv);
     return ret;
 }
 
-int8_t z_condvar_free(z_condvar_t *cv) {
+int8_t _z_condvar_drop(_z_condvar_t *cv) {
     (void)(cv);
     int8_t ret = _Z_RES_OK;
     return ret;
 }
 
-int8_t z_condvar_signal(z_condvar_t *cv) {
+int8_t _z_condvar_signal(_z_condvar_t *cv) {
     int8_t ret = _Z_RES_OK;
     WakeConditionVariable(cv);
     return ret;
 }
 
-int8_t z_condvar_wait(z_condvar_t *cv, z_mutex_t *m) {
+int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    int8_t ret = _Z_RES_OK;
+    WakeAllConditionVariable(cv);
+    return ret;
+}
+
+int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     int8_t ret = _Z_RES_OK;
     SleepConditionVariableSRW(cv, m, INFINITE, 0);
     return ret;
@@ -256,4 +262,12 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
 
     unsigned long elapsed = (unsigned long)(now.time - time->time);
     return elapsed;
+}
+
+int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+    z_time_t now;
+    ftime(&now);
+    t->secs = (uint32_t)now.time;
+    t->nanos = (uint32_t)(now.millitm * 1000000);
+    return 0;
 }

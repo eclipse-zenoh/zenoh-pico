@@ -26,9 +26,15 @@
 #define _Z_ERR_SYSTEM_MASK 0xb0
 #define _Z_ERR_GENERIC_MASK 0xb8
 
+typedef int8_t z_result_t;
 /*------------------ Result Enums ------------------*/
 typedef enum {
     _Z_RES_OK = 0,
+    Z_OK = 0,
+    _Z_RES_CHANNEL_CLOSED = 1,
+    Z_CHANNEL_DISCONNECTED = 1,
+    _Z_RES_CHANNEL_NODATA = 2,
+    Z_CHANNEL_NODATA = 2,
 
     _Z_ERR_MESSAGE_DESERIALIZATION_FAILED = -119,
     _Z_ERR_MESSAGE_SERIALIZATION_FAILED = -118,
@@ -62,12 +68,38 @@ typedef enum {
 
     _Z_ERR_SCOUT_NO_RESULTS = -87,
 
+    _Z_ERR_SYSTEM_GENERIC = -80,
     _Z_ERR_SYSTEM_TASK_FAILED = -79,
     _Z_ERR_SYSTEM_OUT_OF_MEMORY = -78,
 
     _Z_ERR_CONNECTION_CLOSED = -77,
 
+    _Z_ERR_DID_NOT_READ = -76,
+    _Z_ERR_INVALID = -75,
+    Z_EINVAL = -75,
+    _Z_ERR_OVERFLOW = -74,
+
     _Z_ERR_GENERIC = -128
 } _z_res_t;
+
+#define _Z_RETURN_IF_ERR(expr)    \
+    {                             \
+        int8_t __res = expr;      \
+        if (__res != _Z_RES_OK) { \
+            return __res;         \
+        }                         \
+    }
+
+#define _Z_CLEAN_RETURN_IF_ERR(base_expr, clean_expr) \
+    {                                                 \
+        int8_t __res = base_expr;                     \
+        if (__res != _Z_RES_OK) {                     \
+            clean_expr;                               \
+            return __res;                             \
+        }                                             \
+    }
+
+#define _Z_IS_OK(expr) (expr == _Z_RES_OK)
+#define _Z_IS_ERR(expr) (expr != _Z_RES_OK)
 
 #endif /* ZENOH_PICO_UTILS_RESULT_H */

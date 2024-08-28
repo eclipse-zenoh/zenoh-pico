@@ -31,7 +31,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
-void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
+void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     void *ctx = callback->context;
     z_id_t id = zt->_transport._unicast._remote_zid;
     callback->call(&id, ctx);
@@ -39,12 +39,14 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *call
 
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
     _z_id_t remote_zid = zt->_transport._unicast._remote_zid;
-    _z_bytes_t remote_zidbytes = _z_bytes_wrap(remote_zid.id, _z_id_len(remote_zid));
-    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_from_bytes(&remote_zidbytes));
+    _z_slice_t remote_zid_bytes = _z_slice_alias_buf(remote_zid.id, _z_id_len(remote_zid));
+    _z_string_t remote_zid_str = _z_string_convert_bytes(&remote_zid_bytes);
+    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_data(&remote_zid_str));
+    _z_string_clear(&remote_zid_str);
 }
 
 #else
-void _zp_unicast_fetch_zid(const _z_transport_t *zt, z_owned_closure_zid_t *callback) {
+void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(callback);
 }

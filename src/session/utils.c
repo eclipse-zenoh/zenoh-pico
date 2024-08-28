@@ -18,10 +18,12 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
@@ -36,11 +38,7 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->time = 0;
 }
 
-_Bool _z_timestamp_check(const _z_timestamp_t *stamp) {
-    for (uint8_t i = 0; i < sizeof(_z_id_t); ++i)
-        if (stamp->id.id[i]) return true;
-    return false;
-}
+_Bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     int8_t ret = _Z_RES_OK;
@@ -49,14 +47,14 @@ int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
+int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;
     zn->_query_id = 1;
-    zn->_pull_id = 1;
 
     // Initialize the data structs
     zn->_local_resources = NULL;
@@ -73,7 +71,7 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    ret = z_mutex_init(&zn->_mutex_inner);
+    ret = _z_mutex_init(&zn->_mutex_inner);
     if (ret != _Z_RES_OK) {
         _z_transport_clear(&zn->_tp);
         return ret;
@@ -84,13 +82,13 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
     // Note session in transport
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._session = zn;
+            zn->_tp._transport._unicast._session = zsrc;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._session = zn;
+            zn->_tp._transport._multicast._session = zsrc;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._session = zn;
+            zn->_tp._transport._raweth._session = zsrc;
             break;
         default:
             break;
@@ -99,8 +97,12 @@ int8_t _z_session_init(_z_session_t *zn, _z_id_t *zid) {
 }
 
 void _z_session_clear(_z_session_t *zn) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _zp_stop_read_task(zn);
+    _zp_stop_lease_task(zn);
+#endif
+    _z_close(zn);
     // Clear Zenoh PID
-
     // Clean up transports
     _z_transport_clear(&zn->_tp);
 
@@ -115,9 +117,10 @@ void _z_session_clear(_z_session_t *zn) {
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
 #endif
+    _z_flush_interest(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_free(&zn->_mutex_inner);
+    _z_mutex_drop(&zn->_mutex_inner);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
@@ -130,3 +133,11 @@ int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
 
     return ret;
 }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+void _zp_session_lock_mutex(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
+void _zp_session_unlock_mutex(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
+#else
+void _zp_session_lock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
+void _zp_session_unlock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
+#endif

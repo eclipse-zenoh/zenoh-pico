@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 /**
- * What values.
+ * What bitmask for scouting.
  *
  * Enumerators:
  *     Z_WHAT_ROUTER: Router.
@@ -32,7 +32,11 @@ extern "C" {
 typedef enum {
     Z_WHAT_ROUTER = 0x01,  // Router
     Z_WHAT_PEER = 0x02,    // Peer
-    Z_WHAT_CLIENT = 0x03   // Client
+    Z_WHAT_CLIENT = 0x04,  // Client
+    Z_WHAT_ROUTER_PEER = (0x01 | 0x02),
+    Z_WHAT_ROUTER_CLIENT = (0x01 | 0x04),
+    Z_WHAT_PEER_CLIENT = (0x02 | 0x04),
+    Z_WHAT_ROUTER_PEER_CLIENT = ((0x01 | 0x02) | 0x04),
 } z_what_t;
 
 /**
@@ -43,8 +47,12 @@ typedef enum {
  *     Z_WHATAMI_PEER: Bitmask to filter for Zenoh peers.
  *     Z_WHATAMI_CLIENT: Bitmask to filter for Zenoh clients.
  */
-typedef enum { Z_WHATAMI_ROUTER = 0x00, Z_WHATAMI_PEER = 0x01, Z_WHATAMI_CLIENT = 0x02 } z_whatami_t;
-#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER
+typedef enum z_whatami_t {
+    Z_WHATAMI_ROUTER = 0x01,
+    Z_WHATAMI_PEER = 0x02,
+    Z_WHATAMI_CLIENT = 0x04,
+} z_whatami_t;
+#define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER;
 
 /**
  * Status values for keyexpr canonization operation.
@@ -76,6 +84,22 @@ typedef enum {
 } zp_keyexpr_canon_status_t;
 
 /**
+ * Intersection level of 2 key expressions.
+ *
+ * Enumerators:
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT: 2 key expression do not intersect.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS: 2 key expressions intersect, i.e. there exists at least one key expression
+ * that is included by both. Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES: First key expression is the superset of second one.
+ *  Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS: 2 key expressions are equal.
+ */
+typedef enum {
+    Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT = 0,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS = 1,
+    Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES = 2,
+    Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS = 3,
+} z_keyexpr_intersection_level_t;
+
+/**
  * Sample kind values.
  *
  * Enumerators:
@@ -86,55 +110,91 @@ typedef enum { Z_SAMPLE_KIND_PUT = 0, Z_SAMPLE_KIND_DELETE = 1 } z_sample_kind_t
 #define Z_SAMPLE_KIND_DEFAULT Z_SAMPLE_KIND_PUT
 
 /**
- * Zenoh encoding values.
- * These values are based on already existing HTTP MIME types and extended with other relevant encodings.
+ * Default encoding values used by Zenoh.
  *
- * Enumerators:
- *     Z_ENCODING_PREFIX_EMPTY: Encoding not defined.
- *     Z_ENCODING_PREFIX_APP_OCTET_STREAM: ``application/octet-stream``. Default value for all other cases. An unknown
- *         file type should use this type. Z_ENCODING_PREFIX_APP_CUSTOM: Custom application type. Non IANA standard.
- *     Z_ENCODING_PREFIX_TEXT_PLAIN: ``text/plain``. Default value for textual files. A textual file should be
- *         human-readable and must not contain binary data. Z_ENCODING_PREFIX_APP_PROPERTIES: Application properties
- *         type. Non IANA standard. Z_ENCODING_PREFIX_APP_JSON: ``application/json``. JSON format.
- *     Z_ENCODING_PREFIX_APP_SQL: Application sql type. Non IANA standard. Z_ENCODING_PREFIX_APP_INTEGER: Application
- *         integer type. Non IANA standard. Z_ENCODING_PREFIX_APP_FLOAT: Application float type. Non IANA standard.
- *     Z_ENCODING_PREFIX_APP_XML: ``application/xml``. XML.
- *     Z_ENCODING_PREFIX_APP_XHTML_XML: ``application/xhtml+xml``. XHTML.
- *     Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED: ``application/x-www-form-urlencoded``. The keys and values are
- *         encoded in key-value tuples separated by '&', with a '=' between the key and the value.
- *      Z_ENCODING_PREFIX_TEXT_JSON: Text JSON. Non IANA standard. Z_ENCODING_PREFIX_TEXT_HTML: ``text/html``. HyperText
- *         Markup Language (HTML). Z_ENCODING_PREFIX_TEXT_XML: ``text/xml``. `Application/xml` is recommended as of RFC
- *         7303 (section 4.1), but `text/xml` is still used sometimes. Z_ENCODING_PREFIX_TEXT_CSS: ``text/css``.
- *         Cascading Style Sheets (CSS). Z_ENCODING_PREFIX_TEXT_CSV: ``text/csv``. Comma-separated values (CSV).
- *     Z_ENCODING_PREFIX_TEXT_JAVASCRIPT: ``text/javascript``. JavaScript.
- *     Z_ENCODING_PREFIX_IMAGE_JPEG: ``image/jpeg``. JPEG images.
- *     Z_ENCODING_PREFIX_IMAGE_PNG: ``image/png``. Portable Network Graphics.
- *     Z_ENCODING_PREFIX_IMAGE_GIF: ``image/gif``. Graphics Interchange Format (GIF).
+ * An encoding has a similar role to Content-type in HTTP: it indicates, when present, how data should be interpreted by
+ * the application.
+ *
+ * Please note the Zenoh protocol does not impose any encoding value nor it operates on it.
+ * It can be seen as some optional metadata that is carried over by Zenoh in such a way the application may perform
+ * different operations depending on the encoding value.
+ *
+ * A set of associated constants are provided to cover the most common encodings for user convenience.
+ * This is particularly useful in helping Zenoh to perform additional wire-level optimizations.
+ *
+ * Register your encoding metadata from a string with :c:func:`z_encoding_from_str`. To get the optimization, you need
+ * Z_FEATURE_ENCODING_VALUES to 1 and your string should follow the format: "<constant>;<optional additional data>"
+ *
+ * E.g: "text/plain;utf8"
+ *
+ * Here is the list of constants:
  */
-typedef enum {
-    Z_ENCODING_PREFIX_EMPTY = 0,
-    Z_ENCODING_PREFIX_APP_OCTET_STREAM = 1,
-    Z_ENCODING_PREFIX_APP_CUSTOM = 2,  // non iana standard
-    Z_ENCODING_PREFIX_TEXT_PLAIN = 3,
-    Z_ENCODING_PREFIX_APP_PROPERTIES = 4,  // non iana standard
-    Z_ENCODING_PREFIX_APP_JSON = 5,        // if not readable from casual users
-    Z_ENCODING_PREFIX_APP_SQL = 6,
-    Z_ENCODING_PREFIX_APP_INTEGER = 7,  // non iana standard
-    Z_ENCODING_PREFIX_APP_FLOAT = 8,    // non iana standard
-    Z_ENCODING_PREFIX_APP_XML = 9,      // if not readable from casual users (RFC 3023, section 3)
-    Z_ENCODING_PREFIX_APP_XHTML_XML = 10,
-    Z_ENCODING_PREFIX_APP_X_WWW_FORM_URLENCODED = 11,
-    Z_ENCODING_PREFIX_TEXT_JSON = 12,  // non iana standard - if readable from casual users
-    Z_ENCODING_PREFIX_TEXT_HTML = 13,
-    Z_ENCODING_PREFIX_TEXT_XML = 14,  // if readable from casual users (RFC 3023, section 3)
-    Z_ENCODING_PREFIX_TEXT_CSS = 15,
-    Z_ENCODING_PREFIX_TEXT_CSV = 16,
-    Z_ENCODING_PREFIX_TEXT_JAVASCRIPT = 17,
-    Z_ENCODING_PREFIX_IMAGE_JPEG = 18,
-    Z_ENCODING_PREFIX_IMAGE_PNG = 19,
-    Z_ENCODING_PREFIX_IMAGE_GIF = 20
-} z_encoding_prefix_t;
-#define Z_ENCODING_PREFIX_DEFAULT Z_ENCODING_PREFIX_EMPTY
+//     "zenoh/bytes"
+//     "zenoh/int8"
+//     "zenoh/int16"
+//     "zenoh/int32"
+//     "zenoh/int64"
+//     "zenoh/int128"
+//     "zenoh/uint8"
+//     "zenoh/uint16"
+//     "zenoh/uint32"
+//     "zenoh/uint64"
+//     "zenoh/uint128"
+//     "zenoh/float32"
+//     "zenoh/float64"
+//     "zenoh/bool"
+//     "zenoh/string"
+//     "zenoh/error"
+//     "application/octet-stream"
+//     "text/plain"
+//     "application/json"
+//     "text/json"
+//     "application/cdr"
+//     "application/cbor"
+//     "application/yaml"
+//     "text/yaml"
+//     "text/json5"
+//     "application/python-serialized-object"
+//     "application/protobuf"
+//     "application/java-serialized-object"
+//     "application/openmetrics-text"
+//     "image/png"
+//     "image/jpeg"
+//     "image/gif"
+//     "image/bmp"
+//     "image/webp"
+//     "application/xml"
+//     "application/x-www-form-urlencoded"
+//     "text/html"
+//     "text/xml"
+//     "text/css"
+//     "text/javascript"
+//     "text/markdown"
+//     "text/csv"
+//     "application/sql"
+//     "application/coap-payload"
+//     "application/json-patch+json"
+//     "application/json-seq"
+//     "application/jsonpath"
+//     "application/jwt"
+//     "application/mp4"
+//     "application/soap+xml"
+//     "application/yang"
+//     "audio/aac"
+//     "audio/flac"
+//     "audio/mp4"
+//     "audio/ogg"
+//     "audio/vorbis"
+//     "video/h261"
+//     "video/h263"
+//     "video/h264"
+//     "video/h265"
+//     "video/h266"
+//     "video/mp4"
+//     "video/ogg"
+//     "video/raw"
+//     "video/vp8"
+//     "video/vp9"
 
 /**
  * Consolidation mode values.
@@ -166,16 +226,6 @@ typedef enum {
  */
 typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
-
-/**
- * Reply tag values.
- *
- * Enumerators:
- *     Z_REPLY_TAG_DATA: Tag identifying that the reply contains some data.
- *     Z_REPLY_TAG_FINAL: Tag identifying that the reply does not contain any data and that there will be no more
- *         replies for this query.
- */
-typedef enum { Z_REPLY_TAG_DATA = 0, Z_REPLY_TAG_FINAL = 1 } z_reply_tag_t;
 
 /**
  * Congestion control values.
@@ -213,16 +263,6 @@ typedef enum {
     Z_PRIORITY_BACKGROUND = 7
 } z_priority_t;
 #define Z_PRIORITY_DEFAULT Z_PRIORITY_DATA
-
-/**
- * Subscription mode values.
- *
- * Enumerators:
- *     Z_SUBMODE_PUSH: Defines the subscription with a push paradigm.
- *     Z_SUBMODE_PULL: Defines the subscription with a pull paradigm.
- */
-typedef enum { Z_SUBMODE_PUSH = 0, Z_SUBMODE_PULL = 1 } z_submode_t;
-#define Z_SUBMODE_DEFAULT Z_SUBMODE_PUSH
 
 /**
  * Query target values.

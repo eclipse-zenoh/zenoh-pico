@@ -34,40 +34,6 @@ typedef void (*_z_drop_handler_t)(void *arg);
 #define _Z_RESOURCE_IS_REMOTE 0
 #define _Z_RESOURCE_IS_LOCAL 1
 
-/**
- * An reply to a :c:func:`z_query`.
- *
- * Members:
- *   _z_sample_t data: a :c:type:`_z_sample_t` containing the key and value of the reply.
- *   _z_bytes_t replier_id: The id of the replier that sent this reply.
- *
- */
-typedef struct {
-    _z_sample_t sample;
-    _z_id_t replier_id;
-} _z_reply_data_t;
-
-void _z_reply_data_clear(_z_reply_data_t *rd);
-
-_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
-
-/**
- * An reply to a :c:func:`z_query`.
- *
- * Members:
- *   _z_reply_t_Tag tag: Indicates if the reply contains data or if it's a FINAL reply.
- *   _z_reply_data_t data: The reply data if :c:member:`_z_reply_t.tag` equals
- * :c:member:`_z_reply_t_Tag.Z_REPLY_TAG_DATA`.
- *
- */
-typedef struct {
-    _z_reply_data_t data;
-    z_reply_tag_t _tag;
-} _z_reply_t;
-void _z_reply_clear(_z_reply_t *src);
-void _z_reply_free(_z_reply_t **hello);
-
 typedef struct {
     _z_keyexpr_t _key;
     uint16_t _id;
@@ -76,10 +42,14 @@ typedef struct {
 
 _Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
 void _z_resource_clear(_z_resource_t *res);
+void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
 
-_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
+
+// Forward declaration to avoid cyclical include
+typedef struct _z_sample_t _z_sample_t;
 
 /**
  * The callback signature of the functions handling data messages.
@@ -101,7 +71,8 @@ void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
-_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_noop_size, _z_subscription_rc_drop, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_subscription_rc_size, _z_subscription_rc_drop,
+               _z_subscription_rc_copy)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
@@ -109,11 +80,13 @@ typedef struct {
     uint32_t _id;
 } _z_publication_t;
 
-typedef struct z_query_t z_query_t;  // Forward type declaration to avoid cyclical include
+// Forward type declaration to avoid cyclical include
+typedef struct _z_query_rc_t _z_query_rc_t;
+
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_queryable_handler_t)(const z_query_t *query, void *arg);
+typedef void (*_z_queryable_handler_t)(const _z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -133,31 +106,23 @@ _Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size,
                _z_noop_copy)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
-typedef struct {
-    _z_reply_t _reply;
-    _z_timestamp_t _tstamp;
-} _z_pending_reply_t;
+// Forward declaration to avoid cyclical includes
+typedef struct _z_reply_t _z_reply_t;
+typedef _z_list_t _z_reply_data_list_t;
+typedef _z_list_t _z_pending_reply_list_t;
+typedef struct _z_reply_t _z_reply_t;
 
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
-void _z_pending_reply_clear(_z_pending_reply_t *res);
-
-_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
-_Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
-
-struct __z_reply_handler_wrapper_t;  // Forward declaration to be used in _z_reply_handler_t
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t *reply, struct __z_reply_handler_wrapper_t *arg);
+typedef void (*_z_reply_handler_t)(const _z_reply_t *reply, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _id;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
-    void *_call_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
-    void *_drop_arg;  // TODO[API-NET]: These two can be merged into one, when API and NET are a single layer
-    char *_parameters;
+    void *_arg;
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
@@ -172,8 +137,8 @@ _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_t _mutex;
-    z_condvar_t _cond_var;
+    _z_mutex_t _mutex;
+    _z_condvar_t _cond_var;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
@@ -185,5 +150,58 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
 typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
 int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
+
+typedef enum {
+    _Z_INTEREST_MSG_TYPE_FINAL = 0,
+    _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER = 1,
+    _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE = 2,
+    _Z_INTEREST_MSG_TYPE_DECL_TOKEN = 3,
+    _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER = 4,
+    _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE = 5,
+    _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN = 6,
+} _z_interest_msg_type_t;
+
+typedef struct _z_interest_msg_t {
+    uint8_t type;
+    uint32_t id;
+} _z_interest_msg_t;
+
+/**
+ * The callback signature of the functions handling interest messages.
+ */
+typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, void *arg);
+
+typedef struct {
+    _z_keyexpr_t _key;
+    uint32_t _id;
+    _z_interest_handler_t _callback;
+    void *_arg;
+    uint8_t _flags;
+} _z_session_interest_t;
+
+_Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
+void _z_session_interest_clear(_z_session_interest_t *res);
+
+_Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
+_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
+               _z_noop_copy)
+_Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
+
+typedef enum {
+    _Z_DECLARE_TYPE_SUBSCRIBER = 0,
+    _Z_DECLARE_TYPE_QUERYABLE = 1,
+    _Z_DECLARE_TYPE_TOKEN = 2,
+} _z_declare_type_t;
+
+typedef struct {
+    _z_keyexpr_t _key;
+    uint32_t _id;
+    uint8_t _type;
+} _z_declare_data_t;
+
+void _z_declare_data_clear(_z_declare_data_t *data);
+_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
+_Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

@@ -27,16 +27,36 @@ _z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); 
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL, false),
-        ._suffix = (char *)suffix,
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_alias_str(suffix),
     };
 }
 
-void _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+_z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._suffix = (_z_string_check(str)) ? _z_string_alias(str) : _z_string_null(),
+    };
+}
+
+_z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len) {
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._suffix = (str != NULL) ? _z_string_alias_substr(str, len) : _z_string_null(),
+    };
+}
+
+int8_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+    *dst = _z_keyexpr_null();
     dst->_id = src->_id;
-    dst->_suffix = src->_suffix ? _z_str_clone(src->_suffix) : NULL;
     dst->_mapping = src->_mapping;
-    _z_keyexpr_set_owns_suffix(dst, true);
+
+    if (_z_keyexpr_has_suffix(src)) {
+        _Z_RETURN_IF_ERR(_z_string_copy(&dst->_suffix, &src->_suffix));
+    }
+    return _Z_RES_OK;
 }
 
 _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
@@ -45,22 +65,24 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
     return dst;
 }
 
-_z_keyexpr_t _z_keyexpr_to_owned(_z_keyexpr_t src) {
-    return _z_keyexpr_owns_suffix(&src) ? src : _z_keyexpr_duplicate(src);
-}
-
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
     return stolen;
 }
 
+void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
+    dst->_id = src->_id;
+    dst->_mapping = src->_mapping;
+    _z_string_move(&dst->_suffix, &src->_suffix);
+}
+
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (rk->_suffix != NULL && _z_keyexpr_owns_suffix(rk)) {
-        _z_str_clear((char *)rk->_suffix);
-        _z_keyexpr_set_owns_suffix(rk, false);
+    if (_z_keyexpr_has_suffix(rk)) {
+        _z_string_clear(&rk->_suffix);
     }
+    rk->_suffix = _z_string_null();
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
@@ -73,14 +95,36 @@ void _z_keyexpr_free(_z_keyexpr_t **rk) {
         *rk = NULL;
     }
 }
+
+_Bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    if (left->_id != right->_id) {
+        return false;
+    }
+    if (_z_keyexpr_mapping_id(left) != _z_keyexpr_mapping_id(right)) {
+        return false;
+    }
+    return _z_string_equals(&left->_suffix, &right->_suffix);
+}
+
 _z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
     _z_keyexpr_t alias = {
         ._id = src._id,
         ._mapping = src._mapping,
-        ._suffix = src._suffix,
+        ._suffix = _z_string_alias(&src._suffix),
     };
-    _z_keyexpr_set_owns_suffix(&alias, false);
     return alias;
+}
+
+_z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, _Bool try_declared) {
+    if ((try_declared && src._id != Z_RESOURCE_ID_NONE) || !_z_keyexpr_has_suffix(&src)) {
+        return (_z_keyexpr_t){
+            ._id = src._id,
+            ._mapping = src._mapping,
+            ._suffix = _z_string_null(),
+        };
+    } else {
+        return _z_keyexpr_from_string(0, &src._suffix);
+    }
 }
 
 /*------------------ Canonize helpers ------------------*/
@@ -89,7 +133,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
 
     _Bool in_big_wild = false;
     char const *chunk_start = start;
-    const char *end = _z_cptr_char_offset(start, *len);
+    const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
     char const *next_slash;
 
     do {
@@ -192,7 +236,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
 }
 
 void __zp_singleify(char *start, size_t *len, const char *needle) {
-    const char *end = _z_cptr_char_offset(start, *len);
+    const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
     _Bool right_after_needle = false;
     char *reader = start;
 
@@ -203,7 +247,7 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 break;
             }
             right_after_needle = true;
-            reader = _z_ptr_char_offset(reader, pos);
+            reader = _z_ptr_char_offset(reader, (ptrdiff_t)pos);
         } else {
             right_after_needle = false;
             reader = _z_ptr_char_offset(reader, 1);
@@ -218,10 +262,10 @@ void __zp_singleify(char *start, size_t *len, const char *needle) {
                 for (size_t i = 0; i < pos; i++) {
                     writer[i] = reader[i];
                 }
-                writer = _z_ptr_char_offset(writer, pos);
+                writer = _z_ptr_char_offset(writer, (ptrdiff_t)pos);
             }
             right_after_needle = true;
-            reader = _z_ptr_char_offset(reader, pos);
+            reader = _z_ptr_char_offset(reader, (ptrdiff_t)pos);
         } else {
             right_after_needle = false;
             *writer = *reader;
@@ -239,7 +283,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
     }
 
     (void)memcpy(writer[0], chunk, len);
-    writer[0] = _z_ptr_char_offset(writer[0], len);
+    writer[0] = _z_ptr_char_offset(writer[0], (ptrdiff_t)len);
 }
 
 /*------------------ Common helpers ------------------*/
@@ -291,7 +335,7 @@ _Bool _z_ke_isdoublestar(_z_str_se_t s) {
 
 /*------------------ Inclusion helpers ------------------*/
 _Bool _z_ke_chunk_includes_nodsl(_z_str_se_t l, _z_str_se_t r) {
-    size_t llen = l.end - l.start;
+    size_t llen = (size_t)(l.end - l.start);
     _Bool result =
         !(r.start[0] == _Z_VERBATIM) && ((llen == (size_t)1) && (l.start[0] == '*') &&
                                          (((_z_ptr_char_diff(r.end, r.start) == 2) && (r.start[0] == '*')) == false));
@@ -360,14 +404,14 @@ _Bool _z_keyexpr_has_verbatim(_z_str_se_t s) {
     return false;
 }
 
-_Bool _z_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_chunk_matcher chunk_includer) {
+_Bool _z_keyexpr_suffix_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_chunk_matcher chunk_includer) {
     for (;;) {
         _z_str_se_t lchunk = {0};
         _z_str_se_t lrest = _z_splitstr_split_once((_z_splitstr_t){.s = left, .delimiter = _Z_DELIMITER}, &lchunk);
         _Bool lempty = lrest.start == NULL;
         if (_z_keyexpr_is_superwild_chunk(lchunk)) {
             if (lempty ? !_z_keyexpr_has_verbatim(right)
-                       : _z_keyexpr_includes_superwild(lrest, right, chunk_includer)) {
+                       : _z_keyexpr_suffix_includes_superwild(lrest, right, chunk_includer)) {
                 return true;
             }
             if (right.start[0] == _Z_VERBATIM) {
@@ -393,11 +437,16 @@ _Bool _z_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_c
 }
 
 /*------------------ Zenoh-Core helpers ------------------*/
-_Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+_Bool _z_keyexpr_suffix_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    size_t llen = _z_string_len(&left->_suffix);
+    size_t rlen = _z_string_len(&right->_suffix);
+    const char *lstart = _z_string_data(&left->_suffix);
+    const char *rstart = _z_string_data(&right->_suffix);
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
+
     if (result == false) {
-        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
-        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
+        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, (ptrdiff_t)llen)};
+        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, (ptrdiff_t)rlen)};
         size_t ln_chunks = 0, ln_verbatim = 0;
         size_t rn_chunks = 0, rn_verbatim = 0;
         int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
@@ -408,7 +457,7 @@ _Bool _z_keyexpr_includes(const char *lstart, const size_t llen, const char *rst
                 ? _z_ke_chunk_includes_stardsl
                 : _z_ke_chunk_includes_nodsl;
         if ((lwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) {
-            return _z_keyexpr_includes_superwild(l, r, chunk_includer);
+            return _z_keyexpr_suffix_includes_superwild(l, r, chunk_includer);
         } else if (((rwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == 0) && (ln_chunks == rn_chunks)) {
             _z_splitstr_t lchunks = {.s = l, .delimiter = _Z_DELIMITER};
             _z_splitstr_t rchunks = {.s = r, .delimiter = _Z_DELIMITER};
@@ -627,11 +676,16 @@ _Bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_m
            (_z_splitstr_is_empty(&it2) || _z_keyexpr_is_superwild_chunk(it2.s));
 }
 
-_Bool _z_keyexpr_intersects(const char *lstart, const size_t llen, const char *rstart, const size_t rlen) {
+_Bool _z_keyexpr_suffix_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    size_t llen = _z_string_len(&left->_suffix);
+    size_t rlen = _z_string_len(&right->_suffix);
+    const char *lstart = _z_string_data(&left->_suffix);
+    const char *rstart = _z_string_data(&right->_suffix);
     _Bool result = ((llen == rlen) && (strncmp(lstart, rstart, llen) == 0));
+
     if (result == false) {
-        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, llen)};
-        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, rlen)};
+        _z_str_se_t l = {.start = lstart, .end = _z_cptr_char_offset(lstart, (ptrdiff_t)llen)};
+        _z_str_se_t r = {.start = rstart, .end = _z_cptr_char_offset(rstart, (ptrdiff_t)rlen)};
         size_t ln_chunks = 0, ln_verbatim = 0;
         size_t rn_chunks = 0, rn_verbatim = 0;
         int8_t lwildness = _zp_ke_wildness(l, &ln_chunks, &ln_verbatim);
@@ -685,8 +739,8 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         (ret == Z_KEYEXPR_CANON_DOUBLE_STAR_AFTER_DOUBLE_STAR)) {
         ret = Z_KEYEXPR_CANON_SUCCESS;
 
-        const char *end = _z_cptr_char_offset(start, *len);
-        char *reader = _z_ptr_char_offset(start, canon_len);
+        const char *end = _z_cptr_char_offset(start, (ptrdiff_t)(*len));
+        char *reader = _z_ptr_char_offset(start, (ptrdiff_t)canon_len);
         const char *write_start = reader;
         char *writer = reader;
         char *next_slash = strchr(reader, '/');
@@ -800,3 +854,19 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
 }
 
 zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len) { return __zp_canon_prefix(start, &len); }
+
+_Bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    size_t llen = _z_string_len(&left->_suffix);
+    size_t rlen = _z_string_len(&right->_suffix);
+    const char *lstart = _z_string_data(&left->_suffix);
+    const char *rstart = _z_string_data(&right->_suffix);
+
+    if (lstart != NULL && rstart != NULL) {
+        if (llen == rlen) {
+            if (strncmp(lstart, rstart, llen) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

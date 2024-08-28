@@ -29,22 +29,25 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     char *locator = NULL;
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     if (locator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(locator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, locator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
-    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
-    if (!z_check(pub)) {
+    z_owned_publisher_t pub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -56,7 +59,12 @@ int main(int argc, char **argv) {
         if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-            z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_serialize_from_str(&payload, buf);
+
+            z_publisher_put(z_loan(pub), z_move(payload), NULL);
             ++idx;
 
             now = z_clock_now();

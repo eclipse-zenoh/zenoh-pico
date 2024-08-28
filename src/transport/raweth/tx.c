@@ -31,19 +31,19 @@
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { z_mutex_unlock(&ztm->_mutex_tx); }
+static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_tx); }
 #else
 static void _zp_raweth_unlock_tx_mutex(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
 #endif
 
 static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
-    for (int i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
+    for (size_t i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
-        if (zp_keyexpr_intersect_null_terminated(keyexpr->_suffix, entry->_keyexpr._suffix) != _Z_RES_OK) {
+        if (z_keyexpr_intersects(keyexpr, &entry->_keyexpr) != _Z_RES_OK) {
             continue;
         }
-        return i;
+        return (int)i;
     }
     return -1;
 }
@@ -69,10 +69,11 @@ static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socke
         // Key not found case
         if (idx < 0) {
             idx = 0;  // Set to default entry
-            _Z_DEBUG("Key '%s' wasn't found in config mapping, sending to default address", keyexpr->_suffix);
+            _Z_DEBUG("Key '%.*s' wasn't found in config mapping, sending to default address",
+                     (int)_z_string_len(&keyexpr->_suffix), _z_string_data(&keyexpr->_suffix));
         }
         // Store data into socket
-        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, idx);
+        const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, (size_t)idx);
         memcpy(&sock->_dmac, &entry->_dmac, _ZP_MAC_ADDR_LENGTH);
         uint16_t vlan = entry->_vlan;
         sock->_has_vlan = entry->_has_vlan;
@@ -130,7 +131,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         header.vlan_type = _ZP_ETH_TYPE_VLAN;
         header.tag = resocket->_vlan;
         header.ethtype = resocket->_ethtype;
-        header.data_length = _z_raweth_htons(wpos - sizeof(header));
+        header.data_length = _z_raweth_htons((uint16_t)(wpos - sizeof(header)));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
     } else {
@@ -139,7 +140,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
         memcpy(&header.dmac, &resocket->_dmac, _ZP_MAC_ADDR_LENGTH);
         memcpy(&header.smac, &resocket->_smac, _ZP_MAC_ADDR_LENGTH);
         header.ethtype = resocket->_ethtype;
-        header.data_length = _z_raweth_htons(wpos - sizeof(header));
+        header.data_length = _z_raweth_htons((uint16_t)(wpos - sizeof(header)));
         // Write header
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (uint8_t *)&header, 0, sizeof(header)));
     }
@@ -151,7 +152,7 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
 static int8_t _z_raweth_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf) {
     int8_t ret = _Z_RES_OK;
     for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)) && (ret == _Z_RES_OK); i++) {
-        _z_bytes_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
+        _z_slice_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
 
         do {
@@ -196,7 +197,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&ztm->_mutex_tx);
+    _z_mutex_lock(&ztm->_mutex_tx);
 #endif
     // Reset wbuf
     _z_wbuf_reset(&ztm->_wbuf);
@@ -214,7 +215,7 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     ztm->_transmitted = true;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_tx);
+    _z_mutex_unlock(&ztm->_mutex_tx);
 #endif
 
     return ret;
@@ -229,9 +230,9 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     // Acquire the lock and drop the message if needed
 #if Z_FEATURE_MULTI_THREAD == 1
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
-        z_mutex_lock(&ztm->_mutex_tx);
+        _z_mutex_lock(&ztm->_mutex_tx);
     } else {
-        if (z_mutex_trylock(&ztm->_mutex_tx) != (int8_t)0) {
+        if (_z_mutex_try_lock(&ztm->_mutex_tx) != (int8_t)0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;
@@ -241,7 +242,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     _ZP_UNUSED(cong_ctrl);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    const z_keyexpr_t *keyexpr = NULL;
+    const _z_keyexpr_t *keyexpr = NULL;
     switch (n_msg->_tag) {
         case _Z_N_PUSH:
             keyexpr = &n_msg->_body._push._key;
@@ -314,7 +315,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 #endif
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_tx);
+    _z_mutex_unlock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     return ret;
 }

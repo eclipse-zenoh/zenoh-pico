@@ -22,12 +22,20 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 
 _Bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { return this_->_id == other->_id; }
 
 void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
+
+void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src) {
+    _z_keyexpr_copy(&dst->_key, &src->_key);
+    dst->_id = src->_id;
+    dst->_refcount = src->_refcount;
+}
 
 void _z_resource_free(_z_resource_t **res) {
     _z_resource_t *ptr = *res;
@@ -65,13 +73,10 @@ _z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uint16_t mapping, 
 
 _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_t *keyexpr) {
     _z_resource_t *ret = NULL;
-    uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
-
     _z_resource_list_t *xs = rl;
     while (xs != NULL) {
         _z_resource_t *r = _z_resource_list_head(xs);
-        if ((r->_key._id == keyexpr->_id) && _z_keyexpr_mapping_id(&r->_key) == mapping &&
-            (_z_str_eq(r->_key._suffix, keyexpr->_suffix) == true)) {
+        if (_z_keyexpr_equals(&r->_key, keyexpr)) {
             ret = r;
             break;
         }
@@ -83,19 +88,19 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
 }
 
 _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
-    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = NULL, ._mapping = _z_keyexpr_mapping(0, true)};
+    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = _z_string_null(), ._mapping = _z_keyexpr_mapping(0)};
 
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
-    _z_str_list_t *strs = NULL;
-    size_t len = 1;  // Start with space for the null-terminator
+    _z_string_list_t *strs = NULL;
+    size_t len = 0;
 
     // Append suffix as the right-most segment
-    if (keyexpr->_suffix != NULL) {
-        len = len + strlen(keyexpr->_suffix);
-        strs = _z_str_list_push(strs, (char *)keyexpr->_suffix);  // Warning: list must be release with
-                                                                  //   _z_list_free(&strs, _z_noop_free);
-                                                                  //   or will release the suffix as well
+    if (_z_keyexpr_has_suffix(keyexpr)) {
+        len = len + _z_string_len(&keyexpr->_suffix);
+        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);  // Warning: list must be release with
+                                                                             //   _z_list_free(&strs, _z_noop_free);
+                                                                             //   or will release the suffix as well
     }
 
     // Recursively go through all the RIDs
@@ -107,39 +112,31 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             len = 0;
             break;
         }
-
-        if (res->_key._suffix != NULL) {
-            len = len + strlen(res->_key._suffix);
-            strs = _z_str_list_push(strs, (char *)res->_key._suffix);  // Warning: list must be release with
-                                                                       //   _z_list_free(&strs, _z_noop_free);
-                                                                       //   or will release the suffix as well
+        if (_z_keyexpr_has_suffix(&res->_key)) {
+            len = len + _z_string_len(&res->_key._suffix);
+            strs = _z_string_list_push(strs, &res->_key._suffix);  // Warning: list must be release with
+                                                                   //   _z_list_free(&strs, _z_noop_free);
+                                                                   //   or will release the suffix as well
         }
         id = res->_key._id;
     }
-
+    // Copy the data
     if (len != (size_t)0) {
-        char *rname = NULL;
-        rname = (char *)z_malloc(len);
-        if (rname != NULL) {
-            rname[0] = '\0';  // NULL terminator must be set (required to strcat)
-            len = len - (size_t)1;
+        ret._suffix = _z_string_preallocate(len);
+        if (_z_keyexpr_has_suffix(&ret)) {
+            char *curr_ptr = (char *)_z_string_data(&ret._suffix);
 
             // Concatenate all the partial resource names
-            _z_str_list_t *xstr = strs;
+            _z_string_list_t *xstr = strs;
             while (xstr != NULL) {
-                char *s = _z_str_list_head(xstr);
-                if (len > (size_t)0) {
-                    (void)strncat(rname, s, len);
-                    len = len - strlen(s);
-                }
-                xstr = _z_str_list_tail(xstr);
+                _z_string_t *s = _z_string_list_head(xstr);
+                memcpy(curr_ptr, _z_string_data(s), _z_string_len(s));
+                curr_ptr = _z_ptr_char_offset(curr_ptr, (ptrdiff_t)_z_string_len(s));
+                xstr = _z_string_list_tail(xstr);
             }
-            ret._suffix = rname;
         }
     }
-
     _z_list_free(&strs, _z_noop_free);
-
     return ret;
 }
 
@@ -174,59 +171,45 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_key
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, mapping, rid);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return res;
 }
 
 _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    if (keyexpr->_suffix == NULL) {
+    if (!_z_keyexpr_has_suffix(keyexpr)) {
         return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
     }
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, keyexpr);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return res;
 }
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return res;
 }
 
 /// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
-int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
-    int16_t ret = Z_RESOURCE_ID_NONE;
+uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
+    uint16_t ret = Z_RESOURCE_ID_NONE;
     key = _z_keyexpr_alias(key);
     uint16_t mapping = register_to_mapping;
     uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     if (key._id != Z_RESOURCE_ID_NONE) {
         if (parent_mapping == mapping) {
@@ -237,13 +220,13 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
         }
     }
     ret = key._id;
-    if ((key._suffix != NULL)) {
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;
         } else {
             res->_refcount = 1;
-            res->_key = _z_keyexpr_to_owned(key);
+            res->_key = _z_keyexpr_duplicate(key);
             ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
             res->_id = ret;
             // Register the resource
@@ -255,9 +238,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
         }
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return ret;
 }
@@ -265,9 +246,7 @@ int16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, ui
 void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, mapping);
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
     _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &zn->_remote_resources;
     while (id != 0) {
         _z_resource_list_t *parent = *parent_mut;
@@ -289,9 +268,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
             parent = *parent_mut;
         }
     }
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }
 
 _Bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, const _z_resource_t *ctx) {
@@ -299,27 +276,19 @@ _Bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, con
     return _z_keyexpr_mapping_id(&candidate->_key) == mapping;
 }
 void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
     _z_resource_t ctx = {._id = mapping, ._refcount = 0, ._key = {0}};
     zn->_remote_resources =
         _z_resource_list_drop_filter(zn->_remote_resources, _z_unregister_resource_for_peer_filter, &ctx);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }
 
 void _z_flush_resources(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_resource_list_free(&zn->_local_resources);
     _z_resource_list_free(&zn->_remote_resources);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }

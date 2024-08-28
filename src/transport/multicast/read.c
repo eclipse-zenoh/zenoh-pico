@@ -19,6 +19,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -28,7 +29,7 @@
 int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     int8_t ret = _Z_RES_OK;
 
-    _z_bytes_t addr;
+    _z_slice_t addr;
     _z_transport_message_t t_msg;
     ret = _z_multicast_recv_t_msg(ztm, &t_msg, &addr);
     if (ret == _Z_RES_OK) {
@@ -51,12 +52,12 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
 
     // Acquire and keep the lock
-    z_mutex_lock(&ztm->_mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_bytes_t addr = _z_bytes_wrap(NULL, 0);
+    _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
     while (ztm->_read_task_running == true) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
@@ -66,16 +67,14 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                        _z_bytes_clear(&addr);
+                        _z_slice_clear(&addr);
                         _z_zbuf_compact(&ztm->_zbuf);
                         continue;
                     }
                 }
-
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-                }
-
+                // Get stream size
+                to_read = _z_read_stream_size(&ztm->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, NULL);
                     if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
@@ -109,7 +108,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
                 if (ret == _Z_RES_OK) {
                     _z_t_msg_clear(&t_msg);
-                    _z_bytes_clear(&addr);
+                    _z_slice_clear(&addr);
                 } else {
                     ztm->_read_task_running = false;
                     continue;
@@ -124,16 +123,16 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
     }
-    z_mutex_unlock(&ztm->_mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
     return NULL;
 }
 
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(_z_task_t));
     zt->_transport._multicast._read_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
-    if (z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
+    if (_z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
         zt->_transport._multicast._read_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }

@@ -14,25 +14,16 @@
 #include "zenoh-pico/net/subscribe.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-_z_subinfo_t _z_subinfo_push_default(void) {
+_z_subinfo_t _z_subinfo_default(void) {
     _z_subinfo_t si;
-    si.reliability = Z_RELIABILITY_RELIABLE;
-    si.mode = Z_SUBMODE_PUSH;
-    si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
-    return si;
-}
-
-_z_subinfo_t _z_subinfo_pull_default(void) {
-    _z_subinfo_t si;
-    si.reliability = Z_RELIABILITY_RELIABLE;
-    si.mode = Z_SUBMODE_PULL;
-    si.period = (_z_period_t){.origin = 0, .period = 0, .duration = 0};
+    si.reliability = Z_RELIABILITY_BEST_EFFORT;
     return si;
 }
 
 void _z_subscriber_clear(_z_subscriber_t *sub) {
     // Nothing to clear
     (void)(sub);
+    *sub = _z_subscriber_null();
 }
 
 void _z_subscriber_free(_z_subscriber_t **sub) {
@@ -45,4 +36,8 @@ void _z_subscriber_free(_z_subscriber_t **sub) {
         *sub = NULL;
     }
 }
+
+_Bool _z_subscriber_check(const _z_subscriber_t *subscriber) { return !_Z_RC_IS_NULL(&subscriber->_zn); }
+_z_subscriber_t _z_subscriber_null(void) { return (_z_subscriber_t){._entity_id = 0, ._zn = _z_session_rc_null()}; }
+
 #endif

@@ -36,32 +36,32 @@
 int8_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, _Bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(ke) ? strlen(ke._suffix) : 0);
+    uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(&ke) ? _z_string_len(&ke._suffix) : 0);
     header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, ke._id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ke._id));
     if (kelen) {
-        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)ke._suffix, 0, kelen))
+        _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, (const uint8_t *)_z_string_data(&ke._suffix), 0, kelen))
     }
     return _Z_RES_OK;
 }
 
 int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl) {
     uint8_t header = _Z_DECL_KEXPR_MID;
-    int has_kesuffix = _z_keyexpr_has_suffix(decl->_keyexpr);
+    int has_kesuffix = _z_keyexpr_has_suffix(&decl->_keyexpr);
     if (has_kesuffix) {
         header |= _Z_DECL_KEXPR_FLAG_N;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_id));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_kesuffix, &decl->_keyexpr))
 
     return _Z_RES_OK;
 }
 
 int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensions, uint32_t id, _z_keyexpr_t keyexpr) {
-    _Bool has_kesuffix = _z_keyexpr_has_suffix(keyexpr);
+    _Bool has_kesuffix = _z_keyexpr_has_suffix(&keyexpr);
     if (has_extensions) {
         header |= _Z_FLAG_Z_Z;
     }
@@ -72,32 +72,31 @@ int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensio
         header |= _Z_DECL_SUBSCRIBER_FLAG_M;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, id));
     return _z_keyexpr_encode(wbf, has_kesuffix, &keyexpr);
 }
 int8_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *decl) {
     uint8_t header = _Z_DECL_SUBSCRIBER_MID;
-    _Bool has_submode_ext = decl->_ext_subinfo._pull_mode || decl->_ext_subinfo._reliable;
+    _Bool has_submode_ext = decl->_ext_subinfo._reliable;
     _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, has_submode_ext, decl->_id, decl->_keyexpr));
     if (has_submode_ext) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01));
-        _Z_RETURN_IF_ERR(
-            _z_uint8_encode(wbf, (decl->_ext_subinfo._pull_mode ? 2 : 0) | (decl->_ext_subinfo._reliable ? 1 : 0)));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (decl->_ext_subinfo._reliable ? 1 : 0)));
     }
 
     return _Z_RES_OK;
 }
 int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl) {
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_UNDECL_KEXPR));
-    return _z_zint_encode(wbf, decl->_id);
+    return _z_zsize_encode(wbf, decl->_id);
 }
 int8_t _z_undecl_encode(_z_wbuf_t *wbf, uint8_t header, _z_zint_t decl_id, _z_keyexpr_t ke) {
-    _Bool has_keyexpr_ext = _z_keyexpr_check(ke);
+    _Bool has_keyexpr_ext = _z_keyexpr_check(&ke);
     if (has_keyexpr_ext) {
         header |= _Z_FLAG_Z_Z;
     }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl_id));
     if (has_keyexpr_ext) {
         _Z_RETURN_IF_ERR(_z_decl_ext_keyexpr_encode(wbf, ke, false));
     }
@@ -108,12 +107,16 @@ int8_t _z_undecl_subscriber_encode(_z_wbuf_t *wbf, const _z_undecl_subscriber_t 
 }
 int8_t _z_decl_queryable_encode(_z_wbuf_t *wbf, const _z_decl_queryable_t *decl) {
     uint8_t header = _Z_DECL_QUERYABLE_MID;
-    _Bool has_info_ext = (decl->_ext_queryable_info._complete != 0) || (decl->_ext_queryable_info._distance != 0);
+    _Bool has_info_ext = decl->_ext_queryable_info._complete || (decl->_ext_queryable_info._distance != 0);
     _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, has_info_ext, decl->_id, decl->_keyexpr));
     if (has_info_ext) {
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01));
-        _Z_RETURN_IF_ERR(_z_zint64_encode(
-            wbf, ((uint64_t)decl->_ext_queryable_info._distance << 8) | decl->_ext_queryable_info._complete));
+        uint8_t flags = 0;
+        if (decl->_ext_queryable_info._complete) {
+            flags |= 0x01;
+        }
+        uint64_t value = (uint64_t)flags | (uint64_t)decl->_ext_queryable_info._distance << 8;
+        _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, value));
     }
     return _Z_RES_OK;
 }
@@ -128,24 +131,12 @@ int8_t _z_decl_token_encode(_z_wbuf_t *wbf, const _z_decl_token_t *decl) {
 int8_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl) {
     return _z_undecl_encode(wbf, _Z_UNDECL_TOKEN_MID, decl->_id, decl->_ext_keyexpr);
 }
-
-int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl) {
-    uint8_t header = _Z_DECL_INTEREST_MID;
-    _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, false, decl->_id, decl->_keyexpr));
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, decl->interest_flags));
-    return _Z_RES_OK;
-}
-
-int8_t _z_final_interest_encode(_z_wbuf_t *wbf, const _z_final_interest_t *decl) {
-    uint8_t header = _Z_FINAL_INTEREST_MID;
+int8_t _z_decl_final_encode(_z_wbuf_t *wbf) {
+    uint8_t header = _Z_DECL_FINAL_MID;
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
-    _Z_RETURN_IF_ERR(_z_zint_encode(wbf, decl->_id));
     return _Z_RES_OK;
 }
 
-int8_t _z_undecl_interest_encode(_z_wbuf_t *wbf, const _z_undecl_interest_t *decl) {
-    return _z_undecl_encode(wbf, _Z_UNDECL_INTEREST_MID, decl->_id, decl->_ext_keyexpr);
-}
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
     int8_t ret = _Z_RES_OK;
     switch (decl->_tag) {
@@ -173,15 +164,10 @@ int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         case _Z_UNDECL_TOKEN: {
             ret = _z_undecl_token_encode(wbf, &decl->_body._undecl_token);
         } break;
-        case _Z_DECL_INTEREST: {
-            ret = _z_decl_interest_encode(wbf, &decl->_body._decl_interest);
+        case _Z_DECL_FINAL: {
+            ret = _z_decl_final_encode(wbf);
         } break;
-        case _Z_FINAL_INTEREST: {
-            ret = _z_final_interest_encode(wbf, &decl->_body._final_interest);
-        } break;
-        case _Z_UNDECL_INTEREST: {
-            ret = _z_undecl_interest_encode(wbf, &decl->_body._undecl_interest);
-        } break;
+            ;
     }
     return ret;
 }
@@ -210,7 +196,7 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_keyexpr_t *ke = (_z_keyexpr_t *)ctx;
     switch (extension->_header) {
         case _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f: {
-            _z_zbuf_t _zbf = _z_zbytes_as_zbuf(extension->_body._zbuf._val);
+            _z_zbuf_t _zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
@@ -218,15 +204,14 @@ int8_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
-                ke->_suffix = z_malloc(len + 1);
-                if (!ke->_suffix) {
+                ke->_suffix = _z_string_preallocate(len);
+                if (!_z_keyexpr_has_suffix(ke)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->_mapping = _z_keyexpr_mapping(mapping, true);
-                _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
-                ke->_suffix[len] = 0;
+                ke->_mapping = _z_keyexpr_mapping(mapping);
+                _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
             } else {
-                ke->_mapping = _z_keyexpr_mapping(mapping, false);
+                ke->_mapping = _z_keyexpr_mapping(mapping);
             }
         } break;
         default:
@@ -251,20 +236,19 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
     _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
     if (_Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_N)) {
         _z_zint_t len;
-        _Z_RETURN_IF_ERR(_z_zint_decode(&len, zbf));
+        _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
         if (_z_zbuf_len(zbf) < len) {
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
-        ke->_suffix = z_malloc(len + 1);
-        if (ke->_suffix == NULL) {
+        ke->_suffix = _z_string_preallocate(len);
+        if (!_z_keyexpr_has_suffix(ke)) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->_mapping = _z_keyexpr_mapping(mapping, true);
-        _z_zbuf_read_bytes(zbf, (uint8_t *)ke->_suffix, 0, len);
-        ke->_suffix[len] = 0;
+        ke->_mapping = _z_keyexpr_mapping(mapping);
+        _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
     } else {
-        ke->_suffix = NULL;
-        ke->_mapping = _z_keyexpr_mapping(mapping, false);
+        ke->_suffix = _z_string_null();
+        ke->_mapping = _z_keyexpr_mapping(mapping);
     }
     return _Z_RES_OK;
 }
@@ -272,7 +256,6 @@ int8_t _z_decl_subscriber_decode_extensions(_z_msg_ext_t *extension, void *ctx) 
     _z_decl_subscriber_t *decl = (_z_decl_subscriber_t *)ctx;
     switch (extension->_header) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            decl->_ext_subinfo._pull_mode = _Z_HAS_FLAG(extension->_body._zint._val, 2);
             decl->_ext_subinfo._reliable = _Z_HAS_FLAG(extension->_body._zint._val, 1);
         } break;
         default:
@@ -301,8 +284,8 @@ int8_t _z_decl_queryable_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     switch (extension->_header) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {
             uint64_t val = extension->_body._zint._val;
-            decl->_ext_queryable_info._complete = val & 0xff;
-            decl->_ext_queryable_info._distance = (uint32_t)(val >> 8);
+            decl->_ext_queryable_info._complete = _Z_HAS_FLAG(val, 0x01);
+            decl->_ext_queryable_info._distance = (uint16_t)(val >> 8);
         } break;
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
@@ -336,32 +319,20 @@ int8_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t heade
 int8_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header) {
     return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
 }
-int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    _Bool has_ext;
-    *decl = _z_decl_interest_null();
-    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr));
-    _Z_RETURN_IF_ERR(_z_uint8_decode(&decl->interest_flags, zbf));
-    if (has_ext) {
+
+int8_t _z_decl_final_decode(_z_decl_final_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+    // Nothing to do
+    _ZP_UNUSED(decl);
+    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x13));
     }
     return _Z_RES_OK;
 }
-int8_t _z_final_interest_decode(_z_final_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = _z_final_interest_null();
-    _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_id, zbf));
-    if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
-        _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x10));
-    }
-    return _Z_RES_OK;
-}
-int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = _z_undecl_interest_null();
-    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
-}
+
 int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
-    int8_t ret;
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
+    int8_t ret;
     switch (_Z_MID(header)) {
         case _Z_DECL_KEXPR_MID: {
             decl->_tag = _Z_DECL_KEXPR;
@@ -395,17 +366,9 @@ int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
             decl->_tag = _Z_UNDECL_TOKEN;
             ret = _z_undecl_token_decode(&decl->_body._undecl_token, zbf, header);
         } break;
-        case _Z_DECL_INTEREST_MID: {
-            decl->_tag = _Z_DECL_INTEREST;
-            ret = _z_decl_interest_decode(&decl->_body._decl_interest, zbf, header);
-        } break;
-        case _Z_FINAL_INTEREST_MID: {
-            decl->_tag = _Z_FINAL_INTEREST;
-            ret = _z_final_interest_decode(&decl->_body._final_interest, zbf, header);
-        } break;
-        case _Z_UNDECL_INTEREST_MID: {
-            decl->_tag = _Z_UNDECL_INTEREST;
-            ret = _z_undecl_interest_decode(&decl->_body._undecl_interest, zbf, header);
+        case _Z_DECL_FINAL_MID: {
+            decl->_tag = _Z_DECL_FINAL;
+            ret = _z_decl_final_decode(&decl->_body._decl_final, zbf, header);
         } break;
         default: {
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;

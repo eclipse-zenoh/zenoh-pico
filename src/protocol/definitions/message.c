@@ -16,39 +16,33 @@
 
 #include <stdbool.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 
-void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_value_clear(&msg->_value); }
+void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
-    _z_bytes_clear(&msg->_encoding.suffix);
-    _z_bytes_clear(&msg->_payload);
+    _z_bytes_drop(&msg->_payload);
+    _z_bytes_drop(&msg->_attachment);
+    _z_encoding_clear(&msg->_encoding);
     _z_timestamp_clear(&msg->_commons._timestamp);
 }
 
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg) {
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = _z_encoded_as_attachment(&msg->_ext_attachment);
-#endif
-    return (_z_msg_query_reqexts_t) {
-        .body = msg->_ext_value.payload.start != NULL || msg->_ext_value.encoding.prefix != 0 ||
-                !_z_bytes_is_empty(&msg->_ext_value.encoding.suffix),
+    return (_z_msg_query_reqexts_t){
+        .body = _z_bytes_check(&msg->_ext_value.payload) || _z_encoding_check(&msg->_ext_value.encoding),
         .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
-        .consolidation = msg->_ext_consolidation != Z_CONSOLIDATION_MODE_AUTO,
-#if Z_FEATURE_ATTACHMENT == 1
-        .attachment = z_attachment_check(&att)
-#else
-        .attachment = false
-#endif
+        .attachment = _z_bytes_check(&msg->_ext_attachment),
     };
 }
 
 void _z_msg_query_clear(_z_msg_query_t *msg) {
-    _z_bytes_clear(&msg->_parameters);
+    _z_slice_clear(&msg->_parameters);
+    _z_bytes_drop(&msg->_ext_attachment);
     _z_value_clear(&msg->_ext_value);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
-    _z_timestamp_clear(&err->_timestamp);
-    _z_value_clear(&err->_ext_value);
+    _z_encoding_clear(&err->_encoding);
+    _z_bytes_drop(&err->_payload);
 }

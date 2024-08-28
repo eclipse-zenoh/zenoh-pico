@@ -27,7 +27,7 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_bytes_t *addr) {
+static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr) {
     uint8_t *buff = _z_zbuf_get_wptr(zbf);
     size_t rb = _z_receive_raweth(&link->_socket._raweth._sock, buff, _z_zbuf_space_left(zbf), addr,
                                   &link->_socket._raweth._whitelist);
@@ -47,9 +47,9 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
     }
     size_t data_length = 0;
     if (has_vlan) {
-        _zp_eth_vlan_header_t *header = (_zp_eth_vlan_header_t *)buff;
+        _zp_eth_vlan_header_t *vlan_header = (_zp_eth_vlan_header_t *)buff;
         // Retrieve data length
-        data_length = _z_raweth_ntohs(header->data_length);
+        data_length = _z_raweth_ntohs(vlan_header->data_length);
         if (rb < (data_length + sizeof(_zp_eth_vlan_header_t))) {
             // Invalid data_length
             return SIZE_MAX;
@@ -58,7 +58,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + sizeof(_zp_eth_vlan_header_t) + data_length);
         _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + sizeof(_zp_eth_vlan_header_t));
     } else {
-        _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
+        header = (_zp_eth_header_t *)buff;
         // Retrieve data length
         data_length = _z_raweth_ntohs(header->data_length);
         if (rb < (data_length + sizeof(_zp_eth_header_t))) {
@@ -73,13 +73,13 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
 }
 
 /*------------------ Reception helper ------------------*/
-int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    z_mutex_lock(&ztm->_mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Prepare the buffer
@@ -107,18 +107,18 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
 
-int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     return _z_raweth_recv_t_msg_na(ztm, t_msg, addr);
 }
 
 #else
-int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);

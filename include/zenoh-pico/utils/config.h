@@ -30,7 +30,6 @@
  * Zenoh-net properties are represented as int-string map.
  */
 typedef _z_str_intmap_t _z_config_t;
-typedef _z_str_intmap_t _z_scouting_config_t;
 
 /**
  * Initialize a new empty map of properties.
@@ -46,7 +45,7 @@ int8_t _z_config_init(_z_config_t *ps);
  *   key: The key of the property to add.
  *   value: The value of the property to add.
  */
-int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, _z_string_t value);
+int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value);
 
 /**
  * Get the property with the given key from a properties map.
@@ -70,6 +69,17 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key);
  *     The length of the given properties map.
  */
 #define _z_config_len _z_str_intmap_len
+
+/**
+ * Clone a config.
+ *
+ * Parameters:
+ *     m: A pointer to the config to clone.
+ *
+ * Returns:
+ *     The clone of the config.
+ */
+#define _z_config_clone _z_str_intmap_clone
 
 /**
  * Get the length of the given properties map.
@@ -98,6 +108,5 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key);
  *
  */
 #define _z_config_free _z_str_intmap_free
-#define _z_scouting_config_free _z_str_intmap_free
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */
