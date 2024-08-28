@@ -1534,6 +1534,18 @@ int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *c
 z_id_t z_info_zid(const z_loaned_session_t *zs);
 
 /**
+ * Converts a Zenoh ID into a string for print purposes.
+ *
+ * Parameters:
+ *   str: Pointer to uninitialized :c:type:`z_owned_string_t` to store the string.
+ *   id: Pointer to the id to convert.
+ *
+ * Return:
+ *   ``0`` if operation successful, ``negative value`` otherwise.
+ */
+z_result_t z_id_to_string(z_owned_string_t *str, z_id_t *id);
+
+/**
  * Gets the keyexpr from a sample by aliasing it.
  *
  * Parameters:
