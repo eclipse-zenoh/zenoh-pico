@@ -28,16 +28,26 @@
 int8_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
     int8_t ret = _Z_RES_OK;
 
-    if (_z_str_eq(ep->_locator._protocol, BT_SCHEMA) != true) {
+    _z_string_t bt_str = _z_string_alias_str(BT_SCHEMA);
+    if (!_z_string_equals(&ep->_locator._protocol, &bt_str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
-        if (strlen(ep->_locator._address) == (size_t)0) {
+        if (_z_string_len(&ep->_locator._address) == (size_t)0) {
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         }
     }
 
+    return ret;
+}
+
+static char *__z_convert_address_bt(_z_string_t *address) {
+    char *ret = NULL;
+    ret = (char *)z_malloc(_z_string_len(address) + 1);
+    if (ret != NULL) {
+        _z_str_n_copy(ret, _z_string_data(address), _z_string_len(address) + 1);
+    }
     return ret;
 }
 
@@ -54,8 +64,8 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
         tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
-    self->_socket._bt._gname = self->_endpoint._locator._address;
-    ret = _z_open_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile, tout);
+    self->_socket._bt._gname = __z_convert_address_bt(&self->_endpoint._locator._address);
+    ret = _z_open_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
 
     return ret;
 }
@@ -73,8 +83,8 @@ int8_t _z_f_link_listen_bt(_z_link_t *self) {
         tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
 
-    self->_socket._bt._gname = self->_endpoint._locator._address;
-    ret = _z_listen_bt(&self->_socket._bt._sock, self->_endpoint._locator._address, mode, profile, tout);
+    self->_socket._bt._gname = __z_convert_address_bt(&self->_endpoint._locator._address);
+    ret = _z_listen_bt(&self->_socket._bt._sock, self->_socket._bt._gname, mode, profile, tout);
 
     return ret;
 }
