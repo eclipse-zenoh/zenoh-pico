@@ -30,24 +30,36 @@
 int8_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
     int8_t ret = _Z_RES_OK;
 
-    if (_z_str_eq(endpoint->_locator._protocol, SERIAL_SCHEMA) != true) {
+    _z_string_t ser_str = _z_string_alias_str(SERIAL_SCHEMA);
+    if (!_z_string_equals(&endpoint->_locator._protocol, &ser_str)) {
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
-        char *p_dot = strchr(endpoint->_locator._address, '.');
+        size_t addr_len = _z_string_len(&endpoint->_locator._address);
+        const char *p_start = _z_string_data(&endpoint->_locator._address);
+        const char *p_dot = (char *)memchr(p_start, (int)'.', addr_len);
         if (p_dot != NULL) {
-            if ((endpoint->_locator._address == p_dot) ||
-                (strlen(p_dot) == (size_t)1)) {  // If dot is the first or last character
+            size_t dot_loc = _z_ptr_char_diff(p_dot, p_start);
+            // Check if dot is first or last character
+            if ((dot_loc == 0) || (dot_loc == addr_len)) {
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
         } else {
-            if (strlen(endpoint->_locator._address) == (size_t)0) {
+            if (_z_string_len(&endpoint->_locator._address) == (size_t)0) {
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
         }
     }
+    return ret;
+}
 
+static char *__z_convert_address_serial(_z_string_t *address) {
+    char *ret = NULL;
+    ret = (char *)z_malloc(_z_string_len(address) + 1);
+    if (ret != NULL) {
+        _z_str_n_copy(ret, _z_string_data(address), _z_string_len(address) + 1);
+    }
     return ret;
 }
 
@@ -56,15 +68,16 @@ int8_t _z_f_link_open_serial(_z_link_t *self) {
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
+    char *address = __z_convert_address_serial(&self->_endpoint._locator._address);
+    char *p_dot = strchr(address, '.');
 
-    char *p_dot = strchr(self->_endpoint._locator._address, '.');
     if (p_dot != NULL) {
-        uint32_t txpin = (uint32_t)strtoul(self->_endpoint._locator._address, &p_dot, 10);
+        uint32_t txpin = (uint32_t)strtoul(address, &p_dot, 10);
         p_dot = _z_ptr_char_offset(p_dot, 1);
         uint32_t rxpin = (uint32_t)strtoul(p_dot, NULL, 10);
         ret = _z_open_serial_from_pins(&self->_socket._serial._sock, txpin, rxpin, baudrate);
     } else {
-        ret = _z_open_serial_from_dev(&self->_socket._serial._sock, self->_endpoint._locator._address, baudrate);
+        ret = _z_open_serial_from_dev(&self->_socket._serial._sock, address, baudrate);
     }
 
     return ret;
@@ -75,15 +88,16 @@ int8_t _z_f_link_listen_serial(_z_link_t *self) {
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
+    char *address = __z_convert_address_serial(&self->_endpoint._locator._address);
+    char *p_dot = strchr(address, '.');
 
-    char *p_dot = strchr(self->_endpoint._locator._address, '.');
     if (p_dot != NULL) {
-        uint32_t txpin = (uint32_t)strtoul(self->_endpoint._locator._address, &p_dot, 10);
+        uint32_t txpin = (uint32_t)strtoul(address, &p_dot, 10);
         p_dot = _z_ptr_char_offset(p_dot, 1);
         uint32_t rxpin = (uint32_t)strtoul(p_dot, NULL, 10);
         ret = _z_listen_serial_from_pins(&self->_socket._serial._sock, txpin, rxpin, baudrate);
     } else {
-        ret = _z_listen_serial_from_dev(&self->_socket._serial._sock, self->_endpoint._locator._address, baudrate);
+        ret = _z_listen_serial_from_dev(&self->_socket._serial._sock, address, baudrate);
     }
 
     return ret;
