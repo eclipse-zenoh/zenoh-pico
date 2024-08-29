@@ -305,7 +305,8 @@
                   z_owned_reply_t : z_reply_clone,                     \
                   z_owned_hello_t : z_hello_clone,                     \
                   z_owned_string_t : z_string_clone,                   \
-                  z_owned_string_array_t : z_string_array_clone        \
+                  z_owned_string_array_t : z_string_array_clone,       \
+                  z_owned_config_t : z_config_clone                    \
             )(&x, y)
 
 /**
