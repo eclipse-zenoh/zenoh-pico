@@ -15,16 +15,17 @@
 #define ZENOH_PICO_COLLECTIONS_STRING_H
 
 #include "zenoh-pico/collections/array.h"
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/intmap.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
 /*-------- str --------*/
 typedef char *_z_str_t;
 
 char *_z_str_clone(const char *src);
+char *_z_str_n_clone(const char *src, size_t len);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
 _Bool _z_str_eq(const char *left, const char *right);
@@ -33,10 +34,7 @@ size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
 void _z_str_n_copy(char *dst, const char *src, size_t size);
 _Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
-// _Z_ARRAY_DEFINE(_z_str, char *)
-// This is here for reference on why
-// the _z_str_array_t was not defined using this macro
-// but instead manually as find below
+
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
 _Z_INT_MAP_DEFINE(_z_str, char)
@@ -63,46 +61,43 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
 /**
  * A string with no terminator.
  *
- * Members:
- *   size_t len: The length of the string.
- *   const char *val: A pointer to the string.
  */
 typedef struct {
-    size_t len;
-    char *val;
+    _z_slice_t _slice;
 } _z_string_t;
 
-_z_string_t _z_string_make(const char *value);
-void _z_string_copy(_z_string_t *dst, const _z_string_t *src);
+_z_string_t _z_string_null(void);
+_Bool _z_string_check(const _z_string_t *value);
+_z_string_t _z_string_copy_from_str(const char *value);
+_z_string_t _z_string_copy_from_substr(const char *value, size_t len);
+_z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
+_z_string_t _z_string_alias_str(const char *value);
+_z_string_t _z_string_alias_substr(const char *value, size_t len);
+_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
+_Bool _z_string_is_empty(const _z_string_t *s);
+const char *_z_string_rchr(_z_string_t *str, char filter);
+char *_z_string_pbrk(_z_string_t *str, const char *filter);
+
+size_t _z_string_len(const _z_string_t *s);
+const char *_z_string_data(const _z_string_t *s);
+int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
+int8_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
+_z_string_t _z_string_steal(_z_string_t *str);
+_z_string_t _z_string_alias(const _z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
-_z_string_t _z_string_from_bytes(const _z_bytes_t *bs);
+_Bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
+_z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
+_z_string_t _z_string_preallocate(const size_t len);
 
-/*-------- str_array --------*/
-/**
- * An array of NULL terminated strings.
- *
- * Members:
- *   size_t len: The length of the array.
- *   char **_val: A pointer to the array.
- */
-typedef struct {
-    size_t len;
-    char **val;
-} _z_str_array_t;
+_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy)
 
-_z_str_array_t _z_str_array_empty(void);
-_z_str_array_t _z_str_array_make(size_t len);
-void _z_str_array_init(_z_str_array_t *sa, size_t len);
-char **_z_str_array_get(const _z_str_array_t *sa, size_t pos);
-size_t _z_str_array_len(const _z_str_array_t *sa);
-_Bool _z_str_array_is_empty(const _z_str_array_t *sa);
-void _z_str_array_copy(_z_str_array_t *dst, const _z_str_array_t *src);
-void _z_str_array_move(_z_str_array_t *dst, _z_str_array_t *src);
-void _z_str_array_clear(_z_str_array_t *sa);
-void _z_str_array_free(_z_str_array_t **sa);
+static inline void _z_string_elem_move(void *dst, void *src) { _z_string_move((_z_string_t *)dst, (_z_string_t *)src); }
+_Z_SVEC_DEFINE(_z_string, _z_string_t)
+_Z_LIST_DEFINE(_z_string, _z_string_t)
+_Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

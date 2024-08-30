@@ -24,18 +24,19 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                         _z_bytes_t *addr) {
+                                         _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
     int8_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    z_mutex_lock(&ztm->_mutex_rx);
+    _z_mutex_lock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -50,9 +51,9 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
                         break;
                     }
                 }
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztm->_zbuf) << (i * (uint8_t)8);
-                }
+                // Get stream size
+                to_read = _z_read_stream_size(&ztm->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < to_read) {
@@ -82,17 +83,17 @@ static int8_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_trans
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_rx);
+    _z_mutex_unlock(&ztm->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
 
-int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     return _z_multicast_recv_t_msg_na(ztm, t_msg, addr);
 }
 #else
-int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_bytes_t *addr) {
+int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
@@ -102,7 +103,7 @@ int8_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_messa
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_bytes_t *remote_addr) {
+static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_slice_t *remote_addr) {
     _z_transport_peer_entry_t *ret = NULL;
 
     _z_transport_peer_entry_list_t *xs = l;
@@ -121,11 +122,11 @@ static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_lis
 }
 
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                             _z_slice_t *addr) {
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire and keep the lock
-    z_mutex_lock(&ztm->_mutex_peer);
+    _z_mutex_lock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Mark the session that we have received data from this peer
@@ -269,7 +270,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                     }
 
                     if (ret == _Z_RES_OK) {
-                        entry->_remote_addr = _z_bytes_duplicate(addr);
+                        entry->_remote_addr = _z_slice_duplicate(addr);
                         entry->_remote_zid = t_msg->_body._join._zid;
 
                         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &t_msg->_body._join._next_sn);
@@ -341,14 +342,14 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztm->_mutex_peer);
+    _z_mutex_unlock(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
 }
 #else
 int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
-                                             _z_bytes_t *addr) {
+                                             _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);

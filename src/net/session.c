@@ -18,10 +18,10 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/memory.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/lease.h"
@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
+int8_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
     int8_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -46,7 +46,7 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&zn->_tp, &local_zid, locator, mode);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;
@@ -55,7 +55,7 @@ int8_t __z_open_inner(_z_session_t *zn, char *locator, z_whatami_t mode) {
     return ret;
 }
 
-int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
+int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
     int8_t ret = _Z_RES_OK;
 
     _z_id_t zid = _z_id_empty();
@@ -65,7 +65,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
     }
 
     if (config != NULL) {
-        _z_str_array_t locators = _z_str_array_empty();
+        _z_string_svec_t locators = _z_string_svec_make(0);
         char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
         char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
         if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
@@ -79,40 +79,42 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
             }
-            char *mcast_locator = opt_as_str;
+            _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
 
             opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
             if (opt_as_str == NULL) {
                 opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
             }
-            uint32_t timeout = strtoul(opt_as_str, NULL, 10);
+            uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
             // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, zid, mcast_locator, timeout, true);
+            _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
             if (hellos != NULL) {
                 _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_str_array_copy(&locators, &hello->locators);
+                _z_string_svec_copy(&locators, &hello->_locators);
             }
             _z_hello_list_free(&hellos);
         } else {
-            int key = Z_CONFIG_CONNECT_KEY;
+            uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
             if (listen != NULL) {
                 if (connect == NULL) {
                     key = Z_CONFIG_LISTEN_KEY;
-                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, _z_string_make(Z_CONFIG_MODE_PEER));
+                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
                 } else {
                     return _Z_ERR_GENERIC;
                 }
             }
-            locators = _z_str_array_make(1);
-            locators.val[0] = _z_str_clone(_z_config_get(config, key));
+            locators = _z_string_svec_make(1);
+            _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
+            _z_string_svec_append(&locators, &s);
         }
 
         ret = _Z_ERR_SCOUT_NO_RESULTS;
-        for (size_t i = 0; i < locators.len; i++) {
+        size_t len = _z_string_svec_len(&locators);
+        for (size_t i = 0; i < len; i++) {
             ret = _Z_RES_OK;
 
-            char *locator = locators.val[i];
+            _z_string_t *locator = _z_string_svec_get(&locators, i);
             // @TODO: check invalid configurations
             // For example, client mode in multicast links
 
@@ -138,7 +140,7 @@ int8_t _z_open(_z_session_t *zn, _z_config_t *config) {
                 _Z_ERROR("Trying to configure an invalid mode.");
             }
         }
-        _z_str_array_clear(&locators);
+        _z_string_svec_clear(&locators);
     } else {
         _Z_ERROR("A valid config is missing.");
         ret = _Z_ERR_GENERIC;
@@ -153,8 +155,12 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _z_bytes_t local_zid = _z_bytes_wrap(zn->_local_zid.id, _z_id_len(zn->_local_zid));
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_from_bytes(&local_zid));
+        _z_slice_t local_zid = _z_slice_alias_buf(zn->_local_zid.id, _z_id_len(zn->_local_zid));
+        // TODO(sasahcmc): is it zero terminated???
+        // rework it!!!
+        _z_string_t s = _z_string_convert_bytes(&local_zid);
+        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_data(&s));
+        _z_string_clear(&s);
 
         switch (zn->_tp._type) {
             case _Z_TRANSPORT_UNICAST_TYPE:
@@ -182,7 +188,7 @@ int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -211,7 +217,7 @@ int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
 int8_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     int8_t ret = _Z_RES_OK;
     // Allocate task
-    z_task_t *task = (z_task_t *)z_malloc(sizeof(z_task_t));
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

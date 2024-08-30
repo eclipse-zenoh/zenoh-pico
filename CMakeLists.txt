@@ -26,11 +26,19 @@ set(ZENOH_PICO_MAJOR ${PROJECT_VERSION_MAJOR})
 set(ZENOH_PICO_MINOR ${PROJECT_VERSION_MINOR})
 set(ZENOH_PICO_PATCH ${PROJECT_VERSION_PATCH})
 set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
   @ONLY
 )
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
+  @ONLY
+)
+
 set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 if(NOT DEFINED PROJECT_VERSION_TWEAK)
 	set(project_version "${project_version}")
@@ -49,8 +57,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 set(ZENOH_DEBUG 0 CACHE STRING "Use this to set the ZENOH_DEBUG variable")
-set(FRAG_MAX_SIZE 0 CACHE STRING "Use this to override the maximum size for fragmented messages")
-set(BATCH_UNICAST_SIZE 0 CACHE STRING "Use this to override the maximum unicast batch size")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -65,6 +71,42 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
   endif()
 endif()
 
+# Language options
+if(NOT CMAKE_C_STANDARD)
+  if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
+    set(CMAKE_C_STANDARD 11)
+    message(STATUS "Setting C11 as the C Standard")
+  else()
+    # C99 pedantic doesn't like unix header anonymous structure
+    set(CMAKE_C_STANDARD 99)
+    message(STATUS "Setting C99 as the C Standard")
+  endif()
+endif()
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+
+# Compile options
+if(CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release")
+  if(UNIX)
+    add_compile_options(-pipe -O3)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-pipe -O3)
+  endif()
+else()
+  if(UNIX)
+    add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wunused -Wstrict-prototypes -pipe -g -O0)
+    # C99 pedantic doesn't like struct anonymous in unix header
+    if (NOT CMAKE_C_STANDARD STREQUAL "99")
+      add_compile_options(-Wpedantic)
+    endif()
+    # add_compile_options(-Wconversion)
+    # add_link_options(-fsanitize=address)
+  elseif(MSVC)
+    add_compile_options(/W4 /WX /Od /wd4127)
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
+    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -pipe -g -O0)
+  endif()
+endif()
+
 set(Libname "zenohpico")
 add_library(${Libname})
 
@@ -73,16 +115,6 @@ function(add_definition value)
   target_compile_definitions(${Libname} PUBLIC ${value})
 endfunction()
 
-if(NOT CMAKE_C_STANDARD)
-  if(c_std_11 IN_LIST CMAKE_C_COMPILE_FEATURES)
-    set(CMAKE_C_STANDARD 11)
-    message(STATUS "Setting C11 as the C Standard")
-  else()
-    set(CMAKE_C_STANDARD 99)
-    message(STATUS "Setting C99 as the C Standard")
-  endif()
-endif()
-set(CMAKE_C_STANDARD_REQUIRED TRUE)
 add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
 # while in development, use timestamp for patch version:
@@ -141,48 +173,66 @@ endif()
 
 add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
-if(FRAG_MAX_SIZE)
-  add_definition(Z_FRAG_MAX_SIZE=${FRAG_MAX_SIZE})
-endif()
-if (BATCH_UNICAST_SIZE)
-  add_definition(Z_BATCH_UNICAST_SIZE=${BATCH_UNICAST_SIZE})
-endif()
 
 # Zenoh pico feature configuration options
-set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread feature")
+set(FRAG_MAX_SIZE 4096 CACHE STRING "Use this to override the maximum size for fragmented messages")
+set(BATCH_UNICAST_SIZE 2048 CACHE STRING "Use this to override the maximum unicast batch size")
+set(BATCH_MULTICAST_SIZE 2048 CACHE STRING "Use this to override the maximum multicast batch size")
+set(Z_CONFIG_SOCKET_TIMEOUT 100 CACHE STRING "Default socket timeout in milliseconds")
+
+set(Z_FEATURE_UNSTABLE_API 0 CACHE STRING "Toggle unstable Zenoh-C API")
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
-set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport feature")
-set(Z_FEATURE_ATTACHMENT 1 CACHE STRING "Toggle attachment feature")
-add_definition(Z_FEATURE_MULTI_THREAD=${Z_FEATURE_MULTI_THREAD})
-add_definition(Z_FEATURE_PUBLICATION=${Z_FEATURE_PUBLICATION})
-add_definition(Z_FEATURE_SUBSCRIPTION=${Z_FEATURE_SUBSCRIPTION})
-add_definition(Z_FEATURE_QUERY=${Z_FEATURE_QUERY})
-add_definition(Z_FEATURE_QUERYABLE=${Z_FEATURE_QUERYABLE})
-add_definition(Z_FEATURE_RAWETH_TRANSPORT=${Z_FEATURE_RAWETH_TRANSPORT})
-add_definition(Z_FEATURE_ATTACHMENT=${Z_FEATURE_ATTACHMENT})
+set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interests")
+set(Z_FEATURE_FRAGMENTATION 1 CACHE STRING "Toggle fragmentation")
+set(Z_FEATURE_ENCODING_VALUES 1 CACHE STRING "Toggle encoding values")
+set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread")
+set(Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION 0 CACHE STRING "Toggle dynamic memory allocation")
+
+set(Z_FEATURE_LINK_TCP 1 CACHE STRING "Toggle TCP links")
+set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
+set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
+set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
+set(Z_FEATURE_SCOUTING_UDP 1 CACHE STRING "Toggle UDP scouting")
+set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
+set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
+set(Z_FEATURE_MULTICAST_TRANSPORT 1 CACHE STRING "Toggle multicast transport")
+set(Z_FEATURE_UNICAST_TRANSPORT 1 CACHE STRING "Toggle unicast transport")
+set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport")
+set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interest feature")
+
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
+* UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
-* ATTACHMENT: ${Z_FEATURE_ATTACHMENT}\n\
+* INTEREST: ${Z_FEATURE_INTEREST}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  @ONLY
+)
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  @ONLY
+)
 
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
 message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
-if(FRAG_MAX_SIZE)
-  message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
-endif()
-if(BATCH_UNICAST_SIZE)
-  message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
-endif()
+message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
+message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
+message(STATUS "Multicast batch max size: ${BATCH_MULTICAST_SIZE}")
 message(STATUS "Build for Zephyr RTOS: ${WITH_ZEPHYR}")
 message(STATUS "Build for FreeRTOS-Plus-TCP: ${WITH_FREERTOS_PLUS_TCP}")
 message(STATUS "Configuring for ${CMAKE_SYSTEM_NAME}")
@@ -198,29 +248,10 @@ if(CHECK_THREADS)
   find_package(Threads REQUIRED)
 endif()
 
-if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-  if(UNIX)
-    add_compile_options(-c -Wall -Wextra -Werror -Wshadow -Wpedantic -Wunused -Wstrict-prototypes -pipe -g -O0)
-    # add_compile_options(-Wconversion)
-    # add_link_options(-fsanitize=address)
-  elseif(MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
-    add_compile_options(/W4 /WX /Od)
-  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
-    add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -pipe -g -O0)
-  endif()
-elseif(CMAKE_BUILD_TYPE MATCHES "RELEASE")
-  if(UNIX)
-    add_compile_options(-pipe -O3)
-  elseif(MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
-  elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
-    add_compile_options(-pipe -O3)
-  endif()
+if(MSVC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c11 /experimental:c11atomics")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /experimental:c11atomics")
 endif()
-
 
 file(GLOB_RECURSE PublicHeaders
   "include/zenoh-pico/api/*.h"
@@ -241,13 +272,13 @@ target_include_directories(${Libname}
 file(GLOB_RECURSE Sources
   "src/api/*.c"
   "src/collections/*.c"
-  "src/deprecated/*.c"
   "src/link/*.c"
   "src/net/*.c"
   "src/protocol/*.c"
   "src/session/*.c"
   "src/transport/*.c"
   "src/utils/*.c"
+  "src/system/platform-common.c"
 )
 
 if(WITH_ZEPHYR)
@@ -315,6 +346,11 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   DESTINATION include
   COMPONENT Headers
 )
+if(BUILD_SHARED_LIBS)
+  set(LIBNAME ${CMAKE_SHARED_LIBRARY_PREFIX}${Libname}${CMAKE_SHARED_LIBRARY_SUFFIX})
+else()
+  set(LIBNAME ${CMAKE_STATIC_LIBRARY_PREFIX}${Libname}${CMAKE_STATIC_LIBRARY_SUFFIX})
+endif()
 
 set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/zenohpico")
 # Generate <Package>Config.cmake
@@ -362,6 +398,8 @@ if(UNIX OR MSVC)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
     add_executable(z_data_struct_test ${PROJECT_SOURCE_DIR}/tests/z_data_struct_test.c)
+    add_executable(z_channels_test ${PROJECT_SOURCE_DIR}/tests/z_channels_test.c)
+    add_executable(z_collections_test ${PROJECT_SOURCE_DIR}/tests/z_collections_test.c)
     add_executable(z_endpoint_test ${PROJECT_SOURCE_DIR}/tests/z_endpoint_test.c)
     add_executable(z_iobuf_test ${PROJECT_SOURCE_DIR}/tests/z_iobuf_test.c)
     add_executable(z_msgcodec_test ${PROJECT_SOURCE_DIR}/tests/z_msgcodec_test.c)
@@ -372,8 +410,15 @@ if(UNIX OR MSVC)
     add_executable(z_test_fragment_rx ${PROJECT_SOURCE_DIR}/tests/z_test_fragment_rx.c)
     add_executable(z_perf_tx ${PROJECT_SOURCE_DIR}/tests/z_perf_tx.c)
     add_executable(z_perf_rx ${PROJECT_SOURCE_DIR}/tests/z_perf_rx.c)
+    add_executable(z_bytes_test ${PROJECT_SOURCE_DIR}/tests/z_bytes_test.c)
+    add_executable(z_api_bytes_test ${PROJECT_SOURCE_DIR}/tests/z_api_bytes_test.c)
+    add_executable(z_api_encoding_test ${PROJECT_SOURCE_DIR}/tests/z_api_encoding_test.c)
+    add_executable(z_api_config_test ${PROJECT_SOURCE_DIR}/tests/z_api_config_test.c)
+    add_executable(z_refcount_test ${PROJECT_SOURCE_DIR}/tests/z_refcount_test.c)
 
     target_link_libraries(z_data_struct_test ${Libname})
+    target_link_libraries(z_channels_test ${Libname})
+    target_link_libraries(z_collections_test ${Libname})
     target_link_libraries(z_endpoint_test ${Libname})
     target_link_libraries(z_iobuf_test ${Libname})
     target_link_libraries(z_msgcodec_test ${Libname})
@@ -384,20 +429,34 @@ if(UNIX OR MSVC)
     target_link_libraries(z_test_fragment_rx ${Libname})
     target_link_libraries(z_perf_tx ${Libname})
     target_link_libraries(z_perf_rx ${Libname})
+    target_link_libraries(z_bytes_test ${Libname})
+    target_link_libraries(z_api_bytes_test ${Libname})
+    target_link_libraries(z_api_encoding_test ${Libname})
+    target_link_libraries(z_api_config_test ${Libname})
+    target_link_libraries(z_refcount_test ${Libname})
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/fragment.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/fragment.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/single_thread.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/single_thread.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/attachment.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/attachment.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/no_router.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/no_router.py COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
+    add_test(z_channels_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_channels_test)
+    add_test(z_collections_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_collections_test)
     add_test(z_endpoint_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_endpoint_test)
     add_test(z_iobuf_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_iobuf_test)
     add_test(z_msgcodec_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_msgcodec_test)
     add_test(z_keyexpr_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_keyexpr_test)
     add_test(z_api_null_drop_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_null_drop_test)
     add_test(z_api_double_drop_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_double_drop_test)
+    add_test(z_bytes_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_bytes_test)
+    add_test(z_api_bytes_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_bytes_test)
+    add_test(z_api_encoding_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_encoding_test)
+    add_test(z_api_config_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_config_test)
+    add_test(z_refcount_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_refcount_test)
   endif()
 
   if(BUILD_MULTICAST)
@@ -461,7 +520,11 @@ if(PACKAGING)
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
-      set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR})
+      execute_process(
+        COMMAND dpkg --print-architecture
+        OUTPUT_VARIABLE DEBARCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
     endif()
 
     message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")

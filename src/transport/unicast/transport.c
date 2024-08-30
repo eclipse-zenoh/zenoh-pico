@@ -38,38 +38,27 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = _z_mutex_init(&zt->_transport._unicast._mutex_rx);
         if (ret != _Z_RES_OK) {
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
-        uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
+        uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
         size_t dbuf_size = 0;
-        size_t wbuf_size = 0;
-        size_t zbuf_size = 0;
+        size_t wbuf_size = mtu;
+        size_t zbuf_size = param->_batch_size;
         _Bool expandable = false;
 
-        switch (zl->_cap._flow) {
-            case Z_LINK_CAP_FLOW_STREAM:
-                // Add stream length field to buffer size
-                wbuf_size = mtu + _Z_MSG_LEN_ENC_SIZE;
-                zbuf_size = Z_BATCH_UNICAST_SIZE + _Z_MSG_LEN_ENC_SIZE;
-                expandable = true;
-                break;
-            case Z_LINK_CAP_FLOW_DATAGRAM:
-            default:
-                wbuf_size = mtu;
-                zbuf_size = Z_BATCH_UNICAST_SIZE;
-                expandable = false;
-                break;
+        // Set expandable on stream link
+        if (zl->_cap._flow == Z_LINK_CAP_FLOW_STREAM) {
+            expandable = true;
         }
-
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
         expandable = false;
         dbuf_size = Z_FRAG_MAX_SIZE;
@@ -86,8 +75,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -115,8 +104,8 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
             _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_free(&zt->_transport._unicast._mutex_tx);
-            z_mutex_free(&zt->_transport._unicast._mutex_rx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
             _z_wbuf_clear(&zt->_transport._unicast._wbuf);
@@ -224,8 +213,8 @@ int8_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, con
                     // Create the OpenSyn message
                     _z_zint_t lease = Z_TRANSPORT_LEASE;
                     _z_zint_t initial_sn = param->_initial_sn_tx;
-                    _z_bytes_t cookie;
-                    _z_bytes_copy(&cookie, &iam._body._init._cookie);
+                    _z_slice_t cookie;
+                    _z_slice_copy(&cookie, &iam._body._init._cookie);
 
                     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
 
@@ -290,17 +279,17 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztu->_read_task != NULL) {
-        z_task_join(ztu->_read_task);
-        z_task_free(&ztu->_read_task);
+        _z_task_join(ztu->_read_task);
+        _z_task_free(&ztu->_read_task);
     }
     if (ztu->_lease_task != NULL) {
-        z_task_join(ztu->_lease_task);
-        z_task_free(&ztu->_lease_task);
+        _z_task_join(ztu->_lease_task);
+        _z_task_free(&ztu->_lease_task);
     }
 
     // Clean up the mutexes
-    z_mutex_free(&ztu->_mutex_tx);
-    z_mutex_free(&ztu->_mutex_rx);
+    _z_mutex_drop(&ztu->_mutex_tx);
+    _z_mutex_drop(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Clean up the buffers

@@ -31,7 +31,6 @@ configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_WS)
 file(GLOB_RECURSE Sources
   "../src/api/*.c"
   "../src/collections/*.c"
-  "../src/deprecated/*.c"
   "../src/link/*.c"
   "../src/net/*.c"
   "../src/protocol/*.c"

@@ -18,8 +18,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
@@ -33,7 +33,7 @@ typedef struct {
 #endif
 
     _z_id_t _remote_zid;
-    _z_bytes_t _remote_addr;
+    _z_slice_t _remote_addr;
     _z_conduit_sn_list_t _sn_rx_sns;
 
     // SN numbers
@@ -56,7 +56,7 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
                                                                     _z_transport_peer_entry_t *entry);
 
 // Forward type declaration to avoid cyclical include
-typedef struct _z_session_t _z_session_t;
+typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
 // Forward declaration to be used in _zp_f_send_tmsg*
 typedef struct _z_transport_multicast_t _z_transport_multicast_t;
@@ -65,12 +65,12 @@ typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_trans
 
 typedef struct {
     // Session associated to the transport
-    _z_session_t *_session;
+    _z_session_rc_ref_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
-    z_mutex_t _mutex_rx;
-    z_mutex_t _mutex_tx;
+    _z_mutex_t _mutex_rx;
+    _z_mutex_t _mutex_tx;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
@@ -96,8 +96,8 @@ typedef struct {
     volatile _z_zint_t _lease;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_task_t *_read_task;
-    z_task_t *_lease_task;
+    _z_task_t *_read_task;
+    _z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -108,15 +108,15 @@ typedef struct {
 
 typedef struct _z_transport_multicast_t {
     // Session associated to the transport
-    _z_session_t *_session;
+    _z_session_rc_ref_t *_session;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // TX and RX mutexes
-    z_mutex_t _mutex_rx;
-    z_mutex_t _mutex_tx;
+    _z_mutex_t _mutex_rx;
+    _z_mutex_t _mutex_tx;
 
     // Peer list mutex
-    z_mutex_t _mutex_peer;
+    _z_mutex_t _mutex_peer;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     _z_link_t _link;
@@ -138,8 +138,8 @@ typedef struct _z_transport_multicast_t {
     _zp_f_send_tmsg _send_f;
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_task_t *_read_task;
-    z_task_t *_lease_task;
+    _z_task_t *_read_task;
+    _z_task_t *_lease_task;
     volatile _Bool _read_task_running;
     volatile _Bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1

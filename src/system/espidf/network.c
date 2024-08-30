@@ -17,7 +17,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/link/bt.h"
@@ -471,7 +471,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                             _z_bytes_t *addr) {
+                             _z_slice_t *addr) {
     struct sockaddr_storage raddr;
     socklen_t raddrlen = sizeof(struct sockaddr_storage);
 
@@ -489,7 +489,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             if (!((a->sin_port == b->sin_port) && (a->sin_addr.s_addr == b->sin_addr.s_addr))) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_bytes_make(sizeof(in_addr_t) + sizeof(in_port_t));
+                    *addr = _z_slice_make(sizeof(in_addr_t) + sizeof(in_port_t));
                     (void)memcpy((uint8_t *)addr->start, &b->sin_addr.s_addr, sizeof(in_addr_t));
                     (void)memcpy((uint8_t *)(addr->start + sizeof(in_addr_t)), &b->sin_port, sizeof(in_port_t));
                 }
@@ -502,7 +502,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                 (memcmp(&a->sin6_addr, &b->sin6_addr, sizeof(struct in6_addr)) != 0)) {
                 // If addr is not NULL, it means that the raddr was requested by the upper-layers
                 if (addr != NULL) {
-                    *addr = _z_bytes_make(sizeof(struct in6_addr) + sizeof(in_port_t));
+                    *addr = _z_slice_make(sizeof(struct in6_addr) + sizeof(in_port_t));
                     (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(struct in6_addr));
                     (void)memcpy((uint8_t *)(addr->start + sizeof(struct in6_addr)), &b->sin6_port, sizeof(in_port_t));
                 }
@@ -517,7 +517,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
 }
 
 size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
-                                   const _z_sys_net_endpoint_t lep, _z_bytes_t *addr) {
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *addr) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 
@@ -594,8 +594,8 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     QueueHandle_t uart_queue;
     uart_driver_install(sock->_serial, uart_buffer_size, 0, 100, &uart_queue, 0);
     uart_flush_input(sock->_serial);
-    sock->after_cobs = (uint8_t *)zp_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->before_cobs = (uint8_t *)zp_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    sock->after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    sock->before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     return ret;
 }
 
@@ -628,8 +628,8 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
     uart_wait_tx_done(sock->_serial, 1000);
     uart_flush(sock->_serial);
     uart_driver_delete(sock->_serial);
-    zp_free(sock->after_cobs);
-    zp_free(sock->before_cobs);
+    z_free(sock->after_cobs);
+    z_free(sock->before_cobs);
 }
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {

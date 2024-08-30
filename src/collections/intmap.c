@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/collections/intmap.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -47,6 +48,39 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
     }
 
     return len;
+}
+
+int8_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c) {
+    assert((dst != NULL) && (src != NULL) && (dst->_capacity == src->_capacity));
+    for (size_t idx = 0; idx < src->_capacity; idx++) {
+        const _z_list_t *src_list = src->_vals[idx];
+        if (src_list == NULL) {
+            continue;
+        }
+        // Allocate entry
+        dst->_vals[idx] = _z_list_clone(src_list, f_c);
+        if (dst->_vals[idx] == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+    }
+    return _Z_RES_OK;
+}
+
+_z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f) {
+    _z_int_void_map_t dst = {._capacity = src->_capacity, ._vals = NULL};
+    // Lazily allocate and initialize to NULL all the pointers
+    size_t len = dst._capacity * sizeof(_z_list_t *);
+    dst._vals = (_z_list_t **)z_malloc(len);
+    if (dst._vals == NULL) {
+        return dst;
+    }
+    (void)memset(dst._vals, 0, len);
+    // Copy elements
+    if (_z_int_void_map_copy(&dst, src, f_c) != _Z_RES_OK) {
+        // Free the map
+        _z_int_void_map_clear(&dst, f_f);
+    }
+    return dst;
 }
 
 _Bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }

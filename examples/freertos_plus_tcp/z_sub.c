@@ -28,39 +28,46 @@
 
 #define KEYEXPR "demo/example/**"
 
-void data_handler(const z_sample_t *sample, void *ctx) {
+void data_handler(const z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
-    z_owned_str_t keystr = z_keyexpr_to_string(sample->keyexpr);
-    printf(">> [Subscriber] Received ('%s': '%.*s')\n", z_loan(keystr), (int)sample->payload.len,
-           sample->payload.start);
-    z_drop(z_move(keystr));
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
+    z_owned_string_t value;
+    z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
+    printf(">> [Subscriber] Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)),
+           z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(value)), z_string_data(z_loan(value)));
+    z_drop(z_move(value));
 }
 
 void app_main(void) {
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         return;
     }
 
-    z_owned_closure_sample_t callback = z_closure(data_handler);
+    z_owned_closure_sample_t callback;
+    z_closure(&callback, data_handler);
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(KEYEXPR), z_move(callback), NULL);
-    if (!z_check(sub)) {
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+    z_owned_subscriber_t sub;
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return;
     }
@@ -70,10 +77,6 @@ void app_main(void) {
     }
 
     z_undeclare_subscriber(z_move(sub));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
 
     z_close(z_move(s));
 }

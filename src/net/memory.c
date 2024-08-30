@@ -11,49 +11,12 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/net/memory.h"
-
 #include <stddef.h>
 
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 
-void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
-    dst->keyexpr._id = src->keyexpr._id;          // FIXME: call the z_keyexpr_move
-    dst->keyexpr._suffix = src->keyexpr._suffix;  // FIXME: call the z_keyexpr_move
-    src->keyexpr._suffix = NULL;                  // FIXME: call the z_keyexpr_move
-
-    _z_bytes_move(&dst->payload, &src->payload);
-
-    dst->encoding.prefix = src->encoding.prefix;                  // FIXME: call the z_encoding_move
-    _z_bytes_move(&dst->encoding.suffix, &src->encoding.suffix);  // FIXME: call the z_encoding_move
-
-    dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
-    dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
-}
-
-void _z_sample_clear(_z_sample_t *sample) {
-    _z_keyexpr_clear(&sample->keyexpr);
-    _z_bytes_clear(&sample->payload);
-    _z_bytes_clear(&sample->encoding.suffix);  // FIXME: call the z_encoding_clear
-    _z_timestamp_clear(&sample->timestamp);
-}
-
-void _z_sample_free(_z_sample_t **sample) {
-    _z_sample_t *ptr = *sample;
-
-    if (ptr != NULL) {
-        _z_sample_clear(ptr);
-
-        z_free(ptr);
-        *sample = NULL;
-    }
-}
-
-void _z_hello_clear(_z_hello_t *hello) {
-    if (hello->locators.len > 0) {
-        _z_str_array_clear(&hello->locators);
-    }
-}
+void _z_hello_clear(_z_hello_t *hello) { _z_string_svec_clear(&hello->_locators); }
 
 void _z_hello_free(_z_hello_t **hello) {
     _z_hello_t *ptr = *hello;
@@ -66,25 +29,9 @@ void _z_hello_free(_z_hello_t **hello) {
     }
 }
 
-void _z_reply_data_clear(_z_reply_data_t *reply_data) {
-    _z_sample_clear(&reply_data->sample);
-    reply_data->replier_id = _z_id_empty();
-}
-
-void _z_reply_data_free(_z_reply_data_t **reply_data) {
-    _z_reply_data_t *ptr = *reply_data;
-
-    if (ptr != NULL) {
-        _z_reply_data_clear(ptr);
-
-        z_free(ptr);
-        *reply_data = NULL;
-    }
-}
-
 void _z_value_clear(_z_value_t *value) {
-    _z_bytes_clear(&value->encoding.suffix);
-    _z_bytes_clear(&value->payload);
+    _z_encoding_clear(&value->encoding);
+    _z_bytes_drop(&value->payload);
 }
 
 void _z_value_free(_z_value_t **value) {
@@ -97,3 +44,5 @@ void _z_value_free(_z_value_t **value) {
         *value = NULL;
     }
 }
+
+_Bool _z_hello_check(const _z_hello_t *hello) { return _z_id_check(hello->_zid); }

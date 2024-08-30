@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -32,7 +33,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     int8_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
-    z_mutex_lock(&ztu->_mutex_rx);
+    _z_mutex_lock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     size_t to_read = 0;
@@ -48,9 +49,9 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
                         continue;
                     }
                 }
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-                }
+                // Get stream size
+                to_read = _z_read_stream_size(&ztu->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
@@ -85,7 +86,7 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&ztu->_mutex_rx);
+    _z_mutex_unlock(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return ret;
@@ -164,7 +165,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                 _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
 
                 _z_zenoh_message_t zm;
-                int8_t ret = _z_network_message_decode(&zm, &zbf);
+                ret = _z_network_message_decode(&zm, &zbf);
                 if (ret == _Z_RES_OK) {
                     _z_handle_network_message(ztu->_session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
                     _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented

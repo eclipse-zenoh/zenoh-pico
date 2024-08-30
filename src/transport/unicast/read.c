@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -49,7 +50,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
     // Acquire and keep the lock
-    z_mutex_lock(&ztu->_mutex_rx);
+    _z_mutex_lock(&ztu->_mutex_rx);
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_zbuf);
@@ -66,11 +67,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         continue;
                     }
                 }
-
-                for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
-                    to_read |= _z_zbuf_read(&ztu->_zbuf) << (i * (uint8_t)8);
-                }
-
+                // Get stream size
+                to_read = _z_read_stream_size(&ztu->_zbuf);
+                // Read data
                 if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
                     _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
@@ -117,16 +116,16 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) + to_read);
     }
-    z_mutex_unlock(&ztu->_mutex_rx);
+    _z_mutex_unlock(&ztu->_mutex_rx);
     return NULL;
 }
 
-int8_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(_z_task_t));
     zt->_transport._unicast._read_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
-    if (z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
+    if (_z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
         zt->_transport._unicast._read_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }

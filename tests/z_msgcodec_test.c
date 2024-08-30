@@ -26,14 +26,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/codec/declarations.h"
 #include "zenoh-pico/protocol/codec/ext.h"
+#include "zenoh-pico/protocol/codec/interest.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
@@ -78,7 +80,7 @@ void print_wbuf(_z_wbuf_t *wbf) {
 
 void print_zbuf(_z_zbuf_t *zbf) { print_iosli(&zbf->_ios); }
 
-void print_uint8_array(_z_bytes_t *arr) {
+void print_uint8_array(_z_slice_t *arr) {
     printf("Length: %zu, Buffer: [", arr->len);
     for (size_t i = 0; i < arr->len; i++) {
         printf("%02x", arr->start[i]);
@@ -145,7 +147,7 @@ uint64_t gen_uint64(void) {
     return ret;
 }
 
-unsigned int gen_uint(void) {
+uint32_t gen_uint32(void) {
     unsigned int ret = 0;
     z_random_fill(&ret, sizeof(ret));
     return ret;
@@ -168,29 +170,31 @@ _z_wbuf_t gen_wbuf(size_t len) {
     return _z_wbuf_make(len, is_expandable);
 }
 
-_z_bytes_t gen_payload(size_t len) {
-    _z_bytes_t pld;
-    pld._is_alloc = true;
-    pld.len = len;
-    pld.start = (uint8_t *)z_malloc(len);
-    z_random_fill((uint8_t *)pld.start, pld.len);
+_z_slice_t gen_slice(size_t len) {
+    if (len == 0) {
+        return _z_slice_empty();
+    }
 
-    return pld;
+    uint8_t *p = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
+    for (_z_zint_t i = 0; i < len; i++) {
+        ((uint8_t *)p)[i] = gen_uint8() & 0x7f;  // 0b01111111
+    }
+    return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_default());
+}
+
+_z_bytes_t gen_payload(size_t len) {
+    _z_slice_t pld = gen_slice(len);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, pld);
+
+    return b;
 }
 
 _z_bytes_t gen_bytes(size_t len) {
-    _z_bytes_t arr;
-    arr._is_alloc = true;
-    arr.len = len;
-    arr.start = NULL;
-    if (len == 0) return arr;
-
-    arr.start = (uint8_t *)z_malloc(sizeof(uint8_t) * len);
-    for (_z_zint_t i = 0; i < len; i++) {
-        ((uint8_t *)arr.start)[i] = gen_uint8() & 0x7f;  // 0b01111111
-    }
-
-    return arr;
+    _z_slice_t s = gen_slice(len);
+    _z_bytes_t b;
+    _z_bytes_from_slice(&b, s);
+    return b;
 }
 
 _z_id_t gen_zid(void) {
@@ -217,36 +221,46 @@ char *gen_str(size_t size) {
     return str;
 }
 
-_z_str_array_t gen_str_array(size_t size) {
-    _z_str_array_t sa = _z_str_array_make(size);
-    for (size_t i = 0; i < size; i++) ((char **)sa.val)[i] = gen_str(16);
+_z_string_svec_t gen_str_array(size_t size) {
+    _z_string_svec_t sa = _z_string_svec_make(size);
+    for (size_t i = 0; i < size; i++) {
+        _z_string_t s = _z_string_copy_from_str(gen_str(16));
+        _z_string_svec_append(&sa, &s);
+    }
 
     return sa;
 }
+
+_z_string_t gen_string(size_t len) { return _z_string_alias_str(gen_str(len)); }
 
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);
     for (size_t i = 0; i < size; i++) {
         _z_locator_t *val = &la._val[i];
-        val->_protocol = gen_str(3);
-        val->_address = gen_str(12);
+        val->_protocol = gen_string(3);
+        val->_address = gen_string(12);
         val->_metadata = _z_str_intmap_make();  // @TODO: generate metadata
     }
 
     return la;
 }
 
+_z_encoding_t gen_encoding(void) {
+    _z_encoding_t en;
+    en.id = gen_uint16();
+    if (gen_bool()) {
+        en.schema = gen_string(16);
+    } else {
+        en.schema = _z_string_null();
+    }
+    return en;
+}
+
 _z_value_t gen_value(void) {
     _z_value_t val;
-    val.encoding.prefix = gen_zint();
+    val.encoding = gen_encoding();
     if (gen_bool()) {
-        val.encoding.suffix = gen_bytes(8);
-    } else {
-        val.encoding.suffix = _z_bytes_empty();
-    }
-
-    if (gen_bool()) {
-        val.payload = _z_bytes_empty();
+        val.payload = _z_bytes_null();
     } else {
         val.payload = gen_bytes(16);
     }
@@ -276,7 +290,7 @@ void assert_eq_iosli(_z_iosli_t *left, _z_iosli_t *right) {
     printf(")");
 }
 
-void assert_eq_uint8_array(const _z_bytes_t *left, const _z_bytes_t *right) {
+void assert_eq_uint8_array(const _z_slice_t *left, const _z_slice_t *right) {
     printf("Array -> ");
     printf("Length (%zu:%zu), ", left->len, right->len);
 
@@ -294,20 +308,22 @@ void assert_eq_uint8_array(const _z_bytes_t *left, const _z_bytes_t *right) {
     printf(")");
 }
 
-void assert_eq_str_array(_z_str_array_t *left, _z_str_array_t *right) {
+void assert_eq_string_array(_z_string_svec_t *left, _z_string_svec_t *right) {
     printf("Array -> ");
-    printf("Length (%zu:%zu), ", left->len, right->len);
+    printf("Length (%zu:%zu), ", left->_len, right->_len);
 
-    assert(left->len == right->len);
+    assert(left->_len == right->_len);
     printf("Content (");
-    for (size_t i = 0; i < left->len; i++) {
-        const char *l = left->val[i];
-        const char *r = right->val[i];
+    for (size_t i = 0; i < left->_len; i++) {
+        const char *l = _z_string_data(_z_string_svec_get(left, i));
+        const char *r = _z_string_data(_z_string_svec_get(right, i));
+        size_t l_len = _z_string_len(_z_string_svec_get(left, i));
+        size_t r_len = _z_string_len(_z_string_svec_get(right, i));
 
-        printf("%s:%s", l, r);
-        if (i < left->len - 1) printf(" ");
+        printf("%.*s:%.*s", (int)l_len, l, (int)r_len, r);
+        if (i < left->_len - 1) printf(" ");
 
-        assert(_z_str_eq(l, r) == true);
+        assert(_z_string_equals(_z_string_svec_get(left, i), _z_string_svec_get(right, i)));
     }
     printf(")");
 }
@@ -322,18 +338,45 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         const _z_locator_t *l = &left->_val[i];
         const _z_locator_t *r = &right->_val[i];
 
-        char *ls = _z_locator_to_str(l);
-        char *rs = _z_locator_to_str(r);
+        _z_string_t ls = _z_locator_to_string(l);
+        _z_string_t rs = _z_locator_to_string(r);
 
-        printf("%s:%s", ls, rs);
+        printf("%s:%s", _z_string_data(&ls), _z_string_data(&rs));
         if (i < left->_len - 1) printf(" ");
 
-        z_free(ls);
-        z_free(rs);
+        _z_string_clear(&ls);
+        _z_string_clear(&rs);
 
         assert(_z_locator_eq(l, r) == true);
     }
     printf(")");
+}
+
+/*=============================*/
+/*      Zenoh Core Fields      */
+/*=============================*/
+void zint(void) {
+    printf("\n>> ZINT\n");
+    _z_wbuf_t wbf = gen_wbuf(9);
+
+    // Initialize
+    _z_zint_t e_z = gen_zint();
+
+    // Encode
+    int8_t res = _z_zsize_encode(&wbf, e_z);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_zint_t d_z;
+    res = _z_zsize_decode(&d_z, &zbf);
+    assert(res == _Z_RES_OK);
+    assert(e_z == d_z);
+
+    // Free
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
 }
 
 /*=============================*/
@@ -349,7 +392,7 @@ void assert_eq_unit_extension(_z_msg_ext_unit_t *left, _z_msg_ext_unit_t *right)
 
 void unit_extension(void) {
     printf("\n>> UNIT Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_unit_extension();
@@ -390,7 +433,7 @@ void assert_eq_zint_extension(_z_msg_ext_zint_t *left, _z_msg_ext_zint_t *right)
 
 void zint_extension(void) {
     printf("\n>> ZINT Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_zint_extension();
@@ -420,7 +463,7 @@ void zint_extension(void) {
 
 /*------------------ Unit extension ------------------*/
 _z_msg_ext_t gen_zbuf_extension(void) {
-    _z_bytes_t val = gen_bytes(gen_uint8());
+    _z_slice_t val = gen_slice(gen_uint8());
     return _z_msg_ext_make_zbuf(_Z_MOCK_EXTENSION_ZBUF, val);
 }
 
@@ -432,7 +475,7 @@ void assert_eq_zbuf_extension(_z_msg_ext_zbuf_t *left, _z_msg_ext_zbuf_t *right)
 
 void zbuf_extension(void) {
     printf("\n>> ZBUF Extension\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_msg_ext_t ext = gen_zbuf_extension();
@@ -464,11 +507,41 @@ void zbuf_extension(void) {
 /*       Message Fields        */
 /*=============================*/
 /*------------------ Payload field ------------------*/
-void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) { assert_eq_uint8_array(left, right); }
+void assert_eq_slice(const _z_slice_t *left, const _z_slice_t *right) { assert_eq_uint8_array(left, right); }
+
+void assert_eq_string(const _z_string_t *left, const _z_string_t *right) {
+    assert(_z_string_len(left) == _z_string_len(right));
+    if (_z_string_len(left) > 0) {
+        assert(_z_string_equals(left, right));
+    }
+}
+
+void assert_eq_bytes(const _z_bytes_t *left, const _z_bytes_t *right) {
+    size_t len_left = _z_bytes_len(left);
+    size_t len_right = _z_bytes_len(right);
+    printf("Array -> ");
+    printf("Length (%zu:%zu), ", len_left, len_right);
+
+    assert(len_left == len_right);
+    printf("Content (");
+    _z_bytes_reader_t reader_left = _z_bytes_get_reader(left);
+    _z_bytes_reader_t reader_right = _z_bytes_get_reader(right);
+    for (size_t i = 0; i < len_left; i++) {
+        uint8_t l = 0, r = 0;
+        _z_bytes_reader_read(&reader_left, &l, 1);
+        _z_bytes_reader_read(&reader_right, &r, 1);
+
+        printf("%02x:%02x", l, r);
+        if (i < len_left - 1) printf(" ");
+
+        assert(l == r);
+    }
+    printf(")");
+}
 
 void payload_field(void) {
     printf("\n>> Payload field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_bytes_t e_pld = gen_payload(64);
@@ -489,8 +562,8 @@ void payload_field(void) {
     printf("\n");
 
     // Free
-    _z_bytes_clear(&e_pld);
-    _z_bytes_clear(&d_pld);
+    _z_bytes_drop(&e_pld);
+    _z_bytes_drop(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -505,10 +578,9 @@ void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t 
     assert(left->_entity_id == right->_entity_id);
     assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
 }
-_z_encoding_t gen_encoding(void) { return (_z_encoding_t){.prefix = gen_uint64(), .suffix = gen_bytes(16)}; }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
-    assert(left->prefix == right->prefix);
-    assert_eq_bytes(&left->suffix, &right->suffix);
+    assert(left->id == right->id);
+    assert_eq_string(&left->schema, &right->schema);
 }
 void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
@@ -518,8 +590,9 @@ void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
     ts.time = gen_uint64();
-    _z_bytes_t id = gen_bytes(16);
-    memcpy(ts.id.id, id.start, id.len);
+    for (size_t i = 0; i < 16; i++) {
+        ts.id.id[i] = gen_uint8() & 0x7f;  // 0b01111111
+    }
     return ts;
 }
 
@@ -539,7 +612,7 @@ void assert_eq_timestamp(const _z_timestamp_t *left, const _z_timestamp_t *right
 
 void timestamp_field(void) {
     printf("\n>> Timestamp field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_timestamp_t e_ts = gen_timestamp();
@@ -572,37 +645,15 @@ void timestamp_field(void) {
 /*------------------ SubInfo field ------------------*/
 _z_subinfo_t gen_subinfo(void) {
     _z_subinfo_t sm;
-    sm.mode = gen_bool() ? Z_SUBMODE_PUSH : Z_SUBMODE_PULL;
     sm.reliability = gen_bool() ? Z_RELIABILITY_RELIABLE : Z_RELIABILITY_BEST_EFFORT;
-    if (gen_bool()) {
-        sm.period.origin = gen_uint();
-        sm.period.period = gen_uint();
-        sm.period.duration = gen_uint();
-    } else {
-        sm.period.origin = 0;
-        sm.period.period = 0;
-        sm.period.duration = 0;
-    }
 
     return sm;
 }
 
 void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right) {
     printf("SubInfo -> ");
-    printf("Mode (%u:%u), ", left->mode, right->mode);
-    assert(left->mode == right->mode);
-
     printf("Reliable (%u:%u), ", left->reliability, right->reliability);
     assert(left->reliability == right->reliability);
-
-    printf("Period (");
-    printf("<%u:%u,%u>", left->period.origin, left->period.period, left->period.duration);
-    printf(":");
-    printf("<%u:%u,%u>", right->period.origin, right->period.period, right->period.duration);
-    printf(")");
-    assert(left->period.origin == right->period.origin);
-    assert(left->period.period == right->period.period);
-    assert(left->period.duration == right->period.duration);
 }
 
 /*------------------ ResKey field ------------------*/
@@ -612,11 +663,13 @@ _z_keyexpr_t gen_keyexpr(void) {
     key._mapping._val = gen_uint8();
     _Bool is_numerical = gen_bool();
     if (is_numerical == true) {
-        key._suffix = NULL;
-        _z_keyexpr_set_owns_suffix(&key, false);
+        key._suffix = _z_string_null();
     } else {
-        key._suffix = gen_str(gen_zint() % 16);
-        _z_keyexpr_set_owns_suffix(&key, true);
+        size_t len = gen_zint() % 16;
+        key._suffix = _z_string_preallocate(len);
+        char *suffix = gen_str(len);
+        memcpy((char *)_z_string_data(&key._suffix), suffix, len);
+        z_free(suffix);
     }
     return key;
 }
@@ -625,12 +678,13 @@ void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     printf("ResKey -> ");
     printf("ID (%u:%u), ", left->_id, right->_id);
     assert(left->_id == right->_id);
-    assert(!(_z_keyexpr_has_suffix(*left) ^ _z_keyexpr_has_suffix(*right)));
+    assert(_z_keyexpr_has_suffix(left) == _z_keyexpr_has_suffix(right));
 
     printf("Name (");
-    if (_z_keyexpr_has_suffix(*left)) {
-        printf("%s:%s", left->_suffix, right->_suffix);
-        assert(_z_str_eq(left->_suffix, right->_suffix) == true);
+    if (_z_keyexpr_has_suffix(left)) {
+        printf("%.*s:%.*s", (int)_z_string_len(&left->_suffix), _z_string_data(&left->_suffix),
+               (int)_z_string_len(&right->_suffix), _z_string_data(&right->_suffix));
+        assert(_z_string_equals(&left->_suffix, &right->_suffix) == true);
     } else {
         printf("NULL:NULL");
     }
@@ -639,13 +693,13 @@ void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
 
 void keyexpr_field(void) {
     printf("\n>> ResKey field\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_keyexpr_t e_rk = gen_keyexpr();
 
     // Encode
-    uint8_t header = (e_rk._suffix) ? _Z_FLAG_Z_K : 0;
+    uint8_t header = (_z_keyexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
     int8_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);
@@ -683,7 +737,7 @@ void assert_eq_resource_declaration(const _z_decl_kexpr_t *left, const _z_decl_k
 
 void resource_declaration(void) {
     printf("\n>> Resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_kexpr_t e_rd = gen_resource_declaration();
@@ -717,21 +771,19 @@ _z_decl_subscriber_t gen_subscriber_declaration(void) {
     _z_subinfo_t subinfo = gen_subinfo();
     _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(),
                                  ._id = (uint32_t)gen_uint64(),
-                                 ._ext_subinfo = {._pull_mode = subinfo.mode == Z_SUBMODE_PULL,
-                                                  ._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
+                                 ._ext_subinfo = {._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
     return e_sd;
 }
 
 void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z_decl_subscriber_t *right) {
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
     assert(left->_id == right->_id);
-    assert(left->_ext_subinfo._pull_mode == right->_ext_subinfo._pull_mode);
     assert(left->_ext_subinfo._reliable == right->_ext_subinfo._reliable);
 }
 
 void subscriber_declaration(void) {
     printf("\n>> Subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_subscriber_t e_sd = gen_subscriber_declaration();
@@ -763,7 +815,7 @@ void subscriber_declaration(void) {
 _z_decl_queryable_t gen_queryable_declaration(void) {
     _z_decl_queryable_t e_qd = {._keyexpr = gen_keyexpr(),
                                 ._id = (uint32_t)gen_uint64(),
-                                ._ext_queryable_info = {._complete = gen_uint8(), ._distance = (uint32_t)gen_zint()}};
+                                ._ext_queryable_info = {._complete = gen_uint8(), ._distance = gen_uint16()}};
 
     return e_qd;
 }
@@ -779,7 +831,7 @@ void assert_eq_queryable_declaration(const _z_decl_queryable_t *left, const _z_d
 
 void queryable_declaration(void) {
     printf("\n>> Queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_decl_queryable_t e_qd = gen_queryable_declaration();
@@ -824,7 +876,7 @@ void assert_eq_forget_resource_declaration(const _z_undecl_kexpr_t *left, const 
 
 void forget_resource_declaration(void) {
     printf("\n>> Forget resource declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_kexpr_t e_frd = gen_forget_resource_declaration();
@@ -865,7 +917,7 @@ void assert_eq_forget_subscriber_declaration(const _z_undecl_subscriber_t *left,
 
 void forget_subscriber_declaration(void) {
     printf("\n>> Forget subscriber declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_subscriber_t e_fsd = gen_forget_subscriber_declaration();
@@ -882,7 +934,6 @@ void forget_subscriber_declaration(void) {
     _z_uint8_decode(&e_hdr, &zbf);
     res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr);
     assert(res == _Z_RES_OK);
-
     printf("   ");
     assert_eq_forget_subscriber_declaration(&e_fsd, &d_fsd);
     printf("\n");
@@ -907,7 +958,7 @@ void assert_eq_forget_queryable_declaration(const _z_undecl_queryable_t *left, c
 
 void forget_queryable_declaration(void) {
     printf("\n>> Forget queryable declaration\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_undecl_queryable_t e_fqd = gen_forget_queryable_declaration();
@@ -1004,19 +1055,24 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
 /*------------------ Declare message ------------------*/
 _z_network_message_t gen_declare_message(void) {
     _z_declaration_t declaration = gen_declaration();
-
-    return _z_n_msg_make_declare(declaration);
+    _Bool has_id = gen_bool();
+    uint32_t id = gen_uint32();
+    return _z_n_msg_make_declare(declaration, has_id, id);
 }
 
 void assert_eq_declare_message(_z_n_msg_declare_t *left, _z_n_msg_declare_t *right) {
     printf("   ");
+    assert(left->has_interest_id == right->has_interest_id);
+    if (left->has_interest_id) {
+        assert(left->_interest_id == right->_interest_id);
+    }
     assert_eq_declaration(&left->_decl, &right->_decl);
     printf("\n");
 }
 
 void declare_message(void) {
     printf("\n>> Declare message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_network_message_t n_msg = gen_declare_message();
@@ -1037,6 +1093,79 @@ void declare_message(void) {
     // Free
     _z_n_msg_clear(&d_dcl);
     _z_n_msg_clear(&n_msg);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Interest ------------------*/
+#define _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK 0x8f  // Used to remove R, C & F flags
+
+_z_interest_t gen_interest(void) {
+    _z_interest_t i = {0};
+    _Bool is_final = gen_bool();  // To determine if interest is final or not
+    // Generate interest id
+    i._id = gen_uint32();
+    printf("Gen interest %d\n", is_final);
+    // Add regular interest data
+    if (!is_final) {
+        // Generate base flags
+        i.flags = gen_uint8() & _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK;
+        // Generate test cases
+        _Bool is_restricted = gen_bool();
+        uint8_t cf_type = gen_uint8() % 3;  // Flags must be c, f or cf
+        switch (cf_type) {
+            default:
+            case 0:
+                i.flags |= _Z_INTEREST_FLAG_CURRENT;
+                break;
+            case 1:
+                i.flags |= _Z_INTEREST_FLAG_FUTURE;
+                break;
+            case 2:
+                i.flags |= (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE);
+                break;
+        }
+        if (is_restricted) {
+            i.flags |= _Z_INTEREST_FLAG_RESTRICTED;
+            // Generate ke
+            i._keyexpr = gen_keyexpr();
+        }
+    };
+    return i;
+}
+
+_z_network_message_t gen_interest_message(void) {
+    _z_interest_t interest = gen_interest();
+    return _z_n_msg_make_interest(interest);
+}
+
+void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
+    printf("Interest: 0x%x, 0x%x, %u, %u\n", left->flags, right->flags, left->_id, right->_id);
+    printf("Interest ke: %d, %d, %d, %d, %.*s, %.*s\n", left->_keyexpr._id, right->_keyexpr._id,
+           left->_keyexpr._mapping._val, right->_keyexpr._mapping._val, (int)_z_string_len(&left->_keyexpr._suffix),
+           _z_string_data(&left->_keyexpr._suffix), (int)_z_string_len(&right->_keyexpr._suffix),
+           _z_string_data(&right->_keyexpr._suffix));
+    assert(left->flags == right->flags);
+    assert(left->_id == right->_id);
+    assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
+}
+void interest_message(void) {
+    printf("\n>> Interest message\n");
+    // Init
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+    _z_network_message_t expected = gen_interest_message();
+    // Encode
+    assert(_z_n_interest_encode(&wbf, &expected._body._interest) == _Z_RES_OK);
+    // Decode
+    _z_n_msg_interest_t decoded;
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t header = _z_zbuf_read(&zbf);
+    assert(_z_n_interest_decode(&decoded, &zbf, header) == _Z_RES_OK);
+    // Check
+    assert_eq_interest(&expected._body._interest._interest, &decoded._interest);
+    // Clean-up
+    _z_n_msg_interest_clear(&decoded);
+    _z_n_msg_interest_clear(&expected._body._interest);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1077,7 +1206,7 @@ void assert_eq_push_body(const _z_push_body_t *left, const _z_push_body_t *right
 
 void push_body_message(void) {
     printf("\n>> Put/Del message\n");
-    _z_wbuf_t wbf = gen_wbuf(65535);
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
     _z_push_body_t e_da = gen_push_body();
@@ -1103,46 +1232,19 @@ void push_body_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-/*------------------ Pull message ------------------*/
-_z_msg_pull_t gen_pull_message(void) { return (_z_msg_pull_t){._ext_source_info = _z_source_info_null()}; }
-
-void assert_eq_pull_message(_z_msg_pull_t *left, _z_msg_pull_t *right) {
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-}
-
-void pull_message(void) {
-    printf("\n>> Pull message\n");
-    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
-    _z_msg_pull_t e_pull_msg = gen_pull_message();
-
-    assert(_z_pull_encode(&wbf, &e_pull_msg) == _Z_RES_OK);
-
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-
-    _z_msg_pull_t d_pull_msg;
-    assert(_z_pull_decode(&d_pull_msg, &zbf, header) == _Z_RES_OK);
-    assert_eq_pull_message(&e_pull_msg, &d_pull_msg);
-
-    _z_msg_pull_clear(&e_pull_msg);
-    _z_msg_pull_clear(&d_pull_msg);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 _z_msg_query_t gen_query(void) {
     return (_z_msg_query_t){
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
+        ._consolidation = (gen_uint8() % 4) - 1,
         ._ext_info = gen_source_info(),
-        ._parameters = gen_bytes(16),
+        ._parameters = gen_slice(16),
         ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
     };
 }
 
 void assert_eq_query(const _z_msg_query_t *left, const _z_msg_query_t *right) {
-    assert(left->_ext_consolidation == right->_ext_consolidation);
+    assert(left->_consolidation == right->_consolidation);
     assert_eq_source_info(&left->_ext_info, &right->_ext_info);
-    assert_eq_bytes(&left->_parameters, &right->_parameters);
+    assert_eq_slice(&left->_parameters, &right->_parameters);
     assert_eq_value(&left->_ext_value, &right->_ext_value);
 }
 
@@ -1164,21 +1266,18 @@ void query_message(void) {
 }
 
 _z_msg_err_t gen_err(void) {
+    size_t len = 1 + gen_uint8();
     return (_z_msg_err_t){
-        ._code = gen_uint16(),
-        ._is_infrastructure = gen_bool(),
-        ._timestamp = gen_timestamp(),
+        ._encoding = gen_encoding(),
         ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._ext_value = gen_bool() ? gen_value() : _z_value_null(),
+        ._payload = gen_payload(len),  // Hangs if 0
     };
 }
 
 void assert_eq_err(const _z_msg_err_t *left, const _z_msg_err_t *right) {
-    assert(left->_code == right->_code);
-    assert(left->_is_infrastructure == right->_is_infrastructure);
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
+    assert_eq_encoding(&left->_encoding, &right->_encoding);
     assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert_eq_value(&left->_ext_value, &right->_ext_value);
+    assert_eq_bytes(&left->_payload, &right->_payload);
 }
 
 void err_message(void) {
@@ -1197,46 +1296,16 @@ void err_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-_z_msg_ack_t gen_ack(void) {
-    return (_z_msg_ack_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-    };
-}
-
-void assert_eq_ack(const _z_msg_ack_t *left, const _z_msg_ack_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-}
-
-void ack_message(void) {
-    printf("\n>> Ack message\n");
-    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
-    _z_msg_ack_t expected = gen_ack();
-    assert(_z_ack_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_ack_t decoded;
-    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    uint8_t header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_ack_decode(&decoded, &zbf, header));
-    assert_eq_ack(&expected, &decoded);
-    _z_zbuf_clear(&zbf);
-    _z_wbuf_clear(&wbf);
-}
-
 _z_msg_reply_t gen_reply(void) {
     return (_z_msg_reply_t){
-        ._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null(),
-        ._timestamp = gen_timestamp(),
-        ._ext_consolidation = (gen_uint8() % 4) - 1,
-        ._value = gen_value(),
+        ._consolidation = (gen_uint8() % 4) - 1,
+        ._body = gen_push_body(),
     };
 }
 
 void assert_eq_reply(const _z_msg_reply_t *left, const _z_msg_reply_t *right) {
-    assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
-    assert_eq_source_info(&left->_ext_source_info, &right->_ext_source_info);
-    assert(left->_ext_consolidation == right->_ext_consolidation);
-    assert_eq_value(&left->_value, &right->_value);
+    assert(left->_consolidation == right->_consolidation);
+    assert_eq_push_body(&left->_body, &right->_body);
 }
 
 void reply_message(void) {
@@ -1297,16 +1366,12 @@ _z_n_msg_request_t gen_request(void) {
         ._ext_budget = gen_bool() ? (uint32_t)gen_uint64() : 0,
         ._ext_timeout_ms = gen_bool() ? (uint32_t)gen_uint64() : 0,
     };
-    switch (gen_uint8() % 4) {
+    switch (gen_uint8() % 2) {
         case 0: {
             request._tag = _Z_REQUEST_QUERY;
             request._body._query = gen_query();
         } break;
-        case 1: {
-            request._tag = _Z_REQUEST_PULL;
-            request._body._pull =
-                (_z_msg_pull_t){._ext_source_info = gen_bool() ? gen_source_info() : _z_source_info_null()};
-        } break;
+        case 1:
         default: {
             _z_push_body_t body = gen_push_body();
             if (body._is_put) {
@@ -1342,9 +1407,6 @@ void assert_eq_request(const _z_n_msg_request_t *left, const _z_n_msg_request_t 
             assert_eq_push_body(&(_z_push_body_t){._is_put = false, ._body._del = left->_body._del},
                                 &(_z_push_body_t){._is_put = false, ._body._del = right->_body._del});
         } break;
-        case _Z_REQUEST_PULL: {
-            assert_eq_source_info(&left->_body._pull._ext_source_info, &right->_body._pull._ext_source_info);
-        } break;
     }
 }
 
@@ -1373,28 +1435,15 @@ _z_n_msg_response_t gen_response(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
     };
-    switch (gen_uint() % 5) {
+    switch (gen_uint32() % 2) {
         case 0: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
-            ret._body._ack = gen_ack();
-        } break;
-        case 1: {
             ret._tag = _Z_RESPONSE_BODY_ERR;
             ret._body._err = gen_err();
         } break;
-        case 2: {
-            ret._tag = _Z_RESPONSE_BODY_ACK;
-            ret._body._reply = gen_reply();
-        } break;
+        case 1:
         default: {
-            _z_push_body_t body = gen_push_body();
-            if (body._is_put) {
-                ret._tag = _Z_RESPONSE_BODY_PUT;
-                ret._body._put = body._body._put;
-            } else {
-                ret._tag = _Z_RESPONSE_BODY_DEL;
-                ret._body._del = body._body._del;
-            }
+            ret._tag = _Z_RESPONSE_BODY_REPLY;
+            ret._body._reply = gen_reply();
         } break;
     }
     return ret;
@@ -1414,17 +1463,7 @@ void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response
         } break;
         case _Z_RESPONSE_BODY_ERR: {
             assert_eq_err(&left->_body._err, &right->_body._err);
-        } break;
-        case _Z_RESPONSE_BODY_ACK: {
-            assert_eq_ack(&left->_body._ack, &right->_body._ack);
-        } break;
-        case _Z_RESPONSE_BODY_PUT: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = true, ._body._put = left->_body._put},
-                                &(_z_push_body_t){._is_put = true, ._body._put = right->_body._put});
-        } break;
-        case _Z_RESPONSE_BODY_DEL: {
-            assert_eq_push_body(&(_z_push_body_t){._is_put = false, ._body._del = left->_body._del},
-                                &(_z_push_body_t){._is_put = false, ._body._del = right->_body._del});
+
         } break;
     }
 }
@@ -1478,7 +1517,7 @@ _z_transport_message_t gen_join(void) {
         conduit._val._plain._best_effort = gen_uint64();
         conduit._val._plain._reliable = gen_uint64();
     }
-    return _z_t_msg_make_join(gen_uint8() % 3, gen_uint64(), gen_zid(), conduit);
+    return _z_t_msg_make_join(_z_whatami_from_uint8((gen_uint8() % 3)), gen_uint64(), gen_zid(), conduit);
 }
 void assert_eq_join(const _z_t_msg_join_t *left, const _z_t_msg_join_t *right) {
     assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
@@ -1517,16 +1556,16 @@ void join_message(void) {
 
 _z_transport_message_t gen_init(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_init_syn(gen_uint8() % 3, gen_zid());
+        return _z_t_msg_make_init_syn(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid());
     } else {
-        return _z_t_msg_make_init_ack(gen_uint8() % 3, gen_zid(), gen_bytes(16));
+        return _z_t_msg_make_init_ack(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(), gen_slice(16));
     }
 }
 void assert_eq_init(const _z_t_msg_init_t *left, const _z_t_msg_init_t *right) {
     assert(left->_batch_size == right->_batch_size);
     assert(left->_req_id_res == right->_req_id_res);
     assert(left->_seq_num_res == right->_seq_num_res);
-    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert_eq_slice(&left->_cookie, &right->_cookie);
     assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
     assert(left->_version == right->_version);
     assert(left->_whatami == right->_whatami);
@@ -1549,13 +1588,13 @@ void init_message(void) {
 
 _z_transport_message_t gen_open(void) {
     if (gen_bool()) {
-        return _z_t_msg_make_open_syn(gen_uint(), gen_uint(), gen_bytes(16));
+        return _z_t_msg_make_open_syn(gen_uint32(), gen_uint32(), gen_slice(16));
     } else {
-        return _z_t_msg_make_open_ack(gen_uint(), gen_uint());
+        return _z_t_msg_make_open_ack(gen_uint32(), gen_uint32());
     }
 }
 void assert_eq_open(const _z_t_msg_open_t *left, const _z_t_msg_open_t *right) {
-    assert_eq_bytes(&left->_cookie, &right->_cookie);
+    assert_eq_slice(&left->_cookie, &right->_cookie);
     assert(left->_initial_sn == right->_initial_sn);
     assert(left->_lease == right->_lease);
 }
@@ -1616,7 +1655,8 @@ void keep_alive_message(void) {
     _z_wbuf_clear(&wbf);
 }
 _z_network_message_t gen_net_msg(void) {
-    switch (gen_uint8() % 5) {
+    switch (gen_uint8() % 6) {
+        default:
         case 0: {
             return gen_declare_message();
         } break;
@@ -1629,9 +1669,11 @@ _z_network_message_t gen_net_msg(void) {
         case 3: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE, ._body._response = gen_response()};
         } break;
-        case 4:
-        default: {
+        case 4: {
             return (_z_network_message_t){._tag = _Z_N_RESPONSE_FINAL, ._body._response_final = gen_response_final()};
+        } break;
+        case 5: {
+            return (_z_network_message_t){._tag = _Z_N_INTEREST, ._body._interest._interest = gen_interest()};
         } break;
     }
 }
@@ -1655,12 +1697,19 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
         case _Z_N_RESPONSE_FINAL: {
             assert_eq_response_final(&left->_body._response_final, &right->_body._response_final);
         } break;
+        case _Z_N_INTEREST: {
+            assert_eq_interest(&left->_body._interest._interest, &right->_body._interest._interest);
+        } break;
+        default:
+            assert(false);
+            break;
     }
 }
 _z_network_message_vec_t gen_net_msgs(size_t n) {
     _z_network_message_vec_t ret = _z_network_message_vec_make(n);
     for (size_t i = 0; i < n; i++) {
         _z_network_message_t *msg = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
+        memset(msg, 0, sizeof(_z_network_message_t));
         *msg = gen_net_msg();
         _z_network_message_vec_append(&ret, msg);
     }
@@ -1668,7 +1717,7 @@ _z_network_message_vec_t gen_net_msgs(size_t n) {
 }
 
 _z_transport_message_t gen_frame(void) {
-    return _z_t_msg_make_frame(gen_uint(), gen_net_msgs(gen_uint8() % 16), gen_bool());
+    return _z_t_msg_make_frame(gen_uint32(), gen_net_msgs(gen_uint8() % 16), gen_bool());
 }
 void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right) {
     assert(left->_sn == right->_sn);
@@ -1694,11 +1743,11 @@ void frame_message(void) {
 }
 
 _z_transport_message_t gen_fragment(void) {
-    return _z_t_msg_make_fragment(gen_uint(), gen_bytes(gen_uint8()), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), gen_slice(gen_uint8()), gen_bool(), gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);
-    assert_eq_bytes(&left->_payload, &right->_payload);
+    assert_eq_slice(&left->_payload, &right->_payload);
 }
 void fragment_message(void) {
     printf("\n>> fragment message\n");
@@ -1788,9 +1837,10 @@ void transport_message(void) {
 
 _z_scouting_message_t gen_scouting(void) {
     if (gen_bool()) {
-        return _z_s_msg_make_scout(gen_uint8() % 3, gen_zid());
+        return _z_s_msg_make_scout((z_what_t)_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid());
     } else {
-        return _z_s_msg_make_hello(gen_uint8() % 3, gen_zid(), gen_locator_array((gen_uint8() % 16) + 1));
+        return _z_s_msg_make_hello(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zid(),
+                                   gen_locator_array((gen_uint8() % 16) + 1));
     }
 }
 void assert_eq_scouting(const _z_scouting_message_t *left, const _z_scouting_message_t *right) {
@@ -1836,6 +1886,9 @@ int main(void) {
     for (unsigned int i = 0; i < RUNS; i++) {
         printf("\n\n== RUN %u", i);
 
+        // Core
+        zint();
+
         // Message fields
         payload_field();
         timestamp_field();
@@ -1852,11 +1905,10 @@ int main(void) {
         // Zenoh messages
         declare_message();
         push_body_message();
-        pull_message();
         query_message();
         err_message();
-        ack_message();
         reply_message();
+        interest_message();
 
         // Network messages
         push_message();

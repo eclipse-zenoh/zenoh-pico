@@ -62,25 +62,28 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, mode);
     if (clocator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_LISTEN_KEY, llocator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     printf("Declaring publisher for '%s'...\n", keyexpr);
-    z_owned_publisher_t pub = z_declare_publisher(z_session_loan(&s), z_keyexpr(keyexpr), NULL);
-    if (!z_publisher_check(&pub)) {
+    z_owned_publisher_t pub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_declare_publisher(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -92,7 +95,12 @@ int main(int argc, char **argv) {
         if (z_clock_elapsed_ms(&now) > 1000) {
             snprintf(buf, 256, "[%4d] %s", idx, value);
             printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-            z_publisher_put(z_publisher_loan(&pub), (const uint8_t *)buf, strlen(buf), NULL);
+
+            // Create payload
+            z_owned_bytes_t payload;
+            z_bytes_serialize_from_str(&payload, buf);
+
+            z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
             ++idx;
 
             now = z_clock_now();

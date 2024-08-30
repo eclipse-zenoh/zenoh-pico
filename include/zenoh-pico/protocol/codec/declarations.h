@@ -28,9 +28,8 @@
 #define _Z_UNDECL_QUERYABLE_MID 5
 #define _Z_DECL_TOKEN_MID 6
 #define _Z_UNDECL_TOKEN_MID 7
-#define _Z_DECL_INTEREST_MID 8
-#define _Z_FINAL_INTEREST_MID 9
-#define _Z_UNDECL_INTEREST_MID 10
+#define _Z_DECL_FINAL_MID 0x1a
+
 int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl);
 int8_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl);
@@ -47,12 +46,6 @@ int8_t _z_decl_token_encode(_z_wbuf_t *wbf, const _z_decl_token_t *decl);
 int8_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
 int8_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl);
 int8_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_decl_interest_encode(_z_wbuf_t *wbf, const _z_decl_interest_t *decl);
-int8_t _z_decl_interest_decode(_z_decl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_final_interest_encode(_z_wbuf_t *wbf, const _z_final_interest_t *decl);
-int8_t _z_final_interest_decode(_z_final_interest_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_undecl_interest_encode(_z_wbuf_t *wbf, const _z_undecl_interest_t *decl);
-int8_t _z_undecl_interest_decode(_z_undecl_interest_t *decl, _z_zbuf_t *zbf, uint8_t header);
 
 int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl);
 int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf);

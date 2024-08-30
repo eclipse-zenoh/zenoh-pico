@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
@@ -36,7 +37,7 @@
  *     locator: The locator where to scout.
  *     timeout: The time that should be spent scouting before returning the results.
  */
-void _z_scout(const z_what_t what, const _z_id_t zid, const char *locator, const uint32_t timeout,
+void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
@@ -82,12 +83,13 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr:  The resource key to publish. The callee gets the ownership
  *              of any allocated value.
+ *     encoding: The optional default encoding to use during put. The callee gets the ownership.
  *
  * Returns:
- *    The created :c:type:`_z_publisher_t` or null if the declaration failed.
+ *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
  */
-_z_publisher_t *_z_declare_publisher(_z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                     z_congestion_control_t congestion_control, z_priority_t priority);
+_z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -107,24 +109,21 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Parameters:
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to write. The caller keeps its ownership.
- *     payload: The value to write.
- *     len: The length of the value to write.
+ *     payload: The data to write.
  *     encoding: The encoding of the payload. The callee gets the ownership of
  *               any allocated value.
  *     kind: The kind of the value.
  *     cong_ctrl: The congestion control of this write. Possible values defined
  *                in :c:type:`_z_congestion_control_t`.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *     timestamp: The timestamp of this write. The API level timestamp (e.g. of the data when it was created).
+ *     attachment: An optional attachment to this write.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *payload, const size_t len,
-                const _z_encoding_t encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                z_priority_t priority
-#if Z_FEATURE_ATTACHMENT == 1
-                ,
-                z_attachment_t attachment
-#endif
-);
+int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t *encoding,
+                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -141,10 +140,10 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const uint8_t *pay
  * received. arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_subscriber_t` or null if the declaration failed.
+ *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                       _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
+                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -156,17 +155,6 @@ _z_subscriber_t *_z_declare_subscriber(_z_session_rc_t *zn, _z_keyexpr_t keyexpr
  *    0 if success, or a negative value identifying the error.
  */
 int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
-
-/**
- * Pull data for a pull mode :c:type:`_z_subscriber_t`. The pulled data will be provided
- * by calling the **callback** function provided to the :c:func:`_z_declare_subscriber` function.
- *
- * Parameters:
- *     sub: The :c:type:`_z_subscriber_t` to pull from.
- * Returns:
- *     ``0`` in case of success, ``-1`` in case of failure.
- */
-int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
@@ -182,10 +170,10 @@ int8_t _z_subscriber_pull(const _z_subscriber_t *sub);
  *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *    The created :c:type:`_z_queryable_t` or null if the declaration failed.
+ *    The created :c:type:`_z_queryable_t` (in null state if the declaration failed)..
  */
-_z_queryable_t *_z_declare_queryable(_z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
-                                     _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+                                    _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -210,8 +198,27 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     query: The query to reply to. The caller keeps its ownership.
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
+ *     kind: The type of operation.
+ *     attachment: An optional attachment to the reply.
  */
-int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const _z_value_t payload);
+int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp,
+                     const _z_bytes_t attachment);
+/**
+ * Send a reply error to a query.
+ *
+ * This function must be called inside of a Queryable callback passing the
+ * query received as parameters of the callback function. This function can
+ * be called multiple times to send multiple replies to a query. The reply
+ * will be considered complete when the Queryable callback returns.
+ *
+ * Parameters:
+ *     query: The query to reply to. The caller keeps its ownership.
+ *     key: The resource key of this reply. The caller keeps the ownership.
+ *     payload: The value of this reply, the caller keeps ownership.
+ */
+int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -227,18 +234,24 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_keyexpr_t keyexpr, const 
  *     consolidation: The kind of consolidation that should be applied on replies.
  *     value: The payload of the query.
  *     callback: The callback function that will be called on reception of replies for this query.
- *     arg_call: A pointer that will be passed to the **callback** on each call.
  *     dropper: The callback function that will be called on upon completion of the callback.
- *     arg_drop: A pointer that will be passed to the **dropper** on each call.
+ *     arg: A pointer that will be passed to the **callback** on each call.
+ *     timeout_ms: The timeout value of this query.
+ *     attachment: An optional attachment to this query.
+ *     cong_ctrl: The congestion control to apply when routing the query.
+ *     priority: The priority of the query.
+ *
  */
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                void *arg_call, _z_drop_handler_t dropper, void *arg_drop, uint32_t timeout_ms
-#if Z_FEATURE_ATTACHMENT == 1
-                ,
-                z_attachment_t attachment
+                _z_drop_handler_t dropper, void *arg, uint32_t timeout_ms, const _z_bytes_t attachment,
+                z_congestion_control_t cong_ctrl, z_priority_t priority, _Bool is_express);
 #endif
-);
+
+#if Z_FEATURE_INTEREST == 1
+uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
+                         void *arg);
+int8_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */

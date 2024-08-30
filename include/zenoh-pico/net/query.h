@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
@@ -27,20 +28,18 @@ typedef struct _z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    _z_session_t *_zn;
+    _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
+    _z_bytes_t attachment;
     char *_parameters;
     _Bool _anyke;
 } _z_query_t;
 
+_z_query_t _z_query_null(void);
 void _z_query_clear(_z_query_t *q);
-_Z_REFCOUNT_DEFINE(_z_query, _z_query)
+int8_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
+void _z_query_free(_z_query_t **query);
 
-/**
- * Container for an owned query rc
- */
-typedef struct {
-    _z_query_rc_t _rc;
-} z_owned_query_t;
+_Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
  * Return type when declaring a queryable.
@@ -51,10 +50,12 @@ typedef struct {
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1
-_z_query_t _z_query_create(const _z_value_t *value, const _z_keyexpr_t *key, const _z_bytes_t *parameters,
-                           _z_session_t *zn, uint32_t request_id);
+_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_rc_t *zn,
+                           uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
+_z_queryable_t _z_queryable_null(void);
+_Bool _z_queryable_check(const _z_queryable_t *queryable);
 #endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

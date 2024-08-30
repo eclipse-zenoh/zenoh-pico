@@ -16,10 +16,10 @@
 
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/logger.h"
-#include "zenoh-pico/net/memory.h"
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
+#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 

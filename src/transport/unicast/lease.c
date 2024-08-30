@@ -44,10 +44,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     ztu->_received = false;
     ztu->_transmitted = false;
 
-    _z_zint_t next_lease = ztu->_lease;
-    _z_zint_t next_keep_alive = (_z_zint_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+    int next_lease = (int)ztu->_lease;
+    int next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     while (ztu->_lease_task_running == true) {
-        if (next_lease == 0) {
+        // Next lease process
+        if (next_lease <= 0) {
             // Check if received data
             if (ztu->_received == true) {
                 // Reset the lease parameters
@@ -58,10 +59,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
                 break;
             }
-
-            next_lease = ztu->_lease;
+            next_lease = (int)ztu->_lease;
         }
-
+        // Next keep alive process
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
             if (ztu->_transmitted == false) {
@@ -72,11 +72,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 
             // Reset the keep alive parameters
             ztu->_transmitted = false;
-            next_keep_alive = (_z_zint_t)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+            next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
 
         // Compute the target interval
-        _z_zint_t interval;
+        int interval;
         if (next_lease == 0) {
             interval = next_keep_alive;
         } else {
@@ -87,7 +87,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         }
 
         // The keep alive and lease intervals are expressed in milliseconds
-        z_sleep_ms(interval);
+        z_sleep_ms((size_t)interval);
 
         next_lease = next_lease - interval;
         next_keep_alive = next_keep_alive - interval;
@@ -95,13 +95,12 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     return 0;
 }
 
-int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, z_task_t *task) {
+int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
-    (void)memset(task, 0, sizeof(z_task_t));
+    (void)memset(task, 0, sizeof(_z_task_t));
     zt->_transport._unicast._lease_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
-    if (z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
-        zt->_transport._unicast._lease_task_running = false;
+    if (_z_task_init(task, attr, _zp_unicast_lease_task, &zt->_transport._unicast) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
