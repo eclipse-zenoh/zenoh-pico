@@ -50,4 +50,4 @@ jobs:
           BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
           BUILD_MULTICAST: OFF # Workaround for Windows as it seems the previous step is being ignored
           BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
-          ZENOH_BRANCH: dev/1.0.0
+          ZENOH_BRANCH: main
