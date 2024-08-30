@@ -34,7 +34,6 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     struct {
-        _Bool _pull_mode;
         _Bool _reliable;
     } _ext_subinfo;
 } _z_decl_subscriber_t;
@@ -49,8 +48,8 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     struct {
-        uint8_t _complete;
-        uint32_t _distance;
+        _Bool _complete;
+        uint16_t _distance;
     } _ext_queryable_info;
 } _z_decl_queryable_t;
 _z_decl_queryable_t _z_decl_queryable_null(void);
@@ -71,28 +70,10 @@ typedef struct {
 } _z_undecl_token_t;
 _z_undecl_token_t _z_undecl_token_null(void);
 
-#define _Z_INTEREST_FLAG_KEYEXPRS (1)
-#define _Z_INTEREST_FLAG_SUBSCRIBERS (1 << 1)
-#define _Z_INTEREST_FLAG_QUERYABLES (1 << 2)
-#define _Z_INTEREST_FLAG_TOKENS (1 << 3)
-#define _Z_INTEREST_FLAG_CURRENT (1 << 5)
-#define _Z_INTEREST_FLAG_FUTURE (1 << 6)
-#define _Z_INTEREST_FLAG_AGGREGATE (1 << 7)
 typedef struct {
-    _z_keyexpr_t _keyexpr;
-    uint32_t _id;
-    uint8_t interest_flags;
-} _z_decl_interest_t;
-_z_decl_interest_t _z_decl_interest_null(void);
-typedef struct {
-    uint32_t _id;
-} _z_final_interest_t;
-_z_final_interest_t _z_final_interest_null(void);
-typedef struct {
-    uint32_t _id;
-    _z_keyexpr_t _ext_keyexpr;
-} _z_undecl_interest_t;
-_z_undecl_interest_t _z_undecl_interest_null(void);
+    _Bool _placeholder;  // In case we add extensions
+} _z_decl_final_t;
+_z_decl_final_t _z_decl_final_null(void);
 
 typedef struct {
     enum {
@@ -104,9 +85,7 @@ typedef struct {
         _Z_UNDECL_QUERYABLE,
         _Z_DECL_TOKEN,
         _Z_UNDECL_TOKEN,
-        _Z_DECL_INTEREST,
-        _Z_FINAL_INTEREST,
-        _Z_UNDECL_INTEREST,
+        _Z_DECL_FINAL,
     } _tag;
     union {
         _z_decl_kexpr_t _decl_kexpr;
@@ -117,9 +96,7 @@ typedef struct {
         _z_undecl_queryable_t _undecl_queryable;
         _z_decl_token_t _decl_token;
         _z_undecl_token_t _undecl_token;
-        _z_decl_interest_t _decl_interest;
-        _z_final_interest_t _final_interest;
-        _z_undecl_interest_t _undecl_interest;
+        _z_decl_final_t _decl_final;
     } _body;
 } _z_declaration_t;
 void _z_declaration_clear(_z_declaration_t* decl);
@@ -128,17 +105,15 @@ void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping);
 _z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 
-_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable, _Bool pull_mode);
+_z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool reliable);
 _z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
-_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint32_t distance, uint8_t complete);
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint16_t distance, _Bool complete);
 _z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
 _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
 _z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
-_z_declaration_t _z_make_decl_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
-_z_declaration_t _z_make_undecl_interest(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
-_z_declaration_t _z_make_final_decl(uint32_t id);
+_z_declaration_t _z_make_decl_final(void);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_DECLARATIONS_H */

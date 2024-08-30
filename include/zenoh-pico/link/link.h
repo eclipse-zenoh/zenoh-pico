@@ -94,8 +94,8 @@ typedef int8_t (*_z_f_link_listen)(struct _z_link_t *self);
 typedef void (*_z_f_link_close)(struct _z_link_t *self);
 typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
 typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
-typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr);
-typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_bytes_t *addr);
+typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
+typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
 
 typedef struct _z_link_t {
@@ -137,11 +137,11 @@ typedef struct _z_link_t {
 
 void _z_link_clear(_z_link_t *zl);
 void _z_link_free(_z_link_t **zl);
-int8_t _z_open_link(_z_link_t *zl, const char *locator);
-int8_t _z_listen_link(_z_link_t *zl, const char *locator);
+int8_t _z_open_link(_z_link_t *zl, _z_string_t *locator);
+int8_t _z_listen_link(_z_link_t *zl, _z_string_t *locator);
 
 int8_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
-size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_bytes_t *addr);
-size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_bytes_t *addr);
+size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
+size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr);
 
 #endif /* ZENOH_PICO_LINK_H */

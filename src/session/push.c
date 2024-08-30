@@ -16,7 +16,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/logging.h"
@@ -25,19 +25,23 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push) {
     int8_t ret = _Z_RES_OK;
 
     // TODO check body to know where to dispatch
-    _z_bytes_t payload = push->_body._is_put ? push->_body._body._put._payload : _z_bytes_empty();
-    _z_encoding_t encoding = push->_body._is_put ? push->_body._body._put._encoding : z_encoding_default();
-    int kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
 #if Z_FEATURE_SUBSCRIPTION == 1
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t att = _z_encoded_as_attachment(&push->_body._body._put._attachment);
-#endif
-    ret = _z_trigger_subscriptions(zn, push->_key, payload, encoding, kind, push->_timestamp, push->_qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                   ,
-                                   att
-#endif
-    );
+
+    size_t kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
+    if (push->_body._is_put) {
+        _z_msg_put_t *put = &push->_body._body._put;
+        ret = _z_trigger_subscriptions(zn, push->_key, put->_payload, &put->_encoding, kind, &put->_commons._timestamp,
+                                       push->_qos, put->_attachment);
+    } else {
+        _z_encoding_t encoding = _z_encoding_null();
+        _z_bytes_t payload = _z_bytes_null();
+        _z_msg_del_t *del = &push->_body._body._del;
+        ret = _z_trigger_subscriptions(zn, push->_key, payload, &encoding, kind, &del->_commons._timestamp, push->_qos,
+                                       del->_attachment);
+    }
+#else
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(push);
 #endif
     return ret;
 }

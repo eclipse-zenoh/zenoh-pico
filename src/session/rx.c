@@ -18,12 +18,13 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/push.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/reply.h"
@@ -34,34 +35,35 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ Handle message ------------------*/
-int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
+int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
             _Z_DEBUG("Handling _Z_N_DECLARE");
-            _z_n_msg_declare_t decl = msg->_body._declare;
-            switch (decl._decl._tag) {
+            _z_n_msg_declare_t *decl = &msg->_body._declare;
+            switch (decl->_decl._tag) {
                 case _Z_DECL_KEXPR: {
-                    if (_z_register_resource(zn, decl._decl._body._decl_kexpr._keyexpr,
-                                             decl._decl._body._decl_kexpr._id, local_peer_id) == 0) {
+                    if (_z_register_resource(zn, decl->_decl._body._decl_kexpr._keyexpr,
+                                             decl->_decl._body._decl_kexpr._id, local_peer_id) == 0) {
                         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
                     }
                 } break;
                 case _Z_UNDECL_KEXPR: {
-                    _z_unregister_resource(zn, decl._decl._body._undecl_kexpr._id, local_peer_id);
+                    _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, local_peer_id);
                 } break;
                 case _Z_DECL_SUBSCRIBER: {
-                    // TODO: add support or explicitly discard
-                } break;
-                case _Z_UNDECL_SUBSCRIBER: {
-                    // TODO: add support or explicitly discard
+                    _z_interest_process_declares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_QUERYABLE: {
-                    // TODO: add support or explicitly discard
+                    _z_interest_process_declares(zn, &decl->_decl);
+                } break;
+                case _Z_UNDECL_SUBSCRIBER: {
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
-                    // TODO: add support or explicitly discard
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_TOKEN: {
                     // TODO: add support or explicitly discard
@@ -69,14 +71,12 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
                 case _Z_UNDECL_TOKEN: {
                     // TODO: add support or explicitly discard
                 } break;
-                case _Z_DECL_INTEREST: {
-                    // TODO: add support or explicitly discard
-                } break;
-                case _Z_FINAL_INTEREST: {
-                    // TODO: add support or explicitly discard
-                } break;
-                case _Z_UNDECL_INTEREST: {
-                    // TODO: add support or explicitly discard
+                case _Z_DECL_FINAL: {
+                    // Check that interest id is valid
+                    if (!decl->has_interest_id) {
+                        return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
+                    }
+                    _z_interest_process_declare_final(zn, decl->_interest_id);
                 } break;
             }
         } break;
@@ -87,105 +87,53 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
         } break;
         case _Z_N_REQUEST: {
             _Z_DEBUG("Handling _Z_N_REQUEST");
-            _z_n_msg_request_t req = msg->_body._request;
-            switch (req._tag) {
+            _z_n_msg_request_t *req = &msg->_body._request;
+            switch (req->_tag) {
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
-                    _z_msg_query_t *query = &req._body._query;
-                    ret = _z_trigger_queryables(zn, query, req._key, (uint32_t)req._rid);
+                    _z_msg_query_t *query = &req->_body._query;
+                    ret = _z_trigger_queryables(zsrc, query, req->_key, (uint32_t)req->_rid,
+                                                req->_body._query._ext_attachment);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif
                 } break;
                 case _Z_REQUEST_PUT: {
-                    _z_msg_put_t put = req._body._put;
 #if Z_FEATURE_SUBSCRIPTION == 1
-#if Z_FEATURE_ATTACHMENT == 1
-                    z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
-#endif
-                    ret = _z_trigger_subscriptions(zn, req._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, req._ext_qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                                   ,
-                                                   att
-#endif
-                    );
+                    _z_msg_put_t put = req->_body._put;
+                    ret = _z_trigger_subscriptions(zn, req->_key, put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
+                                                   &put._commons._timestamp, req->_ext_qos, put._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
-                        ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
-                        _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
+                        _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
                 } break;
                 case _Z_REQUEST_DEL: {
-                    _z_msg_del_t del = req._body._del;
 #if Z_FEATURE_SUBSCRIPTION == 1
-                    ret = _z_trigger_subscriptions(zn, req._key, _z_bytes_empty(), z_encoding_default(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, req._ext_qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                                   ,
-                                                   z_attachment_null()
-#endif
-                    );
+                    _z_msg_del_t del = req->_body._del;
+                    _z_encoding_t encoding = _z_encoding_null();
+                    ret = _z_trigger_subscriptions(zn, req->_key, _z_bytes_null(), &encoding, Z_SAMPLE_KIND_DELETE,
+                                                   &del._commons._timestamp, req->_ext_qos, del._attachment);
 #endif
                     if (ret == _Z_RES_OK) {
-                        _z_network_message_t ack = _z_n_msg_make_ack(req._rid, &req._key);
-                        ret = _z_send_n_msg(zn, &ack, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
-                        _z_network_message_t final = _z_n_msg_make_response_final(req._rid);
+                        _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
                         ret |= _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
                     }
-                } break;
-                case _Z_REQUEST_PULL: {
-                    // @TODO: define behaviour
                 } break;
             }
         } break;
         case _Z_N_RESPONSE: {
             _Z_DEBUG("Handling _Z_N_RESPONSE");
-            _z_n_msg_response_t response = msg->_body._response;
-            switch (response._tag) {
+            _z_n_msg_response_t *response = &msg->_body._response;
+            switch (response->_tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
-                    _z_msg_reply_t *reply = &response._body._reply;
-                    ret = _z_trigger_reply_partial(zn, response._request_id, response._key, reply);
+                    _z_msg_reply_t *reply = &response->_body._reply;
+                    ret = _z_trigger_reply_partial(zn, response->_request_id, response->_key, reply);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
-                    // @TODO: expose errors to the user
-                    _z_msg_err_t error = response._body._err;
-                    _z_bytes_t payload = error._ext_value.payload;
-                    _ZP_UNUSED(payload);  // Unused when logs are deactivated
-                    _Z_ERROR("Received Err for query %zu: code=%d, message=%.*s", response._request_id, error._code,
-                             (int)payload.len, payload.start);
-                } break;
-                case _Z_RESPONSE_BODY_ACK: {
-                    // @TODO: implement ACKs for puts/dels
-                } break;
-                case _Z_RESPONSE_BODY_PUT: {
-                    _z_msg_put_t put = response._body._put;
-#if Z_FEATURE_SUBSCRIPTION == 1
-#if Z_FEATURE_ATTACHMENT == 1
-                    z_attachment_t att = _z_encoded_as_attachment(&put._attachment);
-#endif
-                    ret = _z_trigger_subscriptions(zn, response._key, put._payload, put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   put._commons._timestamp, response._ext_qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                                   ,
-                                                   att
-#endif
-                    );
-#endif
-                } break;
-                case _Z_RESPONSE_BODY_DEL: {
-                    _z_msg_del_t del = response._body._del;
-#if Z_FEATURE_SUBSCRIPTION == 1
-                    ret = _z_trigger_subscriptions(zn, response._key, _z_bytes_empty(), z_encoding_default(),
-                                                   Z_SAMPLE_KIND_DELETE, del._commons._timestamp, response._ext_qos
-#if Z_FEATURE_ATTACHMENT == 1
-                                                   ,
-                                                   z_attachment_null()
-#endif
-                    );
-#endif
+                    _z_msg_err_t *error = &response->_body._err;
+                    ret = _z_trigger_reply_err(zn, response->_request_id, error);
                 } break;
             }
         } break;
@@ -193,6 +141,19 @@ int8_t _z_handle_network_message(_z_session_t *zn, _z_zenoh_message_t *msg, uint
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL");
             ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
         } break;
+
+        case _Z_N_INTEREST: {
+            _Z_DEBUG("Handling _Z_N_INTEREST");
+            _z_n_msg_interest_t *interest = &msg->_body._interest;
+
+            _Bool not_final = ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0);
+            if (not_final) {
+                _z_interest_process_interest(zn, interest->_interest._keyexpr, interest->_interest._id,
+                                             interest->_interest.flags);
+            } else {
+                _z_interest_process_interest_final(zn, interest->_interest._id);
+            }
+        }
     }
     _z_msg_clear(msg);
     return ret;

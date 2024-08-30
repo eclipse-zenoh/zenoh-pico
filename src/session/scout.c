@@ -25,16 +25,17 @@
 #error "Scouting UDP requires UDP unicast links to be enabled (Z_FEATURE_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsigned long period, _Bool exit_on_first) {
+_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, _Bool exit_on_first) {
     // Define an empty array
     _z_hello_list_t *ret = NULL;
     int8_t err = _Z_RES_OK;
 
     _z_endpoint_t ep;
-    err = _z_endpoint_from_str(&ep, locator);
+    err = _z_endpoint_from_string(&ep, locator);
 
 #if Z_FEATURE_SCOUTING_UDP == 1
-    if ((err == _Z_RES_OK) && (_z_str_eq(ep._locator._protocol, UDP_SCHEMA) == true)) {
+    _z_string_t cmp_str = _z_string_alias_str(UDP_SCHEMA);
+    if ((err == _Z_RES_OK) && _z_string_equals(&ep._locator._protocol, &cmp_str)) {
         _z_endpoint_clear(&ep);
     } else
 #endif
@@ -78,21 +79,21 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
                             _Z_INFO("Received _Z_HELLO message");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
-                                hello->version = s_msg._body._hello._version;
-                                hello->whatami = s_msg._body._hello._whatami;
-                                memcpy(hello->zid.id, s_msg._body._hello._zid.id, 16);
+                                hello->_version = s_msg._body._hello._version;
+                                hello->_whatami = s_msg._body._hello._whatami;
+                                memcpy(hello->_zid.id, s_msg._body._hello._zid.id, 16);
 
                                 size_t n_loc = _z_locator_array_len(&s_msg._body._hello._locators);
                                 if (n_loc > 0) {
-                                    hello->locators = _z_str_array_make(n_loc);
+                                    hello->_locators = _z_string_svec_make(n_loc);
+
                                     for (size_t i = 0; i < n_loc; i++) {
-                                        hello->locators.val[i] =
-                                            _z_locator_to_str(&s_msg._body._hello._locators._val[i]);
+                                        _z_string_t s = _z_locator_to_string(&s_msg._body._hello._locators._val[i]);
+                                        _z_string_svec_append(&hello->_locators, &s);
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address
-                                    hello->locators.len = 0;
-                                    hello->locators.val = NULL;
+                                    _z_string_svec_clear(&hello->_locators);
                                 }
 
                                 ret = _z_hello_list_push(ret, hello);
@@ -128,7 +129,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, const char *locator, unsig
     return ret;
 }
 
-_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, const char *locator, const uint32_t timeout,
+_z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
                                 const _Bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 

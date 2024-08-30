@@ -32,7 +32,7 @@
 // Max frame size
 #define _ZP_MAX_ETH_FRAME_SIZE 1514
 
-// Endpoing config types
+// Endpoint config types
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
@@ -82,14 +82,13 @@ typedef struct {
     _Bool _has_vlan;
 } _z_raweth_socket_t;
 
-int8_t _z_get_smac_raweth(_z_raweth_socket_t *resock);
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len);
-size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_bytes_t *addr,
+size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_slice_t *addr,
                          const _zp_raweth_whitelist_array_t *whitelist);
 int8_t _z_close_raweth(_z_sys_net_socket_t *sock);
-size_t _z_raweth_ntohs(size_t val);
-size_t _z_raweth_htons(size_t val);
+uint16_t _z_raweth_ntohs(uint16_t val);
+uint16_t _z_raweth_htons(uint16_t val);
 
 #endif
 

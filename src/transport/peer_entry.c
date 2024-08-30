@@ -23,7 +23,7 @@ void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src) {
 #endif
 
     src->_remote_zid = _z_id_empty();
-    _z_bytes_clear(&src->_remote_addr);
+    _z_slice_clear(&src->_remote_addr);
 }
 
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src) {
@@ -40,7 +40,7 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
     dst->_received = src->_received;
 
     dst->_remote_zid = src->_remote_zid;
-    _z_bytes_copy(&dst->_remote_addr, &src->_remote_addr);
+    _z_slice_copy(&dst->_remote_addr, &src->_remote_addr);
 }
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {

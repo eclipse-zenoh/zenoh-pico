@@ -1,0 +1,43 @@
+{
+    "name": "zenoh-pico",
+    "version": "@ZENOH_PICO_MAJOR@.@ZENOH_PICO_MINOR@.@ZENOH_PICO_PATCH@.@ZENOH_PICO_TWEAK@",
+    "description": "The Eclipse Zenoh: Zero Overhead Pub/sub, Store/Query and Compute. It unifies data in motion, data in-use, data at rest and computations. It carefully blends traditional pub/sub with geo-distributed storages, queries and computations, while retaining a level of time and space efficiency that is well beyond any of the mainstream stacks. Zenoh-Pico is the implementation able to scale down to extremely constrainded devices and networks.",
+    "keywords": [
+        "pubsub",
+        "publish",
+        "subscribe",
+        "query",
+        "distributed data distribution"
+    ],
+    "homepage": "https://zenoh.io/",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/eclipse-zenoh/zenoh-pico"
+    },
+    "authors": {
+        "name": "ZettaScale Technology Zenoh Team",
+        "email": "zenoh@zettascale.tech",
+        "url": "https://www.zettascale.tech/",
+        "maintainer": true
+    },
+    "license": "Apache-2.0 OR EPL-2.0",
+    "frameworks": [
+        "arduino",
+        "espidf",
+        "mbed",
+        "zephyr"
+    ],
+    "headers": [
+        "zenoh-pico.h"
+    ],
+    "examples": [
+        "examples"
+    ],
+    "dependencies": {
+        "BluetoothSerial": "0.16.1",
+        "FreeRTOS": "1.0.0"
+    },
+    "build": {
+        "extraScript": "extra_script.py"
+    }
+}

@@ -66,56 +66,61 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
     }
 
     printf("Opening session...\n");
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s));
+        z_close(z_move(s));
         return -1;
     }
-
+    // Wait for joins in peer mode
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for joins...\n");
+        sleep(3);
+    }
+    // Declare publisher
     printf("Declaring publisher for '%s'...\n", keyexpr);
-    z_owned_publisher_t pub = z_declare_publisher(z_loan(s), z_keyexpr(keyexpr), NULL);
-    if (!z_check(pub)) {
+    z_owned_publisher_t pub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
 
+    // Publish data
     printf("Press CTRL-C to quit...\n");
     char buf[256];
     for (int idx = 0; idx < n; ++idx) {
-        sleep(1);
+        z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
-        z_publisher_put_options_t options = z_publisher_put_options_default();
-        options.encoding = z_encoding(Z_ENCODING_PREFIX_TEXT_PLAIN, NULL);
-        z_publisher_put(z_loan(pub), (const uint8_t *)buf, strlen(buf), &options);
+        // Create payload
+        z_owned_bytes_t payload;
+        z_bytes_serialize_from_str(&payload, buf);
+
+        z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
-
+    // Clean up
     z_undeclare_publisher(z_move(pub));
-
-    // Stop read and lease tasks for zenoh-pico
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
-
     z_close(z_move(s));
-
     return 0;
 }
 #else

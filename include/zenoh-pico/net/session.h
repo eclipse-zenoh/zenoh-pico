@@ -29,7 +29,7 @@
  */
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_t _mutex_inner;
+    _z_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
@@ -41,7 +41,6 @@ typedef struct _z_session_t {
     // Session counters
     uint16_t _resource_id;
     uint32_t _entity_id;
-    _z_zint_t _pull_id;
     _z_zint_t _query_id;
     _z_zint_t _interest_id;
 
@@ -62,9 +61,15 @@ typedef struct _z_session_t {
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;
 #endif
+
+    // Session interests
+#if Z_FEATURE_INTEREST == 1
+    _z_session_interest_rc_list_t *_local_interests;
+    _z_declare_data_list_t *_remote_declares;
+#endif
 } _z_session_t;
 
-extern void _z_session_clear(_z_session_t *zn);  // Forward type declaration to avoid cyclical include
+extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid cyclical include
 
 _Z_REFCOUNT_DEFINE(_z_session, _z_session)
 
@@ -79,7 +84,7 @@ _Z_REFCOUNT_DEFINE(_z_session, _z_session)
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  *
  */
-int8_t _z_open(_z_session_t *zn, _z_config_t *config);
+int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.

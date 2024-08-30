@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/codec/ext.h"
 #include "zenoh-pico/system/platform.h"
@@ -57,13 +57,13 @@ int8_t _z_msg_ext_decode_zint_na(_z_msg_ext_zint_t *ext, _z_zbuf_t *zbf) { retur
 
 int8_t _z_msg_ext_encode_zbuf(_z_wbuf_t *wbf, const _z_msg_ext_zbuf_t *ext) {
     int8_t ret = _Z_RES_OK;
-    _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &ext->_val))
+    _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &ext->_val))
     return ret;
 }
 
 int8_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
     int8_t ret = _Z_RES_OK;
-    ret |= _z_bytes_decode(&ext->_val, zbf);
+    ret |= _z_slice_decode(&ext->_val, zbf);
     return ret;
 }
 
@@ -180,7 +180,7 @@ int8_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             break;
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
-            _z_bytes_t buf = extension->_body._zbuf._val;
+            _z_slice_t buf = extension->_body._zbuf._val;
             char *hex = z_malloc(buf.len * 2 + 1);
             for (size_t i = 0; i < buf.len; ++i) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);

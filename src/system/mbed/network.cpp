@@ -262,7 +262,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
-                             _z_bytes_t *addr) {
+                             _z_slice_t *addr) {
     SocketAddress raddr;
     nsapi_size_or_error_t rb = 0;
 
@@ -274,13 +274,13 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
         }
 
         if (raddr.get_ip_version() == NSAPI_IPv4) {
-            *addr = _z_bytes_make(NSAPI_IPv4_BYTES + sizeof(uint16_t));
+            *addr = _z_slice_make(NSAPI_IPv4_BYTES + sizeof(uint16_t));
             (void)memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv4_BYTES);
             uint16_t port = raddr.get_port();
             (void)memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv4_BYTES), &port, sizeof(uint16_t));
             break;
         } else if (raddr.get_ip_version() == NSAPI_IPv6) {
-            *addr = _z_bytes_make(NSAPI_IPv6_BYTES + sizeof(uint16_t));
+            *addr = _z_slice_make(NSAPI_IPv6_BYTES + sizeof(uint16_t));
             (void)memcpy(const_cast<uint8_t *>(addr->start), raddr.get_ip_bytes(), NSAPI_IPv6_BYTES);
             uint16_t port = raddr.get_port();
             (void)memcpy(const_cast<uint8_t *>(addr->start + NSAPI_IPv6_BYTES), &port, sizeof(uint16_t));
@@ -294,7 +294,7 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
 }
 
 size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,
-                                   const _z_sys_net_endpoint_t lep, _z_bytes_t *addr) {
+                                   const _z_sys_net_endpoint_t lep, _z_slice_t *addr) {
     size_t n = 0;
     uint8_t *pos = &ptr[0];
 

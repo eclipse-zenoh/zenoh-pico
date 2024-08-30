@@ -42,20 +42,22 @@ void reply_dropper(void *ctx) {
     Serial.println(" >> Received query final notification");
 }
 
-void reply_handler(z_owned_reply_t *oreply, void *ctx) {
+void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(oreply)) {
-        z_sample_t sample = z_reply_ok(oreply);
-        z_owned_str_t keystr = z_keyexpr_to_string(sample.keyexpr);
-        std::string val((const char *)sample.payload.start, sample.payload.len);
+        const z_loaned_sample_t *sample = z_reply_ok(oreply);
+        z_view_string_t keystr;
+        z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
+        z_owned_string_t replystr;
+        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
 
         Serial.print(" >> [Get listener] Received (");
-        Serial.print(z_str_loan(&keystr));
+        Serial.write(z_string_data(z_view_string_loan(&keystr)), z_string_len(z_view_string_loan(&keystr)));
         Serial.print(", ");
-        Serial.print(val.c_str());
+        Serial.write(z_string_data(z_string_loan(&replystr)), z_string_len(z_string_loan(&replystr)));
         Serial.println(")");
 
-        z_str_drop(z_str_move(&keystr));
+        z_string_drop(z_string_move(&replystr));
     } else {
         Serial.println(" >> Received an error");
     }
@@ -78,16 +80,16 @@ void setup() {
     Serial.println("OK");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    if (z_open(&s, z_config_move(&config)) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;
@@ -96,8 +98,8 @@ void setup() {
     Serial.println("OK");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     Serial.println("Zenoh setup finished!");
 
@@ -110,12 +112,19 @@ void loop() {
     Serial.print("Sending Query ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
-    z_get_options_t opts = z_get_options_default();
+    z_get_options_t opts;
+    z_get_options_default(&opts);
+    // Value encoding
+    z_owned_bytes_t payload;
     if (strcmp(VALUE, "") != 0) {
-        opts.value.payload = _z_bytes_wrap((const uint8_t *)VALUE, strlen(VALUE));
+        z_bytes_from_static_str(&payload, VALUE);
+        opts.payload = z_bytes_move(&payload);
     }
-    z_owned_closure_reply_t callback = z_closure_reply(reply_handler, reply_dropper, NULL);
-    if (z_get(z_session_loan(&s), z_keyexpr(KEYEXPR), "", z_closure_reply_move(&callback), &opts) < 0) {
+    z_owned_closure_reply_t callback;
+    z_closure_reply(&callback, reply_handler, reply_dropper, NULL);
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+    if (z_get(z_session_loan(&s), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&callback), &opts) < 0) {
         Serial.println("Unable to send query.");
     }
 }

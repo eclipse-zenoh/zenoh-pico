@@ -33,10 +33,10 @@ typedef struct {
 typedef struct {
     TaskHandle_t handle;
     EventGroupHandle_t join_event;
-} z_task_t;
+} _z_task_t;
 
-typedef SemaphoreHandle_t z_mutex_t;
-typedef void *z_condvar_t;
+typedef SemaphoreHandle_t _z_mutex_t;
+typedef void *_z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef TickType_t z_clock_t;

@@ -35,18 +35,31 @@
 #define KEYEXPR "demo/example/zenoh-pico-queryable"
 #define VALUE "[ARDUINO]{ESP32} Queryable from Zenoh-Pico!"
 
-void query_handler(const z_query_t *query, void *arg) {
-    z_owned_str_t keystr = z_keyexpr_to_string(z_query_keyexpr(query));
+void query_handler(const z_loaned_query_t *query, void *arg) {
+    z_view_string_t keystr;
+    z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
+    Serial.print(" >> [Queryable handler] Received Query '");
+    Serial.write(z_string_data(z_view_string_loan(&keystr)), z_string_len(z_view_string_loan(&keystr)));
+    Serial.println("'");
 
-    Serial.print(" >> [Queryable handler] Replying Data ('");
-    Serial.print(z_str_loan(&keystr));
-    Serial.print("': '");
-    Serial.print(VALUE);
-    Serial.println("')");
+    // Process value
+    z_owned_string_t payload_string;
+    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    if (z_string_len(z_string_loan(&payload_string)) > 1) {
+        Serial.print("     with value '");
+        Serial.write(z_string_data(z_string_loan(&payload_string)), z_string_len(z_string_loan(&payload_string)));
+        Serial.println("'");
+    }
+    z_string_drop(z_string_move(&payload_string));
 
-    z_query_reply(query, z_keyexpr(KEYEXPR), (const unsigned char *)VALUE, strlen(VALUE), NULL);
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
 
-    z_str_drop(z_str_move(&keystr));
+    // Reply value encoding
+    z_owned_bytes_t reply_payload;
+    z_bytes_from_static_str(&reply_payload, VALUE);
+
+    z_query_reply(query, z_view_keyexpr_loan(&ke), z_bytes_move(&reply_payload), NULL);
 }
 
 void setup() {
@@ -66,16 +79,17 @@ void setup() {
     Serial.println("OK");
 
     // Initialize Zenoh Session and other parameters
-    z_owned_config_t config = z_config_default();
-    zp_config_insert(z_config_loan(&config), Z_CONFIG_MODE_KEY, z_string_make(MODE));
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
     if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan(&config), Z_CONFIG_CONNECT_KEY, z_string_make(CONNECT));
+        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
     }
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s = z_open(z_config_move(&config));
-    if (!z_session_check(&s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_config_move(&config)) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;
@@ -84,17 +98,20 @@ void setup() {
     Serial.println("OK");
 
     // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan(&s), NULL);
-    zp_start_lease_task(z_session_loan(&s), NULL);
+    zp_start_read_task(z_session_loan_mut(&s), NULL);
+    zp_start_lease_task(z_session_loan_mut(&s), NULL);
 
     // Declare Zenoh queryable
     Serial.print("Declaring Queryable on ");
     Serial.print(KEYEXPR);
     Serial.println(" ...");
-    z_owned_closure_query_t callback = z_closure_query(query_handler, NULL, NULL);
-    z_owned_queryable_t qable =
-        z_declare_queryable(z_session_loan(&s), z_keyexpr(KEYEXPR), z_closure_query_move(&callback), NULL);
-    if (!z_queryable_check(&qable)) {
+    z_owned_closure_query_t callback;
+    z_closure_query(&callback, query_handler, NULL, NULL);
+    z_owned_queryable_t qable;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
+    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+                            NULL) < 0) {
         Serial.println("Unable to declare queryable.");
         while (1) {
             ;

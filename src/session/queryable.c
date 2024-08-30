@@ -45,7 +45,7 @@ _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_queryable_
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (id == qle->in->val._id) {
+        if (id == _Z_RC_IN_VAL(qle)->_id) {
             ret = qle;
             break;
         }
@@ -63,8 +63,7 @@ _z_session_queryable_rc_list_t *__z_get_session_queryable_by_key(_z_session_quer
     _z_session_queryable_rc_list_t *xs = qles;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-        if (_z_keyexpr_intersects(qle->in->val._key._suffix, strlen(qle->in->val._key._suffix), key._suffix,
-                                  strlen(key._suffix)) == true) {
+        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(qle)->_key, &key) == true) {
             ret = _z_session_queryable_rc_list_push(ret, _z_session_queryable_rc_clone_as_ptr(qle));
         }
 
@@ -95,89 +94,72 @@ _z_session_queryable_rc_list_t *__unsafe_z_get_session_queryable_by_key(_z_sessi
 }
 
 _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, const _z_zint_t id) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_session_queryable_rc_t *qle = __unsafe_z_get_session_queryable_by_id(zn, id);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return qle;
 }
 
 _z_session_queryable_rc_list_t *_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
     _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return qles;
 }
 
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q) {
-    _Z_DEBUG(">>> Allocating queryable for (%ju:%s)", (uintmax_t)q->_key._id, q->_key._suffix);
+    _Z_DEBUG(">>> Allocating queryable for (%ju:%.*s)", (uintmax_t)q->_key._id, (int)_z_string_len(&q->_key._suffix),
+             _z_string_data(&q->_key._suffix));
     _z_session_queryable_rc_t *ret = NULL;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     ret = (_z_session_queryable_rc_t *)z_malloc(sizeof(_z_session_queryable_rc_t));
     if (ret != NULL) {
-        *ret = _z_session_queryable_rc_new_from_val(*q);
+        *ret = _z_session_queryable_rc_new_from_val(q);
         zn->_local_queryable = _z_session_queryable_rc_list_push(zn->_local_queryable, ret);
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid) {
+int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
+                             const _z_bytes_t attachment) {
     int8_t ret = _Z_RES_OK;
+    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
-    if (key._suffix != NULL) {
+    if (_z_keyexpr_has_suffix(&key)) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+        _zp_session_unlock_mutex(zn);
 
         // Build the z_query
-        z_query_t query = {._val = {._rc = _z_query_rc_new()}};
-        query._val._rc.in->val = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zn, qid);
+        _z_query_t q = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, attachment);
+        _z_query_rc_t query = _z_query_rc_new_from_val(&q);
         // Parse session_queryable list
         _z_session_queryable_rc_list_t *xs = qles;
         while (xs != NULL) {
             _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
-            qle->in->val._callback(&query, qle->in->val._arg);
+            _Z_RC_IN_VAL(qle)->_callback(&query, _Z_RC_IN_VAL(qle)->_arg);
             xs = _z_session_queryable_rc_list_tail(xs);
         }
         // Clean up
-        _z_query_rc_drop(&query._val._rc);
-        _z_keyexpr_clear(&key);
+        _z_query_rc_drop(&query);
         _z_session_queryable_rc_list_free(&qles);
     } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+        _zp_session_unlock_mutex(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
@@ -185,28 +167,20 @@ int8_t _z_trigger_queryables(_z_session_t *zn, const _z_msg_query_t *msgq, const
 }
 
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *qle) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     zn->_local_queryable =
         _z_session_queryable_rc_list_drop_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }
 
 void _z_flush_session_queryable(_z_session_t *zn) {
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_lock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_lock_mutex(zn);
 
     _z_session_queryable_rc_list_free(&zn->_local_queryable);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(&zn->_mutex_inner);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    _zp_session_unlock_mutex(zn);
 }
 
 #endif

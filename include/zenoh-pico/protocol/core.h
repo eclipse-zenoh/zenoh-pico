@@ -22,8 +22,11 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/system/platform.h"
 
 #define _Z_OPTIONAL
@@ -56,14 +59,6 @@ _Bool _z_id_check(_z_id_t id);
 _z_id_t _z_id_empty(void);
 
 /**
- * A zenoh encoding.
- */
-typedef struct {
-    _z_bytes_t suffix;
-    z_encoding_prefix_t prefix;
-} _z_encoding_t;
-
-/**
  * A zenoh timestamp.
  */
 typedef struct {
@@ -71,69 +66,11 @@ typedef struct {
     uint64_t time;
 } _z_timestamp_t;
 
-#if Z_FEATURE_ATTACHMENT == 1
-/**
- * The body of a loop over an attachment's key-value pairs.
- *
- * `key` and `value` are loaned to the body for the duration of a single call.
- * `context` is passed transparently through the iteration driver.
- *
- * Returning `0` is treated as `continue`.
- * Returning any other value is treated as `break`.
- */
-typedef int8_t (*z_attachment_iter_body_t)(_z_bytes_t key, _z_bytes_t value, void *context);
-/**
- * The driver of a loop over an attachment's key-value pairs.
- *
- * This function is expected to call `loop_body` once for each key-value pair
- * within `iterator`, passing `context`, and returning any non-zero value immediately (breaking iteration).
- */
-typedef int8_t (*z_attachment_iter_driver_t)(const void *iterator, z_attachment_iter_body_t loop_body, void *context);
-/**
- * The v-table for an attachment.
- */
-typedef struct z_attachment_vtable_t {
-    /**
-     * See `z_attachment_iteration_driver_t`'s documentation.
-     */
-    z_attachment_iter_driver_t iteration_driver;
-} z_attachment_vtable_t;
-
-/**
- * A v-table based map of byte slice to byte slice.
- *
- * `vtable == NULL` marks the gravestone value, as this type is often optional.
- * Users are encouraged to use `z_attachment_null` and `z_attachment_check` to interact.
- */
-typedef struct z_attachment_t {
-    const void *data;
-    z_attachment_iter_driver_t iteration_driver;
-} z_attachment_t;
-
-z_attachment_t z_attachment_null(void);
-_Bool z_attachment_check(const z_attachment_t *attachment);
-int8_t z_attachment_iterate(z_attachment_t this_, z_attachment_iter_body_t body, void *ctx);
-_z_bytes_t z_attachment_get(z_attachment_t this_, _z_bytes_t key);
-
-typedef struct {
-    union {
-        z_attachment_t decoded;
-        _z_bytes_t encoded;
-    } body;
-    _Bool is_encoded;
-} _z_owned_encoded_attachment_t;
-/**
- * Estimate the length of an attachment once encoded.
- */
-size_t _z_attachment_estimate_length(z_attachment_t att);
-z_attachment_t _z_encoded_as_attachment(const _z_owned_encoded_attachment_t *att);
-void _z_encoded_attachment_drop(_z_owned_encoded_attachment_t *att);
-#endif
-
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 _Bool _z_timestamp_check(const _z_timestamp_t *stamp);
+uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
  * The product of:
@@ -150,25 +87,26 @@ typedef struct {
 #define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE 0x7fff
 
 /**
- * A zenoh-net resource key.
+ * A zenoh key-expression.
  *
  * Members:
- *   _z_zint_t: The resource ID.
- *   char *val: A pointer to the string containing the resource name.
+ *   uint16_t _id: The resource ID of the ke.
+ *   _z_mapping_t _mapping: The resource mapping of the ke.
+ *   _z_string_t _suffix: The string value of the ke.
  */
 typedef struct {
     uint16_t _id;
     _z_mapping_t _mapping;
-    char *_suffix;
+    _z_string_t _suffix;
 } _z_keyexpr_t;
-static inline _Bool _z_keyexpr_owns_suffix(const _z_keyexpr_t *key) { return (key->_mapping._val & 0x8000) != 0; }
+
 static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
 static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
     return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
 }
-static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id, _Bool owns_suffix) {
+static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id) {
     assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-    _z_mapping_t mapping = {(uint16_t)((owns_suffix ? 0x8000 : 0) | id)};
+    _z_mapping_t mapping = {id};
     return mapping;
 }
 static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
@@ -181,12 +119,8 @@ static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
         _z_keyexpr_set_mapping(ke, id);
     }
 }
-static inline void _z_keyexpr_set_owns_suffix(_z_keyexpr_t *ke, _Bool owns_suffix) {
-    ke->_mapping._val &= 0x7fff;
-    ke->_mapping._val |= owns_suffix ? 0x8000 : 0;
-}
-static inline _Bool _z_keyexpr_has_suffix(_z_keyexpr_t ke) { return (ke._suffix != NULL) && (ke._suffix[0] != 0); }
-static inline _Bool _z_keyexpr_check(_z_keyexpr_t ke) { return (ke._id != 0) || _z_keyexpr_has_suffix(ke); }
+static inline _Bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
+static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
 
 /**
  * Create a resource key from a resource name.
@@ -219,33 +153,11 @@ typedef struct {
 } _z_qos_t;
 
 /**
- * A zenoh-net data sample.
- *
- * A sample is the value associated to a given resource at a given point in time.
- *
- * Members:
- *   _z_keyexpr_t key: The resource key of this data sample.
- *   _z_bytes_t value: The value of this data sample.
- *   _z_encoding_t encoding: The encoding for the value of this data sample.
- */
-typedef struct {
-    _z_keyexpr_t keyexpr;
-    _z_bytes_t payload;
-    _z_timestamp_t timestamp;
-    _z_encoding_t encoding;
-    z_sample_kind_t kind;
-    _z_qos_t qos;
-#if Z_FEATURE_ATTACHMENT == 1
-    z_attachment_t attachment;
-#endif
-} _z_sample_t;
-
-/**
  * Represents a Zenoh value.
  *
  * Members:
- *   _z_encoding_t encoding: The encoding of the `payload`.
  *   _z_bytes_t payload: The payload of this zenoh value.
+ *   _z_encoding_t encoding: The encoding of the `payload`.
  */
 typedef struct {
     _z_bytes_t payload;
@@ -253,7 +165,8 @@ typedef struct {
 } _z_value_t;
 _z_value_t _z_value_null(void);
 _z_value_t _z_value_steal(_z_value_t *value);
-void _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+void _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 
@@ -261,18 +174,22 @@ void _z_value_free(_z_value_t **hello);
  * A hello message returned by a zenoh entity to a scout message sent with :c:func:`_z_scout`.
  *
  * Members:
- *   _z_bytes_t zid: The Zenoh ID of the scouted entity (empty if absent).
- *   _z_str_array_t locators: The locators of the scouted entity.
+ *   _z_slice_t zid: The Zenoh ID of the scouted entity (empty if absent).
+ *   _z_string_vec_t locators: The locators of the scouted entity.
  *   z_whatami_t whatami: The kind of zenoh entity.
  */
 typedef struct {
-    _z_id_t zid;
-    _z_str_array_t locators;
-    z_whatami_t whatami;
-    uint8_t version;
+    _z_id_t _zid;
+    _z_string_svec_t _locators;
+    z_whatami_t _whatami;
+    uint8_t _version;
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
+int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
+_z_hello_t _z_hello_null(void);
+_Bool _z_hello_check(const _z_hello_t *hello);
+
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_hello, _z_hello_t)
 
@@ -281,32 +198,14 @@ typedef struct {
 } _z_target_complete_body_t;
 
 /**
- * The subscription period.
- *
- * Members:
- *     unsigned int origin:
- *     unsigned int period:
- *     unsigned int duration:
- */
-typedef struct {
-    unsigned int origin;
-    unsigned int period;
-    unsigned int duration;
-} _z_period_t;
-
-/**
  * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created
  * :c:type:`_z_subscription_rc_t`.
  *
  * Members:
- *     _z_period_t *period: The subscription period.
  *     z_reliability_t reliability: The subscription reliability.
- *     _z_submode_t mode: The subscription mode.
  */
 typedef struct {
-    _z_period_t period;
     z_reliability_t reliability;
-    z_submode_t mode;
 } _z_subinfo_t;
 
 typedef struct {

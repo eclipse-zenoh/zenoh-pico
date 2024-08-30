@@ -39,15 +39,18 @@ void z_stats_stop(z_stats_t *stats) {
     stats->count = 0;
 }
 
-void on_sample(const z_sample_t *sample, void *context) {
+void on_sample(const z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
+    z_owned_slice_t value;
+    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
+    unsigned long data_len = (unsigned long)z_slice_len(z_loan(value));
 
-    if (stats->curr_len != sample->payload.len) {
+    if (stats->curr_len != data_len) {
         // End previous measurement
         z_stats_stop(stats);
         // Check for end packet
-        stats->curr_len = (unsigned long)sample->payload.len;
-        if (sample->payload.len == 1) {
+        stats->curr_len = data_len;
+        if (data_len == 1) {
             test_end = true;
             return;
         }
@@ -55,6 +58,7 @@ void on_sample(const z_sample_t *sample, void *context) {
         printf("Starting test for pkt len: %lu\n", stats->curr_len);
         stats->start = z_clock_now();
     }
+    z_drop(z_move(value));
     stats->count++;
 }
 
@@ -74,32 +78,36 @@ int main(int argc, char **argv) {
         clocator = "tcp/127.0.0.1:7447";
     }
     // Set config
-    z_owned_config_t config = z_config_default();
+    z_owned_config_t config;
+    z_config_default(&config);
     if (mode != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_MODE_KEY, z_string_make(mode));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
     }
     if (llocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_LISTEN_KEY, z_string_make(llocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
     }
     if (clocator != NULL) {
-        zp_config_insert(z_loan(config), Z_CONFIG_CONNECT_KEY, z_string_make(clocator));
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
     }
     // Open session
-    z_owned_session_t s = z_open(z_move(config));
-    if (!z_check(s)) {
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config)) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan(s), NULL) < 0 || zp_start_lease_task(z_loan(s), NULL) < 0) {
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s));
         exit(-1);
     }
     // Declare Subscriber/resource
-    z_owned_closure_sample_t callback = z_closure(on_sample, NULL, (void *)&test_stats);
-    z_owned_subscriber_t sub = z_declare_subscriber(z_loan(s), z_keyexpr(keyexpr), z_move(callback), NULL);
-    if (!z_check(sub)) {
+    z_owned_closure_sample_t callback;
+    z_closure(&callback, on_sample, NULL, (void *)&test_stats);
+    z_owned_subscriber_t sub;
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }
@@ -112,13 +120,12 @@ int main(int argc, char **argv) {
     z_sleep_s(1);
     // Clean up
     z_undeclare_subscriber(z_move(sub));
-    zp_stop_read_task(z_loan(s));
-    zp_stop_lease_task(z_loan(s));
     z_close(z_move(s));
     exit(0);
 }
 #else
 int main(void) {
+    (void)test_stats;
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this test requires it.\n");
     return -2;
 }

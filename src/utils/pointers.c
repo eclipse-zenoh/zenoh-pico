@@ -14,13 +14,13 @@
 
 #include "zenoh-pico/utils/pointers.h"
 
-size_t _z_ptr_u8_diff(const uint8_t *l_ptr, const uint8_t *r_ptr) { return l_ptr - r_ptr; }
+size_t _z_ptr_u8_diff(const uint8_t *l_ptr, const uint8_t *r_ptr) { return (size_t)(l_ptr - r_ptr); }
 
 const uint8_t *_z_cptr_u8_offset(const uint8_t *ptr, const ptrdiff_t off) { return ptr + off; }
 
 uint8_t *_z_ptr_u8_offset(uint8_t *ptr, const ptrdiff_t off) { return ptr + off; }
 
-size_t _z_ptr_char_diff(const char *l_ptr, const char *r_ptr) { return l_ptr - r_ptr; }
+size_t _z_ptr_char_diff(const char *l_ptr, const char *r_ptr) { return (size_t)(l_ptr - r_ptr); }
 
 const char *_z_cptr_char_offset(const char *ptr, const ptrdiff_t off) { return ptr + off; }
 
