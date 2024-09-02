@@ -14,3 +14,5 @@ if(@CHECK_THREADS@)
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoTargets.cmake")
+
+add_library(zenohpico::lib ALIAS zenohpico::zenohpico)
