@@ -109,11 +109,11 @@ endif()
 
 set(Libname "zenohpico")
 add_library(${Libname})
+add_library(zenohpico::lib ALIAS ${Libname})
 
 function(add_definition value)
   add_definitions(-D${value})
   target_compile_definitions(${Libname} PUBLIC ${value})
-  add_library(zenohpico::lib ALIAS ${Libname})
 endfunction()
 
 add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
