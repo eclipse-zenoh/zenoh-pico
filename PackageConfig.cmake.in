@@ -1,21 +1,4 @@
-#
-# Copyright (c) 2023 ZettaScale Technology.
-#
-# This program and the accompanying materials are made available under the
-# terms of the Eclipse Public License 2.0 which is available at
-# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-# which is available at https://www.apache.org/licenses/LICENSE-2.0.
-#
-# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-#
-# Contributors:
-#   ZettaScale Zenoh team, <zenoh@zettascale.tech>
-#
-
-@PACKAGE_INIT@
-
-set(ZENOHPICO_BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
-set(CMAKE_SYSTEM_NAME @CMAKE_SYSTEM_NAME@)
+include(CMakeFindDependencyMacro)
 
 set(ZENOHPICO_FEATURE_UNSTABLE_API @Z_FEATURE_UNSTABLE_API@)
 set(ZENOHPICO_FEATURE_MULTI_THREAD @Z_FEATURE_MULTI_THREAD@)
@@ -26,43 +9,10 @@ set(ZENOHPICO_FEATURE_QUERYABLE @Z_FEATURE_QUERYABLE@)
 set(ZENOHPICO_FEATURE_RAWETH_TRANSPORT @Z_FEATURE_RAWETH_TRANSPORT@)
 set(ZENOHPICO_FEATURE_INTEREST @Z_FEATURE_INTEREST@)
 
-if(ZENOHPICO_BUILD_SHARED_LIBS)
-  if (NOT TARGET __zenohpico_lib)
-    add_library(__zenohpico_lib SHARED IMPORTED GLOBAL)
-    add_library(zenohpico::lib ALIAS __zenohpico_lib)
-    set_target_properties(__zenohpico_lib PROPERTIES IMPORTED_NO_SONAME TRUE)
-    set_property(TARGET __zenohpico_lib PROPERTY IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@LIBNAME@")
-    if(NOT ("@IMPLIB@" STREQUAL ""))
-        set_property(TARGET __zenohpico_lib PROPERTY IMPORTED_IMPLIB "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@IMPLIB@")
-    endif()
-    target_include_directories(__zenohpico_lib INTERFACE "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
-  endif()
-else()
-  if (NOT TARGET __zenohpico_static)
-    add_library(__zenohpico_static STATIC IMPORTED GLOBAL)
-    add_library(zenohpico::lib ALIAS __zenohpico_static)
-    set_property(TARGET __zenohpico_static PROPERTY IMPORTED_LOCATION "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/@LIBNAME@")
-    target_include_directories(__zenohpico_static INTERFACE "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_INCLUDEDIR@")
-  endif()
+if(@CHECK_THREADS@)
+  find_dependency(Threads REQUIRED)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  add_compile_definitions(ZENOH_LINUX)
-elseif(POSIX_COMPATIBLE)
-  add_compile_definitions(ZENOH_LINUX)
-elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
-  add_compile_definitions(ZENOH_BSD)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  add_compile_definitions(ZENOH_MACOS)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  add_compile_definitions(EMSCRIPTEN)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  add_compile_definitions(ZENOH_WINDOWS)
-elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
-  if(WITH_ZEPHYR)
-    add_compile_definitions(ZENOH_ZEPHYR)
-  elseif(WITH_FREERTOS_PLUS_TCP)
-    add_compile_definitions(ZENOH_FREERTOS_PLUS_TCP)
-  endif()
-endif()
+include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoTargets.cmake")
 
+add_library(zenohpico::lib ALIAS zenohpico::zenohpico)

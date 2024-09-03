@@ -108,11 +108,8 @@ else()
 endif()
 
 set(Libname "zenohpico")
-if(BUILD_SHARED_LIBS)
-  add_library(${Libname} SHARED)
-else()
-  add_library(${Libname} STATIC)
-endif()
+add_library(${Libname})
+add_library(zenohpico::lib ALIAS ${Libname})
 
 function(add_definition value)
   add_definitions(-D${value})
@@ -268,7 +265,10 @@ file(GLOB_RECURSE PublicHeaders
   "include/zenoh-pico/utils/*.h"
   "include/zenoh-pico/config.h"
 )
-target_include_directories(${Libname} PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${Libname}
+  PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
@@ -334,6 +334,7 @@ message(STATUS "Build tests: ${BUILD_TESTING}")
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
 install(TARGETS ${Libname}
+  EXPORT zenohpicoTargets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   COMPONENT Library
@@ -371,6 +372,12 @@ install(
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   CONFIGURATIONS ${configurations}
   COMPONENT dev)
+
+# Generate <Package>Targets.cmake
+install(
+  EXPORT zenohpicoTargets
+  NAMESPACE zenohpico::
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
 
 if(UNIX)
   configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
