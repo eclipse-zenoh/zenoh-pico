@@ -85,7 +85,7 @@
     _Bool z_view_##name##_is_empty(const z_view_##name##_t *obj);                   \
     const z_loaned_##name##_t *z_view_##name##_loan(const z_view_##name##_t *name); \
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *name);         \
-    void _z_view_##name##_empty(z_view_##name##_t *name);
+    void z_view_##name##_empty(z_view_##name##_t *name);
 
 #define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
     z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return (z_moved_##name##_t *)(obj); } \

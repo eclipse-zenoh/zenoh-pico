@@ -53,6 +53,11 @@ int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
     return _Z_RES_OK;
 }
 
+int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len) {
+    str->_val = _z_string_alias_substr((char *)value, len);
+    return _Z_RES_OK;
+}
+
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k) {
     return _z_string_svec_get(a, k);
 }
