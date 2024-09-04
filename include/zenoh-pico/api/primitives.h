@@ -1546,13 +1546,13 @@ z_id_t z_info_zid(const z_loaned_session_t *zs);
  * Converts a Zenoh ID into a string for print purposes.
  *
  * Parameters:
- *   str: Pointer to uninitialized :c:type:`z_owned_string_t` to store the string.
  *   id: Pointer to the id to convert.
+ *   str: Pointer to uninitialized :c:type:`z_owned_string_t` to store the string.
  *
  * Return:
  *   ``0`` if operation successful, ``negative value`` otherwise.
  */
-z_result_t z_id_to_string(z_owned_string_t *str, z_id_t *id);
+z_result_t z_id_to_string(z_id_t *id, z_owned_string_t *str);
 
 /**
  * Gets the keyexpr from a sample by aliasing it.
