@@ -1420,6 +1420,16 @@ int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_
 bool z_string_is_empty(const z_loaned_string_t *str);
 
 /**
+ * Returns :c:type:`z_loaned_slice_t` for the string
+ *
+ * Parameters:
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to get slice.
+ * Return:
+ *   slice containing string data
+ */
+const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str);
+
+/**
  * Returns id of Zenoh entity that transmitted hello message.
  *
  * Parameters:

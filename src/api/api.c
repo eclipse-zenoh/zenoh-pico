@@ -1026,6 +1026,8 @@ int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_
 
 bool z_string_is_empty(const z_loaned_string_t *str) { return _z_string_is_empty(str); }
 
+const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str) { return &str->_slice; }
+
 #if Z_FEATURE_PUBLICATION == 1
 int8_t _z_undeclare_and_clear_publisher(_z_publisher_t *pub) {
     int8_t ret = _Z_RES_OK;
