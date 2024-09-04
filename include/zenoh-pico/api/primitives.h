@@ -45,6 +45,19 @@ extern "C" {
 int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
 
 /**
+ * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` substring.
+ *
+ * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
+ *   value: Pointer to a null terminated string.
+ *   len: Size of the string.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len);
+
+/**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
  * It is a loaned key expression that aliases ``name``.
  * This function will fail if the string is not in canon form.
