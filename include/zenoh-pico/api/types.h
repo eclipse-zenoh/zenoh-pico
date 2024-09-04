@@ -186,7 +186,7 @@ _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
  *   (unstable) z_reliability_t reliability: The subscription reliability value.
  */
 typedef struct {
-#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_UNSTABLE_API == 1
     z_reliability_t reliability;
 #else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
