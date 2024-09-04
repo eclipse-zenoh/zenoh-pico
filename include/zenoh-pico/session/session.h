@@ -63,7 +63,6 @@ typedef struct {
     _z_data_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
-    _z_subinfo_t _info;
 } _z_subscription_t;
 
 _Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);

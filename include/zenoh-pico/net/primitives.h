@@ -134,16 +134,14 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to subscribe. The callee gets the ownership
  *             of any allocated value.
- *     sub_info: The :c:type:`_z_subinfo_t` to configure the :c:type:`_z_subscriber_t`.
- *               The callee gets the ownership of any allocated value.
  *     callback: The callback function that will be called each time a data matching the subscribed resource is
  * received. arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
  *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_data_handler_t callback,
+                                      _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.

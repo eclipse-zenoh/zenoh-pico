@@ -187,13 +187,12 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_data_handler_t callback,
+                                      _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr._id;
     s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr);
-    s._info = sub_info;
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
@@ -206,8 +205,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
         return ret;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration =
-        _z_make_decl_subscriber(&keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE);
+    _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(_Z_RC_IN_VAL(zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, sp_s);

@@ -197,17 +197,6 @@ typedef struct {
     _z_zint_t n;
 } _z_target_complete_body_t;
 
-/**
- * Informations to be passed to :c:func:`_z_declare_subscriber` to configure the created
- * :c:type:`_z_subscription_rc_t`.
- *
- * Members:
- *     z_reliability_t reliability: The subscription reliability.
- */
-typedef struct {
-    z_reliability_t reliability;
-} _z_subinfo_t;
-
 typedef struct {
     _z_id_t _id;
     uint32_t _entity_id;

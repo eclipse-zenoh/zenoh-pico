@@ -642,20 +642,6 @@ void timestamp_field(void) {
     _z_wbuf_clear(&wbf);
 }
 
-/*------------------ SubInfo field ------------------*/
-_z_subinfo_t gen_subinfo(void) {
-    _z_subinfo_t sm;
-    sm.reliability = gen_bool() ? Z_RELIABILITY_RELIABLE : Z_RELIABILITY_BEST_EFFORT;
-
-    return sm;
-}
-
-void assert_eq_subinfo(_z_subinfo_t *left, _z_subinfo_t *right) {
-    printf("SubInfo -> ");
-    printf("Reliable (%u:%u), ", left->reliability, right->reliability);
-    assert(left->reliability == right->reliability);
-}
-
 /*------------------ ResKey field ------------------*/
 _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
@@ -768,17 +754,13 @@ void resource_declaration(void) {
 
 /*------------------ Subscriber declaration ------------------*/
 _z_decl_subscriber_t gen_subscriber_declaration(void) {
-    _z_subinfo_t subinfo = gen_subinfo();
-    _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(),
-                                 ._id = (uint32_t)gen_uint64(),
-                                 ._ext_subinfo = {._reliable = subinfo.reliability == Z_RELIABILITY_RELIABLE}};
+    _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
     return e_sd;
 }
 
 void assert_eq_subscriber_declaration(const _z_decl_subscriber_t *left, const _z_decl_subscriber_t *right) {
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
     assert(left->_id == right->_id);
-    assert(left->_ext_subinfo._reliable == right->_ext_subinfo._reliable);
 }
 
 void subscriber_declaration(void) {

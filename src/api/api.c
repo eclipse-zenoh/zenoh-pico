@@ -1540,6 +1540,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options) {
 
 int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                             z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
+    _ZP_UNUSED(options);
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
@@ -1575,16 +1576,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
         }
     }
 
-    _z_subinfo_t subinfo = _z_subinfo_default();
-    if (options != NULL) {
-#if Z_FEATURE_UNSTABLE_API == 1
-        subinfo.reliability = options->reliability;
-#else
-        subinfo.reliability = Z_RELIABILITY_DEFAULT;
-#endif
-    }
-    _z_subscriber_t int_sub =
-        _z_declare_subscriber(zs, key, subinfo, callback->_this._val.call, callback->_this._val.drop, ctx);
+    _z_subscriber_t int_sub = _z_declare_subscriber(zs, key, callback->_this._val.call, callback->_this._val.drop, ctx);
 
     z_internal_closure_sample_null(&callback->_this);
     sub->_val = int_sub;
