@@ -64,6 +64,7 @@ typedef _z_timestamp_t z_timestamp_t;
  *   uint8_t *start: A pointer to the bytes array.
  */
 _Z_OWNED_TYPE_VALUE(_z_slice_t, slice)
+_Z_VIEW_TYPE(_z_slice_t, slice)
 
 /**
  * Represents a container for slices.
@@ -84,6 +85,14 @@ typedef _z_bytes_iterator_t z_bytes_iterator_t;
  * A reader for serialized data.
  */
 typedef _z_bytes_iterator_t z_bytes_reader_t;
+
+/**
+ * An iterator over slices of serialized data.
+ */
+typedef struct {
+    const _z_bytes_t *_bytes;
+    size_t _slice_idx;
+} z_bytes_slice_iterator_t;
 
 /**
  * Represents a string without null-terminator.

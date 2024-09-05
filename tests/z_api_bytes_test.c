@@ -299,6 +299,49 @@ void test_pair(void) {
     assert(d == 123.45);
 }
 
+_Bool check_slice(const z_loaned_bytes_t *b, const uint8_t *data, size_t len) {
+    z_bytes_slice_iterator_t it = z_bytes_get_slice_iterator(b);
+    uint8_t *data_out = (uint8_t *)malloc(len);
+    z_view_slice_t v;
+    size_t pos = 0;
+    while (z_bytes_slice_iterator_next(&it, &v)) {
+        const uint8_t *slice_data = z_slice_data(z_view_slice_loan(&v));
+        size_t slice_len = z_slice_len(z_view_slice_loan(&v));
+        memcpy(data_out + pos, slice_data, slice_len);
+        pos += slice_len;
+    }
+    assert(pos == len);
+    assert(memcmp(data, data_out, len) == 0);
+    free(data_out);
+    return true;
+}
+
+void test_slices(void) {
+    uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    z_owned_bytes_t payload;
+    z_bytes_empty(&payload);
+
+    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&payload));
+    z_bytes_writer_write_all(&writer, data, 10);
+
+    assert(check_slice(z_bytes_loan(&payload), data, 10));
+
+    z_bytes_drop(z_bytes_move(&payload));
+    z_bytes_empty(&payload);
+
+    // possible multiple slices
+    writer = z_bytes_get_writer(z_bytes_loan_mut(&payload));
+
+    for (size_t i = 0; i < 10; i++) {
+        z_owned_bytes_t b;
+        z_bytes_serialize_from_buf(&b, data + i, 1);
+        z_bytes_writer_append(&writer, z_bytes_move(&b));
+    }
+
+    assert(check_slice(z_bytes_loan(&payload), data, 10));
+    z_bytes_drop(z_bytes_move(&payload));
+}
+
 int main(void) {
     test_reader_seek();
     test_reader_read();
@@ -309,4 +352,5 @@ int main(void) {
     test_append();
     test_iter();
     test_pair();
+    test_slices();
 }

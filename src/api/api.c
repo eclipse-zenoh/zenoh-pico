@@ -638,6 +638,20 @@ _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
     return true;
 }
 
+z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *bytes) {
+    return (z_bytes_slice_iterator_t){._bytes = bytes, ._slice_idx = 0};
+}
+
+_Bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out) {
+    if (iter->_slice_idx >= _z_bytes_num_slices(iter->_bytes)) {
+        return false;
+    }
+    const _z_arc_slice_t *arc_slice = _z_bytes_get_slice(iter->_bytes, iter->_slice_idx);
+    out->_val = _z_slice_alias_buf(_Z_RC_IN_VAL(&arc_slice->slice)->start + arc_slice->start, arc_slice->len);
+    iter->_slice_idx++;
+    return true;
+}
+
 z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes) {
     return _z_bytes_get_iterator_writer(bytes, Z_IOSLICE_SIZE);
 }
@@ -748,6 +762,7 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexp
                               _z_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string, _z_string_check, _z_string_null)
+_Z_VIEW_FUNCTIONS_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
 
