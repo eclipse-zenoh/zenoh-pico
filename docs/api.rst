@@ -386,6 +386,7 @@ Primitives
 .. autocfunction:: primitives.h::z_string_copy_from_substr
 .. autocfunction:: primitives.h::z_string_empty
 .. autocfunction:: primitives.h::z_string_is_empty
+.. autocfunction:: primitives.h::z_string_as_slice
 .. autocfunction:: primitives.h::z_hello_zid
 .. autocfunction:: primitives.h::z_hello_whatami
 .. autocfunction:: primitives.h::z_hello_locators
