@@ -212,6 +212,7 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
+    z_reliability_t reliability;
 } z_publisher_options_t;
 
 /**
@@ -290,6 +291,7 @@ typedef struct {
     z_timestamp_t *timestamp;
     _Bool is_express;
     z_moved_bytes_t *attachment;
+    z_reliability_t reliability;
 } z_put_options_t;
 
 /**
@@ -306,6 +308,7 @@ typedef struct {
     z_priority_t priority;
     _Bool is_express;
     z_timestamp_t *timestamp;
+    z_reliability_t reliability;
 } z_delete_options_t;
 
 /**

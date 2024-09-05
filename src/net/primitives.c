@@ -103,8 +103,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority,
-                                    _Bool is_express) {
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express,
+                                    z_reliability_t reliability) {
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
@@ -113,6 +113,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._congestion_control = congestion_control;
     ret._priority = priority;
     ret._is_express = is_express;
+    ret.reliability = reliability;
     ret._zn = _z_session_rc_clone(zn);
     ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     return ret;
@@ -132,7 +133,8 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t *encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment) {
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
+                z_reliability_t reliability) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
@@ -175,7 +177,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
             return _Z_ERR_GENERIC;
     }
 
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 

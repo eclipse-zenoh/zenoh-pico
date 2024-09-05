@@ -29,6 +29,7 @@ typedef struct _z_publisher_t {
     _z_encoding_t _encoding;
     z_congestion_control_t _congestion_control;
     z_priority_t _priority;
+    z_reliability_t reliability;
     _Bool _is_express;
 #if Z_FEATURE_INTEREST == 1
     _z_write_filter_t _filter;
