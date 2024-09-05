@@ -281,6 +281,7 @@ typedef union {
 typedef struct {
     enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL, _Z_N_INTEREST } _tag;
     _z_network_body_t _body;
+    z_reliability_t _reliability;
 } _z_network_message_t;
 typedef _z_network_message_t _z_zenoh_message_t;
 void _z_n_msg_clear(_z_network_message_t *m);

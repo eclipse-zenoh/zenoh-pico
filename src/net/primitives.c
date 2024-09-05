@@ -139,8 +139,10 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
+            // TODO(refactor): use z_n_make_push
             msg = (_z_network_message_t){
                 ._tag = _Z_N_PUSH,
+                ._reliability = Z_RELIABILITY_DEFAULT,
                 ._body._push =
                     {
                         ._key = keyexpr,
@@ -159,8 +161,10 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
             };
             break;
         case Z_SAMPLE_KIND_DELETE:
+            // TODO(refactor): use z_n_make_push
             msg = (_z_network_message_t){
                 ._tag = _Z_N_PUSH,
+                ._reliability = Z_RELIABILITY_DEFAULT,
                 ._body._push =
                     {
                         ._key = keyexpr,
@@ -338,8 +342,10 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
         _z_zenoh_message_t z_msg;
         switch (kind) {
             case Z_SAMPLE_KIND_PUT:
+                // TODO(refactor): use z_n_make_reply
                 z_msg = (_z_zenoh_message_t){
                     ._tag = _Z_N_RESPONSE,
+                    ._reliability = Z_RELIABILITY_DEFAULT,
                     ._body._response =
                         {
                             ._request_id = query->_request_id,
@@ -369,8 +375,10 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
                 };
                 break;
             case Z_SAMPLE_KIND_DELETE:
+                // TODO(refactor): use z_n_make_reply
                 z_msg = (_z_zenoh_message_t){
                     ._tag = _Z_N_RESPONSE,
+                    ._reliability = Z_RELIABILITY_DEFAULT,
                     ._body._response =
                         {
                             ._request_id = query->_request_id,
@@ -417,7 +425,9 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     // Build the reply context decorator. This is NOT the final reply.
     _z_id_t zid = zn->_local_zid;
     _z_zenoh_message_t msg = {
+        // TODO(refactor): use z_n_make_reply
         ._tag = _Z_N_RESPONSE,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._response =
             {
                 ._request_id = query->_request_id,

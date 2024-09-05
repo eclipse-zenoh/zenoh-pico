@@ -171,6 +171,8 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
                 _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
+                zm->_reliability = _z_t_msg_get_reliability(t_msg);
+
                 _z_msg_fix_mapping(zm, mapping);
                 _z_handle_network_message(ztm->_session, zm, mapping);
             }
@@ -211,6 +213,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
 
                 _z_zenoh_message_t zm;
                 ret = _z_network_message_decode(&zm, &zbf);
+                zm._reliability = _z_t_msg_get_reliability(t_msg);
                 if (ret == _Z_RES_OK) {
                     uint16_t mapping = entry->_peer_id;
                     _z_msg_fix_mapping(&zm, mapping);
