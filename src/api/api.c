@@ -981,6 +981,7 @@ z_result_t z_id_to_string(z_id_t *id, z_owned_string_t *str) {
 
 const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &sample->keyexpr; }
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return sample->kind; }
+z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample) { return sample->reliability; }
 const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &sample->payload; }
 const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample) {
     if (_z_timestamp_check(&sample->timestamp)) {
