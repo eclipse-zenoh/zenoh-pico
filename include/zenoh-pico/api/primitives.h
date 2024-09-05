@@ -229,6 +229,19 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len);
 int8_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
+ * Canonizes of a given keyexpr in string representation.
+ * The canonization is performed over the passed string, possibly shortening it by setting null at the end.
+ *
+ * Parameters:
+ *   start: Pointer to the keyexpr in its string representation as a null terminated string.
+ *
+ * Return:
+ *   ``0`` if canonization successful, or a ``negative value`` otherwise.
+ *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
+ */
+int8_t z_keyexpr_canonize_null_terminated(char *start);
+
+/**
  * Checks if a given keyexpr contains another keyexpr in its set.
  *
  * Parameters:

@@ -70,6 +70,15 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_
 
 int8_t z_keyexpr_canonize(char *start, size_t *len) { return _z_keyexpr_canonize(start, len); }
 
+int8_t z_keyexpr_canonize_null_terminated(char *start) {
+    size_t len = (start != NULL) ? strlen(start) : 0;
+    int8_t res = _z_keyexpr_canonize(start, &len);
+    if (res == _Z_RES_OK) {
+        start[len] = '\0';
+    }
+    return res;
+}
+
 void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) { keyexpr->_val = _z_rname(name); }
 
 z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
