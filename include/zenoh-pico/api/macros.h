@@ -50,6 +50,7 @@
                   z_owned_sample_t : z_sample_loan,                           \
                   z_owned_query_t : z_query_loan,                             \
                   z_owned_slice_t : z_slice_loan,                             \
+                  z_view_slice_t : z_view_slice_loan,                         \
                   z_owned_bytes_t : z_bytes_loan,                             \
                   z_owned_encoding_t : z_encoding_loan,                       \
                   z_owned_task_t : z_task_loan,                               \
@@ -83,6 +84,7 @@
                   z_owned_sample_t : z_sample_loan_mut,                   \
                   z_owned_query_t : z_query_loan_mut,                     \
                   z_owned_slice_t : z_slice_loan_mut,                     \
+                  z_view_slice_t : z_view_slice_loan_mut,                 \
                   z_owned_bytes_t : z_bytes_loan_mut,                     \
                   z_owned_task_t : z_task_loan_mut,                       \
                   z_owned_mutex_t : z_mutex_loan_mut,                     \
@@ -381,6 +383,7 @@ inline const z_loaned_string_array_t* z_loan(const z_owned_string_array_t& x) { 
 inline const z_loaned_sample_t* z_loan(const z_owned_sample_t& x) { return z_sample_loan(&x); }
 inline const z_loaned_query_t* z_loan(const z_owned_query_t& x) { return z_query_loan(&x); }
 inline const z_loaned_slice_t* z_loan(const z_owned_slice_t& x) { return z_slice_loan(&x); }
+inline const z_loaned_slice_t* z_loan(const z_view_slice_t& x) { return z_view_slice_loan(&x); }
 inline const z_loaned_bytes_t* z_loan(const z_owned_bytes_t& x) { return z_bytes_loan(&x); }
 inline const z_loaned_encoding_t* z_loan(const z_owned_encoding_t& x) { return z_encoding_loan(&x); }
 inline const z_loaned_task_t* z_loan(const z_owned_task_t& x) { return z_task_loan(&x); }
@@ -410,6 +413,7 @@ inline z_loaned_reply_t* z_loan_mut(z_owned_reply_t& x) { return z_reply_loan_mu
 inline z_loaned_hello_t* z_loan_mut(z_owned_hello_t& x) { return z_hello_loan_mut(&x); }
 inline z_loaned_string_t* z_loan_mut(z_owned_string_t& x) { return z_string_loan_mut(&x); }
 inline z_loaned_string_t* z_loan_mut(z_view_string_t& x) { return z_view_string_loan_mut(&x); }
+inline z_loaned_slice_t* z_loan_mut(z_view_slice_t& x) { return z_view_slice_loan_mut(&x); }
 inline z_loaned_string_array_t* z_loan_mut(z_owned_string_array_t& x) { return z_string_array_loan_mut(&x); }
 inline z_loaned_sample_t* z_loan_mut(z_owned_sample_t& x) { return z_sample_loan_mut(&x); }
 inline z_loaned_query_t* z_loan_mut(z_owned_query_t& x) { return z_query_loan_mut(&x); }

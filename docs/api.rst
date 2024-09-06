@@ -54,6 +54,7 @@ Data Structures
 .. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_iterator_t
+.. autoctype:: types.h::z_bytes_slice_iterator_t
 .. autoctype:: types.h::z_bytes_writer_t
   
 
@@ -204,6 +205,10 @@ TODO: view type description
 
   Represents a string without null-terminator.
 
+.. c:type:: z_view_slice_t
+
+  Represents an array of bytes.
+
 .. c:type:: z_view_keyexpr_t
 
   Represents a key expression in Zenoh.
@@ -353,6 +358,8 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_is_empty
 .. autocfunction:: primitives.h::z_bytes_get_iterator
 .. autocfunction:: primitives.h::z_bytes_iterator_next
+.. autocfunction:: primitives.h::z_bytes_get_slice_iterator
+.. autocfunction:: primitives.h::z_bytes_slice_iterator_next
 .. autocfunction:: primitives.h::z_bytes_get_reader
 .. autocfunction:: primitives.h::z_bytes_reader_read
 .. autocfunction:: primitives.h::z_bytes_reader_read_bounded

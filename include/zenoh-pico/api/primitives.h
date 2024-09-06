@@ -987,11 +987,39 @@ z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
  *
  * Parameters:
  *   iter: An iterator over multi-element serialized data.
- *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contained next serialized element.
+ *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contain next serialized element.
  * Return:
  *  ``false`` when iterator reaches the end,  ``true`` otherwise.
  */
 _Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+
+/**
+ * Returns an iterator on raw bytes slices contained in the `z_loaned_bytes_t`.
+ *
+ * Zenoh may store data in non-contiguous regions of memory, this iterator
+ * then allows to access raw data directly without any attempt of deserializing it.
+ * Please note that no guarantee is provided on the internal memory layout.
+ * The only provided guarantee is on the bytes order that is preserved.
+ *
+ * Parameters:
+ *   bytes: Data to iterate over.
+ *
+ * Return:
+ *   The constructed :c:type:`z_bytes_slice_iterator_t`.
+ */
+z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *bytes);
+
+/**
+ * Constructs :c:type:`z_view_slice_t` providing view to the next slice.
+ *
+ *
+ * Parameters:
+ *   iter: An iterator over slices of serialized data.
+ *   out: An uninitialized :c:type:`z_view_slice_t` that will contain next slice.
+ * Return:
+ *  ``false`` when iterator reaches the end,  ``true`` otherwise.
+ */
+_Bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out);
 
 /**
  * Returns a reader for the `bytes`.
@@ -1352,6 +1380,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_zid)
 
 _Z_VIEW_FUNCTIONS_DEF(keyexpr)
 _Z_VIEW_FUNCTIONS_DEF(string)
+_Z_VIEW_FUNCTIONS_DEF(slice)
 
 /**
  * Loans a :c:type:`z_owned_sample_t`.
