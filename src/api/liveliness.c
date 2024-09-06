@@ -13,6 +13,7 @@
 //
 
 #include "zenoh-pico/api/liveliness.h"
+
 #include "zenoh-pico/utils/result.h"
 
 int8_t z_liveliness_declaration_options_default(z_liveliness_declaration_options_t *options) {
