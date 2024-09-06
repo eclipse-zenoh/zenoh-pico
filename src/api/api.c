@@ -1539,13 +1539,7 @@ void _z_subscriber_drop(_z_subscriber_t *sub) { _z_undeclare_and_clear_subscribe
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
                                       _z_subscriber_drop)
 
-void z_subscriber_options_default(z_subscriber_options_t *options) {
-#if Z_FEATURE_UNSTABLE_API == 1
-    options->reliability = Z_RELIABILITY_DEFAULT;
-#else
-    options->__dummy = 0;
-#endif
-}
+void z_subscriber_options_default(z_subscriber_options_t *options) { options->__dummy = 0; }
 
 int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                             z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {

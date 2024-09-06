@@ -21,11 +21,11 @@
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/logging.h"
 
+#if Z_FEATURE_SUBSCRIPTION == 1
 int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
     int8_t ret = _Z_RES_OK;
 
     // TODO check body to know where to dispatch
-#if Z_FEATURE_SUBSCRIPTION == 1
 
     size_t kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
     if (push->_body._is_put) {
@@ -39,9 +39,13 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t 
         ret = _z_trigger_subscriptions(zn, push->_key, payload, &encoding, kind, &del->_commons._timestamp, push->_qos,
                                        del->_attachment, reliability);
     }
-#else
-    _ZP_UNUSED(zn);
-    _ZP_UNUSED(push);
-#endif
     return ret;
 }
+#else
+int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(push);
+    _ZP_UNUSED(reliability);
+    return _Z_RES_OK;
+}
+#endif
