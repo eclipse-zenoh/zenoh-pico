@@ -66,10 +66,10 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
                     _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_TOKEN: {
-                    // TODO: add support or explicitly discard
+                    _z_interest_process_declares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_TOKEN: {
-                    // TODO: add support or explicitly discard
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_FINAL: {
                     // Check that interest id is valid

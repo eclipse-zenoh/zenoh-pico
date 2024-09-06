@@ -266,6 +266,13 @@ int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *de
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
+        case _Z_DECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_DECL_TOKEN;
+            msg.id = decl->_body._decl_token._id;
+            decl_key = &decl->_body._decl_token._keyexpr;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
+            break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
     }
@@ -312,6 +319,12 @@ int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *
             msg.id = decl->_body._undecl_queryable._id;
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
+            break;
+        case _Z_UNDECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN;
+            msg.id = decl->_body._undecl_token._id;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
             break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
