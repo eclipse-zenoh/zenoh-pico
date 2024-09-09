@@ -174,6 +174,41 @@ static int8_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interes
 }
 #endif
 
+// TODO(sashacmc): add Z_FEATURE_LIVELINESS for full liveliness code
+#if Z_FEATURE_LIVELINESS == 1
+static int8_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
+    /*
+            _zp_session_lock_mutex(zn);
+        _z_session_queryable_rc_list_t *qle_list = _z_session_queryable_rc_list_clone(zn->_local_queryable);
+        _zp_session_unlock_mutex(zn);
+        _z_session_queryable_rc_list_t *xs = qle_list;
+        while (xs != NULL) {
+            _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
+            // Build the declare message to send on the wire
+            _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(qle)->_key);
+            _z_declaration_t declaration = _z_make_decl_queryable(
+                &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+                return _Z_ERR_TRANSPORT_TX_FAILED;
+            }
+            _z_n_msg_clear(&n_msg);
+            xs = _z_subscription_rc_list_tail(xs);
+        }
+        _z_session_queryable_rc_list_free(&qle_list);
+    */
+    (void)zn;
+    (void)interest_id;
+    return _Z_RES_OK;
+}
+#else
+static int8_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(interest_id);
+    return _Z_RES_OK;
+}
+#endif
+
 static int8_t _z_interest_send_declare_final(_z_session_t *zn, uint32_t interest_id) {
     _z_declaration_t decl = _z_make_decl_final();
     _z_network_message_t n_msg = _z_n_msg_make_declare(decl, true, interest_id);
@@ -416,7 +451,8 @@ int8_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t
             _Z_RETURN_IF_ERR(_z_interest_send_decl_queryable(zn, id));
         }
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
-            // Zenoh pico doesn't support liveliness token for now
+            _Z_DEBUG("Sending declare tokens");
+            _Z_RETURN_IF_ERR(_z_interest_send_decl_token(zn, id));
         }
         // Send final declare
         _Z_RETURN_IF_ERR(_z_interest_send_declare_final(zn, id));

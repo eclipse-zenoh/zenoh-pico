@@ -59,14 +59,14 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
                 case _Z_DECL_QUERYABLE: {
                     _z_interest_process_declares(zn, &decl->_decl);
                 } break;
+                case _Z_DECL_TOKEN: {
+                    _z_interest_process_declares(zn, &decl->_decl);
+                } break;
                 case _Z_UNDECL_SUBSCRIBER: {
                     _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
                     _z_interest_process_undeclares(zn, &decl->_decl);
-                } break;
-                case _Z_DECL_TOKEN: {
-                    _z_interest_process_declares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_TOKEN: {
                     _z_interest_process_undeclares(zn, &decl->_decl);
