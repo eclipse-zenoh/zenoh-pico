@@ -29,13 +29,6 @@ typedef struct {
 } _z_subscriber_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-/**
- * Create a default subscription info for a push subscriber.
- *
- * Returns:
- *     A :c:type:`_z_subinfo_t` containing the created subscription info.
- */
-_z_subinfo_t _z_subinfo_default(void);
 
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);

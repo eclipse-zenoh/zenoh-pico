@@ -77,13 +77,7 @@ int8_t _z_decl_commons_encode(_z_wbuf_t *wbf, uint8_t header, _Bool has_extensio
 }
 int8_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *decl) {
     uint8_t header = _Z_DECL_SUBSCRIBER_MID;
-    _Bool has_submode_ext = decl->_ext_subinfo._reliable;
-    _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, has_submode_ext, decl->_id, decl->_keyexpr));
-    if (has_submode_ext) {
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01));
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (decl->_ext_subinfo._reliable ? 1 : 0)));
-    }
-
+    _Z_RETURN_IF_ERR(_z_decl_commons_encode(wbf, header, false, decl->_id, decl->_keyexpr));
     return _Z_RES_OK;
 }
 int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl) {
@@ -253,11 +247,8 @@ int8_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, _Bool *has_extensi
     return _Z_RES_OK;
 }
 int8_t _z_decl_subscriber_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
-    _z_decl_subscriber_t *decl = (_z_decl_subscriber_t *)ctx;
+    _ZP_UNUSED(ctx);
     switch (extension->_header) {
-        case _Z_MSG_EXT_ENC_ZINT | 0x01: {
-            decl->_ext_subinfo._reliable = _Z_HAS_FLAG(extension->_body._zint._val, 1);
-        } break;
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
                 return _z_msg_ext_unknown_error(extension, 0x14);

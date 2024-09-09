@@ -103,8 +103,8 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority,
-                                    _Bool is_express) {
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express,
+                                    z_reliability_t reliability) {
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
@@ -113,6 +113,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._congestion_control = congestion_control;
     ret._priority = priority;
     ret._is_express = is_express;
+    ret.reliability = reliability;
     ret._zn = _z_session_rc_clone(zn);
     ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     return ret;
@@ -132,13 +133,16 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t *encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment) {
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
+                z_reliability_t reliability) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
+            // TODO(refactor): use z_n_make_push
             msg = (_z_network_message_t){
                 ._tag = _Z_N_PUSH,
+                ._reliability = Z_RELIABILITY_DEFAULT,
                 ._body._push =
                     {
                         ._key = keyexpr,
@@ -157,8 +161,10 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
             };
             break;
         case Z_SAMPLE_KIND_DELETE:
+            // TODO(refactor): use z_n_make_push
             msg = (_z_network_message_t){
                 ._tag = _Z_N_PUSH,
+                ._reliability = Z_RELIABILITY_DEFAULT,
                 ._body._push =
                     {
                         ._key = keyexpr,
@@ -175,7 +181,7 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
             return _Z_ERR_GENERIC;
     }
 
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
@@ -187,13 +193,12 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t p
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg) {
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_data_handler_t callback,
+                                      _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr._id;
     s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr);
-    s._info = sub_info;
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
@@ -206,8 +211,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
         return ret;
     }
     // Build the declare message to send on the wire
-    _z_declaration_t declaration =
-        _z_make_decl_subscriber(&keyexpr, s._id, sub_info.reliability == Z_RELIABILITY_RELIABLE);
+    _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(_Z_RC_IN_VAL(zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, sp_s);
@@ -338,8 +342,10 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
         _z_zenoh_message_t z_msg;
         switch (kind) {
             case Z_SAMPLE_KIND_PUT:
+                // TODO(refactor): use z_n_make_reply
                 z_msg = (_z_zenoh_message_t){
                     ._tag = _Z_N_RESPONSE,
+                    ._reliability = Z_RELIABILITY_DEFAULT,
                     ._body._response =
                         {
                             ._request_id = query->_request_id,
@@ -369,8 +375,10 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
                 };
                 break;
             case Z_SAMPLE_KIND_DELETE:
+                // TODO(refactor): use z_n_make_reply
                 z_msg = (_z_zenoh_message_t){
                     ._tag = _Z_N_RESPONSE,
+                    ._reliability = Z_RELIABILITY_DEFAULT,
                     ._body._response =
                         {
                             ._request_id = query->_request_id,
@@ -417,7 +425,9 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     // Build the reply context decorator. This is NOT the final reply.
     _z_id_t zid = zn->_local_zid;
     _z_zenoh_message_t msg = {
+        // TODO(refactor): use z_n_make_reply
         ._tag = _Z_N_RESPONSE,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._response =
             {
                 ._request_id = query->_request_id,

@@ -124,8 +124,7 @@ static int8_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t intere
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
         _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(sub)->_key);
-        _z_declaration_t declaration = _z_make_decl_subscriber(
-            &key, _Z_RC_IN_VAL(sub)->_id, _Z_RC_IN_VAL(sub)->_info.reliability == Z_RELIABILITY_RELIABLE);
+        _z_declaration_t declaration = _z_make_decl_subscriber(&key, _Z_RC_IN_VAL(sub)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;

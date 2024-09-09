@@ -142,6 +142,7 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice
                                      z_priority_t priority, _Bool is_express) {
     return (_z_zenoh_message_t){
         ._tag = _Z_N_REQUEST,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._request =
             {
                 ._rid = qid,
@@ -166,12 +167,14 @@ _z_zenoh_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid) {
     return (_z_zenoh_message_t){
         ._tag = _Z_N_RESPONSE_FINAL,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body = {._response_final = {._request_id = rid}},
     };
 }
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id) {
     return (_z_network_message_t){
         ._tag = _Z_N_DECLARE,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._declare =
             {
                 .has_interest_id = has_interest_id,
@@ -185,12 +188,14 @@ _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool h
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body) {
     return (_z_network_message_t){
         ._tag = _Z_N_PUSH,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._push = {._key = _z_keyexpr_steal(key), ._body = _z_push_body_steal(body)},
     };
 }
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body) {
     return (_z_network_message_t){
         ._tag = _Z_N_RESPONSE,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._response =
             {
                 ._key = _z_keyexpr_steal(key),
@@ -216,6 +221,7 @@ _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) ke
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest) {
     return (_z_network_message_t){
         ._tag = _Z_N_INTEREST,
+        ._reliability = Z_RELIABILITY_DEFAULT,
         ._body._interest =
             {
                 ._interest = interest,

@@ -190,16 +190,10 @@ _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
- *
- * Members:
- *   (unstable) z_reliability_t reliability: The subscription reliability value.
+ *.
  */
 typedef struct {
-#if Z_FEATURE_UNSTABLE_API == 1
-    z_reliability_t reliability;
-#else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
-#endif
 } z_subscriber_options_t;
 
 /**
@@ -221,12 +215,16 @@ typedef struct {
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
+#if Z_FEATURE_UNSTABLE_API == 1
+    z_reliability_t reliability;
+#endif
 } z_publisher_options_t;
 
 /**
@@ -297,6 +295,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
+ *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -305,6 +304,9 @@ typedef struct {
     z_timestamp_t *timestamp;
     _Bool is_express;
     z_moved_bytes_t *attachment;
+#if Z_FEATURE_UNSTABLE_API == 1
+    z_reliability_t reliability;
+#endif
 } z_put_options_t;
 
 /**
@@ -315,12 +317,16 @@ typedef struct {
  *   z_priority_t priority: The priority of this message when router.
  *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     _Bool is_express;
     z_timestamp_t *timestamp;
+#if Z_FEATURE_UNSTABLE_API == 1
+    z_reliability_t reliability;
+#endif
 } z_delete_options_t;
 
 /**

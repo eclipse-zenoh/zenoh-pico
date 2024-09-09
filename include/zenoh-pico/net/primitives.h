@@ -84,12 +84,14 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  *     keyexpr:  The resource key to publish. The callee gets the ownership
  *              of any allocated value.
  *     encoding: The optional default encoding to use during put. The callee gets the ownership.
+ *     reliability: The reliability of the publisher messages
  *
  * Returns:
  *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
  */
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express);
+                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express,
+                                    z_reliability_t reliability);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -118,12 +120,14 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *     timestamp: The timestamp of this write. The API level timestamp (e.g. of the data when it was created).
  *     attachment: An optional attachment to this write.
+ *     reliability: The message reliability.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t *encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment);
+                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
+                z_reliability_t reliability);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -134,16 +138,14 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to subscribe. The callee gets the ownership
  *             of any allocated value.
- *     sub_info: The :c:type:`_z_subinfo_t` to configure the :c:type:`_z_subscriber_t`.
- *               The callee gets the ownership of any allocated value.
  *     callback: The callback function that will be called each time a data matching the subscribed resource is
  * received. arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
  *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_subinfo_t sub_info,
-                                      _z_data_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_data_handler_t callback,
+                                      _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.

@@ -14,11 +14,6 @@
 #include "zenoh-pico/net/subscribe.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-_z_subinfo_t _z_subinfo_default(void) {
-    _z_subinfo_t si;
-    si.reliability = Z_RELIABILITY_BEST_EFFORT;
-    return si;
-}
 
 void _z_subscriber_clear(_z_subscriber_t *sub) {
     // Nothing to clear

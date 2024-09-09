@@ -410,6 +410,7 @@ Primitives
 .. autocfunction:: primitives.h::z_sample_timestamp
 .. autocfunction:: primitives.h::z_sample_encoding
 .. autocfunction:: primitives.h::z_sample_kind
+.. autocfunction:: primitives.h::z_sample_reliability
 .. autocfunction:: primitives.h::z_sample_attachment
 .. autocfunction:: primitives.h::z_put_options_default
 .. autocfunction:: primitives.h::z_delete_options_default
