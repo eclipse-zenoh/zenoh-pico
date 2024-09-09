@@ -114,7 +114,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._priority = priority;
     ret._is_express = is_express;
     ret.reliability = reliability;
-    ret._zn = _z_session_rc_clone(zn);
+    ret._zn = _z_session_rc_clone_as_weak(zn);
     ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     return ret;
 }
@@ -126,7 +126,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     // Clear publisher
     _z_write_filter_destroy(pub);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
-    _z_session_rc_drop(&pub->_zn);
+    _z_session_weak_drop(&pub->_zn);
     return _Z_RES_OK;
 }
 
