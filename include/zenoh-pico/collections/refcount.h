@@ -143,7 +143,7 @@ size_t _z_rc_strong_count(void *cnt);
         return c;                                                                                                    \
     }                                                                                                                \
     static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) { *dst = name##_weak_clone(p); } \
-    static inline name##_rc_t name##_weak_upgrade(const name##_weak_t *p) {                                                \
+    static inline name##_rc_t name##_weak_upgrade(const name##_weak_t *p) {                                          \
         name##_rc_t c = name##_rc_null();                                                                            \
         if (_z_rc_weak_upgrade(p->_cnt) == _Z_RES_OK) {                                                              \
             c._val = p->_val;                                                                                        \
