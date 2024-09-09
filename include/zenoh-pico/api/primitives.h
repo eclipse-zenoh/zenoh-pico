@@ -1610,7 +1610,7 @@ const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 
 /**
- * Gets the reliability a sample was received with.
+ * (unstable) Gets the reliability a sample was received with.
  *
  * Parameters:
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the reliability from.
@@ -1618,7 +1618,9 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
  */
+#if Z_FEATURE_UNSTABLE_API == 1
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
+#endif
 
 /**
  * Got sample qos congestion control value.
