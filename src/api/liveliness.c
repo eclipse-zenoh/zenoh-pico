@@ -13,7 +13,41 @@
 //
 
 #include "zenoh-pico/api/liveliness.h"
+
 #include "zenoh-pico/utils/result.h"
+
+_Bool _z_liveliness_token_check(const _z_liveliness_token_t *token) {
+    // TODO(sashacmc): Implement
+    (void)token;
+    return true;
+}
+
+_z_liveliness_token_t _z_liveliness_token_null(void) {
+    // TODO(sashacmc): Implement
+    _z_liveliness_token_t s = {0};
+    return s;
+}
+
+void _z_liveliness_token_move(_z_liveliness_token_t *dst, _z_liveliness_token_t *src) {
+    // TODO(sashacmc): Implement
+    (void)dst;
+    (void)src;
+}
+
+int8_t _z_liveliness_token_copy(_z_liveliness_token_t *dst, const _z_liveliness_token_t *src) {
+    // TODO(sashacmc): Implement
+    (void)dst;
+    (void)src;
+    return _Z_RES_OK;
+}
+
+void _z_liveliness_token_clear(_z_liveliness_token_t *token) {
+    // TODO(sashacmc): Implement
+    (void)token;
+}
+
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_liveliness_token_t, liveliness_token, _z_liveliness_token_check,
+                              _z_liveliness_token_null, _z_liveliness_token_copy, _z_liveliness_token_clear)
 
 int8_t z_liveliness_subscriber_options_default(z_liveliness_subscriber_options_t *options) {
     options->__dummy = 0;
@@ -60,12 +94,6 @@ int8_t z_liveliness_get(const z_loaned_session_t *session, const z_loaned_keyexp
     (void)key_expr;
     (void)callback;
     (void)options;
-    return _Z_RES_OK;
-}
-
-int8_t z_liveliness_token_drop(z_moved_liveliness_token_t *token) {
-    // TODO(sashacmc): Implement
-    (void)token;
     return _Z_RES_OK;
 }
 

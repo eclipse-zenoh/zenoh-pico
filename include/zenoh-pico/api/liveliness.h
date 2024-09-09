@@ -26,6 +26,7 @@ typedef struct {
 } _z_liveliness_token_t;
 
 _Z_OWNED_TYPE_VALUE(_z_liveliness_token_t, liveliness_token)
+_Z_OWNED_FUNCTIONS_DEF(liveliness_token)
 
 /**
  * The options for `z_liveliness_declare_token()`.
@@ -102,11 +103,6 @@ int8_t z_liveliness_get_options_default(z_liveliness_get_options_t *options);
  */
 int8_t z_liveliness_get(const z_loaned_session_t *session, const z_loaned_keyexpr_t *key_expr,
                         z_moved_closure_reply_t *callback, z_liveliness_get_options_t *options);
-
-/**
- * Undeclares liveliness token, frees memory and resets it to a gravestone state.
- */
-int8_t z_liveliness_token_drop(z_moved_liveliness_token_t *token);
 
 /**
  * Destroys a liveliness token, notifying subscribers of its destruction.
