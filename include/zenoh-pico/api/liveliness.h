@@ -49,9 +49,9 @@ typedef struct z_liveliness_get_options_t {
 } z_liveliness_get_options_t;
 
 /**
- * Constructs default value for `z_liveliness_declaration_options_t`.
+ * Constucts default value for `z_liveliness_declare_subscriber_options_t`.
  */
-int8_t z_liveliness_declaration_options_default(z_liveliness_declaration_options_t *options);
+int8_t z_liveliness_subscriber_options_default(z_liveliness_subscriber_options_t *options);
 
 /**
  * Declares a subscriber on liveliness tokens that intersect `key_expr`.
@@ -68,6 +68,11 @@ int8_t z_liveliness_declare_subscriber(z_owned_subscriber_t *token, const z_loan
                                        const z_loaned_keyexpr_t *key_expr, z_moved_closure_sample_t *callback,
                                        z_liveliness_subscriber_options_t *_options);
 /**
+ * Constructs default value for `z_liveliness_declaration_options_t`.
+ */
+int8_t z_liveliness_declaration_options_default(z_liveliness_declaration_options_t *options);
+
+/**
  * Constructs and declares a liveliness token on the network.
  *
  * Liveliness token subscribers on an intersecting key expression will receive a PUT sample when connectivity
@@ -83,6 +88,11 @@ int8_t z_liveliness_declare_token(z_owned_liveliness_token_t *token, const z_loa
                                   const z_liveliness_declaration_options_t *_options);
 
 /**
+ * Constructs default value `z_liveliness_get_options_t`.
+ */
+int8_t z_liveliness_get_options_default(z_liveliness_get_options_t *options);
+
+/**
  * Queries liveliness tokens currently on the network with a key expression intersecting with `key_expr`.
  *
  * @param session: The Zenoh session.
@@ -94,28 +104,18 @@ int8_t z_liveliness_get(const z_loaned_session_t *session, const z_loaned_keyexp
                         z_moved_closure_reply_t *callback, z_liveliness_get_options_t *options);
 
 /**
- * Constructs default value `z_liveliness_get_options_t`.
- */
-int8_t z_liveliness_get_options_default(z_liveliness_get_options_t *options);
-
-/**
- * Constucts default value for `z_liveliness_declare_subscriber_options_t`.
- */
-int8_t z_liveliness_subscriber_options_default(z_liveliness_subscriber_options_t *options);
-
-/**
  * Undeclares liveliness token, frees memory and resets it to a gravestone state.
  */
 int8_t z_liveliness_token_drop(z_moved_liveliness_token_t *token);
 
 /**
+ * Destroys a liveliness token, notifying subscribers of its destruction.
+ */
+
+int8_t z_liveliness_undeclare_token(z_moved_liveliness_token_t *token);
+/**
  * Borrows token.
  */
 const z_loaned_liveliness_token_t *z_liveliness_token_loan(const z_owned_liveliness_token_t *token);
-
-/**
- * Destroys a liveliness token, notifying subscribers of its destruction.
- */
-int8_t z_liveliness_undeclare_token(z_moved_liveliness_token_t *token);
 
 #endif  // INCLUDE_ZENOH_PICO_API_LIVELINESS_H
