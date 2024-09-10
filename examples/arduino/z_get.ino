@@ -89,7 +89,7 @@ void setup() {
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    if (z_open(&s, z_config_move(&config)) < 0) {
+    if (z_open(&s, z_config_move(&config), NULL) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
             ;

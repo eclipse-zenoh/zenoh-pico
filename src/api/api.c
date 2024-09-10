@@ -919,7 +919,10 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
     return ret;
 }
 
-int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config) {
+void z_open_options_default(z_open_options_t *options) { options->__dummy = 0; }
+
+int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
+    _ZP_UNUSED(options);
     z_internal_session_null(zs);
     _z_session_t *s = z_malloc(sizeof(_z_session_t));
     if (s == NULL) {
@@ -948,7 +951,10 @@ int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config) {
     return _Z_RES_OK;
 }
 
-int8_t z_close(z_moved_session_t *zs) {
+void z_close_options_default(z_close_options_t *options) { options->__dummy = 0; }
+
+int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options) {
+    _ZP_UNUSED(options);
     if (zs == NULL || !z_internal_session_check(&zs->_this)) {
         return _Z_RES_OK;
     }

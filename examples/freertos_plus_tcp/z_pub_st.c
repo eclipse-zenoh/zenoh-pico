@@ -42,7 +42,7 @@ void app_main(void) {
 
     printf("Opening session...\n");
     z_owned_session_t s;
-    if (z_open(&s, z_move(config)) < 0) {
+    if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
         return;
     }
@@ -80,7 +80,7 @@ void app_main(void) {
 
     z_undeclare_publisher(z_move(pub));
 
-    z_close(z_move(s));
+    z_close(z_move(s), NULL);
 }
 #else
 void app_main(void) {

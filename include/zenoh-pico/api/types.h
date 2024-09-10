@@ -197,6 +197,20 @@ typedef struct {
 } z_subscriber_options_t;
 
 /**
+ * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} z_open_options_t;
+
+/**
+ * Represents the configuration used to configure a zenoh upon closing :c:func:`z_close`.
+ */
+typedef struct {
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+} z_close_options_t;
+
+/**
  * Represents the reply consolidation mode to apply on replies to a :c:func:`z_get`.
  *
  * Members:

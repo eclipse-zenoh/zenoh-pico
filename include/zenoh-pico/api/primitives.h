@@ -1551,7 +1551,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
  * Return:
  *   ``0`` if open successful, ``negative value`` otherwise.
  */
-int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config);
+int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
 
 /**
  * Closes a Zenoh session.
@@ -1562,7 +1562,7 @@ int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config);
  * Return:
  *   ``0`` if close successful, ``negative value`` otherwise.
  */
-int8_t z_close(z_moved_session_t *zs);
+int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
 
 /**
  * Fetches Zenoh IDs of all connected peers.
