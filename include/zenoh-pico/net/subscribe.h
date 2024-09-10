@@ -25,7 +25,7 @@
  */
 typedef struct {
     uint32_t _entity_id;
-    _z_session_rc_t _zn;
+    _z_session_weak_t _zn;
 } _z_subscriber_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1

@@ -33,6 +33,6 @@ void _z_subscriber_free(_z_subscriber_t **sub) {
 }
 
 _Bool _z_subscriber_check(const _z_subscriber_t *subscriber) { return !_Z_RC_IS_NULL(&subscriber->_zn); }
-_z_subscriber_t _z_subscriber_null(void) { return (_z_subscriber_t){._entity_id = 0, ._zn = _z_session_rc_null()}; }
+_z_subscriber_t _z_subscriber_null(void) { return (_z_subscriber_t){._entity_id = 0, ._zn = _z_session_weak_null()}; }
 
 #endif
