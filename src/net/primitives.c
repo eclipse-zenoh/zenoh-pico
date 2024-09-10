@@ -114,7 +114,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     ret._priority = priority;
     ret._is_express = is_express;
     ret.reliability = reliability;
-    ret._zn = _z_session_rc_clone(zn);
+    ret._zn = _z_session_rc_clone_as_weak(zn);
     ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     return ret;
 }
@@ -126,7 +126,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     // Clear publisher
     _z_write_filter_destroy(pub);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
-    _z_session_rc_drop(&pub->_zn);
+    _z_session_weak_drop(&pub->_zn);
     return _Z_RES_OK;
 }
 
@@ -221,7 +221,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     _z_n_msg_clear(&n_msg);
     // Fill subscriber
     ret._entity_id = s._id;
-    ret._zn = _z_session_rc_clone(zn);
+    ret._zn = _z_session_rc_clone_as_weak(zn);
     return ret;
 }
 
@@ -250,7 +250,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, s);
-    _z_session_rc_drop(&sub->_zn);
+    _z_session_weak_drop(&sub->_zn);
     return _Z_RES_OK;
 }
 #endif
@@ -285,7 +285,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     _z_n_msg_clear(&n_msg);
     // Fill queryable
     ret._entity_id = q._id;
-    ret._zn = _z_session_rc_clone(zn);
+    ret._zn = _z_session_rc_clone_as_weak(zn);
     return ret;
 }
 
@@ -313,7 +313,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
-    _z_session_rc_drop(&qle->_zn);
+    _z_session_weak_drop(&qle->_zn);
     return _Z_RES_OK;
 }
 

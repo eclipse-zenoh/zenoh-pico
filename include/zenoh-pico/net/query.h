@@ -46,7 +46,7 @@ _Z_REFCOUNT_DEFINE(_z_query, _z_query)
  */
 typedef struct {
     uint32_t _entity_id;
-    _z_session_rc_t _zn;
+    _z_session_weak_t _zn;
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1
