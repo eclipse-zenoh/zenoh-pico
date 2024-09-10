@@ -94,28 +94,6 @@
         z_internal_##name##_null(&src->_this);                                                           \
     }
 
-#define _Z_OWNED_FUNCTIONS_PTR_IMPL(type, name, f_copy, f_free)                                     \
-    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                         \
-    void z_internal_##name##_null(z_owned_##name##_t *obj) { obj->_val = NULL; }                    \
-    _Bool z_internal_##name##_check(const z_owned_##name##_t *obj) { return obj->_val != NULL; }    \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return obj->_val; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return obj->_val; }         \
-    int8_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
-        int8_t ret = _Z_RES_OK;                                                                     \
-        obj->_val = (type *)z_malloc(sizeof(type));                                                 \
-        if (obj->_val != NULL) {                                                                    \
-            f_copy(obj->_val, src);                                                                 \
-        } else {                                                                                    \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                      \
-        }                                                                                           \
-        return ret;                                                                                 \
-    }                                                                                               \
-    void z_##name##_drop(z_moved_##name##_t *obj) {                                                 \
-        if ((obj != NULL) && (obj->_this._val != NULL)) {                                           \
-            f_free(obj->_this._val);                                                                \
-        }                                                                                           \
-    }
-
 #define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_drop)                   \
     _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
     void z_internal_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                 \
