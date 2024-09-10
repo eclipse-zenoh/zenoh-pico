@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     // Open Zenoh session
     printf("Opening Zenoh Session...");
     z_owned_session_t s;
-    if (z_open(&s, z_config_move(&config)) < 0) {
+    if (z_open(&s, z_config_move(&config), NULL) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     printf("Closing Zenoh Session...");
     z_undeclare_subscriber(z_subscriber_move(&sub));
 
-    z_close(z_session_move(&s));
+    z_close(z_session_move(&s), NULL);
     printf("OK!\n");
 
     return 0;

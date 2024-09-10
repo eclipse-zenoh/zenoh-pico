@@ -69,14 +69,14 @@ int main(int argc, char **argv) {
     }
     // Open session
     z_owned_session_t s;
-    if (z_open(&s, z_move(config)) < 0) {
+    if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
         exit(-1);
     }
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s));
+        z_close(z_session_move(&s), NULL);
         exit(-1);
     }
     // Declare publisher
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 
     // Clean up
     z_undeclare_publisher(z_move(pub));
-    z_close(z_move(s));
+    z_close(z_move(s), NULL);
     free(value);
     exit(0);
 }

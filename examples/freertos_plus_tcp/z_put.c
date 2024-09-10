@@ -39,7 +39,7 @@ void app_main(void) {
 
     printf("Opening session...\n");
     z_owned_session_t s;
-    if (z_open(&s, z_move(config)) < 0) {
+    if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
         return;
     }
@@ -47,7 +47,7 @@ void app_main(void) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s));
+        z_close(z_session_move(&s), NULL);
         return;
     }
 
@@ -57,7 +57,7 @@ void app_main(void) {
     z_view_keyexpr_from_str_unchecked(&vke, KEYEXPR);
     if (z_declare_keyexpr(&ke, z_loan(s), z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");
-        z_close(z_move(s));
+        z_close(z_move(s), NULL);
         return;
     }
 
@@ -79,7 +79,7 @@ void app_main(void) {
 
     // Clean up
     z_undeclare_keyexpr(z_move(ke), z_loan(s));
-    z_close(z_move(s));
+    z_close(z_move(s), NULL);
 }
 #else
 void app_main(void) {

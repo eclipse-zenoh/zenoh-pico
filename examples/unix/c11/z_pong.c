@@ -37,14 +37,14 @@ int main(int argc, char** argv) {
     z_owned_config_t config;
     z_config_default(&config);
     z_owned_session_t session;
-    if (z_open(&session, z_move(config)) < 0) {
+    if (z_open(&session, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
     if (zp_start_read_task(z_loan_mut(session), NULL) < 0 || zp_start_lease_task(z_loan_mut(session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&session));
+        z_close(z_session_move(&session), NULL);
         return -1;
     }
 
@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
 
     z_drop(z_move(sub));
 
-    z_close(z_move(session));
+    z_close(z_move(session), NULL);
 }
 #else
 int main(void) {

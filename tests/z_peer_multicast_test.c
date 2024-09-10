@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     for (unsigned int i = 0; i < SET; i++) idx[i] = i;
 
     z_owned_session_t s1;
-    assert(z_open(&s1, z_move(config)) == Z_OK);
+    assert(z_open(&s1, z_move(config), NULL) == Z_OK);
     _z_slice_t id_as_bytes =
         _z_slice_alias_buf(_Z_RC_IN_VAL(z_loan(s1))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
     _z_string_t zid1 = _z_string_convert_bytes(&id_as_bytes);
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]);
 
     z_owned_session_t s2;
-    assert(z_open(&s2, z_move(config)) == Z_OK);
+    assert(z_open(&s2, z_move(config), NULL) == Z_OK);
 
     id_as_bytes =
         _z_slice_alias_buf(_Z_RC_IN_VAL(z_loan(s2))->_local_zid.id, _z_id_len(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
@@ -185,12 +185,12 @@ int main(int argc, char **argv) {
 
     // Close both sessions
     printf("Closing session 1\n");
-    z_close(z_move(s1));
+    z_close(z_move(s1), NULL);
 
     z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
-    z_close(z_move(s2));
+    z_close(z_move(s2), NULL);
 
     z_free((uint8_t *)value);
     value = NULL;

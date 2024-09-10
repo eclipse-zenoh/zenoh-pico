@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
     printf("Opening session...\n");
     z_owned_session_t s;
-    if (z_open(&s, z_config_move(&config)) < 0) {
+    if (z_open(&s, z_config_move(&config), NULL) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     }
 
     z_undeclare_publisher(z_publisher_move(&pub));
-    z_close(z_session_move(&s));
+    z_close(z_session_move(&s), NULL);
     free(buf);
     return 0;
 }

@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 
     printf("Opening session...\n");
     z_owned_session_t s;
-    if (z_open(&s, z_config_move(&config)) < 0) {
+    if (z_open(&s, z_config_move(&config), NULL) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s));
+        z_close(z_session_move(&s), NULL);
         return -1;
     }
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     z_undeclare_subscriber(z_subscriber_move(&sub));
     z_ring_handler_sample_drop(z_ring_handler_sample_move(&handler));
 
-    z_close(z_session_move(&s));
+    z_close(z_session_move(&s), NULL);
 
     return 0;
 }
