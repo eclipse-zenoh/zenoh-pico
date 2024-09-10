@@ -1250,7 +1250,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload
 
         _z_session_rc_drop(&sess_rc);
     } else {
-        ret = _Z_ERR_CONNECTION_CLOSED;
+        ret = _Z_ERR_SESSION_CLOSED;
     }
 
     // Clean-up
@@ -1277,7 +1277,7 @@ int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_del
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&pub->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_CONNECTION_CLOSED;
+        return _Z_ERR_SESSION_CLOSED;
     }
     int8_t ret = _z_write(_Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
                           pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null(),
@@ -1446,7 +1446,7 @@ int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *ke
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_CONNECTION_CLOSED;
+        return _Z_ERR_SESSION_CLOSED;
     }
     // Set options
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
@@ -1484,7 +1484,7 @@ int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_CONNECTION_CLOSED;
+        return _Z_ERR_SESSION_CLOSED;
     }
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     z_query_reply_del_options_t opts;
@@ -1512,7 +1512,7 @@ int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_CONNECTION_CLOSED;
+        return _Z_ERR_SESSION_CLOSED;
     }
     z_query_reply_err_options_t opts;
     if (options == NULL) {
