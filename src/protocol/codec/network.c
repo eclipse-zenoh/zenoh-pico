@@ -195,10 +195,7 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             msg->_ext_budget = (uint32_t)extension->_body._zint._val;
         } break;
         case 0x06 | _Z_MSG_EXT_ENC_ZINT: {
-            if (extension->_body._zint._val > UINT32_MAX) {
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-            }
-            msg->_ext_timeout_ms = (uint32_t)extension->_body._zint._val;
+            msg->_ext_timeout_ms = extension->_body._zint._val;
         } break;
         default:
             if ((extension->_header & _Z_MSG_EXT_FLAG_M) != 0) {

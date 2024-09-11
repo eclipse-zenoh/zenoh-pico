@@ -126,7 +126,7 @@ typedef struct {
     _z_n_qos_t _ext_qos;
     z_query_target_t _ext_target;
     uint32_t _ext_budget;
-    uint32_t _ext_timeout_ms;
+    uint64_t _ext_timeout_ms;
     enum {
         _Z_REQUEST_QUERY,
         _Z_REQUEST_PUT,
