@@ -301,15 +301,6 @@ void z_config_new(z_owned_config_t *config);
 int8_t z_config_default(z_owned_config_t *config);
 
 /**
- * Clones a zenoh configuration.
- *
- * Parameters:
- *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
- *   src: Pointer to the :c:type:`z_loaned_config_t` to clone.
- */
-void z_config_clone(z_owned_config_t *config, const z_loaned_config_t *src);
-
-/**
  * Gets the property with the given integer key from the configuration.
  *
  * Parameters:
@@ -1334,7 +1325,7 @@ int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_drop
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
 _Z_OWNED_FUNCTIONS_DEF(keyexpr)
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF(config)
+_Z_OWNED_FUNCTIONS_DEF(config)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(session)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(subscriber)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(publisher)

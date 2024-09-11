@@ -188,8 +188,6 @@ void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); 
 
 int8_t z_config_default(z_owned_config_t *config) { return _z_config_default(&config->_val); }
 
-void z_config_clone(z_owned_config_t *config, const z_loaned_config_t *src) { config->_val = _z_config_clone(src); }
-
 const char *zp_config_get(const z_loaned_config_t *config, uint8_t key) { return _z_config_get(config, key); }
 
 int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value) {
@@ -746,8 +744,12 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
 
 _Bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
 _z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
+int8_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
+    *dst = _z_str_intmap_clone(src);
+    return _Z_RES_OK;
+}
 void _z_config_drop(_z_config_t *config) { _z_str_intmap_clear(config); }
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_config_t, config, _z_config_check, _z_config_null, _z_config_drop)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_null, _z_config_copy, _z_config_drop)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
 
