@@ -295,10 +295,6 @@
  */
 #define z_clone(x, y) _Generic((x), \
                   z_owned_keyexpr_t : z_keyexpr_clone,                 \
-                  z_owned_session_t : z_session_clone,                 \
-                  z_owned_subscriber_t : z_subscriber_clone,           \
-                  z_owned_publisher_t : z_publisher_clone,             \
-                  z_owned_queryable_t : z_queryable_clone,             \
                   z_owned_query_t : z_query_clone,                     \
                   z_owned_sample_t : z_sample_clone,                   \
                   z_owned_bytes_t : z_bytes_clone,                     \
