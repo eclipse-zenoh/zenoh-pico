@@ -190,7 +190,7 @@ int8_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         } break;
         case 0x05 | _Z_MSG_EXT_ENC_ZINT: {
             if (extension->_body._zint._val > UINT32_MAX) {
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+                _Z_INFO("Request extension budget was truncated to u32.");
             }
             msg->_ext_budget = (uint32_t)extension->_body._zint._val;
         } break;
