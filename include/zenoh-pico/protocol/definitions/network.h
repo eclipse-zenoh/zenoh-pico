@@ -294,7 +294,7 @@ _Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
-                                       uint32_t timeout_ms, _z_bytes_t attachment, z_congestion_control_t cong_ctrl,
+                                       uint64_t timeout_ms, _z_bytes_t attachment, z_congestion_control_t cong_ctrl,
                                        z_priority_t priority, _Bool is_express);
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);

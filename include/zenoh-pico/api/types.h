@@ -390,7 +390,7 @@ typedef struct {
     z_priority_t priority;
     _Bool is_express;
     z_query_target_t target;
-    uint32_t timeout_ms;
+    uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
 } z_get_options_t;
 
