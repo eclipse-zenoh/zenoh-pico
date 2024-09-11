@@ -1346,7 +1346,7 @@ _z_n_msg_request_t gen_request(void) {
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_target = gen_uint8() % 3,
         ._ext_budget = gen_bool() ? (uint32_t)gen_uint64() : 0,
-        ._ext_timeout_ms = gen_bool() ? (uint32_t)gen_uint64() : 0,
+        ._ext_timeout_ms = gen_bool() ? gen_uint64() : 0,
     };
     switch (gen_uint8() % 2) {
         case 0: {
