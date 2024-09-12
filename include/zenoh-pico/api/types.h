@@ -503,12 +503,12 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_data_handler_t call: `void *call(const struct z_sample_t*, const void *context)` is the callback function.
+ *   z_data_handler_t call: `void *call(z_loaned_sample_t*, const void *context)` is the callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
 
-void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample);
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample);
 
 typedef _z_queryable_handler_t z_queryable_handler_t;
 
@@ -524,14 +524,14 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   _z_queryable_handler_t call: `void (*_z_queryable_handler_t)(z_query_t *query, void *arg)` is the
+ *   _z_queryable_handler_t call: `void (*_z_queryable_handler_t)(z_loaned_query_t *query, void *arg)` is the
  * callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
 
-void z_closure_query_call(const z_loaned_closure_query_t *closure, const z_loaned_query_t *query);
+void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query);
 
 typedef _z_reply_handler_t z_reply_handler_t;
 
@@ -547,16 +547,16 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_reply_handler_t call: `void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg)` is the
+ *   z_reply_handler_t call: `void (*_z_reply_handler_t)(z_loaned_reply_t *reply, void *arg)` is the
  * callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
 
-void z_closure_reply_call(const z_loaned_closure_reply_t *closure, const z_loaned_reply_t *reply);
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply);
 
-typedef void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *arg);
+typedef void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg);
 
 typedef struct {
     void *context;
@@ -570,16 +570,16 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_loaned_hello_handler_t call: `void (*z_loaned_hello_handler_t)(const z_loaned_hello_t *hello, void *arg)` is the
+ *   z_loaned_hello_handler_t call: `void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg)` is the
  * callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
-void z_closure_hello_call(const z_loaned_closure_hello_t *closure, const z_loaned_hello_t *hello);
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
 
-typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
+typedef void (*z_id_handler_t)(z_id_t *id, void *arg);
 
 typedef struct {
     void *context;
@@ -593,13 +593,13 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
+ *   z_id_handler_t call: `void (*z_id_handler_t)(z_id_t *id, void *arg)` is the callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
 
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, z_id_t *id);
 
 #ifdef __cplusplus
 }

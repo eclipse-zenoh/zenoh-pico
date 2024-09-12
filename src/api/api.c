@@ -712,31 +712,31 @@ const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) {
     return &_Z_RC_IN_VAL(query)->_value.encoding;
 }
 
-void z_closure_sample_call(const z_loaned_closure_sample_t *closure, const z_loaned_sample_t *sample) {
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
         (closure->call)(sample, closure->context);
     }
 }
 
-void z_closure_query_call(const z_loaned_closure_query_t *closure, const z_loaned_query_t *query) {
+void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query) {
     if (closure->call != NULL) {
         (closure->call)(query, closure->context);
     }
 }
 
-void z_closure_reply_call(const z_loaned_closure_reply_t *closure, const z_loaned_reply_t *reply) {
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply) {
     if (closure->call != NULL) {
         (closure->call)(reply, closure->context);
     }
 }
 
-void z_closure_hello_call(const z_loaned_closure_hello_t *closure, const z_loaned_hello_t *hello) {
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello) {
     if (closure->call != NULL) {
         (closure->call)(hello, closure->context);
     }
 }
 
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id) {
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, z_id_t *id) {
     if (closure->call != NULL) {
         (closure->call)(id, closure->context);
     }
