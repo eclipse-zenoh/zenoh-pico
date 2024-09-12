@@ -28,7 +28,7 @@
 
 #define KEYEXPR "demo/example/**"
 
-void data_handler(const z_loaned_sample_t *sample, void *ctx) {
+void data_handler(z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);

@@ -31,7 +31,7 @@
 #define KEYEXPR "demo/example/zenoh-pico-queryable"
 #define VALUE "[MBedOS]{nucleo-F767ZI} Queryable from Zenoh-Pico!"
 
-void query_handler(const z_loaned_query_t *query, void *ctx) {
+void query_handler(z_loaned_query_t *query, void *ctx) {
     (void)(ctx);
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);

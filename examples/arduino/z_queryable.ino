@@ -34,7 +34,7 @@
 z_owned_session_t s;
 z_owned_queryable_t qable;
 
-void query_handler(const z_loaned_query_t *query, void *arg) {
+void query_handler(z_loaned_query_t *query, void *arg) {
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     Serial.print(" >> [Queryable handler] Received Query '");

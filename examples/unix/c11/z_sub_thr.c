@@ -39,7 +39,7 @@ z_stats_t *z_stats_make(void) {
     return stats;
 }
 
-void on_sample(const z_loaned_sample_t *sample, void *context) {
+void on_sample(z_loaned_sample_t *sample, void *context) {
     (void)sample;
     z_stats_t *stats = (z_stats_t *)context;
     stats->count++;

@@ -71,7 +71,7 @@ void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, " }");
 }
 
-void callback(const z_loaned_hello_t *hello, void *context) {
+void callback(z_loaned_hello_t *hello, void *context) {
     fprinthello(stdout, hello);
     fprintf(stdout, "\n");
     (*(int *)context)++;
