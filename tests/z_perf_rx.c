@@ -39,7 +39,7 @@ void z_stats_stop(z_stats_t *stats) {
     stats->count = 0;
 }
 
-void on_sample(const z_loaned_sample_t *sample, void *context) {
+void on_sample(z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
     z_owned_slice_t value;
     z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
