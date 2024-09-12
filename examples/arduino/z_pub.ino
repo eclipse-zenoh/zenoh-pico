@@ -21,16 +21,12 @@
 #define SSID "SSID"
 #define PASS "PASS"
 
-#define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
-#if CLIENT_OR_PEER == 0
+// Client mode values (comment/uncomment as needed)
 #define MODE "client"
 #define CONNECT ""  // If empty, it will scout
-#elif CLIENT_OR_PEER == 1
-#define MODE "peer"
-#define CONNECT "udp/224.0.0.225:7447#iface=en0"
-#else
-#error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
-#endif
+// Peer mode values (comment/uncomment as needed)
+// #define MODE "peer"
+// #define CONNECT "udp/224.0.0.225:7447#iface=en0"
 
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[ARDUINO]{ESP32} Publication from Zenoh-Pico!"
