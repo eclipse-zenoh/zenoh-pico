@@ -423,8 +423,8 @@ inline z_loaned_condvar_t* z_loan_mut(z_owned_condvar_t& x) { return z_condvar_l
 inline z_loaned_reply_err_t* z_loan_mut(z_owned_reply_err_t& x) { return z_reply_err_loan_mut(&x); }
 
 // z_drop definition
-inline void z_drop(z_moved_session_t* v) { return z_session_drop(v); }
-inline void z_drop(z_moved_publisher_t* v) { return z_publisher_drop(v); }
+inline void z_drop(z_moved_session_t* v) { z_session_drop(v); }
+inline void z_drop(z_moved_publisher_t* v) { z_publisher_drop(v); }
 inline void z_drop(z_moved_keyexpr_t* v) { z_keyexpr_drop(v); }
 inline void z_drop(z_moved_config_t* v) { z_config_drop(v); }
 inline void z_drop(z_moved_subscriber_t* v) { return z_subscriber_drop(v); }
