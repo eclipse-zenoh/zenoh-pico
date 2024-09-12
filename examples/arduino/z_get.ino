@@ -21,16 +21,12 @@
 #define SSID "SSID"
 #define PASS "PASS"
 
-#define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
-#if CLIENT_OR_PEER == 0
+// Client mode values (comment/uncomment as needed)
 #define MODE "client"
 #define CONNECT ""  // If empty, it will scout
-#elif CLIENT_OR_PEER == 1
-#define MODE "peer"
-#define CONNECT "udp/224.0.0.225:7447#iface=en0"
-#else
-#error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
-#endif
+// Peer mode values (comment/uncomment as needed)
+// #define MODE "peer"
+// #define CONNECT "udp/224.0.0.225:7447#iface=en0"
 
 #define KEYEXPR "demo/example/**"
 #define VALUE ""
@@ -97,10 +93,14 @@ void setup() {
     }
     Serial.println("OK");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan_mut(&s), NULL);
-    zp_start_lease_task(z_session_loan_mut(&s), NULL);
-
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
+        Serial.println("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s), NULL);
+        while (1) {
+            ;
+        }
+    }
     Serial.println("Zenoh setup finished!");
 
     delay(300);

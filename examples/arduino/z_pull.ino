@@ -21,22 +21,19 @@
 #define SSID "SSID"
 #define PASS "PASS"
 
-#define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
-#if CLIENT_OR_PEER == 0
+// Client mode values (comment/uncomment as needed)
 #define MODE "client"
 #define CONNECT ""  // If empty, it will scout
-#elif CLIENT_OR_PEER == 1
-#define MODE "peer"
-#define CONNECT "udp/224.0.0.225:7447#iface=en0"
-#else
-#error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
-#endif
+// Peer mode values (comment/uncomment as needed)
+// #define MODE "peer"
+// #define CONNECT "udp/224.0.0.225:7447#iface=en0"
 
 #define KEYEXPR "demo/example/**"
 
 const size_t INTERVAL = 5000;
 const size_t SIZE = 3;
-
+z_owned_session_t s;
+z_owned_subscriber_t sub;
 z_owned_ring_handler_sample_t handler;
 
 void setup() {
@@ -65,7 +62,6 @@ void setup() {
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s;
     if (z_open(&s, z_config_move(&config), NULL) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
@@ -74,16 +70,18 @@ void setup() {
     }
     Serial.println("OK");
 
+    // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
+        Serial.println("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s), NULL);
-        return;
+        while (1) {
+            ;
+        }
     }
 
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
     z_owned_closure_sample_t closure;
     z_ring_channel_sample_new(&closure, &handler, SIZE);
-    z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, KEYEXPR);
     if (z_declare_subscriber(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),
