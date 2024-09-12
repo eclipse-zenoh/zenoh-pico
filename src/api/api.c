@@ -1508,6 +1508,7 @@ int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload
                         .encoding = _z_encoding_from_owned(&opts.encoding->_this)};
 
     int8_t ret = _z_send_reply_err(_Z_RC_IN_VAL(query), &sess_rc, value);
+    _z_session_rc_drop(&sess_rc);
     z_bytes_drop(payload);
     // Clean-up
     z_encoding_drop(opts.encoding);
