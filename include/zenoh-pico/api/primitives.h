@@ -1771,7 +1771,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
                            const z_publisher_options_t *options);
 
 /**
- * Undeclares a publisher.
+ * Undeclares and clears the publisher.
  *
  * Parameters:
  *   pub: Moved :c:type:`z_owned_publisher_t` to undeclare.
@@ -1919,6 +1919,9 @@ void z_queryable_options_default(z_queryable_options_t *options);
 
 /**
  * Declares a queryable for a given keyexpr.
+ * Note that dropping queryable does not drop its callback, meaning that after queryable drop the messages will still
+ * be receieved and processed, until the corresponding session is dropped. To disable the callback with cleanup use
+ * :c:func:`z_undeclare_queryable`.
  *
  * Parameters:
  *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
@@ -1935,7 +1938,7 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
                            const z_queryable_options_t *options);
 
 /**
- * Undeclares a queryable.
+ * Undeclares and clears the queryable.
  *
  * Parameters:
  *   queryable: Moved :c:type:`z_owned_queryable_t` to undeclare.
@@ -2120,6 +2123,9 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
 
 /**
  * Declares a subscriber for a given keyexpr.
+ * Note that dropping subscriber does not drop its callback, meaning that after subscriber drop the messages will still
+ * be receieved and processed, until the corresponding session is dropped. To disable the callback with cleanup use
+ * :c:func:`z_subscriber_undeclare`.
  *
  * Parameters:
  *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
@@ -2135,7 +2141,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
                             z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**
- * Undeclares the subscriber.
+ * Undeclares and clears the subscriber.
  *
  * Parameters:
  *   sub: Moved :c:type:`z_owned_subscriber_t` to undeclare.
