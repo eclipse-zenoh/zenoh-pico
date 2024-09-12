@@ -736,7 +736,7 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
     }
 }
 
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, z_id_t *id) {
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id) {
     if (closure->call != NULL) {
         (closure->call)(id, closure->context);
     }

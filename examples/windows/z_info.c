@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <zenoh-pico.h>
 
-void print_zid(z_id_t *id, void *ctx) {
+void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
     printf(" ");
     for (int i = 15; i >= 0; i--) {

@@ -579,7 +579,7 @@ _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
 void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
 
-typedef void (*z_id_handler_t)(z_id_t *id, void *arg);
+typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
 typedef struct {
     void *context;
@@ -593,13 +593,13 @@ typedef struct {
  *
  * Members:
  *   void *context: a pointer to an arbitrary state.
- *   z_id_handler_t call: `void (*z_id_handler_t)(z_id_t *id, void *arg)` is the callback function.
+ *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
  *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
 
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, z_id_t *id);
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

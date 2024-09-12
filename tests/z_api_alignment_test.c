@@ -44,7 +44,7 @@
 const char *value = "Test value";
 
 volatile unsigned int zids = 0;
-void zid_handler(z_id_t *id, void *arg) {
+void zid_handler(const z_id_t *id, void *arg) {
     (void)(arg);
     (void)(id);
     printf("%s\n", __func__);

@@ -511,7 +511,7 @@ inline void z_call(const z_loaned_closure_reply_t &closure, z_loaned_reply_t *re
     { z_closure_reply_call(&closure, reply); }
 inline void z_call(const z_loaned_closure_hello_t &closure, z_loaned_hello_t *hello)
     { z_closure_hello_call(&closure, hello); }
-inline void z_call(const z_loaned_closure_zid_t &closure, z_id_t *zid)
+inline void z_call(const z_loaned_closure_zid_t &closure, const z_id_t *zid)
     { z_closure_zid_call(&closure, zid); }
 
 inline void z_closure(
@@ -552,7 +552,7 @@ inline void z_closure(
 };
 inline void z_closure(
     z_owned_closure_zid_t* closure,
-    void (*call)(z_id_t*, void*),
+    void (*call)(const z_id_t*, void*),
     void (*drop)(void*) = NULL,
     void *context = NULL) {
     closure->_val.context = context;
