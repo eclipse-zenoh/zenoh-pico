@@ -427,8 +427,8 @@ inline void z_drop(z_moved_session_t* v) { z_session_drop(v); }
 inline void z_drop(z_moved_publisher_t* v) { z_publisher_drop(v); }
 inline void z_drop(z_moved_keyexpr_t* v) { z_keyexpr_drop(v); }
 inline void z_drop(z_moved_config_t* v) { z_config_drop(v); }
-inline void z_drop(z_moved_subscriber_t* v) { return z_subscriber_drop(v); }
-inline void z_drop(z_moved_queryable_t* v) { return z_queryable_drop(v); }
+inline void z_drop(z_moved_subscriber_t* v) { z_subscriber_drop(v); }
+inline void z_drop(z_moved_queryable_t* v) { z_queryable_drop(v); }
 inline void z_drop(z_moved_reply_t* v) { z_reply_drop(v); }
 inline void z_drop(z_moved_hello_t* v) { z_hello_drop(v); }
 inline void z_drop(z_moved_string_t* v) { z_string_drop(v); }
