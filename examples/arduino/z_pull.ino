@@ -70,10 +70,13 @@ void setup() {
     }
     Serial.println("OK");
 
+    // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
+        Serial.println("Unable to start read and lease tasks\n");
         z_close(z_session_move(&s), NULL);
-        return;
+        while (1) {
+            ;
+        }
     }
 
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);

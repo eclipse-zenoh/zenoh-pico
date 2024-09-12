@@ -69,9 +69,14 @@ void setup() {
     }
     Serial.println("OK");
 
-    // Start the receive and the session lease loop for zenoh-pico
-    zp_start_read_task(z_session_loan_mut(&s), NULL);
-    zp_start_lease_task(z_session_loan_mut(&s), NULL);
+    // Start read and lease tasks for zenoh-pico
+    if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
+        Serial.println("Unable to start read and lease tasks\n");
+        z_close(z_session_move(&s), NULL);
+        while (1) {
+            ;
+        }
+    }
 
     // Declare Zenoh publisher
     Serial.print("Declaring publisher for ");
