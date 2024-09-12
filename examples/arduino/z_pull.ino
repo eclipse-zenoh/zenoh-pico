@@ -32,7 +32,8 @@
 
 const size_t INTERVAL = 5000;
 const size_t SIZE = 3;
-
+z_owned_session_t s;
+z_owned_subscriber_t sub;
 z_owned_ring_handler_sample_t handler;
 
 void setup() {
@@ -61,7 +62,6 @@ void setup() {
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s;
     if (z_open(&s, z_config_move(&config), NULL) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
@@ -82,7 +82,6 @@ void setup() {
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
     z_owned_closure_sample_t closure;
     z_ring_channel_sample_new(&closure, &handler, SIZE);
-    z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, KEYEXPR);
     if (z_declare_subscriber(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),

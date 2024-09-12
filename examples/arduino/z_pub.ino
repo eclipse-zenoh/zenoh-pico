@@ -31,6 +31,7 @@
 #define KEYEXPR "demo/example/zenoh-pico-pub"
 #define VALUE "[ARDUINO]{ESP32} Publication from Zenoh-Pico!"
 
+z_owned_session_t s;
 z_owned_publisher_t pub;
 static int idx = 0;
 
@@ -60,7 +61,6 @@ void setup() {
 
     // Open Zenoh session
     Serial.print("Opening Zenoh Session...");
-    z_owned_session_t s;
     if (z_open(&s, z_config_move(&config), NULL) < 0) {
         Serial.println("Unable to open session!");
         while (1) {
