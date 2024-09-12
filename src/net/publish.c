@@ -19,6 +19,7 @@
 #if Z_FEATURE_PUBLICATION == 1
 void _z_publisher_clear(_z_publisher_t *pub) {
     _z_keyexpr_clear(&pub->_key);
+    _z_session_weak_drop(&pub->_zn);
     *pub = _z_publisher_null();
 }
 

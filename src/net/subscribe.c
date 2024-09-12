@@ -16,8 +16,7 @@
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 void _z_subscriber_clear(_z_subscriber_t *sub) {
-    // Nothing to clear
-    (void)(sub);
+    _z_session_weak_drop(&sub->_zn);
     *sub = _z_subscriber_null();
 }
 

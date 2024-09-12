@@ -126,7 +126,6 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
     // Clear publisher
     _z_write_filter_destroy(pub);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
-    _z_session_weak_drop(&pub->_zn);
     return _Z_RES_OK;
 }
 
@@ -250,7 +249,6 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, s);
-    _z_session_weak_drop(&sub->_zn);
     return _Z_RES_OK;
 }
 #endif
@@ -313,7 +311,6 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
-    _z_session_weak_drop(&qle->_zn);
     return _Z_RES_OK;
 }
 

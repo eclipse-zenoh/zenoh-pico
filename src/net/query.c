@@ -104,7 +104,7 @@ _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){._entity_id = 0
 _Bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
 
 void _z_queryable_clear(_z_queryable_t *qbl) {
-    // Nothing to clear
+    _z_session_weak_drop(&qbl->_zn);
     *qbl = _z_queryable_null();
 }
 
