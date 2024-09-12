@@ -100,7 +100,7 @@ void wifi_init_sta(void) {
     vEventGroupDelete(s_event_group_handler);
 }
 
-void data_handler(const z_loaned_sample_t* sample, void* arg) {
+void data_handler(z_loaned_sample_t* sample, void* arg) {
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;

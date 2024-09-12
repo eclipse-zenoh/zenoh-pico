@@ -53,7 +53,7 @@ extern "C" {
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                        \
         }                                                                                                              \
     }                                                                                                                  \
-    static inline void _z_##handler_name##_send(const elem_loaned_type *elem, void *context) {                         \
+    static inline void _z_##handler_name##_send(elem_loaned_type *elem, void *context) {                               \
         elem_owned_type *internal_elem = (elem_owned_type *)z_malloc(sizeof(elem_owned_type));                         \
         if (internal_elem == NULL) {                                                                                   \
             _Z_ERROR("Out of memory");                                                                                 \

@@ -31,7 +31,7 @@
 static z_owned_condvar_t cond;
 static z_owned_mutex_t mutex;
 
-void callback(const z_loaned_sample_t* sample, void* context) {
+void callback(z_loaned_sample_t* sample, void* context) {
     (void)sample;
     (void)context;
     z_condvar_signal(z_condvar_loan_mut(&cond));

@@ -41,7 +41,7 @@ _z_list_t *subs2 = NULL;
 volatile unsigned int total = 0;
 
 volatile unsigned int datas = 0;
-void data_handler(const z_loaned_sample_t *sample, void *arg) {
+void data_handler(z_loaned_sample_t *sample, void *arg) {
     char *res = (char *)malloc(64);
     snprintf(res, 64, "%s%u", uri, *(unsigned int *)arg);
     printf(">> Received data: %s\t(%u/%u)\n", res, datas, total);

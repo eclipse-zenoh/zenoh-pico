@@ -38,7 +38,7 @@ void reply_dropper(void *ctx) {
     Serial.println(" >> Received query final notification");
 }
 
-void reply_handler(const z_loaned_reply_t *oreply, void *ctx) {
+void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
     (void)(ctx);
     if (z_reply_is_ok(oreply)) {
         const z_loaned_sample_t *sample = z_reply_ok(oreply);
