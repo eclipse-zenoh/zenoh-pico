@@ -1585,7 +1585,7 @@ z_id_t z_info_zid(const z_loaned_session_t *zs);
  * Return:
  *   ``0`` if operation successful, ``negative value`` otherwise.
  */
-z_result_t z_id_to_string(z_id_t *id, z_owned_string_t *str);
+z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str);
 
 /**
  * Gets the keyexpr from a sample by aliasing it.
