@@ -1055,6 +1055,7 @@ int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
  * Constructs writer for :c:type:`z_loaned_bytes_t`.
+ * Note: creating another writer while previous one is still in use is undefined behaviour.
  *
  * Parameters:
  *   bytes: Data container to write to.
