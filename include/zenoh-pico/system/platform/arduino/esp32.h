@@ -15,7 +15,7 @@
 #ifndef ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 
-#include <Arduino.h>
+#include <stddef.h>
 
 #include "zenoh-pico/config.h"
 
