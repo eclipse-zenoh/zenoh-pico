@@ -324,7 +324,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
-    s->_val = _z_string_alias_str(value);
+    s->_val = _z_string_from_str_custom_deleter(value, _z_delete_context_default());
     return _Z_RES_OK;
 }
 
