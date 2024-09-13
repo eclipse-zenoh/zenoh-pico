@@ -264,9 +264,12 @@ jobs:
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
+      - name: Install valgrind
+        uses: taiki-e/install-action@valgrind
+
       - name: Build project and run test
         run: |
-          sudo apt install -y ninja-build valgrind
+          sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/memory_leak.py
         timeout-minutes: 5
