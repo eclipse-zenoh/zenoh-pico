@@ -930,6 +930,7 @@ int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_opti
         _z_session_rc_decr(&zs->_rc);
         z_internal_session_null(zs);
         z_config_drop(config);
+        z_free(s);
         return ret;
     }
     // Clean up
