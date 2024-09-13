@@ -1669,7 +1669,7 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
  */
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
 #endif
 
