@@ -12,11 +12,11 @@ DIR_EXAMPLES = "build/examples"
 NO_LEAK_OUTPUT = "All heap blocks were freed -- no leaks are possible"
 
 
-def failure_mode():
+def failure_mode(fail_cmd):
     test_status = 0
     # Start binary
     print("Start binary")
-    z_pub_command = f"stdbuf -oL -eL valgrind ./{DIR_EXAMPLES}/z_pub -m peer"
+    z_pub_command = f"stdbuf -oL -eL valgrind ./{DIR_EXAMPLES}/" + fail_cmd
     z_pub_process = subprocess.Popen(
         z_pub_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     # Test failure mode
     print("*** Failure mode ***")
-    if failure_mode() == 1:
+    if failure_mode(f'z_pub -m peer') == 1:
         EXIT_STATUS = 1
     # Test pub and sub examples
     print("*** Pub & sub test ***")
