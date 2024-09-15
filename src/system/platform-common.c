@@ -52,5 +52,8 @@ int8_t z_condvar_drop(z_moved_condvar_t *cv) { return _z_condvar_drop(&cv->_this
 
 int8_t z_condvar_signal(z_loaned_condvar_t *cv) { return _z_condvar_signal(cv); }
 int8_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m) { return _z_condvar_wait(cv, m); }
+int8_t z_condvar_timedwait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, const z_clock_t *abstime) {
+    return _z_condvar_timedwait(cv, m, abstime);
+}
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1

@@ -136,6 +136,10 @@ int8_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signa
 int8_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
 
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
+
+int8_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
+    _Z_CHECK_SYS_ERR(pthread_cond_timedwait(cv, m, abstime));
+}
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
