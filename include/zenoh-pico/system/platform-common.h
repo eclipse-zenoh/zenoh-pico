@@ -140,6 +140,9 @@ z_clock_t z_clock_now(void);
 unsigned long z_clock_elapsed_us(z_clock_t *time);
 unsigned long z_clock_elapsed_ms(z_clock_t *time);
 unsigned long z_clock_elapsed_s(z_clock_t *time);
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration);
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration);
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration);
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void);
