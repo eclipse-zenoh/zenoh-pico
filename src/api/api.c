@@ -1053,6 +1053,8 @@ bool z_string_is_empty(const z_loaned_string_t *str) { return _z_string_is_empty
 
 const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str) { return &str->_slice; }
 
+z_priority_t z_priority_default(void) { return Z_PRIORITY_DEFAULT; }
+
 #if Z_FEATURE_PUBLICATION == 1
 void _z_publisher_drop(_z_publisher_t *pub) { _z_publisher_clear(pub); }
 
