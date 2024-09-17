@@ -25,7 +25,7 @@ typedef struct {
 } _z_delete_context_t;
 
 _z_delete_context_t _z_delete_context_null(void);
-_Bool _z_delete_context_is_null(const _z_delete_context_t *c);
+bool _z_delete_context_is_null(const _z_delete_context_t *c);
 _z_delete_context_t _z_delete_context_create(void (*deleter)(void *context, void *data), void *context);
 _z_delete_context_t _z_delete_context_default(void);
 void _z_delete_context_delete(_z_delete_context_t *c, void *data);
@@ -46,7 +46,7 @@ typedef struct {
 } _z_slice_t;
 
 _z_slice_t _z_slice_empty(void);
-inline static _Bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
+inline static bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
 int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);
@@ -59,10 +59,10 @@ int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, si
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
 void _z_slice_reset(_z_slice_t *bs);
-_Bool _z_slice_is_empty(const _z_slice_t *bs);
-_Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
+bool _z_slice_is_empty(const _z_slice_t *bs);
+bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
-_Bool _z_slice_is_alloced(const _z_slice_t *s);
+bool _z_slice_is_alloced(const _z_slice_t *s);
 
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */

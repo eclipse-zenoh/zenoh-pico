@@ -375,7 +375,7 @@ size_t _z_encoding_len(const _z_encoding_t *en) {
 }
 
 int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
-    _Bool has_schema = _z_string_check(&en->schema);
+    bool has_schema = _z_string_check(&en->schema);
     uint32_t id = (uint32_t)(en->id) << 1;
     if (has_schema) {
         id |= _Z_ENCODING_FLAG_S;
@@ -389,7 +389,7 @@ int8_t _z_encoding_encode(_z_wbuf_t *wbf, const _z_encoding_t *en) {
 
 int8_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf) {
     uint32_t id = 0;
-    _Bool has_schema = false;
+    bool has_schema = false;
     _Z_RETURN_IF_ERR(_z_zint32_decode(&id, zbf));
     if ((id & _Z_ENCODING_FLAG_S) != 0) {
         has_schema = true;

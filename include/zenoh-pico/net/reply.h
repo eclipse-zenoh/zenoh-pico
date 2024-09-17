@@ -91,7 +91,7 @@ typedef struct _z_pending_reply_t {
     _z_timestamp_t _tstamp;
 } _z_pending_reply_t;
 
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
+bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
 void _z_pending_reply_clear(_z_pending_reply_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)

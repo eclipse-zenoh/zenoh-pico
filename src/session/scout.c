@@ -25,7 +25,7 @@
 #error "Scouting UDP requires UDP unicast links to be enabled (Z_FEATURE_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
-_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, _Bool exit_on_first) {
+_z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, bool exit_on_first) {
     // Define an empty array
     _z_hello_list_t *ret = NULL;
     int8_t err = _Z_RES_OK;
@@ -130,7 +130,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
 }
 
 _z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
-                                const _Bool exit_on_first) {
+                                const bool exit_on_first) {
     _z_hello_list_t *ret = NULL;
 
     // Create the buffer to serialize the scout message on

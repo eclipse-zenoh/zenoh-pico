@@ -228,14 +228,14 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
+    bool is_express;
 #if Z_FEATURE_UNSTABLE_API == 1
     z_reliability_t reliability;
 #endif
@@ -245,10 +245,10 @@ typedef struct {
  * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.
  *
  * Members:
- *   _Bool complete: The completeness of the queryable.
+ *   bool complete: The completeness of the queryable.
  */
 typedef struct {
-    _Bool complete;
+    bool complete;
 } z_queryable_options_t;
 
 /**
@@ -259,7 +259,7 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
@@ -267,7 +267,7 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
 } z_query_reply_options_t;
 
@@ -278,14 +278,14 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
 } z_query_reply_del_options_t;
 
@@ -307,7 +307,7 @@ typedef struct {
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
  *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
@@ -316,7 +316,7 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
 #if Z_FEATURE_UNSTABLE_API == 1
     z_reliability_t reliability;
@@ -329,14 +329,14 @@ typedef struct {
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when router.
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
+    bool is_express;
     z_timestamp_t *timestamp;
 #if Z_FEATURE_UNSTABLE_API == 1
     z_reliability_t reliability;
@@ -378,7 +378,7 @@ typedef struct {
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing the query.
  *   z_priority_t priority: The priority of the query.
- *  _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *  bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  */
@@ -388,7 +388,7 @@ typedef struct {
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
+    bool is_express;
     z_query_target_t target;
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
@@ -486,7 +486,7 @@ _Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
 size_t z_string_array_len(const z_loaned_string_array_t *a);
-_Bool z_string_array_is_empty(const z_loaned_string_array_t *a);
+bool z_string_array_is_empty(const z_loaned_string_array_t *a);
 
 typedef void (*z_dropper_handler_t)(void *arg);
 typedef _z_data_handler_t z_data_handler_t;

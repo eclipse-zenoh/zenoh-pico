@@ -45,4 +45,4 @@ void _z_value_free(_z_value_t **value) {
     }
 }
 
-_Bool _z_hello_check(const _z_hello_t *hello) { return _z_id_check(hello->_zid); }
+bool _z_hello_check(const _z_hello_t *hello) { return _z_id_check(hello->_zid); }

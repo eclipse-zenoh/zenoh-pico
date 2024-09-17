@@ -46,7 +46,7 @@ typedef struct {
     _z_string_t _address;
 } _z_locator_t;
 
-_Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
+bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
 
 void _z_locator_init(_z_locator_t *locator);
 _z_string_t _z_locator_to_string(const _z_locator_t *loc);

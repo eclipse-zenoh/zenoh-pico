@@ -28,10 +28,10 @@ typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
-typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
+typedef bool (*z_element_eq_f)(const void *left, const void *right);
 
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f)                                     \
-    typedef _Bool (*name##_eq_f)(const type *left, const type *right);                                         \
+    typedef bool (*name##_eq_f)(const type *left, const type *right);                                          \
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
         type *ptr = (type *)*e;                                                                                \

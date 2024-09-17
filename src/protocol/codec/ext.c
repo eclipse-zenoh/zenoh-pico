@@ -70,7 +70,7 @@ int8_t _z_msg_ext_decode_zbuf(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) {
 int8_t _z_msg_ext_decode_zbuf_na(_z_msg_ext_zbuf_t *ext, _z_zbuf_t *zbf) { return _z_msg_ext_decode_zbuf(ext, zbf); }
 
 /*------------------ Message Extension ------------------*/
-int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, _Bool has_next) {
+int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, bool has_next) {
     int8_t ret = _Z_RES_OK;
 
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, _Z_EXT_FULL_ID(ext->_header) | (has_next << 7)))
@@ -121,7 +121,7 @@ int8_t _z_msg_ext_unknown_body_decode(_z_msg_ext_body_t *body, uint8_t enc, _z_z
     return ret;
 }
 
-int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next) {
+int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next) {
     int8_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&ext->_header, zbf);  // Decode the header
@@ -135,7 +135,7 @@ int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next) {
     return ret;
 }
 
-int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next) {
+int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next) {
     return _z_msg_ext_decode(ext, zbf, has_next);
 }
 
@@ -213,7 +213,7 @@ int8_t _z_msg_ext_skip_non_mandatory(_z_msg_ext_t *extension, void *ctx) {
 }
 int8_t _z_msg_ext_decode_iter(_z_zbuf_t *zbf, int8_t (*callback)(_z_msg_ext_t *, void *), void *context) {
     int8_t ret = _Z_RES_OK;
-    _Bool has_next = true;
+    bool has_next = true;
     while (has_next && ret == _Z_RES_OK) {
         _z_msg_ext_t ext = _z_msg_ext_make_unit(0);
         ret |= _z_msg_ext_decode(&ext, zbf, &has_next);

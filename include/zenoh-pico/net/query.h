@@ -31,7 +31,7 @@ typedef struct _z_query_t {
     _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
     _z_bytes_t attachment;
     char *_parameters;
-    _Bool _anyke;
+    bool _anyke;
 } _z_query_t;
 
 _z_query_t _z_query_null(void);
@@ -55,7 +55,7 @@ _z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
 _z_queryable_t _z_queryable_null(void);
-_Bool _z_queryable_check(const _z_queryable_t *queryable);
+bool _z_queryable_check(const _z_queryable_t *queryable);
 #endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

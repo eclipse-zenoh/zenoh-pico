@@ -103,7 +103,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express,
+                                    z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
                                     z_reliability_t reliability) {
     // Allocate publisher
     _z_publisher_t ret;
@@ -132,7 +132,7 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 /*------------------ Write ------------------*/
 int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t *encoding,
                 const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
+                bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
                 z_reliability_t reliability) {
     int8_t ret = _Z_RES_OK;
     _z_network_message_t msg;
@@ -255,7 +255,7 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
+_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, bool complete,
                                     _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
@@ -316,7 +316,7 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
 
 int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
                      const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
+                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
     int8_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
@@ -453,7 +453,7 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
 int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                 const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
                 _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, const _z_bytes_t attachment,
-                z_congestion_control_t cong_ctrl, z_priority_t priority, _Bool is_express) {
+                z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express) {
     int8_t ret = _Z_RES_OK;
 
     // Create the pending query object

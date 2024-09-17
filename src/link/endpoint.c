@@ -71,8 +71,8 @@ int8_t _z_locator_copy(_z_locator_t *dst, const _z_locator_t *src) {
     return _Z_RES_OK;
 }
 
-_Bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
-    _Bool res = false;
+bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
+    bool res = false;
 
     res = _z_string_equals(&left->_protocol, &right->_protocol);
     if (res == true) {

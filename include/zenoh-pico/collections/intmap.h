@@ -59,7 +59,7 @@ void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f
 
 size_t _z_int_void_map_capacity(const _z_int_void_map_t *map);
 size_t _z_int_void_map_len(const _z_int_void_map_t *map);
-_Bool _z_int_void_map_is_empty(const _z_int_void_map_t *map);
+bool _z_int_void_map_is_empty(const _z_int_void_map_t *map);
 
 int8_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c);
 _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f);
@@ -67,50 +67,50 @@ _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f);
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
 
-#define _Z_INT_MAP_DEFINE(name, type)                                                                            \
-    typedef _z_int_void_map_entry_t name##_intmap_entry_t;                                                       \
-    static inline void name##_intmap_entry_elem_free(void **e) {                                                 \
-        name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                                                \
-        if (ptr != NULL) {                                                                                       \
-            name##_elem_free(&ptr->_val);                                                                        \
-            z_free(ptr);                                                                                         \
-            *e = NULL;                                                                                           \
-        }                                                                                                        \
-    }                                                                                                            \
-    static inline void *name##_intmap_entry_elem_clone(const void *e) {                                          \
-        const name##_intmap_entry_t *src = (name##_intmap_entry_t *)e;                                           \
-        name##_intmap_entry_t *dst = (name##_intmap_entry_t *)z_malloc(sizeof(name##_intmap_entry_t));           \
-        dst->_key = src->_key;                                                                                   \
-        dst->_val = name##_elem_clone(src->_val);                                                                \
-        return dst;                                                                                              \
-    }                                                                                                            \
-    typedef _z_int_void_map_t name##_intmap_t;                                                                   \
-    static inline void name##_intmap_init(name##_intmap_t *m) {                                                  \
-        _z_int_void_map_init(m, _Z_DEFAULT_INT_MAP_CAPACITY);                                                    \
-    }                                                                                                            \
-    static inline name##_intmap_t name##_intmap_make(void) {                                                     \
-        return _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);                                                \
-    }                                                                                                            \
-    static inline type *name##_intmap_insert(name##_intmap_t *m, size_t k, type *v) {                            \
-        return (type *)_z_int_void_map_insert(m, k, v, name##_intmap_entry_elem_free);                           \
-    }                                                                                                            \
-    static inline type *name##_intmap_get(const name##_intmap_t *m, size_t k) {                                  \
-        return (type *)_z_int_void_map_get(m, k);                                                                \
-    }                                                                                                            \
-    static inline name##_intmap_t name##_intmap_clone(const name##_intmap_t *m) {                                \
-        return _z_int_void_map_clone(m, name##_intmap_entry_elem_clone, name##_intmap_entry_elem_free);          \
-    }                                                                                                            \
-    static inline void name##_intmap_remove(name##_intmap_t *m, size_t k) {                                      \
-        _z_int_void_map_remove(m, k, name##_intmap_entry_elem_free);                                             \
-    }                                                                                                            \
-    static inline size_t name##_intmap_capacity(name##_intmap_t *m) { return _z_int_void_map_capacity(m); }      \
-    static inline size_t name##_intmap_len(name##_intmap_t *m) { return _z_int_void_map_len(m); }                \
-    static inline _Bool name##_intmap_is_empty(const name##_intmap_t *m) { return _z_int_void_map_is_empty(m); } \
-    static inline void name##_intmap_clear(name##_intmap_t *m) {                                                 \
-        _z_int_void_map_clear(m, name##_intmap_entry_elem_free);                                                 \
-    }                                                                                                            \
-    static inline void name##_intmap_free(name##_intmap_t **m) {                                                 \
-        _z_int_void_map_free(m, name##_intmap_entry_elem_free);                                                  \
+#define _Z_INT_MAP_DEFINE(name, type)                                                                           \
+    typedef _z_int_void_map_entry_t name##_intmap_entry_t;                                                      \
+    static inline void name##_intmap_entry_elem_free(void **e) {                                                \
+        name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                                               \
+        if (ptr != NULL) {                                                                                      \
+            name##_elem_free(&ptr->_val);                                                                       \
+            z_free(ptr);                                                                                        \
+            *e = NULL;                                                                                          \
+        }                                                                                                       \
+    }                                                                                                           \
+    static inline void *name##_intmap_entry_elem_clone(const void *e) {                                         \
+        const name##_intmap_entry_t *src = (name##_intmap_entry_t *)e;                                          \
+        name##_intmap_entry_t *dst = (name##_intmap_entry_t *)z_malloc(sizeof(name##_intmap_entry_t));          \
+        dst->_key = src->_key;                                                                                  \
+        dst->_val = name##_elem_clone(src->_val);                                                               \
+        return dst;                                                                                             \
+    }                                                                                                           \
+    typedef _z_int_void_map_t name##_intmap_t;                                                                  \
+    static inline void name##_intmap_init(name##_intmap_t *m) {                                                 \
+        _z_int_void_map_init(m, _Z_DEFAULT_INT_MAP_CAPACITY);                                                   \
+    }                                                                                                           \
+    static inline name##_intmap_t name##_intmap_make(void) {                                                    \
+        return _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);                                               \
+    }                                                                                                           \
+    static inline type *name##_intmap_insert(name##_intmap_t *m, size_t k, type *v) {                           \
+        return (type *)_z_int_void_map_insert(m, k, v, name##_intmap_entry_elem_free);                          \
+    }                                                                                                           \
+    static inline type *name##_intmap_get(const name##_intmap_t *m, size_t k) {                                 \
+        return (type *)_z_int_void_map_get(m, k);                                                               \
+    }                                                                                                           \
+    static inline name##_intmap_t name##_intmap_clone(const name##_intmap_t *m) {                               \
+        return _z_int_void_map_clone(m, name##_intmap_entry_elem_clone, name##_intmap_entry_elem_free);         \
+    }                                                                                                           \
+    static inline void name##_intmap_remove(name##_intmap_t *m, size_t k) {                                     \
+        _z_int_void_map_remove(m, k, name##_intmap_entry_elem_free);                                            \
+    }                                                                                                           \
+    static inline size_t name##_intmap_capacity(name##_intmap_t *m) { return _z_int_void_map_capacity(m); }     \
+    static inline size_t name##_intmap_len(name##_intmap_t *m) { return _z_int_void_map_len(m); }               \
+    static inline bool name##_intmap_is_empty(const name##_intmap_t *m) { return _z_int_void_map_is_empty(m); } \
+    static inline void name##_intmap_clear(name##_intmap_t *m) {                                                \
+        _z_int_void_map_clear(m, name##_intmap_entry_elem_free);                                                \
+    }                                                                                                           \
+    static inline void name##_intmap_free(name##_intmap_t **m) {                                                \
+        _z_int_void_map_free(m, name##_intmap_entry_elem_free);                                                 \
     }
 
 #endif /* ZENOH_PICO_COLLECTIONS_INTMAP_H */

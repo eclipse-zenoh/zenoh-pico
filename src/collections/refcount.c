@@ -193,7 +193,7 @@ int8_t _z_rc_increase_weak(void* cnt) {
     return _Z_RES_OK;
 }
 
-_Bool _z_rc_decrease_strong(void** cnt) {
+bool _z_rc_decrease_strong(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return _z_rc_decrease_weak(cnt);
@@ -201,7 +201,7 @@ _Bool _z_rc_decrease_strong(void** cnt) {
     return _z_rc_decrease_weak(cnt);
 }
 
-_Bool _z_rc_decrease_weak(void** cnt) {
+bool _z_rc_decrease_weak(void** cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)*cnt;
     if (_ZP_RC_OP_DECR_AND_CMP_WEAK(c, 1)) {
         return false;

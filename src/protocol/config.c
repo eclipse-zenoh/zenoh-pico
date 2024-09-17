@@ -54,7 +54,7 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
         if (p_key_end != NULL) {
             // Verify the key is valid based on the provided mapping
             size_t p_key_len = _z_ptr_char_diff(p_key_end, p_key_start);
-            _Bool found = false;
+            bool found = false;
             uint8_t key = 0;
             for (uint8_t i = 0; i < argc; i++) {
                 if (p_key_len != strlen(argv[i]._str)) {

@@ -148,7 +148,7 @@ int8_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg,
             _Z_DEBUG("Handling _Z_N_INTEREST");
             _z_n_msg_interest_t *interest = &msg->_body._interest;
 
-            _Bool not_final = ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0);
+            bool not_final = ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0);
             if (not_final) {
                 _z_interest_process_interest(zn, interest->_interest._keyexpr, interest->_interest._id,
                                              interest->_interest.flags);

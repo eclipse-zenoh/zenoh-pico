@@ -40,9 +40,9 @@
 
 int8_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg) {
     uint8_t header = _Z_MID_N_PUSH | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
-    _Bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
-    _Bool has_qos_ext = msg->_qos._val != _Z_N_QOS_DEFAULT._val;
-    _Bool has_timestamp_ext = _z_timestamp_check(&msg->_timestamp);
+    bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
+    bool has_qos_ext = msg->_qos._val != _Z_N_QOS_DEFAULT._val;
+    bool has_timestamp_ext = _z_timestamp_check(&msg->_timestamp);
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
@@ -114,7 +114,7 @@ int8_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 int8_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_N_REQUEST | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
-    _Bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
+    bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
@@ -240,11 +240,11 @@ int8_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_N_RESPONSE;
     _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
-    _Bool has_qos_ext = msg->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
-    _Bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
-    _Bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
+    bool has_qos_ext = msg->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
+    bool has_ts_ext = _z_timestamp_check(&msg->_ext_timestamp);
+    bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
     int n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
-    _Bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
+    bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
     if (_z_keyexpr_is_local(&msg->_key)) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     }
@@ -392,8 +392,8 @@ int8_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, 
 
 int8_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
     uint8_t header = _Z_MID_N_DECLARE;
-    _Bool has_qos_ext = decl->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
-    _Bool has_timestamp_ext = _z_timestamp_check(&decl->_ext_timestamp);
+    bool has_qos_ext = decl->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
+    bool has_timestamp_ext = _z_timestamp_check(&decl->_ext_timestamp);
     int n_ext = (has_qos_ext ? 1 : 0) + (has_timestamp_ext ? 1 : 0);
     if (n_ext != 0) {
         header |= _Z_FLAG_N_Z;
@@ -458,7 +458,7 @@ int8_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t heade
 int8_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest) {
     // Set header
     uint8_t header = _Z_MID_N_INTEREST;
-    _Bool is_final = true;
+    bool is_final = true;
     if (_Z_HAS_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_CURRENT)) {
         is_final = false;
         _Z_SET_FLAG(header, _Z_FLAG_N_INTEREST_CURRENT);
@@ -473,8 +473,8 @@ int8_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest)
 
 int8_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header) {
     interest->_interest = _z_interest_null();
-    _Bool is_final = true;
-    _Bool has_ext = false;
+    bool is_final = true;
+    bool has_ext = false;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_INTEREST_CURRENT)) {
         _Z_SET_FLAG(interest->_interest.flags, _Z_INTEREST_FLAG_CURRENT);

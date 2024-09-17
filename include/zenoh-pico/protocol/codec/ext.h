@@ -22,9 +22,9 @@
 #include "zenoh-pico/protocol/iobuf.h"
 
 /*------------------ Message Extension ------------------*/
-int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, _Bool has_next);
-int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next);
-int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, _Bool *has_next);
+int8_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, bool has_next);
+int8_t _z_msg_ext_decode(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next);
+int8_t _z_msg_ext_decode_na(_z_msg_ext_t *ext, _z_zbuf_t *zbf, bool *has_next);
 int8_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensions);
 int8_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf);
 /**

@@ -18,7 +18,7 @@
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/iobuf.h"
 
-int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, _Bool is_final);
-int8_t _z_interest_decode(_z_interest_t *decl, _z_zbuf_t *zbf, _Bool is_final, _Bool has_ext);
+int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is_final);
+int8_t _z_interest_decode(_z_interest_t *decl, _z_zbuf_t *zbf, bool is_final, bool has_ext);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_DECLARATIONS_H */

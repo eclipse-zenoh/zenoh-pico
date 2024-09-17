@@ -45,7 +45,7 @@ typedef struct {
     _z_arc_slice_svec_t _slices;
 } _z_bytes_t;
 
-_Bool _z_bytes_check(const _z_bytes_t *bytes);
+bool _z_bytes_check(const _z_bytes_t *bytes);
 _z_bytes_t _z_bytes_null(void);
 int8_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 int8_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
@@ -57,7 +57,7 @@ void _z_bytes_free(_z_bytes_t **bs);
 size_t _z_bytes_num_slices(const _z_bytes_t *bs);
 _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i);
 size_t _z_bytes_len(const _z_bytes_t *bs);
-_Bool _z_bytes_is_empty(const _z_bytes_t *bs);
+bool _z_bytes_is_empty(const _z_bytes_t *bs);
 int8_t _z_bytes_to_uint8(const _z_bytes_t *bs, uint8_t *u);
 int8_t _z_bytes_to_uint16(const _z_bytes_t *bs, uint16_t *u);
 int8_t _z_bytes_to_uint32(const _z_bytes_t *bs, uint32_t *u);

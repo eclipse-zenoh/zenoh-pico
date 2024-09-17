@@ -46,7 +46,7 @@ typedef struct kv_pairs_rx_t {
 static z_owned_condvar_t cond;
 static z_owned_mutex_t mutex;
 
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
+bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     kv_pairs_tx_t *kvs = (kv_pairs_tx_t *)(context);
     z_owned_bytes_t k, v;
     if (kvs->current_idx >= kvs->len) {

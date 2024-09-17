@@ -341,7 +341,7 @@ void test_equals(void) {
     TEST_TRUE_EQUAL("greetings/hello/there", "greetings/hello/there");
 }
 
-_Bool keyexpr_equals_string(const z_loaned_keyexpr_t *ke, const char *s) {
+bool keyexpr_equals_string(const z_loaned_keyexpr_t *ke, const char *s) {
     z_view_string_t vs;
     z_keyexpr_as_view_string(ke, &vs);
     _z_string_t str = _z_string_alias_str(s);

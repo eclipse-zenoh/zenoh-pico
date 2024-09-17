@@ -188,7 +188,7 @@ uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
 }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
-_Bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
+bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
 
@@ -258,7 +258,7 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) { return _z_iosl
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_ioss); }
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
+_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     _z_wbuf_t wbf;
     if (is_expandable == true) {
         // Preallocate 4 slots, this is usually what we expect

@@ -65,18 +65,18 @@ const uint8_t _ZP_RAWETH_DEFAULT_SMAC[_ZP_MAC_ADDR_LENGTH] = {0x30, 0x03, 0xc8, 
 const _zp_raweth_mapping_entry_t _ZP_RAWETH_DEFAULT_MAPPING = {
     {0, {0}, {{0, NULL, {NULL, NULL}}}}, 0x0000, {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}, false};
 
-static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config);
+static bool _z_valid_iface_raweth(_z_str_intmap_t *config);
 static const char *_z_get_iface_raweth(_z_str_intmap_t *config);
-static _Bool _z_valid_ethtype_raweth(_z_str_intmap_t *config);
+static bool _z_valid_ethtype_raweth(_z_str_intmap_t *config);
 static long _z_get_ethtype_raweth(_z_str_intmap_t *config);
 static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config);
 static int8_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapping_array_t *array, size_t size);
 static size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config);
 static int8_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_whitelist_array_t *array, size_t size);
 static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *storage);
-static _Bool _z_valid_mapping_entry(char *entry);
-static _Bool _z_valid_address_raweth_inner(const _z_string_t *address);
-static _Bool _z_valid_address_raweth(const char *address);
+static bool _z_valid_mapping_entry(char *entry);
+static bool _z_valid_address_raweth_inner(const _z_string_t *address);
+static bool _z_valid_address_raweth(const char *address);
 static uint8_t *_z_parse_address_raweth(const char *address);
 static int8_t _z_f_link_open_raweth(_z_link_t *self);
 static int8_t _z_f_link_listen_raweth(_z_link_t *self);
@@ -88,7 +88,7 @@ static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t 
 static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 static uint16_t _z_get_link_mtu_raweth(void);
 
-static _Bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
+static bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
     const char *iface = _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
     return (iface != NULL);
 }
@@ -97,7 +97,7 @@ static const char *_z_get_iface_raweth(_z_str_intmap_t *config) {
     return _z_str_intmap_get(config, RAWETH_CONFIG_IFACE_KEY);
 }
 
-static _Bool _z_valid_ethtype_raweth(_z_str_intmap_t *config) {
+static bool _z_valid_ethtype_raweth(_z_str_intmap_t *config) {
     const char *s_ethtype = _z_str_intmap_get(config, RAWETH_CONFIG_ETHTYPE_KEY);
     if (s_ethtype == NULL) {
         return false;
@@ -282,7 +282,7 @@ static int8_t _z_get_mapping_entry(char *entry, _zp_raweth_mapping_entry_t *stor
     }
     return _Z_RES_OK;
 }
-static _Bool _z_valid_mapping_entry(char *entry) {
+static bool _z_valid_mapping_entry(char *entry) {
     size_t len = strlen(entry);
     const char *entry_end = &entry[len - (size_t)1];
 
@@ -311,7 +311,7 @@ static _Bool _z_valid_mapping_entry(char *entry) {
     return true;
 }
 
-static _Bool _z_valid_address_raweth_inner(const _z_string_t *address) {
+static bool _z_valid_address_raweth_inner(const _z_string_t *address) {
     // Check if the string has the correct length
     size_t len = _z_string_len(address);
     const char *str_data = _z_string_data(address);
@@ -336,7 +336,7 @@ static _Bool _z_valid_address_raweth_inner(const _z_string_t *address) {
     return true;
 }
 
-static _Bool _z_valid_address_raweth(const char *address) {
+static bool _z_valid_address_raweth(const char *address) {
     _z_string_t addr_str = _z_string_alias_str(address);
     return _z_valid_address_raweth_inner(&addr_str);
 }

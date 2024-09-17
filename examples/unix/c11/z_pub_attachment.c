@@ -36,7 +36,7 @@ typedef struct kv_pairs_t {
 
 #if Z_FEATURE_PUBLICATION == 1
 
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
+bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     kv_pairs_t *kvs = (kv_pairs_t *)(context);
     z_owned_bytes_t k, v;
     if (kvs->current_idx >= kvs->len) {

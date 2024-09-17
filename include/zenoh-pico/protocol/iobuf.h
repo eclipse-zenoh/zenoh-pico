@@ -30,7 +30,7 @@ typedef struct {
     size_t _w_pos;
     size_t _capacity;
     uint8_t *_buf;
-    _Bool _is_alloc;
+    bool _is_alloc;
 } _z_iosli_t;
 
 _z_iosli_t _z_iosli_make(size_t capacity);
@@ -72,7 +72,7 @@ _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
-_Bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
+bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf);
@@ -101,7 +101,7 @@ typedef struct {
     size_t _expansion_step;
 } _z_wbuf_t;
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable);
+_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
 size_t _z_wbuf_len(const _z_wbuf_t *wbf);

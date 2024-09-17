@@ -28,7 +28,7 @@ char *_z_str_clone(const char *src);
 char *_z_str_n_clone(const char *src, size_t len);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
-_Bool _z_str_eq(const char *left, const char *right);
+bool _z_str_eq(const char *left, const char *right);
 
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
@@ -67,14 +67,14 @@ typedef struct {
 } _z_string_t;
 
 _z_string_t _z_string_null(void);
-_Bool _z_string_check(const _z_string_t *value);
+bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
 _z_string_t _z_string_alias_str(const char *value);
 _z_string_t _z_string_alias_substr(const char *value, size_t len);
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
-_Bool _z_string_is_empty(const _z_string_t *s);
+bool _z_string_is_empty(const _z_string_t *s);
 const char *_z_string_rchr(_z_string_t *str, char filter);
 char *_z_string_pbrk(_z_string_t *str, const char *filter);
 
@@ -89,7 +89,7 @@ void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
-_Bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
+bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
 

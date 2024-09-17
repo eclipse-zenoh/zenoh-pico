@@ -45,7 +45,7 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     struct {
-        _Bool _complete;
+        bool _complete;
         uint16_t _distance;
     } _ext_queryable_info;
 } _z_decl_queryable_t;
@@ -68,7 +68,7 @@ typedef struct {
 _z_undecl_token_t _z_undecl_token_null(void);
 
 typedef struct {
-    _Bool _placeholder;  // In case we add extensions
+    bool _placeholder;  // In case we add extensions
 } _z_decl_final_t;
 _z_decl_final_t _z_decl_final_null(void);
 
@@ -105,7 +105,7 @@ _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);
 _z_declaration_t _z_make_decl_subscriber(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);
 _z_declaration_t _z_make_undecl_subscriber(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
-_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, _Bool complete, uint16_t distance);
+_z_declaration_t _z_make_decl_queryable(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, bool complete, uint16_t distance);
 _z_declaration_t _z_make_undecl_queryable(uint32_t id, _Z_OPTIONAL const _z_keyexpr_t* key);
 
 _z_declaration_t _z_make_decl_token(_Z_MOVE(_z_keyexpr_t) key, uint32_t id);

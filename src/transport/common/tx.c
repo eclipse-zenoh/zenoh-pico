@@ -139,7 +139,7 @@ int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_rel
     int8_t ret = _Z_RES_OK;
 
     // Assume first that this is not the final fragment
-    _Bool is_final = false;
+    bool is_final = false;
     do {
         size_t w_pos = _z_wbuf_get_wpos(dst);  // Mark the buffer for the writing operation
 

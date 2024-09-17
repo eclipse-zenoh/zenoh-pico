@@ -38,8 +38,8 @@ uint8_t _z_id_len(_z_id_t id) {
     }
     return len;
 }
-_Bool _z_id_check(_z_id_t id) {
-    _Bool ret = false;
+bool _z_id_check(_z_id_t id) {
+    bool ret = false;
     for (int i = 0; !ret && i < _Z_ID_LEN; i++) {
         ret |= id.id[i] != 0;
     }

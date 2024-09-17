@@ -27,7 +27,7 @@ extern "C" {
 /*-------- Fifo Buffer Multithreaded --------*/
 typedef struct {
     _z_fifo_t _fifo;
-    _Bool is_closed;
+    bool is_closed;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _cv_not_full;

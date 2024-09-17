@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
     assert(argc == 2);
     (void)(argc);
 
-    _Bool is_reliable = strncmp(argv[1], "tcp", 3) == 0;
+    bool is_reliable = strncmp(argv[1], "tcp", 3) == 0;
 
     z_owned_config_t config;
     z_config_default(&config);

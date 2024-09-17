@@ -29,7 +29,7 @@ _z_sample_t _z_sample_null(void) {
     return s;
 }
 
-_Bool _z_sample_check(const _z_sample_t *sample) {
+bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_bytes_check(&sample->payload) ||
            _z_bytes_check(&sample->attachment) || _z_encoding_check(&sample->encoding);
 }

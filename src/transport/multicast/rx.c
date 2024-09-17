@@ -192,7 +192,7 @@ int8_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_t
                                   ? &entry->_dbuf_reliable
                                   : &entry->_dbuf_best_effort;  // Select the right defragmentation buffer
 
-            _Bool drop = false;
+            bool drop = false;
             if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
                 // Filling the wbuf capacity as a way to signaling the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message

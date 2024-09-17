@@ -166,7 +166,7 @@ int8_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param,
     return ret;
 }
 
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
+int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
     int8_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
@@ -232,7 +232,7 @@ int8_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param,
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only) {
+int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(reason);
     _ZP_UNUSED(link_only);

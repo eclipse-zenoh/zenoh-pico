@@ -25,7 +25,7 @@ _z_string_t _z_string_null(void) {
     return s;
 }
 
-_Bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
+bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
 
 _z_string_t _z_string_copy_from_str(const char *value) {
     _z_string_t s;
@@ -104,7 +104,7 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
-_Bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
+bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
     if (_z_string_len(left) != _z_string_len(right)) {
         return false;
     }
@@ -138,7 +138,7 @@ _z_string_t _z_string_preallocate(size_t len) {
 }
 const char *_z_string_data(const _z_string_t *s) { return (const char *)s->_slice.start; }
 
-_Bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len <= 1; }
+bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len <= 1; }
 
 const char *_z_string_rchr(_z_string_t *str, char filter) {
     const char *curr_res = NULL;
@@ -218,4 +218,4 @@ char *_z_str_n_clone(const char *src, size_t len) {
     return dst;
 }
 
-_Bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
+bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }

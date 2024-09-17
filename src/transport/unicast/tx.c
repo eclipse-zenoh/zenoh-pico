@@ -82,7 +82,7 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
     _z_transport_unicast_t *ztu = &zn->_tp._transport._unicast;
 
     // Acquire the lock and drop the message if needed
-    _Bool drop = false;
+    bool drop = false;
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_lock(&ztu->_mutex_tx);
@@ -130,7 +130,7 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
 
                 ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
-                    _Bool is_first = true;  // Fragment and send the message
+                    bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {
                         if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_unicast_get_sn(ztu, reliability);

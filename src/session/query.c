@@ -33,7 +33,7 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     _z_pending_reply_list_free(&pen_qry->_pending_replies);
 }
 
-_Bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
+bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
 
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
@@ -115,7 +115,7 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     _z_reply_t reply = _z_reply_create(expanded_ke, zn->_local_zid, msg->_payload, &msg->_commons._timestamp,
                                        &msg->_encoding, kind, msg->_attachment);
 
-    _Bool drop = false;
+    bool drop = false;
     // Verify if this is a newer reply, free the old one in case it is
     if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
                                (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC))) {

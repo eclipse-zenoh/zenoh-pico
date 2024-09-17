@@ -64,7 +64,7 @@ const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, si
 
 size_t z_string_array_len(const z_loaned_string_array_t *a) { return _z_string_svec_len(a); }
 
-_Bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_svec_is_empty(a); }
+bool z_string_array_is_empty(const z_loaned_string_array_t *a) { return _z_string_svec_is_empty(a); }
 
 int8_t z_keyexpr_is_canon(const char *start, size_t len) { return _z_keyexpr_is_canon(start, len); }
 
@@ -172,15 +172,15 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
-_Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     return _z_keyexpr_suffix_includes(l, r);
 }
 
-_Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     return _z_keyexpr_suffix_intersects(l, r);
 }
 
-_Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
     return _z_keyexpr_suffix_equals(l, r);
 }
 
@@ -302,7 +302,7 @@ static int8_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encodin
         prefix = ENCODING_VALUES_ID_TO_STR[encoding->id];
         prefix_len = strlen(prefix);
     }
-    _Bool has_schema = _z_string_len(&encoding->schema) > 0;
+    bool has_schema = _z_string_len(&encoding->schema) > 0;
     // Size include null terminator
     size_t total_len = prefix_len + _z_string_len(&encoding->schema) + 1;
     // Check for schema separator
@@ -584,7 +584,7 @@ int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value) {
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
-int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_bytes_t *data, void *context),
                          void *context) {
     z_bytes_empty(bytes);
     z_owned_bytes_t data;
@@ -605,7 +605,7 @@ void z_bytes_empty(z_owned_bytes_t *bytes) { bytes->_val = _z_bytes_null(); }
 
 size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); }
 
-_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
+bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
 
 z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
@@ -625,7 +625,7 @@ int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_t
 
 z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
 
-_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
+bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
     z_bytes_empty(bytes);
     if (_z_bytes_iterator_next(iter, &bytes->_val) != _Z_RES_OK) {
         z_bytes_drop(z_bytes_move(bytes));
@@ -638,7 +638,7 @@ z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *byte
     return (z_bytes_slice_iterator_t){._bytes = bytes, ._slice_idx = 0};
 }
 
-_Bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out) {
+bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out) {
     if (iter->_slice_idx >= _z_bytes_num_slices(iter->_bytes)) {
         return false;
     }
@@ -677,7 +677,7 @@ uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts) { return ts->time; }
 
 z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
 
-_Bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
+bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
@@ -742,7 +742,7 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
     }
 }
 
-_Bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
+bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
 _z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
 int8_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
     *dst = _z_str_intmap_clone(src);
@@ -753,7 +753,7 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_nu
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
 
-_Bool _z_value_check(const _z_value_t *value) {
+bool _z_value_check(const _z_value_t *value) {
     return _z_encoding_check(&value->encoding) || _z_bytes_check(&value->payload);
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
@@ -794,7 +794,7 @@ int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out) {
     return _Z_RES_OK;
 }
 
-_Bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
+bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
     _z_string_svec_copy(dst, src);
     return dst->_len == src->_len ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -1283,7 +1283,7 @@ const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publis
 #endif
 
 #if Z_FEATURE_QUERY == 1
-_Bool _z_reply_check(const _z_reply_t *reply) {
+bool _z_reply_check(const _z_reply_t *reply) {
     if (reply->data._tag == _Z_REPLY_TAG_DATA) {
         return _z_sample_check(&reply->data._result.sample);
     } else if (reply->data._tag == _Z_REPLY_TAG_ERROR) {
@@ -1352,13 +1352,13 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
     return ret;
 }
 
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
+bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data._result.sample; }
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data._result.error; }
 
-_Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
+bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     if (_z_id_check(reply->data.replier_id)) {
         *out_id = reply->data.replier_id;
         return true;
@@ -1600,7 +1600,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            _Bool do_keydecl = true;
+            bool do_keydecl = true;
             _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
             // Remove wild
             char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");

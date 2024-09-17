@@ -36,7 +36,7 @@ typedef struct _z_l_t {
 _z_list_t *_z_list_of(void *x);
 
 size_t _z_list_len(const _z_list_t *xs);
-_Bool _z_list_is_empty(const _z_list_t *xs);
+bool _z_list_is_empty(const _z_list_t *xs);
 
 void *_z_list_head(const _z_list_t *xs);
 _z_list_t *_z_list_tail(const _z_list_t *xs);
@@ -56,7 +56,7 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     typedef _z_list_t name##_list_t;                                                                                 \
     static inline name##_list_t *name##_list_new(void) { return NULL; }                                              \
     static inline size_t name##_list_len(const name##_list_t *l) { return _z_list_len(l); }                          \
-    static inline _Bool name##_list_is_empty(const name##_list_t *l) { return _z_list_is_empty(l); }                 \
+    static inline bool name##_list_is_empty(const name##_list_t *l) { return _z_list_is_empty(l); }                  \
     static inline type *name##_list_head(const name##_list_t *l) { return (type *)_z_list_head(l); }                 \
     static inline name##_list_t *name##_list_tail(const name##_list_t *l) { return _z_list_tail(l); }                \
     static inline name##_list_t *name##_list_push(name##_list_t *l, type *e) { return _z_list_push(l, e); }          \

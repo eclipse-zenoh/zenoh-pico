@@ -38,8 +38,8 @@ _z_lifo_t _z_lifo_make(size_t capacity) {
 
 size_t _z_lifo_capacity(const _z_lifo_t *r) { return r->_capacity; }
 size_t _z_lifo_len(const _z_lifo_t *r) { return r->_len; }
-_Bool _z_lifo_is_empty(const _z_lifo_t *r) { return r->_len == 0; }
-_Bool _z_lifo_is_full(const _z_lifo_t *r) { return r->_len == r->_capacity; }
+bool _z_lifo_is_empty(const _z_lifo_t *r) { return r->_len == 0; }
+bool _z_lifo_is_full(const _z_lifo_t *r) { return r->_len == r->_capacity; }
 
 void *_z_lifo_push(_z_lifo_t *r, void *e) {
     void *ret = e;

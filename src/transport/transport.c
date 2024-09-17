@@ -32,7 +32,7 @@
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
+int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, bool link_only) {
     int8_t ret = _Z_RES_OK;
     // Call transport function
     switch (zt->_type) {

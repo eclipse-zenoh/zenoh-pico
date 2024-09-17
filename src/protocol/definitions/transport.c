@@ -196,7 +196,7 @@ _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial
 }
 
 /*------------------ Close Message ------------------*/
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only) {
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, bool link_only) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_CLOSE;
 
@@ -247,11 +247,11 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t 
 }
 
 /*------------------ Fragment Message ------------------*/
-_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, _Bool is_last) {
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last) {
     return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last);
 }
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, z_reliability_t reliability,
-                                              _Bool is_last) {
+                                              bool is_last) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == false) {

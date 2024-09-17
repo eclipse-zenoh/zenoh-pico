@@ -41,7 +41,7 @@ typedef struct _z_sample_t {
 void _z_sample_clear(_z_sample_t *sample);
 
 _z_sample_t _z_sample_null(void);
-_Bool _z_sample_check(const _z_sample_t *sample);
+bool _z_sample_check(const _z_sample_t *sample);
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 
 /**
