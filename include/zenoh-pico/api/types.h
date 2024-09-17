@@ -477,6 +477,9 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  *
  * Operations over :c:type:`z_loaned_string_array_t` must be done using the provided functions:
  *
+ *   - :c:func:`z_string_array_new`
+ *   - :c:func:`z_string_array_push_by_alias`
+ *   - :c:func:`z_string_array_push_by_copy`
  *   - :c:func:`z_string_array_get`
  *   - :c:func:`z_string_array_len`
  *   - :c:func:`z_str_array_array_is_empty`
@@ -484,6 +487,9 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 _Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
+void z_string_array_new(z_owned_string_array_t *a);
+size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value);
+size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value);
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
 size_t z_string_array_len(const z_loaned_string_array_t *a);
 _Bool z_string_array_is_empty(const z_loaned_string_array_t *a);

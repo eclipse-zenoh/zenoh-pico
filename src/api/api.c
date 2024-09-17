@@ -23,6 +23,7 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/filtering.h"
@@ -56,6 +57,25 @@ int8_t z_view_string_from_str(z_view_string_t *str, const char *value) {
 int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len) {
     str->_val = _z_string_alias_substr((char *)value, len);
     return _Z_RES_OK;
+}
+
+_z_string_svec_t _z_string_array_null(void) { return _z_string_svec_make(0); }
+
+void z_string_array_new(z_owned_string_array_t *a) { a->_val = _z_string_array_null(); }
+
+size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value) {
+    _z_string_t str = _z_string_alias(value);
+    _z_string_svec_append(a, &str);
+
+    return _z_string_svec_len(a);
+}
+
+size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value) {
+    _z_string_t str;
+    _z_string_copy(&str, value);
+    _z_string_svec_append(a, &str);
+
+    return _z_string_svec_len(a);
 }
 
 const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k) {
@@ -799,7 +819,6 @@ int8_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) 
     _z_string_svec_copy(dst, src);
     return dst->_len == src->_len ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
-_z_string_svec_t _z_string_array_null(void) { return _z_string_svec_make(0); }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
                               _z_string_array_copy, _z_string_svec_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty, _z_slice_copy, _z_slice_clear)
