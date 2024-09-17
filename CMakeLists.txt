@@ -339,6 +339,7 @@ install(TARGETS ${Libname}
   EXPORT zenohpicoTargets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
   COMPONENT Library
 )
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
