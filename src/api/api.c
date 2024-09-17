@@ -217,6 +217,337 @@ z_result_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *
 #if Z_FEATURE_ENCODING_VALUES == 1
 #define ENCODING_SCHEMA_SEPARATOR ';'
 
+const z_owned_encoding_t ENCODING_ZENOH_BYTES = {
+    ._val = {
+        .id = 0,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_INT8 = {
+    ._val = {
+        .id = 1,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_INT16 = {
+    ._val = {
+        .id = 2,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_INT32 = {
+    ._val = {
+        .id = 3,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_INT64 = {
+    ._val = {
+        .id = 4,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_INT128 = {
+    ._val = {
+        .id = 5,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_UINT8 = {
+    ._val = {
+        .id = 6,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_UINT16 = {
+    ._val = {
+        .id = 7,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_UINT32 = {
+    ._val = {
+        .id = 8,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_UINT64 = {
+    ._val = {
+        .id = 9,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_UINT128 = {
+    ._val = {
+        .id = 10,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_FLOAT32 = {
+    ._val = {
+        .id = 11,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_FLOAT64 = {
+    ._val = {
+        .id = 12,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_BOOL = {
+    ._val = {
+        .id = 13,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_STRING = {
+    ._val = {
+        .id = 14,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_ZENOH_ERROR = {
+    ._val = {
+        .id = 15,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_OCTET_STREAM = {
+    ._val = {
+        .id = 16,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_PLAIN = {
+    ._val = {
+        .id = 17,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JSON = {
+    ._val = {
+        .id = 18,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_JSON = {
+    ._val = {
+        .id = 19,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_CDR = {
+    ._val = {
+        .id = 20,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_CBOR = {
+    ._val = {
+        .id = 21,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_YAML = {
+    ._val = {
+        .id = 22,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_YAML = {
+    ._val = {
+        .id = 23,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_JSON5 = {
+    ._val = {
+        .id = 24,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_PYTHON_SERIALIZED_OBJECT = {
+    ._val = {
+        .id = 25,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_PROTOBUF = {
+    ._val = {
+        .id = 26,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JAVA_SERIALIZED_OBJECT = {
+    ._val = {
+        .id = 27,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_OPENMETRICS_TEXT = {
+    ._val = {
+        .id = 28,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_IMAGE_PNG = {
+    ._val = {
+        .id = 29,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_IMAGE_JPEG = {
+    ._val = {
+        .id = 30,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_IMAGE_GIF = {
+    ._val = {
+        .id = 31,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_IMAGE_BMP = {
+    ._val = {
+        .id = 32,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_IMAGE_WEBP = {
+    ._val = {
+        .id = 33,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_XML = {
+    ._val = {
+        .id = 34,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_X_WWW_FORM_URLENCODED = {
+    ._val = {
+        .id = 35,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_HTML = {
+    ._val = {
+        .id = 36,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_XML = {
+    ._val = {
+        .id = 37,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_CSS = {
+    ._val = {
+        .id = 38,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_JAVASCRIPT = {
+    ._val = {
+        .id = 39,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_MARKDOWN = {
+    ._val = {
+        .id = 40,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_TEXT_CSV = {
+    ._val = {
+        .id = 41,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_SQL = {
+    ._val = {
+        .id = 42,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_COAP_PAYLOAD = {
+    ._val = {
+        .id = 43,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JSON_PATCH_JSON = {
+    ._val = {
+        .id = 44,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JSON_SEQ = {
+    ._val = {
+        .id = 45,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JSONPATH = {
+    ._val = {
+        .id = 46,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_JWT = {
+    ._val = {
+        .id = 47,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_MP4 = {
+    ._val = {
+        .id = 48,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_SOAP_XML = {
+    ._val = {
+        .id = 49,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_APPLICATION_YANG = {
+    ._val = {
+        .id = 50,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_AUDIO_AAC = {
+    ._val = {
+        .id = 51,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_AUDIO_FLAC = {
+    ._val = {
+        .id = 52,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_AUDIO_MP4 = {
+    ._val = {
+        .id = 53,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_AUDIO_OGG = {
+    ._val = {
+        .id = 54,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_AUDIO_VORBIS = {
+    ._val = {
+        .id = 55,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_H261 = {
+    ._val = {
+        .id = 56,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_H263 = {
+    ._val = {
+        .id = 57,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_H264 = {
+    ._val = {
+        .id = 58,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_H265 = {
+    ._val = {
+        .id = 59,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_H266 = {
+    ._val = {
+        .id = 60,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_MP4 = {
+    ._val = {
+        .id = 61,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_OGG = {
+    ._val = {
+        .id = 62,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_RAW = {
+    ._val = {
+        .id = 63,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_VP8 = {
+    ._val = {
+        .id = 64,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+const z_owned_encoding_t ENCODING_VIDEO_VP9 = {
+    ._val = {
+        .id = 65,
+        .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}},
+    }};
+
 const char *ENCODING_VALUES_ID_TO_STR[] = {
     "zenoh/bytes",
     "zenoh/int8",
