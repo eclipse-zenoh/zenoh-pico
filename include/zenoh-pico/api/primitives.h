@@ -1454,6 +1454,11 @@ bool z_string_is_empty(const z_loaned_string_t *str);
 const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str);
 
 /**
+ * Returns default :c:type:`z_priority_t` value
+ */
+z_priority_t z_priority_default(void);
+
+/**
  * Returns id of Zenoh entity that transmitted hello message.
  *
  * Parameters:
