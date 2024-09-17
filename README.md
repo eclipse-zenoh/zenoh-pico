@@ -382,6 +382,14 @@ $ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
 ```
 where `lo0` is the network interface you want to use for multicast communication.
 
+> [!WARNING]
+> Multicast communication does not perform any negotiation upon group joining. Because of that, it is important that all transport parameters are the same to make sure all your nodes in the system can communicate.
+> One common parameter to configure is the batch size since its default value depends on the actual platform when operating on multicast:
+>  - with zenoh-pico you can configure it via the `BATCH_MULTICAST_SIZE` build option (see [below](#error-when-opening-a-session-on-a-microcontroller))
+>  - with other Zenoh APIs, set the "transport/link/tx/batch_size" value in configuration file
+>
+> E.g., the batch size on Linux and Windows is 65535 bytes, on Mac OS X is 9216, anything else is 8192.
+
 ### 3.4. Basic Pub/Sub Example - Mixing Client and P2P communication
 To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, as well as with any other Zenoh client/peer, you need to start a Zenoh Router that listens on both multicast and unicast: 
 ```bash
