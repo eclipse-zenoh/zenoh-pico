@@ -122,11 +122,10 @@ int main(void) {
     kv_pair_t input_hashmap[1];
     input_hashmap[0] = (kv_pair_t){.key = "test_key", .value = "test_value"};
     kv_pairs_tx_t ctx = (kv_pairs_tx_t){.data = input_hashmap, .current_idx = 0, .len = 1};
-    z_owned_bytes_t hashmap;
-    z_bytes_from_iter(&hashmap, hashmap_iter, (void *)&ctx);
+    z_bytes_from_iter(&payload, hashmap_iter, (void *)&ctx);
     kv_pairs_rx_t output_hashmap = {
         .current_idx = 0, .len = 16, .data = (kv_pair_decoded_t *)malloc(16 * sizeof(kv_pair_decoded_t))};
-    parse_hashmap(&output_hashmap, z_loan(hashmap));
+    parse_hashmap(&output_hashmap, z_loan(payload));
     assert(strncmp(input_hashmap[0].key, _z_string_data(z_loan(output_hashmap.data[0].key)),
                    strlen(input_hashmap[0].key)) == 0);
     assert(strncmp(input_hashmap[0].value, _z_string_data(z_loan(output_hashmap.data[0].value)),
