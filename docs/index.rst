@@ -21,4 +21,5 @@ The *libzenoh-pico* library provides a C client API for the zenoh protocol.
 .. toctree::
     :maxdepth: 10
 
+    concepts
     api
