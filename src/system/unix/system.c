@@ -127,7 +127,12 @@ int8_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_trylock
 int8_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_init(cv, 0)); }
+int8_t _z_condvar_init(_z_condvar_t *cv) {
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
+}
 
 int8_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
 
@@ -136,6 +141,10 @@ int8_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signa
 int8_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
 
 int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
+
+int8_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
+    _Z_CHECK_SYS_ERR(pthread_cond_timedwait(cv, m, abstime));
+}
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
@@ -188,6 +197,28 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
     return elapsed;
 }
+
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000000;
+    clock->tv_nsec += (duration % 1000000) * 1000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000;
+    clock->tv_nsec += (duration % 1000) * 1000000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
