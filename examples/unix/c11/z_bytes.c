@@ -54,7 +54,8 @@ static void drop_hashmap(kv_pairs_rx_t *kvp);
 
 int main(void) {
     z_owned_bytes_t payload;
-    // z_owned_encoding_t encoding;
+    z_owned_encoding_t encoding;
+    (void)encoding;
 
     // Number types: uint8, uint16, uint32, uint64, int8, int16, int32, int64, float, double
     uint32_t input_u32 = 123456;
@@ -64,7 +65,7 @@ int main(void) {
     assert(input_u32 == output_u32);
     z_drop(z_move(payload));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // z_encoding_from_str(&encoding, "zenoh/uint32");
+    encoding = ENCODING_ZENOH_UINT32;
 
     // String, also work with and z_owned_string_t
     const char *input_str = "test";
@@ -75,7 +76,7 @@ int main(void) {
     z_drop(z_move(payload));
     z_drop(z_move(output_string));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // z_encoding_from_str(&encoding, "zenoh/string");
+    encoding = ENCODING_ZENOH_STRING;
 
     // Bytes, also work with z_owned_slice_t
     const uint8_t input_bytes[] = {1, 2, 3, 4};
@@ -86,7 +87,7 @@ int main(void) {
     z_drop(z_move(payload));
     z_drop(z_move(output_bytes));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // z_encoding_from_str(&encoding, "zenoh/bytes");
+    encoding = ENCODING_ZENOH_BYTES;  // That's the default value
 
     // Writer reader
     uint8_t input_writer[] = {0, 1, 2, 3, 4};
