@@ -681,11 +681,11 @@ static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *enc
 
 #else
 static z_result_t _z_encoding_convert_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len) {
-    return _z_encoding_make(encoding->_val, _Z_ENCODING_ID_DEFAULT, s, len);
+    return _z_encoding_make(&encoding->_val, _Z_ENCODING_ID_DEFAULT, s, len);
 }
 
 static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *encoding, z_owned_string_t *s) {
-    _z_string_copy(s->_val, &encoding->schema);
+    _z_string_copy(&s->_val, &encoding->schema);
     return _Z_RES_OK;
 }
 
