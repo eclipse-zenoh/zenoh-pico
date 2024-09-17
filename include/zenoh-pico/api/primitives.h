@@ -1479,14 +1479,25 @@ z_id_t z_hello_zid(const z_loaned_hello_t *hello);
 z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello);
 
 /**
- * Constructs an array of locators of Zenoh entity that sent hello message.
+ * Returns an array of locators of Zenoh entity that sent hello message.
  *
  * Parameters:
  *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
  * Return:
  *   :c:type:`z_loaned_string_array_t` containing locators.
  */
-const z_loaned_string_array_t *z_hello_locators(const z_loaned_hello_t *hello);
+const z_loaned_string_array_t *zp_hello_locators(const z_loaned_hello_t *hello);
+
+/**
+ * Constructs an array of locators of Zenoh entity that sent hello message.
+ * Note that it is a method for zenoh-c compatiblity, in zenoh-pico :c:func:`zp_hello_locators`
+ * can be used.
+ *
+ * Parameters:
+ *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ *   locators_out: An uninitialized memory location where :c:type:`z_owned_string_array_t` will be constructed.
+ */
+void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *locators_out);
 
 /**
  * Constructs a non-owned non-null-terminated string from the kind of zenoh entity.

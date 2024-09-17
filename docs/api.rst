@@ -396,6 +396,7 @@ Primitives
 .. autocfunction:: primitives.h::z_hello_zid
 .. autocfunction:: primitives.h::z_hello_whatami
 .. autocfunction:: primitives.h::z_hello_locators
+.. autocfunction:: primitives.h::zp_hello_locators
 .. autocfunction:: primitives.h::z_whatami_to_view_string
 .. autocfunction:: primitives.h::z_scout
 .. autocfunction:: primitives.h::z_open

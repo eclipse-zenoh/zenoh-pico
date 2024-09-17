@@ -790,7 +790,11 @@ z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
 
 z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello) { return hello->_whatami; }
 
-const z_loaned_string_array_t *z_hello_locators(const z_loaned_hello_t *hello) { return &hello->_locators; }
+const z_loaned_string_array_t *zp_hello_locators(const z_loaned_hello_t *hello) { return &hello->_locators; }
+
+void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *locators_out) {
+    z_string_array_clone(locators_out, &hello->_locators);
+}
 
 static const char *WHAT_AM_I_TO_STRING_MAP[8] = {
     "Other",              // 0
