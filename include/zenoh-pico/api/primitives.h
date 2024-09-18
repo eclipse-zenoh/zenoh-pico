@@ -388,6 +388,18 @@ z_result_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, cons
 z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
 
 /**
+ * Checks if 2 encodings are equal.
+ *
+ * Parameters:
+ *   left: Pointer to first :c:type:`z_loaned_encoding_t` to compare.
+ *   right: Pointer to second :c:type:`z_loaned_encoding_t` to compare.
+ *
+ * Return:
+ *   ``true`` if `left` equals `right`, ``false`` otherwise.
+ */
+bool z_encoding_equals(const z_loaned_encoding_t *left, const z_loaned_encoding_t *right);
+
+/**
  * Gets the bytes data from a reply error payload by aliasing it.
  *
  * Parameters:

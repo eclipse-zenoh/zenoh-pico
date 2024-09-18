@@ -406,6 +406,10 @@ z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_str
     return _Z_RES_OK;
 }
 
+bool z_encoding_equals(const z_loaned_encoding_t *left, const z_loaned_encoding_t *right) {
+    return left->id == right->id && _z_string_equals(&left->schema, &right->schema);
+}
+
 z_result_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
     slice->_val = _z_slice_copy_from_buf(data, len);
     if (slice->_val.start == NULL) {
