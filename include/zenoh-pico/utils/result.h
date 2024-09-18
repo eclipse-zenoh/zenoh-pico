@@ -15,6 +15,8 @@
 #ifndef ZENOH_PICO_UTILS_RESULT_H
 #define ZENOH_PICO_UTILS_RESULT_H
 
+#include <stdint.h>
+
 #define _ZP_UNUSED(x) (void)(x)
 #define _ZP_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
