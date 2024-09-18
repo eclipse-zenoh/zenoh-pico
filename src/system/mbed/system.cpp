@@ -114,17 +114,17 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) {
+z_result_t z_sleep_us(size_t time) {
     ThisThread::sleep_for(chrono::milliseconds(((time / 1000) + (time % 1000 == 0 ? 0 : 1))));
     return 0;
 }
 
-int z_sleep_ms(size_t time) {
+z_result_t z_sleep_ms(size_t time) {
     ThisThread::sleep_for(chrono::milliseconds(time));
     return 0;
 }
 
-int z_sleep_s(size_t time) {
+z_result_t z_sleep_s(size_t time) {
     ThisThread::sleep_for(chrono::seconds(time));
     return 0;
 }
