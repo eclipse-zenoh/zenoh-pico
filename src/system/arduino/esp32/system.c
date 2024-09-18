@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <Arduino.h>
 #include <esp_heap_caps.h>
 #include <stddef.h>
 #include <sys/time.h>
