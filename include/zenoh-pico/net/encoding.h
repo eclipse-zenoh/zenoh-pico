@@ -27,12 +27,12 @@ typedef struct _z_encoding_t {
     uint16_t id;
 } _z_encoding_t;
 
-int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len);
+z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len);
 _z_encoding_t _z_encoding_wrap(uint16_t id, const char *schema);
 _z_encoding_t _z_encoding_null(void);
 void _z_encoding_clear(_z_encoding_t *encoding);
 bool _z_encoding_check(const _z_encoding_t *encoding);
-int8_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
+z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
 _z_encoding_t _z_encoding_steal(_z_encoding_t *val);
 

@@ -17,14 +17,14 @@
 
 #include "zenoh-pico/transport/transport.h"
 
-int8_t _zp_multicast_read(_z_transport_multicast_t *ztm);
-int8_t _zp_multicast_stop_read_task(_z_transport_t *zt);
+z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm);
+z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt);
 void *_zp_multicast_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_MULTICAST_TRANSPORT == 1
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task);
+z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task);
 #else
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task);
+z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task);
 #endif /* #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_MULTICAST_TRANSPORT == 1 */
 
 #endif /* ZENOH_PICO_MULTICAST_READ_H */

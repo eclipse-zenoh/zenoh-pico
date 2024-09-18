@@ -36,8 +36,8 @@
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
+    z_result_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
     (void)memset(&hints, 0, sizeof(hints));
@@ -55,8 +55,8 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, 
 
 void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 
-int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
@@ -99,8 +99,8 @@ int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
     return ret;
 }
 
-int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
 
@@ -149,8 +149,8 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
+    z_result_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
     (void)memset(&hints, 0, sizeof(hints));
@@ -170,8 +170,8 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp);
 #endif
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
-int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
@@ -193,8 +193,8 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
     return ret;
 }
 
-int8_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
     (void)tout;
@@ -244,9 +244,9 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 #endif
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                             uint32_t tout, const char *iface) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface) {
+    z_result_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
     unsigned int addrlen = 0;
@@ -336,10 +336,10 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
     return ret;
 }
 
-int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface, const char *join) {
+z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                                   const char *iface, const char *join) {
     (void)join;
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
     unsigned int addrlen = 0;
@@ -554,8 +554,8 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 #endif  // Z_FEATURE_LINK_UDP_MULTICAST == 1
 
 #if Z_FEATURE_LINK_SERIAL == 1
-int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    z_result_t ret = _Z_RES_OK;
     (void)(sock);
     (void)(txpin);
     (void)(rxpin);
@@ -567,8 +567,8 @@ int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint3
     return ret;
 }
 
-int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    z_result_t ret = _Z_RES_OK;
 
     sock->_serial = device_get_binding(dev);
     if (sock->_serial != NULL) {
@@ -589,8 +589,8 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     return ret;
 }
 
-int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    z_result_t ret = _Z_RES_OK;
     (void)(sock);
     (void)(txpin);
     (void)(rxpin);
@@ -602,8 +602,8 @@ int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uin
     return ret;
 }
 
-int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    z_result_t ret = _Z_RES_OK;
     (void)(sock);
     (void)(dev);
     (void)(baudrate);
@@ -617,7 +617,7 @@ int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t 
 void _z_close_serial(_z_sys_net_socket_t *sock) {}
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
@@ -690,7 +690,7 @@ size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t
 }
 
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t i = 0;

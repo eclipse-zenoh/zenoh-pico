@@ -34,17 +34,17 @@ typedef struct {
 #endif
 } _z_ring_mt_t;
 
-int8_t _z_ring_mt_init(_z_ring_mt_t *ring, size_t capacity);
+z_result_t _z_ring_mt_init(_z_ring_mt_t *ring, size_t capacity);
 _z_ring_mt_t *_z_ring_mt_new(size_t capacity);
-int8_t _z_ring_mt_close(_z_ring_mt_t *ring);
+z_result_t _z_ring_mt_close(_z_ring_mt_t *ring);
 
 void _z_ring_mt_clear(_z_ring_mt_t *ring, z_element_free_f free_f);
 void _z_ring_mt_free(_z_ring_mt_t *ring, z_element_free_f free_f);
 
-int8_t _z_ring_mt_push(const void *src, void *context, z_element_free_f element_free);
+z_result_t _z_ring_mt_push(const void *src, void *context, z_element_free_f element_free);
 
-int8_t _z_ring_mt_pull(void *dst, void *context, z_element_move_f element_move);
-int8_t _z_ring_mt_try_pull(void *dst, void *context, z_element_move_f element_move);
+z_result_t _z_ring_mt_pull(void *dst, void *context, z_element_move_f element_move);
+z_result_t _z_ring_mt_try_pull(void *dst, void *context, z_element_move_f element_move);
 
 #ifdef __cplusplus
 }

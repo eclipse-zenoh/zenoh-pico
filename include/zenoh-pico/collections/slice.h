@@ -19,6 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/utils/result.h"
+
 typedef struct {
     void (*deleter)(void *data, void *context);
     void *context;
@@ -47,15 +49,15 @@ typedef struct {
 
 _z_slice_t _z_slice_empty(void);
 inline static bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
-int8_t _z_slice_init(_z_slice_t *bs, size_t capacity);
+z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc);
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
 _z_slice_t _z_slice_alias(const _z_slice_t *bs);
-int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
-int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len);
+z_result_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
+z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len);
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
 void _z_slice_reset(_z_slice_t *bs);

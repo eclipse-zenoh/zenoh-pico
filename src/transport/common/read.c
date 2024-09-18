@@ -20,8 +20,8 @@
 #include "zenoh-pico/transport/raweth/read.h"
 #include "zenoh-pico/transport/unicast/read.h"
 
-int8_t _z_read(_z_transport_t *zt) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_read(_z_transport_t *zt) {
+    z_result_t ret = _Z_RES_OK;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             ret = _zp_unicast_read(&zt->_transport._unicast);

@@ -53,9 +53,9 @@ void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s,
                             _z_str_intmapping_t argv[]);
 char *_z_str_intmap_to_str(const _z_str_intmap_t *s, uint8_t argc, _z_str_intmapping_t argv[]);
 
-int8_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]);
-int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
-                               size_t n);
+z_result_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]);
+z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
+                                   size_t n);
 
 /*-------- string --------*/
 /**
@@ -80,8 +80,8 @@ char *_z_string_pbrk(_z_string_t *str, const char *filter);
 
 size_t _z_string_len(const _z_string_t *s);
 const char *_z_string_data(const _z_string_t *s);
-int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
-int8_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
+z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
+z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
 _z_string_t _z_string_alias(const _z_string_t *str);

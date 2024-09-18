@@ -85,51 +85,51 @@ typedef void *z_task_attr_t;
 #endif
 
 /*------------------ Thread ------------------*/
-int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t _z_task_join(_z_task_t *task);
-int8_t _z_task_cancel(_z_task_t *task);
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+z_result_t _z_task_join(_z_task_t *task);
+z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_free(_z_task_t **task);
 
 _Z_OWNED_TYPE_VALUE(_z_task_t, task)
 _Z_OWNED_FUNCTIONS_SYSTEM_DEF(task)
 
-int8_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-int8_t z_task_join(z_owned_task_t *task);
+z_result_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+z_result_t z_task_join(z_owned_task_t *task);
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m);
-int8_t _z_mutex_drop(_z_mutex_t *m);
+z_result_t _z_mutex_init(_z_mutex_t *m);
+z_result_t _z_mutex_drop(_z_mutex_t *m);
 
-int8_t _z_mutex_lock(_z_mutex_t *m);
-int8_t _z_mutex_try_lock(_z_mutex_t *m);
-int8_t _z_mutex_unlock(_z_mutex_t *m);
+z_result_t _z_mutex_lock(_z_mutex_t *m);
+z_result_t _z_mutex_try_lock(_z_mutex_t *m);
+z_result_t _z_mutex_unlock(_z_mutex_t *m);
 
 _Z_OWNED_TYPE_VALUE(_z_mutex_t, mutex)
 _Z_OWNED_FUNCTIONS_SYSTEM_DEF(mutex)
 
-int8_t z_mutex_init(z_owned_mutex_t *m);
-int8_t z_mutex_drop(z_moved_mutex_t *m);
+z_result_t z_mutex_init(z_owned_mutex_t *m);
+z_result_t z_mutex_drop(z_moved_mutex_t *m);
 
-int8_t z_mutex_lock(z_loaned_mutex_t *m);
-int8_t z_mutex_try_lock(z_loaned_mutex_t *m);
-int8_t z_mutex_unlock(z_loaned_mutex_t *m);
+z_result_t z_mutex_lock(z_loaned_mutex_t *m);
+z_result_t z_mutex_try_lock(z_loaned_mutex_t *m);
+z_result_t z_mutex_unlock(z_loaned_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv);
-int8_t _z_condvar_drop(_z_condvar_t *cv);
+z_result_t _z_condvar_init(_z_condvar_t *cv);
+z_result_t _z_condvar_drop(_z_condvar_t *cv);
 
-int8_t _z_condvar_signal(_z_condvar_t *cv);
-int8_t _z_condvar_signal_all(_z_condvar_t *cv);
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
+z_result_t _z_condvar_signal(_z_condvar_t *cv);
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv);
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
 
 _Z_OWNED_TYPE_VALUE(_z_condvar_t, condvar)
 _Z_OWNED_FUNCTIONS_SYSTEM_DEF(condvar)
 
-int8_t z_condvar_init(z_owned_condvar_t *cv);
-int8_t z_condvar_drop(z_moved_condvar_t *cv);
+z_result_t z_condvar_init(z_owned_condvar_t *cv);
+z_result_t z_condvar_drop(z_moved_condvar_t *cv);
 
-int8_t z_condvar_signal(z_loaned_condvar_t *cv);
-int8_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m);
+z_result_t z_condvar_signal(z_loaned_condvar_t *cv);
+z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m);
 
 /*------------------ Sleep ------------------*/
 int z_sleep_us(size_t time);
@@ -154,7 +154,7 @@ typedef struct {
     uint32_t nanos;
 } zp_time_since_epoch;
 
-int8_t zp_get_time_since_epoch(zp_time_since_epoch *t);
+z_result_t zp_get_time_since_epoch(zp_time_since_epoch *t);
 #ifdef __cplusplus
 }
 #endif

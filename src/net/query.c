@@ -53,7 +53,7 @@ void _z_query_clear(_z_query_t *q) {
     _z_query_clear_inner(q);
 }
 
-int8_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
+z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
     *dst = _z_query_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_key, &src->_key));
     _Z_CLEAN_RETURN_IF_ERR(_z_value_copy(&dst->_value, &src->_value), _z_query_clear_inner(dst));

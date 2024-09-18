@@ -49,8 +49,8 @@ _z_slice_t _z_slice_empty(void) {
     return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
 }
 
-int8_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
+    z_result_t ret = _Z_RES_OK;
 
     bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
     if (bs->start != NULL) {
@@ -120,19 +120,19 @@ void _z_slice_free(_z_slice_t **bs) {
     }
 }
 
-int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
+z_result_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
     // Make sure dst slice is not init beforehand, or suffer memory leak
-    int8_t ret = _z_slice_init(dst, src->len);
+    z_result_t ret = _z_slice_init(dst, src->len);
     if (ret == _Z_RES_OK) {
         (void)memcpy((uint8_t *)dst->start, src->start, src->len);
     }
     return ret;
 }
 
-int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
+z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
     assert(offset + len <= src->len);
     // Make sure dst slice is not init beforehand, or suffer memory leak
-    int8_t ret = _z_slice_init(dst, len);
+    z_result_t ret = _z_slice_init(dst, len);
     if (ret == _Z_RES_OK) {
         const uint8_t *start = _z_cptr_u8_offset(src->start, (ptrdiff_t)offset);
         (void)memcpy((uint8_t *)dst->start, start, len);

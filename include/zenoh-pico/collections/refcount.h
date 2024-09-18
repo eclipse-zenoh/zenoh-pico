@@ -24,12 +24,12 @@
 extern "C" {
 #endif
 
-int8_t _z_rc_init(void **cnt);
-int8_t _z_rc_increase_strong(void *cnt);
-int8_t _z_rc_increase_weak(void *cnt);
+z_result_t _z_rc_init(void **cnt);
+z_result_t _z_rc_increase_strong(void *cnt);
+z_result_t _z_rc_increase_weak(void *cnt);
 bool _z_rc_decrease_strong(void **cnt);
 bool _z_rc_decrease_weak(void **cnt);
-int8_t _z_rc_weak_upgrade(void *cnt);
+z_result_t _z_rc_weak_upgrade(void *cnt);
 
 size_t _z_rc_weak_count(void *cnt);
 size_t _z_rc_strong_count(void *cnt);

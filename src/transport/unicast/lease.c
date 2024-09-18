@@ -20,8 +20,8 @@
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
-int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
     ret = _z_unicast_send_t_msg(ztu, &t_msg);
@@ -30,7 +30,7 @@ int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 }
 #else
 
-int8_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
+z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     _ZP_UNUSED(ztu);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
@@ -95,7 +95,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     return 0;
 }
 
-int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
+z_result_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     zt->_transport._unicast._lease_task_running = true;  // Init before z_task_init for concurrency issue
@@ -108,7 +108,7 @@ int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, z_task_attr_t *attr, _z_
     return _Z_RES_OK;
 }
 
-int8_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
+z_result_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
     zt->_transport._unicast._lease_task_running = false;
     return _Z_RES_OK;
 }
@@ -119,14 +119,14 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     return NULL;
 }
 
-int8_t _zp_unicast_start_lease_task(_z_transport_t *zt, void *attr, void *task) {
+z_result_t _zp_unicast_start_lease_task(_z_transport_t *zt, void *attr, void *task) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
+z_result_t _zp_unicast_stop_lease_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }

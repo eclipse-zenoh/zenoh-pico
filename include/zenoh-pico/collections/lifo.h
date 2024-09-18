@@ -26,7 +26,7 @@ typedef struct {
     size_t _len;
 } _z_lifo_t;
 
-int8_t _z_lifo_init(_z_lifo_t *lifo, size_t capacity);
+z_result_t _z_lifo_init(_z_lifo_t *lifo, size_t capacity);
 _z_lifo_t _z_lifo_make(size_t capacity);
 
 size_t _z_lifo_capacity(const _z_lifo_t *r);
@@ -45,7 +45,7 @@ void _z_lifo_free(_z_lifo_t **xs, z_element_free_f f_f);
 
 #define _Z_LIFO_DEFINE(name, type)                                                                         \
     typedef _z_lifo_t name##_lifo_t;                                                                       \
-    static inline int8_t name##_lifo_init(name##_lifo_t *lifo, size_t capacity) {                          \
+    static inline z_result_t name##_lifo_init(name##_lifo_t *lifo, size_t capacity) {                      \
         return _z_lifo_init(lifo, capacity);                                                               \
     }                                                                                                      \
     static inline name##_lifo_t name##_lifo_make(size_t capacity) { return _z_lifo_make(capacity); }       \

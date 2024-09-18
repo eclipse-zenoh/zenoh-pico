@@ -28,7 +28,7 @@
 _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, bool exit_on_first) {
     // Define an empty array
     _z_hello_list_t *ret = NULL;
-    int8_t err = _Z_RES_OK;
+    z_result_t err = _Z_RES_OK;
 
     _z_endpoint_t ep;
     err = _z_endpoint_from_string(&ep, locator);

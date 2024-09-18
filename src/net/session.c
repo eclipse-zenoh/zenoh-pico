@@ -37,8 +37,8 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-int8_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
-    int8_t ret = _Z_RES_OK;
+z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
     ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
@@ -55,8 +55,8 @@ int8_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mod
     return ret;
 }
 
-int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_id_t zid = _z_id_empty();
     char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
@@ -178,15 +178,15 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     return ps;
 }
 
-int8_t _zp_read(_z_session_t *zn) { return _z_read(&zn->_tp); }
+z_result_t _zp_read(_z_session_t *zn) { return _z_read(&zn->_tp); }
 
-int8_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_tp); }
+z_result_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_tp); }
 
-int8_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
+z_result_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
+    z_result_t ret = _Z_RES_OK;
     // Allocate task
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
@@ -214,8 +214,8 @@ int8_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     return ret;
 }
 
-int8_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
+    z_result_t ret = _Z_RES_OK;
     // Allocate task
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
@@ -243,8 +243,8 @@ int8_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     return ret;
 }
 
-int8_t _zp_stop_read_task(_z_session_t *zn) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_stop_read_task(_z_session_t *zn) {
+    z_result_t ret = _Z_RES_OK;
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -263,8 +263,8 @@ int8_t _zp_stop_read_task(_z_session_t *zn) {
     return ret;
 }
 
-int8_t _zp_stop_lease_task(_z_session_t *zn) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_stop_lease_task(_z_session_t *zn) {
+    z_result_t ret = _Z_RES_OK;
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:

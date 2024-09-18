@@ -84,7 +84,7 @@ _Z_REFCOUNT_DEFINE(_z_session, _z_session)
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  *
  */
-int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.
@@ -115,7 +115,7 @@ _z_config_t *_z_info(const _z_session_t *session);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_read(_z_session_t *z);
+z_result_t _zp_read(_z_session_t *z);
 
 /**
  * Send a KeepAlive message.
@@ -125,7 +125,7 @@ int8_t _zp_read(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_send_keep_alive(_z_session_t *z);
+z_result_t _zp_send_keep_alive(_z_session_t *z);
 
 /**
  * Send a Join message.
@@ -135,7 +135,7 @@ int8_t _zp_send_keep_alive(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_send_join(_z_session_t *z);
+z_result_t _zp_send_join(_z_session_t *z);
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /**
@@ -148,7 +148,7 @@ int8_t _zp_send_join(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
+z_result_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
 
 /**
  * Stop the read task. This may result in stopping a thread or a process depending
@@ -159,7 +159,7 @@ int8_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_stop_read_task(_z_session_t *z);
+z_result_t _zp_stop_read_task(_z_session_t *z);
 
 /**
  * Start a separate task to handle the session lease. This task will send ``KeepAlive``
@@ -175,7 +175,7 @@ int8_t _zp_stop_read_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
+z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending
@@ -186,7 +186,7 @@ int8_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_stop_lease_task(_z_session_t *z);
+z_result_t _zp_stop_lease_task(_z_session_t *z);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

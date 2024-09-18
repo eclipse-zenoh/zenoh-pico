@@ -32,8 +32,8 @@ size_t _z_read_stream_size(_z_zbuf_t *zbuf) {
     return _z_host_le_load16(stream_size);
 }
 
-int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
+    z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer
     _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);

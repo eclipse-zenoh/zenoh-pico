@@ -29,8 +29,8 @@ extern "C" {
 #if Z_FEATURE_LINK_TCP == 1
 
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
+    z_result_t ret = _Z_RES_OK;
 
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
@@ -54,8 +54,8 @@ int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, 
 
 void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep) { delete ep->_iptcp._addr; }
 
-int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
 
     sock->_tcp = new WiFiClient();
     if (!sock->_tcp->connect(*rep._iptcp._addr, rep._iptcp._port)) {
@@ -69,8 +69,8 @@ int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, u
     return ret;
 }
 
-int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
 
@@ -121,8 +121,8 @@ size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t le
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 
 /*------------------ UDP sockets ------------------*/
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
+    z_result_t ret = _Z_RES_OK;
 
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
@@ -149,8 +149,8 @@ void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep) { delete ep->_iptcp._addr; 
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
 
-int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)rep;
 
@@ -167,8 +167,8 @@ int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_
     return ret;
 }
 
-int8_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
     (void)tout;
@@ -230,9 +230,9 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 #endif
 
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                             uint32_t tout, const char *iface) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface) {
+    z_result_t ret = _Z_RES_OK;
     (void)(rep);
 
     sock->_udp = new WiFiUDP();
@@ -251,10 +251,10 @@ int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoin
     return ret;
 }
 
-int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface, const char *join) {
+z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                                   const char *iface, const char *join) {
     (void)join;
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port)) {

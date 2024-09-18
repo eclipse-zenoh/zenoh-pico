@@ -27,11 +27,11 @@ typedef struct {
     _z_sys_net_endpoint_t _rep;
 } _z_tcp_socket_t;
 
-int8_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port);
+z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port);
 void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep);
 
-int8_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
-int8_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep);
+z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
+z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep);
 void _z_close_tcp(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);

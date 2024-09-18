@@ -23,13 +23,13 @@ void _z_report_system_error(int errcode) { _Z_ERROR("System error: %i", errcode)
 /*------------------ Thread ------------------*/
 _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(_z_task_t, task)
 
-int8_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+z_result_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     return _z_task_init(&task->_val, attr, fun, arg);
 }
 
-int8_t z_task_join(z_owned_task_t *task) {
+z_result_t z_task_join(z_owned_task_t *task) {
     _z_task_t *ptr = &task->_val;
-    int8_t ret = _z_task_join(ptr);
+    z_result_t ret = _z_task_join(ptr);
     _z_task_free(&ptr);
     return ret;
 }
@@ -37,20 +37,20 @@ int8_t z_task_join(z_owned_task_t *task) {
 /*------------------ Mutex ------------------*/
 _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(_z_mutex_t, mutex)
 
-int8_t z_mutex_init(z_owned_mutex_t *m) { return _z_mutex_init(&m->_val); }
-int8_t z_mutex_drop(z_moved_mutex_t *m) { return _z_mutex_drop(&m->_this._val); }
+z_result_t z_mutex_init(z_owned_mutex_t *m) { return _z_mutex_init(&m->_val); }
+z_result_t z_mutex_drop(z_moved_mutex_t *m) { return _z_mutex_drop(&m->_this._val); }
 
-int8_t z_mutex_lock(z_loaned_mutex_t *m) { return _z_mutex_lock(m); }
-int8_t z_mutex_try_lock(z_loaned_mutex_t *m) { return _z_mutex_try_lock(m); }
-int8_t z_mutex_unlock(z_loaned_mutex_t *m) { return _z_mutex_unlock(m); }
+z_result_t z_mutex_lock(z_loaned_mutex_t *m) { return _z_mutex_lock(m); }
+z_result_t z_mutex_try_lock(z_loaned_mutex_t *m) { return _z_mutex_try_lock(m); }
+z_result_t z_mutex_unlock(z_loaned_mutex_t *m) { return _z_mutex_unlock(m); }
 
 /*------------------ CondVar ------------------*/
 _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(_z_condvar_t, condvar)
 
-int8_t z_condvar_init(z_owned_condvar_t *cv) { return _z_condvar_init(&cv->_val); }
-int8_t z_condvar_drop(z_moved_condvar_t *cv) { return _z_condvar_drop(&cv->_this._val); }
+z_result_t z_condvar_init(z_owned_condvar_t *cv) { return _z_condvar_init(&cv->_val); }
+z_result_t z_condvar_drop(z_moved_condvar_t *cv) { return _z_condvar_drop(&cv->_this._val); }
 
-int8_t z_condvar_signal(z_loaned_condvar_t *cv) { return _z_condvar_signal(cv); }
-int8_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m) { return _z_condvar_wait(cv, m); }
+z_result_t z_condvar_signal(z_loaned_condvar_t *cv) { return _z_condvar_signal(cv); }
+z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m) { return _z_condvar_wait(cv, m); }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1

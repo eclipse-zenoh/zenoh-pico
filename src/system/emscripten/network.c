@@ -33,8 +33,8 @@
 #define WS_LINK_SLEEP 1
 
 /*------------------ TCP sockets ------------------*/
-int8_t _z_create_endpoint_ws(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_create_endpoint_ws(_z_sys_net_endpoint_t *ep, const char *s_addr, const char *s_port) {
+    z_result_t ret = _Z_RES_OK;
 
     struct addrinfo hints;
     (void)memset(&hints, 0, sizeof(hints));
@@ -53,8 +53,8 @@ int8_t _z_create_endpoint_ws(_z_sys_net_endpoint_t *ep, const char *s_addr, cons
 void _z_free_endpoint_ws(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 
 /*------------------ TCP sockets ------------------*/
-int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
+    z_result_t ret = _Z_RES_OK;
 
     sock->_ws._fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_ws._fd != -1) {
@@ -95,8 +95,8 @@ int8_t _z_open_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, ui
     return ret;
 }
 
-int8_t _z_listen_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_ws(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
+    z_result_t ret = _Z_RES_OK;
     (void)sock;
     (void)lep;
 

@@ -22,8 +22,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
+    z_result_t ret = _Z_RES_OK;
 
     // TODO check body to know where to dispatch
 
@@ -42,7 +42,7 @@ int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t 
     return ret;
 }
 #else
-int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
+z_result_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(push);
     _ZP_UNUSED(reliability);

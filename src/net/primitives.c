@@ -78,8 +78,8 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
     return ret;
 }
 
-int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Undeclaring local keyexpr %d", rid);
     _z_resource_t *r = _z_get_resource_by_id(zn, _Z_KEYEXPR_MAPPING_LOCAL, rid);
     if (r != NULL) {
@@ -119,7 +119,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     return ret;
 }
 
-int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
+z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     if (pub == NULL || _Z_RC_IS_NULL(&pub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -130,11 +130,11 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload, const _z_encoding_t *encoding,
-                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
-                z_reliability_t reliability) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+                    const _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
+                    const _z_bytes_t attachment, z_reliability_t reliability) {
+    z_result_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
@@ -224,7 +224,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     return ret;
 }
 
-int8_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
+z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     if (sub == NULL || _Z_RC_IS_NULL(&sub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -287,7 +287,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     return ret;
 }
 
-int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
+z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     if (qle == NULL || _Z_RC_IS_NULL(&qle->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -314,10 +314,11 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return _Z_RES_OK;
 }
 
-int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
-                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t att) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
+                         const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                         z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
+                         const _z_bytes_t att) {
+    z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     _z_keyexpr_t q_ke;
@@ -415,8 +416,8 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_ke
     return ret;
 }
 
-int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload) {
+    z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Build the reply context decorator. This is NOT the final reply.
@@ -450,11 +451,11 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
 
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, const _z_bytes_t attachment,
-                z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
+                    const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
+                    _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, const _z_bytes_t attachment,
+                    z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express) {
+    z_result_t ret = _Z_RES_OK;
 
     // Create the pending query object
     _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
@@ -515,7 +516,7 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     return intr._id;
 }
 
-int8_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
+z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
     // Find interest entry
     _z_session_interest_rc_t *sintr = _z_get_interest_by_id(zn, interest_id);
     if (sintr == NULL) {

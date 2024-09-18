@@ -69,9 +69,11 @@ _z_string_t *_z_string_copy_from_str_as_ptr(const char *value) {
 
 size_t _z_string_len(const _z_string_t *s) { return s->_slice.len; }
 
-int8_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) { return _z_slice_copy(&dst->_slice, &src->_slice); }
+z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
+    return _z_slice_copy(&dst->_slice, &src->_slice);
+}
 
-int8_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len) {
+z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len) {
     return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
 }
 

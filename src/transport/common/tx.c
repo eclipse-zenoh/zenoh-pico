@@ -70,8 +70,8 @@ void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability) {
     }
 }
 
-int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             ret = _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
@@ -89,8 +89,8 @@ int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg) {
     return ret;
 }
 
-int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
@@ -135,8 +135,8 @@ int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_m
     return ret;
 }
 
-int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn) {
-    int8_t ret = _Z_RES_OK;
+z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn) {
+    z_result_t ret = _Z_RES_OK;
 
     // Assume first that this is not the final fragment
     bool is_final = false;

@@ -18,7 +18,7 @@
 #include <string.h>
 
 /*-------- fifo --------*/
-int8_t _z_fifo_init(_z_fifo_t *r, size_t capacity) {
+z_result_t _z_fifo_init(_z_fifo_t *r, size_t capacity) {
     _z_ring_init(&r->_ring, capacity);
     return 0;
 }

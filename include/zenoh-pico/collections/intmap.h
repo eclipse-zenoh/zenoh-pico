@@ -61,7 +61,7 @@ size_t _z_int_void_map_capacity(const _z_int_void_map_t *map);
 size_t _z_int_void_map_len(const _z_int_void_map_t *map);
 bool _z_int_void_map_is_empty(const _z_int_void_map_t *map);
 
-int8_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c);
+z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c);
 _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f);
 
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f);

@@ -19,8 +19,8 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/utils/logging.h"
 
-int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key, _z_msg_reply_t *reply) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key, _z_msg_reply_t *reply) {
+    z_result_t ret = _Z_RES_OK;
 
     // TODO check id to know where to dispatch
 
@@ -36,8 +36,8 @@ int8_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key
     return ret;
 }
 
-int8_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error) {
+    z_result_t ret = _Z_RES_OK;
 
     // TODO check id to know where to dispatch
 
@@ -51,8 +51,8 @@ int8_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error)
     return ret;
 }
 
-int8_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final) {
+    z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_QUERY == 1
     // TODO check id to know where to dispatch

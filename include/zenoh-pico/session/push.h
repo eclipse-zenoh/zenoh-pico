@@ -21,6 +21,6 @@
 #ifndef ZENOH_PICO_SESSION_PUSH_H
 #define ZENOH_PICO_SESSION_PUSH_H
 
-int8_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability);
+z_result_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliability_t reliability);
 
 #endif /* ZENOH_PICO_SESSION_PUSH_H */

@@ -25,7 +25,7 @@ typedef struct {
     _z_ring_t _ring;
 } _z_fifo_t;
 
-int8_t _z_fifo_init(_z_fifo_t *fifo, size_t capacity);
+z_result_t _z_fifo_init(_z_fifo_t *fifo, size_t capacity);
 _z_fifo_t _z_fifo_make(size_t capacity);
 
 size_t _z_fifo_capacity(const _z_fifo_t *r);
@@ -44,7 +44,7 @@ void _z_fifo_free(_z_fifo_t **xs, z_element_free_f f_f);
 
 #define _Z_FIFO_DEFINE(name, type)                                                                         \
     typedef _z_fifo_t name##_fifo_t;                                                                       \
-    static inline int8_t name##_fifo_init(name##_fifo_t *fifo, size_t capacity) {                          \
+    static inline z_result_t name##_fifo_init(name##_fifo_t *fifo, size_t capacity) {                      \
         return _z_fifo_init(fifo, capacity);                                                               \
     }                                                                                                      \
     static inline name##_fifo_t name##_fifo_make(size_t capacity) { return _z_fifo_make(capacity); }       \

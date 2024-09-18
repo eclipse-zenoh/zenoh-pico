@@ -20,6 +20,6 @@
 
 /*------------------ Transmission and Reception helpers ------------------*/
 size_t _z_read_stream_size(_z_zbuf_t *zbuf);
-int8_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl);
+z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl);
 
 #endif /* ZENOH_PICO_TRANSPORT_RX_H */

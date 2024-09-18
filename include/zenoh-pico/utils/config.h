@@ -34,7 +34,7 @@ typedef _z_str_intmap_t _z_config_t;
 /**
  * Initialize a new empty map of properties.
  */
-int8_t _z_config_init(_z_config_t *ps);
+z_result_t _z_config_init(_z_config_t *ps);
 
 /**
  * Insert a property with a given key to a properties map.
@@ -45,7 +45,7 @@ int8_t _z_config_init(_z_config_t *ps);
  *   key: The key of the property to add.
  *   value: The value of the property to add.
  */
-int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value);
+z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value);
 
 /**
  * Get the property with the given key from a properties map.

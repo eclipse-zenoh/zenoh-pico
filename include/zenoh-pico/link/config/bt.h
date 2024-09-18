@@ -46,8 +46,8 @@ size_t _z_bt_config_strlen(const _z_str_intmap_t *s);
 void _z_bt_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s);
 char *_z_bt_config_to_str(const _z_str_intmap_t *s);
 
-int8_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s);
-int8_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
+z_result_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s);
+z_result_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_BT_H */

@@ -36,7 +36,7 @@ typedef struct _z_query_t {
 
 _z_query_t _z_query_null(void);
 void _z_query_clear(_z_query_t *q);
-int8_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
+z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
 
 _Z_REFCOUNT_DEFINE(_z_query, _z_query)

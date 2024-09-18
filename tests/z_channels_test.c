@@ -42,7 +42,7 @@
 #define _RECV(handler, method, buf)                                                   \
     do {                                                                              \
         z_owned_sample_t sample;                                                      \
-        int8_t res = method(z_loan(handler), &sample);                                \
+        z_result_t res = method(z_loan(handler), &sample);                            \
         if (res == Z_CHANNEL_DISCONNECTED) {                                          \
             strcpy(buf, "closed");                                                    \
         } else if (res == Z_OK) {                                                     \

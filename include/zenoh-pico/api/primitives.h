@@ -42,7 +42,7 @@ extern "C" {
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
+z_result_t z_view_string_from_str(z_view_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` substring.
@@ -55,7 +55,7 @@ int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len);
+z_result_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
@@ -69,7 +69,7 @@ int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
+z_result_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
@@ -96,7 +96,7 @@ void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *na
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
+z_result_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` by aliasing a substring.
@@ -152,7 +152,7 @@ void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char 
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
+z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
 
 /**
  * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
@@ -170,7 +170,7 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
+z_result_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
 
 /**
  * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is
@@ -184,7 +184,7 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, 
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
+z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
  * Returns the relation between `left` and `right` from `left`'s point of view.
@@ -212,7 +212,7 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
  *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_is_canon(const char *start, size_t len);
+z_result_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
  * Canonizes of a given keyexpr in string representation.
@@ -226,7 +226,7 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len);
  *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_canonize(char *start, size_t *len);
+z_result_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
  * Canonizes of a given keyexpr in string representation.
@@ -239,7 +239,7 @@ int8_t z_keyexpr_canonize(char *start, size_t *len);
  *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_canonize_null_terminated(char *start);
+z_result_t z_keyexpr_canonize_null_terminated(char *start);
 
 /**
  * Checks if a given keyexpr contains another keyexpr in its set.
@@ -298,7 +298,7 @@ void z_config_new(z_owned_config_t *config);
  * Return:
  *   `0`` in case of success, or a ``negative value`` otherwise.
  */
-int8_t z_config_default(z_owned_config_t *config);
+z_result_t z_config_default(z_owned_config_t *config);
 
 /**
  * Gets the property with the given integer key from the configuration.
@@ -323,7 +323,7 @@ const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
  * Return:
  *   ``0`` if insertion successful, ``negative value`` otherwise.
  */
-int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
+z_result_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
 
 /**
  * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
@@ -335,7 +335,7 @@ int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *valu
  * Return:
  *   ``0`` if creation successful,``negative value`` otherwise.
  */
-int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
+z_result_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
 
 /**
  * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
@@ -348,7 +348,7 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
  * Return:
  *   ``0`` if creation successful,``negative value`` otherwise.
  */
-int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
+z_result_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
 
 /**
  * Sets a schema to this encoding from a null-terminated string. Zenoh does not define what a schema is and its
@@ -360,7 +360,7 @@ int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_
  * Return:
  *   ``0`` in case of success,``negative value`` otherwise.
  */
-int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema);
+z_result_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema);
 
 /**
  * Sets a schema to this encoding from a substring. Zenoh does not define what a schema is and its semantics is left
@@ -373,7 +373,7 @@ int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char 
  * Return:
  *   ``0`` if in case of success,``negative value`` otherwise.
  */
-int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len);
+z_result_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len);
 
 /**
  * Builds a string from a :c:type:`z_loaned_encoding_t`.
@@ -385,7 +385,7 @@ int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const ch
  * Return:
  *   ``0`` if creation successful,``negative value`` otherwise.
  */
-int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
+z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
 
 /**
  * Gets the bytes data from a reply error payload by aliasing it.
@@ -420,7 +420,7 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
+z_result_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_slice_t` by transferring ownership over a data to it.
@@ -436,8 +436,8 @@ int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                        void *context);
+z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
+                            void (*deleter)(void *data, void *context), void *context);
 
 /**
  * Builds an empty :c:type:`z_owned_slice_t`.
@@ -489,7 +489,7 @@ bool z_slice_is_empty(const z_loaned_slice_t *slice);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
+z_result_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 
 /**
  * Decodes data into a `int16_t` signed integer.
@@ -501,7 +501,7 @@ int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst)
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
+z_result_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 
 /**
  * Decodes data into a `int32_t` signed integer.
@@ -513,7 +513,7 @@ int8_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
+z_result_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 
 /**
  * Decodes data into a `int64_t` signed integer.
@@ -525,7 +525,7 @@ int8_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
+z_result_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 
 /**
  * Decodes data into a `uint8_t` unsigned integer.
@@ -537,7 +537,7 @@ int8_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
+z_result_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 
 /**
  * Decodes data into a `uint16_t` unsigned integer.
@@ -549,7 +549,7 @@ int8_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
+z_result_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 
 /**
  * Decodes data into a `uint32_t` unsigned integer.
@@ -561,7 +561,7 @@ int8_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
+z_result_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 
 /**
  * Decodes data into a `uint64_t` unsigned integer.
@@ -573,7 +573,7 @@ int8_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
+z_result_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 
 /**
  * Decodes data into a `float` floating number.
@@ -585,7 +585,7 @@ int8_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
+z_result_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
 
 /**
  * Decodes data into a `double` floating number.
@@ -597,7 +597,7 @@ int8_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst)
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst);
+z_result_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst);
 
 /**
  * Decodes data into a :c:type:`z_owned_slice_t`
@@ -609,7 +609,7 @@ int8_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
+z_result_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
  * Decodes data into a :c:type:`z_owned_string_t`
@@ -621,7 +621,7 @@ int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_sli
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+z_result_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
  * Decodes data into a pair of :c:type:`z_owned_bytes_t`
@@ -634,7 +634,8 @@ int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_st
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
+z_result_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first,
+                                         z_owned_bytes_t *second);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -646,7 +647,7 @@ int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_byte
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val);
+z_result_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -658,7 +659,7 @@ int8_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val);
+z_result_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -670,7 +671,7 @@ int8_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val);
+z_result_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val);
 
 /**
  * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
@@ -682,7 +683,7 @@ int8_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val);
+z_result_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -694,7 +695,7 @@ int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
+z_result_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -706,7 +707,7 @@ int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
+z_result_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -718,7 +719,7 @@ int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
+z_result_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
 
 /**
  * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
@@ -730,7 +731,7 @@ int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
+z_result_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
 
 /**
  * Encodes a floating number into a :c:type:`z_owned_bytes_t`
@@ -742,7 +743,7 @@ int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
+z_result_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
 
 /**
  * Encodes a floating number into a :c:type:`z_owned_bytes_t`
@@ -754,7 +755,7 @@ int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
+z_result_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
 
 /**
  * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying.
@@ -766,7 +767,7 @@ int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
+z_result_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
 
 /**
  * Encodes a slice into a :c:type:`z_owned_bytes_t`.
@@ -778,7 +779,7 @@ int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
+z_result_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
 
 /**
  * Encodes data into a :c:type:`z_owned_bytes_t`.
@@ -794,8 +795,8 @@ int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                        void *context);
+z_result_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
+                            void (*deleter)(void *data, void *context), void *context);
 
 /**
  * Encodes statically allocated constant data into a :c:type:`z_owned_bytes_t` by aliasing.
@@ -808,7 +809,7 @@ int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void 
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+z_result_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
 /**
  * Encodes data into a :c:type:`z_owned_bytes_t` by copying.
@@ -821,7 +822,7 @@ int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+z_result_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t` by copying.
@@ -833,7 +834,7 @@ int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, s
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
+z_result_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
 
 /**
  * Encodes a string into a :c:type:`z_owned_bytes_t`.
@@ -845,7 +846,7 @@ int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_stri
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
+z_result_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
 
 /**
  * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t`.
@@ -859,8 +860,8 @@ int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
-                        void *context);
+z_result_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
+                            void *context);
 
 /**
  * Encodes a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
@@ -872,7 +873,7 @@ int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(voi
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
+z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
 /**
  * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t` by copying.
  *
@@ -883,7 +884,7 @@ int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value);
+z_result_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value);
 
 /**
  * Constructs payload from an iterator to `z_owned_bytes_t`.
@@ -895,8 +896,8 @@ int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_bytes_t *data, void *context),
-                         void *context);
+z_result_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+                             void *context);
 
 /**
  * Append a pair of `z_owned_bytes` objects which are consumed in the process.
@@ -909,7 +910,7 @@ int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_b
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t *first, z_moved_bytes_t *second);
+z_result_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t *first, z_moved_bytes_t *second);
 
 /**
  * Parameters:
@@ -1013,7 +1014,7 @@ z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
  * Return:
  *  ​0​ upon success, negative error code otherwise.
  */
-int8_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst);
+z_result_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst);
 
 /**
  * Reads data into specified destination.
@@ -1041,7 +1042,7 @@ size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
  * Return:
  *  ​0​ upon success, negative error code otherwise.
  */
-int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
 /**
  * Gets the read position indicator.
  *
@@ -1075,7 +1076,7 @@ z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+z_result_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Appends bytes.
@@ -1089,7 +1090,7 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
+z_result_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Appends bytes, with boundaries information. It would allow to read the same piece of data using
@@ -1102,7 +1103,7 @@ int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
+z_result_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Create timestamp.
@@ -1114,7 +1115,7 @@ int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise (for example if RTC is not available on the system).
  */
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
+z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
 
 /**
  * Returns NTP64 time associated with this timestamp.
@@ -1261,8 +1262,8 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Return:
  *   The sample closure.
  */
-int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
-                        void *context);
+z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
+                            void *context);
 
 /**
  * Builds a new query closure.
@@ -1276,8 +1277,8 @@ int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call
  * Return:
  *   The query closure.
  */
-int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
+                           void *context);
 
 /**
  * Builds a new reply closure.
@@ -1291,8 +1292,8 @@ int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t c
  * Return:
  *   The reply closure.
  */
-int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
+                           void *context);
 
 /**
  * Builds a new hello closure.
@@ -1306,8 +1307,8 @@ int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call,
  * Return:
  *   The hello closure.
  */
-int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
+                           void *context);
 
 /**
  * Builds a new zid closure.
@@ -1321,7 +1322,7 @@ int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_
  * Return:
  *   The hello closure.
  */
-int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
+z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
@@ -1394,7 +1395,7 @@ size_t z_string_len(const z_loaned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
+z_result_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_owned_string_t` by transferring ownership over a null-terminated string to it.
@@ -1409,8 +1410,8 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
-                         void *context);
+z_result_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
+                             void *context);
 
 /**
  * Builds an empty :c:type:`z_owned_string_t`.
@@ -1431,7 +1432,7 @@ void z_string_empty(z_owned_string_t *str);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len);
+z_result_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len);
 
 /**
  * Checks if string is empty
@@ -1510,7 +1511,7 @@ void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *loc
  * Return:
  *  ``0`` in case of success, ``negative value`` otherwise.
  */
-int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
+z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
 
 /************* Primitives **************/
 /**
@@ -1524,7 +1525,7 @@ int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
  * Return:
  *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
+z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
 
 /**
  * Opens a Zenoh session.
@@ -1536,7 +1537,7 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
  * Return:
  *   ``0`` if open successful, ``negative value`` otherwise.
  */
-int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
+z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
 
 /**
  * Closes a Zenoh session.
@@ -1547,7 +1548,7 @@ int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_opti
  * Return:
  *   ``0`` if close successful, ``negative value`` otherwise.
  */
-int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
+z_result_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
 
 /**
  * Fetches Zenoh IDs of all connected peers.
@@ -1562,7 +1563,7 @@ int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
  * Return:
  *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
+z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Fetches Zenoh IDs of all connected routers.
@@ -1577,7 +1578,7 @@ int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *cal
  * Return:
  *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
+z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Gets the local Zenoh ID associated to a given Zenoh session.
@@ -1746,8 +1747,8 @@ void z_delete_options_default(z_delete_options_t *options);
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
-             const z_put_options_t *options);
+z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
+                 const z_put_options_t *options);
 
 /**
  * Deletes data for a given keyexpr.
@@ -1760,7 +1761,7 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
  * Return:
  *   ``0`` if delete operation successful, ``negative value`` otherwise.
  */
-int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options);
+z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options);
 
 /**
  * Builds a :c:type:`z_publisher_options_t` with default values.
@@ -1784,8 +1785,8 @@ void z_publisher_options_default(z_publisher_options_t *options);
  * Return:
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
-                           const z_publisher_options_t *options);
+z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
+                               const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**
  * Undeclares and clears the publisher.
@@ -1796,7 +1797,7 @@ int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *z
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_publisher(z_moved_publisher_t *pub);
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub);
 
 /**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
@@ -1825,8 +1826,8 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
-                       const z_publisher_put_options_t *options);
+z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                           const z_publisher_put_options_t *options);
 
 /**
  * Deletes data from the keyexpr bound to the given publisher.
@@ -1838,7 +1839,7 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload
  * Return:
  *   ``0`` if delete operation successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
+z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
 
 /**
  * Gets the keyexpr from a publisher.
@@ -1874,8 +1875,8 @@ void z_get_options_default(z_get_options_t *options);
  * Return:
  *   ``0`` if put operation successful, ``negative value`` otherwise.
  */
-int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
-             z_moved_closure_reply_t *callback, z_get_options_t *options);
+z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
+                 z_moved_closure_reply_t *callback, z_get_options_t *options);
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *
@@ -1950,9 +1951,9 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Return:
  *   ``0`` if declare operation successful, ``negative value`` otherwise.
  */
-int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
-                           const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
-                           const z_queryable_options_t *options);
+z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+                               const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
+                               const z_queryable_options_t *options);
 
 /**
  * Undeclares and clears the queryable.
@@ -1963,7 +1964,7 @@ int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_sessio
  * Return:
  *   ``0`` if undeclare operation successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_queryable(z_moved_queryable_t *queryable);
+z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable);
 
 /**
  * Builds a :c:type:`z_query_reply_options_t` with default values.
@@ -1990,8 +1991,8 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
-                     const z_query_reply_options_t *options);
+z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
+                         const z_query_reply_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_del_options_t` with default values.
@@ -2017,8 +2018,8 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
-                         const z_query_reply_del_options_t *options);
+z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
+                             const z_query_reply_del_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_err_options_t` with default values.
@@ -2044,8 +2045,8 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  * Return:
  *   ``0`` if reply operation successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
-                         const z_query_reply_err_options_t *options);
+z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
+                             const z_query_reply_err_options_t *options);
 
 #endif
 
@@ -2059,7 +2060,7 @@ int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
+z_result_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a new keyexpr from a substring.
@@ -2072,7 +2073,7 @@ int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
+z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a null-terminated string with auto canonization.
@@ -2084,7 +2085,7 @@ int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
+z_result_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a substring with auto canonization.
@@ -2098,7 +2099,7 @@ int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *n
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
+z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.
@@ -2114,8 +2115,8 @@ int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char
  * Return:
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
-                         const z_loaned_keyexpr_t *keyexpr);
+z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
+                             const z_loaned_keyexpr_t *keyexpr);
 
 /**
  * Undeclares a keyexpr.
@@ -2127,7 +2128,7 @@ int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_ses
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
+z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
@@ -2154,8 +2155,9 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Return:
  *   ``0`` if declare successful, ``negative value`` otherwise.
  */
-int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
-                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
+z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
+                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
+                                const z_subscriber_options_t *options);
 
 /**
  * Undeclares and clears the subscriber.
@@ -2166,7 +2168,7 @@ int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t 
  * Return:
  *   ``0`` if undeclare successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_subscriber(z_moved_subscriber_t *sub);
+z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub);
 
 /**
  * Gets the keyexpr from a subscriber.
@@ -2202,7 +2204,7 @@ void zp_task_read_options_default(zp_task_read_options_t *options);
  * Return:
  *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
-int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
+z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
 
 /**
  * Stops the read task.
@@ -2215,7 +2217,7 @@ int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *
  * Return:
  *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
-int8_t zp_stop_read_task(z_loaned_session_t *zs);
+z_result_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
  * Builds a :c:type:`zp_task_lease_options_t` with default value.
@@ -2240,7 +2242,7 @@ void zp_task_lease_options_default(zp_task_lease_options_t *options);
  * Return:
  *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
-int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
+z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
  * Stops the lease task.
@@ -2253,7 +2255,7 @@ int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t
  * Return:
  *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
-int8_t zp_stop_lease_task(z_loaned_session_t *zs);
+z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
 
 /************* Single Thread helpers **************/
 /**
@@ -2274,7 +2276,7 @@ void zp_read_options_default(zp_read_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
+z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
 
 /**
  * Builds a :c:type:`zp_send_keep_alive_options_t` with default value.
@@ -2294,7 +2296,7 @@ void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
+z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
 
 /**
  * Builds a :c:type:`zp_send_join_options_t` with default value.
@@ -2322,7 +2324,7 @@ void z_scout_options_default(z_scout_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
+z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
 #ifdef __cplusplus
 }
