@@ -32,7 +32,6 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/system/platform/unix.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
@@ -46,8 +45,8 @@
 
 void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry) { _z_keyexpr_clear(&entry->_keyexpr); }
 
-int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
+    z_result_t ret = _Z_RES_OK;
     // Open a raw network socket in promiscuous mode
     sock->_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock->_fd == -1) {
@@ -75,8 +74,8 @@ int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     return ret;
 }
 
-int8_t _z_close_raweth(_z_sys_net_socket_t *sock) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_close_raweth(_z_sys_net_socket_t *sock) {
+    z_result_t ret = _Z_RES_OK;
     if (close(sock->_fd) != 0) {
         ret = _Z_ERR_GENERIC;
     }

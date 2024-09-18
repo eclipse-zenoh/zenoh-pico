@@ -12,12 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/common/tx.h"
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
-#include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -40,8 +40,8 @@ _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliabili
     return sn;
 }
 
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -71,9 +71,9 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
     return ret;
 }
 
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                   z_congestion_control_t cong_ctrl) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send network message");
 
     _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
@@ -86,8 +86,8 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        int8_t locked = _z_mutex_try_lock(&ztm->_mutex_tx);
-        if (locked != (int8_t)0) {
+        z_result_t locked = _z_mutex_try_lock(&ztm->_mutex_tx);
+        if (locked != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             drop = true;
@@ -161,14 +161,14 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 }
 
 #else
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl) {
+z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                   z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);

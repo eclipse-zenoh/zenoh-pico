@@ -31,9 +31,9 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
-int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
-                                     _z_transport_multicast_establish_param_t *param) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
+                                         _z_transport_multicast_establish_param_t *param) {
+    z_result_t ret = _Z_RES_OK;
     // Transport specific information
     _z_transport_multicast_t *ztm = NULL;
     switch (zl->_cap._transport) {
@@ -119,9 +119,9 @@ int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     return ret;
 }
 
-int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                              const _z_id_t *local_zid) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                  const _z_id_t *local_zid) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_zint_t initial_sn_tx = 0;
     z_random_fill(&initial_sn_tx, sizeof(initial_sn_tx));
@@ -156,18 +156,18 @@ int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, c
     return ret;
 }
 
-int8_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid) {
+z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                    const _z_id_t *local_zid) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
-    int8_t ret = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
+    z_result_t ret = _Z_ERR_CONFIG_UNSUPPORTED_CLIENT_MULTICAST;
     // @TODO: not implemented
     return ret;
 }
 
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
+    z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
     ret = ztm->_send_f(ztm, &cm);
@@ -175,7 +175,7 @@ int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bo
     return ret;
 }
 
-int8_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason) {
+z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason) {
     return _z_multicast_send_close(ztm, reason, false);
 }
 
@@ -208,38 +208,38 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
 
 #else
 
-int8_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
-                                     _z_transport_multicast_establish_param_t *param) {
+z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
+                                         _z_transport_multicast_establish_param_t *param) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(param);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                              const _z_id_t *local_zid) {
+z_result_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                  const _z_id_t *local_zid) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid) {
+z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
+                                    const _z_id_t *local_zid) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
+z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(reason);
     _ZP_UNUSED(link_only);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason) {
+z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(reason);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;

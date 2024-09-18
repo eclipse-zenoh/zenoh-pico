@@ -50,7 +50,7 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
     return len;
 }
 
-int8_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c) {
+z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c) {
     assert((dst != NULL) && (src != NULL) && (dst->_capacity == src->_capacity));
     for (size_t idx = 0; idx < src->_capacity; idx++) {
         const _z_list_t *src_list = src->_vals[idx];

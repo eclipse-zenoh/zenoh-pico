@@ -27,8 +27,8 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int8_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_string_t ser_str = _z_string_alias_str(SERIAL_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &ser_str)) {
@@ -63,8 +63,8 @@ static char *__z_convert_address_serial(_z_string_t *address) {
     return ret;
 }
 
-int8_t _z_f_link_open_serial(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_open_serial(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
@@ -83,8 +83,8 @@ int8_t _z_f_link_open_serial(_z_link_t *self) {
     return ret;
 }
 
-int8_t _z_f_link_listen_serial(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_listen_serial(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     const char *baudrate_str = _z_str_intmap_get(&self->_endpoint._config, SERIAL_CONFIG_BAUDRATE_KEY);
     uint32_t baudrate = (uint32_t)strtoul(baudrate_str, NULL, 10);
@@ -127,8 +127,8 @@ size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t l
 
 uint16_t _z_get_link_mtu_serial(void) { return _Z_SERIAL_MTU_SIZE; }
 
-int8_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;

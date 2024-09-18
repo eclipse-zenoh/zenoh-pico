@@ -40,15 +40,15 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
 
 bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
-int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
+    z_result_t ret = _Z_RES_OK;
     z_random_fill((uint8_t *)bs->id, size);
     return ret;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
+    z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Initialize the counters to 1
@@ -124,8 +124,8 @@ void _z_session_clear(_z_session_t *zn) {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
-int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int8_t ret = _Z_ERR_GENERIC;
+z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {
+    z_result_t ret = _Z_ERR_GENERIC;
 
     if (zn != NULL) {
         ret = _z_transport_close(&zn->_tp, reason);

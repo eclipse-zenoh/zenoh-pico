@@ -19,7 +19,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*-------- Fifo Buffer Multithreaded --------*/
-int8_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity) {
+z_result_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity) {
     _Z_RETURN_IF_ERR(_z_fifo_init(&fifo->_fifo, capacity))
     fifo->is_closed = false;
 
@@ -39,7 +39,7 @@ _z_fifo_mt_t *_z_fifo_mt_new(size_t capacity) {
         return NULL;
     }
 
-    int8_t ret = _z_fifo_mt_init(fifo, capacity);
+    z_result_t ret = _z_fifo_mt_init(fifo, capacity);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("_z_fifo_mt_init failed: %i", ret);
         z_free(fifo);
@@ -64,7 +64,7 @@ void _z_fifo_mt_free(_z_fifo_mt_t *fifo, z_element_free_f free_f) {
     z_free(fifo);
 }
 
-int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element_free) {
+z_result_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element_free) {
     _ZP_UNUSED(element_free);
     if (elem == NULL || context == NULL) {
         return _Z_ERR_GENERIC;
@@ -90,7 +90,7 @@ int8_t _z_fifo_mt_push(const void *elem, void *context, z_element_free_f element
     return _Z_RES_OK;
 }
 
-int8_t _z_fifo_mt_close(_z_fifo_mt_t *fifo) {
+z_result_t _z_fifo_mt_close(_z_fifo_mt_t *fifo) {
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_lock(&fifo->_mutex))
     fifo->is_closed = true;
@@ -102,7 +102,7 @@ int8_t _z_fifo_mt_close(_z_fifo_mt_t *fifo) {
     return _Z_RES_OK;
 }
 
-int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) {
+z_result_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) {
     _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -132,7 +132,7 @@ int8_t _z_fifo_mt_pull(void *dst, void *context, z_element_move_f element_move) 
     return _Z_RES_OK;
 }
 
-int8_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_move) {
+z_result_t _z_fifo_mt_try_pull(void *dst, void *context, z_element_move_f element_move) {
     _z_fifo_mt_t *f = (_z_fifo_mt_t *)context;
 
 #if Z_FEATURE_MULTI_THREAD == 1

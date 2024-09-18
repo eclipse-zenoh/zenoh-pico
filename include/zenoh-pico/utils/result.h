@@ -85,7 +85,7 @@ typedef enum {
 
 #define _Z_RETURN_IF_ERR(expr)    \
     {                             \
-        int8_t __res = expr;      \
+        z_result_t __res = expr;  \
         if (__res != _Z_RES_OK) { \
             return __res;         \
         }                         \
@@ -93,7 +93,7 @@ typedef enum {
 
 #define _Z_CLEAN_RETURN_IF_ERR(base_expr, clean_expr) \
     {                                                 \
-        int8_t __res = base_expr;                     \
+        z_result_t __res = base_expr;                 \
         if (__res != _Z_RES_OK) {                     \
             clean_expr;                               \
             return __res;                             \

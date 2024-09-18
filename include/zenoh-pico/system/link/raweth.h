@@ -82,11 +82,11 @@ typedef struct {
     bool _has_vlan;
 } _z_raweth_socket_t;
 
-int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);
+z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);
 size_t _z_send_raweth(const _z_sys_net_socket_t *sock, const void *buff, size_t buff_len);
 size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buff_len, _z_slice_t *addr,
                          const _zp_raweth_whitelist_array_t *whitelist);
-int8_t _z_close_raweth(_z_sys_net_socket_t *sock);
+z_result_t _z_close_raweth(_z_sys_net_socket_t *sock);
 uint16_t _z_raweth_ntohs(uint16_t val);
 uint16_t _z_raweth_htons(uint16_t val);
 

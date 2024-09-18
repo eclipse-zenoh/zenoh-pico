@@ -73,8 +73,8 @@ char *__z_parse_address_segment_ws(_z_string_t *address) {
     return ret;
 }
 
-int8_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_string_t str = _z_string_alias_str(WS_SCHEMA);
     if (_z_string_equals(&endpoint->_locator._protocol, &str)) {
@@ -106,8 +106,8 @@ int8_t _z_endpoint_ws_valid(_z_endpoint_t *endpoint) {
     return ret;
 }
 
-int8_t _z_f_link_open_ws(_z_link_t *zl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_open_ws(_z_link_t *zl) {
+    z_result_t ret = _Z_RES_OK;
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&zl->_endpoint._config, WS_CONFIG_TOUT_KEY);
@@ -120,8 +120,8 @@ int8_t _z_f_link_open_ws(_z_link_t *zl) {
     return ret;
 }
 
-int8_t _z_f_link_listen_ws(_z_link_t *zl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_listen_ws(_z_link_t *zl) {
+    z_result_t ret = _Z_RES_OK;
 
     ret = _z_listen_ws(&zl->_socket._ws._sock, zl->_socket._ws._rep);
 
@@ -155,8 +155,8 @@ uint16_t _z_get_link_mtu_ws(void) {
     return 65535;
 }
 
-int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;

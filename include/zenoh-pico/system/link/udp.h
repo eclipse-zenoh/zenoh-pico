@@ -29,12 +29,12 @@ typedef struct {
     _z_sys_net_endpoint_t _lep;
 } _z_udp_socket_t;
 
-int8_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port);
+z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port);
 void _z_free_endpoint_udp(_z_sys_net_endpoint_t *ep);
 
 // Unicast
-int8_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
-int8_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
+z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
+z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout);
 void _z_close_udp_unicast(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
@@ -42,10 +42,10 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
                            const _z_sys_net_endpoint_t rep);
 
 // Multicast
-int8_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
-                             uint32_t tout, const char *iface);
-int8_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
-                               const char *iface, const char *join);
+z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, _z_sys_net_endpoint_t *lep,
+                                 uint32_t tout, const char *iface);
+z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout,
+                                   const char *iface, const char *join);
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
                             const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep);
 size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len,

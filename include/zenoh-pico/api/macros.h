@@ -677,20 +677,22 @@ inline void z_take(z_owned_fifo_handler_reply_t* this_, z_moved_fifo_handler_rep
 }
 
 // z_clone definition
-inline int8_t z_clone(z_owned_bytes_t* dst, z_loaned_bytes_t* this_) { return z_bytes_clone(dst, this_); };
-inline int8_t z_clone(z_owned_config_t* dst, z_loaned_config_t* this_) { return z_config_clone(dst, this_); };
-inline int8_t z_clone(z_owned_encoding_t* dst, z_loaned_encoding_t* this_) { return z_encoding_clone(dst, this_); };
-inline int8_t z_clone(z_owned_keyexpr_t* dst, z_loaned_keyexpr_t* this_) { return z_keyexpr_clone(dst, this_); };
-inline int8_t z_clone(z_owned_query_t* dst, z_loaned_query_t* this_) { return z_query_clone(dst, this_); };
-inline int8_t z_clone(z_owned_reply_t* dst, z_loaned_reply_t* this_) { return z_reply_clone(dst, this_); };
-inline int8_t z_clone(z_owned_reply_err_t* dst, z_loaned_reply_err_t* this_) { return z_reply_err_clone(dst, this_); };
-inline int8_t z_clone(z_owned_sample_t* dst, z_loaned_sample_t* this_) { return z_sample_clone(dst, this_); };
-inline int8_t z_clone(z_owned_slice_t* dst, z_loaned_slice_t* this_) { return z_slice_clone(dst, this_); };
-inline int8_t z_clone(z_owned_string_t* dst, z_loaned_string_t* this_) { return z_string_clone(dst, this_); };
-inline int8_t z_clone(z_owned_string_array_t* dst, z_loaned_string_array_t* this_) {
+inline z_result_t z_clone(z_owned_bytes_t* dst, z_loaned_bytes_t* this_) { return z_bytes_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_config_t* dst, z_loaned_config_t* this_) { return z_config_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_encoding_t* dst, z_loaned_encoding_t* this_) { return z_encoding_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_keyexpr_t* dst, z_loaned_keyexpr_t* this_) { return z_keyexpr_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_query_t* dst, z_loaned_query_t* this_) { return z_query_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_reply_t* dst, z_loaned_reply_t* this_) { return z_reply_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_reply_err_t* dst, z_loaned_reply_err_t* this_) {
+    return z_reply_err_clone(dst, this_);
+};
+inline z_result_t z_clone(z_owned_sample_t* dst, z_loaned_sample_t* this_) { return z_sample_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_slice_t* dst, z_loaned_slice_t* this_) { return z_slice_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_string_t* dst, z_loaned_string_t* this_) { return z_string_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_string_array_t* dst, z_loaned_string_array_t* this_) {
     return z_string_array_clone(dst, this_);
 };
-inline int8_t z_clone(z_owned_hello_t* dst, z_loaned_hello_t* this_) { return z_hello_clone(dst, this_); };
+inline z_result_t z_clone(z_owned_hello_t* dst, z_loaned_hello_t* this_) { return z_hello_clone(dst, this_); };
 
 template <class T>
 struct z_loaned_to_owned_type_t {};

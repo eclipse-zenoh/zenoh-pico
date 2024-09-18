@@ -74,8 +74,8 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
     return pql;
 }
 
-int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
+    z_result_t ret = _Z_RES_OK;
 
     _Z_DEBUG(">>> Allocating query for (%ju:%.*s)", (uintmax_t)pen_qry->_key._id,
              (int)_z_string_len(&pen_qry->_key._suffix), _z_string_data(&pen_qry->_key._suffix));
@@ -94,9 +94,9 @@ int8_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) 
     return ret;
 }
 
-int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
-                                      _z_msg_put_t *msg, z_sample_kind_t kind) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
+                                          _z_msg_put_t *msg, z_sample_kind_t kind) {
+    z_result_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
 
@@ -179,8 +179,8 @@ int8_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, cons
     return ret;
 }
 
-int8_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
+    z_result_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
 
@@ -209,8 +209,8 @@ int8_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *
     return ret;
 }
 
-int8_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
+    z_result_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
 

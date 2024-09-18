@@ -61,7 +61,7 @@ void _z_sample_free(_z_sample_t **sample) {
     }
 }
 
-int8_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
+z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     *dst = _z_sample_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->keyexpr, &src->keyexpr));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_sample_clear(dst));

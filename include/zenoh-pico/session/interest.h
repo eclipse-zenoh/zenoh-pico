@@ -26,10 +26,10 @@ void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 #endif  // Z_FEATURE_INTEREST == 1
 
 void _z_flush_interest(_z_session_t *zn);
-int8_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
-int8_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
-int8_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id);
-int8_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
-int8_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
+z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
+z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
+z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id);
+z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
+z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
 
 #endif /* ZENOH_PICO_SESSION_INTEREST_H */

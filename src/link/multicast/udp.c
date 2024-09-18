@@ -80,8 +80,8 @@ static char *__z_parse_address_segment_udp_multicast(_z_string_t *address) {
     return ret;
 }
 
-int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
@@ -118,8 +118,8 @@ int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *endpoint) {
     return ret;
 }
 
-int8_t _z_f_link_open_udp_multicast(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_open_udp_multicast(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     uint32_t tout = Z_CONFIG_SOCKET_TIMEOUT;
     char *tout_as_str = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_TOUT_KEY);
@@ -134,8 +134,8 @@ int8_t _z_f_link_open_udp_multicast(_z_link_t *self) {
     return ret;
 }
 
-int8_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_listen_udp_multicast(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     const char *iface = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_IFACE_KEY);
     const char *join = _z_str_intmap_get(&self->_endpoint._config, UDP_CONFIG_JOIN_KEY);
@@ -178,8 +178,8 @@ uint16_t _z_get_link_mtu_udp_multicast(void) {
     return 1450;
 }
 
-int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_MULTICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;

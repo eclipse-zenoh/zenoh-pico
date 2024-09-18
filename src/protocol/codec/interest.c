@@ -39,7 +39,7 @@
 
 #define _Z_INTEREST_TRACE_ID 0x13
 
-int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is_final) {
+z_result_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is_final) {
     // Set id
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, interest->_id));
     if (is_final) {
@@ -69,7 +69,7 @@ int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_final, bool has_ext) {
+z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_final, bool has_ext) {
     // Decode id
     _Z_RETURN_IF_ERR(_z_zint32_decode(&interest->_id, zbf));
     if (!is_final) {

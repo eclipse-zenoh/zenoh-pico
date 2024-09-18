@@ -63,11 +63,11 @@ void z_free(void *ptr) {
 #error "Multi-threading not supported yet on OpenCR port. Disable it by defining Z_FEATURE_MULTI_THREAD=0"
 
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) { return -1; }
 
-int8_t _z_task_join(_z_task_t *task) { return -1; }
+z_result_t _z_task_join(_z_task_t *task) { return -1; }
 
-int8_t _z_task_cancel(_z_task_t *task) { return -1; }
+z_result_t _z_task_cancel(_z_task_t *task) { return -1; }
 
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
@@ -76,25 +76,25 @@ void _z_task_free(_z_task_t **task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) { return -1; }
+z_result_t _z_mutex_init(_z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_drop(_z_mutex_t *m) { return -1; }
+z_result_t _z_mutex_drop(_z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { return -1; }
+z_result_t _z_mutex_lock(_z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_try_lock(_z_mutex_t *m) { return -1; }
+z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return -1; }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { return -1; }
+z_result_t _z_mutex_unlock(_z_mutex_t *m) { return -1; }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
 
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
@@ -197,7 +197,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     return elapsed;
 }
 
-int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+z_result_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
     z_time_t now;
     gettimeofday(&now, NULL);
     t->secs = now.tv_sec;

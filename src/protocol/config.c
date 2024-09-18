@@ -20,13 +20,13 @@
 
 #include "zenoh-pico/utils/pointers.h"
 
-int8_t _z_config_init(_z_config_t *ps) {
+z_result_t _z_config_init(_z_config_t *ps) {
     _z_str_intmap_init(ps);
     return 0;
 }
 
-int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
+    z_result_t ret = _Z_RES_OK;
 
     char *res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
     if (strcmp(res, value) != 0) {
@@ -39,9 +39,9 @@ int8_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
 char *_z_config_get(const _z_config_t *ps, uint8_t key) { return _z_str_intmap_get(ps, key); }
 
 /*------------------ int-string map ------------------*/
-int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
-                               size_t n) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],
+                                   size_t n) {
+    z_result_t ret = _Z_RES_OK;
     *strint = _z_str_intmap_make();
 
     // Check the string contains only the right
@@ -98,7 +98,7 @@ int8_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t a
     return ret;
 }
 
-int8_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]) {
+z_result_t _z_str_intmap_from_str(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[]) {
     return _z_str_intmap_from_strn(strint, s, argc, argv, strlen(s));
 }
 

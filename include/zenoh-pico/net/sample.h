@@ -52,7 +52,7 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
  */
 void _z_sample_free(_z_sample_t **sample);
 
-int8_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
+z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
 _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t payload, const _z_timestamp_t *timestamp,

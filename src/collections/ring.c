@@ -19,7 +19,7 @@
 #include <string.h>
 
 /*-------- ring --------*/
-int8_t _z_ring_init(_z_ring_t *r, size_t capacity) {
+z_result_t _z_ring_init(_z_ring_t *r, size_t capacity) {
     // We need one more element to differentiate wether the ring is empty or full
     capacity++;
 

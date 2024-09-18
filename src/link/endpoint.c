@@ -62,7 +62,7 @@ void _z_locator_free(_z_locator_t **lc) {
     }
 }
 
-int8_t _z_locator_copy(_z_locator_t *dst, const _z_locator_t *src) {
+z_result_t _z_locator_copy(_z_locator_t *dst, const _z_locator_t *src) {
     _Z_RETURN_IF_ERR(_z_string_copy(&dst->_protocol, &src->_protocol));
     _Z_RETURN_IF_ERR(_z_string_copy(&dst->_address, &src->_address));
 
@@ -85,7 +85,7 @@ bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right) {
     return res;
 }
 
-static int8_t _z_locator_protocol_from_string(_z_string_t *protocol, _z_string_t *str) {
+static z_result_t _z_locator_protocol_from_string(_z_string_t *protocol, _z_string_t *str) {
     *protocol = _z_string_null();
 
     const char *p_start = _z_string_data(str);
@@ -97,7 +97,7 @@ static int8_t _z_locator_protocol_from_string(_z_string_t *protocol, _z_string_t
     return _z_string_copy_substring(protocol, str, 0, p_len);
 }
 
-static int8_t _z_locator_address_from_string(_z_string_t *address, _z_string_t *str) {
+static z_result_t _z_locator_address_from_string(_z_string_t *address, _z_string_t *str) {
     *address = _z_string_null();
 
     // Find protocol separator
@@ -130,7 +130,7 @@ static int8_t _z_locator_address_from_string(_z_string_t *address, _z_string_t *
     return _z_string_copy_substring(address, str, start_offset, addr_len);
 }
 
-int8_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, _z_string_t *str) {
+z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, _z_string_t *str) {
     *strint = _z_str_intmap_make();
 
     // Find metadata separator
@@ -169,7 +169,7 @@ void _z_locator_metadata_onto_str(char *dst, size_t dst_len, const _z_str_intmap
     _z_str_intmap_onto_str(dst, dst_len, s, 0, NULL);
 }
 
-int8_t _z_locator_from_string(_z_locator_t *lc, _z_string_t *str) {
+z_result_t _z_locator_from_string(_z_locator_t *lc, _z_string_t *str) {
     if (str == NULL || !_z_string_check(str)) {
         return _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
@@ -284,7 +284,7 @@ void _z_endpoint_free(_z_endpoint_t **ep) {
     }
 }
 
-int8_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, _z_string_t *str, _z_string_t *proto) {
+z_result_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, _z_string_t *str, _z_string_t *proto) {
     char *p_start = (char *)memchr(_z_string_data(str), ENDPOINT_CONFIG_SEPARATOR, _z_string_len(str));
     if (p_start != NULL) {
         p_start = _z_ptr_char_offset(p_start, 1);
@@ -410,7 +410,7 @@ char *_z_endpoint_config_to_string(const _z_str_intmap_t *s, const _z_string_t *
     return NULL;
 }
 
-int8_t _z_endpoint_from_string(_z_endpoint_t *ep, _z_string_t *str) {
+z_result_t _z_endpoint_from_string(_z_endpoint_t *ep, _z_string_t *str) {
     _z_endpoint_init(ep);
     _Z_CLEAN_RETURN_IF_ERR(_z_locator_from_string(&ep->_locator, str), _z_endpoint_clear(ep));
     _Z_CLEAN_RETURN_IF_ERR(_z_endpoint_config_from_string(&ep->_config, str, &ep->_locator._protocol),

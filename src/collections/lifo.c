@@ -18,7 +18,7 @@
 #include <string.h>
 
 /*-------- lifo --------*/
-int8_t _z_lifo_init(_z_lifo_t *r, size_t capacity) {
+z_result_t _z_lifo_init(_z_lifo_t *r, size_t capacity) {
     memset(r, 0, sizeof(_z_lifo_t));
     if (capacity != (size_t)0) {
         r->_val = (void **)z_malloc(sizeof(void *) * capacity);

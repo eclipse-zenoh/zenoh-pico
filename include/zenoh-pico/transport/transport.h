@@ -61,7 +61,7 @@ typedef struct _z_session_rc_t _z_session_rc_ref_t;
 // Forward declaration to be used in _zp_f_send_tmsg*
 typedef struct _z_transport_multicast_t _z_transport_multicast_t;
 // Send function prototype
-typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
+typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
 
 typedef struct {
     // Session associated to the transport
@@ -182,7 +182,7 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
-int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
+z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 

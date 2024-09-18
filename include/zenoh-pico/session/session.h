@@ -148,7 +148,7 @@ struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hel
  */
 typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
-int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
+z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 
 typedef enum {
     _Z_INTEREST_MSG_TYPE_FINAL = 0,

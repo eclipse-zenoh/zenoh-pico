@@ -41,19 +41,19 @@ void z_free(void *ptr) { free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     *task = new Thread();
     mbed::Callback<void()> c = mbed::Callback<void()>(fun, arg);
     return ((Thread *)*task)->start(c);
 }
 
-int8_t _z_task_join(_z_task_t *task) {
+z_result_t _z_task_join(_z_task_t *task) {
     int res = ((Thread *)*task)->join();
     delete ((Thread *)*task);
     return res;
 }
 
-int8_t _z_task_cancel(_z_task_t *task) {
+z_result_t _z_task_cancel(_z_task_t *task) {
     int res = ((Thread *)*task)->terminate();
     delete ((Thread *)*task);
     return res;
@@ -66,47 +66,47 @@ void _z_task_free(_z_task_t **task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) {
+z_result_t _z_mutex_init(_z_mutex_t *m) {
     *m = new Mutex();
     return 0;
 }
 
-int8_t _z_mutex_drop(_z_mutex_t *m) {
+z_result_t _z_mutex_drop(_z_mutex_t *m) {
     delete ((Mutex *)*m);
     return 0;
 }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) {
+z_result_t _z_mutex_lock(_z_mutex_t *m) {
     ((Mutex *)*m)->lock();
     return 0;
 }
 
-int8_t _z_mutex_try_lock(_z_mutex_t *m) { return (((Mutex *)*m)->trylock() == true) ? 0 : -1; }
+z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return (((Mutex *)*m)->trylock() == true) ? 0 : -1; }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) {
+z_result_t _z_mutex_unlock(_z_mutex_t *m) {
     ((Mutex *)*m)->unlock();
     return 0;
 }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) { return 0; }
+z_result_t _z_condvar_init(_z_condvar_t *cv) { return 0; }
 
-int8_t _z_condvar_drop(_z_condvar_t *cv) {
+z_result_t _z_condvar_drop(_z_condvar_t *cv) {
     delete ((ConditionVariable *)*cv);
     return 0;
 }
 
-int8_t _z_condvar_signal(_z_condvar_t *cv) {
+z_result_t _z_condvar_signal(_z_condvar_t *cv) {
     ((ConditionVariable *)*cv)->notify_one();
     return 0;
 }
 
-int8_t _z_condvar_signal_all(_z_condvar_t *cv) {
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
     ((ConditionVariable *)*cv)->notify_all();
     return 0;
 }
 
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     *cv = new ConditionVariable(*((Mutex *)*m));
     ((ConditionVariable *)*cv)->wait();
     return 0;
@@ -189,7 +189,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     return elapsed;
 }
 
-int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+z_result_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
     z_time_t now;
     gettimeofday(&now, NULL);
     t->secs = now.tv_sec;

@@ -48,8 +48,8 @@ _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset,
 size_t _z_arc_slice_len(const _z_arc_slice_t* s);
 bool _z_arc_slice_is_empty(const _z_arc_slice_t* s);
 const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s);
-int8_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src);
-int8_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src);
-int8_t _z_arc_slice_drop(_z_arc_slice_t* s);
+z_result_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src);
+z_result_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src);
+z_result_t _z_arc_slice_drop(_z_arc_slice_t* s);
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARC_SLICE_H */

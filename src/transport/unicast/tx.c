@@ -43,8 +43,8 @@ _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t
     return sn;
 }
 
-int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -74,9 +74,9 @@ int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_mes
     return ret;
 }
 
-int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                             z_congestion_control_t cong_ctrl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                 z_congestion_control_t cong_ctrl) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send network message");
 
     _z_transport_unicast_t *ztu = &zn->_tp._transport._unicast;
@@ -89,8 +89,8 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        int8_t locked = _z_mutex_try_lock(&ztu->_mutex_tx);
-        if (locked != (int8_t)0) {
+        z_result_t locked = _z_mutex_try_lock(&ztu->_mutex_tx);
+        if (locked != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             drop = true;
@@ -170,14 +170,14 @@ int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg
     return ret;
 }
 #else
-int8_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                             z_congestion_control_t cong_ctrl) {
+z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                 z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);

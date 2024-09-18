@@ -107,9 +107,9 @@ size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
 size_t _z_wbuf_len(const _z_wbuf_t *wbf);
 size_t _z_wbuf_space_left(const _z_wbuf_t *wbf);
 
-int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b);
-int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
-int8_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b);
+z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
 void _z_wbuf_put(_z_wbuf_t *wbf, uint8_t b, size_t pos);
 
 size_t _z_wbuf_get_rpos(const _z_wbuf_t *wbf);
@@ -122,7 +122,7 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);
-int8_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
+z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
 
 void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src);
 void _z_wbuf_reset(_z_wbuf_t *wbf);

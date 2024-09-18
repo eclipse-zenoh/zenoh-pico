@@ -357,7 +357,7 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
     return _z_iosli_get(ios, current);
 }
 
-int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
+z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
     if (writable == (size_t)0) {
@@ -376,8 +376,8 @@ int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     return _Z_RES_OK;
 }
 
-int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
+    z_result_t ret = _Z_RES_OK;
 
     size_t loffset = offset;
     size_t llength = length;
@@ -410,8 +410,8 @@ int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, siz
     return ret;
 }
 
-int8_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
@@ -517,8 +517,8 @@ _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     return zbf;
 }
 
-int8_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
+    z_result_t ret = _Z_RES_OK;
 
     for (size_t i = 0; i < length; i++) {
         ret = _z_wbuf_write(dst, _z_wbuf_read(src));

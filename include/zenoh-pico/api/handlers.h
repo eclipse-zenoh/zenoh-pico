@@ -48,7 +48,7 @@ extern "C" {
         z_free(src);                                                                                                  \
     }                                                                                                                 \
     static inline void _z_##handler_name##_close(void *context) {                                                     \
-        int8_t ret = collection_close_f((collection_type *)context);                                                  \
+        z_result_t ret = collection_close_f((collection_type *)context);                                              \
         if (ret < 0) {                                                                                                \
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                       \
         }                                                                                                             \
@@ -60,14 +60,16 @@ extern "C" {
             return;                                                                                                   \
         }                                                                                                             \
         elem_clone_f(internal_elem, elem);                                                                            \
-        int8_t ret = collection_push_f(internal_elem, context, _z_##handler_name##_elem_free);                        \
+        z_result_t ret = collection_push_f(internal_elem, context, _z_##handler_name##_elem_free);                    \
         if (ret != _Z_RES_OK) {                                                                                       \
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                       \
         }                                                                                                             \
     }                                                                                                                 \
-    static inline int8_t z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler, elem_owned_type *elem) { \
+    static inline z_result_t z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler,                      \
+                                                     elem_owned_type *elem) {                                         \
         elem_null_f(elem);                                                                                            \
-        int8_t ret = collection_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);  \
+        z_result_t ret =                                                                                              \
+            collection_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);           \
         if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                           \
             return Z_CHANNEL_DISCONNECTED;                                                                            \
         }                                                                                                             \
@@ -77,10 +79,10 @@ extern "C" {
         }                                                                                                             \
         return _Z_RES_OK;                                                                                             \
     }                                                                                                                 \
-    static inline int8_t z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                      \
-                                                     elem_owned_type *elem) {                                         \
+    static inline z_result_t z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,                  \
+                                                         elem_owned_type *elem) {                                     \
         elem_null_f(elem);                                                                                            \
-        int8_t ret =                                                                                                  \
+        z_result_t ret =                                                                                              \
             collection_try_pull_f(elem, (collection_type *)handler->collection, _z_##handler_name##_elem_move);       \
         if (ret == _Z_RES_CHANNEL_CLOSED) {                                                                           \
             return Z_CHANNEL_DISCONNECTED;                                                                            \
@@ -110,8 +112,8 @@ extern "C" {
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(handler_type, handler_name, _z_##handler_name##_check,               \
                                                  _z_##handler_name##_null, _z_##handler_name##_clear)                 \
                                                                                                                       \
-    static inline int8_t handler_new_f_name(callback_type *callback, z_owned_##handler_name##_t *handler,             \
-                                            size_t capacity) {                                                        \
+    static inline z_result_t handler_new_f_name(callback_type *callback, z_owned_##handler_name##_t *handler,         \
+                                                size_t capacity) {                                                    \
         if (capacity < 1) {                                                                                           \
             return _Z_ERR_INVALID;                                                                                    \
         }                                                                                                             \

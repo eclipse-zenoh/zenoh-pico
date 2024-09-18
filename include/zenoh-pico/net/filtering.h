@@ -41,8 +41,8 @@ typedef struct _z_write_filter_t {
 
 typedef struct _z_publisher_t _z_publisher_t;
 
-int8_t _z_write_filter_create(_z_publisher_t *pub);
-int8_t _z_write_filter_destroy(const _z_publisher_t *pub);
+z_result_t _z_write_filter_create(_z_publisher_t *pub);
+z_result_t _z_write_filter_destroy(const _z_publisher_t *pub);
 bool _z_write_filter_active(const _z_publisher_t *pub);
 
 #endif /* ZENOH_PICO_FILTERING_NETAPI_H */

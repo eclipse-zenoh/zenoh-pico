@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
         z_owned_closure_sample_t callback;
         z_closure(&callback, data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
-        int8_t res = z_declare_subscriber(sub, z_loan(s2), z_loan(rids2[i]), z_move(callback), NULL);
+        z_result_t res = z_declare_subscriber(sub, z_loan(s2), z_loan(rids2[i]), z_move(callback), NULL);
         assert(res == _Z_RES_OK);
         printf("Declared subscription on session 2: %ju %u %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
                z_loan(rids2[i])->_id, "");
