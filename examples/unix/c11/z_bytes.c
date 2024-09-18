@@ -64,7 +64,7 @@ int main(void) {
     assert(input_u32 == output_u32);
     z_drop(z_move(payload));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // encoding = ENCODING_ZENOH_UINT32;
+    // encoding = ZP_ENCODING_ZENOH_UINT32;
 
     // String, also work with and z_owned_string_t
     const char *input_str = "test";
@@ -75,7 +75,7 @@ int main(void) {
     z_drop(z_move(payload));
     z_drop(z_move(output_string));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // encoding = ENCODING_ZENOH_STRING;
+    // encoding = ZP_ENCODING_ZENOH_STRING;
 
     // Bytes, also work with z_owned_slice_t
     const uint8_t input_bytes[] = {1, 2, 3, 4};
@@ -86,7 +86,7 @@ int main(void) {
     z_drop(z_move(payload));
     z_drop(z_move(output_bytes));
     // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-    // encoding = ENCODING_ZENOH_BYTES;  // That's the default value
+    // encoding = ZP_ENCODING_ZENOH_BYTES;  // That's the default value
 
     // Writer reader
     uint8_t input_writer[] = {0, 1, 2, 3, 4};
