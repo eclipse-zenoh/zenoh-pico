@@ -132,9 +132,9 @@ z_result_t z_condvar_signal(z_loaned_condvar_t *cv);
 z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m);
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time);
-int z_sleep_ms(size_t time);
-int z_sleep_s(size_t time);
+z_result_t z_sleep_us(size_t time);
+z_result_t z_sleep_ms(size_t time);
+z_result_t z_sleep_s(size_t time);
 
 /*------------------ Clock ------------------*/
 z_clock_t z_clock_now(void);

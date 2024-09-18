@@ -18,7 +18,9 @@
 #include <sys/time.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform-common.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) { return z_random_u32(); }
@@ -118,22 +120,25 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(p
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) { return usleep(time); }
+z_result_t z_sleep_us(size_t time) { _Z_CHECK_SYS_ERR(usleep(time)); }
 
-int z_sleep_ms(size_t time) {
+z_result_t z_sleep_ms(size_t time) {
     z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
     while (z_time_elapsed_ms(&start) < time) {
-        z_sleep_us(1000);
+        z_result_t ret = z_sleep_us(1000);
+        if (ret < 0) {
+            return ret;
+        }
     }
 
     return 0;
 }
 
-int z_sleep_s(size_t time) { return sleep(time); }
+z_result_t z_sleep_s(size_t time) { _Z_CHECK_SYS_ERR(sleep(time)); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {

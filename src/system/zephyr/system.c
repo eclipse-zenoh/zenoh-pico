@@ -122,7 +122,7 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(p
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) {
+z_result_t z_sleep_us(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_usleep(rem);  // This function is unlikely to work as expected without kernel tuning.
@@ -136,7 +136,7 @@ int z_sleep_us(size_t time) {
     return 0;
 }
 
-int z_sleep_ms(size_t time) {
+z_result_t z_sleep_ms(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_msleep(rem);
@@ -145,7 +145,7 @@ int z_sleep_ms(size_t time) {
     return 0;
 }
 
-int z_sleep_s(size_t time) {
+z_result_t z_sleep_s(size_t time) {
     int32_t rem = time;
     while (rem > 0) {
         rem = k_sleep(K_SECONDS(rem));
