@@ -58,7 +58,7 @@ size_t kv_pairs_size(kv_pairs_tx_t *kvp) {
     return ret;
 }
 
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
+bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
     kv_pairs_tx_t *kvs = (kv_pairs_tx_t *)(context);
     z_owned_bytes_t k, v;
     if (kvs->current_idx >= kvs->len) {

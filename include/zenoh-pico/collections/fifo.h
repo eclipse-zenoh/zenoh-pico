@@ -30,8 +30,8 @@ _z_fifo_t _z_fifo_make(size_t capacity);
 
 size_t _z_fifo_capacity(const _z_fifo_t *r);
 size_t _z_fifo_len(const _z_fifo_t *r);
-_Bool _z_fifo_is_empty(const _z_fifo_t *r);
-_Bool _z_fifo_is_full(const _z_fifo_t *r);
+bool _z_fifo_is_empty(const _z_fifo_t *r);
+bool _z_fifo_is_full(const _z_fifo_t *r);
 
 void *_z_fifo_push(_z_fifo_t *r, void *e);
 void _z_fifo_push_drop(_z_fifo_t *r, void *e, z_element_free_f f);
@@ -50,8 +50,8 @@ void _z_fifo_free(_z_fifo_t **xs, z_element_free_f f_f);
     static inline name##_fifo_t name##_fifo_make(size_t capacity) { return _z_fifo_make(capacity); }       \
     static inline size_t name##_fifo_capacity(const name##_fifo_t *r) { return _z_fifo_capacity(r); }      \
     static inline size_t name##_fifo_len(const name##_fifo_t *r) { return _z_fifo_len(r); }                \
-    static inline _Bool name##_fifo_is_empty(const name##_fifo_t *r) { return _z_fifo_is_empty(r); }       \
-    static inline _Bool name##_fifo_is_full(const name##_fifo_t *r) { return _z_fifo_is_full(r); }         \
+    static inline bool name##_fifo_is_empty(const name##_fifo_t *r) { return _z_fifo_is_empty(r); }        \
+    static inline bool name##_fifo_is_full(const name##_fifo_t *r) { return _z_fifo_is_full(r); }          \
     static inline type *name##_fifo_push(name##_fifo_t *r, type *e) { return _z_fifo_push(r, (void *)e); } \
     static inline void name##_fifo_push_drop(name##_fifo_t *r, type *e) {                                  \
         _z_fifo_push_drop(r, (void *)e, name##_elem_free);                                                 \

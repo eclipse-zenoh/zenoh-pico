@@ -38,7 +38,7 @@ typedef struct TCPSocket TCPSocket;            // Forward declaration to be used
 typedef struct SocketAddress SocketAddress;    // Forward declaration to be used in _z_sys_net_endpoint_t
 
 typedef struct {
-    _Bool _err;
+    bool _err;
     union {
 #if Z_FEATURE_LINK_TCP == 1
         TCPSocket *_tcp;  // As pointer to cross the boundary between C and C++
@@ -53,7 +53,7 @@ typedef struct {
 } _z_sys_net_socket_t;
 
 typedef struct {
-    _Bool _err;
+    bool _err;
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         SocketAddress *_iptcp;  // As pointer to cross the boundary between C and C++

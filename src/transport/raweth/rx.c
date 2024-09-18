@@ -36,7 +36,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
         return SIZE_MAX;
     }
     // Check if header has vlan
-    _Bool has_vlan = false;
+    bool has_vlan = false;
     _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
     if (header->ethtype == _ZP_ETH_TYPE_VLAN) {
         has_vlan = true;

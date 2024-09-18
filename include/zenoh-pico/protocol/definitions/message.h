@@ -104,15 +104,15 @@ typedef struct {
     _z_bytes_t _ext_attachment;
 } _z_msg_query_t;
 typedef struct {
-    _Bool info;
-    _Bool body;
-    _Bool attachment;
+    bool info;
+    bool body;
+    bool attachment;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
 void _z_msg_query_clear(_z_msg_query_t *msg);
 
 typedef struct {
-    _Bool _is_put;
+    bool _is_put;
     union {
         _z_msg_del_t _del;
         _z_msg_put_t _put;

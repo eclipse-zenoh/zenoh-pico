@@ -27,7 +27,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_QUERYABLE == 1
-_Bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two) {
+bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two) {
     return one->_id == two->_id;
 }
 

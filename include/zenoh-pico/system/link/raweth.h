@@ -37,7 +37,7 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint16_t _vlan;  // vlan tag (pcp + dei + id), big endian
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
-    _Bool _has_vlan;
+    bool _has_vlan;
 } _zp_raweth_mapping_entry_t;
 
 void _z_raweth_clear_mapping_entry(_zp_raweth_mapping_entry_t *entry);
@@ -79,7 +79,7 @@ typedef struct {
     uint16_t _ethtype;
     uint8_t _dmac[_ZP_MAC_ADDR_LENGTH];
     uint8_t _smac[_ZP_MAC_ADDR_LENGTH];
-    _Bool _has_vlan;
+    bool _has_vlan;
 } _z_raweth_socket_t;
 
 int8_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface);

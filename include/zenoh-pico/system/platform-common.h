@@ -25,6 +25,7 @@
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
 #include "zenoh-pico/system/platform/unix.h"
 #elif defined(ZENOH_WINDOWS)
+#define NOMINMAX
 #include "zenoh-pico/system/platform/windows.h"
 #elif defined(ZENOH_ESPIDF)
 #include "zenoh-pico/system/platform/espidf.h"

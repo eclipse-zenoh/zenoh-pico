@@ -34,7 +34,7 @@ void _z_publisher_free(_z_publisher_t **pub) {
     }
 }
 
-_Bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
+bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
 _z_publisher_t _z_publisher_null(void) {
     return (_z_publisher_t) {
         ._congestion_control = Z_CONGESTION_CONTROL_DEFAULT, ._id = 0, ._key = _z_keyexpr_null(),

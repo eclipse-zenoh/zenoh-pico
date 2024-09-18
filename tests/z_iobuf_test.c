@@ -59,7 +59,7 @@ size_t gen_size_t(void) {
 _z_zbuf_t gen_zbuf(size_t len) { return _z_zbuf_make(len); }
 
 _z_wbuf_t gen_wbuf(size_t len) {
-    _Bool is_expandable = false;
+    bool is_expandable = false;
 
     if (gen_bool() == true) {
         is_expandable = true;

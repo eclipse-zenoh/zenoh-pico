@@ -39,7 +39,7 @@
 
 #define _Z_INTEREST_TRACE_ID 0x13
 
-int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, _Bool is_final) {
+int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is_final) {
     // Set id
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, interest->_id));
     if (is_final) {
@@ -52,7 +52,7 @@ int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, _Bool i
     // Process restricted flag
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_RESTRICTED)) {
         // Set Named & Mapping flags
-        _Bool has_kesuffix = _z_keyexpr_has_suffix(&interest->_keyexpr);
+        bool has_kesuffix = _z_keyexpr_has_suffix(&interest->_keyexpr);
         if (has_kesuffix) {
             _Z_SET_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N);
         }
@@ -69,7 +69,7 @@ int8_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, _Bool i
     return _Z_RES_OK;
 }
 
-int8_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, _Bool is_final, _Bool has_ext) {
+int8_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_final, bool has_ext) {
     // Decode id
     _Z_RETURN_IF_ERR(_z_zint32_decode(&interest->_id, zbf));
     if (!is_final) {

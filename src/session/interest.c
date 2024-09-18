@@ -31,11 +31,11 @@
 #if Z_FEATURE_INTEREST == 1
 void _z_declare_data_clear(_z_declare_data_t *data) { _z_keyexpr_clear(&data->_key); }
 
-_Bool _z_declare_data_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
+bool _z_declare_data_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
     return ((left->_id == right->_id) && (left->_type == right->_type));
 }
 
-_Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two) {
+bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two) {
     return one->_id == two->_id;
 }
 

@@ -25,7 +25,7 @@
 #include "zenoh-pico/utils/result.h"
 
 /*-------- Bytes --------*/
-_Bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
+bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
 
 _z_bytes_t _z_bytes_null(void) {
     _z_bytes_t b;
@@ -57,7 +57,7 @@ size_t _z_bytes_len(const _z_bytes_t *bs) {
     return len;
 }
 
-_Bool _z_bytes_is_empty(const _z_bytes_t *bs) {
+bool _z_bytes_is_empty(const _z_bytes_t *bs) {
     for (size_t i = 0; i < _z_arc_slice_svec_len(&bs->_slices); i++) {
         const _z_arc_slice_t *s = _z_arc_slice_svec_get(&bs->_slices, i);
         if (_z_arc_slice_len(s) > 0) return false;

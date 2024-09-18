@@ -56,7 +56,7 @@ _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset,
 
 size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
 
-_Bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
+bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 
 const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) { return _Z_RC_IN_VAL(&s->slice)->start + s->start; }
 

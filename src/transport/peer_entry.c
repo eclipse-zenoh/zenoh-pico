@@ -48,8 +48,8 @@ size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {
     return sizeof(_z_transport_peer_entry_t);
 }
 
-_Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
-    _Bool ret = true;
+bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
+    bool ret = true;
     if (memcmp(left->_remote_zid.id, right->_remote_zid.id, 16) != 0) {
         ret = false;
     }

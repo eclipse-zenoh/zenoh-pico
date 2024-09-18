@@ -42,13 +42,13 @@ typedef struct {
     volatile _z_zint_t _next_lease;
 
     uint16_t _peer_id;
-    volatile _Bool _received;
+    volatile bool _received;
 } _z_transport_peer_entry_t;
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
-_Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
+bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
@@ -98,12 +98,12 @@ typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
-    volatile _Bool _read_task_running;
-    volatile _Bool _lease_task_running;
+    volatile bool _read_task_running;
+    volatile bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    volatile _Bool _received;
-    volatile _Bool _transmitted;
+    volatile bool _received;
+    volatile bool _transmitted;
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
@@ -140,11 +140,11 @@ typedef struct _z_transport_multicast_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
-    volatile _Bool _read_task_running;
-    volatile _Bool _lease_task_running;
+    volatile bool _read_task_running;
+    volatile bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    volatile _Bool _transmitted;
+    volatile bool _transmitted;
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -174,7 +174,7 @@ typedef struct {
     uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
-    _Bool _is_qos;
+    bool _is_qos;
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {

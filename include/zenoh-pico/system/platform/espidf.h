@@ -30,7 +30,7 @@ typedef struct {
     UBaseType_t priority;
     size_t stack_depth;
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    _Bool static_allocation;
+    bool static_allocation;
     StackType_t *stack_buffer;
     StaticTask_t *task_buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */

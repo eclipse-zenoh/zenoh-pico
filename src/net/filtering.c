@@ -100,7 +100,7 @@ int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
     return _Z_RES_OK;
 }
 
-_Bool _z_write_filter_active(const _z_publisher_t *pub) { return (pub->_filter.ctx->state == WRITE_FILTER_ACTIVE); }
+bool _z_write_filter_active(const _z_publisher_t *pub) { return (pub->_filter.ctx->state == WRITE_FILTER_ACTIVE); }
 
 #else
 int8_t _z_write_filter_create(_z_publisher_t *pub) {
@@ -113,7 +113,7 @@ int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
     return _Z_RES_OK;
 }
 
-_Bool _z_write_filter_active(const _z_publisher_t *pub) {
+bool _z_write_filter_active(const _z_publisher_t *pub) {
     _ZP_UNUSED(pub);
     return false;
 }

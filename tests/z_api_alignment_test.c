@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_from_str(&key_demo_example_a, "demo/example/a");
     z_view_keyexpr_from_str(&key_demo_example_starstar, "demo/example/**");
 
-    _Bool _ret_bool = z_keyexpr_includes(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
+    bool _ret_bool = z_keyexpr_includes(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
     assert(_ret_bool);
     _ret_bool = z_keyexpr_intersects(z_loan(key_demo_example_starstar), z_loan(key_demo_example_a));
     assert(_ret_bool);

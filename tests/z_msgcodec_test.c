@@ -135,7 +135,7 @@ void print_scouting_message_type(uint8_t header) {
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-_Bool gen_bool(void) { return z_random_u8() % 2; }
+bool gen_bool(void) { return z_random_u8() % 2; }
 
 uint8_t gen_uint8(void) { return z_random_u8(); }
 
@@ -160,7 +160,7 @@ _z_zint_t gen_zint(void) {
 }
 
 _z_wbuf_t gen_wbuf(size_t len) {
-    _Bool is_expandable = false;
+    bool is_expandable = false;
 
     if (gen_bool()) {
         is_expandable = true;
@@ -647,7 +647,7 @@ _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
     key._id = gen_uint16();
     key._mapping._val = gen_uint8();
-    _Bool is_numerical = gen_bool();
+    bool is_numerical = gen_bool();
     if (is_numerical == true) {
         key._suffix = _z_string_null();
     } else {
@@ -1037,7 +1037,7 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
 /*------------------ Declare message ------------------*/
 _z_network_message_t gen_declare_message(void) {
     _z_declaration_t declaration = gen_declaration();
-    _Bool has_id = gen_bool();
+    bool has_id = gen_bool();
     uint32_t id = gen_uint32();
     return _z_n_msg_make_declare(declaration, has_id, id);
 }
@@ -1084,7 +1084,7 @@ void declare_message(void) {
 
 _z_interest_t gen_interest(void) {
     _z_interest_t i = {0};
-    _Bool is_final = gen_bool();  // To determine if interest is final or not
+    bool is_final = gen_bool();  // To determine if interest is final or not
     // Generate interest id
     i._id = gen_uint32();
     printf("Gen interest %d\n", is_final);
@@ -1093,7 +1093,7 @@ _z_interest_t gen_interest(void) {
         // Generate base flags
         i.flags = gen_uint8() & _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK;
         // Generate test cases
-        _Bool is_restricted = gen_bool();
+        bool is_restricted = gen_bool();
         uint8_t cf_type = gen_uint8() % 3;  // Flags must be c, f or cf
         switch (cf_type) {
             default:
@@ -1157,7 +1157,7 @@ void interest_message(void) {
 /*=============================*/
 /*------------------ Push message ------------------*/
 _z_push_body_t gen_push_body(void) {
-    _Bool isput = gen_bool();
+    bool isput = gen_bool();
     _z_timestamp_t ts = gen_bool() ? gen_timestamp() : _z_timestamp_null();
     _z_source_info_t sinfo = gen_bool() ? gen_source_info() : _z_source_info_null();
     _z_m_push_commons_t commons = {._source_info = sinfo, ._timestamp = ts};

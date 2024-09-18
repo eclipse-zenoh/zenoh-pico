@@ -174,11 +174,11 @@ void custom_deleter(void *data, void *context) {
     (*cnt)++;
 }
 
-_Bool z_check_and_drop_payload(z_owned_bytes_t *payload, uint8_t *data, size_t len) {
+bool z_check_and_drop_payload(z_owned_bytes_t *payload, uint8_t *data, size_t len) {
     z_owned_slice_t out;
     z_bytes_deserialize_into_slice(z_bytes_loan(payload), &out);
     z_bytes_drop(z_bytes_move(payload));
-    _Bool res = memcmp(data, z_slice_data(z_slice_loan(&out)), len) == 0;
+    bool res = memcmp(data, z_slice_data(z_slice_loan(&out)), len) == 0;
     z_slice_drop(z_slice_move(&out));
 
     return res;
@@ -299,7 +299,7 @@ void test_pair(void) {
     assert(d == 123.45);
 }
 
-_Bool check_slice(const z_loaned_bytes_t *b, const uint8_t *data, size_t len) {
+bool check_slice(const z_loaned_bytes_t *b, const uint8_t *data, size_t len) {
     z_bytes_slice_iterator_t it = z_bytes_get_slice_iterator(b);
     uint8_t *data_out = (uint8_t *)malloc(len);
     z_view_slice_t v;

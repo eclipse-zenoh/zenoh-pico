@@ -27,8 +27,8 @@ extern "C" {
 int8_t _z_rc_init(void **cnt);
 int8_t _z_rc_increase_strong(void *cnt);
 int8_t _z_rc_increase_weak(void *cnt);
-_Bool _z_rc_decrease_strong(void **cnt);
-_Bool _z_rc_decrease_weak(void **cnt);
+bool _z_rc_decrease_strong(void **cnt);
+bool _z_rc_decrease_weak(void **cnt);
 int8_t _z_rc_weak_upgrade(void *cnt);
 
 size_t _z_rc_weak_count(void *cnt);
@@ -115,10 +115,10 @@ size_t _z_rc_strong_count(void *cnt);
         return c;                                                                                                    \
     }                                                                                                                \
     static inline void name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) { *dst = name##_rc_clone(p); }         \
-    static inline _Bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {                            \
+    static inline bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {                             \
         return (left->_val == right->_val);                                                                          \
     }                                                                                                                \
-    static inline _Bool name##_rc_decr(name##_rc_t *p) {                                                             \
+    static inline bool name##_rc_decr(name##_rc_t *p) {                                                              \
         if ((p == NULL) || (p->_cnt == NULL)) {                                                                      \
             return false;                                                                                            \
         }                                                                                                            \
@@ -127,7 +127,7 @@ size_t _z_rc_strong_count(void *cnt);
         }                                                                                                            \
         return false;                                                                                                \
     }                                                                                                                \
-    static inline _Bool name##_rc_drop(name##_rc_t *p) {                                                             \
+    static inline bool name##_rc_drop(name##_rc_t *p) {                                                              \
         if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
             type##_clear(p->_val);                                                                                   \
             z_free(p->_val);                                                                                         \
@@ -151,10 +151,10 @@ size_t _z_rc_strong_count(void *cnt);
         }                                                                                                            \
         return c;                                                                                                    \
     }                                                                                                                \
-    static inline _Bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) {                      \
+    static inline bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) {                       \
         return (left->_val == right->_val);                                                                          \
     }                                                                                                                \
-    static inline _Bool name##_weak_drop(name##_weak_t *p) {                                                         \
+    static inline bool name##_weak_drop(name##_weak_t *p) {                                                          \
         if ((p == NULL) || (p->_cnt == NULL)) {                                                                      \
             return false;                                                                                            \
         }                                                                                                            \

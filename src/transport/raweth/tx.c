@@ -286,7 +286,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         // Encode the message on the expandable wbuf
         _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _zp_raweth_unlock_tx_mutex(ztm));
         // Fragment and send the message
-        _Bool is_first = true;
+        bool is_first = true;
         while (_z_wbuf_len(&fbf) > 0) {
             if (is_first) {
                 // Get the fragment sequence number

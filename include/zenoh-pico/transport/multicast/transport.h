@@ -23,7 +23,7 @@ int8_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, c
                               const _z_id_t *local_zid);
 int8_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
                                 const _z_id_t *local_zid);
-int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, _Bool link_only);
+int8_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only);
 int8_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
 void _z_multicast_transport_clear(_z_transport_t *zt);
 #endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */

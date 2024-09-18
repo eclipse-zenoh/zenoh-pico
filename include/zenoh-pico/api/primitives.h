@@ -252,7 +252,7 @@ int8_t z_keyexpr_canonize_null_terminated(char *start);
  *   ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
  * defined by ``r``. Otherwise, returns ``false``.
  */
-_Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Checks if a given keyexpr intersects with another keyexpr.
@@ -265,7 +265,7 @@ _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *
  *   ``true`` if keyexprs intersect, i.e. there exists at least one key which is contained in both of the
  * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
-_Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Checks if two keyexpr are equal.
@@ -277,7 +277,7 @@ _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t
  * Return:
  *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
  */
-_Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Builds a new, zenoh-allocated, empty configuration.
@@ -895,7 +895,7 @@ int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value);
  * Return:
  *   ``0`` if encode successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
+int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_bytes_t *data, void *context),
                          void *context);
 
 /**
@@ -935,7 +935,7 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
  * Return:
  *  ``true`` if conainer is empty,  ``false`` otherwise.
  */
-_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
 
 /**
  * Returns an iterator for multi-element serialized data.
@@ -959,7 +959,7 @@ z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
  * Return:
  *  ``false`` when iterator reaches the end,  ``true`` otherwise.
  */
-_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
 
 /**
  * Returns an iterator on raw bytes slices contained in the `z_loaned_bytes_t`.
@@ -987,7 +987,7 @@ z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *byte
  * Return:
  *  ``false`` when iterator reaches the end,  ``true`` otherwise.
  */
-_Bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out);
+bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out);
 
 /**
  * Returns a reader for the `bytes`.
@@ -1135,7 +1135,7 @@ z_id_t z_timestamp_id(const z_timestamp_t *ts);
  * Return:
  *   ``true`` if timestamp is valid, ``false`` otherwise.
  */
-_Bool z_timestamp_check(z_timestamp_t ts);
+bool z_timestamp_check(z_timestamp_t ts);
 
 /**
  * Builds a default query target.
@@ -1885,7 +1885,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
  * Return:
  *   ``true`` if queryable answered with an OK, ``false`` otherwise.
  */
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply);
+bool z_reply_is_ok(const z_loaned_reply_t *reply);
 
 /**
  * Gets the content of an OK reply.
@@ -1922,7 +1922,7 @@ const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
  * Return:
  * 	`true` if id is present
  */
-_Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
+bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1

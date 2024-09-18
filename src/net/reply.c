@@ -84,7 +84,7 @@ int8_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
     return _Z_RES_OK;
 }
 
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
+bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
     return one->_tstamp.time == two->_tstamp.time;
 }
 

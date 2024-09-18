@@ -53,7 +53,7 @@ int8_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl, _z_transpo
         size_t dbuf_size = 0;
         size_t wbuf_size = mtu;
         size_t zbuf_size = param->_batch_size;
-        _Bool expandable = false;
+        bool expandable = false;
 
         // Set expandable on stream link
         if (zl->_cap._flow == Z_LINK_CAP_FLOW_STREAM) {
@@ -261,7 +261,7 @@ int8_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const
     return ret;
 }
 
-int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
+int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only) {
     int8_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
@@ -330,7 +330,7 @@ int8_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, _Bool link_only) {
+int8_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(reason);
     _ZP_UNUSED(link_only);

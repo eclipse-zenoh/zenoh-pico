@@ -19,7 +19,7 @@
 #include <string.h>
 
 /*-------- int-void map --------*/
-_Bool _z_int_void_map_entry_key_eq(const void *left, const void *right) {
+bool _z_int_void_map_entry_key_eq(const void *left, const void *right) {
     _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
     _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
     return l->_key == r->_key;
@@ -83,7 +83,7 @@ _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_
     return dst;
 }
 
-_Bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }
+bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }
 
 void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f) {
     if (map->_vals != NULL) {

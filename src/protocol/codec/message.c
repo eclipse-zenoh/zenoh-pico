@@ -109,7 +109,7 @@ int8_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
 }
 
 /*------------------ ResKey Field ------------------*/
-int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *fld) {
+int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, bool has_suffix, const _z_keyexpr_t *fld) {
     int8_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _RESKEY");
 
@@ -121,7 +121,7 @@ int8_t _z_keyexpr_encode(_z_wbuf_t *wbf, _Bool has_suffix, const _z_keyexpr_t *f
     return ret;
 }
 
-int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, _Bool has_suffix) {
+int8_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *zbf, bool has_suffix) {
     _Z_DEBUG("Decoding _RESKEY");
     int8_t ret = _Z_RES_OK;
 
@@ -249,13 +249,13 @@ int8_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     (void)(wbf);
     (void)(pshb);
     uint8_t header = pshb->_is_put ? _Z_MID_Z_PUT : _Z_MID_Z_DEL;
-    _Bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id) ||
-                            pshb->_body._put._commons._source_info._source_sn != 0 ||
-                            pshb->_body._put._commons._source_info._entity_id != 0;
+    bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id) ||
+                           pshb->_body._put._commons._source_info._source_sn != 0 ||
+                           pshb->_body._put._commons._source_info._entity_id != 0;
 
-    _Bool has_attachment = pshb->_is_put && _z_bytes_check(&pshb->_body._put._attachment);
-    _Bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
-    _Bool has_encoding = false;
+    bool has_attachment = pshb->_is_put && _z_bytes_check(&pshb->_body._put._attachment);
+    bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
+    bool has_encoding = false;
     if (has_source_info || has_attachment) {
         header |= _Z_FLAG_Z_Z;
     }
@@ -389,11 +389,11 @@ int8_t _z_query_encode(_z_wbuf_t *wbf, const _z_msg_query_t *msg) {
     int8_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_Z_QUERY;
 
-    _Bool has_params = _z_slice_check(&msg->_parameters);
+    bool has_params = _z_slice_check(&msg->_parameters);
     if (has_params) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_P);
     }
-    _Bool has_consolidation = (msg->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT);
+    bool has_consolidation = (msg->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT);
     if (has_consolidation) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Q_C);
     }
@@ -486,7 +486,7 @@ int8_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
 
 int8_t _z_reply_encode(_z_wbuf_t *wbf, const _z_msg_reply_t *reply) {
     uint8_t header = _Z_MID_Z_REPLY;
-    _Bool has_consolidation = reply->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT;
+    bool has_consolidation = reply->_consolidation != Z_CONSOLIDATION_MODE_DEFAULT;
     if (has_consolidation) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_R_C);
     }
@@ -528,12 +528,12 @@ int8_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     uint8_t header = _Z_MID_Z_ERR;
 
     // Encode header
-    _Bool has_encoding = _z_encoding_check(&err->_encoding);
+    bool has_encoding = _z_encoding_check(&err->_encoding);
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }
-    _Bool has_sinfo_ext = _z_id_check(err->_ext_source_info._id) || err->_ext_source_info._entity_id != 0 ||
-                          err->_ext_source_info._source_sn != 0;
+    bool has_sinfo_ext = _z_id_check(err->_ext_source_info._id) || err->_ext_source_info._entity_id != 0 ||
+                         err->_ext_source_info._source_sn != 0;
     if (has_sinfo_ext) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Z);
     }
@@ -709,7 +709,7 @@ int8_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *zbf)
     int8_t ret = _Z_RES_OK;
     *msg = (_z_scouting_message_t){0};
 
-    _Bool is_last = false;
+    bool is_last = false;
 
     do {
         ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header

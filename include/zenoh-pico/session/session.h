@@ -40,7 +40,7 @@ typedef struct {
     uint16_t _refcount;
 } _z_resource_t;
 
-_Bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
+bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
 void _z_resource_clear(_z_resource_t *res);
 void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
@@ -65,7 +65,7 @@ typedef struct {
     void *_arg;
 } _z_subscription_t;
 
-_Bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
+bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
@@ -93,10 +93,10 @@ typedef struct {
     _z_queryable_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
-    _Bool _complete;
+    bool _complete;
 } _z_session_queryable_t;
 
-_Bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
+bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
 void _z_session_queryable_clear(_z_session_queryable_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
@@ -125,10 +125,10 @@ typedef struct {
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
-    _Bool _anykey;
+    bool _anykey;
 } _z_pending_query_t;
 
-_Bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
+bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
 void _z_pending_query_clear(_z_pending_query_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy)
@@ -178,7 +178,7 @@ typedef struct {
     uint8_t _flags;
 } _z_session_interest_t;
 
-_Bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
+bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
 void _z_session_interest_clear(_z_session_interest_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
