@@ -100,7 +100,7 @@ int main(void) {
     assert(0 == memcmp(input_writer, output_reader, sizeof(output_reader)));
     z_drop(z_move(payload));
 
-    // Iterator
+    // Bytes iterator
     uint8_t result_iter[] = {0, 1, 2, 3, 4};
     uint8_t output_iter[5] = {0};
     uint8_t context = 0;
@@ -131,6 +131,21 @@ int main(void) {
                    strlen(input_hashmap[0].value)) == 0);
     z_drop(z_move(payload));
     drop_hashmap(&output_hashmap);
+
+    // Slice iterator
+    kv_pair_t input_val[1];
+    input_val[0] = (kv_pair_t){.key = "test_key", .value = "test_value"};
+    ctx = (kv_pairs_tx_t){.data = input_val, .current_idx = 0, .len = 1};
+    z_bytes_from_iter(&payload, hashmap_iter, (void *)&ctx);
+    z_bytes_slice_iterator_t slice_iter = z_bytes_get_slice_iterator(z_bytes_loan(&payload));
+    z_view_slice_t curr_slice;
+    while (z_bytes_slice_iterator_next(&slice_iter, &curr_slice)) {
+        printf("slice len: %d, slice data: '%.*s'\n", (int)z_slice_len(z_view_slice_loan(&curr_slice)),
+               (int)z_slice_len(z_view_slice_loan(&curr_slice)),
+               (const char *)z_slice_data(z_view_slice_loan(&curr_slice)));
+    }
+    z_drop(z_move(payload));
+
     return 0;
 }
 
