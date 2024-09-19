@@ -229,7 +229,7 @@ typedef struct {
  * publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
  *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   z_reliability_t reliability: (unstable) The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -309,7 +309,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   z_reliability_t reliability: (unstable) The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -331,7 +331,7 @@ typedef struct {
  *   z_priority_t priority: The priority of this message when router.
  *   bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   z_reliability_t reliability: (unstable) The reliability that should be used to transmit the data.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
