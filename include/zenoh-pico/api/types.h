@@ -236,7 +236,7 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     bool is_express;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_publisher_options_t;
@@ -318,7 +318,7 @@ typedef struct {
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_put_options_t;
@@ -338,7 +338,7 @@ typedef struct {
     z_priority_t priority;
     bool is_express;
     z_timestamp_t *timestamp;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_delete_options_t;

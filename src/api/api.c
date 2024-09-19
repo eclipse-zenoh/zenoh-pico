@@ -1031,7 +1031,7 @@ z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str) {
 
 const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { return &sample->keyexpr; }
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return sample->kind; }
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample) { return sample->reliability; }
 #endif
 const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &sample->payload; }
@@ -1096,7 +1096,7 @@ void z_put_options_default(z_put_options_t *options) {
     options->is_express = false;
     options->timestamp = NULL;
     options->attachment = NULL;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     options->reliability = Z_RELIABILITY_DEFAULT;
 #endif
 }
@@ -1106,7 +1106,7 @@ void z_delete_options_default(z_delete_options_t *options) {
     options->is_express = false;
     options->timestamp = NULL;
     options->priority = Z_PRIORITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     options->reliability = Z_RELIABILITY_DEFAULT;
 #endif
 }
@@ -1121,7 +1121,7 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
         opt = *options;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     reliability = opt.reliability;
 #endif
 
@@ -1154,7 +1154,7 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
         opt = *options;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     reliability = opt.reliability;
 #endif
 
@@ -1169,7 +1169,7 @@ void z_publisher_options_default(z_publisher_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
     options->priority = Z_PRIORITY_DEFAULT;
     options->is_express = false;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     options->reliability = Z_RELIABILITY_DEFAULT;
 #endif
 }
@@ -1197,7 +1197,7 @@ z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_
         opt = *options;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     reliability = opt.reliability;
 #endif
 
@@ -1240,7 +1240,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         opt = *options;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     reliability = pub->reliability;
 #endif
 
@@ -1289,7 +1289,7 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
         opt = *options;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     reliability = pub->reliability;
 #endif
     // Remove potentially redundant ke suffix
