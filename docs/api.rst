@@ -61,7 +61,7 @@ Data Structures
 Owned Types
 ~~~~~~~~~~~
 
-TODO: owned type description
+See :ref:`owned_types_concept`
 
 .. c:type:: z_owned_slice_t
   
@@ -130,7 +130,7 @@ TODO: owned type description
 Loaned Types
 ~~~~~~~~~~~
 
-TODO: loaned type description
+See :ref:`loaned_types_concept`
 
 .. c:type:: z_loaned_slice_t
 
@@ -199,7 +199,7 @@ TODO: loaned type description
 View Types
 ~~~~~~~~~~~
 
-TODO: view type description
+See :ref:`view_types_concept`
 
 .. c:type:: z_view_string_t
 

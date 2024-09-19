@@ -28,6 +28,8 @@ Zenoh-Pico types fall into these categories:
 - Option structures: `z_xxx_options_t`
 - Enums and plain data structures: `z_xxx_t`
 
+.. _owned_types_concept:
+
 Owned Types `z_owned_xxx_t`
 ---------------------------
 
@@ -46,6 +48,8 @@ the `z_drop` macro. Example:
 
 Owned objects can be passed to functions in two ways: by moving (`z_moved_xxx_t`) or 
 loaning (`z_loaned_xxx_t`).
+
+.. _loaned_types_concept:
 
 Loaned Types `z_loaned_xxx_t`
 -----------------------------
@@ -68,6 +72,8 @@ modify (`z_loaned_xxx_t*`) the object. In both cases, ownership remains with the
     z_drop(z_move(s));
     z_drop(z_move(s1));
 
+.. _moved_types_concept:
+
 Moved types `z_moved_xxx_t`
 ---------------------------
 
@@ -88,6 +94,8 @@ it's not required. Note that `z_drop` itself takes ownership, so `z_move` is als
         z_drop(z_move(session));
     }
     // z_drop(z_move(cfg)); // this is safe but useless
+
+.. _view_types_concept:
 
 View Types `z_view_xxx_t`
 -------------------------
