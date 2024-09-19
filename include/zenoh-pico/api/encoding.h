@@ -51,7 +51,6 @@ extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BYTES;
 const z_loaned_encoding_t *z_encoding_zenoh_bytes(void);
 
 // A VLE-encoded signed little-endian 8bit integer. Binary representation uses two's complement.
-//// - Primitives types supported in all Zenoh bindings
 // Constant alias for string: `"zenoh/int8"`.
 //
 // Usually used for types: `int8_t`.
