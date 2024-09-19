@@ -51,6 +51,7 @@ static bool hashmap_iter(z_owned_bytes_t *kv_pair, void *context);
 static bool iter_body(z_owned_bytes_t *b, void *context);
 static void parse_hashmap(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *hashmap);
 static void drop_hashmap(kv_pairs_rx_t *kvp);
+static void print_slice_data(z_view_slice_t *slice);
 
 int main(void) {
     // z_owned_encoding_t encoding;
@@ -140,9 +141,9 @@ int main(void) {
     z_bytes_slice_iterator_t slice_iter = z_bytes_get_slice_iterator(z_bytes_loan(&payload));
     z_view_slice_t curr_slice;
     while (z_bytes_slice_iterator_next(&slice_iter, &curr_slice)) {
-        printf("slice len: %d, slice data: '%.*s'\n", (int)z_slice_len(z_view_slice_loan(&curr_slice)),
-               (int)z_slice_len(z_view_slice_loan(&curr_slice)),
-               (const char *)z_slice_data(z_view_slice_loan(&curr_slice)));
+        printf("slice len: %d, slice data: '", (int)z_slice_len(z_view_slice_loan(&curr_slice)));
+        print_slice_data(&curr_slice);
+        printf("'\n");
     }
     z_drop(z_move(payload));
 
@@ -195,4 +196,10 @@ static void drop_hashmap(kv_pairs_rx_t *kvp) {
         z_string_drop(z_string_move(&kvp->data[i].value));
     }
     z_free(kvp->data);
+}
+
+static void print_slice_data(z_view_slice_t *slice) {
+    for (size_t i = 0; i < z_slice_len(z_view_slice_loan(slice)); i++) {
+        printf("0x%02x ", z_slice_data(z_view_slice_loan(slice))[i]);
+    }
 }
