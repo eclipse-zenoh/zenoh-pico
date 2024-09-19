@@ -160,7 +160,7 @@ z_result_t z_sleep_ms(size_t time) {
     return _Z_RES_OK;
 }
 
-z_result_t z_sleep_s(size_t time) { _Z_CHECK_SYS_ERR(sleep((unsigned int)time)); }
+z_result_t z_sleep_s(size_t time) { _Z_CHECK_SYS_ERR((int)sleep((unsigned int)time)); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
