@@ -42,428 +42,498 @@ extern "C" {
 
 #if Z_FEATURE_ENCODING_VALUES == 1
 // - Below are Primitives types, supported in all Zenoh bindings
-// Just some bytes.
-//
-// Constant alias for string: `"zenoh/bytes"`.
-//
-// Usually used for types: `uint8_t[]`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BYTES;
+/**
+ * Just some bytes.
+ *
+ * Constant alias for string: `"zenoh/bytes"`.
+ *
+ * Usually used for types: `uint8_t[]`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_bytes(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BYTES;
 
-// A VLE-encoded signed little-endian 8bit integer. Binary representation uses two's complement.
-// Constant alias for string: `"zenoh/int8"`.
-//
-// Usually used for types: `int8_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT8;
+/**
+ * A VLE-encoded signed little-endian 8bit integer. Binary representation uses two's complement.
+ * Constant alias for string: `"zenoh/int8"`.
+ *
+ * Usually used for types: `int8_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_int8(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT8;
 
-// A VLE-encoded signed little-endian 16bit integer. Binary representation uses two's complement.
-//
-// Constant alias for string: `"zenoh/int16"`.
-//
-// Usually used for types: `int16_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT16;
+/**
+ * A VLE-encoded signed little-endian 16bit integer. Binary representation uses two's complement.
+ * Constant alias for string: `"zenoh/int16"`.
+ *
+ * Usually used for types: `int16_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_int16(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT16;
 
-// A VLE-encoded signed little-endian 32bit integer. Binary representation uses two's complement.
-//
-// Constant alias for string: `"zenoh/int32"`.
-//
-// Usually used for types: `int32_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT32;
+/**
+ * A VLE-encoded signed little-endian 32bit integer. Binary representation uses two's complement.
+ * Constant alias for string: `"zenoh/int32"`.
+ *
+ * Usually used for types: `int32_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_int32(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT32;
 
-// A VLE-encoded signed little-endian 64bit integer. Binary representation uses two's complement.
-//
-// Constant alias for string: `"zenoh/int64"`.
-//
-// Usually used for types: `int64_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT64;
+/**
+ * A VLE-encoded signed little-endian 64bit integer. Binary representation uses two's complement.
+ * Constant alias for string: `"zenoh/int64"`.
+ *
+ * Usually used for types: `int64_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_int64(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT64;
 
-// A VLE-encoded signed little-endian 128bit integer. Binary representation uses two's complement.
-//
-// Constant alias for string: `"zenoh/int128"`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT128;
+/**
+ * A VLE-encoded signed little-endian 128bit integer. Binary representation uses two's complement.
+ * Constant alias for string: `"zenoh/int128"`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_int128(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT128;
 
-// A VLE-encoded unsigned little-endian 8bit integer.
-//
-// Constant alias for string: `"zenoh/uint8"`.
-//
-// Usually used for types: `uint8_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT8;
+/**
+ * A VLE-encoded unsigned little-endian 8bit integer.
+ * Constant alias for string: `"zenoh/uint8"`.
+ *
+ * Usually used for types: `uint8_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_uint8(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT8;
 
-// A VLE-encoded unsigned little-endian 16bit integer.
-//
-// Constant alias for string: `"zenoh/uint16"`.
-//
-// Usually used for types: `uint16_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT16;
+/**
+ * A VLE-encoded unsigned little-endian 16bit integer.
+ * Constant alias for string: `"zenoh/uint16"`.
+ *
+ * Usually used for types: `uint16_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_uint16(void);
-// A VLE-encoded unsigned little-endian 32bit integer.
-//
-// Constant alias for string: `"zenoh/uint32"`.
-//
-// Usually used for types: `uint32_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT32;
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT16;
+
+/**
+ * A VLE-encoded unsigned little-endian 32bit integer.
+ * Constant alias for string: `"zenoh/uint32"`.
+ *
+ * Usually used for types: `uint32_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_uint32(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT32;
 
-// A VLE-encoded unsigned little-endian 64bit integer.
-//
-// Constant alias for string: `"zenoh/uint64"`.
-//
-// Usually used for types: `uint64_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT64;
+/**
+ * A VLE-encoded unsigned little-endian 64bit integer.
+ * Constant alias for string: `"zenoh/uint64"`.
+ *
+ * Usually used for types: `uint64_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_uint64(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT64;
 
-// A VLE-encoded unsigned little-endian 128bit integer.
-//
-// Constant alias for string: `"zenoh/uint128"`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT128;
+/**
+ * A VLE-encoded unsigned little-endian 128bit integer.
+ * Constant alias for string: `"zenoh/uint128"`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_uint128(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT128;
 
-// A VLE-encoded 32bit float. Binary representation uses *IEEE 754-2008* *binary32* .
-//
-// Constant alias for string: `"zenoh/float32"`.
-//
-// Usually used for types: `float`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT32;
+/**
+ * A VLE-encoded 32bit float. Binary representation uses *IEEE 754-2008* *binary32*.
+ * Constant alias for string: `"zenoh/float32"`.
+ *
+ * Usually used for types: `float`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_float32(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT32;
 
-// A VLE-encoded 64bit float. Binary representation uses *IEEE 754-2008* *binary64*.
-//
-// Constant alias for string: `"zenoh/float64"`.
-//
-// Usually used for types: `double`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT64;
+/**
+ * A VLE-encoded 64bit float. Binary representation uses *IEEE 754-2008* *binary64*.
+ * Constant alias for string: `"zenoh/float64"`.
+ *
+ * Usually used for types: `double`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_float64(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT64;
 
-// A boolean. `0` is `false`, `1` is `true`. Other values are invalid.
-//
-// Constant alias for string: `"zenoh/bool"`.
-//
-// Usually used for types: `bool`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BOOL;
+/**
+ * A boolean. `0` is `false`, `1` is `true`. Other values are invalid.
+ * Constant alias for string: `"zenoh/bool"`.
+ *
+ * Usually used for types: `bool`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_bool(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BOOL;
 
-// A UTF-8 string.
-//
-// Constant alias for string: `"zenoh/string"`.
-//
-// Usually used for types: `char[]`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_STRING;
+/**
+ * A UTF-8 string.
+ * Constant alias for string: `"zenoh/string"`.
+ *
+ * Usually used for types: `char[]`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_string(void);
-// A zenoh error.
-//
-// Constant alias for string: `"zenoh/error"`.
-//
-// Usually used for types: `z_reply_err_t`.
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_ERROR;
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_STRING;
+
+/**
+ * A zenoh error.
+ * Constant alias for string: `"zenoh/error"`.
+ *
+ * Usually used for types: `z_reply_err_t`.
+ */
 const z_loaned_encoding_t *z_encoding_zenoh_error(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_ERROR;
 
-// - Below are Advanced types, may be supported in some of the Zenoh bindings.
-// An application-specific stream of bytes.
-//
-// Constant alias for string: `"application/octet-stream"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_OCTET_STREAM;
+/**
+ * An application-specific stream of bytes.
+ * Constant alias for string: `"application/octet-stream"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_octet_stream(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_OCTET_STREAM;
 
-// A textual file.
-//
-// Constant alias for string: `"text/plain"`.
-extern const z_owned_encoding_t ENCODING_TEXT_PLAIN;
+/**
+ * A textual file.
+ * Constant alias for string: `"text/plain"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_plain(void);
+extern const z_owned_encoding_t ENCODING_TEXT_PLAIN;
 
-// JSON data intended to be consumed by an application.
-//
-// Constant alias for string: `"application/json"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JSON;
+/**
+ * JSON data intended to be consumed by an application.
+ * Constant alias for string: `"application/json"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_json(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JSON;
 
-// JSON data intended to be human readable.
-//
-// Constant alias for string: `"text/json"`.
-extern const z_owned_encoding_t ENCODING_TEXT_JSON;
+/**
+ * JSON data intended to be human readable.
+ * Constant alias for string: `"text/json"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_json(void);
+extern const z_owned_encoding_t ENCODING_TEXT_JSON;
 
-// A Common Data Representation (CDR)-encoded data.
-//
-// Constant alias for string: `"application/cdr"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_CDR;
+/**
+ * A Common Data Representation (CDR)-encoded data.
+ * Constant alias for string: `"application/cdr"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_cdr(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_CDR;
 
-// A Concise Binary Object Representation (CBOR)-encoded data.
-//
-// Constant alias for string: `"application/cbor"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_CBOR;
+/**
+ * A Concise Binary Object Representation (CBOR)-encoded data.
+ * Constant alias for string: `"application/cbor"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_cbor(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_CBOR;
 
-// YAML data intended to be consumed by an application.
-//
-// Constant alias for string: `"application/yaml"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_YAML;
+/**
+ * YAML data intended to be consumed by an application.
+ * Constant alias for string: `"application/yaml"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_yaml(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_YAML;
 
-// YAML data intended to be human readable.
-//
-// Constant alias for string: `"text/yaml"`.
-extern const z_owned_encoding_t ENCODING_TEXT_YAML;
+/**
+ * YAML data intended to be human readable.
+ * Constant alias for string: `"text/yaml"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_yaml(void);
+extern const z_owned_encoding_t ENCODING_TEXT_YAML;
 
-// JSON5 encoded data that are human readable.
-//
-// Constant alias for string: `"text/json5"`.
-extern const z_owned_encoding_t ENCODING_TEXT_JSON5;
+/**
+ * JSON5 encoded data that are human readable.
+ * Constant alias for string: `"text/json5"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_json5(void);
+extern const z_owned_encoding_t ENCODING_TEXT_JSON5;
 
-// A Python object serialized using [pickle](https://docs.python.org/3/library/pickle.html).
-//
-// Constant alias for string: `"application/python-serialized-object"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_PYTHON_SERIALIZED_OBJECT;
+/**
+ * A Python object serialized using [pickle](https://docs.python.org/3/library/pickle.html).
+ * Constant alias for string: `"application/python-serialized-object"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_python_serialized_object(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_PYTHON_SERIALIZED_OBJECT;
 
-// An application-specific protobuf-encoded data.
-//
-// Constant alias for string: `"application/protobuf"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_PROTOBUF;
+/**
+ * An application-specific protobuf-encoded data.
+ * Constant alias for string: `"application/protobuf"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_protobuf(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_PROTOBUF;
 
-// A Java serialized object.
-//
-// Constant alias for string: `"application/java-serialized-object"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JAVA_SERIALIZED_OBJECT;
+/**
+ * A Java serialized object.
+ * Constant alias for string: `"application/java-serialized-object"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_java_serialized_object(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JAVA_SERIALIZED_OBJECT;
 
-// An [openmetrics](https://github.com/OpenObservability/OpenMetrics) data, common used by
-// [Prometheus](https://prometheus.io/).
-//
-// Constant alias for string: `"application/openmetrics-text"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_OPENMETRICS_TEXT;
+/**
+ * An [openmetrics](https://github.com/OpenObservability/OpenMetrics) data, commonly used by
+ * [Prometheus](https://prometheus.io/).
+ * Constant alias for string: `"application/openmetrics-text"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_openmetrics_text(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_OPENMETRICS_TEXT;
 
-// A Portable Network Graphics (PNG) image.
-//
-// Constant alias for string: `"image/png"`.
-extern const z_owned_encoding_t ENCODING_IMAGE_PNG;
+/**
+ * A Portable Network Graphics (PNG) image.
+ * Constant alias for string: `"image/png"`.
+ */
 const z_loaned_encoding_t *z_encoding_image_png(void);
+extern const z_owned_encoding_t ENCODING_IMAGE_PNG;
 
-// A Joint Photographic Experts Group (JPEG) image.
-//
-// Constant alias for string: `"image/jpeg"`.
-extern const z_owned_encoding_t ENCODING_IMAGE_JPEG;
+/**
+ * A Joint Photographic Experts Group (JPEG) image.
+ * Constant alias for string: `"image/jpeg"`.
+ */
 const z_loaned_encoding_t *z_encoding_image_jpeg(void);
+extern const z_owned_encoding_t ENCODING_IMAGE_JPEG;
 
-// A Graphics Interchange Format (GIF) image.
-//
-// Constant alias for string: `"image/gif"`.
-extern const z_owned_encoding_t ENCODING_IMAGE_GIF;
+/**
+ * A Graphics Interchange Format (GIF) image.
+ * Constant alias for string: `"image/gif"`.
+ */
 const z_loaned_encoding_t *z_encoding_image_gif(void);
+extern const z_owned_encoding_t ENCODING_IMAGE_GIF;
 
-// A BitMap (BMP) image.
-//
-// Constant alias for string: `"image/bmp"`.
-extern const z_owned_encoding_t ENCODING_IMAGE_BMP;
+/**
+ * A BitMap (BMP) image.
+ * Constant alias for string: `"image/bmp"`.
+ */
 const z_loaned_encoding_t *z_encoding_image_bmp(void);
+extern const z_owned_encoding_t ENCODING_IMAGE_BMP;
 
-// A Web Portable (WebP) image.
-//
-//  Constant alias for string: `"image/webp"`.
-extern const z_owned_encoding_t ENCODING_IMAGE_WEBP;
+/**
+ * A Web Portable (WebP) image.
+ * Constant alias for string: `"image/webp"`.
+ */
 const z_loaned_encoding_t *z_encoding_image_webp(void);
+extern const z_owned_encoding_t ENCODING_IMAGE_WEBP;
 
-// An XML file intended to be consumed by an application..
-//
-// Constant alias for string: `"application/xml"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_XML;
+/**
+ * An XML file intended to be consumed by an application.
+ * Constant alias for string: `"application/xml"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_xml(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_XML;
 
-// An encoded a list of tuples, each consisting of a name and a value.
-//
-// Constant alias for string: `"application/x-www-form-urlencoded"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_X_WWW_FORM_URLENCODED;
+/**
+ * An encoded list of tuples, each consisting of a name and a value.
+ * Constant alias for string: `"application/x-www-form-urlencoded"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_x_www_form_urlencoded(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_X_WWW_FORM_URLENCODED;
 
-// An HTML file.
-//
-// Constant alias for string: `"text/html"`.
-extern const z_owned_encoding_t ENCODING_TEXT_HTML;
+/**
+ * An HTML file.
+ * Constant alias for string: `"text/html"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_html(void);
+extern const z_owned_encoding_t ENCODING_TEXT_HTML;
 
-// An XML file that is human readable.
-//
-// Constant alias for string: `"text/xml"`.
-extern const z_owned_encoding_t ENCODING_TEXT_XML;
+/**
+ * An XML file that is human-readable.
+ * Constant alias for string: `"text/xml"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_xml(void);
+extern const z_owned_encoding_t ENCODING_TEXT_XML;
 
-// A CSS file.
-//
-// Constant alias for string: `"text/css"`.
-extern const z_owned_encoding_t ENCODING_TEXT_CSS;
+/**
+ * A CSS file.
+ * Constant alias for string: `"text/css"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_css(void);
+extern const z_owned_encoding_t ENCODING_TEXT_CSS;
 
-// A JavaScript file.
-//
-// Constant alias for string: `"text/javascript"`.
-extern const z_owned_encoding_t ENCODING_TEXT_JAVASCRIPT;
+/**
+ * A JavaScript file.
+ * Constant alias for string: `"text/javascript"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_javascript(void);
+extern const z_owned_encoding_t ENCODING_TEXT_JAVASCRIPT;
 
-// A MarkDown file.
-//
-// Constant alias for string: `"text/markdown"`.
-extern const z_owned_encoding_t ENCODING_TEXT_MARKDOWN;
+/**
+ * A Markdown file.
+ * Constant alias for string: `"text/markdown"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_markdown(void);
+extern const z_owned_encoding_t ENCODING_TEXT_MARKDOWN;
 
-// A CSV file.
-//
-// Constant alias for string: `"text/csv"`.
-extern const z_owned_encoding_t ENCODING_TEXT_CSV;
+/**
+ * A CSV file.
+ * Constant alias for string: `"text/csv"`.
+ */
 const z_loaned_encoding_t *z_encoding_text_csv(void);
+extern const z_owned_encoding_t ENCODING_TEXT_CSV;
 
-// An application-specific SQL query.
-//
-// Constant alias for string: `"application/sql"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_SQL;
+/**
+ * An application-specific SQL query.
+ * Constant alias for string: `"application/sql"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_sql(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_SQL;
 
-// Constrained Application Protocol (CoAP) data intended for CoAP-to-HTTP and HTTP-to-CoAP proxies.
-//
-// Constant alias for string: `"application/coap-payload"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_COAP_PAYLOAD;
+/**
+ * Constrained Application Protocol (CoAP) data intended for CoAP-to-HTTP and HTTP-to-CoAP proxies.
+ * Constant alias for string: `"application/coap-payload"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_coap_payload(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_COAP_PAYLOAD;
 
-// Defines a JSON document structure for expressing a sequence of operations to apply to a JSON document.
-//
-// Constant alias for string: `"application/json-patch+json"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JSON_PATCH_JSON;
+/**
+ * Defines a JSON document structure for expressing a sequence of operations to apply to a JSON document.
+ * Constant alias for string: `"application/json-patch+json"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_json_patch_json(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JSON_PATCH_JSON;
 
-// A JSON text sequence consists of any number of JSON texts, all encoded in UTF-8.
-//
-// Constant alias for string: `"application/json-seq"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JSON_SEQ;
+/**
+ * A JSON text sequence consists of any number of JSON texts, all encoded in UTF-8.
+ * Constant alias for string: `"application/json-seq"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_json_seq(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JSON_SEQ;
 
-// A JSONPath defines a string syntax for selecting and extracting JSON values from within a given JSON value.
-//
-// Constant alias for string: `"application/jsonpath"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JSONPATH;
+/**
+ * A JSONPath defines a string syntax for selecting and extracting JSON values from within a given JSON value.
+ * Constant alias for string: `"application/jsonpath"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_jsonpath(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JSONPATH;
 
-// A JSON Web Token (JWT).
-//
-// Constant alias for string: `"application/jwt"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_JWT;
+/**
+ * A JSON Web Token (JWT).
+ * Constant alias for string: `"application/jwt"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_jwt(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_JWT;
 
-// An application-specific MPEG-4 encoded data, either audio or video.
-//
-// Constant alias for string: `"application/mp4"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_MP4;
+/**
+ * An application-specific MPEG-4 encoded data, either audio or video.
+ * Constant alias for string: `"application/mp4"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_mp4(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_MP4;
 
-// A SOAP 1.2 message serialized as XML 1.0.
-//
-// Constant alias for string: `"application/soap+xml"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_SOAP_XML;
+/**
+ * A SOAP 1.2 message serialized as XML 1.0.
+ * Constant alias for string: `"application/soap+xml"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_soap_xml(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_SOAP_XML;
 
-// A YANG-encoded data commonly used by the Network Configuration Protocol (NETCONF).
-//
-// Constant alias for string: `"application/yang"`.
-extern const z_owned_encoding_t ENCODING_APPLICATION_YANG;
+/**
+ * A YANG-encoded data commonly used by the Network Configuration Protocol (NETCONF).
+ * Constant alias for string: `"application/yang"`.
+ */
 const z_loaned_encoding_t *z_encoding_application_yang(void);
+extern const z_owned_encoding_t ENCODING_APPLICATION_YANG;
 
-// A MPEG-4 Advanced Audio Coding (AAC) media.
-//
-// Constant alias for string: `"audio/aac"`.
-extern const z_owned_encoding_t ENCODING_AUDIO_AAC;
+/**
+ * A MPEG-4 Advanced Audio Coding (AAC) media.
+ * Constant alias for string: `"audio/aac"`.
+ */
 const z_loaned_encoding_t *z_encoding_audio_aac(void);
+extern const z_owned_encoding_t ENCODING_AUDIO_AAC;
 
-// A Free Lossless Audio Codec (FLAC) media.
-//
-// Constant alias for string: `"audio/flac"`.
-extern const z_owned_encoding_t ENCODING_AUDIO_FLAC;
+/**
+ * A Free Lossless Audio Codec (FLAC) media.
+ * Constant alias for string: `"audio/flac"`.
+ */
 const z_loaned_encoding_t *z_encoding_audio_flac(void);
+extern const z_owned_encoding_t ENCODING_AUDIO_FLAC;
 
-// An audio codec defined in MPEG-1, MPEG-2, MPEG-4, or registered at the MP4 registration authority.
-//
-// Constant alias for string: `"audio/mp4"`.
-extern const z_owned_encoding_t ENCODING_AUDIO_MP4;
+/**
+ * An audio codec defined in MPEG-1, MPEG-2, MPEG-4, or registered at the MP4 registration authority.
+ * Constant alias for string: `"audio/mp4"`.
+ */
 const z_loaned_encoding_t *z_encoding_audio_mp4(void);
+extern const z_owned_encoding_t ENCODING_AUDIO_MP4;
 
-// An Ogg-encapsulated audio stream.
-//
-// Constant alias for string: `"audio/ogg"`.
-extern const z_owned_encoding_t ENCODING_AUDIO_OGG;
+/**
+ * An Ogg-encapsulated audio stream.
+ * Constant alias for string: `"audio/ogg"`.
+ */
 const z_loaned_encoding_t *z_encoding_audio_ogg(void);
+extern const z_owned_encoding_t ENCODING_AUDIO_OGG;
 
-// A Vorbis-encoded audio stream.
-//
-// Constant alias for string: `"audio/vorbis"`.
-extern const z_owned_encoding_t ENCODING_AUDIO_VORBIS;
+/**
+ * A Vorbis-encoded audio stream.
+ * Constant alias for string: `"audio/vorbis"`.
+ */
 const z_loaned_encoding_t *z_encoding_audio_vorbis(void);
+extern const z_owned_encoding_t ENCODING_AUDIO_VORBIS;
 
-// A h261-encoded video stream.
-//
-// Constant alias for string: `"video/h261"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_H261;
+/**
+ * A h261-encoded video stream.
+ * Constant alias for string: `"video/h261"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_h261(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_H261;
 
-// A h263-encoded video stream.
-//
-// Constant alias for string: `"video/h263"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_H263;
+/**
+ * A h263-encoded video stream.
+ * Constant alias for string: `"video/h263"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_h263(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_H263;
 
-// A h264-encoded video stream.
-//
-// Constant alias for string: `"video/h264"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_H264;
+/**
+ * A h264-encoded video stream.
+ * Constant alias for string: `"video/h264"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_h264(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_H264;
 
-// A h265-encoded video stream.
-//
-// Constant alias for string: `"video/h265"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_H265;
+/**
+ * A h265-encoded video stream.
+ * Constant alias for string: `"video/h265"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_h265(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_H265;
 
-// A h266-encoded video stream.
-//
-// Constant alias for string: `"video/h266"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_H266;
+/**
+ * A h266-encoded video stream.
+ * Constant alias for string: `"video/h266"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_h266(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_H266;
 
-// A video codec defined in MPEG-1, MPEG-2, MPEG-4, or registered at the MP4 registration authority.
-//
-// Constant alias for string: `"video/mp4"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_MP4;
+/**
+ * A video codec defined in MPEG-1, MPEG-2, MPEG-4, or registered at the MP4 registration authority.
+ * Constant alias for string: `"video/mp4"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_mp4(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_MP4;
 
-// An Ogg-encapsulated video stream.
-//
-// Constant alias for string: `"video/ogg"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_OGG;
+/**
+ * An Ogg-encapsulated video stream.
+ * Constant alias for string: `"video/ogg"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_ogg(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_OGG;
 
-// An uncompressed, studio-quality video stream.
-//
-// Constant alias for string: `"video/raw"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_RAW;
+/**
+ * An uncompressed, studio-quality video stream.
+ * Constant alias for string: `"video/raw"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_raw(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_RAW;
 
-// A VP8-encoded video stream.
-//
-// Constant alias for string: `"video/vp8"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_VP8;
+/**
+ * A VP8-encoded video stream.
+ * Constant alias for string: `"video/vp8"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_vp8(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_VP8;
 
-// A VP9-encoded video stream.
-//
-// Constant alias for string: `"video/vp9"`.
-extern const z_owned_encoding_t ENCODING_VIDEO_VP9;
+/**
+ * A VP9-encoded video stream.
+ * Constant alias for string: `"video/vp9"`.
+ */
 const z_loaned_encoding_t *z_encoding_video_vp9(void);
+extern const z_owned_encoding_t ENCODING_VIDEO_VP9;
+
 #endif
 
 #ifdef __cplusplus
