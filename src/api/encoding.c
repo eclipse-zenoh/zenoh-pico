@@ -29,7 +29,7 @@
             .id = _id,                                                                                              \
             .schema = {._slice = {.start = NULL, .len = 0, ._delete_context = {.deleter = NULL, .context = NULL}}}, \
         }};                                                                                                         \
-    inline const z_loaned_encoding_t *z_encoding_##_fname(void) { return &ZP_ENCODING_##_cname._val; }
+    const z_loaned_encoding_t *z_encoding_##_fname(void) { return &ZP_ENCODING_##_cname._val; }
 
 ENCODING_CONSTANT_MACRO(ZENOH_BYTES, zenoh_bytes, 0)
 ENCODING_CONSTANT_MACRO(ZENOH_INT8, zenoh_int8, 1)
