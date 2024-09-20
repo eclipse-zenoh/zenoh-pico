@@ -441,6 +441,12 @@ Primitives
 .. autocfunction:: primitives.h::z_keyexpr_from_substr
 .. autocfunction:: primitives.h::z_keyexpr_from_str_autocanonize
 .. autocfunction:: primitives.h::z_keyexpr_from_substr_autocanonize
+.. autocfunction:: primitives.h::z_string_array_new
+.. autocfunction:: primitives.h::z_string_array_push_by_alias
+.. autocfunction:: primitives.h::z_string_array_push_by_copy
+.. autocfunction:: primitives.h::z_string_array_get
+.. autocfunction:: primitives.h::z_string_array_len
+.. autocfunction:: primitives.h::z_string_array_is_empty
 .. autocfunction:: primitives.h::z_declare_keyexpr
 .. autocfunction:: primitives.h::z_undeclare_keyexpr
 .. autocfunction:: primitives.h::z_subscriber_options_default
