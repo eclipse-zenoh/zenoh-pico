@@ -2142,6 +2142,60 @@ z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned
  */
 z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
 
+/**
+ * Constructs a new empty string array.
+ *
+ * Parameters:
+ *   a: Pointer to an uninitialized :c:type:`z_owned_string_array_t` to store the array of strings.
+ */
+void z_string_array_new(z_owned_string_array_t *a);
+
+/**
+ * Appends specified value to the end of the string array by alias.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   value: Pointer to the string to be add.
+ *
+ * Return:
+ *   the new length of the array.
+ */
+size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value);
+
+/**
+ * Appends specified value to the end of the string array by copying.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   value: Pointer to the string to be add.
+ *
+ * Return:
+ *   the new length of the array.
+ */
+size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value);
+
+/**
+ * Returns the value at the position of index in the string array.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   k: index value.
+ *
+ * Return:
+ *   `NULL` if the index is out of bounds.
+ */
+const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
+
+/**
+ * Returns number of elements in the array.
+ */
+size_t z_string_array_len(const z_loaned_string_array_t *a);
+
+/**
+ * Returns ``true`` if the array is empty, ``false`` otherwise.
+ */
+bool z_string_array_is_empty(const z_loaned_string_array_t *a);
+
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
  * Builds a :c:type:`z_subscriber_options_t` with default values.

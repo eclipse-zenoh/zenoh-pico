@@ -487,13 +487,6 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 _Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
-void z_string_array_new(z_owned_string_array_t *a);
-size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value);
-size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value);
-const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
-size_t z_string_array_len(const z_loaned_string_array_t *a);
-bool z_string_array_is_empty(const z_loaned_string_array_t *a);
-
 typedef void (*z_dropper_handler_t)(void *arg);
 typedef _z_data_handler_t z_data_handler_t;
 
