@@ -204,7 +204,7 @@ void _z_close_udp_unicast(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     struct sockaddr_storage raddr;
-    unsigned int addrlen = sizeof(struct sockaddr_storage);
+    socklen_t addrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = recvfrom(sock._fd, ptr, len, 0, (struct sockaddr *)&raddr, &addrlen);
     if (rb < (ssize_t)0) {
@@ -244,7 +244,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     z_result_t ret = _Z_RES_OK;
 
     struct sockaddr *lsockaddr = NULL;
-    unsigned int addrlen = 0;
+    socklen_t addrlen = 0;
     if (rep._iptcp->ai_family == AF_INET) {
         lsockaddr = (struct sockaddr *)z_malloc(sizeof(struct sockaddr_in));
         if (lsockaddr != NULL) {
@@ -477,7 +477,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,
                              _z_slice_t *addr) {
     struct sockaddr_storage raddr;
-    unsigned int raddrlen = sizeof(struct sockaddr_storage);
+    socklen_t raddrlen = sizeof(struct sockaddr_storage);
 
     ssize_t rb = 0;
     do {
