@@ -501,7 +501,9 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         // Required to be compliant with MISRA 15.7 rule
     }
 #if defined(ZENOH_LINUX)
-    z_free(lep._iptcp->ai_addr);
+    if (lep._iptcp != NULL) {
+        z_free(lep._iptcp->ai_addr);
+    }
 #else
     _ZP_UNUSED(lep);
 #endif
