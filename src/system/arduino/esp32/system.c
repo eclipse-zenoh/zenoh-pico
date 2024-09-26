@@ -14,6 +14,7 @@
 
 #include <Arduino.h>
 #include <esp_heap_caps.h>
+#include <esp_random.h>
 #include <stddef.h>
 #include <sys/time.h>
 
@@ -70,7 +71,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     if (z_arg != NULL) {
         z_arg->_fun = fun;
         z_arg->_arg = arg;
-        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, task) != pdPASS) {
+        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, (TaskHandle_t*)task) != pdPASS) {
             ret = -1;
         }
     } else {
@@ -110,7 +111,7 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unloc
 /*------------------ Condvar ------------------*/
 z_result_t _z_condvar_init(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_init(cv, NULL)); }
 
-z_result_t _z_condvar_free(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
+z_result_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signal(cv)); }
 
