@@ -197,14 +197,15 @@ int main(void) {
 
     // Slice iterator
     {
-        /// fill z_bytes with some data
-        float input_vec[] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f};
-        ze_serializer_t serializer = ze_serializer(z_loan_mut(payload));
-        ze_serializer_serialize_sequence_begin(&serializer, 5);
-        for (size_t i = 0; i < 5; ++i) {
-            ze_serializer_serialize_float(&serializer, input_vec[i]);
-        }
-        ze_serializer_serialize_sequence_end(&serializer);
+        /// Fill z_bytes with some data
+        z_owned_bytes_t b1, b2, b3;
+        z_bytes_copy_from_str(&b1, "abc");
+        z_bytes_copy_from_str(&b2, "def");
+        z_bytes_copy_from_str(&b3, "hij");
+        z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(payload));
+        z_bytes_writer_append(&writer, z_move(b1));
+        z_bytes_writer_append(&writer, z_move(b2));
+        z_bytes_writer_append(&writer, z_move(b3));
 
         z_bytes_slice_iterator_t slice_iter = z_bytes_get_slice_iterator(z_bytes_loan(&payload));
         z_view_slice_t curr_slice;
