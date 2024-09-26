@@ -182,14 +182,14 @@ void test_slice(void) {
     assert(z_check_and_drop_payload(&payload5, data, 10));
 }
 
-#define TEST_ARITHMETIC(TYPE, EXT, VAL)                          \
-    {                                                            \
-        TYPE in = VAL, out;                                      \
-        z_owned_bytes_t payload;                                 \
-        ze_serialize_from_##EXT(&payload, in);                   \
+#define TEST_ARITHMETIC(TYPE, EXT, VAL)                        \
+    {                                                          \
+        TYPE in = VAL, out;                                    \
+        z_owned_bytes_t payload;                               \
+        ze_serialize_from_##EXT(&payload, in);                 \
         ze_deserialize_to_##EXT(z_bytes_loan(&payload), &out); \
-        assert(in == out);                                       \
-        z_bytes_drop(z_bytes_move(&payload));                    \
+        assert(in == out);                                     \
+        z_bytes_drop(z_bytes_move(&payload));                  \
     }
 
 void test_arithmetic(void) {

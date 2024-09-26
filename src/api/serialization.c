@@ -135,7 +135,7 @@ z_result_t ze_deserialize_to_string(const z_loaned_bytes_t *bytes, z_owned_strin
         _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_##suffix(&serializer, data)) \
         return _Z_RES_OK;                                                                   \
     }                                                                                       \
-    z_result_t ze_deserialize_to_##suffix(const z_loaned_bytes_t *bytes, type *data) {    \
+    z_result_t ze_deserialize_to_##suffix(const z_loaned_bytes_t *bytes, type *data) {      \
         ze_deserializer_t deserializer = ze_deserializer(bytes);                            \
         return ze_deserializer_deserialize_##suffix(&deserializer, data);                   \
     }
