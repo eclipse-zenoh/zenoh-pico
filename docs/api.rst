@@ -55,6 +55,8 @@ Data Structures
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_slice_iterator_t
 .. autoctype:: types.h::z_bytes_writer_t
+.. autoctype:: serialization.h::ze_serializer_t
+.. autoctype:: serialization.h::ze_deserializer_t
   
 
 Owned Types
@@ -349,18 +351,18 @@ Primitives
 .. autocfunction:: serialization.h::ze_serializer_serialize_str
 .. autocfunction:: serialization.h::ze_serializer_serialize_sequence_begin
 .. autocfunction:: serialization.h::ze_serializer_serialize_sequence_end
-.. autocfunction:: serialization.h::ze_deserialize_into_int8
-.. autocfunction:: serialization.h::ze_deserialize_into_int16
-.. autocfunction:: serialization.h::ze_deserialize_into_int32
-.. autocfunction:: serialization.h::ze_deserialize_into_int64
-.. autocfunction:: serialization.h::ze_deserialize_into_uint8
-.. autocfunction:: serialization.h::ze_deserialize_into_uint16
-.. autocfunction:: serialization.h::ze_deserialize_into_uint32
-.. autocfunction:: serialization.h::ze_deserialize_into_uint64
-.. autocfunction:: serialization.h::ze_deserialize_into_float
-.. autocfunction:: serialization.h::ze_deserialize_into_double
-.. autocfunction:: serialization.h::ze_deserialize_into_slice
-.. autocfunction:: serialization.h::ze_deserialize_into_string
+.. autocfunction:: serialization.h::ze_deserialize_to_int8
+.. autocfunction:: serialization.h::ze_deserialize_to_int16
+.. autocfunction:: serialization.h::ze_deserialize_to_int32
+.. autocfunction:: serialization.h::ze_deserialize_to_int64
+.. autocfunction:: serialization.h::ze_deserialize_to_uint8
+.. autocfunction:: serialization.h::ze_deserialize_to_uint16
+.. autocfunction:: serialization.h::ze_deserialize_to_uint32
+.. autocfunction:: serialization.h::ze_deserialize_to_uint64
+.. autocfunction:: serialization.h::ze_deserialize_to_float
+.. autocfunction:: serialization.h::ze_deserialize_to_double
+.. autocfunction:: serialization.h::ze_deserialize_to_slice
+.. autocfunction:: serialization.h::ze_deserialize_to_string
 .. autocfunction:: serialization.h::ze_serialize_from_int8
 .. autocfunction:: serialization.h::ze_serialize_from_int16
 .. autocfunction:: serialization.h::ze_serialize_from_int32

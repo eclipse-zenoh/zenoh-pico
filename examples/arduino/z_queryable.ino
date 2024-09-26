@@ -43,7 +43,7 @@ void query_handler(z_loaned_query_t *query, void *arg) {
 
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         Serial.print("     with value '");
         Serial.write(z_string_data(z_string_loan(&payload_string)), z_string_len(z_string_loan(&payload_string)));

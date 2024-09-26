@@ -47,7 +47,7 @@
             strcpy(buf, "closed");                                              \
         } else if (res == Z_OK) {                                               \
             z_owned_slice_t value;                                              \
-            z_bytes_into_slice(z_sample_payload(z_loan(sample)), &value);       \
+            z_bytes_to_slice(z_sample_payload(z_loan(sample)), &value);       \
             size_t value_len = z_slice_len(z_loan(value));                      \
             strncpy(buf, (const char *)z_slice_data(z_loan(value)), value_len); \
             buf[value_len] = '\0';                                              \

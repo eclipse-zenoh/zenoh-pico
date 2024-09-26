@@ -240,12 +240,12 @@ void z_slice_empty(z_owned_slice_t *slice) { slice->_val = _z_slice_empty(); }
 
 bool z_slice_is_empty(const z_loaned_slice_t *slice) { return _z_slice_is_empty(slice); }
 
-z_result_t z_bytes_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
+z_result_t z_bytes_to_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
     dst->_val = _z_slice_empty();
     return _z_bytes_to_slice(bytes, &dst->_val);
 }
 
-z_result_t z_bytes_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
+z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
     // Init owned string
     z_internal_string_null(s);
     // Convert bytes to string

@@ -51,7 +51,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
-    z_bytes_into_string(z_sample_payload(sample), &value);
+    z_bytes_to_string(z_sample_payload(sample), &value);
     z_owned_string_t encoding;
     z_encoding_to_string(z_sample_encoding(sample), &encoding);
 

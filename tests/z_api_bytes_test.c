@@ -134,7 +134,7 @@ void custom_deleter(void *data, void *context) {
 
 bool z_check_and_drop_payload(z_owned_bytes_t *payload, uint8_t *data, size_t len) {
     z_owned_slice_t out;
-    z_bytes_into_slice(z_bytes_loan(payload), &out);
+    z_bytes_to_slice(z_bytes_loan(payload), &out);
     z_bytes_drop(z_bytes_move(payload));
     bool res = memcmp(data, z_slice_data(z_slice_loan(&out)), len) == 0;
     z_slice_drop(z_slice_move(&out));
@@ -150,7 +150,7 @@ void test_slice(void) {
     z_bytes_from_buf(&payload, data, 10, custom_deleter, (void *)&cnt);
 
     z_owned_slice_t out;
-    z_bytes_into_slice(z_bytes_loan(&payload), &out);
+    z_bytes_to_slice(z_bytes_loan(&payload), &out);
 
     assert(cnt == 0);
     z_bytes_drop(z_bytes_move(&payload));
@@ -187,7 +187,7 @@ void test_slice(void) {
         TYPE in = VAL, out;                                      \
         z_owned_bytes_t payload;                                 \
         ze_serialize_from_##EXT(&payload, in);                   \
-        ze_deserialize_into_##EXT(z_bytes_loan(&payload), &out); \
+        ze_deserialize_to_##EXT(z_bytes_loan(&payload), &out); \
         assert(in == out);                                       \
         z_bytes_drop(z_bytes_move(&payload));                    \
     }

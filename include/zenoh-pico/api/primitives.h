@@ -501,7 +501,7 @@ bool z_slice_is_empty(const z_loaned_slice_t *slice);
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-z_result_t z_bytes_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
+z_result_t z_bytes_to_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
  * Converts data into a :c:type:`z_owned_string_t`
@@ -513,7 +513,7 @@ z_result_t z_bytes_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *ds
  * Return:
  *   ``0`` if decode successful, or a ``negative value`` otherwise.
  */
-z_result_t z_bytes_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
  * Converts a slice into a :c:type:`z_owned_bytes_t`.

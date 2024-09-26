@@ -660,7 +660,7 @@ z_result_t ze_serialize_from_double(z_owned_bytes_t *bytes, double val);
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
+z_result_t ze_deserialize_to_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
  * Deserializes data into a :c:type:`z_owned_string_t`
@@ -672,7 +672,7 @@ z_result_t ze_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slic
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+z_result_t ze_deserialize_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
  * Deserializes data into a `:c:type:`int8_t`.
@@ -684,7 +684,7 @@ z_result_t ze_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_str
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
+z_result_t ze_deserialize_to_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 
 /**
  * Deserializes data into a :c:type:`int16_t`.
@@ -696,7 +696,7 @@ z_result_t ze_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
+z_result_t ze_deserialize_to_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 
 /**
  * Deserializes data into a :c:type:`int32_t`.
@@ -708,7 +708,7 @@ z_result_t ze_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
+z_result_t ze_deserialize_to_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 
 /**
  * Deserializes data into a :c:type:`int64_t`.
@@ -720,7 +720,7 @@ z_result_t ze_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
+z_result_t ze_deserialize_to_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 
 /**
  * Deserializes data into a :c:type:`uint8_t`.
@@ -732,7 +732,7 @@ z_result_t ze_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
+z_result_t ze_deserialize_to_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 
 /**
  * Deserializes data into a :c:type:`uint16_t`.
@@ -744,7 +744,7 @@ z_result_t ze_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
+z_result_t ze_deserialize_to_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 
 /**
  * Deserializes data into a :c:type:`uint32_t`.
@@ -756,7 +756,7 @@ z_result_t ze_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *d
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
+z_result_t ze_deserialize_to_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 
 /**
  * Deserializes data into a `:c:type:`uint64_t`.
@@ -768,7 +768,7 @@ z_result_t ze_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *d
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
+z_result_t ze_deserialize_to_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 
 /**
  * Deserializes data into a `:c:type:`float`.
@@ -780,7 +780,7 @@ z_result_t ze_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *d
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
+z_result_t ze_deserialize_to_float(const z_loaned_bytes_t *bytes, float *dst);
 
 /**
  * Deserializes data into a :c:type:`double`.
@@ -792,7 +792,7 @@ z_result_t ze_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
-z_result_t ze_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst);
+z_result_t ze_deserialize_to_double(const z_loaned_bytes_t *bytes, double *dst);
 
 #ifdef __cplusplus
 }

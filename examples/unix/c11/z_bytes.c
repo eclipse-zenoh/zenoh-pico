@@ -44,7 +44,7 @@ int main(void) {
         const uint8_t input_bytes[] = {1, 2, 3, 4};
         z_owned_slice_t output_bytes;
         z_bytes_copy_from_buf(&payload, input_bytes, sizeof(input_bytes));
-        z_bytes_into_slice(z_loan(payload), &output_bytes);
+        z_bytes_to_slice(z_loan(payload), &output_bytes);
         assert(memcmp(input_bytes, z_slice_data(z_loan(output_bytes)), z_slice_len(z_loan(output_bytes))) == 0);
         z_drop(z_move(payload));
         z_drop(z_move(output_bytes));
@@ -53,7 +53,7 @@ int main(void) {
         const char *input_str = "test";
         z_owned_string_t output_string;
         z_bytes_copy_from_str(&payload, input_str);
-        z_bytes_into_string(z_loan(payload), &output_string);
+        z_bytes_to_string(z_loan(payload), &output_string);
         assert(strncmp(input_str, z_string_data(z_loan(output_string)), z_string_len(z_loan(output_string))) == 0);
         z_drop(z_move(payload));
         z_drop(z_move(output_string));
@@ -65,7 +65,7 @@ int main(void) {
         uint32_t input_u32 = 1234;
         uint32_t output_u32 = 0;
         ze_serialize_from_uint32(&payload, input_u32);
-        ze_deserialize_into_uint32(z_loan(payload), &output_u32);
+        ze_deserialize_to_uint32(z_loan(payload), &output_u32);
         assert(input_u32 == output_u32);
         z_drop(z_move(payload));
         // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
