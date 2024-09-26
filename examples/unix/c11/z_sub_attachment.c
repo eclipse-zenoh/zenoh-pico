@@ -20,54 +20,30 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
+#include <zenoh-pico/api/serialization.h>
 
 typedef struct kv_pair_t {
     z_owned_string_t key;
     z_owned_string_t value;
 } kv_pair_t;
 
-typedef struct kv_pairs_t {
-    kv_pair_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_t;
-
-#define KVP_LEN 16
-
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 static int msg_nb = 0;
 
-void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
-    z_owned_bytes_t kv, first, second;
-    z_bytes_iterator_t iter = z_bytes_get_iterator(attachment);
-
-    while (kvp->current_idx < kvp->len && z_bytes_iterator_next(&iter, &kv)) {
-        z_bytes_deserialize_into_pair(z_loan(kv), &first, &second);
-        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
-        z_bytes_drop(z_bytes_move(&first));
-        z_bytes_drop(z_bytes_move(&second));
-        z_bytes_drop(z_bytes_move(&kv));
-        kvp->current_idx++;
-    }
-}
-
-void print_attachment(kv_pairs_t *kvp) {
+void print_attachment(const kv_pair_t *kvp, size_t len) {
     printf("    with attachment:\n");
-    for (uint32_t i = 0; i < kvp->current_idx; i++) {
-        printf("     %d: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp->data[i].key)),
-               z_string_data(z_loan(kvp->data[i].key)), (int)z_string_len(z_loan(kvp->data[i].value)),
-               z_string_data(z_loan(kvp->data[i].value)));
+    for (size_t i = 0; i < len; i++) {
+        printf("     %zu: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp[i].key)), z_string_data(z_loan(kvp[i].key)),
+               (int)z_string_len(z_loan(kvp[i].value)), z_string_data(z_loan(kvp[i].value)));
     }
 }
 
-void drop_attachment(kv_pairs_t *kvp) {
-    for (size_t i = 0; i < kvp->current_idx; i++) {
-        z_string_drop(z_string_move(&kvp->data[i].key));
-        z_string_drop(z_string_move(&kvp->data[i].value));
+void drop_attachment(kv_pair_t *kvp, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        z_drop(z_move(kvp[i].key));
+        z_drop(z_move(kvp[i].value));
     }
-    z_free(kvp->data);
 }
 
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
@@ -75,7 +51,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
-    z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
+    z_bytes_into_string(z_sample_payload(sample), &value);
     z_owned_string_t encoding;
     z_encoding_to_string(z_sample_encoding(sample), &encoding);
 
@@ -89,12 +65,24 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         printf("    with timestamp: %" PRIu64 "\n", z_timestamp_ntp64_time(ts));
     }
     // Check attachment
-    kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};
-    parse_attachment(&kvp, z_sample_attachment(sample));
-    if (kvp.current_idx > 0) {
-        print_attachment(&kvp);
+    const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
+    if (attachment != NULL) {
+        z_bytes_reader_t reader = z_bytes_get_reader(attachment);
+        size_t attachment_len;
+        z_bytes_reader_deserialize_sequence_begin(&reader, &attachment_len);
+        kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
+        for (size_t i = 0; i < attachment_len; ++i) {
+            z_bytes_reader_deserialize_string(&reader, &kvp[i].key);
+            z_bytes_reader_deserialize_string(&reader, &kvp[i].value);
+        }
+        z_bytes_reader_deserialize_sequence_end(&reader);
+        if (attachment_len > 0) {
+            print_attachment(kvp, attachment_len);
+        }
+        drop_attachment(kvp, attachment_len);
+        free(kvp);
     }
-    drop_attachment(&kvp);
+
     z_drop(z_move(value));
     z_drop(z_move(encoding));
     msg_nb++;

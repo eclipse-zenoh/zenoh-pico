@@ -337,7 +337,7 @@ int main(int argc, char **argv) {
 
     printf("Publisher Put...");
     // Create payload
-    z_bytes_serialize_from_str(&payload, value);
+    z_bytes_copy_from_str(&payload, value);
 
     z_publisher_put_options_t _ret_pput_opt;
     z_publisher_put_options_default(&_ret_pput_opt);

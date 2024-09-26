@@ -41,7 +41,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
            z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_into_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 0) {
         printf("     with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
                z_string_data(z_loan(payload_string)));

@@ -74,17 +74,12 @@ _Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
 /**
  * Represents a writer for serialized data.
  */
-typedef _z_bytes_iterator_writer_t z_bytes_writer_t;
-
-/**
- * An iterator over multi-element serialized data.
- */
-typedef _z_bytes_iterator_t z_bytes_iterator_t;
+typedef _z_bytes_writer_t z_bytes_writer_t;
 
 /**
  * A reader for serialized data.
  */
-typedef _z_bytes_iterator_t z_bytes_reader_t;
+typedef _z_bytes_reader_t z_bytes_reader_t;
 
 /**
  * An iterator over slices of serialized data.

@@ -20,35 +20,15 @@
 #include <time.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-
-#include "zenoh-pico/system/platform.h"
+#include <zenoh-pico/api/serialization.h>
+#include <zenoh-pico/system/platform.h>
 
 typedef struct kv_pair_t {
     const char *key;
     const char *value;
 } kv_pair_t;
 
-typedef struct kv_pairs_t {
-    const kv_pair_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_t;
-
 #if Z_FEATURE_PUBLICATION == 1
-
-bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
-    kv_pairs_t *kvs = (kv_pairs_t *)(context);
-    z_owned_bytes_t k, v;
-    if (kvs->current_idx >= kvs->len) {
-        return false;
-    } else {
-        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
-        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
-        kvs->current_idx++;
-        return true;
-    }
-}
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
@@ -138,6 +118,7 @@ int main(int argc, char **argv) {
     kv_pair_t kvs[2];
     kvs[0] = (kv_pair_t){.key = "source", .value = "C"};
     z_owned_bytes_t attachment;
+    z_bytes_empty(&attachment);
 
     // Allocate buffer
     char buf_ind[16];
@@ -159,13 +140,18 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_copy_from_str(&payload, buf);
 
         // Add attachment value
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
-        kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
-        z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
+        z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(attachment));
+        z_bytes_writer_serialize_sequence_begin(&writer, 2);
+        for (size_t i = 0; i < 2; ++i) {
+            z_bytes_writer_serialize_str(&writer, kvs[i].key);
+            z_bytes_writer_serialize_str(&writer, kvs[i].value);
+        }
+        z_bytes_writer_serialize_sequence_end(&writer);
         options.attachment = z_move(attachment);
 
         // Add encoding value

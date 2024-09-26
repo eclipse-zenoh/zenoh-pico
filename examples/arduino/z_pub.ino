@@ -109,7 +109,7 @@ void loop() {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_str(&payload, buf);
+    z_bytes_copy_from_str(&payload, buf);
 
     if (z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL) < 0) {
         Serial.println("Error while publishing data");

@@ -39,7 +39,7 @@ void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_into_string(z_sample_payload(sample), &replystr);
 
         printf(" >> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_view_string_loan(&keystr)),
                z_string_data(z_view_string_loan(&keystr)), (int)z_string_len(z_string_loan(&replystr)),

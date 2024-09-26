@@ -240,52 +240,12 @@ void z_slice_empty(z_owned_slice_t *slice) { slice->_val = _z_slice_empty(); }
 
 bool z_slice_is_empty(const z_loaned_slice_t *slice) { return _z_slice_is_empty(slice); }
 
-z_result_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst) {
-    return _z_bytes_to_uint8(bytes, (uint8_t *)dst);
-}
-
-z_result_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst) {
-    return _z_bytes_to_uint16(bytes, (uint16_t *)dst);
-}
-
-z_result_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst) {
-    return _z_bytes_to_uint32(bytes, (uint32_t *)dst);
-}
-
-z_result_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst) {
-    return _z_bytes_to_uint64(bytes, (uint64_t *)dst);
-}
-
-z_result_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst) {
-    return _z_bytes_to_uint8(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst) {
-    return _z_bytes_to_uint16(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst) {
-    return _z_bytes_to_uint32(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst) {
-    return _z_bytes_to_uint64(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst) {
-    return _z_bytes_to_float(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst) {
-    return _z_bytes_to_double(bytes, dst);
-}
-
-z_result_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
+z_result_t z_bytes_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst) {
     dst->_val = _z_slice_empty();
     return _z_bytes_to_slice(bytes, &dst->_val);
 }
 
-z_result_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
+z_result_t z_bytes_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s) {
     // Init owned string
     z_internal_string_null(s);
     // Convert bytes to string
@@ -296,71 +256,11 @@ z_result_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owne
     return _Z_RES_OK;
 }
 
-z_result_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first,
-                                         z_owned_bytes_t *second) {
-    // Init pair of owned bytes
-    z_bytes_empty(first);
-    z_bytes_empty(second);
-    return _z_bytes_deserialize_into_pair(bytes, &first->_val, &second->_val);
-}
-
-z_result_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val) {
-    return z_bytes_serialize_from_uint8(bytes, (uint8_t)val);
-}
-
-z_result_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val) {
-    return z_bytes_serialize_from_uint16(bytes, (uint16_t)val);
-}
-
-z_result_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val) {
-    return z_bytes_serialize_from_uint32(bytes, (uint32_t)val);
-}
-
-z_result_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val) {
-    return z_bytes_serialize_from_uint64(bytes, (uint64_t)val);
-}
-
-z_result_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_uint8(&bytes->_val, val);
-}
-
-z_result_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_uint16(&bytes->_val, val);
-}
-
-z_result_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_uint32(&bytes->_val, val);
-}
-
-z_result_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_uint64(&bytes->_val, val);
-}
-
-z_result_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_float(&bytes->_val, val);
-}
-
-z_result_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_double(&bytes->_val, val);
-}
-
 z_result_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice) {
     z_bytes_empty(bytes);
     _z_slice_t s = _z_slice_steal(&slice->_this._val);
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, s), _z_slice_clear(&s));
     return _Z_RES_OK;
-}
-
-z_result_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice) {
-    z_owned_slice_t s;
-    _Z_RETURN_IF_ERR(z_slice_clone(&s, slice));
-    return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
 z_result_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
@@ -376,14 +276,20 @@ z_result_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, 
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
-z_result_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+z_result_t z_bytes_copy_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    _Z_RETURN_IF_ERR(z_slice_copy_from_buf(&s, data, len));
+    s._val = _z_slice_copy_from_buf(data, len);
+    if (s._val.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return z_bytes_from_slice(bytes, z_slice_move(&s));
+}
+
+z_result_t z_bytes_copy_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice) {
+    z_owned_slice_t s;
+    _Z_RETURN_IF_ERR(_z_slice_copy(&s._val, slice));
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
 z_result_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s) {
-    // TODO, verify that string is a valid UTF-8 ?
     z_owned_slice_t slice;
     size_t str_len = _z_string_len(&s->_this._val);
     slice._val = _z_slice_steal(&s->_this._val._slice);
@@ -391,10 +297,11 @@ z_result_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s) {
     return z_bytes_from_slice(bytes, z_slice_move(&slice));
 }
 
-z_result_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s) {
-    z_owned_string_t s_copy;
-    _Z_RETURN_IF_ERR(z_string_clone(&s_copy, s));
-    return z_bytes_from_string(bytes, z_string_move(&s_copy));
+z_result_t z_bytes_copy_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *value) {
+    z_owned_string_t s;
+    _Z_RETURN_IF_ERR(_z_string_copy(&s._val, value));
+
+    return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
 z_result_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
@@ -404,33 +311,17 @@ z_result_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 
+z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value) {
+    z_owned_string_t s;
+    s._val = _z_string_copy_from_str(value);
+    if (s._val._slice.start == NULL && value != NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return z_bytes_from_string(bytes, z_string_move(&s));
+}
+
 z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
     s._val = _z_string_alias_str(value);
     return z_bytes_from_string(bytes, z_string_move(&s));
-}
-
-z_result_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value) {
-    z_owned_string_t s;
-    _Z_RETURN_IF_ERR(z_string_copy_from_str(&s, value));
-    return z_bytes_from_string(bytes, z_string_move(&s));
-}
-
-z_result_t z_bytes_from_iter(z_owned_bytes_t *bytes, bool (*iterator_body)(z_owned_bytes_t *data, void *context),
-                             void *context) {
-    z_bytes_empty(bytes);
-    z_owned_bytes_t data;
-    _z_bytes_iterator_writer_t iter_writer = _z_bytes_get_iterator_writer(&bytes->_val, 0);
-    while (iterator_body(&data, context)) {
-        _Z_CLEAN_RETURN_IF_ERR(_z_bytes_iterator_writer_write(&iter_writer, &data._val),
-                               z_bytes_drop(z_bytes_move(bytes)));
-    }
-    return _Z_RES_OK;
-}
-
-z_result_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t *first, z_moved_bytes_t *second) {
-    z_bytes_empty(bytes);
-    return _z_bytes_from_pair(&bytes->_val, &first->_this._val, &second->_this._val);
 }
 
 void z_bytes_empty(z_owned_bytes_t *bytes) { bytes->_val = _z_bytes_null(); }
@@ -439,32 +330,17 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes) { return _z_bytes_len(bytes); 
 
 bool z_bytes_is_empty(const z_loaned_bytes_t *bytes) { return _z_bytes_is_empty(bytes); }
 
-z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
+z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes) { return _z_bytes_get_reader(bytes); }
 
 size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len) {
-    return _z_bytes_reader_read(&reader->_reader, dst, len);
-}
-
-z_result_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst) {
-    return _z_bytes_iterator_next(reader, &dst->_val);
+    return _z_bytes_reader_read(reader, dst, len);
 }
 
 z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin) {
-    return _z_bytes_reader_seek(&reader->_reader, offset, origin);
+    return _z_bytes_reader_seek(reader, offset, origin);
 }
 
-int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(&reader->_reader); }
-
-z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes) { return _z_bytes_get_iterator(bytes); }
-
-bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *bytes) {
-    z_bytes_empty(bytes);
-    if (_z_bytes_iterator_next(iter, &bytes->_val) != _Z_RES_OK) {
-        z_bytes_drop(z_bytes_move(bytes));
-        return false;
-    }
-    return true;
-}
+int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(reader); }
 
 z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *bytes) {
     return (z_bytes_slice_iterator_t){._bytes = bytes, ._slice_idx = 0};
@@ -480,20 +356,14 @@ bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t 
     return true;
 }
 
-z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes) {
-    return _z_bytes_get_iterator_writer(bytes, Z_IOSLICE_SIZE);
-}
+z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes) { return _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE); }
 
 z_result_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
-    return _z_bytes_writer_write_all(&writer->writer, src, len);
+    return _z_bytes_writer_write_all(writer, src, len);
 }
 
 z_result_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
-    return _z_bytes_writer_append(&writer->writer, &bytes->_this._val);
-}
-
-z_result_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
-    return _z_bytes_iterator_writer_write(writer, &bytes->_this._val);
+    return _z_bytes_writer_append_z_bytes(writer, &bytes->_this._val);
 }
 
 z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
