@@ -69,7 +69,9 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
 
         // Check attachment
         const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
-        if (attachment == NULL) return;
+        if (attachment == NULL) {
+            return;
+        }
         z_bytes_reader_t reader = z_bytes_get_reader(attachment);
         size_t attachment_len;
         z_bytes_reader_deserialize_sequence_begin(&reader, &attachment_len);
