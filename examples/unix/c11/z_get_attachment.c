@@ -72,15 +72,15 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
         if (attachment == NULL) {
             return;
         }
-        z_bytes_reader_t reader = z_bytes_get_reader(attachment);
+        ze_deserializer_t deserializer = ze_deserializer(attachment);
         size_t attachment_len;
-        z_bytes_reader_deserialize_sequence_begin(&reader, &attachment_len);
+        ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].key);
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].value);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
         }
-        z_bytes_reader_deserialize_sequence_end(&reader);
+        ze_deserializer_deserialize_sequence_end(&deserializer);
         if (attachment_len > 0) {
             print_attachment(kvp, attachment_len);
         }
@@ -178,13 +178,13 @@ int main(int argc, char **argv) {
     z_string_from_str(&kvs[0].value, "test_value", NULL, NULL);
     z_owned_bytes_t attachment;
     z_bytes_empty(&attachment);
-    z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(attachment));
-    z_bytes_writer_serialize_sequence_begin(&writer, 2);
+    ze_serializer_t serializer = ze_serializer(z_loan_mut(attachment));
+    ze_serializer_serialize_sequence_begin(&serializer, 2);
     for (size_t i = 0; i < 1; ++i) {
-        z_bytes_writer_serialize_string(&writer, z_loan(kvs[i].key));
-        z_bytes_writer_serialize_string(&writer, z_loan(kvs[i].value));
+        ze_serializer_serialize_string(&serializer, z_loan(kvs[i].key));
+        ze_serializer_serialize_string(&serializer, z_loan(kvs[i].value));
     }
-    z_bytes_writer_serialize_sequence_end(&writer);
+    ze_serializer_serialize_sequence_end(&serializer);
     drop_attachment(kvs, 1);
     opts.attachment = z_move(attachment);
 

@@ -69,15 +69,15 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     // Check attachment
     const z_loaned_bytes_t *attachment = z_query_attachment(query);
     if (attachment != NULL) {
-        z_bytes_reader_t reader = z_bytes_get_reader(attachment);
+        ze_deserializer_t deserializer = ze_deserializer(attachment);
         size_t attachment_len;
-        z_bytes_reader_deserialize_sequence_begin(&reader, &attachment_len);
+        ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].key);
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].value);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
         }
-        z_bytes_reader_deserialize_sequence_end(&reader);
+        ze_deserializer_deserialize_sequence_end(&deserializer);
         if (attachment_len > 0) {
             print_attachment(kvp, attachment_len);
         }
@@ -98,11 +98,11 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     kv_pair_t kvs[1];
     z_string_from_str(&kvs[0].key, "reply_key", NULL, NULL);
     z_string_from_str(&kvs[0].value, "reply_value", NULL, NULL);
-    z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(reply_attachment));
-    z_bytes_writer_serialize_sequence_begin(&writer, 1);
-    z_bytes_writer_serialize_string(&writer, z_loan(kvs[0].key));
-    z_bytes_writer_serialize_string(&writer, z_loan(kvs[0].value));
-    z_bytes_writer_serialize_sequence_end(&writer);
+    ze_serializer_t serializer = ze_serializer(z_loan_mut(reply_attachment));
+    ze_serializer_serialize_sequence_begin(&serializer, 1);
+    ze_serializer_serialize_string(&serializer, z_loan(kvs[0].key));
+    ze_serializer_serialize_string(&serializer, z_loan(kvs[0].value));
+    ze_serializer_serialize_sequence_end(&serializer);
     options.attachment = z_move(reply_attachment);
     drop_attachment(kvs, 1);
 

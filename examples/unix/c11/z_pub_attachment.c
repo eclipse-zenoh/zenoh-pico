@@ -145,13 +145,13 @@ int main(int argc, char **argv) {
         // Add attachment value
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
-        z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(attachment));
-        z_bytes_writer_serialize_sequence_begin(&writer, 2);
+        ze_serializer_t serializer = ze_serializer(z_loan_mut(attachment));
+        ze_serializer_serialize_sequence_begin(&serializer, 2);
         for (size_t i = 0; i < 2; ++i) {
-            z_bytes_writer_serialize_str(&writer, kvs[i].key);
-            z_bytes_writer_serialize_str(&writer, kvs[i].value);
+            ze_serializer_serialize_str(&serializer, kvs[i].key);
+            ze_serializer_serialize_str(&serializer, kvs[i].value);
         }
-        z_bytes_writer_serialize_sequence_end(&writer);
+        ze_serializer_serialize_sequence_end(&serializer);
         options.attachment = z_move(attachment);
 
         // Add encoding value

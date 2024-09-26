@@ -182,14 +182,14 @@ void test_slice(void) {
     assert(z_check_and_drop_payload(&payload5, data, 10));
 }
 
-#define TEST_ARITHMETIC(TYPE, EXT, VAL)                               \
-    {                                                                 \
-        TYPE in = VAL, out;                                           \
-        z_owned_bytes_t payload;                                      \
-        z_bytes_serialize_from_##EXT(&payload, in);                   \
-        z_bytes_deserialize_into_##EXT(z_bytes_loan(&payload), &out); \
-        assert(in == out);                                            \
-        z_bytes_drop(z_bytes_move(&payload));                         \
+#define TEST_ARITHMETIC(TYPE, EXT, VAL)                          \
+    {                                                            \
+        TYPE in = VAL, out;                                      \
+        z_owned_bytes_t payload;                                 \
+        ze_serialize_from_##EXT(&payload, in);                   \
+        ze_deserialize_into_##EXT(z_bytes_loan(&payload), &out); \
+        assert(in == out);                                       \
+        z_bytes_drop(z_bytes_move(&payload));                    \
     }
 
 void test_arithmetic(void) {
@@ -254,20 +254,20 @@ void test_serialize_simple(void) {
     z_owned_bytes_t b;
     z_bytes_empty(&b);
 
-    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&b));
+    ze_serializer_t serializer = ze_serializer(z_bytes_loan_mut(&b));
 
-    assert(z_bytes_writer_serialize_double(&writer, 0.5) == 0);
-    assert(z_bytes_writer_serialize_int32(&writer, -1111) == 0);
-    assert(z_bytes_writer_serialize_str(&writer, "abc") == 0);
+    assert(ze_serializer_serialize_double(&serializer, 0.5) == 0);
+    assert(ze_serializer_serialize_int32(&serializer, -1111) == 0);
+    assert(ze_serializer_serialize_str(&serializer, "abc") == 0);
 
     double d;
     int32_t i;
     z_owned_string_t s;
 
-    z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&b));
-    assert(z_bytes_reader_deserialize_double(&reader, &d) == 0);
-    assert(z_bytes_reader_deserialize_int32(&reader, &i) == 0);
-    assert(z_bytes_reader_deserialize_string(&reader, &s) == 0);
+    ze_deserializer_t deserializer = ze_deserializer(z_bytes_loan(&b));
+    assert(ze_deserializer_deserialize_double(&deserializer, &d) == 0);
+    assert(ze_deserializer_deserialize_int32(&deserializer, &i) == 0);
+    assert(ze_deserializer_deserialize_string(&deserializer, &s) == 0);
 
     assert(d == 0.5);
     assert(i == -1111);
@@ -282,23 +282,23 @@ void test_serialize_sequence(void) {
     z_owned_bytes_t b;
     z_bytes_empty(&b);
 
-    z_bytes_writer_t writer = z_bytes_get_writer(z_bytes_loan_mut(&b));
-    z_bytes_writer_serialize_sequence_begin(&writer, 6);
+    ze_serializer_t serializer = ze_serializer(z_bytes_loan_mut(&b));
+    ze_serializer_serialize_sequence_begin(&serializer, 6);
     for (size_t i = 0; i < 6; ++i) {
-        z_bytes_writer_serialize_uint32(&writer, input[i]);
+        ze_serializer_serialize_uint32(&serializer, input[i]);
     }
-    z_bytes_writer_serialize_sequence_end(&writer);
+    ze_serializer_serialize_sequence_end(&serializer);
 
-    z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&b));
+    ze_deserializer_t deserializer = ze_deserializer(z_bytes_loan(&b));
     size_t len = 0;
-    assert(z_bytes_reader_deserialize_sequence_begin(&reader, &len) == 0);
+    assert(ze_deserializer_deserialize_sequence_begin(&deserializer, &len) == 0);
     assert(len == 6);
     for (size_t i = 0; i < 6; i++) {
         uint32_t u = 0;
-        assert(z_bytes_reader_deserialize_uint32(&reader, &u) == 0);
+        assert(ze_deserializer_deserialize_uint32(&deserializer, &u) == 0);
         assert(u == input[i]);
     }
-    assert(z_bytes_reader_deserialize_sequence_end(&reader) == 0);
+    assert(ze_deserializer_deserialize_sequence_end(&deserializer) == 0);
     z_bytes_drop(z_bytes_move(&b));
 }
 

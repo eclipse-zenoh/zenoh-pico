@@ -755,7 +755,6 @@ int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
  *
  * Parameters:
  *   bytes: Data container to write to.
- *   writer: Uninitialized memory location where writer is to be constructed.
  *
  */
 z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);

@@ -67,15 +67,15 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     // Check attachment
     const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
     if (attachment != NULL) {
-        z_bytes_reader_t reader = z_bytes_get_reader(attachment);
+        ze_deserializer_t deserializer = ze_deserializer(attachment);
         size_t attachment_len;
-        z_bytes_reader_deserialize_sequence_begin(&reader, &attachment_len);
+        ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].key);
-            z_bytes_reader_deserialize_string(&reader, &kvp[i].value);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
         }
-        z_bytes_reader_deserialize_sequence_end(&reader);
+        ze_deserializer_deserialize_sequence_end(&deserializer);
         if (attachment_len > 0) {
             print_attachment(kvp, attachment_len);
         }

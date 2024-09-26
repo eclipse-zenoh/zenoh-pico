@@ -72,17 +72,17 @@ _Z_VIEW_TYPE(_z_slice_t, slice)
 _Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
 
 /**
- * Represents a writer for serialized data.
+ * Represents a writer for data.
  */
 typedef _z_bytes_writer_t z_bytes_writer_t;
 
 /**
- * A reader for serialized data.
+ * A reader for data.
  */
 typedef _z_bytes_reader_t z_bytes_reader_t;
 
 /**
- * An iterator over slices of serialized data.
+ * An iterator over slices of data.
  */
 typedef struct {
     const _z_bytes_t *_bytes;

@@ -134,7 +134,7 @@ affect the owned object. However, passing the structure to a function transfers 
     z_publisher_put_options_default(&options);
     int64_t metadata = 42;
     z_owned_bytes_t attachment;
-    z_bytes_serialize_from_int64(&attachment, metadata);
+    ze_serialize_from_int64(&attachment, metadata);
     options.attachment = z_move(attachment); // the data itself is still in the `attachment`
 
     z_owned_bytes_t payload;
