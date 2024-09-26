@@ -100,42 +100,42 @@ z_result_t ze_deserializer_deserialize_string(ze_deserializer_t *deserializer, z
     ze_serializer_t serializer = ze_serializer(z_bytes_loan_mut(bytes)); \
     _Z_CLEAN_RETURN_IF_ERR(expr, z_bytes_drop(z_bytes_move(bytes)));
 
-z_result_t ze_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
+z_result_t ze_serialize_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_buf(&serializer, data, len));
     return _Z_RES_OK;
 }
 
-z_result_t ze_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *data) {
+z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *data) {
     _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_slice(&serializer, data));
     return _Z_RES_OK;
 }
 
-z_result_t ze_deserialize_to_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *data) {
+z_result_t ze_deserialize_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *data) {
     ze_deserializer_t deserializer = ze_deserializer(bytes);
     return ze_deserializer_deserialize_slice(&deserializer, data);
 }
 
-z_result_t ze_serialize_from_str(z_owned_bytes_t *bytes, const char *data) {
+z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *data) {
     _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_str(&serializer, data));
     return _Z_RES_OK;
 }
 
-z_result_t ze_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *data) {
+z_result_t ze_serialize_string(z_owned_bytes_t *bytes, const z_loaned_string_t *data) {
     _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_string(&serializer, data));
     return _Z_RES_OK;
 }
 
-z_result_t ze_deserialize_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *data) {
+z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t *data) {
     ze_deserializer_t deserializer = ze_deserializer(bytes);
     return ze_deserializer_deserialize_string(&deserializer, data);
 }
 
 #define _Z_IMPLEMENT_ZBYTES_ARITHMETIC(suffix, type)                                        \
-    z_result_t ze_serialize_from_##suffix(z_owned_bytes_t *bytes, type data) {              \
+    z_result_t ze_serialize_##suffix(z_owned_bytes_t *bytes, type data) {                   \
         _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_##suffix(&serializer, data)) \
         return _Z_RES_OK;                                                                   \
     }                                                                                       \
-    z_result_t ze_deserialize_to_##suffix(const z_loaned_bytes_t *bytes, type *data) {      \
+    z_result_t ze_deserialize_##suffix(const z_loaned_bytes_t *bytes, type *data) {         \
         ze_deserializer_t deserializer = ze_deserializer(bytes);                            \
         return ze_deserializer_deserialize_##suffix(&deserializer, data);                   \
     }

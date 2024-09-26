@@ -64,8 +64,8 @@ int main(void) {
         // Arithmetic types: uint8, uint16, uint32, uint64, int8, int16, int32, int64, float, double
         uint32_t input_u32 = 1234;
         uint32_t output_u32 = 0;
-        ze_serialize_from_uint32(&payload, input_u32);
-        ze_deserialize_to_uint32(z_loan(payload), &output_u32);
+        ze_serialize_uint32(&payload, input_u32);
+        ze_deserialize_uint32(z_loan(payload), &output_u32);
         assert(input_u32 == output_u32);
         z_drop(z_move(payload));
         // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
