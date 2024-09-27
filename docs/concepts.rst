@@ -101,10 +101,8 @@ View Types `z_view_xxx_t`
 -------------------------
 
 `z_view_xxx_t` types are reference types that point to external data. These values do not need to be dropped and 
-remain valid only as long as the data they reference is valid. 
-
-A key feature is that `z_view_xxx_t` types are loaned as `z_loaned_xxx_t`, just like their owned counterparts, 
-allowing consistent use of both owned and view types. Example:
+remain valid only as long as the data they reference is valid. Typically the view types are the variants of
+owned types that do not own the data. This allows to use view and owned types interchangeably.
 
 .. code-block:: c
 
@@ -117,6 +115,7 @@ allowing consistent use of both owned and view types. Example:
     z_drop(z_move(dst));
     z_string_clone(&dst, z_loan(view));
     z_drop(z_move(dst));
+    z_drop(z_move(owned)); // but no need to drop view
 
 Options Structures `z_xxx_options_t`
 ------------------------------------
@@ -143,11 +142,11 @@ affect the owned object. However, passing the structure to a function transfers 
     // the `payload` and `attachment` are consumed by the `z_publisher_put` function
 
 
-Enums and Plain Data Structures `z_xxx_t`
+Other Structures and Enums `z_xxx_t`
 -----------------------------------------
 
-Types named `z_xxx_t` are simple, copyable, and can be passed by value. They do not have special handling. 
-Examples include `z_timestamp_t`, `z_priority_t`, etc.
+Types named `z_xxx_t` are copyable, and can be passed by value. Some of them are just plain data structures or enums, like 
+`z_timestamp_t`, `z_priority_t`. Some are temporary data access structures, like `z_bytes_slice_iterator_t`, `z_bytes_reader_t`, etc.
 
 .. code-block:: c
 
