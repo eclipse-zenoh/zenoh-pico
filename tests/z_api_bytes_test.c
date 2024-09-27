@@ -238,7 +238,7 @@ void test_slices(void) {
     assert(check_slice(z_bytes_loan(&payload), data, 10));
 
     z_bytes_drop(z_bytes_move(&payload));
-    z_bytes_empty(&payload);
+    z_bytes_writer_empty(&writer);
 
     // possible multiple slices
     // reusing empty writer
