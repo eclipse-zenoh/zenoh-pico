@@ -22,6 +22,13 @@
 extern "C" {
 #endif
 
+/**
+ * Represents a reader for serialized data.
+ */
+typedef struct ze_deserializer_t {
+    z_bytes_reader_t _reader;
+} ze_deserializer_t;
+
 typedef struct _ze_serializer_t {
     _z_bytes_writer_t _writer;
 } _ze_serializer_t;
@@ -32,13 +39,6 @@ typedef struct _ze_serializer_t {
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_serializer_t, serializer)
 
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(ze, serializer)
-
-/**
- * Represents a reader for serialized data.
- */
-typedef struct ze_deserializer_t {
-    z_bytes_reader_t _reader;
-} ze_deserializer_t;
 
 /**
  * Constructs serializer.
