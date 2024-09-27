@@ -452,6 +452,19 @@ z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
                             void (*deleter)(void *data, void *context), void *context);
 
 /**
+ * Builds a :c:type:`z_view_slice_t`.
+ *
+ * Parameters:
+ *   slice: Pointer to an uninitialized :c:type:`z_view_slice_t`.
+ *   data: Pointer to the data to be pointed by `slice`.
+ *   len: Number of bytes in `data`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ */
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len);
+
+/**
  * Builds an empty :c:type:`z_owned_slice_t`.
  *
  * Parameters:

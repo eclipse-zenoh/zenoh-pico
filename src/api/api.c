@@ -232,6 +232,11 @@ z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
     return _Z_RES_OK;
 }
 
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len) {
+    slice->_val = _z_slice_alias_buf(data, len);
+    return _Z_RES_OK;
+}
+
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice) { return slice->start; }
 
 size_t z_slice_len(const z_loaned_slice_t *slice) { return slice->len; }
