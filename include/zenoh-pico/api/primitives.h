@@ -750,15 +750,37 @@ z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int ori
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
- * Constructs writer for :c:type:`z_loaned_bytes_t`.
- * Note: creating another writer while previous one is still in use is undefined behaviour.
+ * Constructs writer for payload.
  *
  * Parameters:
- *   bytes: Data container to write to.
+ *   writer: An uninitialized memory location where writer is to be constructed.
+ *   bytes: Data container to initiate the writer with.
+ *
+ * Return:
+ *   ``0`` in case of success, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_writer_from_bytes(z_owned_bytes_writer_t *writer, z_moved_bytes_t *bytes);
+
+/**
+ * Constructs an empty writer for payload.
+ *
+ * Parameters:
+ *   writer: An uninitialized memory location where writer is to be constructed.
+ *
+ * Return:
+ *   ``0`` in case of success, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_writer_empty(z_owned_bytes_writer_t *writer);
+
+/**
+ * Finishes writing and returns underlying bytes.
+ *
+ * Parameters:
+ *   writer: A data writer.
+ *   bytes: An uninitialized memory location where bytes is to be constructed.
  *
  */
-z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
-
+void z_bytes_writer_finish(z_moved_bytes_writer_t *writer, z_owned_bytes_t *bytes);
 /**
  * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
  *
@@ -768,9 +790,9 @@ z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
  *   len: Number of bytes to write.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if write is successful, ``negative value`` otherwise.
  */
-z_result_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+z_result_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Appends bytes.
@@ -784,7 +806,7 @@ z_result_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src
  * Return:
  *  0 in case of success, negative error code otherwise
  */
-z_result_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
+z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Create timestamp.
@@ -1020,6 +1042,7 @@ _Z_OWNED_FUNCTIONS_DEF(sample)
 _Z_OWNED_FUNCTIONS_DEF(query)
 _Z_OWNED_FUNCTIONS_DEF(slice)
 _Z_OWNED_FUNCTIONS_DEF(bytes)
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF(bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(reply_err)
 _Z_OWNED_FUNCTIONS_DEF(encoding)
 

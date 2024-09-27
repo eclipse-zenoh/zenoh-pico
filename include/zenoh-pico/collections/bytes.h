@@ -78,15 +78,18 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
 size_t _z_bytes_reader_read(_z_bytes_reader_t *reader, uint8_t *buf, size_t len);
 
 typedef struct {
-    uint8_t *cache;
-    size_t cache_size;
-    _z_bytes_t *bytes;
+    _z_arc_slice_t *cache;
+    _z_bytes_t bytes;
 } _z_bytes_writer_t;
 
-_z_bytes_writer_t _z_bytes_get_writer(_z_bytes_t *bytes, size_t cache_size);
+bool _z_bytes_writer_is_empty(const _z_bytes_writer_t *writer);
+bool _z_bytes_writer_check(const _z_bytes_writer_t *writer);
+_z_bytes_writer_t _z_bytes_writer_from_bytes(_z_bytes_t *bytes);
+_z_bytes_writer_t _z_bytes_writer_empty(void);
 z_result_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *src, size_t len);
 z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t *bytes);
 z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_arc_slice_t *bytes);
-z_result_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer);
+_z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer);
+void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
 
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

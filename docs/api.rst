@@ -54,8 +54,6 @@ Data Structures
 .. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_bytes_reader_t
 .. autoctype:: types.h::z_bytes_slice_iterator_t
-.. autoctype:: types.h::z_bytes_writer_t
-.. autoctype:: serialization.h::ze_serializer_t
 .. autoctype:: serialization.h::ze_deserializer_t
   
 
@@ -71,6 +69,14 @@ See :ref:`owned_types_concept`
 .. c:type:: z_owned_bytes_t
   
   Represents an array of bytes container.
+
+.. c:type:: z_owned_bytes_writer_t
+
+  Represents a payload writer.
+
+.. c:type:: ze_owned_serializer_t
+
+  Represents a data serializer.
 
 .. c:type:: z_owned_string_t
 
@@ -140,6 +146,14 @@ See :ref:`loaned_types_concept`
 .. c:type:: z_loaned_bytes_t
 
   Represents an array of bytes container.
+
+.. c:type:: z_loaned_bytes_writer_t
+
+  Represents a payload writer.
+
+.. c:type:: ze_loaned_serializer_t
+
+  Represents a data serializer.
 
 .. c:type:: z_loaned_string_t
 
@@ -321,7 +335,7 @@ Primitives
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_slice_empty
 .. autocfunction:: primitives.h::z_slice_is_empty
-.. autocfunction:: serialization.h::ze_deserializer
+.. autocfunction:: serialization.h::ze_deserializer_from_bytes
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int8
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int16
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int32
@@ -336,7 +350,9 @@ Primitives
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_string
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_begin
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_end
-.. autocfunction:: serialization.h::ze_serializer
+.. autocfunction:: serialization.h::ze_serializer_empty
+.. autocfunction:: serialization.h::ze_serializer_from_bytes
+.. autocfunction:: serialization.h::ze_serializer_finish
 .. autocfunction:: serialization.h::ze_serializer_serialize_int8
 .. autocfunction:: serialization.h::ze_serializer_serialize_int16
 .. autocfunction:: serialization.h::ze_serializer_serialize_int32
@@ -398,7 +414,9 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_reader_read
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
-.. autocfunction:: primitives.h::z_bytes_get_writer
+.. autocfunction:: primitives.h::z_bytes_writer_empty
+.. autocfunction:: primitives.h::z_bytes_writer_from_bytes
+.. autocfunction:: primitives.h::z_bytes_writer_finish
 .. autocfunction:: primitives.h::z_bytes_writer_write_all
 .. autocfunction:: primitives.h::z_bytes_writer_append
 .. autocfunction:: primitives.h::z_timestamp_check

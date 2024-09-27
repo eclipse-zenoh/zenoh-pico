@@ -74,7 +74,7 @@ _Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
 /**
  * Represents a writer for data.
  */
-typedef _z_bytes_writer_t z_bytes_writer_t;
+_Z_OWNED_TYPE_VALUE(_z_bytes_writer_t, bytes_writer)
 
 /**
  * A reader for data.

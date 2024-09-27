@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-#include <zenoh-pico/api/serialization.h>
 
 typedef struct kv_pair_t {
     z_owned_string_t key;
@@ -67,7 +66,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     // Check attachment
     const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
     if (attachment != NULL) {
-        ze_deserializer_t deserializer = ze_deserializer(attachment);
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
         ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);

@@ -356,13 +356,25 @@ bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t 
     return true;
 }
 
-z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes) { return _z_bytes_get_writer(bytes, Z_IOSLICE_SIZE); }
+void z_bytes_writer_finish(z_moved_bytes_writer_t *writer, z_owned_bytes_t *bytes) {
+    bytes->_val = _z_bytes_writer_finish(&writer->_this._val);
+}
 
-z_result_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len) {
+z_result_t z_bytes_writer_from_bytes(z_owned_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
+    writer->_val = _z_bytes_writer_from_bytes(&bytes->_this._val);
+    return _Z_RES_OK;
+}
+
+z_result_t z_bytes_writer_empty(z_owned_bytes_writer_t *writer) {
+    writer->_val = _z_bytes_writer_empty();
+    return _Z_RES_OK;
+}
+
+z_result_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len) {
     return _z_bytes_writer_write_all(writer, src, len);
 }
 
-z_result_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
+z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
     return _z_bytes_writer_append_z_bytes(writer, &bytes->_this._val);
 }
 
@@ -509,6 +521,8 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_ch
                               _z_string_array_copy, _z_string_svec_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty, _z_slice_copy, _z_slice_clear)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_writer_check, _z_bytes_writer_empty,
+                                      _z_bytes_writer_clear)
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid

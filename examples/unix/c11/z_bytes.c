@@ -22,7 +22,6 @@
 
 #undef NDEBUG
 #include <assert.h>
-#include <zenoh-pico/api/serialization.h>
 
 typedef struct custom_struct_t {
     float f;
@@ -76,10 +75,12 @@ int main(void) {
     {
         uint8_t input_writer[] = {0, 1, 2, 3, 4};
         uint8_t output_reader[5] = {0};
-        z_bytes_empty(&payload);
-        z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(payload));
-        z_bytes_writer_write_all(&writer, input_writer, 3);
-        z_bytes_writer_write_all(&writer, input_writer + 3, 2);
+
+        z_owned_bytes_writer_t writer;
+        z_bytes_writer_empty(&writer);
+        z_bytes_writer_write_all(z_loan_mut(writer), input_writer, 3);
+        z_bytes_writer_write_all(z_loan_mut(writer), input_writer + 3, 2);
+        z_bytes_writer_finish(z_move(writer), &payload);
         z_bytes_reader_t reader = z_bytes_get_reader(z_loan(payload));
         z_bytes_reader_read(&reader, output_reader, sizeof(output_reader));
         assert(0 == memcmp(input_writer, output_reader, sizeof(output_reader)));
@@ -91,14 +92,16 @@ int main(void) {
         // A sequence of primitive types
         int32_t input_vec[] = {1, 2, 3, 4};
         int32_t output_vec[4] = {0};
-        ze_serializer_t serializer = ze_serializer(z_loan_mut(payload));
-        ze_serializer_serialize_sequence_begin(&serializer, 4);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 4);
         for (size_t i = 0; i < 4; ++i) {
-            ze_serializer_serialize_int32(&serializer, input_vec[i]);
+            ze_serializer_serialize_int32(z_loan_mut(serializer), input_vec[i]);
         }
-        ze_serializer_serialize_sequence_end(&serializer);
+        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
+        ze_serializer_finish(z_move(serializer), &payload);
 
-        ze_deserializer_t deserializer = ze_deserializer(z_loan(payload));
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_loan(payload));
         size_t num_elements = 0;
         ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements);
         assert(num_elements == 4);
@@ -121,15 +124,17 @@ int main(void) {
         kvs_input[1].key = 1;
         z_string_from_str(&kvs_input[1].value, "def", NULL, NULL);
 
-        ze_serializer_t serializer = ze_serializer(z_loan_mut(payload));
-        ze_serializer_serialize_sequence_begin(&serializer, 2);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 2);
         for (size_t i = 0; i < 2; ++i) {
-            ze_serializer_serialize_int32(&serializer, kvs_input[i].key);
-            ze_serializer_serialize_string(&serializer, z_loan(kvs_input[i].value));
+            ze_serializer_serialize_int32(z_loan_mut(serializer), kvs_input[i].key);
+            ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs_input[i].value));
         }
-        ze_serializer_serialize_sequence_end(&serializer);
+        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
+        ze_serializer_finish(z_move(serializer), &payload);
 
-        ze_deserializer_t deserializer = ze_deserializer(z_loan(payload));
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_loan(payload));
         size_t num_elements = 0;
         ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements);
         assert(num_elements == 2);
@@ -154,24 +159,26 @@ int main(void) {
         // Custom struct/tuple serializaiton
         custom_struct_t cs = (custom_struct_t){.f = 1.0f, .u = {{1, 2, 3}, {4, 5, 6}}, .c = "test"};
 
-        ze_serializer_t serializer = ze_serializer(z_loan_mut(payload));
-        ze_serializer_serialize_float(&serializer, cs.f);
-        ze_serializer_serialize_sequence_begin(&serializer, 2);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_float(z_loan_mut(serializer), cs.f);
+        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 2);
         for (size_t i = 0; i < 2; ++i) {
-            ze_serializer_serialize_sequence_begin(&serializer, 3);
+            ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 3);
             for (size_t j = 0; j < 3; ++j) {
-                ze_serializer_serialize_uint64(&serializer, cs.u[i][j]);
+                ze_serializer_serialize_uint64(z_loan_mut(serializer), cs.u[i][j]);
             }
-            ze_serializer_serialize_sequence_end(&serializer);
+            ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         }
-        ze_serializer_serialize_sequence_end(&serializer);
-        ze_serializer_serialize_str(&serializer, cs.c);
+        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
+        ze_serializer_serialize_str(z_loan_mut(serializer), cs.c);
+        ze_serializer_finish(z_move(serializer), &payload);
 
         float f = 0.0f;
         uint64_t u = 0;
         z_owned_string_t c;
 
-        ze_deserializer_t deserializer = ze_deserializer(z_loan(payload));
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_loan(payload));
         ze_deserializer_deserialize_float(&deserializer, &f);
         assert(f == cs.f);
         size_t num_elements0 = 0;
@@ -202,11 +209,13 @@ int main(void) {
         z_bytes_copy_from_str(&b1, "abc");
         z_bytes_copy_from_str(&b2, "def");
         z_bytes_copy_from_str(&b3, "hij");
-        z_bytes_writer_t writer = z_bytes_get_writer(z_loan_mut(payload));
-        z_bytes_writer_append(&writer, z_move(b1));
-        z_bytes_writer_append(&writer, z_move(b2));
-        z_bytes_writer_append(&writer, z_move(b3));
+        z_owned_bytes_writer_t writer;
+        z_bytes_writer_empty(&writer);
+        z_bytes_writer_append(z_loan_mut(writer), z_move(b1));
+        z_bytes_writer_append(z_loan_mut(writer), z_move(b2));
+        z_bytes_writer_append(z_loan_mut(writer), z_move(b3));
 
+        z_bytes_writer_finish(z_move(writer), &payload);
         z_bytes_slice_iterator_t slice_iter = z_bytes_get_slice_iterator(z_bytes_loan(&payload));
         z_view_slice_t curr_slice;
         while (z_bytes_slice_iterator_next(&slice_iter, &curr_slice)) {

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-#include <zenoh-pico/api/serialization.h>
 
 typedef struct kv_pair_t {
     z_owned_string_t key;
@@ -69,7 +68,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     // Check attachment
     const z_loaned_bytes_t *attachment = z_query_attachment(query);
     if (attachment != NULL) {
-        ze_deserializer_t deserializer = ze_deserializer(attachment);
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
         ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
@@ -94,15 +93,16 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 
     // Reply attachment
     z_owned_bytes_t reply_attachment;
-    z_bytes_empty(&reply_attachment);
     kv_pair_t kvs[1];
     z_string_from_str(&kvs[0].key, "reply_key", NULL, NULL);
     z_string_from_str(&kvs[0].value, "reply_value", NULL, NULL);
-    ze_serializer_t serializer = ze_serializer(z_loan_mut(reply_attachment));
-    ze_serializer_serialize_sequence_begin(&serializer, 1);
-    ze_serializer_serialize_string(&serializer, z_loan(kvs[0].key));
-    ze_serializer_serialize_string(&serializer, z_loan(kvs[0].value));
-    ze_serializer_serialize_sequence_end(&serializer);
+    ze_owned_serializer_t serializer;
+    ze_serializer_empty(&serializer);
+    ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 1);
+    ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].key));
+    ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].value));
+    ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
+    ze_serializer_finish(z_move(serializer), &reply_attachment);
     options.attachment = z_move(reply_attachment);
     drop_attachment(kvs, 1);
 
