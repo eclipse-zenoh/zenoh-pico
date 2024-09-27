@@ -71,7 +71,8 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     if (z_arg != NULL) {
         z_arg->_fun = fun;
         z_arg->_arg = arg;
-        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, (TaskHandle_t*)task) != pdPASS) {
+        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, (TaskHandle_t *)task) !=
+            pdPASS) {
             ret = -1;
         }
     } else {
