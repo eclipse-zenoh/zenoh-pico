@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_API_SERIALIZATION_H
 #define INCLUDE_ZENOH_PICO_API_SERIALIZATION_H
 
+#include "olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/utils/endianness.h"
 
@@ -37,8 +38,6 @@ typedef struct _ze_serializer_t {
  * Represents a writer for serialized data.
  */
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_serializer_t, serializer)
-
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(ze, serializer)
 
 /**
  * Constructs serializer.
@@ -822,6 +821,7 @@ z_result_t ze_deserialize_float(const z_loaned_bytes_t *bytes, float *dst);
  */
 z_result_t ze_deserialize_double(const z_loaned_bytes_t *bytes, double *dst);
 
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(ze, serializer)
 #ifdef __cplusplus
 }
 #endif
