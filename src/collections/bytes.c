@@ -410,3 +410,9 @@ void _z_bytes_writer_clear(_z_bytes_writer_t *writer) {
     _z_bytes_drop(&writer->bytes);
     writer->cache = NULL;
 }
+
+void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {
+    dst->cache = src->cache;
+    _z_bytes_move(&dst->bytes, &src->bytes);
+    src->cache = NULL;
+}

@@ -28,7 +28,6 @@
 #include "zenoh-pico/api/handlers.h"
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/api/serialization.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 

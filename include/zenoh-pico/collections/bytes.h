@@ -91,5 +91,6 @@ z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t 
 z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_arc_slice_t *bytes);
 _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer);
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
+void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
 
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */
