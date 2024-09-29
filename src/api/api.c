@@ -360,11 +360,6 @@ void z_bytes_writer_finish(z_moved_bytes_writer_t *writer, z_owned_bytes_t *byte
     bytes->_val = _z_bytes_writer_finish(&writer->_this._val);
 }
 
-z_result_t z_bytes_writer_from_bytes(z_owned_bytes_writer_t *writer, z_moved_bytes_t *bytes) {
-    writer->_val = _z_bytes_writer_from_bytes(&bytes->_this._val);
-    return _Z_RES_OK;
-}
-
 z_result_t z_bytes_writer_empty(z_owned_bytes_writer_t *writer) {
     writer->_val = _z_bytes_writer_empty();
     return _Z_RES_OK;

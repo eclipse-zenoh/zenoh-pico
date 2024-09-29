@@ -40,30 +40,6 @@ typedef struct _ze_serializer_t {
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_serializer_t, serializer)
 
 /**
- * Constructs serializer from a `bytes_writer`.
- *
- * Parameters:
- *   serializer: An uninitialized memory location where serializer is to be constructed.
- *   writer: A writer to initialize serializer with.
- *
- * Return:
- *   ``0`` in case of success, ``negative value`` otherwise.
- */
-z_result_t ze_serializer_from_bytes_writer(ze_owned_serializer_t *serializer, z_moved_bytes_writer_t *writer);
-
-/**
- * Converts serializer into 'z_owned_bytes_writer_t'. This corresponds to initializing writer with serializer data.
- *
- * Parameters:
- *   serializer: A serializer instance.
- *   writer: An uninitialized memory location where 'z_owned_bytes_writer_t' is to be constructed.
- *
- * Return:
- *   ``0`` in case of success, ``negative value`` otherwise.
- */
-z_result_t ze_serializer_to_bytes_writer(ze_moved_serializer_t *serializer, z_owned_bytes_writer_t *writer);
-
-/**
  * Constructs an empty serializer.
  *
  * Parameters:
@@ -96,32 +72,6 @@ void ze_serializer_finish(ze_moved_serializer_t *serializer, z_owned_bytes_t *by
  *   The constructed :c:type:`ze_deserializer_t`.
  */
 ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes);
-
-/**
- * Constructs deserializer from a `z_bytes_reader_t`.. The state of deserializer (i.e. underlying data and read
- * position) will be initiated with the reader's state.
- *
- *
- * Parameters:
- *   reader: A reader to initialize deserializer with.
- *
- * Return:
- *   The constructed :c:type:`ze_bytes_deserializer_t`.
- */
-ze_deserializer_t ze_deserializer_from_bytes_reader(const z_bytes_reader_t *reader);
-
-/**
- * Converts deserializer into a `z_bytes_reader_t`. The state of reader (i.e. underlying data and read position) will be
- * initiated with the serializer's state.
- *
- *
- * Parameters:
- *   deserializer: A deserializer to initialize reader with.
- *
- * Return:
- *   The constructed :c:type:`z_bytes_reader_t`.
- */
-z_bytes_reader_t ze_deserializer_to_bytes_reader(const ze_deserializer_t *deserializer);
 
 /**
  * Writes a serialized :c:type:`uint8_t` into underlying :c:type:`z_owned_bytes_t`.

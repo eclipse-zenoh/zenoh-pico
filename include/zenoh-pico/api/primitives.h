@@ -750,18 +750,6 @@ z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int ori
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
- * Constructs writer for payload.
- *
- * Parameters:
- *   writer: An uninitialized memory location where writer is to be constructed.
- *   bytes: Data container to initiate the writer with.
- *
- * Return:
- *   ``0`` in case of success, ``negative value`` otherwise.
- */
-z_result_t z_bytes_writer_from_bytes(z_owned_bytes_writer_t *writer, z_moved_bytes_t *bytes);
-
-/**
  * Constructs an empty writer for payload.
  *
  * Parameters:

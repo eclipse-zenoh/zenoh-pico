@@ -336,8 +336,6 @@ Primitives
 .. autocfunction:: primitives.h::z_slice_empty
 .. autocfunction:: primitives.h::z_slice_is_empty
 .. autocfunction:: serialization.h::ze_deserializer_from_bytes
-.. autocfunction:: serialization.h::ze_deserializer_from_bytes_reader
-.. autocfunction:: serialization.h::ze_deserializer_to_bytes_reader
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int8
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int16
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_int32
@@ -353,8 +351,6 @@ Primitives
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_begin
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_end
 .. autocfunction:: serialization.h::ze_serializer_empty
-.. autocfunction:: serialization.h::ze_serializer_from_bytes_writer
-.. autocfunction:: serialization.h::ze_serializer_to_byte_writer
 .. autocfunction:: serialization.h::ze_serializer_finish
 .. autocfunction:: serialization.h::ze_serializer_serialize_int8
 .. autocfunction:: serialization.h::ze_serializer_serialize_int16
@@ -418,7 +414,6 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
 .. autocfunction:: primitives.h::z_bytes_writer_empty
-.. autocfunction:: primitives.h::z_bytes_writer_from_bytes
 .. autocfunction:: primitives.h::z_bytes_writer_finish
 .. autocfunction:: primitives.h::z_bytes_writer_write_all
 .. autocfunction:: primitives.h::z_bytes_writer_append

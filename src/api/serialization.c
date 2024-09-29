@@ -30,16 +30,6 @@ void _ze_serializer_clear(_ze_serializer_t *serializer) { _z_bytes_writer_clear(
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(ze, _ze_serializer_t, serializer, _ze_serializer_check,
                                              _ze_serializer_empty, _ze_serializer_clear)
 
-z_result_t ze_serializer_from_bytes_writer(ze_owned_serializer_t *serializer, z_moved_bytes_writer_t *writer) {
-    _z_bytes_writer_move(&serializer->_val._writer, &writer->_this._val);
-    return _Z_RES_OK;
-}
-
-z_result_t ze_serializer_to_writer(ze_moved_serializer_t *serializer, z_owned_bytes_writer_t *writer) {
-    _z_bytes_writer_move(&writer->_val, &serializer->_this._val._writer);
-    return _Z_RES_OK;
-}
-
 z_result_t ze_serializer_empty(ze_owned_serializer_t *serializer) {
     serializer->_val._writer = _z_bytes_writer_empty();
     return _Z_RES_OK;
@@ -53,16 +43,6 @@ ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes) {
     ze_deserializer_t d;
     d._reader = z_bytes_get_reader(bytes);
     return d;
-}
-
-ze_deserializer_t ze_deserializer_from_bytes_reader(const z_bytes_reader_t *reader) {
-    ze_deserializer_t d;
-    d._reader = *reader;
-    return d;
-}
-
-z_bytes_reader_t ze_deserializer_to_bytes_reader(const ze_deserializer_t *deserializer) {
-    return deserializer->_reader;
 }
 
 z_result_t __read_single_byte(uint8_t *b, void *context) {
