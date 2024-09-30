@@ -113,9 +113,11 @@ int main(int argc, char **argv) {
     z_publisher_put_options_t options;
     z_publisher_put_options_default(&options);
 
+#if defined(Z_FEATURE_UNSTABLE_API)
     // Allocate attachment
     kv_pair_t kvs[2];
     kvs[0] = (kv_pair_t){.key = "source", .value = "C"};
+#endif
     z_owned_bytes_t attachment;
     z_bytes_empty(&attachment);
 
