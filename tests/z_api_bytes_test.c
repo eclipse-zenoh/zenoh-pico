@@ -188,7 +188,7 @@ void test_slice(void) {
     z_bytes_from_static_buf(&payload5, data, 10);
     assert(z_check_and_drop_payload(&payload5, data, 10));
 }
-
+#if defined(Z_FEATURE_UNSTABLE_API)
 #define TEST_ARITHMETIC(TYPE, EXT, VAL)                     \
     {                                                       \
         TYPE in = VAL, out;                                 \
@@ -213,7 +213,7 @@ void test_arithmetic(void) {
     TEST_ARITHMETIC(float, float, 10.1f);
     TEST_ARITHMETIC(double, double, -105.001);
 }
-
+#endif
 bool check_slice(const z_loaned_bytes_t *b, const uint8_t *data, size_t len) {
     z_bytes_slice_iterator_t it = z_bytes_get_slice_iterator(b);
     uint8_t *data_out = (uint8_t *)malloc(len);
@@ -257,7 +257,7 @@ void test_slices(void) {
     assert(check_slice(z_bytes_loan(&payload), data, 10));
     z_bytes_drop(z_bytes_move(&payload));
 }
-
+#if defined(Z_FEATURE_UNSTABLE_API)
 void test_serialize_simple(void) {
     z_owned_bytes_t b;
 
@@ -314,15 +314,17 @@ void test_serialize_sequence(void) {
     assert(ze_deserializer_is_done(&deserializer));
     z_bytes_drop(z_bytes_move(&b));
 }
-
+#endif
 int main(void) {
     test_reader_seek();
     test_reader_read();
     test_writer();
     test_slice();
-    test_arithmetic();
     test_append();
     test_slices();
+#if defined(Z_FEATURE_UNSTABLE_API)
+    test_arithmetic();
     test_serialize_simple();
     test_serialize_sequence();
+#endif
 }

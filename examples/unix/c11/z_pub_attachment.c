@@ -119,9 +119,6 @@ int main(int argc, char **argv) {
     z_owned_bytes_t attachment;
     z_bytes_empty(&attachment);
 
-    // Allocate buffer
-    char buf_ind[16];
-
     // Create encoding
     z_owned_encoding_t encoding;
 
@@ -140,8 +137,9 @@ int main(int argc, char **argv) {
         // Create payload
         z_owned_bytes_t payload;
         z_bytes_copy_from_str(&payload, buf);
-
+#if defined(Z_FEATURE_UNSTABLE_API)
         // Add attachment value
+        char buf_ind[16];
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
         ze_owned_serializer_t serializer;
@@ -154,7 +152,7 @@ int main(int argc, char **argv) {
         ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         ze_serializer_finish(z_move(serializer), &attachment);
         options.attachment = z_move(attachment);
-
+#endif
         // Add encoding value
         z_encoding_from_str(&encoding, "zenoh/string;utf8");
         options.encoding = z_move(encoding);

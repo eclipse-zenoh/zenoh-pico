@@ -76,7 +76,7 @@ See :ref:`owned_types_concept`
 
 .. c:type:: ze_owned_serializer_t
 
-  Represents a data serializer.
+  Represents a data serializer (unstable).
 
 .. c:type:: z_owned_string_t
 
@@ -153,7 +153,7 @@ See :ref:`loaned_types_concept`
 
 .. c:type:: ze_loaned_serializer_t
 
-  Represents a data serializer.
+  Represents a data serializer (unstable).
 
 .. c:type:: z_loaned_string_t
 

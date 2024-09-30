@@ -17,6 +17,7 @@
 
 #include "zenoh-pico/protocol/codec/core.h"
 
+#if defined(Z_FEATURE_UNSTABLE_API)
 bool _ze_serializer_check(const _ze_serializer_t *serializer) { return _z_bytes_writer_check(&serializer->_writer); }
 
 _ze_serializer_t _ze_serializer_empty(void) {
@@ -171,3 +172,4 @@ _Z_IMPLEMENT_ZBYTES_ARITHMETIC(double, double)
 bool ze_deserializer_is_done(const ze_deserializer_t *deserializer) {
     return _z_bytes_reader_remaining(&deserializer->_reader) == 0;
 }
+#endif
