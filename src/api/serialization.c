@@ -83,6 +83,7 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
         _z_slice_clear(&val->_val);
         return _Z_ERR_DID_NOT_READ;
     };
+    return Z_OK;
 }
 
 z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const char *val) {
