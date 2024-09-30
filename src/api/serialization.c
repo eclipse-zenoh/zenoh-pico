@@ -155,7 +155,11 @@ z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t
     }                                                                                       \
     z_result_t ze_deserialize_##suffix(const z_loaned_bytes_t *bytes, type *data) {         \
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(bytes);                 \
-        return ze_deserializer_deserialize_##suffix(&deserializer, data);                   \
+        z_result_t err = ze_deserializer_deserialize_##suffix(&deserializer, data);         \
+        if (err == Z_OK && !ze_deserializer_is_done(&deserializer)) {                       \
+            err = Z_EDESERIALIZE;                                                          \
+        }                                                                                   \
+        return err;                                                                         \
     }
 
 _Z_IMPLEMENT_ZBYTES_ARITHMETIC(uint8, uint8_t)

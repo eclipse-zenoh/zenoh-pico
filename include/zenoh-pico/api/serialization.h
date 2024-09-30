@@ -82,7 +82,7 @@ ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes);
  *   deserializer: A deserializer instance.
  *
  * Return:
- *   `True` if there are no more data to parse, `false` otherwise
+ *   ``True`` if there is no more data to parse, ``false`` otherwise.
  */
 bool ze_deserializer_is_done(const ze_deserializer_t *deserializer);
 
