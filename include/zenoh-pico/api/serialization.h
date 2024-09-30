@@ -19,11 +19,12 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/utils/endianness.h"
 
+#if defined(Z_FEATURE_UNSTABLE_API)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined(Z_FEATURE_UNSTABLE_API)
 /**
  * Represents a reader for serialized data (unstable).
  */
