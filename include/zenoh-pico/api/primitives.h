@@ -15,7 +15,10 @@
 #ifndef INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 #define INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 
+#ifndef SPHINX_DOCS
+// For some reason sphinx/clang doesn't handle bool types correctly if stdbool.h is included
 #include <stdbool.h>
+#endif
 #include <stdint.h>
 
 #include "olv_macros.h"
