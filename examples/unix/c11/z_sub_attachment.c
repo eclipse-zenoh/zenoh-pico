@@ -69,13 +69,12 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     if (attachment != NULL) {
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
-        ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
+        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
         }
-        ze_deserializer_deserialize_sequence_end(&deserializer);
         if (attachment_len > 0) {
             print_attachment(kvp, attachment_len);
         }

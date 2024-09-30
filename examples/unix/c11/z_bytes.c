@@ -94,21 +94,19 @@ int main(void) {
         int32_t output_vec[4] = {0};
         ze_owned_serializer_t serializer;
         ze_serializer_empty(&serializer);
-        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 4);
+        ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 4);
         for (size_t i = 0; i < 4; ++i) {
             ze_serializer_serialize_int32(z_loan_mut(serializer), input_vec[i]);
         }
-        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         ze_serializer_finish(z_move(serializer), &payload);
 
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_loan(payload));
         size_t num_elements = 0;
-        ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements);
+        ze_deserializer_deserialize_sequence_length(&deserializer, &num_elements);
         assert(num_elements == 4);
         for (size_t i = 0; i < num_elements; ++i) {
             ze_deserializer_deserialize_int32(&deserializer, &output_vec[i]);
         }
-        ze_deserializer_deserialize_sequence_end(&deserializer);
 
         for (size_t i = 0; i < 4; ++i) {
             assert(input_vec[i] == output_vec[i]);
@@ -126,24 +124,22 @@ int main(void) {
 
         ze_owned_serializer_t serializer;
         ze_serializer_empty(&serializer);
-        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 2);
+        ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
         for (size_t i = 0; i < 2; ++i) {
             ze_serializer_serialize_int32(z_loan_mut(serializer), kvs_input[i].key);
             ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs_input[i].value));
         }
-        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         ze_serializer_finish(z_move(serializer), &payload);
 
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_loan(payload));
         size_t num_elements = 0;
-        ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements);
+        ze_deserializer_deserialize_sequence_length(&deserializer, &num_elements);
         assert(num_elements == 2);
         kv_pair_t kvs_output[2];
         for (size_t i = 0; i < num_elements; ++i) {
             ze_deserializer_deserialize_int32(&deserializer, &kvs_output[i].key);
             ze_deserializer_deserialize_string(&deserializer, &kvs_output[i].value);
         }
-        ze_deserializer_deserialize_sequence_end(&deserializer);
 
         for (size_t i = 0; i < 2; ++i) {
             assert(kvs_input[i].key == kvs_output[i].key);
@@ -162,15 +158,13 @@ int main(void) {
         ze_owned_serializer_t serializer;
         ze_serializer_empty(&serializer);
         ze_serializer_serialize_float(z_loan_mut(serializer), cs.f);
-        ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 2);
+        ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
         for (size_t i = 0; i < 2; ++i) {
-            ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 3);
+            ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 3);
             for (size_t j = 0; j < 3; ++j) {
                 ze_serializer_serialize_uint64(z_loan_mut(serializer), cs.u[i][j]);
             }
-            ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         }
-        ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
         ze_serializer_serialize_str(z_loan_mut(serializer), cs.c);
         ze_serializer_finish(z_move(serializer), &payload);
 
@@ -182,19 +176,17 @@ int main(void) {
         ze_deserializer_deserialize_float(&deserializer, &f);
         assert(f == cs.f);
         size_t num_elements0 = 0;
-        ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements0);
+        ze_deserializer_deserialize_sequence_length(&deserializer, &num_elements0);
         assert(num_elements0 == 2);
         for (size_t i = 0; i < 2; ++i) {
             size_t num_elements1 = 0;
-            ze_deserializer_deserialize_sequence_begin(&deserializer, &num_elements1);
+            ze_deserializer_deserialize_sequence_length(&deserializer, &num_elements1);
             assert(num_elements1 == 3);
             for (size_t j = 0; j < 3; ++j) {
                 ze_deserializer_deserialize_uint64(&deserializer, &u);
                 assert(u == cs.u[i][j]);
             }
-            ze_deserializer_deserialize_sequence_end(&deserializer);
         }
-        ze_deserializer_deserialize_sequence_end(&deserializer);
         ze_deserializer_deserialize_string(&deserializer, &c);
         assert(strncmp(cs.c, z_string_data(z_loan(c)), z_string_len(z_loan(c))) == 0);
 

@@ -348,8 +348,7 @@ Primitives
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_double
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_slice
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_string
-.. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_begin
-.. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_end
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_length
 .. autocfunction:: serialization.h::ze_serializer_empty
 .. autocfunction:: serialization.h::ze_serializer_finish
 .. autocfunction:: serialization.h::ze_serializer_serialize_int8
@@ -366,8 +365,7 @@ Primitives
 .. autocfunction:: serialization.h::ze_serializer_serialize_buf
 .. autocfunction:: serialization.h::ze_serializer_serialize_string
 .. autocfunction:: serialization.h::ze_serializer_serialize_str
-.. autocfunction:: serialization.h::ze_serializer_serialize_sequence_begin
-.. autocfunction:: serialization.h::ze_serializer_serialize_sequence_end
+.. autocfunction:: serialization.h::ze_serializer_serialize_sequence_length
 .. autocfunction:: serialization.h::ze_deserialize_int8
 .. autocfunction:: serialization.h::ze_deserialize_int16
 .. autocfunction:: serialization.h::ze_deserialize_int32

@@ -71,13 +71,12 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     if (attachment != NULL) {
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
-        ze_deserializer_deserialize_sequence_begin(&deserializer, &attachment_len);
+        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
         }
-        ze_deserializer_deserialize_sequence_end(&deserializer);
         if (attachment_len > 0) {
             print_attachment(kvp, attachment_len);
         }
@@ -100,10 +99,9 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     z_string_from_str(&kvs[0].value, "reply_value", NULL, NULL);
     ze_owned_serializer_t serializer;
     ze_serializer_empty(&serializer);
-    ze_serializer_serialize_sequence_begin(z_loan_mut(serializer), 1);
+    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 1);
     ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].key));
     ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].value));
-    ze_serializer_serialize_sequence_end(z_loan_mut(serializer));
     ze_serializer_finish(z_move(serializer), &reply_attachment);
     options.attachment = z_move(reply_attachment);
     drop_attachment(kvs, 1);

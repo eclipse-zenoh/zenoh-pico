@@ -55,30 +55,20 @@ z_result_t __read_zint(z_bytes_reader_t *reader, _z_zint_t *zint) {
     return _z_zsize_decode_with_reader(zint, __read_single_byte, reader);
 }
 
-z_result_t ze_serializer_serialize_sequence_begin(ze_loaned_serializer_t *serializer, size_t len) {
+z_result_t ze_serializer_serialize_sequence_length(ze_loaned_serializer_t *serializer, size_t len) {
     uint8_t buf[16];
     size_t bytes_used = _z_zsize_encode_buf(buf, len);
     return _z_bytes_writer_write_all(&serializer->_writer, buf, bytes_used);
 }
 
-z_result_t ze_serializer_serialize_sequence_end(ze_loaned_serializer_t *serializer) {
-    _ZP_UNUSED(serializer);
-    return _Z_RES_OK;
-}
-
-z_result_t ze_deserializer_deserialize_sequence_begin(ze_deserializer_t *deserializer, size_t *len) {
+z_result_t ze_deserializer_deserialize_sequence_length(ze_deserializer_t *deserializer, size_t *len) {
     return __read_zint(&deserializer->_reader, len);
 }
 
-z_result_t ze_deserializer_deserialize_sequence_end(ze_deserializer_t *deserializer) {
-    _ZP_UNUSED(deserializer);
-    return _Z_RES_OK;
-}
-
 z_result_t ze_serializer_serialize_buf(ze_loaned_serializer_t *serializer, const uint8_t *val, size_t len) {
-    _Z_RETURN_IF_ERR(ze_serializer_serialize_sequence_begin(serializer, len));
+    _Z_RETURN_IF_ERR(ze_serializer_serialize_sequence_length(serializer, len));
     _Z_RETURN_IF_ERR(_z_bytes_writer_write_all(&serializer->_writer, val, len));
-    return ze_serializer_serialize_sequence_end(serializer);
+    return Z_OK;
 }
 
 z_result_t ze_serializer_serialize_slice(ze_loaned_serializer_t *serializer, const z_loaned_slice_t *val) {
@@ -87,13 +77,12 @@ z_result_t ze_serializer_serialize_slice(ze_loaned_serializer_t *serializer, con
 
 z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_owned_slice_t *val) {
     size_t len = 0;
-    _Z_RETURN_IF_ERR(ze_deserializer_deserialize_sequence_begin(deserializer, &len));
+    _Z_RETURN_IF_ERR(ze_deserializer_deserialize_sequence_length(deserializer, &len));
     _Z_RETURN_IF_ERR(_z_slice_init(&val->_val, len));
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val->_val.start, len) != len) {
         _z_slice_clear(&val->_val);
         return _Z_ERR_DID_NOT_READ;
     };
-    return ze_deserializer_deserialize_sequence_end(deserializer);
 }
 
 z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const char *val) {
