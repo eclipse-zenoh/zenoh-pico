@@ -438,8 +438,8 @@ inline z_loaned_task_t* z_loan_mut(z_owned_task_t& x) { return z_task_loan_mut(&
 inline z_loaned_mutex_t* z_loan_mut(z_owned_mutex_t& x) { return z_mutex_loan_mut(&x); }
 inline z_loaned_condvar_t* z_loan_mut(z_owned_condvar_t& x) { return z_condvar_loan_mut(&x); }
 inline z_loaned_reply_err_t* z_loan_mut(z_owned_reply_err_t& x) { return z_reply_err_loan_mut(&x); }
-inline z_loaned_bytes_writer_t* z_loan(z_owned_bytes_writer_t& x) { return z_bytes_writer_loan_mut(&x); };
-inline ze_loaned_serializer_t* z_loan(ze_owned_serializer_t& x) { return ze_serializer_loan_mut(&x); };
+inline z_loaned_bytes_writer_t* z_loan_mut(z_owned_bytes_writer_t& x) { return z_bytes_writer_loan_mut(&x); };
+inline ze_loaned_serializer_t* z_loan_mut(ze_owned_serializer_t& x) { return ze_serializer_loan_mut(&x); };
 
 // z_drop definition
 inline void z_drop(z_moved_session_t* v) { z_session_drop(v); }
