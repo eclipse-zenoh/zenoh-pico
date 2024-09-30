@@ -341,6 +341,7 @@ z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int ori
 }
 
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader) { return _z_bytes_reader_tell(reader); }
+size_t z_bytes_reader_remaining(const z_bytes_reader_t *reader) { return _z_bytes_reader_remaining(reader); }
 
 z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *bytes) {
     return (z_bytes_slice_iterator_t){._bytes = bytes, ._slice_idx = 0};

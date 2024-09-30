@@ -750,6 +750,17 @@ z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int ori
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
+ * Gets number of bytes that can still be read.
+ *
+ * Parameters:
+ *  reader: Data reader.
+ *
+ * Return:
+ *  Number of bytes that can still be read.
+ */
+size_t z_bytes_reader_remaining(const z_bytes_reader_t *reader);
+
+/**
  * Constructs an empty writer for payload.
  *
  * Parameters:

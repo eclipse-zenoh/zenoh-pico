@@ -62,15 +62,19 @@ void test_reader_read(void) {
     z_bytes_reader_t reader = z_bytes_get_reader(z_bytes_loan(&payload));
 
     assert(5 == z_bytes_reader_read(&reader, data_out, 5));
+    assert(5 == z_bytes_reader_remaining(&reader));
 
     z_bytes_reader_seek(&reader, 2, SEEK_CUR);
     assert(2 == z_bytes_reader_read(&reader, data_out + 7, 2));
+    assert(1 == z_bytes_reader_remaining(&reader));
 
     z_bytes_reader_seek(&reader, 5, SEEK_SET);
     assert(2 == z_bytes_reader_read(&reader, data_out + 5, 2));
+    assert(3 == z_bytes_reader_remaining(&reader));
 
     z_bytes_reader_seek(&reader, -1, SEEK_END);
     assert(1 == z_bytes_reader_read(&reader, data_out + 9, 10));
+    assert(0 == z_bytes_reader_remaining(&reader));
 
     assert(0 == z_bytes_reader_read(&reader, data_out, 10));
 
@@ -269,9 +273,11 @@ void test_serialize_simple(void) {
     z_owned_string_t s;
 
     ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_bytes_loan(&b));
+    assert(!ze_deserializer_is_done(&deserializer));
     assert(ze_deserializer_deserialize_double(&deserializer, &d) == 0);
     assert(ze_deserializer_deserialize_int32(&deserializer, &i) == 0);
     assert(ze_deserializer_deserialize_string(&deserializer, &s) == 0);
+    assert(ze_deserializer_is_done(&deserializer));
 
     assert(d == 0.5);
     assert(i == -1111);
@@ -296,6 +302,7 @@ void test_serialize_sequence(void) {
 
     ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_bytes_loan(&b));
     size_t len = 0;
+    assert(!ze_deserializer_is_done(&deserializer));
     assert(ze_deserializer_deserialize_sequence_begin(&deserializer, &len) == 0);
     assert(len == 6);
     for (size_t i = 0; i < 6; i++) {
@@ -304,6 +311,7 @@ void test_serialize_sequence(void) {
         assert(u == input[i]);
     }
     assert(ze_deserializer_deserialize_sequence_end(&deserializer) == 0);
+    assert(ze_deserializer_is_done(&deserializer));
     z_bytes_drop(z_bytes_move(&b));
 }
 

@@ -416,3 +416,7 @@ void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {
     _z_bytes_move(&dst->bytes, &src->bytes);
     src->cache = NULL;
 }
+
+size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader) {
+    return _z_bytes_len(reader->bytes) - reader->byte_idx;
+}

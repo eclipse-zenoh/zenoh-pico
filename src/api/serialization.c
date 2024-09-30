@@ -167,3 +167,7 @@ _Z_IMPLEMENT_ZBYTES_ARITHMETIC(int32, int32_t)
 _Z_IMPLEMENT_ZBYTES_ARITHMETIC(int64, int64_t)
 _Z_IMPLEMENT_ZBYTES_ARITHMETIC(float, float)
 _Z_IMPLEMENT_ZBYTES_ARITHMETIC(double, double)
+
+bool ze_deserializer_is_done(const ze_deserializer_t *deserializer) {
+    return _z_bytes_reader_remaining(&deserializer->_reader) == 0;
+}

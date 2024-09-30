@@ -380,6 +380,7 @@ Primitives
 .. autocfunction:: serialization.h::ze_deserialize_double
 .. autocfunction:: serialization.h::ze_deserialize_slice
 .. autocfunction:: serialization.h::ze_deserialize_string
+.. autocfunction:: serialization.h::ze_deserializer_is_done
 .. autocfunction:: serialization.h::ze_serialize_int8
 .. autocfunction:: serialization.h::ze_serialize_int16
 .. autocfunction:: serialization.h::ze_serialize_int32
@@ -413,6 +414,7 @@ Primitives
 .. autocfunction:: primitives.h::z_bytes_reader_read
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
+.. autocfunction:: primitives.h::z_bytes_reader_remaining
 .. autocfunction:: primitives.h::z_bytes_writer_empty
 .. autocfunction:: primitives.h::z_bytes_writer_finish
 .. autocfunction:: primitives.h::z_bytes_writer_write_all
