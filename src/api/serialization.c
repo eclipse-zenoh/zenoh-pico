@@ -157,7 +157,7 @@ z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(bytes);                 \
         z_result_t err = ze_deserializer_deserialize_##suffix(&deserializer, data);         \
         if (err == Z_OK && !ze_deserializer_is_done(&deserializer)) {                       \
-            err = Z_EDESERIALIZE;                                                          \
+            err = Z_EDESERIALIZE;                                                           \
         }                                                                                   \
         return err;                                                                         \
     }
