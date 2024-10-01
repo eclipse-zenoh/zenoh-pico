@@ -64,7 +64,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         printf("    with timestamp: %" PRIu64 "\n", z_timestamp_ntp64_time(ts));
     }
     // Check attachment
-#if defined(Z_FEATURE_UNSTABLE_API)
+
     const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
     if (attachment != NULL) {
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
@@ -81,7 +81,6 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         drop_attachment(kvp, attachment_len);
         free(kvp);
     }
-#endif
 
     z_drop(z_move(value));
     z_drop(z_move(encoding));

@@ -66,7 +66,6 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
         z_drop(z_move(replystr));
         z_drop(z_move(encoding));
 
-#if defined(Z_FEATURE_UNSTABLE_API)
         // Check attachment
         const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
         if (attachment == NULL) {
@@ -85,7 +84,6 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
         }
         drop_attachment(kvp, attachment_len);
         free(kvp);
-#endif
     } else {
         printf(">> Received an error\n");
     }
@@ -172,7 +170,6 @@ int main(int argc, char **argv) {
         opts.payload = z_bytes_move(&payload);
     }
 
-#if defined(Z_FEATURE_UNSTABLE_API)
     // Add attachment value
     kv_pair_t kvs[1];
     z_string_from_str(&kvs[0].key, "test_key", NULL, NULL);
@@ -189,7 +186,7 @@ int main(int argc, char **argv) {
     drop_attachment(kvs, 1);
     ze_serializer_finish(z_move(serializer), &attachment);
     opts.attachment = z_move(attachment);
-#endif
+
     // Add encoding value
     z_owned_encoding_t encoding;
     z_encoding_from_str(&encoding, "zenoh/string;utf8");
