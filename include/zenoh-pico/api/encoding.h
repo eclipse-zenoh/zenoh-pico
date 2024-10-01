@@ -534,6 +534,11 @@ extern const z_owned_encoding_t ENCODING_VIDEO_VP8;
 const z_loaned_encoding_t *z_encoding_video_vp9(void);
 extern const z_owned_encoding_t ENCODING_VIDEO_VP9;
 
+/**
+ * Returns a loaned default `z_loaned_encoding_t`.
+ */
+const z_loaned_encoding_t *z_encoding_loan_default(void);
+
 #endif
 
 #ifdef __cplusplus

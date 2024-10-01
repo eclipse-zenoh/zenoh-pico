@@ -282,3 +282,5 @@ z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_str
     _z_encoding_convert_into_string(encoding, s);
     return _Z_RES_OK;
 }
+
+const z_loaned_encoding_t *z_encoding_loan_default(void) { return z_encoding_zenoh_bytes(); }
