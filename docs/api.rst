@@ -113,7 +113,7 @@ See details at :ref:`owned_types_concept`
 String Array
 ------------
 
-Represents an array of non null-terminated string.
+Represents an array of non null-terminated strings.
 
 Types
 ^^^^^
@@ -542,7 +542,7 @@ If the channel is dropped, the handlers transition into a "gravestone" state, si
 
 The Ring channel differs from FIFO in that data is overwritten if the buffer is full, but it still supports blocking and non-blocking reception of data. As with the FIFO channel, the handler can be dropped, resetting it to a gravestone state.
 
-The methods are common for all channles:
+The methods common for all channles:
 
 - `z_yyy_channel_xxx_new`: Constructs the send and receive ends of the `yyy` (`fifo` or `ring`) channel for items type `xxx`.
 - `z_yyy_handler_xxx_recv`: Receives an item from the channel (blocking). If no more items are available or the channel is dropped, the item transitions to the gravestone state.
