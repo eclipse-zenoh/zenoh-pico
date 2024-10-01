@@ -113,11 +113,10 @@ int main(int argc, char **argv) {
     z_publisher_put_options_t options;
     z_publisher_put_options_default(&options);
 
-#if defined(Z_FEATURE_UNSTABLE_API)
     // Allocate attachment
     kv_pair_t kvs[2];
     kvs[0] = (kv_pair_t){.key = "source", .value = "C"};
-#endif
+
     z_owned_bytes_t attachment;
     z_bytes_empty(&attachment);
 
@@ -139,7 +138,7 @@ int main(int argc, char **argv) {
         // Create payload
         z_owned_bytes_t payload;
         z_bytes_copy_from_str(&payload, buf);
-#if defined(Z_FEATURE_UNSTABLE_API)
+
         // Add attachment value
         char buf_ind[16];
         sprintf(buf_ind, "%d", idx);
@@ -153,7 +152,7 @@ int main(int argc, char **argv) {
         }
         ze_serializer_finish(z_move(serializer), &attachment);
         options.attachment = z_move(attachment);
-#endif
+
         // Add encoding value
         z_encoding_from_str(&encoding, "zenoh/string;utf8");
         options.encoding = z_move(encoding);

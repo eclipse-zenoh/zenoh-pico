@@ -65,7 +65,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     }
     z_drop(z_move(payload_string));
     z_drop(z_move(encoding));
-#if defined(Z_FEATURE_UNSTABLE_API)
+
     // Check attachment
     const z_loaned_bytes_t *attachment = z_query_attachment(query);
     if (attachment != NULL) {
@@ -83,7 +83,6 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
         drop_attachment(kvp, attachment_len);
         free(kvp);
     }
-#endif
 
     // Reply payload
     z_owned_bytes_t reply_payload;
@@ -91,7 +90,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
-#if defined(Z_FEATURE_UNSTABLE_API)
+
     // Reply attachment
     z_owned_bytes_t reply_attachment;
     kv_pair_t kvs[1];
@@ -105,7 +104,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     ze_serializer_finish(z_move(serializer), &reply_attachment);
     options.attachment = z_move(reply_attachment);
     drop_attachment(kvs, 1);
-#endif
+
     // Reply encoding
     z_owned_encoding_t reply_encoding;
     z_encoding_from_str(&reply_encoding, "zenoh/string;utf8");
