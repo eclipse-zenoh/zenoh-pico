@@ -279,7 +279,7 @@ file(GLOB_RECURSE Sources
   "src/session/*.c"
   "src/transport/*.c"
   "src/utils/*.c"
-  "src/system/platform-common.c"
+  "src/system/platform_common.c"
 )
 
 if(WITH_ZEPHYR)

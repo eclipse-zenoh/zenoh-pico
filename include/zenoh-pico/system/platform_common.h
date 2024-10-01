@@ -15,7 +15,10 @@
 #ifndef ZENOH_PICO_SYSTEM_PLATFORM_COMMON_H
 #define ZENOH_PICO_SYSTEM_PLATFORM_COMMON_H
 
+#ifndef SPHINX_DOCS
+// For some reason sphinx/clang doesn't handle bool types correctly if stdbool.h is included
 #include <stdbool.h>
+#endif
 #include <stdint.h>
 
 #include "zenoh-pico/api/olv_macros.h"
@@ -65,10 +68,30 @@ void _z_report_system_error(int errcode);
     } while (false)
 
 /*------------------ Random ------------------*/
+
+/**
+ * Generates a random unsigned 8-bit integer.
+ */
 uint8_t z_random_u8(void);
+
+/**
+ * Generates a random unsigned 16-bit integer.
+ */
 uint16_t z_random_u16(void);
+
+/**
+ * Generates a random unsigned 32-bit integer.
+ */
 uint32_t z_random_u32(void);
+
+/**
+ * Generates a random unsigned 64-bit integer.
+ */
 uint64_t z_random_u64(void);
+
+/**
+ * Fills buffer with random data.
+ */
 void z_random_fill(void *buf, size_t len);
 
 /*------------------ Memory ------------------*/
@@ -85,18 +108,21 @@ typedef void *z_task_attr_t;
 #endif
 
 /*------------------ Thread ------------------*/
+_Z_OWNED_TYPE_VALUE(_z_task_t, task)
+_Z_OWNED_FUNCTIONS_SYSTEM_DEF(task)
+
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 z_result_t _z_task_join(_z_task_t *task);
 z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_free(_z_task_t **task);
 
-_Z_OWNED_TYPE_VALUE(_z_task_t, task)
-_Z_OWNED_FUNCTIONS_SYSTEM_DEF(task)
-
 z_result_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 z_result_t z_task_join(z_owned_task_t *task);
 
 /*------------------ Mutex ------------------*/
+_Z_OWNED_TYPE_VALUE(_z_mutex_t, mutex)
+_Z_OWNED_FUNCTIONS_SYSTEM_DEF(mutex)
+
 z_result_t _z_mutex_init(_z_mutex_t *m);
 z_result_t _z_mutex_drop(_z_mutex_t *m);
 
@@ -104,26 +130,56 @@ z_result_t _z_mutex_lock(_z_mutex_t *m);
 z_result_t _z_mutex_try_lock(_z_mutex_t *m);
 z_result_t _z_mutex_unlock(_z_mutex_t *m);
 
-_Z_OWNED_TYPE_VALUE(_z_mutex_t, mutex)
-_Z_OWNED_FUNCTIONS_SYSTEM_DEF(mutex)
-
+/**
+ * Constructs a mutex.
+ *
+ * Returns:
+ * 	 0 in case of success, negative error code otherwise.
+ */
 z_result_t z_mutex_init(z_owned_mutex_t *m);
+
+/**
+ * Drops mutex and resets it to its gravestone state.
+ *
+ * Returns:
+ * 	 0 in case of success, negative error code otherwise.
+ */
 z_result_t z_mutex_drop(z_moved_mutex_t *m);
 
+/**
+ * Locks mutex. If mutex is already locked, blocks the thread until it aquires the lock.
+ *
+ * Returns:
+ * 	 0 in case of success, negative error code otherwise.
+ */
 z_result_t z_mutex_lock(z_loaned_mutex_t *m);
+
+/**
+ * Tries to lock mutex. If mutex is already locked, return immediately.
+ *
+ * Returns:
+ * 	 0 in case of success, negative error code otherwise.
+ */
 z_result_t z_mutex_try_lock(z_loaned_mutex_t *m);
+
+/**
+ * Unlocks previously locked mutex. If mutex was not locked by the current thread, the behaviour is undefined.
+ *
+ * Returns:
+ * 	 0 in case of success, negative error code otherwise.
+ */
 z_result_t z_mutex_unlock(z_loaned_mutex_t *m);
 
 /*------------------ CondVar ------------------*/
+_Z_OWNED_TYPE_VALUE(_z_condvar_t, condvar)
+_Z_OWNED_FUNCTIONS_SYSTEM_DEF(condvar)
+
 z_result_t _z_condvar_init(_z_condvar_t *cv);
 z_result_t _z_condvar_drop(_z_condvar_t *cv);
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv);
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv);
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
-
-_Z_OWNED_TYPE_VALUE(_z_condvar_t, condvar)
-_Z_OWNED_FUNCTIONS_SYSTEM_DEF(condvar)
 
 z_result_t z_condvar_init(z_owned_condvar_t *cv);
 z_result_t z_condvar_drop(z_moved_condvar_t *cv);

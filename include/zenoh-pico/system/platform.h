@@ -18,6 +18,6 @@
 #include <stdint.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/system/platform-common.h"
+#include "zenoh-pico/system/platform_common.h"
 
 #endif /* ZENOH_PICO_SYSTEM_PLATFORM_H */

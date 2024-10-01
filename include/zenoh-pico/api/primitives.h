@@ -984,6 +984,11 @@ z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t 
                             void *context);
 
 /**
+ * Calls sample closure.
+ */
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample);
+
+/**
  * Builds a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -997,6 +1002,11 @@ z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t 
  */
 z_result_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
                            void *context);
+
+/**
+ * Calls query closure.
+ */
+void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query);
 
 /**
  * Builds a new reply closure.
@@ -1014,6 +1024,11 @@ z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t c
                            void *context);
 
 /**
+ * Calls reply closure.
+ */
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply);
+
+/**
  * Builds a new hello closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -1029,6 +1044,11 @@ z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_hand
                            void *context);
 
 /**
+ * Calls hello closure.
+ */
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
+
+/**
  * Builds a new zid closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -1038,9 +1058,14 @@ z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_hand
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The hello closure.
+ *   The zid closure.
  */
 z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
+
+/**
+ * Calls zid closure.
+ */
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
@@ -1364,7 +1389,7 @@ const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the encoding from.
  *
  * Return:
- *   The encoding wrapped as a :c:type:`z_loaned_encoding_t*`.
+ *   The encoding wrapped as a :c:type:`z_loaned_encoding_t`.
  */
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
 
