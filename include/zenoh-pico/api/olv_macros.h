@@ -27,52 +27,53 @@
 //
 // !!! FOR INTERNAL USAGE ONLY !!!
 
-#define _Z_MOVED_TYPE(name)       \
-    typedef struct {              \
-        z_owned_##name##_t _this; \
-    } z_moved_##name##_t;
+#define _Z_MOVED_TYPE_PREFIX(prefix, name) \
+    typedef struct {                       \
+        prefix##_owned_##name##_t _this;   \
+    } prefix##_moved_##name##_t;
 
-#define _Z_LOANED_TYPE(type, name) typedef type z_loaned_##name##_t;
+#define _Z_LOANED_TYPE_PREFIX(prefix, type, name) typedef type prefix##_loaned_##name##_t;
 
 // For value types
-#define _Z_OWNED_TYPE_VALUE(type, name) \
-    typedef struct {                    \
-        type _val;                      \
-    } z_owned_##name##_t;               \
-    _Z_LOANED_TYPE(type, name)          \
-    _Z_MOVED_TYPE(name)
+#define _Z_OWNED_TYPE_VALUE_PREFIX(prefix, type, name) \
+    typedef struct {                                   \
+        type _val;                                     \
+    } prefix##_owned_##name##_t;                       \
+    _Z_LOANED_TYPE_PREFIX(prefix, type, name)          \
+    _Z_MOVED_TYPE_PREFIX(prefix, name)
+
+#define _Z_OWNED_TYPE_VALUE(type, name) _Z_OWNED_TYPE_VALUE_PREFIX(z, type, name)
 
 // For refcounted types
-#define _Z_OWNED_TYPE_RC(type, name) \
-    typedef struct {                 \
-        type _rc;                    \
-    } z_owned_##name##_t;            \
-    _Z_LOANED_TYPE(type, name)       \
-    _Z_MOVED_TYPE(name)
+#define _Z_OWNED_TYPE_RC_PREFIX(prefix, type, name) \
+    typedef struct {                                \
+        type _rc;                                   \
+    } prefix##_owned_##name##_t;                    \
+    _Z_LOANED_TYPE_PREFIX(prefix, type, name)       \
+    _Z_MOVED_TYPE_PREFIX(prefix, name)
+
+#define _Z_OWNED_TYPE_RC(type, name) _Z_OWNED_TYPE_RC_PREFIX(z, type, name)
 
 #define _Z_VIEW_TYPE(type, name) \
     typedef struct {             \
         type _val;               \
     } z_view_##name##_t;
 
-#define _Z_OWNED_FUNCTIONS_DEF(name)                                                      \
-    void z_internal_##name##_null(z_owned_##name##_t *obj);                               \
-    bool z_internal_##name##_check(const z_owned_##name##_t *obj);                        \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj);            \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);                    \
-    z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *obj);                         \
-    void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t *src);               \
-    z_result_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src); \
-    void z_##name##_drop(z_moved_##name##_t *obj);
+#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name)                                         \
+    void prefix##_internal_##name##_null(prefix##_owned_##name##_t *obj);                           \
+    bool prefix##_internal_##name##_check(const prefix##_owned_##name##_t *obj);                    \
+    const prefix##_loaned_##name##_t *prefix##_##name##_loan(const prefix##_owned_##name##_t *obj); \
+    prefix##_loaned_##name##_t *prefix##_##name##_loan_mut(prefix##_owned_##name##_t *obj);         \
+    prefix##_moved_##name##_t *prefix##_##name##_move(prefix##_owned_##name##_t *obj);              \
+    void prefix##_##name##_take(prefix##_owned_##name##_t *obj, prefix##_moved_##name##_t *src);    \
+    void prefix##_##name##_drop(prefix##_moved_##name##_t *obj);
 
-#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(name)                                   \
-    void z_internal_##name##_null(z_owned_##name##_t *obj);                    \
-    bool z_internal_##name##_check(const z_owned_##name##_t *obj);             \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj); \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj);         \
-    z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *obj);              \
-    void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t *src);    \
-    void z_##name##_drop(z_moved_##name##_t *obj);
+#define _Z_OWNED_FUNCTIONS_DEF_PREFIX(prefix, name)     \
+    _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name) \
+    z_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj, const prefix##_loaned_##name##_t *src);
+
+#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(name) _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(z, name)
+#define _Z_OWNED_FUNCTIONS_DEF(name) _Z_OWNED_FUNCTIONS_DEF_PREFIX(z, name)
 
 #define _Z_OWNED_FUNCTIONS_SYSTEM_DEF(name)                                    \
     void z_internal_##name##_null(z_owned_##name##_t *obj);                    \
@@ -87,47 +88,56 @@
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *name);         \
     void z_view_##name##_empty(z_view_##name##_t *name);
 
-#define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
-    z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return (z_moved_##name##_t *)(obj); } \
-    void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t *src) {                             \
-        *obj = src->_this;                                                                               \
-        z_internal_##name##_null(&src->_this);                                                           \
+#define _ZP_NOTHING
+
+#define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(prefix, name, attribute)                             \
+    attribute prefix##_moved_##name##_t *prefix##_##name##_move(prefix##_owned_##name##_t *obj) {           \
+        return (prefix##_moved_##name##_t *)(obj);                                                          \
+    }                                                                                                       \
+    attribute void prefix##_##name##_take(prefix##_owned_##name##_t *obj, prefix##_moved_##name##_t *src) { \
+        *obj = src->_this;                                                                                  \
+        prefix##_internal_##name##_null(&src->_this);                                                       \
     }
 
-#define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_drop)                   \
-    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
-    void z_internal_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                 \
-    bool z_internal_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }  \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; } \
-    z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }         \
-    z_result_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {           \
-        return f_copy((&obj->_val), src);                                                            \
-    }                                                                                                \
-    void z_##name##_drop(z_moved_##name##_t *obj) {                                                  \
-        if (obj != NULL) f_drop((&obj->_this._val));                                                 \
-    }
+#define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name) _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(z, name, _ZP_NOTHING)
 
-#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, attribute)                \
-    attribute void z_internal_##name##_null(z_owned_##name##_t *obj) { obj->_val = f_null(); }                     \
-    attribute bool z_internal_##name##_check(const z_owned_##name##_t *obj) { return f_check((&obj->_val)); }      \
-    attribute const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *obj) { return &obj->_val; }     \
-    attribute z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *obj) { return &obj->_val; }             \
-    attribute z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *obj) { return (z_moved_##name##_t *)(obj); } \
-    attribute void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t *src) {                             \
-        *obj = src->_this;                                                                                         \
-        z_internal_##name##_null(&src->_this);                                                                     \
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute) \
+    attribute void prefix##_internal_##name##_null(prefix##_owned_##name##_t *obj) { obj->_val = f_null(); }       \
+    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(prefix, name, attribute)                                        \
+    attribute bool prefix##_internal_##name##_check(const prefix##_owned_##name##_t *obj) {                        \
+        return f_check((&obj->_val));                                                                              \
     }                                                                                                              \
-    attribute void z_##name##_drop(z_moved_##name##_t *obj) {                                                      \
+    attribute const prefix##_loaned_##name##_t *prefix##_##name##_loan(const prefix##_owned_##name##_t *obj) {     \
+        return &obj->_val;                                                                                         \
+    }                                                                                                              \
+    attribute prefix##_loaned_##name##_t *prefix##_##name##_loan_mut(prefix##_owned_##name##_t *obj) {             \
+        return &obj->_val;                                                                                         \
+    }                                                                                                              \
+    attribute void prefix##_##name##_drop(prefix##_moved_##name##_t *obj) {                                        \
         if (obj != NULL) f_drop((&obj->_this._val));                                                               \
     }
 
-#define _ZP_NOTHING
+#define _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_copy, f_drop, attribute) \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute)     \
+    attribute prefix##_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj,                            \
+                                                        const prefix##_loaned_##name##_t *src) {                   \
+        return f_copy((&obj->_val), src);                                                                          \
+    }
+
+#define _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(prefix, type, name, f_check, f_null, f_copy, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_copy, f_drop, _ZP_NOTHING)
+
+#define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(prefix, type, name, f_check, f_null, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, _ZP_NOTHING)
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(type, name, f_check, f_null, f_drop) \
-    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, _ZP_NOTHING)
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(z, type, name, f_check, f_null, f_drop)
+
+#define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(z, type, name, f_check, f_null, f_copy, f_drop)
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(type, name, f_check, f_null, f_drop) \
-    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_INNER(type, name, f_check, f_null, f_drop, static inline)
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_drop, static inline)
 
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name)                                                                \
     _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                             \

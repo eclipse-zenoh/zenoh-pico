@@ -19,89 +19,28 @@
 #include <zenoh-pico.h>
 
 typedef struct kv_pair_t {
-    const char *key;
-    const char *value;
-} kv_pair_t;
-
-typedef struct kv_pairs_tx_t {
-    const kv_pair_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_tx_t;
-
-typedef struct kv_pair_decoded_t {
     z_owned_string_t key;
     z_owned_string_t value;
-} kv_pair_decoded_t;
-
-typedef struct kv_pairs_rx_t {
-    kv_pair_decoded_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_rx_t;
-
-#define KVP_LEN 16
+} kv_pair_t;
 
 #if Z_FEATURE_QUERYABLE == 1
 const char *keyexpr = "demo/example/zenoh-pico-queryable";
 const char *value = "Queryable from Pico!";
 static int msg_nb = 0;
 
-size_t kv_pairs_size(kv_pairs_tx_t *kvp) {
-    size_t ret = 0;
-    for (size_t i = 0; i < kvp->len; i++) {
-        // Size fields
-        ret += 2 * sizeof(uint32_t);
-        // Data size
-        ret += strlen(kvp->data[i].key) + strlen(kvp->data[i].value);
-    }
-    return ret;
-}
-
-bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
-    kv_pairs_tx_t *kvs = (kv_pairs_tx_t *)(context);
-    z_owned_bytes_t k, v;
-    if (kvs->current_idx >= kvs->len) {
-        return false;
-    } else {
-        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
-        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
-        kvs->current_idx++;
-        return true;
-    }
-}
-
-void parse_attachment(kv_pairs_rx_t *kvp, const z_loaned_bytes_t *attachment) {
-    z_owned_bytes_t kv, first, second;
-    z_bytes_iterator_t iter = z_bytes_get_iterator(attachment);
-
-    while (kvp->current_idx < kvp->len && z_bytes_iterator_next(&iter, &kv)) {
-        z_bytes_deserialize_into_pair(z_loan(kv), &first, &second);
-        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
-        z_bytes_drop(z_bytes_move(&first));
-        z_bytes_drop(z_bytes_move(&second));
-        z_bytes_drop(z_bytes_move(&kv));
-        kvp->current_idx++;
-    }
-}
-
-void print_attachment(kv_pairs_rx_t *kvp) {
+void print_attachment(const kv_pair_t *kvp, size_t len) {
     printf("    with attachment:\n");
-    for (uint32_t i = 0; i < kvp->current_idx; i++) {
-        printf("     %d: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp->data[i].key)),
-               z_string_data(z_loan(kvp->data[i].key)), (int)z_string_len(z_loan(kvp->data[i].value)),
-               z_string_data(z_loan(kvp->data[i].value)));
+    for (size_t i = 0; i < len; i++) {
+        printf("     %zu: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp[i].key)), z_string_data(z_loan(kvp[i].key)),
+               (int)z_string_len(z_loan(kvp[i].value)), z_string_data(z_loan(kvp[i].value)));
     }
 }
 
-void drop_attachment(kv_pairs_rx_t *kvp) {
-    for (size_t i = 0; i < kvp->current_idx; i++) {
-        z_string_drop(z_string_move(&kvp->data[i].key));
-        z_string_drop(z_string_move(&kvp->data[i].value));
+void drop_attachment(kv_pair_t *kvp, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        z_drop(z_move(kvp[i].key));
+        z_drop(z_move(kvp[i].value));
     }
-    z_free(kvp->data);
 }
 
 void query_handler(z_loaned_query_t *query, void *ctx) {
@@ -119,21 +58,32 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 0) {
         printf("    with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
                z_string_data(z_loan(payload_string)));
     }
-    // Check attachment
-    kv_pairs_rx_t kvp = {
-        .current_idx = 0, .len = KVP_LEN, .data = (kv_pair_decoded_t *)malloc(KVP_LEN * sizeof(kv_pair_decoded_t))};
-    parse_attachment(&kvp, z_query_attachment(query));
-    if (kvp.current_idx > 0) {
-        print_attachment(&kvp);
-    }
-    drop_attachment(&kvp);
     z_drop(z_move(payload_string));
     z_drop(z_move(encoding));
+#if defined(Z_FEATURE_UNSTABLE_API)
+    // Check attachment
+    const z_loaned_bytes_t *attachment = z_query_attachment(query);
+    if (attachment != NULL) {
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
+        size_t attachment_len;
+        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
+        kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
+        for (size_t i = 0; i < attachment_len; ++i) {
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
+        }
+        if (attachment_len > 0) {
+            print_attachment(kvp, attachment_len);
+        }
+        drop_attachment(kvp, attachment_len);
+        free(kvp);
+    }
+#endif
 
     // Reply payload
     z_owned_bytes_t reply_payload;
@@ -141,15 +91,21 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 
     z_query_reply_options_t options;
     z_query_reply_options_default(&options);
-
+#if defined(Z_FEATURE_UNSTABLE_API)
     // Reply attachment
+    z_owned_bytes_t reply_attachment;
     kv_pair_t kvs[1];
-    kvs[0] = (kv_pair_t){.key = "reply_key", .value = "reply_value"};
-    kv_pairs_tx_t kv_ctx = (kv_pairs_tx_t){.data = kvs, .current_idx = 0, .len = 1};
-    z_owned_bytes_t attachment;
-    z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&kv_ctx);
-    options.attachment = z_move(attachment);
-
+    z_string_from_str(&kvs[0].key, "reply_key", NULL, NULL);
+    z_string_from_str(&kvs[0].value, "reply_value", NULL, NULL);
+    ze_owned_serializer_t serializer;
+    ze_serializer_empty(&serializer);
+    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 1);
+    ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].key));
+    ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[0].value));
+    ze_serializer_finish(z_move(serializer), &reply_attachment);
+    options.attachment = z_move(reply_attachment);
+    drop_attachment(kvs, 1);
+#endif
     // Reply encoding
     z_owned_encoding_t reply_encoding;
     z_encoding_from_str(&reply_encoding, "zenoh/string;utf8");

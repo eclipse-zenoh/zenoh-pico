@@ -133,11 +133,11 @@ affect the owned object. However, passing the structure to a function transfers 
     z_publisher_put_options_default(&options);
     int64_t metadata = 42;
     z_owned_bytes_t attachment;
-    z_bytes_serialize_from_int64(&attachment, metadata);
+    ze_serialize_int64(&attachment, metadata);
     options.attachment = z_move(attachment); // the data itself is still in the `attachment`
 
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_str(&payload, "Don't panic!");
+    z_bytes_copy_from_str(&payload, "Don't panic!"); 
     z_publisher_put(z_loan(pub), z_move(payload), &options);
     // the `payload` and `attachment` are consumed by the `z_publisher_put` function
 

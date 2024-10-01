@@ -53,9 +53,8 @@ Data Structures
 .. autoctype:: types.h::zp_send_keep_alive_options_t
 .. autoctype:: types.h::zp_send_join_options_t
 .. autoctype:: types.h::z_bytes_reader_t
-.. autoctype:: types.h::z_bytes_iterator_t
 .. autoctype:: types.h::z_bytes_slice_iterator_t
-.. autoctype:: types.h::z_bytes_writer_t
+.. autoctype:: serialization.h::ze_deserializer_t
   
 
 Owned Types
@@ -70,6 +69,14 @@ See :ref:`owned_types_concept`
 .. c:type:: z_owned_bytes_t
   
   Represents an array of bytes container.
+
+.. c:type:: z_owned_bytes_writer_t
+
+  Represents a payload writer.
+
+.. c:type:: ze_owned_serializer_t
+
+  Represents a data serializer (unstable).
 
 .. c:type:: z_owned_string_t
 
@@ -139,6 +146,14 @@ See :ref:`loaned_types_concept`
 .. c:type:: z_loaned_bytes_t
 
   Represents an array of bytes container.
+
+.. c:type:: z_loaned_bytes_writer_t
+
+  Represents a payload writer.
+
+.. c:type:: ze_loaned_serializer_t
+
+  Represents a data serializer (unstable).
 
 .. c:type:: z_loaned_string_t
 
@@ -320,54 +335,88 @@ Primitives
 .. autocfunction:: primitives.h::z_slice_len
 .. autocfunction:: primitives.h::z_slice_empty
 .. autocfunction:: primitives.h::z_slice_is_empty
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_int8
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_int16
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_int32
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_int64
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_uint8
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_uint16
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_uint32
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_uint64
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_float
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_double
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_slice
-.. autocfunction:: primitives.h::z_bytes_deserialize_into_string
-.. autocfunction:: primitives.h::z_bytes_serialize_from_int8
-.. autocfunction:: primitives.h::z_bytes_serialize_from_int16
-.. autocfunction:: primitives.h::z_bytes_serialize_from_int32
-.. autocfunction:: primitives.h::z_bytes_serialize_from_int64
-.. autocfunction:: primitives.h::z_bytes_serialize_from_uint8
-.. autocfunction:: primitives.h::z_bytes_serialize_from_uint16
-.. autocfunction:: primitives.h::z_bytes_serialize_from_uint32
-.. autocfunction:: primitives.h::z_bytes_serialize_from_uint64
-.. autocfunction:: primitives.h::z_bytes_serialize_from_float
-.. autocfunction:: primitives.h::z_bytes_serialize_from_double
+.. autocfunction:: serialization.h::ze_deserializer_from_bytes
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_int8
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_int16
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_int32
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_int64
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_uint8
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_uint16
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_uint32
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_uint64
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_float
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_double
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_slice
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_string
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_length
+.. autocfunction:: serialization.h::ze_serializer_empty
+.. autocfunction:: serialization.h::ze_serializer_finish
+.. autocfunction:: serialization.h::ze_serializer_serialize_int8
+.. autocfunction:: serialization.h::ze_serializer_serialize_int16
+.. autocfunction:: serialization.h::ze_serializer_serialize_int32
+.. autocfunction:: serialization.h::ze_serializer_serialize_int64
+.. autocfunction:: serialization.h::ze_serializer_serialize_uint8
+.. autocfunction:: serialization.h::ze_serializer_serialize_uint16
+.. autocfunction:: serialization.h::ze_serializer_serialize_uint32
+.. autocfunction:: serialization.h::ze_serializer_serialize_uint64
+.. autocfunction:: serialization.h::ze_serializer_serialize_float
+.. autocfunction:: serialization.h::ze_serializer_serialize_double
+.. autocfunction:: serialization.h::ze_serializer_serialize_slice
+.. autocfunction:: serialization.h::ze_serializer_serialize_buf
+.. autocfunction:: serialization.h::ze_serializer_serialize_string
+.. autocfunction:: serialization.h::ze_serializer_serialize_str
+.. autocfunction:: serialization.h::ze_serializer_serialize_sequence_length
+.. autocfunction:: serialization.h::ze_deserialize_int8
+.. autocfunction:: serialization.h::ze_deserialize_int16
+.. autocfunction:: serialization.h::ze_deserialize_int32
+.. autocfunction:: serialization.h::ze_deserialize_int64
+.. autocfunction:: serialization.h::ze_deserialize_uint8
+.. autocfunction:: serialization.h::ze_deserialize_uint16
+.. autocfunction:: serialization.h::ze_deserialize_uint32
+.. autocfunction:: serialization.h::ze_deserialize_uint64
+.. autocfunction:: serialization.h::ze_deserialize_float
+.. autocfunction:: serialization.h::ze_deserialize_double
+.. autocfunction:: serialization.h::ze_deserialize_slice
+.. autocfunction:: serialization.h::ze_deserialize_string
+.. autocfunction:: serialization.h::ze_deserializer_is_done
+.. autocfunction:: serialization.h::ze_serialize_int8
+.. autocfunction:: serialization.h::ze_serialize_int16
+.. autocfunction:: serialization.h::ze_serialize_int32
+.. autocfunction:: serialization.h::ze_serialize_int64
+.. autocfunction:: serialization.h::ze_serialize_uint8
+.. autocfunction:: serialization.h::ze_serialize_uint16
+.. autocfunction:: serialization.h::ze_serialize_uint32
+.. autocfunction:: serialization.h::ze_serialize_uint64
+.. autocfunction:: serialization.h::ze_serialize_float
+.. autocfunction:: serialization.h::ze_serialize_double
+.. autocfunction:: serialization.h::ze_serialize_slice
+.. autocfunction:: serialization.h::ze_serialize_buf
+.. autocfunction:: serialization.h::ze_serialize_string
+.. autocfunction:: serialization.h::ze_serialize_str
 .. autocfunction:: primitives.h::z_bytes_from_slice
-.. autocfunction:: primitives.h::z_bytes_serialize_from_slice
+.. autocfunction:: primitives.h::z_bytes_copy_from_slice
 .. autocfunction:: primitives.h::z_bytes_from_buf
-.. autocfunction:: primitives.h::z_bytes_serialize_from_buf
+.. autocfunction:: primitives.h::z_bytes_copy_from_buf
 .. autocfunction:: primitives.h::z_bytes_from_static_buf
 .. autocfunction:: primitives.h::z_bytes_from_string
-.. autocfunction:: primitives.h::z_bytes_serialize_from_string
+.. autocfunction:: primitives.h::z_bytes_copy_from_string
 .. autocfunction:: primitives.h::z_bytes_from_str
-.. autocfunction:: primitives.h::z_bytes_serialize_from_str
+.. autocfunction:: primitives.h::z_bytes_copy_from_str
 .. autocfunction:: primitives.h::z_bytes_from_static_str
 .. autocfunction:: primitives.h::z_bytes_empty
 .. autocfunction:: primitives.h::z_bytes_len
 .. autocfunction:: primitives.h::z_bytes_is_empty
-.. autocfunction:: primitives.h::z_bytes_get_iterator
-.. autocfunction:: primitives.h::z_bytes_iterator_next
 .. autocfunction:: primitives.h::z_bytes_get_slice_iterator
 .. autocfunction:: primitives.h::z_bytes_slice_iterator_next
 .. autocfunction:: primitives.h::z_bytes_get_reader
 .. autocfunction:: primitives.h::z_bytes_reader_read
-.. autocfunction:: primitives.h::z_bytes_reader_read_bounded
 .. autocfunction:: primitives.h::z_bytes_reader_seek
 .. autocfunction:: primitives.h::z_bytes_reader_tell
-.. autocfunction:: primitives.h::z_bytes_get_writer
+.. autocfunction:: primitives.h::z_bytes_reader_remaining
+.. autocfunction:: primitives.h::z_bytes_writer_empty
+.. autocfunction:: primitives.h::z_bytes_writer_finish
 .. autocfunction:: primitives.h::z_bytes_writer_write_all
 .. autocfunction:: primitives.h::z_bytes_writer_append
-.. autocfunction:: primitives.h::z_bytes_writer_append_bounded
 .. autocfunction:: primitives.h::z_timestamp_check
 .. autocfunction:: primitives.h::z_query_target_default
 .. autocfunction:: primitives.h::z_query_consolidation_auto

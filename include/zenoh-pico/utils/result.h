@@ -81,6 +81,7 @@ typedef enum {
     Z_EINVAL = -75,
     _Z_ERR_OVERFLOW = -74,
     _Z_ERR_SESSION_CLOSED = -73,
+    Z_EDESERIALIZE = -72,
 
     _Z_ERR_GENERIC = -128
 } _z_res_t;

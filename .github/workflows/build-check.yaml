@@ -234,7 +234,7 @@ jobs:
       - name: Build project and run test
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make
+          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/attachment.py
         timeout-minutes: 5
 

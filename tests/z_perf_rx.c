@@ -42,7 +42,7 @@ void z_stats_stop(z_stats_t *stats) {
 void on_sample(z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
     z_owned_slice_t value;
-    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
+    z_bytes_to_slice(z_sample_payload(sample), &value);
     unsigned long data_len = (unsigned long)z_slice_len(z_loan(value));
 
     if (stats->curr_len != data_len) {
