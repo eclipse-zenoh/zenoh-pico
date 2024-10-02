@@ -1465,3 +1465,7 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     (void)(options);
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+z_reliability_t z_reliability_default(void) { return Z_RELIABILITY_DEFAULT; }
+#endif

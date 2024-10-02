@@ -888,7 +888,7 @@ Functions
 .. autocfunction:: primitives.h::z_publisher_options_default
 .. autocfunction:: primitives.h::z_publisher_put_options_default
 .. autocfunction:: primitives.h::z_publisher_delete_options_default
-.. TODO: implement .. autocfunction:: primitives.h::z_reliability_default
+.. autocfunction:: primitives.h::z_reliability_default
 
 Ownership Functions
 -------------------

@@ -2124,6 +2124,16 @@ void z_scout_options_default(z_scout_options_t *options);
  */
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
+/**
+ * Gets the default reliability value (unstable).
+ *
+ * Return:
+ *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ */
+#ifdef Z_FEATURE_UNSTABLE_API
+z_reliability_t z_reliability_default(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
