@@ -247,7 +247,7 @@ typedef struct {
 } z_queryable_options_t;
 
 /**
- * Represents the configuration used to configure a query reply sent via :c:func:`z_query_reply.
+ * Represents the configuration used to configure a query reply sent via :c:func:`z_query_reply`.
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
@@ -267,7 +267,7 @@ typedef struct {
 } z_query_reply_options_t;
 
 /**
- * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del.
+ * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del`.
  *
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
@@ -285,7 +285,7 @@ typedef struct {
 } z_query_reply_del_options_t;
 
 /**
- * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err.
+ * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err`.
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
@@ -502,8 +502,6 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
 
-void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample);
-
 typedef _z_queryable_handler_t z_queryable_handler_t;
 
 typedef struct {
@@ -524,8 +522,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
-
-void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query);
 
 typedef _z_reply_handler_t z_reply_handler_t;
 
@@ -548,8 +544,6 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
 
-void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply);
-
 typedef void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg);
 
 typedef struct {
@@ -571,8 +565,6 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
-void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
-
 typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
 
 typedef struct {
@@ -592,8 +584,6 @@ typedef struct {
  *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
-
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

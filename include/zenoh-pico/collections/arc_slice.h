@@ -22,7 +22,7 @@
 
 #include "refcount.h"
 #include "slice.h"
-#include "zenoh-pico/system/platform-common.h"
+#include "zenoh-pico/system/platform_common.h"
 
 _Z_REFCOUNT_DEFINE(_z_slice, _z_slice)
 

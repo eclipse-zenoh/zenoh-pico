@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "zenoh-pico/system/platform-common.h"
+#include "zenoh-pico/system/platform_common.h"
 #include "zenoh-pico/utils/result.h"
 
 #if defined(ZENOH_LINUX)
