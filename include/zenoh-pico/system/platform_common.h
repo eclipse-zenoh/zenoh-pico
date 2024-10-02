@@ -117,7 +117,7 @@ z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_free(_z_task_t **task);
 
 z_result_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
-z_result_t z_task_join(z_owned_task_t *task);
+z_result_t z_task_join(z_moved_task_t *task);
 
 /*------------------ Mutex ------------------*/
 _Z_OWNED_TYPE_VALUE(_z_mutex_t, mutex)
