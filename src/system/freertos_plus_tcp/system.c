@@ -124,6 +124,11 @@ z_result_t _z_task_join(_z_task_t *task) {
     return 0;
 }
 
+z_result_t _z_task_detach(_z_task_t *task) {
+    // Not implemented
+    return _Z_ERR_GENERIC;
+}
+
 z_result_t _z_task_cancel(_z_task_t *task) {
     vTaskDelete(task->handle);
     return 0;

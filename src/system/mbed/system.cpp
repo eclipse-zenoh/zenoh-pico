@@ -53,6 +53,11 @@ z_result_t _z_task_join(_z_task_t *task) {
     return res;
 }
 
+z_result_t _z_task_detach(_z_task_t *task) {
+    // Not implemented
+    return _Z_ERR_GENERIC;
+}
+
 z_result_t _z_task_cancel(_z_task_t *task) {
     int res = ((Thread *)*task)->terminate();
     delete ((Thread *)*task);

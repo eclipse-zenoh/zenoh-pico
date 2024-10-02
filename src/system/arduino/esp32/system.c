@@ -87,6 +87,11 @@ z_result_t _z_task_join(_z_task_t *task) {
     return _z_task_cancel(task);
 }
 
+z_result_t _z_task_detach(_z_task_t *task) {
+    // Note: task/thread detach not supported on FreeRTOS API, so we force its deletion instead.
+    return _z_task_cancel(task);
+}
+
 z_result_t _z_task_cancel(_z_task_t *task) {
     vTaskDelete(*task);
     return 0;

@@ -67,6 +67,8 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 z_result_t _z_task_join(_z_task_t *task) { return -1; }
 
+z_result_t _z_task_detach(_z_task_t *task) { return -1; }
+
 z_result_t _z_task_cancel(_z_task_t *task) { return -1; }
 
 void _z_task_free(_z_task_t **task) {

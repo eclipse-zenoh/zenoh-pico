@@ -87,6 +87,8 @@ z_result_t _z_task_join(_z_task_t* task) {
     return furi_thread_join(*task);
 }
 
+z_result_t _z_task_detach(_z_task_t* task) { return -1; }
+
 z_result_t _z_task_cancel(_z_task_t* task) { return -1; }
 
 void _z_task_free(_z_task_t** task) {
