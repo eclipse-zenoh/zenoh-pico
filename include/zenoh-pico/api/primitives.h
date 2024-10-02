@@ -1404,6 +1404,7 @@ const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
  */
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  * Gets the reliability a sample was received with (unstable).
  *
@@ -1413,7 +1414,6 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
  */
-#ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
 #endif
 
@@ -2123,6 +2123,16 @@ void z_scout_options_default(z_scout_options_t *options);
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
+
+#ifdef Z_FEATURE_UNSTABLE_API
+/**
+ * Gets the default reliability value (unstable).
+ *
+ * Return:
+ *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ */
+z_reliability_t z_reliability_default(void);
+#endif
 
 #ifdef __cplusplus
 }
