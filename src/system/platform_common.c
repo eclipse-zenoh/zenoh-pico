@@ -34,6 +34,15 @@ z_result_t z_task_join(z_moved_task_t *task) {
     return ret;
 }
 
+z_result_t z_task_detach(z_moved_task_t *task) {
+    _z_task_t *ptr = &task->_this._val;
+    z_result_t ret = _z_task_detach(ptr);
+    _z_task_free(&ptr);
+    return ret;
+}
+
+z_result_t z_task_drop(z_moved_task_t *task) { return z_task_detach(task); }
+
 /*------------------ Mutex ------------------*/
 _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(_z_mutex_t, mutex)
 

@@ -113,11 +113,47 @@ _Z_OWNED_FUNCTIONS_SYSTEM_DEF(task)
 
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
 z_result_t _z_task_join(_z_task_t *task);
+z_result_t _z_task_detach(_z_task_t *task);
 z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_free(_z_task_t **task);
 
+/**
+ * Constructs a new task.
+ *
+ * Parameters:
+ *   task: An uninitialized memory location where task will be constructed.
+ *   attr: Attributes of the task.
+ *   fun: Function to be executed by the task.
+ *   arg: Argument that will be passed to the function `fun`.
+ *
+ * Returns:
+ *   ``0`` in case of success, negative error code otherwise.
+ */
 z_result_t z_task_init(z_owned_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg);
+
+/**
+ * Joins the task and releases all allocated resources
+ *
+ * Returns:
+ *   ``0`` in case of success, negative error code otherwise.
+ */
 z_result_t z_task_join(z_moved_task_t *task);
+
+/**
+ * Detaches the task and releases all allocated resources.
+ *
+ * Returns:
+ *   ``0`` in case of success, negative error code otherwise.
+ */
+z_result_t z_task_detach(z_moved_task_t *task);
+
+/**
+ * Drop the task. Same as :c:func:`z_task_detach`. Use :c:func:`z_task_join` to wait for the task completion.
+ *
+ * Returns:
+ *   ``0`` in case of success, negative error code otherwise.
+ */
+z_result_t z_task_drop(z_moved_task_t *task);
 
 /*------------------ Mutex ------------------*/
 _Z_OWNED_TYPE_VALUE(_z_mutex_t, mutex)

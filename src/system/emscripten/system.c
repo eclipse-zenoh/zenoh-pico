@@ -13,6 +13,7 @@
 //
 
 #include <emscripten/html5.h>
+#include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,6 +50,8 @@ z_result_t _z_task_init(_z_task_t *task, pthread_attr_t *attr, void *(*fun)(void
 }
 
 z_result_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
+
+z_result_t _z_task_detach(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_detach(*task)); }
 
 z_result_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
 

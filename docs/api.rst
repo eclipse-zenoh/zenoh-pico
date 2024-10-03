@@ -762,14 +762,8 @@ Functions
 ^^^^^^^^^
 .. autocfunction:: platform_common.h::z_task_init
 .. autocfunction:: platform_common.h::z_task_join
-.. TODO: implement .. autocfunction:: platform_common.h::z_task_detach
-
-Ownership Functions
-^^^^^^^^^^^^^^^^^^^
-
-See details at :ref:`owned_types_concept`
-
-.. c:function:: void z_task_drop(z_moved_task_t * task) 
+.. autocfunction:: platform_common.h::z_task_detach
+.. autocfunction:: platform_common.h::z_task_drop
 
 Session
 =======
