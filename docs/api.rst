@@ -1079,8 +1079,10 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const z_loaned_hello_t * z_hello_loan(const z_owned_hello_t * hello)
 
 
-Serialization (unstable)
+Serialization
 ========================
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
 
 Types
 -----

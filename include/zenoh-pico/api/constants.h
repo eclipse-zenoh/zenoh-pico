@@ -136,6 +136,8 @@ typedef enum {
  * Enumerators:
  *     Z_RELIABILITY_BEST_EFFORT: Defines reliability as ``BEST_EFFORT``
  *     Z_RELIABILITY_RELIABLE: Defines reliability as ``RELIABLE``
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_reliability_t;
 #define Z_RELIABILITY_DEFAULT Z_RELIABILITY_RELIABLE
