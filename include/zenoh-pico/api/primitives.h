@@ -1413,6 +1413,8 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  *
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
 #endif
@@ -2130,6 +2132,8 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
  *
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_reliability_t z_reliability_default(void);
 #endif
