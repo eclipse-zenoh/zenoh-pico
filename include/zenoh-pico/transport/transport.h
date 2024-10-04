@@ -154,11 +154,7 @@ typedef struct {
         _z_transport_multicast_t _raweth;
     } _transport;
 
-    enum {
-        _Z_TRANSPORT_UNICAST_TYPE,
-        _Z_TRANSPORT_MULTICAST_TYPE,
-        _Z_TRANSPORT_RAWETH_TYPE,
-    } _type;
+    enum { _Z_TRANSPORT_UNICAST_TYPE, _Z_TRANSPORT_MULTICAST_TYPE, _Z_TRANSPORT_RAWETH_TYPE, _Z_TRANSPORT_NONE } _type;
 } _z_transport_t;
 
 _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noop_copy)

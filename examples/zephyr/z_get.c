@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
     printf("Closing Zenoh Session...");
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

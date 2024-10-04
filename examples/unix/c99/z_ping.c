@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     if (zp_start_read_task(z_session_loan_mut(&session), NULL) < 0 ||
         zp_start_lease_task(z_session_loan_mut(&session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&session), NULL);
+        z_session_drop(z_session_move(&session));
         return -1;
     }
 
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     z_undeclare_subscriber(z_subscriber_move(&sub));
     z_undeclare_publisher(z_publisher_move(&pub));
 
-    z_close(z_session_move(&session), NULL);
+    z_session_drop(z_session_move(&session));
 }
 
 char* getopt(int argc, char** argv, char option) {

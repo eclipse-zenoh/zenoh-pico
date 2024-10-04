@@ -78,7 +78,7 @@ void app_main(void) {
     if (zp_start_read_task(z_loan_mut(s), &read_task_opt) < 0 ||
         zp_start_lease_task(z_loan_mut(s), &lease_task_opt) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return;
     }
 
@@ -108,7 +108,7 @@ void app_main(void) {
 
     // Clean-up
     z_undeclare_publisher(z_move(pub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
 }
 #else
 void app_main(void) {

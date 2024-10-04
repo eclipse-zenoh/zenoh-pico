@@ -187,7 +187,7 @@ void app_main() {
     printf("Closing Zenoh Session...");
     z_undeclare_queryable(z_move(qable));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 }
 #else

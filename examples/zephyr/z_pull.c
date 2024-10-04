@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         exit(-1);
     }
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     z_undeclare_subscriber(z_move(sub));
     z_drop(z_move(handler));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

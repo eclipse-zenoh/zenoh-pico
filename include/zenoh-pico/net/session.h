@@ -95,6 +95,16 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
 void _z_close(_z_session_t *session);
 
 /**
+ * Return true is session and all associated transports were closed.
+ */
+bool _z_session_is_closed(const _z_session_t *session);
+
+/**
+ * Upgrades weak session session, than resets it to null if session is closed.
+ */
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session);
+
+/**
  * Get informations about an zenoh-net session.
  *
  * Parameters:

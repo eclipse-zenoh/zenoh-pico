@@ -80,7 +80,7 @@ void app_main(void) {
 
     z_undeclare_publisher(z_move(pub));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
 }
 #else
 void app_main(void) {
