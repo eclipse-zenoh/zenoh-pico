@@ -150,6 +150,8 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
                             if (ret == _Z_RES_OK) {
                                 ztu->_transmitted = true;  // Mark the session that we have transmitted data
                             }
+                        } else {
+                            _Z_ERROR("Fragment serialization failed with err %d", ret);
                         }
                     }
                 }
