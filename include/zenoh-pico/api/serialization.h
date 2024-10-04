@@ -92,7 +92,7 @@ ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes);
 bool ze_deserializer_is_done(const ze_deserializer_t *deserializer);
 
 /**
- * Writes a serialized :c:type:`uint8_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `uint8_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -108,7 +108,7 @@ static inline z_result_t ze_serializer_serialize_uint8(ze_loaned_serializer_t *s
 }
 
 /**
- * Writes a serialized :c:type:`uint16_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `uint16_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -125,7 +125,7 @@ static inline z_result_t ze_serializer_serialize_uint16(ze_loaned_serializer_t *
 }
 
 /**
- * Writes a serialized :c:type:`uint32_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `uint32_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -142,7 +142,7 @@ static inline z_result_t ze_serializer_serialize_uint32(ze_loaned_serializer_t *
 }
 
 /**
- * Writes a serialized :c:type:`uint64_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `uint64_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -159,7 +159,7 @@ static inline z_result_t ze_serializer_serialize_uint64(ze_loaned_serializer_t *
 }
 
 /**
- * Writes a serialized :c:type:`float` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `float` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -175,7 +175,7 @@ static inline z_result_t ze_serializer_serialize_float(ze_loaned_serializer_t *s
 }
 
 /**
- * Writes a serialized :c:type:`double` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `double` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -191,7 +191,7 @@ static inline z_result_t ze_serializer_serialize_double(ze_loaned_serializer_t *
 }
 
 /**
- * Writes a serialized :c:type:`int8_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `int8_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -207,7 +207,7 @@ static inline z_result_t ze_serializer_serialize_int8(ze_loaned_serializer_t *se
 }
 
 /**
- * Writes a serialized :c:type:`int16_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `int16_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -223,7 +223,7 @@ static inline z_result_t ze_serializer_serialize_int16(ze_loaned_serializer_t *s
 }
 
 /**
- * Writes a serialized :c:type:`int32_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `int32_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -239,7 +239,7 @@ static inline z_result_t ze_serializer_serialize_int32(ze_loaned_serializer_t *s
 }
 
 /**
- * Writes a serialized :c:type:`int64_t` into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized `int64_t` into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -259,7 +259,7 @@ static inline z_result_t ze_serializer_serialize_int64(ze_loaned_serializer_t *s
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`uint8_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint8_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -275,7 +275,7 @@ static inline z_result_t ze_deserializer_deserialize_uint8(ze_deserializer_t *de
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`uint16_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint16_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -295,7 +295,7 @@ static inline z_result_t ze_deserializer_deserialize_uint16(ze_deserializer_t *d
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`uint32_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint32_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -315,7 +315,7 @@ static inline z_result_t ze_deserializer_deserialize_uint32(ze_deserializer_t *d
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`uint64_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint64_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -335,7 +335,7 @@ static inline z_result_t ze_deserializer_deserialize_uint64(ze_deserializer_t *d
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`float` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `float` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -354,7 +354,7 @@ static inline z_result_t ze_deserializer_deserialize_float(ze_deserializer_t *de
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`double` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `double` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -373,7 +373,7 @@ static inline z_result_t ze_deserializer_deserialize_double(ze_deserializer_t *d
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`int8_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int8_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -389,7 +389,7 @@ static inline z_result_t ze_deserializer_deserialize_int8(ze_deserializer_t *des
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`int16_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int16_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -405,7 +405,7 @@ static inline z_result_t ze_deserializer_deserialize_int16(ze_deserializer_t *de
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`int32_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int32_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -421,7 +421,7 @@ static inline z_result_t ze_deserializer_deserialize_int32(ze_deserializer_t *de
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized :c:type:`int64_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int64_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -606,7 +606,7 @@ z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *value);
 z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
 
 /**
- * Serializes a :c:type:`int8_t` into a :c:type:`z_owned_bytes_t` .
+ * Serializes a `int8_t` into a :c:type:`z_owned_bytes_t` .
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -620,7 +620,7 @@ z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *sl
 z_result_t ze_serialize_int8(z_owned_bytes_t *bytes, int8_t val);
 
 /**
- * Serializes a :c:type:`int16_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `int16_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -634,7 +634,7 @@ z_result_t ze_serialize_int8(z_owned_bytes_t *bytes, int8_t val);
 z_result_t ze_serialize_int16(z_owned_bytes_t *bytes, int16_t val);
 
 /**
- * Serializes a :c:type:`int32_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `int32_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -648,7 +648,7 @@ z_result_t ze_serialize_int16(z_owned_bytes_t *bytes, int16_t val);
 z_result_t ze_serialize_int32(z_owned_bytes_t *bytes, int32_t val);
 
 /**
- * Serializes a :c:type:`int64_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `int64_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -662,7 +662,7 @@ z_result_t ze_serialize_int32(z_owned_bytes_t *bytes, int32_t val);
 z_result_t ze_serialize_int64(z_owned_bytes_t *bytes, int64_t val);
 
 /**
- * Serializes a :c:type:`uint8_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `uint8_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -676,7 +676,7 @@ z_result_t ze_serialize_int64(z_owned_bytes_t *bytes, int64_t val);
 z_result_t ze_serialize_uint8(z_owned_bytes_t *bytes, uint8_t val);
 
 /**
- * Serializes a :c:type:`uint16_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `uint16_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -690,7 +690,7 @@ z_result_t ze_serialize_uint8(z_owned_bytes_t *bytes, uint8_t val);
 z_result_t ze_serialize_uint16(z_owned_bytes_t *bytes, uint16_t val);
 
 /**
- * Serializes a :c:type:`uint32_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `uint32_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -704,7 +704,7 @@ z_result_t ze_serialize_uint16(z_owned_bytes_t *bytes, uint16_t val);
 z_result_t ze_serialize_uint32(z_owned_bytes_t *bytes, uint32_t val);
 
 /**
- * Serializes a :c:type:`uint64_t` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `uint64_t` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -718,7 +718,7 @@ z_result_t ze_serialize_uint32(z_owned_bytes_t *bytes, uint32_t val);
 z_result_t ze_serialize_uint64(z_owned_bytes_t *bytes, uint64_t val);
 
 /**
- * Serializes a :c:type:`float` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `float` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -732,7 +732,7 @@ z_result_t ze_serialize_uint64(z_owned_bytes_t *bytes, uint64_t val);
 z_result_t ze_serialize_float(z_owned_bytes_t *bytes, float val);
 
 /**
- * Serializes a :c:type:`double` into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `double` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -774,11 +774,11 @@ z_result_t ze_deserialize_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *
 z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
- * Deserializes data into a `:c:type:`int8_t`.
+ * Deserializes data into a `int8_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`int8_t` to contain the deserialized.
+ *   dst: Pointer to an uninitialized `int8_t` to contain the deserialized.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -788,11 +788,11 @@ z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t
 z_result_t ze_deserialize_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 
 /**
- * Deserializes data into a :c:type:`int16_t`.
+ * Deserializes data into a `int16_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`int16_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int16_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -802,11 +802,11 @@ z_result_t ze_deserialize_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 z_result_t ze_deserialize_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 
 /**
- * Deserializes data into a :c:type:`int32_t`.
+ * Deserializes data into a `int32_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`int32_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int32_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -816,11 +816,11 @@ z_result_t ze_deserialize_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 z_result_t ze_deserialize_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 
 /**
- * Deserializes data into a :c:type:`int64_t`.
+ * Deserializes data into a `int64_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`int64_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `int64_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -830,11 +830,11 @@ z_result_t ze_deserialize_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 z_result_t ze_deserialize_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 
 /**
- * Deserializes data into a :c:type:`uint8_t`.
+ * Deserializes data into a `uint8_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`uint8_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint8_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -844,11 +844,11 @@ z_result_t ze_deserialize_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 z_result_t ze_deserialize_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 
 /**
- * Deserializes data into a :c:type:`uint16_t`.
+ * Deserializes data into a `uint16_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`uint16_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint16_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -858,11 +858,11 @@ z_result_t ze_deserialize_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 z_result_t ze_deserialize_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 
 /**
- * Deserializes data into a :c:type:`uint32_t`.
+ * Deserializes data into a `uint32_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`uint32_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint32_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -872,11 +872,11 @@ z_result_t ze_deserialize_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 z_result_t ze_deserialize_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 
 /**
- * Deserializes data into a `:c:type:`uint64_t`.
+ * Deserializes data into a `uint64_t`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`uint64_t` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `uint64_t` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -886,11 +886,11 @@ z_result_t ze_deserialize_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 z_result_t ze_deserialize_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 
 /**
- * Deserializes data into a `:c:type:`float`.
+ * Deserializes data into a `float`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`float` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `float` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -900,11 +900,11 @@ z_result_t ze_deserialize_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 z_result_t ze_deserialize_float(const z_loaned_bytes_t *bytes, float *dst);
 
 /**
- * Deserializes data into a :c:type:`double`.
+ * Deserializes data into a `double`.
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized :c:type:`double` to contain the deserialized number.
+ *   dst: Pointer to an uninitialized `double` to contain the deserialized number.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
