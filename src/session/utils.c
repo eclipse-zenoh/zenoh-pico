@@ -97,6 +97,9 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 }
 
 void _z_session_clear(_z_session_t *zn) {
+    if (_z_session_is_closed(zn)) {
+        return;
+    }
 #if Z_FEATURE_MULTI_THREAD == 1
     _zp_stop_read_task(zn);
     _zp_stop_lease_task(zn);

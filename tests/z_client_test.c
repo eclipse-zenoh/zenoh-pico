@@ -401,12 +401,12 @@ int main(int argc, char **argv) {
 
     // Close both sessions
     printf("Closing session 1\n");
-    z_close(z_move(s1), NULL);
+    z_drop(z_move(s1));
 
     z_sleep_s(SLEEP);
 
     printf("Closing session 2\n");
-    z_close(z_move(s2), NULL);
+    z_drop(z_move(s2));
 
     z_free((uint8_t *)value);
     value = NULL;

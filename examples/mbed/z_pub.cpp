@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     printf("Closing Zenoh Session...");
     z_undeclare_publisher(z_publisher_move(&pub));
 
-    z_close(z_session_move(&s), NULL);
+    z_session_drop(z_session_move(&s));
     printf("OK!\n");
 
     return 0;

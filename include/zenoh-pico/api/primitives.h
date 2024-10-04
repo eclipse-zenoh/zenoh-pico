@@ -1287,12 +1287,23 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
  * Closes a Zenoh session.
  *
  * Parameters:
- *   zs: Moved :c:type:`z_owned_session_t` to close.
+ *   zs: Loaned :c:type:`z_owned_session_t` to close.
  *
  * Return:
  *   ``0`` if close successful, ``negative value`` otherwise.
  */
-z_result_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
+z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options);
+
+/**
+ * Checks if Zenoh session is closed.
+ *
+ * Parameters:
+ *   zs: Loaned :c:type:`z_owned_session_t`.
+ *
+ * Return:
+ *   ``true`` if session is closed, ``false`` otherwise.
+ */
+bool z_session_is_closed(const z_loaned_session_t *zs);
 
 /**
  * Fetches Zenoh IDs of all connected peers.

@@ -821,6 +821,7 @@ Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
+.. autocfunction:: primitives.h::z_session_is_closed
 
 .. autocfunction:: primitives.h::z_info_zid
 .. autocfunction:: primitives.h::z_info_routers_zid

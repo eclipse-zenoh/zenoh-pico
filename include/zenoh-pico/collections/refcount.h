@@ -128,12 +128,17 @@ size_t _z_rc_strong_count(void *cnt);
         return false;                                                                                                \
     }                                                                                                                \
     static inline bool name##_rc_drop(name##_rc_t *p) {                                                              \
+        if (p == NULL) {                                                                                             \
+            return false;                                                                                            \
+        }                                                                                                            \
+        bool res = false;                                                                                            \
         if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
             type##_clear(p->_val);                                                                                   \
             z_free(p->_val);                                                                                         \
-            return true;                                                                                             \
+            res = true;                                                                                              \
         }                                                                                                            \
-        return false;                                                                                                \
+        *p = name##_rc_null();                                                                                       \
+        return res;                                                                                                  \
     }                                                                                                                \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                                          \
         name##_weak_t c = name##_weak_null();                                                                        \
@@ -158,10 +163,12 @@ size_t _z_rc_strong_count(void *cnt);
         if ((p == NULL) || (p->_cnt == NULL)) {                                                                      \
             return false;                                                                                            \
         }                                                                                                            \
+        bool res = false;                                                                                            \
         if (_z_rc_decrease_weak(&p->_cnt)) {                                                                         \
-            return true;                                                                                             \
+            res = true;                                                                                              \
         }                                                                                                            \
-        return false;                                                                                                \
+        *p = name##_weak_null();                                                                                     \
+        return res;                                                                                                  \
     }                                                                                                                \
     static inline size_t name##_rc_size(name##_rc_t *p) {                                                            \
         _ZP_UNUSED(p);                                                                                               \

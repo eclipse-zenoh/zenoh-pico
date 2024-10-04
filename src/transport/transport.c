@@ -64,6 +64,7 @@ void _z_transport_clear(_z_transport_t *zt) {
         default:
             break;
     }
+    zt->_type = _Z_TRANSPORT_NONE;
 }
 
 void _z_transport_free(_z_transport_t **zt) {

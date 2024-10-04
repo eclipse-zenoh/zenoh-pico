@@ -57,6 +57,7 @@ z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t
 
 z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
     z_result_t ret = _Z_RES_OK;
+    _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
 
     _z_id_t zid = _z_id_empty();
     char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
@@ -150,6 +151,16 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
 }
 
 void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
+
+bool _z_session_is_closed(const _z_session_t *session) { return session->_tp._type == _Z_TRANSPORT_NONE; }
+
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session) {
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(session);
+    if (!_Z_RC_IS_NULL(&sess_rc) && _z_session_is_closed(_Z_RC_IN_VAL(&sess_rc))) {
+        _z_session_rc_drop(&sess_rc);
+    }
+    return sess_rc;
+}
 
 _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));

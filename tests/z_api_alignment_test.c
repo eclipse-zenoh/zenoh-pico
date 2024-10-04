@@ -425,15 +425,17 @@ int main(int argc, char **argv) {
 #endif
 
     printf("Close sessions...");
-    _ret_res = z_close(z_move(s1), NULL);
+    _ret_res = z_close(z_loan_mut(s1), NULL);
     assert_eq(_ret_res, 0);
+    z_drop(z_move(s1));
 
 #ifdef ZENOH_PICO
     zp_stop_read_task(z_loan_mut(s2));
     zp_stop_lease_task(z_loan_mut(s2));
 #endif
-    _ret_res = z_close(z_move(s2), NULL);
+    _ret_res = z_close(z_loan_mut(s2), NULL);
     assert_eq(_ret_res, 0);
+    z_drop(z_move(s2));
     printf("Ok\n");
 
     z_sleep_s(SLEEP * 5);

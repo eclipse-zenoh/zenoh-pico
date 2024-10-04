@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     z_undeclare_subscriber(z_move(sub));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
 
     return 0;
 }

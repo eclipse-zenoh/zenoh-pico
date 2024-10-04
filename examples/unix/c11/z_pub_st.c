@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         zp_send_join(z_loan(s), NULL);
     }
     z_undeclare_publisher(z_move(pub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     return 0;
 }
 #else

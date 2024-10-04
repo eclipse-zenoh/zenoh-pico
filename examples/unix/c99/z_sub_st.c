@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
         zp_send_join(z_session_loan(&s), NULL);
     }
     z_undeclare_subscriber(z_subscriber_move(&sub));
-    z_close(z_session_move(&s), NULL);
+    z_session_drop(z_session_move(&s));
     return 0;
 }
 #else
