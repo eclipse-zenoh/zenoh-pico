@@ -498,7 +498,7 @@ z_result_t ze_deserializer_deserialize_string(ze_deserializer_t *deserializer, z
  * Parameters:
  *   serializer: A serializer instance.
  *   len: Length of the sequence. Could be read during deserialization using
- * :c:func:`ze_deserializer_deserialize_sequence_length`.
+ *     :c:func:`ze_deserializer_deserialize_sequence_length`.
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
@@ -511,7 +511,7 @@ z_result_t ze_serializer_serialize_sequence_length(ze_loaned_serializer_t *seria
  * Parameters:
  *   deserializer: A deserializer instance.
  *   len: A pointer where the length of the sequence (previously passed via
- * :c:func:`ze_serializer_serialize_sequence_length`) will be written.
+ *     :c:func:`ze_serializer_serialize_sequence_length`) will be written.
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.

@@ -247,7 +247,7 @@ const z_loaned_encoding_t *z_encoding_text_json5(void);
 extern const z_owned_encoding_t ENCODING_TEXT_JSON5;
 
 /**
- * A Python object serialized using [pickle](https://docs.python.org/3/library/pickle.html).
+ * A Python object serialized using `pickle <https://docs.python.org/3/library/pickle.html>`_.
  * Constant alias for string: `"application/python-serialized-object"`.
  */
 const z_loaned_encoding_t *z_encoding_application_python_serialized_object(void);
@@ -268,8 +268,8 @@ const z_loaned_encoding_t *z_encoding_application_java_serialized_object(void);
 extern const z_owned_encoding_t ENCODING_APPLICATION_JAVA_SERIALIZED_OBJECT;
 
 /**
- * An [openmetrics](https://github.com/OpenObservability/OpenMetrics) data, commonly used by
- * [Prometheus](https://prometheus.io/).
+ * An `openmetrics <https://github.com/OpenObservability/OpenMetrics>`_ data, commonly used by
+ * `Prometheus <https://prometheus.io/>`_.
  * Constant alias for string: `"application/openmetrics-text"`.
  */
 const z_loaned_encoding_t *z_encoding_application_openmetrics_text(void);
