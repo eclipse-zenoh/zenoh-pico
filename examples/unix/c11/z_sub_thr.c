@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
     }
 
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(s));
     exit(0);
 }

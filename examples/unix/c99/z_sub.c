@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
         sleep(1);
     }
 
-    z_undeclare_subscriber(z_subscriber_move(&sub));
+    z_subscriber_drop(z_subscriber_move(&sub));
 
     z_session_drop(z_session_move(&s));
 

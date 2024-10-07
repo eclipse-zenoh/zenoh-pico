@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
         sleep(1);
     }
 
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
     z_drop(z_move(s));
 

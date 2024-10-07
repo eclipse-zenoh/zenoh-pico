@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     zp_stop_lease_task(z_loan_mut(s));
 
     // Clean up
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
     z_drop(z_move(s));
     free(value);
     exit(0);

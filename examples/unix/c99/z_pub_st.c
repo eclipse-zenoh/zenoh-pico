@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
         zp_send_join(z_session_loan(&s), NULL);
     }
 
-    z_undeclare_publisher(z_publisher_move(&pub));
+    z_publisher_drop(z_publisher_move(&pub));
     z_session_drop(z_session_move(&s));
     free(buf);
     return 0;

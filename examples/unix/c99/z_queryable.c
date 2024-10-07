@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
         sleep(1);
     }
 
-    z_undeclare_queryable(z_queryable_move(&qable));
+    z_queryable_drop(z_queryable_move(&qable));
 
     z_session_drop(z_session_move(&s));
 

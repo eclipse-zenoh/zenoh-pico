@@ -135,8 +135,8 @@ int main(int argc, char** argv) {
     z_mutex_unlock(z_mutex_loan_mut(&mutex));
     z_free(results);
     z_free(data);
-    z_undeclare_subscriber(z_subscriber_move(&sub));
-    z_undeclare_publisher(z_publisher_move(&pub));
+    z_subscriber_drop(z_subscriber_move(&sub));
+    z_publisher_drop(z_publisher_move(&pub));
 
     z_session_drop(z_session_move(&session));
 }

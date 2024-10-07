@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
         z_publisher_put(z_loan(pub), z_move(p), NULL);
     }
     // Clean up
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
     z_drop(z_move(s));
     z_drop(z_move(payload));
     exit(0);

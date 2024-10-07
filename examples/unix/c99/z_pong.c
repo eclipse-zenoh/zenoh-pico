@@ -26,7 +26,7 @@ void callback(z_loaned_sample_t* sample, void* context) {
 
 void drop(void* context) {
     z_owned_publisher_t* pub = (z_owned_publisher_t*)context;
-    z_undeclare_publisher(z_publisher_move(pub));
+    z_publisher_drop(z_publisher_move(pub));
     // A note on lifetimes:
     //  here, `sub` takes ownership of `pub` and will drop it before returning from its own `drop`,
     //  which makes passing a pointer to the stack safe as long as `sub` is dropped in a scope where `pub` is still
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     while (getchar() != 'q') {
     }
 
-    z_undeclare_subscriber(z_subscriber_move(&sub));
+    z_subscriber_drop(z_subscriber_move(&sub));
 
     z_session_drop(z_session_move(&session));
 }

@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
         sleep(1);
     }
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(s));
     return 0;
 }

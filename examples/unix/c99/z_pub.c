@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
         z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
     }
     // Clean up
-    z_undeclare_publisher(z_publisher_move(&pub));
+    z_publisher_drop(z_publisher_move(&pub));
     z_session_drop(z_session_move(&s));
     return 0;
 }

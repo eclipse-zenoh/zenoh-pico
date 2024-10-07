@@ -107,7 +107,7 @@ void app_main(void) {
     }
 
     // Clean-up
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
     z_drop(z_move(s));
 }
 #else

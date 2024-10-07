@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     printf("End of test\n");
     z_sleep_s(1);
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(s));
     exit(0);
 }

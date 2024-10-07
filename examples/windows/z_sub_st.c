@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         zp_send_join(z_loan(s), NULL);
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
 
     z_drop(z_move(s));
 

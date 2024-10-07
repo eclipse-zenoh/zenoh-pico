@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
         (void)ret;  // Remove unused result warning
     }
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(s));
     return 0;
 }

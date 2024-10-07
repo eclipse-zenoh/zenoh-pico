@@ -96,7 +96,7 @@ void app_main(void) {
         z_sleep_s(1);
     }
 
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
     z_drop(z_move(s));
 }

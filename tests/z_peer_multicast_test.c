@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     while (subs2) {
         z_owned_subscriber_t *sub = _z_list_head(subs2);
         printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id);
-        z_undeclare_subscriber(z_move(*sub));
+        z_drop(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
     }
 

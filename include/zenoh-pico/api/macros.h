@@ -79,6 +79,7 @@
                   z_owned_session_t : z_session_loan_mut,                 \
                   z_owned_publisher_t : z_publisher_loan_mut,             \
                   z_owned_queryable_t : z_queryable_loan_mut,             \
+                  z_owned_subscriber_t : z_subscriber_loan_mut,           \
                   z_owned_reply_t : z_reply_loan_mut,                     \
                   z_owned_hello_t : z_hello_loan_mut,                     \
                   z_owned_string_t : z_string_loan_mut,                   \
@@ -424,6 +425,7 @@ inline z_loaned_config_t* z_loan_mut(z_owned_config_t& x) { return z_config_loan
 inline z_loaned_session_t* z_loan_mut(z_owned_session_t& x) { return z_session_loan_mut(&x); }
 inline z_loaned_publisher_t* z_loan_mut(z_owned_publisher_t& x) { return z_publisher_loan_mut(&x); }
 inline z_loaned_queryable_t* z_loan_mut(z_owned_queryable_t& x) { return z_queryable_loan_mut(&x); }
+inline z_loaned_subscriber_t* z_loan_mut(z_owned_subscriber_t& x) { return z_subscriber_loan_mut(&x); }
 inline z_loaned_reply_t* z_loan_mut(z_owned_reply_t& x) { return z_reply_loan_mut(&x); }
 inline z_loaned_hello_t* z_loan_mut(z_owned_hello_t& x) { return z_hello_loan_mut(&x); }
 inline z_loaned_string_t* z_loan_mut(z_owned_string_t& x) { return z_string_loan_mut(&x); }

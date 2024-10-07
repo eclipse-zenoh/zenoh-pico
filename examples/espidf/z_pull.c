@@ -178,7 +178,7 @@ void app_main() {
         }
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(handler));
 
     z_drop(z_move(s));

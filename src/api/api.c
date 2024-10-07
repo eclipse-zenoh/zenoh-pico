@@ -778,7 +778,10 @@ const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str) { return
 z_priority_t z_priority_default(void) { return Z_PRIORITY_DEFAULT; }
 
 #if Z_FEATURE_PUBLICATION == 1
-void _z_publisher_drop(_z_publisher_t *pub) { _z_publisher_clear(pub); }
+void _z_publisher_drop(_z_publisher_t *pub) {
+    _z_undeclare_publisher(pub);
+    _z_publisher_clear(pub);
+}
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
                                       _z_publisher_drop)
@@ -910,10 +913,10 @@ z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_publisher(z_moved_publisher_t *pub) {
-    z_result_t ret = _z_undeclare_publisher(&pub->_this._val);
-    _z_publisher_clear(&pub->_this._val);
-    return ret;
+z_result_t z_undeclare_publisher(z_loaned_publisher_t *pub) {
+    z_result_t res = _z_undeclare_publisher(pub);
+    _z_session_weak_drop(&pub->_zn);  // drop session to prevent publisher from being able to perform put
+    return res;
 }
 
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
@@ -1096,7 +1099,10 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
 #if Z_FEATURE_QUERYABLE == 1
 _Z_OWNED_FUNCTIONS_RC_IMPL(query)
 
-void _z_queryable_drop(_z_queryable_t *queryable) { _z_queryable_clear(queryable); }
+void _z_queryable_drop(_z_queryable_t *queryable) {
+    _z_undeclare_queryable(queryable);
+    _z_queryable_clear(queryable);
+}
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_queryable_t, queryable, _z_queryable_check, _z_queryable_null,
                                       _z_queryable_drop)
@@ -1136,11 +1142,7 @@ z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_se
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
-    z_result_t ret = _z_undeclare_queryable(&queryable->_this._val);
-    _z_queryable_clear(&queryable->_this._val);
-    return ret;
-}
+z_result_t z_undeclare_queryable(z_loaned_queryable_t *queryable) { return _z_undeclare_queryable(queryable); }
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
@@ -1304,7 +1306,10 @@ z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_sessio
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-void _z_subscriber_drop(_z_subscriber_t *sub) { _z_subscriber_clear(sub); }
+void _z_subscriber_drop(_z_subscriber_t *sub) {
+    _z_undeclare_subscriber(sub);
+    _z_subscriber_clear(sub);
+}
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
                                       _z_subscriber_drop)
@@ -1362,11 +1367,7 @@ z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_sessio
     }
 }
 
-z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {
-    z_result_t ret = _z_undeclare_subscriber(&sub->_this._val);
-    _z_subscriber_clear(&sub->_this._val);
-    return ret;
-}
+z_result_t z_undeclare_subscriber(z_loaned_subscriber_t *sub) { return _z_undeclare_subscriber(sub); }
 
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
     // Retrieve keyexpr from session

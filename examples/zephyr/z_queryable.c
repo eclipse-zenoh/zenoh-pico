@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
     z_drop(z_move(s));
     printf("OK!\n");

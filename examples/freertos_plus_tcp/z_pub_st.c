@@ -78,7 +78,7 @@ void app_main(void) {
         zp_send_join(z_loan(s), NULL);
     }
 
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
 
     z_drop(z_move(s));
 }

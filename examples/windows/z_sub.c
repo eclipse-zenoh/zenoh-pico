@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
         Sleep(1);
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
 
     z_drop(z_move(s));
 
