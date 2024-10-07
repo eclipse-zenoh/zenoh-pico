@@ -1076,9 +1076,6 @@ See details at :ref:`owned_types_concept`
 
 Serialization
 ========================
-
-.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
-
 Types
 -----
 
@@ -1104,6 +1101,7 @@ Functions
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_uint64
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_float
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_double
+.. autocfunction:: serialization.h::ze_deserializer_deserialize_bool
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_slice
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_string
 .. autocfunction:: serialization.h::ze_deserializer_deserialize_sequence_length
@@ -1119,6 +1117,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serializer_serialize_uint64
 .. autocfunction:: serialization.h::ze_serializer_serialize_float
 .. autocfunction:: serialization.h::ze_serializer_serialize_double
+.. autocfunction:: serialization.h::ze_serializer_serialize_bool
 .. autocfunction:: serialization.h::ze_serializer_serialize_slice
 .. autocfunction:: serialization.h::ze_serializer_serialize_buf
 .. autocfunction:: serialization.h::ze_serializer_serialize_string
@@ -1134,6 +1133,7 @@ Functions
 .. autocfunction:: serialization.h::ze_deserialize_uint64
 .. autocfunction:: serialization.h::ze_deserialize_float
 .. autocfunction:: serialization.h::ze_deserialize_double
+.. autocfunction:: serialization.h::ze_deserialize_bool
 .. autocfunction:: serialization.h::ze_deserialize_slice
 .. autocfunction:: serialization.h::ze_deserialize_string
 .. autocfunction:: serialization.h::ze_deserializer_is_done
@@ -1147,6 +1147,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_uint64
 .. autocfunction:: serialization.h::ze_serialize_float
 .. autocfunction:: serialization.h::ze_serialize_double
+.. autocfunction:: serialization.h::ze_serialize_bool
 .. autocfunction:: serialization.h::ze_serialize_slice
 .. autocfunction:: serialization.h::ze_serialize_buf
 .. autocfunction:: serialization.h::ze_serialize_string
