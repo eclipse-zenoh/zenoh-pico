@@ -264,6 +264,8 @@ void test_serialize_simple(void) {
     ze_owned_serializer_t serializer;
     ze_serializer_empty(&serializer);
 
+    assert(ze_serializer_serialize_bool(ze_serializer_loan_mut(&serializer), true) == 0);
+    assert(ze_serializer_serialize_bool(ze_serializer_loan_mut(&serializer), false) == 0);
     assert(ze_serializer_serialize_double(ze_serializer_loan_mut(&serializer), 0.5) == 0);
     assert(ze_serializer_serialize_int32(ze_serializer_loan_mut(&serializer), -1111) == 0);
     assert(ze_serializer_serialize_str(ze_serializer_loan_mut(&serializer), "abc") == 0);
@@ -271,9 +273,14 @@ void test_serialize_simple(void) {
     double d;
     int32_t i;
     z_owned_string_t s;
+    bool bl = false;
 
     ze_deserializer_t deserializer = ze_deserializer_from_bytes(z_bytes_loan(&b));
     assert(!ze_deserializer_is_done(&deserializer));
+    assert(ze_deserializer_deserialize_bool(&deserializer, &bl) == 0);
+    assert(bl);
+    assert(ze_deserializer_deserialize_bool(&deserializer, &bl) == 0);
+    assert(!bl);
     assert(ze_deserializer_deserialize_double(&deserializer, &d) == 0);
     assert(ze_deserializer_deserialize_int32(&deserializer, &i) == 0);
     assert(ze_deserializer_deserialize_string(&deserializer, &s) == 0);

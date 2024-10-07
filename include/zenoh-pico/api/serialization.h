@@ -47,8 +47,6 @@ _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_serializer_t, serializer)
  *
  * Return:
  *   ``0`` in case of success, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_empty(ze_owned_serializer_t *serializer);
 
@@ -58,8 +56,6 @@ z_result_t ze_serializer_empty(ze_owned_serializer_t *serializer);
  * Parameters:
  *   serializer: A data serializer.
  *   bytes: An uninitialized memory location where bytes is to be constructed.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_serializer_finish(ze_moved_serializer_t *serializer, z_owned_bytes_t *bytes);
 
@@ -73,8 +69,6 @@ void ze_serializer_finish(ze_moved_serializer_t *serializer, z_owned_bytes_t *by
  *
  * Return:
  *   The constructed :c:type:`ze_deserializer_t`.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes);
 
@@ -86,8 +80,6 @@ ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes);
  *
  * Return:
  *   ``True`` if there is no more data to parse, ``false`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 bool ze_deserializer_is_done(const ze_deserializer_t *deserializer);
 
@@ -100,8 +92,6 @@ bool ze_deserializer_is_done(const ze_deserializer_t *deserializer);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_uint8(ze_loaned_serializer_t *serializer, uint8_t val) {
     return z_bytes_writer_write_all(&serializer->_writer, &val, 1);
@@ -116,8 +106,6 @@ static inline z_result_t ze_serializer_serialize_uint8(ze_loaned_serializer_t *s
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_uint16(ze_loaned_serializer_t *serializer, uint16_t val) {
     _z_host_le_store16(val, (uint8_t *)&val);
@@ -133,8 +121,6 @@ static inline z_result_t ze_serializer_serialize_uint16(ze_loaned_serializer_t *
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_uint32(ze_loaned_serializer_t *serializer, uint32_t val) {
     _z_host_le_store32(val, (uint8_t *)&val);
@@ -150,8 +136,6 @@ static inline z_result_t ze_serializer_serialize_uint32(ze_loaned_serializer_t *
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_uint64(ze_loaned_serializer_t *serializer, uint64_t val) {
     _z_host_le_store64(val, (uint8_t *)&val);
@@ -167,8 +151,6 @@ static inline z_result_t ze_serializer_serialize_uint64(ze_loaned_serializer_t *
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_float(ze_loaned_serializer_t *serializer, float val) {
     return z_bytes_writer_write_all(&serializer->_writer, (uint8_t *)&val, sizeof(val));
@@ -183,11 +165,23 @@ static inline z_result_t ze_serializer_serialize_float(ze_loaned_serializer_t *s
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_double(ze_loaned_serializer_t *serializer, double val) {
     return z_bytes_writer_write_all(&serializer->_writer, (uint8_t *)&val, sizeof(val));
+}
+
+/**
+ * Writes a serialized 'bool' into underlying :c:type:`z_owned_bytes_t`.
+ *
+ * Parameters:
+ *   serializer: A serializer instance.
+ *   val: `bool` value to serialize.
+ *
+ * Return:
+ *   ``0`` if serialization is successful, ``negative value`` otherwise.
+ */
+static inline z_result_t ze_serializer_serialize_bool(ze_loaned_serializer_t *serializer, bool val) {
+    return ze_serializer_serialize_uint8(serializer, val ? 1 : 0);
 }
 
 /**
@@ -199,8 +193,6 @@ static inline z_result_t ze_serializer_serialize_double(ze_loaned_serializer_t *
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_int8(ze_loaned_serializer_t *serializer, int8_t val) {
     return ze_serializer_serialize_uint8(serializer, (uint8_t)val);
@@ -215,8 +207,6 @@ static inline z_result_t ze_serializer_serialize_int8(ze_loaned_serializer_t *se
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_int16(ze_loaned_serializer_t *serializer, int16_t val) {
     return ze_serializer_serialize_uint16(serializer, (uint16_t)val);
@@ -231,8 +221,6 @@ static inline z_result_t ze_serializer_serialize_int16(ze_loaned_serializer_t *s
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_int32(ze_loaned_serializer_t *serializer, int32_t val) {
     return ze_serializer_serialize_uint32(serializer, (uint32_t)val);
@@ -247,8 +235,6 @@ static inline z_result_t ze_serializer_serialize_int32(ze_loaned_serializer_t *s
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_serializer_serialize_int64(ze_loaned_serializer_t *serializer, int64_t val) {
     return ze_serializer_serialize_uint64(serializer, (uint64_t)val);
@@ -263,8 +249,6 @@ static inline z_result_t ze_serializer_serialize_int64(ze_loaned_serializer_t *s
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_uint8(ze_deserializer_t *deserializer, uint8_t *val) {
     return z_bytes_reader_read(&deserializer->_reader, val, 1) == 1 ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
@@ -279,8 +263,6 @@ static inline z_result_t ze_deserializer_deserialize_uint8(ze_deserializer_t *de
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_uint16(ze_deserializer_t *deserializer, uint16_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint16_t)) != sizeof(uint16_t)) {
@@ -299,8 +281,6 @@ static inline z_result_t ze_deserializer_deserialize_uint16(ze_deserializer_t *d
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_uint32(ze_deserializer_t *deserializer, uint32_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint32_t)) != sizeof(uint32_t)) {
@@ -319,8 +299,6 @@ static inline z_result_t ze_deserializer_deserialize_uint32(ze_deserializer_t *d
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_uint64(ze_deserializer_t *deserializer, uint64_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint64_t)) != sizeof(uint64_t)) {
@@ -339,8 +317,6 @@ static inline z_result_t ze_deserializer_deserialize_uint64(ze_deserializer_t *d
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_float(ze_deserializer_t *deserializer, float *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(float)) != sizeof(float)) {
@@ -358,13 +334,31 @@ static inline z_result_t ze_deserializer_deserialize_float(ze_deserializer_t *de
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_double(ze_deserializer_t *deserializer, double *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(double)) != sizeof(double)) {
         return _Z_ERR_DID_NOT_READ;
     }
+    return _Z_RES_OK;
+}
+
+/**
+ * Deserializes next portion of data into a `bool`.
+ *
+ * Parameters:
+ *   deserializer: A deserializer instance.
+ *   dst: Pointer to an uninitialized `bool` to contain the deserialized value.
+ *
+ * Return:
+ *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
+ */
+static inline z_result_t ze_deserializer_deserialize_bool(ze_deserializer_t *deserializer, bool *val) {
+    uint8_t res;
+    _Z_RETURN_IF_ERR(ze_deserializer_deserialize_uint8(deserializer, &res));
+    if (res > 1) {
+        return Z_EDESERIALIZE;
+    }
+    *val = (res == 1);
     return _Z_RES_OK;
 }
 
@@ -377,8 +371,6 @@ static inline z_result_t ze_deserializer_deserialize_double(ze_deserializer_t *d
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_int8(ze_deserializer_t *deserializer, int8_t *val) {
     return ze_deserializer_deserialize_uint8(deserializer, (uint8_t *)val);
@@ -393,8 +385,6 @@ static inline z_result_t ze_deserializer_deserialize_int8(ze_deserializer_t *des
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_int16(ze_deserializer_t *deserializer, int16_t *val) {
     return ze_deserializer_deserialize_uint16(deserializer, (uint16_t *)val);
@@ -409,8 +399,6 @@ static inline z_result_t ze_deserializer_deserialize_int16(ze_deserializer_t *de
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_int32(ze_deserializer_t *deserializer, int32_t *val) {
     return ze_deserializer_deserialize_uint32(deserializer, (uint32_t *)val);
@@ -425,8 +413,6 @@ static inline z_result_t ze_deserializer_deserialize_int32(ze_deserializer_t *de
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 static inline z_result_t ze_deserializer_deserialize_int64(ze_deserializer_t *deserializer, int64_t *val) {
     return ze_deserializer_deserialize_uint64(deserializer, (uint64_t *)val);
@@ -442,8 +428,6 @@ static inline z_result_t ze_deserializer_deserialize_int64(ze_deserializer_t *de
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_serialize_buf(ze_loaned_serializer_t *serializer, const uint8_t *val, size_t len);
 
@@ -457,8 +441,6 @@ z_result_t ze_serializer_serialize_buf(ze_loaned_serializer_t *serializer, const
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_serialize_slice(ze_loaned_serializer_t *serializer, const z_loaned_slice_t *val);
 
@@ -471,8 +453,6 @@ z_result_t ze_serializer_serialize_slice(ze_loaned_serializer_t *serializer, con
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_owned_slice_t *val);
 
@@ -485,8 +465,6 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const char *val);
 
@@ -499,8 +477,6 @@ z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_serialize_string(ze_loaned_serializer_t *serializer, const z_loaned_string_t *val);
 
@@ -513,8 +489,6 @@ z_result_t ze_serializer_serialize_string(ze_loaned_serializer_t *serializer, co
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserializer_deserialize_string(ze_deserializer_t *deserializer, z_owned_string_t *val);
 
@@ -528,8 +502,6 @@ z_result_t ze_deserializer_deserialize_string(ze_deserializer_t *deserializer, z
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serializer_serialize_sequence_length(ze_loaned_serializer_t *serializer, size_t len);
 
@@ -543,8 +515,6 @@ z_result_t ze_serializer_serialize_sequence_length(ze_loaned_serializer_t *seria
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserializer_deserialize_sequence_length(ze_deserializer_t *deserializer, size_t *len);
 
@@ -558,8 +528,6 @@ z_result_t ze_deserializer_deserialize_sequence_length(ze_deserializer_t *deseri
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
@@ -572,8 +540,6 @@ z_result_t ze_serialize_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t 
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
 
@@ -586,8 +552,6 @@ z_result_t ze_serialize_string(z_owned_bytes_t *bytes, const z_loaned_string_t *
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *value);
 
@@ -600,8 +564,6 @@ z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *value);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
 
@@ -614,8 +576,6 @@ z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *sl
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_int8(z_owned_bytes_t *bytes, int8_t val);
 
@@ -628,8 +588,6 @@ z_result_t ze_serialize_int8(z_owned_bytes_t *bytes, int8_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_int16(z_owned_bytes_t *bytes, int16_t val);
 
@@ -642,8 +600,6 @@ z_result_t ze_serialize_int16(z_owned_bytes_t *bytes, int16_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_int32(z_owned_bytes_t *bytes, int32_t val);
 
@@ -656,8 +612,6 @@ z_result_t ze_serialize_int32(z_owned_bytes_t *bytes, int32_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_int64(z_owned_bytes_t *bytes, int64_t val);
 
@@ -670,8 +624,6 @@ z_result_t ze_serialize_int64(z_owned_bytes_t *bytes, int64_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_uint8(z_owned_bytes_t *bytes, uint8_t val);
 
@@ -684,8 +636,6 @@ z_result_t ze_serialize_uint8(z_owned_bytes_t *bytes, uint8_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_uint16(z_owned_bytes_t *bytes, uint16_t val);
 
@@ -698,8 +648,6 @@ z_result_t ze_serialize_uint16(z_owned_bytes_t *bytes, uint16_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_uint32(z_owned_bytes_t *bytes, uint32_t val);
 
@@ -712,8 +660,6 @@ z_result_t ze_serialize_uint32(z_owned_bytes_t *bytes, uint32_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_uint64(z_owned_bytes_t *bytes, uint64_t val);
 
@@ -726,8 +672,6 @@ z_result_t ze_serialize_uint64(z_owned_bytes_t *bytes, uint64_t val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_float(z_owned_bytes_t *bytes, float val);
 
@@ -740,10 +684,20 @@ z_result_t ze_serialize_float(z_owned_bytes_t *bytes, float val);
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_serialize_double(z_owned_bytes_t *bytes, double val);
+
+/**
+ * Serializes a `bool` into a :c:type:`z_owned_bytes_t`.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
+ *   val: `bool` value to serialize.
+ *
+ * Return:
+ *   ``0`` if serialization is successful, ``negative value`` otherwise.
+ */
+z_result_t ze_serialize_bool(z_owned_bytes_t *bytes, bool val);
 
 /**
  * Deserializes data into a :c:type:`z_owned_slice_t`.
@@ -754,8 +708,6 @@ z_result_t ze_serialize_double(z_owned_bytes_t *bytes, double val);
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
@@ -768,8 +720,6 @@ z_result_t ze_deserialize_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *
  *
  * Return:
  *   ``0`` if deserialization is successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
@@ -782,8 +732,6 @@ z_result_t ze_deserialize_string(const z_loaned_bytes_t *bytes, z_owned_string_t
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
 
@@ -796,8 +744,6 @@ z_result_t ze_deserialize_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
 
@@ -810,8 +756,6 @@ z_result_t ze_deserialize_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
 
@@ -824,8 +768,6 @@ z_result_t ze_deserialize_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
 
@@ -838,8 +780,6 @@ z_result_t ze_deserialize_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
 
@@ -852,8 +792,6 @@ z_result_t ze_deserialize_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
 
@@ -866,8 +804,6 @@ z_result_t ze_deserialize_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
 
@@ -880,8 +816,6 @@ z_result_t ze_deserialize_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
 
@@ -894,8 +828,6 @@ z_result_t ze_deserialize_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_float(const z_loaned_bytes_t *bytes, float *dst);
 
@@ -908,10 +840,20 @@ z_result_t ze_deserialize_float(const z_loaned_bytes_t *bytes, float *dst);
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_deserialize_double(const z_loaned_bytes_t *bytes, double *dst);
+
+/**
+ * Deserializes data into a boolean.
+ *
+ * Parameters:
+ *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
+ *   dst: Pointer to an uninitialized `bool` to contain the deserialized value.
+ *
+ * Return:
+ *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
+ */
+z_result_t ze_deserialize_bool(const z_loaned_bytes_t *bytes, bool *dst);
 
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(ze, serializer)
 #ifdef __cplusplus
