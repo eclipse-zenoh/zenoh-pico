@@ -171,7 +171,7 @@ static inline z_result_t ze_serializer_serialize_double(ze_loaned_serializer_t *
 }
 
 /**
- * Writes a serialized boolean into underlying :c:type:`z_owned_bytes_t`.
+ * Writes a serialized 'bool' into underlying :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -347,7 +347,7 @@ static inline z_result_t ze_deserializer_deserialize_double(ze_deserializer_t *d
  *
  * Parameters:
  *   deserializer: A deserializer instance.
- *   dst: Pointer to an uninitialized boolean to contain the deserialized value.
+ *   dst: Pointer to an uninitialized `bool` to contain the deserialized value.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
@@ -688,7 +688,7 @@ z_result_t ze_serialize_float(z_owned_bytes_t *bytes, float val);
 z_result_t ze_serialize_double(z_owned_bytes_t *bytes, double val);
 
 /**
- * Serializes a boolean into a :c:type:`z_owned_bytes_t`.
+ * Serializes a `bool` into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized int.
@@ -848,7 +848,7 @@ z_result_t ze_deserialize_double(const z_loaned_bytes_t *bytes, double *dst);
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to deserialize.
- *   dst: Pointer to an uninitialized boolean to contain the deserialized value.
+ *   dst: Pointer to an uninitialized `bool` to contain the deserialized value.
  *
  * Return:
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
