@@ -66,8 +66,8 @@ z_result_t z_view_string_from_substr(z_view_string_t *str, const char *value, si
  * This function will fail if the string is not in canon form.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
@@ -159,7 +159,6 @@ z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_st
 
 /**
  * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
- * Returns 0 in case of success, negative error code otherwise.
  *
  * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this
  * operation, as this would extremely likely cause bugs.
@@ -446,8 +445,8 @@ z_result_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, si
  *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
  *   data: Pointer to the data to be owned by `slice`.
  *   len: Number of bytes in `data`.
- *   deleter: A thread-safe delete function to free the `data`. Will be called once when the `slice` is dropped.
- *     Can be NULL, in case if a `data` is allocated in static memory.
+ *   deleter: A thread-safe delete function to free the `data`. Will be called once when `slice` is dropped.
+ *     Can be NULL in the case where `data` is allocated in static memory.
  *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
@@ -473,7 +472,7 @@ z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t le
  * Builds an empty :c:type:`z_owned_slice_t`.
  *
  * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
+ *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
  */
 void z_slice_empty(z_owned_slice_t *slice);
 
@@ -503,7 +502,7 @@ size_t z_slice_len(const z_loaned_slice_t *slice);
  * Checks if slice is empty
  *
  * Parameters:
- *   str: Pointer to a :c:type:`z_loaned_slice_t` to check.
+ *   slice: Pointer to a :c:type:`z_loaned_slice_t` to check.
  *
  * Return:
  *   ``true`` if the container is empty, ``false`` otherwise.
@@ -565,8 +564,8 @@ z_result_t z_bytes_copy_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
  *   data: Pointer to the data to convert. Ownership is transferred to the `bytes`.
  *   len: Number of bytes to consider.
- *   deleter: A thread-safe delete function to free the `data`. Will be called once when `bytes` is dropped. Can be
- *     NULL, in case if a `data` is allocated in static memory.
+ *   deleter: A thread-safe delete function to free the `data`. Will be called once when `bytes` is dropped.
+ *     Can be NULL in the case where `data` is allocated in static memory.
  *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
@@ -631,9 +630,9 @@ z_result_t z_bytes_copy_from_string(z_owned_bytes_t *bytes, const z_loaned_strin
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
  *   value: Pointer to the string to converts. Ownership is transferred to the `bytes`.
- *   deleter: A thread-safe delete function to free the `value`. Will be called once when `bytes` is dropped. Can be
- *     NULL, in case if a `value` is allocated in static memory. context: An optional context to be passed to the
- * `deleter`. context: An optional context to be passed to the `deleter`.
+ *   deleter: A thread-safe delete function to free the `value`. Will be called once when `bytes` is dropped.
+ *     Can be NULL in the case where `value` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
  *   ``0`` if conversion is successful, ``negative value`` otherwise.
@@ -1190,8 +1189,8 @@ z_result_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
  * Parameters:
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *   value: Pointer to a null terminated string to be owned by `str`.
- *   deleter: A thread-safe delete function to free the `value`. Will be called once when `str` is dropped. Can be
- *     NULL, in case if a `value` is allocated in static memory.
+ *   deleter: A thread-safe delete function to free the `value`. Will be called once when `str` is dropped.
+ *     Can be NULL in the case where `value` is allocated in static memory.
  *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
@@ -1901,9 +1900,9 @@ z_result_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const cha
  *
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
- *   name: Pointer to the start of the substring for keyxpr.
+ *   name: Pointer to the start of the substring for keyexpr.
  *   len: Length of the substring to consider. After the function return it will be equal to the canonized key
- * expression string length.
+ *     expression string length.
  *
  * Return:
  *   ``0`` if creation is successful, ``negative value`` otherwise.

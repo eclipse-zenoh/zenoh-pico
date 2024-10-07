@@ -87,11 +87,11 @@ typedef enum {
  * Intersection level of two key expressions.
  *
  * Enumerators:
- *   Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT: two key expressions do not intersect.
- *   Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS: two key expressions intersect, i.e. there exists at least one key
+ *   Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT: The two key expressions do not intersect.
+ *   Z_KEYEXPR_INTERSECTION_LEVEL_INTERSECTS: The two key expressions intersect, i.e. there exists at least one key
  *     expression that is included by both.
- *   Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES: First key expression is the superset of the second one.
- *   Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS: two key expressions are equal.
+ *   Z_KEYEXPR_INTERSECTION_LEVEL_INCLUDES: The first key expression is the superset of the second one.
+ *   Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS: The two key expressions are equal.
  */
 typedef enum {
     Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT = 0,
