@@ -150,7 +150,7 @@ Common
 Key expression
 --------------
 
-Represents a key expression in Zenoh.
+Represents a `key expression <https://zenoh.io/docs/manual/abstractions/#key-expression>`_ in Zenoh.
 
 Types
 ^^^^^
@@ -399,7 +399,7 @@ A closure is a structure that contains all the elements for stateful, memory-lea
   - call: the typical callback function. ``context`` will be passed as its last argument.
   - drop: allows the callback's state to be freed. ``context`` will be passed as its last argument.
 
-Closures are not guaranteed not to be called concurrently.
+There is no guarantee closures won't be called concurrently.
 
 It is guaranteed that:
   - ``call`` will never be called once ``drop`` has started.

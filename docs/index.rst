@@ -16,7 +16,7 @@
 zenoh-pico
 **********
 
-The *libzenoh-pico* library provides a C client API for the zenoh protocol.
+The *libzenoh-pico* library provides a C client API for the `Zenoh protocol <https://zenoh.io/>`_.
 
 .. toctree::
     :maxdepth: 10

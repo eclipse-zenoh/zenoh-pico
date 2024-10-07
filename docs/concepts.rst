@@ -160,4 +160,4 @@ Name Prefixes `z_`, `zp_`
 Most functions and types in the C API use the `z_` prefix, which applies to the common zenoh C API
 (currently Rust-based zenoh-c and pure C zenoh-pico).
 
-The `zp_` prefix is specific to zenoh-pico. zenoh-c uses the `zc_` prefix for the same purpose.
+The `zp_` prefix is used for functions that are exclusive to zenoh-pico, zenoh-c uses the `zc_` prefix for the same purpose.
