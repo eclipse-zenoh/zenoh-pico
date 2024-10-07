@@ -680,27 +680,34 @@ Time
 
 Types
 ^^^^^
-.. c:type:: z_clock_t
 .. c:type:: z_time_t
+
+A time value that is accurate to the nearest microsecond but also has a range of years.
+
+.. c:type:: z_clock_t
+
+This is like a :c:type:`z_time_t` but has nanoseconds instead of microseconds.
 
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_clock_now
-.. autocfunction:: platform_common.h::z_clock_elapsed_s
-.. autocfunction:: platform_common.h::z_clock_elapsed_ms
-.. autocfunction:: platform_common.h::z_clock_elapsed_us
-
 .. autocfunction:: platform_common.h::z_time_now
 .. autocfunction:: platform_common.h::z_time_elapsed_s
 .. autocfunction:: platform_common.h::z_time_elapsed_ms
 .. autocfunction:: platform_common.h::z_time_elapsed_us
 .. autocfunction:: platform_common.h::z_time_now_as_str
 
+.. autocfunction:: platform_common.h::z_clock_now
+.. autocfunction:: platform_common.h::z_clock_elapsed_s
+.. autocfunction:: platform_common.h::z_clock_elapsed_ms
+.. autocfunction:: platform_common.h::z_clock_elapsed_us
+
 
 Mutex
 -----
 Types
 ^^^^^
+
+Represents a mutual exclusion (mutex) object used to ensure exclusive access to shared resources.
 
 See details at :ref:`owned_types_concept`
 
@@ -730,6 +737,14 @@ Conditional Variable
 Types
 ^^^^^
 
+Represents a condition variable, which is a synchronization primitive 
+that allows threads to wait until a particular condition occurs.
+
+A condition variable is used in conjunction with mutexes to enable threads to 
+wait for signals from other threads. When a thread calls the wait function 
+on a condition variable, it releases the associated mutex and enters a wait 
+state until another thread signals the condition variable.
+
 See details at :ref:`owned_types_concept`
 
 .. c:type:: z_owned_condvar_t
@@ -755,6 +770,14 @@ Task
 ----
 Types
 ^^^^^
+
+Represents a task that can be executed by a thread.
+
+A task is an abstraction for encapsulating a unit of work that can 
+be scheduled and executed by a thread. Tasks are typically 
+used to represent asynchronous operations, allowing the program to perform 
+multiple operations concurrently.   
+
 .. c:type:: z_owned_task_t
 .. c:type:: z_moved_task_t
 
