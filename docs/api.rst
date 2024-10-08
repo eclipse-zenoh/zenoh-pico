@@ -728,7 +728,7 @@ Ownership Functions
 See details at :ref:`owned_types_concept`
 
 .. c:function:: void z_mutex_drop(z_moved_mutex_t * mutex) 
-.. c:function:: const z_loaned_mutex_t * z_mutex_loan(const z_owned_mutex_t * mutex)
+.. c:function:: z_loaned_mutex_t * z_mutex_loan_mut(z_owned_mutex_t * mutex)
 
 
 Conditional Variable
