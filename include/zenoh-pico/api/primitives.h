@@ -863,17 +863,6 @@ uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts);
 z_id_t z_timestamp_id(const z_timestamp_t *ts);
 
 /**
- * Checks validity of a timestamp
- *
- * Parameters:
- *   ts: Timestamp value to check validity of.
- *
- * Return:
- *   ``true`` if the timestamp is valid, ``false`` otherwise.
- */
-bool z_timestamp_check(z_timestamp_t ts);
-
-/**
  * Builds a default query target.
  *
  * Return:

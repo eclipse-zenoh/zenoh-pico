@@ -392,8 +392,6 @@ uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts) { return ts->time; }
 
 z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
 
-bool z_timestamp_check(z_timestamp_t ts) { return _z_timestamp_check(&ts); }
-
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {
