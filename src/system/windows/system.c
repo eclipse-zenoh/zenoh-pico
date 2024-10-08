@@ -270,7 +270,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     return elapsed;
 }
 
-z_result_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     z_time_t now;
     ftime(&now);
     t->secs = (uint32_t)now.time;

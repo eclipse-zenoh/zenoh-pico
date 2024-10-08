@@ -298,4 +298,4 @@ struct tm* localtime(const time_t* timep) {
     return &t;
 }
 
-z_result_t zp_get_time_since_epoch(zp_time_since_epoch* t) { return -1; }
+z_result_t _z_get_time_since_epoch(_z_time_since_epoch* t) { return -1; }
