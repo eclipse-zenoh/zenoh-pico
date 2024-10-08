@@ -389,7 +389,6 @@ Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_timestamp_id
 .. autocfunction:: primitives.h::z_timestamp_ntp64_time
-.. autocfunction:: primitives.h::z_timestamp_check
 
 Closures
 ========
