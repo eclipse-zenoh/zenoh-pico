@@ -1752,7 +1752,7 @@ z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_se
                                const z_queryable_options_t *options);
 
 /**
- * Declares a background queryable for a given keyexpr. The queryable callback will be be called
+ * Declares a background queryable for a given keyexpr. The queryable callback will be called
  * to proccess incoming queries until the corresponding session is closed or dropped.
  *
  * Parameters:
