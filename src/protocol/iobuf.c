@@ -223,7 +223,7 @@ void _z_zbuf_clear(_z_zbuf_t *zbf) { _z_iosli_clear(&zbf->_ios); }
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
     if ((zbf->_ios._r_pos != 0) || (zbf->_ios._w_pos != 0)) {
         size_t len = _z_iosli_readable(&zbf->_ios);
-        (void)memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
+        (void)memmove(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
         _z_zbuf_set_rpos(zbf, 0);
         _z_zbuf_set_wpos(zbf, len);
     }
