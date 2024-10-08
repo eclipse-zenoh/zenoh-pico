@@ -359,8 +359,6 @@ int main(int argc, char **argv) {
     assert_eq(datas, 4);
 
     printf("Undeclaring Publisher...");
-    _ret_res = z_undeclare_publisher(z_loan_mut(_ret_pub));
-    assert_eq(_ret_res, 0);
     z_drop(z_move(_ret_pub));
     assert(!z_internal_check(_ret_pub));
     printf("Ok\n");
@@ -368,8 +366,6 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     printf("Undeclaring Subscriber...");
-    _ret_res = z_undeclare_subscriber(z_loan_mut(_ret_sub));
-    assert_eq(_ret_res, 0);
     z_drop(z_move(_ret_sub));
     assert(!z_internal_check(_ret_sub));
     printf("Ok\n");
@@ -417,8 +413,6 @@ int main(int argc, char **argv) {
     assert_eq(replies, 1);
 
     printf("Undeclaring Queryable...");
-    _ret_res = z_undeclare_queryable(z_loan_mut(qle));
-    assert_eq(_ret_res, 0);
     z_drop(z_move(qle));
     printf("Ok\n");
 

@@ -1598,17 +1598,6 @@ z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**
- * Undeclares the publisher. After this function return, all calls to publisher functions will yield an error.
- *
- * Parameters:
- *   pub: Loaned :c:type:`z_owned_publisher_t` to undeclare.
- *
- * Return:
- *   ``0`` if undeclare is successful, ``negative value`` otherwise.
- */
-z_result_t z_undeclare_publisher(z_loaned_publisher_t *pub);
-
-/**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
  *
  * Parameters:
@@ -1746,6 +1735,7 @@ void z_queryable_options_default(z_queryable_options_t *options);
 
 /**
  * Declares a queryable for a given keyexpr.
+ * Note that dropping queryable drops its callback.
  *
  * Parameters:
  *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
@@ -1762,15 +1752,20 @@ z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_se
                                const z_queryable_options_t *options);
 
 /**
- * Undeclares the queryable callback.
+ * Declares a background queryable for a given keyexpr. The queryable callback will be be called
+ * to proccess incoming queries until the corresponding session is closed or dropped.
  *
  * Parameters:
- *   queryable: Moved :c:type:`z_owned_queryable_t` to undeclare.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
+ *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
  *
  * Return:
- *   ``0`` if undeclare operation is successful, ``negative value`` otherwise.
+ *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_undeclare_queryable(z_loaned_queryable_t *queryable);
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                          z_moved_closure_query_t *callback, const z_queryable_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_options_t` with default values.
@@ -2001,9 +1996,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
 
 /**
  * Declares a subscriber for a given keyexpr.
- * Note that dropping subscriber does not drop its callback, meaning that after subscriber drop the messages will still
- * be received and processed, until the corresponding session is dropped. To disable the callback with cleanup use
- * :c:func:`z_subscriber_undeclare`.
+ * Note that dropping subscriber drops its callback.
  *
  * Parameters:
  *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
@@ -2020,15 +2013,20 @@ z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_sessio
                                 const z_subscriber_options_t *options);
 
 /**
- * Undeclares the subscriber callback.
+ * Declares a background subscriber for a given keyexpr. Subscriber callback will be called to process the messages,
+ * until the corresponding session is closed or dropped.
  *
  * Parameters:
- *   sub: Loaned :c:type:`z_owned_subscriber_t` to undeclare.
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a`z_owned_closure_sample_t` callback.
+ *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
  *
  * Return:
- *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_undeclare_subscriber(z_loaned_subscriber_t *sub);
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                           z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**
  * Gets the keyexpr from a subscriber.

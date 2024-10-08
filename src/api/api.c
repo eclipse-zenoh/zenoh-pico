@@ -913,12 +913,6 @@ z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_publisher(z_loaned_publisher_t *pub) {
-    z_result_t res = _z_undeclare_publisher(pub);
-    _z_session_weak_drop(&pub->_zn);  // drop session to prevent publisher from being able to perform put
-    return res;
-}
-
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
     options->encoding = NULL;
     options->attachment = NULL;
@@ -1109,6 +1103,14 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_queryable_t, queryable, _z_queryable_ch
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
 
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                          z_moved_closure_query_t *callback, const z_queryable_options_t *options) {
+    z_owned_queryable_t qle;
+    _Z_RETURN_IF_ERR(z_declare_queryable(&qle, zs, keyexpr, callback, options));
+    _z_queryable_clear(&qle._val);
+    return _Z_RES_OK;
+}
+
 z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options) {
@@ -1141,8 +1143,6 @@ z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_se
     z_internal_closure_query_null(&callback->_this);
     return _Z_RES_OK;
 }
-
-z_result_t z_undeclare_queryable(z_loaned_queryable_t *queryable) { return _z_undeclare_queryable(queryable); }
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
@@ -1316,6 +1316,14 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber
 
 void z_subscriber_options_default(z_subscriber_options_t *options) { options->__dummy = 0; }
 
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                           z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
+    z_owned_subscriber_t sub;
+    _Z_RETURN_IF_ERR(z_declare_subscriber(&sub, zs, keyexpr, callback, options));
+    _z_subscriber_clear(&sub._val);
+    return _Z_RES_OK;
+}
+
 z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options) {
@@ -1366,8 +1374,6 @@ z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_sessio
         return _Z_RES_OK;
     }
 }
-
-z_result_t z_undeclare_subscriber(z_loaned_subscriber_t *sub) { return _z_undeclare_subscriber(sub); }
 
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
     // Retrieve keyexpr from session
