@@ -500,9 +500,13 @@ char *_z_raweth_config_to_str(const _z_str_intmap_t *s) {
     return _z_str_intmap_to_str(s, RAWETH_CONFIG_ARGC, args);
 }
 
-z_result_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {
+z_result_t _z_raweth_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     RAWETH_CONFIG_MAPPING_BUILD
-    return _z_str_intmap_from_strn(strint, s, RAWETH_CONFIG_ARGC, args, strlen(s));
+    return _z_str_intmap_from_strn(strint, s, RAWETH_CONFIG_ARGC, args, n);
+}
+
+z_result_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {
+    return _z_raweth_config_from_strn(strint, s, strlen(s));
 }
 
 #else
@@ -521,9 +525,17 @@ size_t _z_raweth_config_strlen(const _z_str_intmap_t *s) {
     _ZP_UNUSED(s);
     return 0;
 }
+
 char *_z_raweth_config_to_str(const _z_str_intmap_t *s) {
     _ZP_UNUSED(s);
     return NULL;
+}
+
+z_result_t _z_raweth_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
+    _ZP_UNUSED(strint);
+    _ZP_UNUSED(s);
+    _ZP_UNUSED(n);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
 z_result_t _z_raweth_config_from_str(_z_str_intmap_t *strint, const char *s) {

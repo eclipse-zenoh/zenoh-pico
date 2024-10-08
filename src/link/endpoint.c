@@ -288,42 +288,43 @@ z_result_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, _z_string_t *
     char *p_start = (char *)memchr(_z_string_data(str), ENDPOINT_CONFIG_SEPARATOR, _z_string_len(str));
     if (p_start != NULL) {
         p_start = _z_ptr_char_offset(p_start, 1);
+        size_t cfg_size = _z_string_len(str) - _z_ptr_char_diff(_z_string_data(str), p_start);
 
         // Call the right configuration parser depending on the protocol
         _z_string_t cmp_str = _z_string_null();
 #if Z_FEATURE_LINK_TCP == 1
         cmp_str = _z_string_alias_str(TCP_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_tcp_config_from_str(strint, p_start);
+            return _z_tcp_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
         cmp_str = _z_string_alias_str(UDP_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_udp_config_from_str(strint, p_start);
+            return _z_udp_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
         cmp_str = _z_string_alias_str(BT_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_bt_config_from_str(strint, p_start);
+            return _z_bt_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
         cmp_str = _z_string_alias_str(SERIAL_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_serial_config_from_str(strint, p_start);
+            return _z_serial_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
 #if Z_FEATURE_LINK_WS == 1
         cmp_str = _z_string_alias_str(WS_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_ws_config_from_str(strint, p_start);
+            return _z_ws_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
         cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
-            return _z_raweth_config_from_str(strint, p_start);
+            return _z_raweth_config_from_strn(strint, p_start, cfg_size);
         }
     }
     return _Z_RES_OK;
