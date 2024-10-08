@@ -60,6 +60,13 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
             ret = _Z_ERR_GENERIC;
         }
 
+#if Z_FEATURE_TCP_NODELAY == 1
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+#endif
+
 #if LWIP_SO_LINGER == 1
         struct linger ling;
         ling.l_onoff = 1;

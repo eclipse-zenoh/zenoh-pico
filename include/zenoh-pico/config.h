@@ -41,6 +41,7 @@
 #define Z_FEATURE_UNICAST_TRANSPORT 1
 #define Z_FEATURE_FRAGMENTATION 1
 #define Z_FEATURE_ENCODING_VALUES 1
+#define Z_FEATURE_TCP_NODELAY 1
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
