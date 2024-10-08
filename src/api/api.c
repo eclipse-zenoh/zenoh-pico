@@ -204,8 +204,6 @@ bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) 
     return _z_keyexpr_suffix_equals(l, r);
 }
 
-void z_config_new(z_owned_config_t *config) { config->_val = _z_config_empty(); }
-
 z_result_t z_config_default(z_owned_config_t *config) { return _z_config_default(&config->_val); }
 
 const char *zp_config_get(const z_loaned_config_t *config, uint8_t key) { return _z_config_get(config, key); }
