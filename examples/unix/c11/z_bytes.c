@@ -47,6 +47,8 @@ int main(void) {
         assert(memcmp(input_bytes, z_slice_data(z_loan(output_bytes)), z_slice_len(z_loan(output_bytes))) == 0);
         z_drop(z_move(payload));
         z_drop(z_move(output_bytes));
+        // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
+        // const z_loaned_encoding* encoding = z_encoding_zenoh_bytes();
 
         // The same can be done for const char*
         const char *input_str = "test";
@@ -56,6 +58,8 @@ int main(void) {
         assert(strncmp(input_str, z_string_data(z_loan(output_string)), z_string_len(z_loan(output_string))) == 0);
         z_drop(z_move(payload));
         z_drop(z_move(output_string));
+        // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
+        // const z_loaned_encoding* encoding = z_encoding_zenoh_string();
     }
 
     // Serialization
@@ -68,7 +72,7 @@ int main(void) {
         assert(input_u32 == output_u32);
         z_drop(z_move(payload));
         // Corresponding encoding to be used in operations options like `z_put()`, `z_get()`, etc.
-        // const z_loaned_encoding* encoding = z_encoding_zenoh_uint32();
+        // const z_loaned_encoding* encoding = z_encoding_zenoh_serialized();
     }
 
     // Writer/reader for raw bytes

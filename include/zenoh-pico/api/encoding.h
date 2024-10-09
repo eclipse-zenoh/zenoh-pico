@@ -47,141 +47,31 @@ extern "C" {
  *
  * Constant alias for string: `"zenoh/bytes"`.
  *
- * Usually used for types: `uint8_t[]`.
+ * This encoding supposes that the payload was created with c:func:`z_bytes_from_buf`, c:func:`z_bytes_from_slice` or
+ * similar functions and its data can be accessed via c:func:`z_bytes_to_slice`.
  */
 const z_loaned_encoding_t *z_encoding_zenoh_bytes(void);
 extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BYTES;
 
 /**
- * A VLE-encoded signed little-endian 8bit integer. Binary representation uses two's complement.
- * Constant alias for string: `"zenoh/int8"`.
- *
- * Usually used for types: `int8_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_int8(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT8;
-
-/**
- * A VLE-encoded signed little-endian 16bit integer. Binary representation uses two's complement.
- * Constant alias for string: `"zenoh/int16"`.
- *
- * Usually used for types: `int16_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_int16(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT16;
-
-/**
- * A VLE-encoded signed little-endian 32bit integer. Binary representation uses two's complement.
- * Constant alias for string: `"zenoh/int32"`.
- *
- * Usually used for types: `int32_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_int32(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT32;
-
-/**
- * A VLE-encoded signed little-endian 64bit integer. Binary representation uses two's complement.
- * Constant alias for string: `"zenoh/int64"`.
- *
- * Usually used for types: `int64_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_int64(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT64;
-
-/**
- * A VLE-encoded signed little-endian 128bit integer. Binary representation uses two's complement.
- * Constant alias for string: `"zenoh/int128"`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_int128(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_INT128;
-
-/**
- * A VLE-encoded unsigned little-endian 8bit integer.
- * Constant alias for string: `"zenoh/uint8"`.
- *
- * Usually used for types: `uint8_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_uint8(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT8;
-
-/**
- * A VLE-encoded unsigned little-endian 16bit integer.
- * Constant alias for string: `"zenoh/uint16"`.
- *
- * Usually used for types: `uint16_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_uint16(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT16;
-
-/**
- * A VLE-encoded unsigned little-endian 32bit integer.
- * Constant alias for string: `"zenoh/uint32"`.
- *
- * Usually used for types: `uint32_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_uint32(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT32;
-
-/**
- * A VLE-encoded unsigned little-endian 64bit integer.
- * Constant alias for string: `"zenoh/uint64"`.
- *
- * Usually used for types: `uint64_t`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_uint64(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT64;
-
-/**
- * A VLE-encoded unsigned little-endian 128bit integer.
- * Constant alias for string: `"zenoh/uint128"`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_uint128(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_UINT128;
-
-/**
- * A VLE-encoded 32bit float. Binary representation uses *IEEE 754-2008* *binary32*.
- * Constant alias for string: `"zenoh/float32"`.
- *
- * Usually used for types: `float`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_float32(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT32;
-
-/**
- * A VLE-encoded 64bit float. Binary representation uses *IEEE 754-2008* *binary64*.
- * Constant alias for string: `"zenoh/float64"`.
- *
- * Usually used for types: `double`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_float64(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_FLOAT64;
-
-/**
- * A boolean. `0` is `false`, `1` is `true`. Other values are invalid.
- * Constant alias for string: `"zenoh/bool"`.
- *
- * Usually used for types: `bool`.
- */
-const z_loaned_encoding_t *z_encoding_zenoh_bool(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_BOOL;
-
-/**
  * A UTF-8 string.
  * Constant alias for string: `"zenoh/string"`.
  *
- * Usually used for types: `char[]`.
+ * This encoding supposes that the payload was created with c:func:`z_bytes_from_str`, c:func:`z_bytes_from_string` or
+ * similar functions and its data can be accessed via c:func:`z_bytes_to_string`.
  */
 const z_loaned_encoding_t *z_encoding_zenoh_string(void);
 extern const z_owned_encoding_t ZP_ENCODING_ZENOH_STRING;
 
 /**
- * A zenoh error.
- * Constant alias for string: `"zenoh/error"`.
+ * Zenoh serialized data.
+ * Constant alias for string: `"zenoh/serialized"`.
  *
- * Usually used for types: `z_reply_err_t`.
+ * This encoding supposes that the payload was created with serialization functions.
+ * The `schema` field may contain the details of serialziation format.
  */
-const z_loaned_encoding_t *z_encoding_zenoh_error(void);
-extern const z_owned_encoding_t ZP_ENCODING_ZENOH_ERROR;
+const z_loaned_encoding_t *z_encoding_zenoh_serialized(void);
+extern const z_owned_encoding_t ZP_ENCODING_ZENOH_SERIALIZED;
 
 /**
  * An application-specific stream of bytes.
