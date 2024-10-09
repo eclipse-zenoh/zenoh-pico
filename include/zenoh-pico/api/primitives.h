@@ -642,6 +642,7 @@ z_result_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)
  *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
 z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value);
+
 /**
  * Converts a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
  *
@@ -655,8 +656,10 @@ z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value);
 z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
 
 /**
+ * Constructs an empty payload.
+ *
  * Parameters:
- *   bytes: Pointer to an unitialized :c:type:`z_lowned_bytes_t` instance.
+ *   bytes: Pointer to an unitialized :c:type:`z_loaned_bytes_t` instance.
  */
 void z_bytes_empty(z_owned_bytes_t *bytes);
 
@@ -747,9 +750,10 @@ size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
  *   origin: Origin for the new position.
  *
  * Return:
- *   ``0`` upon success, negative error code otherwise.
+ *   ``0`` in case of success, ``negative value`` otherwise.
  */
 z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+
 /**
  * Gets the read position indicator.
  *
@@ -793,7 +797,7 @@ z_result_t z_bytes_writer_empty(z_owned_bytes_writer_t *writer);
 void z_bytes_writer_finish(z_moved_bytes_writer_t *writer, z_owned_bytes_t *bytes);
 
 /**
- * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
+ * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t`.
  *
  * Parameters:
  *   writer: A data writer.
@@ -815,7 +819,7 @@ z_result_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8
  *   bytes: A data to append.
  *
  * Return:
- *   ``0`` in case of success, negative error code otherwise
+ *   ``0`` if write is successful, ``negative value`` otherwise.
  */
 z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
