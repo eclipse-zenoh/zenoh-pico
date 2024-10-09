@@ -245,21 +245,8 @@ See details at :ref:`owned_types_concept`
 Predefined Encodings
 ^^^^^^^^^^^^^^^^^^^^
 .. autocfunction:: encoding.h::z_encoding_zenoh_bytes
-.. autocfunction:: encoding.h::z_encoding_zenoh_int8
-.. autocfunction:: encoding.h::z_encoding_zenoh_int16
-.. autocfunction:: encoding.h::z_encoding_zenoh_int32
-.. autocfunction:: encoding.h::z_encoding_zenoh_int64
-.. autocfunction:: encoding.h::z_encoding_zenoh_int128
-.. autocfunction:: encoding.h::z_encoding_zenoh_uint8
-.. autocfunction:: encoding.h::z_encoding_zenoh_uint16
-.. autocfunction:: encoding.h::z_encoding_zenoh_uint32
-.. autocfunction:: encoding.h::z_encoding_zenoh_uint64
-.. autocfunction:: encoding.h::z_encoding_zenoh_uint128
-.. autocfunction:: encoding.h::z_encoding_zenoh_float32
-.. autocfunction:: encoding.h::z_encoding_zenoh_float64
-.. autocfunction:: encoding.h::z_encoding_zenoh_bool
 .. autocfunction:: encoding.h::z_encoding_zenoh_string
-.. autocfunction:: encoding.h::z_encoding_zenoh_error
+.. autocfunction:: encoding.h::z_encoding_zenoh_serialized
 .. autocfunction:: encoding.h::z_encoding_application_octet_stream
 .. autocfunction:: encoding.h::z_encoding_text_plain
 .. autocfunction:: encoding.h::z_encoding_application_json
