@@ -46,7 +46,7 @@ typedef struct {
 } _z_bytes_t;
 
 bool _z_bytes_check(const _z_bytes_t *bytes);
-_z_bytes_t _z_bytes_null(void);
+static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);

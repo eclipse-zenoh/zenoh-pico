@@ -149,7 +149,12 @@ _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *m
 void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef _z_reply_body_t _z_push_body_t;
-_z_push_body_t _z_push_body_null(void);
+static inline _z_push_body_t _z_push_body_null(void) {
+    return (_z_push_body_t){
+        ._is_put = false,
+        ._body._del._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()}};
+}
+
 _z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
 void _z_push_body_clear(_z_push_body_t *msg);
 

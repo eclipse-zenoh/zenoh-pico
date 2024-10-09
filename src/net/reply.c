@@ -17,15 +17,6 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_reply_data_t _z_reply_data_null(void) {
-    return (_z_reply_data_t){.replier_id = {.id = {0}}, ._result.sample = _z_sample_null(), ._tag = _Z_REPLY_TAG_NONE};
-}
-
-_z_reply_t _z_reply_null(void) {
-    _z_reply_t r = {.data = _z_reply_data_null()};
-    return r;
-}
-
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
     if (reply_data->_tag == _Z_REPLY_TAG_DATA) {

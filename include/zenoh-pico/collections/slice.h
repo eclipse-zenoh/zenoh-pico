@@ -26,9 +26,12 @@ typedef struct {
     void *context;
 } _z_delete_context_t;
 
-_z_delete_context_t _z_delete_context_null(void);
+static inline _z_delete_context_t _z_delete_context_null(void) { return (_z_delete_context_t){.deleter = NULL, .context = NULL}; }
+
+static inline _z_delete_context_t _z_delete_context_create(void (*deleter)(void *context, void *data), void *context) {
+    return (_z_delete_context_t){.deleter = deleter, .context = context};
+}
 bool _z_delete_context_is_null(const _z_delete_context_t *c);
-_z_delete_context_t _z_delete_context_create(void (*deleter)(void *context, void *data), void *context);
 _z_delete_context_t _z_delete_context_default(void);
 void _z_delete_context_delete(_z_delete_context_t *c, void *data);
 
@@ -47,8 +50,10 @@ typedef struct {
     _z_delete_context_t _delete_context;
 } _z_slice_t;
 
-_z_slice_t _z_slice_empty(void);
-inline static bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
+static inline _z_slice_t _z_slice_empty(void) {
+    return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
+}
+static inline bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);

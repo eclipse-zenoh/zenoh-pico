@@ -27,12 +27,6 @@
 /*-------- Bytes --------*/
 bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
 
-_z_bytes_t _z_bytes_null(void) {
-    _z_bytes_t b;
-    b._slices = _z_arc_slice_svec_make(0);
-    return b;
-}
-
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     _z_arc_slice_svec_copy(&dst->_slices, &src->_slices);
     if (_z_arc_slice_svec_len(&dst->_slices) == _z_arc_slice_svec_len(&src->_slices)) {

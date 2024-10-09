@@ -66,7 +66,7 @@ typedef struct {
     _z_slice_t _slice;
 } _z_string_t;
 
-_z_string_t _z_string_null(void);
+static inline _z_string_t _z_string_null(void) { return (_z_string_t){._slice = _z_slice_empty()}; }
 bool _z_string_check(const _z_string_t *value);
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
