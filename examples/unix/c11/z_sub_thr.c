@@ -95,10 +95,9 @@ int main(int argc, char **argv) {
     z_stats_t *context = z_stats_make();
     z_owned_closure_sample_t callback;
     z_closure(&callback, on_sample, drop_stats, (void *)context);
-    z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_background_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }
@@ -109,7 +108,6 @@ int main(int argc, char **argv) {
     }
 
     // Clean up
-    z_drop(z_move(sub));
     z_drop(z_move(s));
     exit(0);
 }

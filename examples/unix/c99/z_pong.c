@@ -63,17 +63,15 @@ int main(int argc, char** argv) {
     z_view_keyexpr_from_str_unchecked(&ping, "test/ping");
     z_owned_closure_sample_t respond;
     z_closure_sample(&respond, callback, drop, (void*)(&pub));
-    z_owned_subscriber_t sub;
-    if (z_declare_subscriber(&sub, z_session_loan(&session), z_view_keyexpr_loan(&ping),
-                             z_closure_sample_move(&respond), NULL) < 0) {
+
+    if (z_declare_background_subscriber(z_session_loan(&session), z_view_keyexpr_loan(&ping),
+                                        z_closure_sample_move(&respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }
 
     while (getchar() != 'q') {
     }
-
-    z_subscriber_drop(z_subscriber_move(&sub));
 
     z_session_drop(z_session_move(&session));
 }
