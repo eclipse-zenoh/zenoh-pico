@@ -4,6 +4,7 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/api/encoding.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -94,9 +95,20 @@ void test_with_schema(void) {
     z_string_drop(z_string_move(&s));
 }
 
+void test_equals(void) {
+#if Z_FEATURE_ENCODING_VALUES == 1
+    z_owned_encoding_t e;
+    z_encoding_from_str(&e, "zenoh/string");
+    assert(z_encoding_equals(z_encoding_loan(&e), z_encoding_zenoh_string()));
+    assert(!z_encoding_equals(z_encoding_loan(&e), z_encoding_zenoh_serialized()));
+    z_encoding_drop(z_encoding_move(&e));
+#endif
+}
+
 int main(void) {
     test_null_encoding();
     test_encoding_without_id();
     test_encoding_with_id();
     test_with_schema();
+    test_equals();
 }

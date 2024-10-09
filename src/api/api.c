@@ -215,6 +215,10 @@ z_result_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
                               _z_encoding_clear)
 
+bool z_encoding_equals(const z_loaned_encoding_t *left, const z_loaned_encoding_t *right) {
+    return left->id == right->id && _z_string_equals(&left->schema, &right->schema);
+}
+
 z_result_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len) {
     slice->_val = _z_slice_copy_from_buf(data, len);
     if (slice->_val.start == NULL) {

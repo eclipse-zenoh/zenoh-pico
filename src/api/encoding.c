@@ -157,12 +157,17 @@ static z_result_t _z_encoding_convert_from_substr(z_owned_encoding_t *encoding, 
     }
 
     // Check id_end value + corner cases
-    if ((pos != len) && (pos != 0)) {
+    if (pos != 0) {
         uint16_t id = _z_encoding_values_str_to_int(s, pos);
         // Check id
         if (id != UINT16_MAX) {
-            const char *ptr = (pos + 1 == len) ? NULL : s + pos + 1;
-            return _z_encoding_make(&encoding->_val, id, ptr, len - pos - 1);
+            const char *ptr = NULL;
+            size_t remaining = 0;
+            if (pos + 1 < len) {
+                ptr = s + pos + 1;
+                remaining = len - pos - 1;
+            }
+            return _z_encoding_make(&encoding->_val, id, ptr, remaining);
         }
     }
     // By default store the string as schema
