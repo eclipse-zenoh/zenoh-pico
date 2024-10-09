@@ -807,7 +807,6 @@ See details at :ref:`owned_types_concept`
 Functions
 ^^^^^^^^^
 
-.. autocfunction:: primitives.h::z_config_new
 .. autocfunction:: primitives.h::z_config_default
 .. autocfunction:: primitives.h::zp_config_get
 .. autocfunction:: primitives.h::zp_config_insert

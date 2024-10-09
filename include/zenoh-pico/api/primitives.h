@@ -282,15 +282,6 @@ bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t 
 bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
- * Builds a new, zenoh-allocated, empty configuration.
- * It consists in an empty set of properties for zenoh session configuration.
- *
- * Parameters:
- *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
- */
-void z_config_new(z_owned_config_t *config);
-
-/**
  * Builds a new, zenoh-allocated, default configuration.
  * It consists in a default set of properties for zenoh session configuration.
  *
