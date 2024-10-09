@@ -159,14 +159,18 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
     _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
     if (_z_keyexpr_has_suffix(&key)) {
         _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
-
         _zp_session_unlock_mutex(zn);
-
+        
+        // Check if there is subs
+        size_t sub_nb = _z_subscription_rc_list_len(subs);
+        if (sub_nb == 0) {
+            return _Z_RES_OK;
+        }
         // Build the sample
         _z_sample_t sample = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment, reliability);
         // Parse subscription list
         _z_subscription_rc_list_t *xs = subs;
-        _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
+        _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_nb);
         while (xs != NULL) {
             _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
             _Z_RC_IN_VAL(sub)->_callback(&sample, _Z_RC_IN_VAL(sub)->_arg);
