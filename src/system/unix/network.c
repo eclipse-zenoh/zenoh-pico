@@ -18,6 +18,7 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -71,7 +72,12 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
             (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
-
+#if Z_FEATURE_TCP_NODELAY == 1
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+#endif
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;

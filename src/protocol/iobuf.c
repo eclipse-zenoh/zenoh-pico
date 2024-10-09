@@ -519,14 +519,30 @@ _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
 
 z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
     z_result_t ret = _Z_RES_OK;
+    size_t llength = length;
+    _z_iosli_t *wios = _z_wbuf_get_iosli(dst, dst->_w_idx);
+    size_t writable = _z_iosli_writable(wios);
 
-    for (size_t i = 0; i < length; i++) {
-        ret = _z_wbuf_write(dst, _z_wbuf_read(src));
-        if (ret != _Z_RES_OK) {
-            break;
-        }
+    // Siphon does not work (as of now) on expandable dst buffers
+    if (writable >= length) {
+        do {
+            assert(src->_r_idx <= src->_w_idx);
+            _z_iosli_t *rios = _z_wbuf_get_iosli(src, src->_r_idx);
+            size_t readable = _z_iosli_readable(rios);
+            if (readable > (size_t)0) {
+                size_t to_read = (readable <= llength) ? readable : llength;
+                uint8_t *w_pos = _z_ptr_u8_offset(wios->_buf, (ptrdiff_t)wios->_w_pos);
+                (void)memcpy(w_pos, rios->_buf + rios->_r_pos, to_read);
+                rios->_r_pos = rios->_r_pos + to_read;
+                llength -= to_read;
+                wios->_w_pos += to_read;
+            } else {
+                src->_r_idx++;
+            }
+        } while (llength > (size_t)0);
+    } else {
+        ret = _Z_ERR_TRANSPORT_NO_SPACE;
     }
-
     return ret;
 }
 

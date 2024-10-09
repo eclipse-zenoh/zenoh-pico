@@ -24,6 +24,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <zephyr/net/net_if.h>
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
@@ -67,6 +68,14 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
             // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
             // ret = _Z_ERR_GENERIC;
         }
+
+#if Z_FEATURE_TCP_NODELAY == 1
+        int optflag = 1;
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+#endif
 
 #if LWIP_SO_LINGER == 1
         struct linger ling;
