@@ -104,16 +104,6 @@ _z_declaration_t _z_make_decl_final(void) {
     return (_z_declaration_t){._tag = _Z_DECL_FINAL, ._body = {._decl_final = {0}}};
 }
 
-_z_decl_kexpr_t _z_decl_kexpr_null(void) { return (_z_decl_kexpr_t){0}; }
-_z_decl_subscriber_t _z_decl_subscriber_null(void) { return (_z_decl_subscriber_t){0}; }
-_z_decl_queryable_t _z_decl_queryable_null(void) { return (_z_decl_queryable_t){0}; }
-_z_decl_token_t _z_decl_token_null(void) { return (_z_decl_token_t){0}; }
-_z_undecl_kexpr_t _z_undecl_kexpr_null(void) { return (_z_undecl_kexpr_t){0}; }
-_z_undecl_subscriber_t _z_undecl_subscriber_null(void) { return (_z_undecl_subscriber_t){0}; }
-_z_undecl_queryable_t _z_undecl_queryable_null(void) { return (_z_undecl_queryable_t){0}; }
-_z_undecl_token_t _z_undecl_token_null(void) { return (_z_undecl_token_t){0}; }
-_z_decl_final_t _z_decl_final_null(void) { return (_z_decl_final_t){0}; }
-
 void _z_decl_fix_mapping(_z_declaration_t *msg, uint16_t mapping) {
     switch (msg->_tag) {
         case _Z_DECL_KEXPR: {

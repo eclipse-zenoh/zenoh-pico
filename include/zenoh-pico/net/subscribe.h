@@ -33,7 +33,10 @@ typedef struct {
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
 bool _z_subscriber_check(const _z_subscriber_t *subscriber);
-_z_subscriber_t _z_subscriber_null(void);
+static inline _z_subscriber_t _z_subscriber_null(void) {
+    return (_z_subscriber_t){._entity_id = 0, ._zn = _z_session_weak_null()};
+}
+
 #endif
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

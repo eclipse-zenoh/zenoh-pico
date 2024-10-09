@@ -40,7 +40,9 @@ typedef struct _z_publisher_t {
 void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
 bool _z_publisher_check(const _z_publisher_t *publisher);
-_z_publisher_t _z_publisher_null(void);
+static inline _z_publisher_t _z_publisher_null(void) {
+    return (_z_publisher_t) {0};
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

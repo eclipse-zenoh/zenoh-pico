@@ -16,18 +16,6 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_query_t _z_query_null(void) {
-    return (_z_query_t){
-        ._anyke = false,
-        ._key = _z_keyexpr_null(),
-        ._parameters = NULL,
-        ._request_id = 0,
-        ._value = _z_value_null(),
-        .attachment = _z_bytes_null(),
-        ._zn = _z_session_weak_null(),
-    };
-}
-
 void _z_query_clear_inner(_z_query_t *q) {
     _z_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
@@ -98,8 +86,6 @@ _z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_
     _z_value_move(&q._value, value);
     return q;
 }
-
-_z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){._entity_id = 0, ._zn = _z_session_weak_null()}; }
 
 bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
 
