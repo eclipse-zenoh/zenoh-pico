@@ -95,6 +95,20 @@ void test_with_schema(void) {
     z_string_drop(z_string_move(&s));
 }
 
+void test_constants(void) {
+#if Z_FEATURE_ENCODING_VALUES == 1
+    z_owned_string_t s;
+    z_encoding_to_string(z_encoding_zenoh_bytes(), &s);
+    assert(strncmp("zenoh/bytes", z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s))) == 0);
+    z_string_drop(z_string_move(&s));
+
+    z_encoding_to_string(z_encoding_zenoh_string(), &s);
+    assert(strncmp("zenoh/string", z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s))) == 0);
+
+    z_string_drop(z_string_move(&s));
+#endif
+}
+
 void test_equals(void) {
 #if Z_FEATURE_ENCODING_VALUES == 1
     z_owned_encoding_t e;
@@ -110,5 +124,6 @@ int main(void) {
     test_encoding_without_id();
     test_encoding_with_id();
     test_with_schema();
+    test_constants();
     test_equals();
 }
