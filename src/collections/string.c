@@ -20,8 +20,6 @@
 #include "zenoh-pico/utils/pointers.h"
 
 /*-------- string --------*/
-bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
-
 _z_string_t _z_string_copy_from_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value));

@@ -31,6 +31,4 @@ void _z_subscriber_free(_z_subscriber_t **sub) {
     }
 }
 
-bool _z_subscriber_check(const _z_subscriber_t *subscriber) { return !_Z_RC_IS_NULL(&subscriber->_zn); }
-
 #endif

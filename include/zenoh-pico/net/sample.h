@@ -40,10 +40,11 @@ typedef struct _z_sample_t {
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
 
-static inline _z_sample_t _z_sample_null(void) {
-    return (_z_sample_t){0};
+static inline _z_sample_t _z_sample_null(void) { return (_z_sample_t){0}; }
+static inline bool _z_sample_check(const _z_sample_t *sample) {
+    return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
+           _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
-bool _z_sample_check(const _z_sample_t *sample);
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 
 /**

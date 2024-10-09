@@ -144,8 +144,6 @@ _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
     return dst;
 }
 
-bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
-
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;
     *b = _z_slice_empty();
