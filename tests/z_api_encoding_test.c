@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/api/encoding.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
-#include "zenoh-pico/api/encoding.h"
 
 #undef NDEBUG
 #include <assert.h>
