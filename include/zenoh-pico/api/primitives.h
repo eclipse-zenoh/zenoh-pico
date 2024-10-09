@@ -1594,7 +1594,7 @@ void z_publisher_options_default(z_publisher_options_t *options);
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
+z_result_t z_publisher_declare(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**
@@ -1747,7 +1747,7 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options);
 
@@ -1764,7 +1764,7 @@ z_result_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_se
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_queryable_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                           z_moved_closure_query_t *callback, const z_queryable_options_t *options);
 
 /**
@@ -2008,7 +2008,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
+z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options);
 
@@ -2025,7 +2025,7 @@ z_result_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_sessio
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_subscriber_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**

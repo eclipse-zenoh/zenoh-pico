@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     z_closure(&callback, on_sample, drop_stats, (void *)context);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_background_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_subscriber_declare_background(z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }

@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr_str);
     z_owned_subscriber_t _ret_sub;
-    _ret_res = z_declare_subscriber(&_ret_sub, z_loan(s2), z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
+    _ret_res = z_subscriber_declare(&_ret_sub, z_loan(s2), z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
     assert(_ret_res == _Z_RES_OK);
     printf("Ok\n");
 
@@ -328,7 +328,7 @@ int main(int argc, char **argv) {
     _ret_pub_opt.encoding = z_move(encoding);
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_owned_publisher_t _ret_pub;
-    _ret_res = z_declare_publisher(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
+    _ret_res = z_publisher_declare(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
     assert(_ret_res == _Z_RES_OK);
     assert(!z_internal_check(encoding));
     printf("Ok\n");
@@ -378,7 +378,7 @@ int main(int argc, char **argv) {
     z_queryable_options_t _ret_qle_opt;
     z_queryable_options_default(&_ret_qle_opt);
     z_owned_queryable_t qle;
-    assert(z_declare_queryable(&qle, z_loan(s1), z_loan(s1_key), z_move(_ret_closure_query), &_ret_qle_opt) ==
+    assert(z_queryable_declare(&qle, z_loan(s1), z_loan(s1_key), z_move(_ret_closure_query), &_ret_qle_opt) ==
            _Z_RES_OK);
     printf("Ok\n");
 
