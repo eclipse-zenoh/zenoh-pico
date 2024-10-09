@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_subscriber(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback),
+    if (z_subscriber_declare(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&callback),
                              NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         exit(-1);
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_subscriber(z_subscriber_move(&sub));
+    z_subscriber_drop(z_subscriber_move(&sub));
 
     z_session_drop(z_session_move(&s));
     printf("OK!\n");

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_publisher(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
+    if (z_publisher_declare(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_publisher(z_publisher_move(&pub));
+    z_publisher_drop(z_publisher_move(&pub));
 
     z_session_drop(z_session_move(&s));
     printf("OK!\n");

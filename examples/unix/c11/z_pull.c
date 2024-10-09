@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
+    if (z_subscriber_declare(&sub, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(handler));
 
     z_drop(z_move(s));

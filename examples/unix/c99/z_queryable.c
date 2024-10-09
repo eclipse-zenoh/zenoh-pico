@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 
     printf("Creating Queryable on '%s'...\n", keyexpr);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+    if (z_queryable_declare(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
                             NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
         sleep(1);
     }
 
-    z_undeclare_queryable(z_queryable_move(&qable));
+    z_queryable_drop(z_queryable_move(&qable));
 
     z_session_drop(z_session_move(&s));
 

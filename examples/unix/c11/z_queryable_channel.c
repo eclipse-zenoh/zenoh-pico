@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     z_owned_ring_handler_query_t handler;
     z_ring_channel_query_new(&closure, &handler, 10);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
+    if (z_queryable_declare(&qable, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to create queryable.\n");
         return -1;
     }
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
     }
 
     z_drop(z_move(handler));
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
     z_drop(z_move(s));
 

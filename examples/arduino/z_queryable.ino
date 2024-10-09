@@ -112,7 +112,7 @@ void setup() {
     z_closure_query(&callback, query_handler, NULL, NULL);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+    if (z_queryable_declare(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
                             NULL) < 0) {
         Serial.println("Unable to declare queryable.");
         while (1) {
