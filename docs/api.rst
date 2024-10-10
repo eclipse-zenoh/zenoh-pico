@@ -941,6 +941,7 @@ Functions
 .. autocfunction:: primitives.h::z_delete
 
 .. autocfunction:: primitives.h::z_declare_publisher
+.. autocfunction:: primitives.h::z_undeclare_publisher
 .. autocfunction:: primitives.h::z_publisher_put
 .. autocfunction:: primitives.h::z_publisher_delete
 .. autocfunction:: primitives.h::z_publisher_keyexpr
@@ -983,6 +984,7 @@ Functions
 ---------
 
 .. autocfunction:: primitives.h::z_declare_subscriber
+.. autocfunction:: primitives.h::z_undeclare_subscriber
 .. autocfunction:: primitives.h::z_declare_background_subscriber
 
 .. autocfunction:: primitives.h::z_subscriber_options_default
@@ -1028,6 +1030,7 @@ Option Types
 Functions
 ---------
 .. autocfunction:: primitives.h::z_declare_queryable
+.. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_declare_background_queryable
 
 .. autocfunction:: primitives.h::z_queryable_options_default

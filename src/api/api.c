@@ -913,6 +913,12 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     return _Z_RES_OK;
 }
 
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub) {
+    z_result_t ret = _z_undeclare_publisher(&pub->_this._val);
+    _z_publisher_clear(&pub->_this._val);
+    return ret;
+}
+
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
     options->encoding = NULL;
     options->attachment = NULL;
@@ -1144,6 +1150,12 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     return _Z_RES_OK;
 }
 
+z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
+    z_result_t ret = _z_undeclare_queryable(&queryable->_this._val);
+    _z_queryable_clear(&queryable->_this._val);
+    return ret;
+}
+
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
@@ -1373,6 +1385,12 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     } else {
         return _Z_RES_OK;
     }
+}
+
+z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {
+    z_result_t ret = _z_undeclare_subscriber(&sub->_this._val);
+    _z_subscriber_clear(&sub->_this._val);
+    return ret;
 }
 
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {

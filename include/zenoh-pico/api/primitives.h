@@ -1581,6 +1581,17 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**
+ * Undeclares the publisher.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_publisher_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub);
+
+/**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
  *
  * Parameters:
@@ -1733,6 +1744,17 @@ void z_queryable_options_default(z_queryable_options_t *options);
 z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options);
+
+/**
+ * Undeclares the queryable.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_queryable_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_queryable(z_moved_queryable_t *pub);
 
 /**
  * Declares a background queryable for a given keyexpr. The queryable callback will be called
@@ -1994,6 +2016,17 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
 z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options);
+
+/**
+ * Undeclares the subscriber.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_subscriber_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_subscriber(z_moved_subscriber_t *pub);
 
 /**
  * Declares a background subscriber for a given keyexpr. Subscriber callback will be called to process the messages,
