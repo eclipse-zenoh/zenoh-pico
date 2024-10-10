@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     z_view_keyexpr_t ping;
     z_view_keyexpr_from_str_unchecked(&ping, "test/ping");
     z_owned_publisher_t pub;
-    if (z_publisher_declare(&pub, z_session_loan(&session), z_view_keyexpr_loan(&ping), NULL) < 0) {
+    if (z_declare_publisher(z_session_loan(&session), &pub, z_view_keyexpr_loan(&ping), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }

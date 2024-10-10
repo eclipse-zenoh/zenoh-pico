@@ -84,7 +84,7 @@ void setup() {
     Serial.println("...");
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_publisher_declare(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
+    if (z_declare_publisher(z_session_loan(&s), &pub, z_view_keyexpr_loan(&ke), NULL) < 0) {
         Serial.println("Unable to declare publisher for key expression!");
         while (1) {
             ;

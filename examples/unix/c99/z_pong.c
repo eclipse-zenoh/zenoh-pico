@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     z_view_keyexpr_t pong;
     z_view_keyexpr_from_str_unchecked(&pong, "test/pong");
     z_owned_publisher_t pub;
-    if (z_publisher_declare(&pub, z_session_loan(&session), z_view_keyexpr_loan(&pong), NULL) < 0) {
+    if (z_declare_publisher(z_session_loan(&session), &pub, z_view_keyexpr_loan(&pong), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }

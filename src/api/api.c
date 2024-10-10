@@ -871,7 +871,7 @@ void z_publisher_options_default(z_publisher_options_t *options) {
 #endif
 }
 
-z_result_t z_publisher_declare(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
+z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options) {
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;

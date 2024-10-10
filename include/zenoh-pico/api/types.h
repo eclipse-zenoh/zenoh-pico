@@ -169,7 +169,7 @@ typedef struct {
 } z_query_consolidation_t;
 
 /**
- * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_publisher_declare`.
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
  *   z_owned_encoding_t *encoding: Default encoding for messages put by this publisher.
@@ -386,7 +386,7 @@ typedef struct {
 } zp_send_join_options_t;
 
 /**
- * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_publisher_declare`.
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
  *   uint64_t timeout_ms: The maximum duration in ms the scouting can take.

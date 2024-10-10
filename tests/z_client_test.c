@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
     // Declare publisher on first session
     for (unsigned int i = 0; i < SET; i++) {
         z_owned_publisher_t *pub = (z_owned_publisher_t *)z_malloc(sizeof(z_owned_publisher_t));
-        if (z_publisher_declare(pub, z_loan(s1), z_loan(rids1[i]), NULL) < 0) {
+        if (z_declare_publisher(z_loan(s1), pub, z_loan(rids1[i]), NULL) < 0) {
             printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
         }
         pubs1 = _z_list_push(pubs1, pub);

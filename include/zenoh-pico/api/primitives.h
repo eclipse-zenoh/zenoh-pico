@@ -1569,15 +1569,15 @@ void z_publisher_options_default(z_publisher_options_t *options);
  * :c:func:`z_publisher_put` and :c:func:`z_publisher_delete` functions.
  *
  * Parameters:
- *   pub: Pointer to an uninitialized :c:type:`z_owned_publisher_t`.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the publisher through.
+ *   pub: Pointer to an uninitialized :c:type:`z_owned_publisher_t`.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the publisher with.
  *   options: Pointer to a :c:type:`z_publisher_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_publisher_declare(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
+z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**

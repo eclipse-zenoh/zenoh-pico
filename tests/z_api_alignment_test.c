@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
     _ret_pub_opt.encoding = z_move(encoding);
     _ret_pub_opt.congestion_control = Z_CONGESTION_CONTROL_BLOCK;
     z_owned_publisher_t _ret_pub;
-    _ret_res = z_publisher_declare(&_ret_pub, z_loan(s1), z_loan(s1_key), &_ret_pub_opt);
+    _ret_res = z_declare_publisher(z_loan(s1), &_ret_pub, z_loan(s1_key), &_ret_pub_opt);
     assert(_ret_res == _Z_RES_OK);
     assert(!z_internal_check(encoding));
     printf("Ok\n");

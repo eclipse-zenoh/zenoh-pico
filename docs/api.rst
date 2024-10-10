@@ -940,7 +940,7 @@ Functions
 .. autocfunction:: primitives.h::z_put
 .. autocfunction:: primitives.h::z_delete
 
-.. autocfunction:: primitives.h::z_publisher_declare
+.. autocfunction:: primitives.h::z_declare_publisher
 .. autocfunction:: primitives.h::z_publisher_put
 .. autocfunction:: primitives.h::z_publisher_delete
 .. autocfunction:: primitives.h::z_publisher_keyexpr
