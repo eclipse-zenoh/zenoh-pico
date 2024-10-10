@@ -138,7 +138,7 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
 /**
- * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_subscriber_declare`.
+ * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior

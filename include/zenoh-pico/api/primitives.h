@@ -1982,8 +1982,8 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Note that dropping subscriber drops its callback.
  *
  * Parameters:
- *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a`z_owned_closure_sample_t` callback.
  *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
@@ -1991,7 +1991,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
+z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options);
 
@@ -2008,7 +2008,7 @@ z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_sessio
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_subscriber_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**

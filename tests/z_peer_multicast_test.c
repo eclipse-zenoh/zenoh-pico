@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
-        z_result_t res = z_subscriber_declare(sub, z_loan(s2), z_loan(ke), z_move(callback), NULL);
+        z_result_t res = z_declare_subscriber(z_loan(s2), sub, z_loan(ke), z_move(callback), NULL);
         assert(res == _Z_RES_OK);
         printf("Declared subscription on session 2: %ju %zu %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
                (z_zint_t)0, s1_res);

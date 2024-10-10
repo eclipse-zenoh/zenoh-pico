@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     z_owned_closure_sample_t respond;
     z_closure(&respond, callback, drop, NULL);
     z_owned_subscriber_t sub;
-    if (z_subscriber_declare(&sub, z_loan(session), z_loan(pong), z_move(respond), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(session), &sub, z_loan(pong), z_move(respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }

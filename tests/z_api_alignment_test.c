@@ -265,7 +265,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr_str);
     z_owned_subscriber_t _ret_sub;
-    _ret_res = z_subscriber_declare(&_ret_sub, z_loan(s2), z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
+    _ret_res = z_declare_subscriber(z_loan(s2), &_ret_sub, z_loan(ke), z_move(_ret_closure_sample), &_ret_sub_opt);
     assert(_ret_res == _Z_RES_OK);
     printf("Ok\n");
 

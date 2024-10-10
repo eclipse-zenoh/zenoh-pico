@@ -982,8 +982,8 @@ Option Types
 Functions
 ---------
 
-.. autocfunction:: primitives.h::z_subscriber_declare
-.. autocfunction:: primitives.h::z_subscriber_declare_background
+.. autocfunction:: primitives.h::z_declare_subscriber
+.. autocfunction:: primitives.h::z_declare_background_subscriber
 
 .. autocfunction:: primitives.h::z_subscriber_options_default
 .. autocfunction:: primitives.h::z_subscriber_keyexpr

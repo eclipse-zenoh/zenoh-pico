@@ -1316,15 +1316,15 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber
 
 void z_subscriber_options_default(z_subscriber_options_t *options) { options->__dummy = 0; }
 
-z_result_t z_subscriber_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
     z_owned_subscriber_t sub;
-    _Z_RETURN_IF_ERR(z_subscriber_declare(&sub, zs, keyexpr, callback, options));
+    _Z_RETURN_IF_ERR(z_declare_subscriber(sz, &sub, keyexpr, callback, options));
     _z_subscriber_clear(&sub._val);
     return _Z_RES_OK;
 }
 
-z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
+z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options) {
     _ZP_UNUSED(options);
