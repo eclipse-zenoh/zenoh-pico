@@ -265,7 +265,7 @@ jobs:
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
       - name: Install valgrind
-        uses: taiki-e/install-action@valgrind
+        run: sudo apt install -y valgrind
 
       - name: Build project and run test
         run: |
