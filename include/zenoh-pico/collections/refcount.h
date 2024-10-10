@@ -34,6 +34,12 @@ z_result_t _z_rc_weak_upgrade(void *cnt);
 size_t _z_rc_weak_count(void *cnt);
 size_t _z_rc_strong_count(void *cnt);
 
+z_result_t _z_simple_rc_init(void **cnt);
+z_result_t _z_simple_rc_increase(void *cnt);
+bool _z_simple_rc_decrease(void **cnt);
+
+size_t _z_simple_rc_strong_count(void *cnt);
+
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_REFCOUNT_DEFINE(name, type)                                                                               \
     typedef struct name##_rc_t {                                                                                     \
@@ -46,18 +52,8 @@ size_t _z_rc_strong_count(void *cnt);
         void *_cnt;                                                                                                  \
     } name##_weak_t;                                                                                                 \
                                                                                                                      \
-    static inline name##_rc_t name##_rc_null(void) {                                                                 \
-        name##_rc_t p;                                                                                               \
-        p._val = NULL;                                                                                               \
-        p._cnt = NULL;                                                                                               \
-        return p;                                                                                                    \
-    }                                                                                                                \
-    static inline name##_weak_t name##_weak_null(void) {                                                             \
-        name##_weak_t p;                                                                                             \
-        p._val = NULL;                                                                                               \
-        p._cnt = NULL;                                                                                               \
-        return p;                                                                                                    \
-    }                                                                                                                \
+    static inline name##_rc_t name##_rc_null(void) { return (name##_rc_t){0}; }                                      \
+    static inline name##_weak_t name##_weak_null(void) { return (name##_weak_t){0}; }                                \
                                                                                                                      \
     static inline name##_rc_t name##_rc_new(type##_t *val) {                                                         \
         name##_rc_t p = name##_rc_null();                                                                            \
@@ -173,6 +169,84 @@ size_t _z_rc_strong_count(void *cnt);
     static inline size_t name##_rc_size(name##_rc_t *p) {                                                            \
         _ZP_UNUSED(p);                                                                                               \
         return sizeof(name##_rc_t);                                                                                  \
+    }
+
+#define _Z_SIMPLE_REFCOUNT_DEFINE(name, type)                                                                 \
+    typedef struct name##_simple_rc_t {                                                                       \
+        type##_t *_val;                                                                                       \
+        void *_cnt;                                                                                           \
+    } name##_simple_rc_t;                                                                                     \
+                                                                                                              \
+    static inline name##_simple_rc_t name##_simple_rc_null(void) { return (name##_simple_rc_t){0}; }          \
+                                                                                                              \
+    static inline name##_simple_rc_t name##_simple_rc_new(type##_t *val) {                                    \
+        name##_simple_rc_t p = name##_simple_rc_null();                                                       \
+        if (_z_simple_rc_init(&p._cnt) == _Z_RES_OK) {                                                        \
+            p._val = val;                                                                                     \
+        }                                                                                                     \
+        return p;                                                                                             \
+    }                                                                                                         \
+    static inline name##_simple_rc_t name##_simple_rc_new_from_val(const type##_t *val) {                     \
+        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));                                                 \
+        if (v == NULL) {                                                                                      \
+            return name##_simple_rc_null();                                                                   \
+        }                                                                                                     \
+        *v = *val;                                                                                            \
+        name##_simple_rc_t p = name##_simple_rc_new(v);                                                       \
+        if (p._cnt == NULL) {                                                                                 \
+            z_free(v);                                                                                        \
+            return name##_simple_rc_null();                                                                   \
+        }                                                                                                     \
+        return p;                                                                                             \
+    }                                                                                                         \
+    static inline name##_simple_rc_t name##_simple_rc_clone(const name##_simple_rc_t *p) {                    \
+        name##_simple_rc_t c = name##_simple_rc_null();                                                       \
+        if (_z_simple_rc_increase(p->_cnt) == _Z_RES_OK) {                                                    \
+            c = *p;                                                                                           \
+        }                                                                                                     \
+        return c;                                                                                             \
+    }                                                                                                         \
+    static inline name##_simple_rc_t *name##_simple_rc_clone_as_ptr(const name##_simple_rc_t *p) {            \
+        name##_simple_rc_t *c = (name##_simple_rc_t *)z_malloc(sizeof(name##_simple_rc_t));                   \
+        if (c != NULL) {                                                                                      \
+            *c = name##_simple_rc_clone(p);                                                                   \
+            if (c->_cnt == NULL) {                                                                            \
+                z_free(c);                                                                                    \
+            }                                                                                                 \
+        }                                                                                                     \
+        return c;                                                                                             \
+    }                                                                                                         \
+    static inline void name##_simple_rc_copy(name##_simple_rc_t *dst, const name##_simple_rc_t *p) {          \
+        *dst = name##_simple_rc_clone(p);                                                                     \
+    }                                                                                                         \
+    static inline bool name##_simple_rc_eq(const name##_simple_rc_t *left, const name##_simple_rc_t *right) { \
+        return (left->_val == right->_val);                                                                   \
+    }                                                                                                         \
+    static inline bool name##_simple_rc_decr(name##_simple_rc_t *p) {                                         \
+        if ((p == NULL) || (p->_cnt == NULL)) {                                                               \
+            return false;                                                                                     \
+        }                                                                                                     \
+        if (_z_simple_rc_decrease(&p->_cnt)) {                                                                \
+            return true;                                                                                      \
+        }                                                                                                     \
+        return false;                                                                                         \
+    }                                                                                                         \
+    static inline bool name##_simple_rc_drop(name##_simple_rc_t *p) {                                         \
+        if (p == NULL) {                                                                                      \
+            return false;                                                                                     \
+        }                                                                                                     \
+        bool res = false;                                                                                     \
+        if (name##_simple_rc_decr(p) && p->_val != NULL) {                                                    \
+            type##_clear(p->_val);                                                                            \
+            z_free(p->_val);                                                                                  \
+            res = true;                                                                                       \
+        }                                                                                                     \
+        *p = name##_simple_rc_null();                                                                         \
+        return res;                                                                                           \
+    }                                                                                                         \
+    static inline size_t name##_simple_rc_size(name##_simple_rc_t *p) {                                       \
+        _ZP_UNUSED(p);                                                                                        \
+        return sizeof(name##_simple_rc_t);                                                                    \
     }
 
 #ifdef __cplusplus
