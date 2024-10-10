@@ -33,9 +33,7 @@ typedef struct {
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
 static inline bool _z_subscriber_check(const _z_subscriber_t *subscriber) { return !_Z_RC_IS_NULL(&subscriber->_zn); }
-static inline _z_subscriber_t _z_subscriber_null(void) {
-    return (_z_subscriber_t){._entity_id = 0, ._zn = _z_session_weak_null()};
-}
+static inline _z_subscriber_t _z_subscriber_null(void) { return (_z_subscriber_t){0}; }
 
 #endif
 

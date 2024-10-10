@@ -36,10 +36,7 @@ _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src);
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_declared);
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
-static inline _z_keyexpr_t _z_keyexpr_null(void) {
-    _z_keyexpr_t keyexpr = {0, {0}, _z_string_null()};
-    return keyexpr;
-}
+static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
 bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src);
 void _z_keyexpr_clear(_z_keyexpr_t *rk);
