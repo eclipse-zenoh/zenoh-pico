@@ -952,14 +952,24 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
+    _z_session_t *session = NULL;
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
-
     if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        ret = _Z_ERR_SESSION_CLOSED;
+    }
+#else
+    session = _Z_RC_IN_VAL(&pub->_zn);
+#endif
+
+    if (session != NULL) {
         // Check if write filter is active before writing
         if (!_z_write_filter_active(pub)) {
             // Write value
-            ret = _z_write(_Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
+            ret = _z_write(session, pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
                            Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
                            _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
         }
@@ -970,11 +980,11 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
             opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
 #endif
-
-        _z_session_rc_drop(&sess_rc);
-    } else {
-        ret = _Z_ERR_SESSION_CLOSED;
     }
+
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
 
     // Clean-up
     _z_encoding_clear(&encoding);
