@@ -35,17 +35,4 @@ void _z_publisher_free(_z_publisher_t **pub) {
     }
 }
 
-bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
-_z_publisher_t _z_publisher_null(void) {
-    return (_z_publisher_t){._congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
-                            ._id = 0,
-                            ._key = _z_keyexpr_null(),
-                            ._priority = Z_PRIORITY_DEFAULT,
-                            ._zn = _z_session_weak_null(),
-                            ._encoding = _z_encoding_null(),
-#if Z_FEATURE_INTEREST == 1
-                            ._filter = (_z_write_filter_t){._interest_id = 0, .ctx = NULL}
-#endif
-    };
-}
 #endif

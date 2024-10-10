@@ -34,7 +34,7 @@ typedef struct _z_query_t {
     bool _anyke;
 } _z_query_t;
 
-_z_query_t _z_query_null(void);
+static inline _z_query_t _z_query_null(void) { return (_z_query_t){0}; }
 void _z_query_clear(_z_query_t *q);
 z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
@@ -54,8 +54,9 @@ _z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_
                            uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
-_z_queryable_t _z_queryable_null(void);
-bool _z_queryable_check(const _z_queryable_t *queryable);
+static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0}; }
+static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
+
 #endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

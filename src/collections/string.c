@@ -17,16 +17,10 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 /*-------- string --------*/
-_z_string_t _z_string_null(void) {
-    _z_string_t s = {._slice = _z_slice_empty()};
-    return s;
-}
-
-bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
-
 _z_string_t _z_string_copy_from_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value));
@@ -85,11 +79,6 @@ _z_string_t _z_string_steal(_z_string_t *str) {
     return ret;
 }
 
-_z_string_t _z_string_alias(const _z_string_t *str) {
-    _z_string_t alias = {._slice = _z_slice_alias(&str->_slice)};
-    return alias;
-}
-
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_alias_str(src); }
 
 void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
@@ -131,10 +120,10 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
 }
 
 _z_string_t _z_string_preallocate(size_t len) {
-    _z_string_t s = _z_string_null();
-    _z_slice_init(&s._slice, len);
-    if (_z_slice_is_empty(&s._slice)) {
-        return _z_string_null();
+    _z_string_t s;
+    // As long as _z_string_t is only a slice, no need to do anything more
+    if (_z_slice_init(&s._slice, len) != _Z_RES_OK) {
+        _Z_ERROR("String allocation failed");
     }
     return s;
 }

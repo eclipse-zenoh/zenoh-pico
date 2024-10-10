@@ -67,7 +67,7 @@ typedef struct {
 } _z_timestamp_t;
 
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
-_z_timestamp_t _z_timestamp_null(void);
+static inline _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){0}; }
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 bool _z_timestamp_check(const _z_timestamp_t *stamp);
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
@@ -163,7 +163,8 @@ typedef struct {
     _z_bytes_t payload;
     _z_encoding_t encoding;
 } _z_value_t;
-_z_value_t _z_value_null(void);
+static inline _z_value_t _z_value_null(void) { return (_z_value_t){0}; }
+
 _z_value_t _z_value_steal(_z_value_t *value);
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 void _z_value_move(_z_value_t *dst, _z_value_t *src);
@@ -187,7 +188,8 @@ typedef struct {
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
-_z_hello_t _z_hello_null(void);
+static inline _z_hello_t _z_hello_null(void) { return (_z_hello_t){0}; }
+
 bool _z_hello_check(const _z_hello_t *hello);
 
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
@@ -202,7 +204,7 @@ typedef struct {
     uint32_t _entity_id;
     uint32_t _source_sn;
 } _z_source_info_t;
-_z_source_info_t _z_source_info_null(void);
+static inline _z_source_info_t _z_source_info_null(void) { return (_z_source_info_t){0}; }
 
 typedef struct {
     uint32_t _request_id;
