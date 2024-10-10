@@ -41,9 +41,12 @@ z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *sc
 void _z_encoding_clear(_z_encoding_t *encoding) { _z_string_clear(&encoding->schema); }
 
 z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
-    *dst = _z_encoding_null();
-    _Z_RETURN_IF_ERR(_z_string_copy(&dst->schema, &src->schema));
     dst->id = src->id;
+    if (_z_string_check(&src->schema)) {
+        _Z_RETURN_IF_ERR(_z_string_copy(&dst->schema, &src->schema));
+    } else {
+        dst->schema = _z_string_null();
+    }
     return _Z_RES_OK;
 }
 
