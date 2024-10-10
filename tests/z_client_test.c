@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s1), z_loan(ke));
+        z_declare_keyexpr(z_loan(s1), &expr, z_loan(ke));
         printf("Declared resource on session 1: %u %.*s\n", z_loan(expr)->_id,
                (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids1[i] = expr;
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s2), z_loan(ke));
+        z_declare_keyexpr(z_loan(s2), &expr, z_loan(ke));
         printf("Declared resource on session 2: %u %.*s\n", z_loan(expr)->_id,
                (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids2[i] = expr;
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
         z_owned_closure_sample_t callback;
         z_closure(&callback, data_handler, NULL, &idx[i]);
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
-        z_result_t res = z_subscriber_declare(sub, z_loan(s2), z_loan(rids2[i]), z_move(callback), NULL);
+        z_result_t res = z_declare_subscriber(z_loan(s2), sub, z_loan(rids2[i]), z_move(callback), NULL);
         assert(res == _Z_RES_OK);
         printf("Declared subscription on session 2: %ju %u %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
                z_loan(rids2[i])->_id, "");
@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
-        assert(z_queryable_declare(qle, z_loan(s2), z_loan(ke), z_move(callback), NULL) == _Z_RES_OK);
+        assert(z_declare_queryable(z_loan(s2), qle, z_loan(ke), z_move(callback), NULL) == _Z_RES_OK);
         printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val._entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }
@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
     // Declare publisher on first session
     for (unsigned int i = 0; i < SET; i++) {
         z_owned_publisher_t *pub = (z_owned_publisher_t *)z_malloc(sizeof(z_owned_publisher_t));
-        if (z_publisher_declare(pub, z_loan(s1), z_loan(rids1[i]), NULL) < 0) {
+        if (z_declare_publisher(z_loan(s1), pub, z_loan(rids1[i]), NULL) < 0) {
             printf("Declared publisher on session 1: %zu\n", z_loan(*pub)->_id);
         }
         pubs1 = _z_list_push(pubs1, pub);
@@ -380,14 +380,14 @@ int main(int argc, char **argv) {
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])->_id);
-        z_undeclare_keyexpr(z_move(rids1[i]), z_loan(s1));
+        z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])->_id);
-        z_undeclare_keyexpr(z_move(rids2[i]), z_loan(s2));
+        z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
     z_sleep_s(SLEEP);

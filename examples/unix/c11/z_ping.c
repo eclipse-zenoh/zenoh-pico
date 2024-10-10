@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     z_view_keyexpr_from_str_unchecked(&pong, "test/pong");
 
     z_owned_publisher_t pub;
-    if (z_publisher_declare(&pub, z_loan(session), z_loan(ping), NULL) < 0) {
+    if (z_declare_publisher(z_loan(session), &pub, z_loan(ping), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     z_owned_closure_sample_t respond;
     z_closure(&respond, callback, drop, NULL);
     z_owned_subscriber_t sub;
-    if (z_subscriber_declare(&sub, z_loan(session), z_loan(pong), z_move(respond), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(session), &sub, z_loan(pong), z_move(respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }

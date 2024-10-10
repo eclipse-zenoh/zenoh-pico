@@ -1569,16 +1569,27 @@ void z_publisher_options_default(z_publisher_options_t *options);
  * :c:func:`z_publisher_put` and :c:func:`z_publisher_delete` functions.
  *
  * Parameters:
- *   pub: Pointer to an uninitialized :c:type:`z_owned_publisher_t`.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the publisher through.
+ *   pub: Pointer to an uninitialized :c:type:`z_owned_publisher_t`.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the publisher with.
  *   options: Pointer to a :c:type:`z_publisher_options_t` to configure the operation.
  *
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_publisher_declare(z_owned_publisher_t *pub, const z_loaned_session_t *zs,
+z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
+
+/**
+ * Undeclares the publisher.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_publisher_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub);
 
 /**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
@@ -1721,8 +1732,8 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Note that dropping queryable drops its callback.
  *
  * Parameters:
- *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
  *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
@@ -1730,9 +1741,20 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options);
+
+/**
+ * Undeclares the queryable.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_queryable_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_queryable(z_moved_queryable_t *pub);
 
 /**
  * Declares a background queryable for a given keyexpr. The queryable callback will be called
@@ -1747,7 +1769,7 @@ z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_se
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_queryable_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                           z_moved_closure_query_t *callback, const z_queryable_options_t *options);
 
 /**
@@ -1899,7 +1921,7 @@ z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const 
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
+z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *declared_keyexpr,
                              const z_loaned_keyexpr_t *keyexpr);
 
 /**
@@ -1912,7 +1934,7 @@ z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned
  * Return:
  *   ``0`` if undeclare is successful, ``negative value`` otherwise.
  */
-z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
+z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr);
 
 /**
  * Constructs a new empty string array.
@@ -1982,8 +2004,8 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Note that dropping subscriber drops its callback.
  *
  * Parameters:
- *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a`z_owned_closure_sample_t` callback.
  *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
@@ -1991,9 +2013,20 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_session_t *zs,
+z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
                                 const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                 const z_subscriber_options_t *options);
+
+/**
+ * Undeclares the subscriber.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_subscriber_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_subscriber(z_moved_subscriber_t *pub);
 
 /**
  * Declares a background subscriber for a given keyexpr. Subscriber callback will be called to process the messages,
@@ -2008,7 +2041,7 @@ z_result_t z_subscriber_declare(z_owned_subscriber_t *sub, const z_loaned_sessio
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_subscriber_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**

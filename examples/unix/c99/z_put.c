@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t vke;
     z_view_keyexpr_from_str(&vke, keyexpr);
     z_owned_keyexpr_t ke;
-    if (z_declare_keyexpr(&ke, z_session_loan(&s), z_view_keyexpr_loan(&vke)) < 0) {
+    if (z_declare_keyexpr(z_session_loan(&s), &ke, z_view_keyexpr_loan(&vke)) < 0) {
         printf("Unable to declare key expression!\n");
         z_session_drop(z_session_move(&s));
         return -1;
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     }
 
     // Clean up
-    z_undeclare_keyexpr(z_keyexpr_move(&ke), z_session_loan(&s));
+    z_undeclare_keyexpr(z_session_loan(&s), z_keyexpr_move(&ke));
     z_session_drop(z_session_move(&s));
     return 0;
 }

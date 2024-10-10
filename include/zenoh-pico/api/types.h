@@ -138,7 +138,7 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
 /**
- * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_subscriber_declare`.
+ * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -169,7 +169,7 @@ typedef struct {
 } z_query_consolidation_t;
 
 /**
- * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_publisher_declare`.
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
  *   z_owned_encoding_t *encoding: Default encoding for messages put by this publisher.
@@ -190,7 +190,7 @@ typedef struct {
 } z_publisher_options_t;
 
 /**
- * Represents the configuration used to configure a queryable upon declaration :c:func:`z_queryable_declare`.
+ * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.
  *
  * Members:
  *   bool complete: The completeness of the queryable.
@@ -386,7 +386,7 @@ typedef struct {
 } zp_send_join_options_t;
 
 /**
- * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_publisher_declare`.
+ * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
  *   uint64_t timeout_ms: The maximum duration in ms the scouting can take.

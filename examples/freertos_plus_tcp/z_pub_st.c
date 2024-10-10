@@ -51,7 +51,7 @@ void app_main(void) {
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_publisher_declare(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
+    if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return;
     }
