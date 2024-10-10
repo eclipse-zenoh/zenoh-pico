@@ -64,7 +64,7 @@ _z_string_svec_t _z_string_array_null(void) { return _z_string_svec_make(0); }
 void z_string_array_new(z_owned_string_array_t *a) { a->_val = _z_string_array_null(); }
 
 size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value) {
-    _z_string_t str = _z_string_alias(value);
+    _z_string_t str = _z_string_alias(*value);
     _z_string_svec_append(a, &str);
 
     return _z_string_svec_len(a);
@@ -130,7 +130,7 @@ void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char 
 }
 
 z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    s->_val = _z_string_alias(&keyexpr->_suffix);
+    s->_val = _z_string_alias(keyexpr->_suffix);
     return _Z_RES_OK;
 }
 
@@ -1348,7 +1348,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr_aliased);
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
@@ -1357,7 +1357,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             bool do_keydecl = true;
-            _z_keyexpr_t resource_key = _z_keyexpr_alias(&keyexpr_aliased);
+            _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
             // Remove wild
             char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
             if ((wild != NULL) && _z_keyexpr_has_suffix(&keyexpr_aliased)) {

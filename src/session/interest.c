@@ -101,7 +101,7 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
     while (xs != NULL) {
         _z_resource_t *res = _z_resource_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(&res->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(res->_key);
         _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &key);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
@@ -123,7 +123,7 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(sub)->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(sub)->_key);
         _z_declaration_t declaration = _z_make_decl_subscriber(&key, _Z_RC_IN_VAL(sub)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
@@ -152,7 +152,7 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(qle)->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(qle)->_key);
         _z_declaration_t declaration = _z_make_decl_queryable(
             &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);

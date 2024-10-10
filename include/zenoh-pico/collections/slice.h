@@ -53,13 +53,15 @@ typedef struct {
 static inline _z_slice_t _z_slice_empty(void) { return (_z_slice_t){0}; }
 static inline bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
 static inline bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
+static inline _z_slice_t _z_slice_alias(const _z_slice_t bs) {
+    return (_z_slice_t){.len = bs.len, .start = bs.start, ._delete_context = _z_delete_context_null()};
+}
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc);
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
-_z_slice_t _z_slice_alias(const _z_slice_t *bs);
 z_result_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
 z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len);
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);
