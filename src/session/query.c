@@ -148,7 +148,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
                     (void)memset(&partial_reply, 0,
                                  sizeof(_z_reply_t));  // Avoid warnings on uninitialized values on the reply
                     partial_reply.data._tag = _Z_REPLY_TAG_DATA;
-                    partial_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(reply.data._result.sample.keyexpr);
+                    partial_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(&reply.data._result.sample.keyexpr);
                     pen_rep->_reply = partial_reply;
                 } else {
                     pen_rep->_reply = reply;  // Store the whole reply in the latest mode

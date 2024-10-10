@@ -1344,7 +1344,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr_aliased);
+    _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
@@ -1353,7 +1353,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             bool do_keydecl = true;
-            _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
+            _z_keyexpr_t resource_key = _z_keyexpr_alias(&keyexpr_aliased);
             // Remove wild
             char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
             if ((wild != NULL) && _z_keyexpr_has_suffix(&keyexpr_aliased)) {
