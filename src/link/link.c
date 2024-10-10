@@ -153,7 +153,7 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
 
 z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     z_result_t ret = _Z_RES_OK;
-    bool link_is_streamed = false;
+    bool link_is_streamed;
 
     switch (link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
