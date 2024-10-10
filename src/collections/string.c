@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 /*-------- string --------*/
@@ -124,10 +125,10 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
 }
 
 _z_string_t _z_string_preallocate(size_t len) {
-    _z_string_t s = _z_string_null();
-    _z_slice_init(&s._slice, len);
-    if (_z_slice_is_empty(&s._slice)) {
-        return _z_string_null();
+    _z_string_t s;
+    // As long as _z_string_t is only a slice, no need to do anything more
+    if (_z_slice_init(&s._slice, len) != _Z_RES_OK) {
+        _Z_ERROR("String allocation failed");
     }
     return s;
 }

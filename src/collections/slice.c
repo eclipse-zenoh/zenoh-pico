@@ -40,22 +40,15 @@ void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
 
 /*-------- Slice --------*/
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
-    z_result_t ret = _Z_RES_OK;
-
-    bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
-    if (bs->start != NULL) {
-        bs->len = capacity;
-        bs->_delete_context = _z_delete_context_default();
-    } else {
+    bs->start = (uint8_t *)z_malloc(capacity);
+    if (bs->start == NULL) {
         bs->len = 0;
         bs->_delete_context = _z_delete_context_null();
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-
-    if (bs->len != capacity) {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
+    bs->len = capacity;
+    bs->_delete_context = _z_delete_context_default();
+    return _Z_RES_OK;
 }
 
 _z_slice_t _z_slice_make(size_t capacity) {
