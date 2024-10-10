@@ -829,11 +829,13 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
                    reliability);
 
     // Trigger local subscriptions
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     _z_trigger_local_subscriptions(
         _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(&payload->_this),
         opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
         opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
+#endif
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
@@ -962,10 +964,12 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
                            _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
         }
         // Trigger local subscriptions
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
         _z_trigger_local_subscriptions(
             _Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
             opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
+#endif
 
         _z_session_rc_drop(&sess_rc);
     } else {

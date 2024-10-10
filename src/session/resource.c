@@ -98,9 +98,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
     // Append suffix as the right-most segment
     if (_z_keyexpr_has_suffix(keyexpr)) {
         len = len + _z_string_len(&keyexpr->_suffix);
-        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);  // Warning: list must be release with
-                                                                             //   _z_list_free(&strs, _z_noop_free);
-                                                                             //   or will release the suffix as well
+        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);
     }
 
     // Recursively go through all the RIDs
@@ -114,9 +112,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         }
         if (_z_keyexpr_has_suffix(&res->_key)) {
             len = len + _z_string_len(&res->_key._suffix);
-            strs = _z_string_list_push(strs, &res->_key._suffix);  // Warning: list must be release with
-                                                                   //   _z_list_free(&strs, _z_noop_free);
-                                                                   //   or will release the suffix as well
+            strs = _z_string_list_push(strs, &res->_key._suffix);
         }
         id = res->_key._id;
     }
@@ -136,6 +132,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             }
         }
     }
+    // Warning: list must be release with _z_list_free(&strs, _z_noop_free) or will release the suffix as well
     _z_list_free(&strs, _z_noop_free);
     return ret;
 }
