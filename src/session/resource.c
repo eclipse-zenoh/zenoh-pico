@@ -88,10 +88,19 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
 }
 
 _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
-    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = _z_string_null(), ._mapping = _z_keyexpr_mapping(0)};
+    _z_zint_t id = keyexpr->_id;
+
+    // Check if ke is already expanded
+    if (id == Z_RESOURCE_ID_NONE) {
+        if (!_z_keyexpr_has_suffix(keyexpr)) {
+            return _z_keyexpr_null();
+        }
+        return _z_keyexpr_duplicate(keyexpr);
+    }
 
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
+    _z_keyexpr_t ret = _z_keyexpr_null();
     _z_string_list_t *strs = NULL;
     size_t len = 0;
 
@@ -100,9 +109,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         len = len + _z_string_len(&keyexpr->_suffix);
         strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);
     }
-
     // Recursively go through all the RIDs
-    _z_zint_t id = keyexpr->_id;
     uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
     while (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = __z_get_resource_by_id(xs, mapping, id);
