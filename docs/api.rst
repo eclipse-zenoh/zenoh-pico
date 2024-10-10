@@ -206,6 +206,66 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const z_loaned_keyexpr_t * z_keyexpr_loan(const z_owned_keyexpr_t * keyexpr)
 .. c:function:: z_loaned_keyexpr_t * z_keyexpr_loan_mut(z_owned_keyexpr_t * keyexpr)
 
+Payload
+-------
+
+Types
+^^^^^
+
+see details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_bytes_t
+.. c:type:: z_loaned_bytes_t
+.. c:type:: z_moved_bytes_t
+
+.. c:type:: z_owned_bytes_writter_t
+.. c:type:: z_loaned_bytes_writter_t
+.. c:type:: z_moved_bytes_writter_t
+
+.. autoctype:: types.h::z_bytes_reader_t
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_bytes_empty
+.. autocfunction:: primitives.h::z_bytes_len
+.. autocfunction:: primitives.h::z_bytes_from_buf
+.. autocfunction:: primitives.h::z_bytes_from_slice
+.. autocfunction:: primitives.h::z_bytes_from_static_buf
+.. autocfunction:: primitives.h::z_bytes_from_static_str
+.. autocfunction:: primitives.h::z_bytes_from_str
+.. autocfunction:: primitives.h::z_bytes_from_string
+.. autocfunction:: primitives.h::z_bytes_copy_from_buf
+.. autocfunction:: primitives.h::z_bytes_copy_from_slice
+.. autocfunction:: primitives.h::z_bytes_copy_from_str
+.. autocfunction:: primitives.h::z_bytes_copy_from_string
+.. autocfunction:: primitives.h::z_bytes_to_slice
+.. autocfunction:: primitives.h::z_bytes_to_string
+
+.. autocfunction:: primitives.h::z_bytes_get_reader
+.. autocfunction:: primitives.h::z_bytes_reader_read
+.. autocfunction:: primitives.h::z_bytes_reader_remaining
+.. autocfunction:: primitives.h::z_bytes_reader_seek
+.. autocfunction:: primitives.h::z_bytes_reader_tell
+
+.. autocfunction:: primitives.h::z_bytes_writer_append
+.. autocfunction:: primitives.h::z_bytes_writer_empty
+.. autocfunction:: primitives.h::z_bytes_writer_finish
+.. autocfunction:: primitives.h::z_bytes_writer_write_all
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: void z_bytes_drop(z_moved_bytes_t * bytes) 
+.. c:function:: void z_bytes_clone(z_owned_bytes_t * dst, const z_loaned_bytes_t * bytes) 
+.. c:function:: const z_loaned_bytes_t * z_bytes_loan(const z_owned_bytes_t * bytes)
+.. c:function:: z_loaned_bytes_t * z_bytes_loan_mut(z_owned_bytes_t * bytes)
+
+.. c:function:: void z_bytes_writer_drop(z_moved_bytes_writer_t * bytes_writer) 
+.. c:function:: void z_bytes_writer_clone(z_owned_bytes_writer_t * dst, const z_loaned_bytes_writer_t * bytes_writer) 
+.. c:function:: const z_loaned_bytes_writer_t * z_bytes_writer_loan(const z_owned_bytes_writer_t * bytes_writer)
+.. c:function:: z_loaned_bytes_writer_t * z_bytes_writer_loan_mut(z_owned_bytes_writer_t * bytes_writer)
 
 Encoding
 --------
