@@ -26,17 +26,24 @@ bool _z_keyexpr_suffix_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *
 bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
+static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
+static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t src) {
+    return (_z_keyexpr_t){
+        ._id = src._id,
+        ._mapping = src._mapping,
+        ._suffix = _z_string_alias(src._suffix),
+    };
+}
+
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str);
 _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len);
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src);
 /// Returns either keyexpr defined by id + mapping with null suffix if try_declared is true and id is non-zero,
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_declared);
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src);
-static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
 bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src);
 void _z_keyexpr_clear(_z_keyexpr_t *rk);

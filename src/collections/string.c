@@ -79,11 +79,6 @@ _z_string_t _z_string_steal(_z_string_t *str) {
     return ret;
 }
 
-_z_string_t _z_string_alias(const _z_string_t *str) {
-    _z_string_t alias = {._slice = _z_slice_alias(&str->_slice)};
-    return alias;
-}
-
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_alias_str(src); }
 
 void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }

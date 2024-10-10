@@ -63,7 +63,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
         uint16_t id = _z_register_resource(zn, keyexpr, 0, _Z_KEYEXPR_MAPPING_LOCAL);
         if (id != 0) {
             // Build the declare message to send on the wire
-            _z_keyexpr_t alias = _z_keyexpr_alias(&keyexpr);
+            _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
             _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
@@ -336,7 +336,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _
     if (ret == _Z_RES_OK) {
         // Build the reply context decorator. This is NOT the final reply.
         _z_id_t zid = zn->_local_zid;
-        _z_keyexpr_t ke = _z_keyexpr_alias(&keyexpr);
+        _z_keyexpr_t ke = _z_keyexpr_alias(keyexpr);
         _z_zenoh_message_t z_msg;
         switch (kind) {
             case Z_SAMPLE_KIND_PUT:
