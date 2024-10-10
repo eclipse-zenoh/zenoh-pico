@@ -1914,8 +1914,8 @@ z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const 
  * in the routing tables.
  *
  * Parameters:
- *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the keyexpr through.
+ *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the keyexpr with.
  *
  * Return:
@@ -1928,8 +1928,8 @@ z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *de
  * Undeclares a keyexpr.
  *
  * Parameters:
- *   keyexpr: Moved :c:type:`z_owned_keyexpr_t` to undeclare.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
+ *   keyexpr: Moved :c:type:`z_owned_keyexpr_t` to undeclare.
  *
  * Return:
  *   ``0`` if undeclare is successful, ``negative value`` otherwise.
