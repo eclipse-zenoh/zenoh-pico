@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s1), z_loan(ke));
+        z_declare_keyexpr(z_loan(s1), &expr, z_loan(ke));
         printf("Declared resource on session 1: %u %.*s\n", z_loan(expr)->_id,
                (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids1[i] = expr;
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
-        z_declare_keyexpr(&expr, z_loan(s2), z_loan(ke));
+        z_declare_keyexpr(z_loan(s2), &expr, z_loan(ke));
         printf("Declared resource on session 2: %u %.*s\n", z_loan(expr)->_id,
                (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
         rids2[i] = expr;
@@ -380,14 +380,14 @@ int main(int argc, char **argv) {
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])->_id);
-        z_undeclare_keyexpr(z_move(rids1[i]), z_loan(s1));
+        z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
         printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])->_id);
-        z_undeclare_keyexpr(z_move(rids2[i]), z_loan(s2));
+        z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 
     z_sleep_s(SLEEP);

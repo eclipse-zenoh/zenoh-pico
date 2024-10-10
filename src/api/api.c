@@ -1281,7 +1281,7 @@ z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_
     return _Z_RES_OK;
 }
 
-z_result_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr) {
+z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
     uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), k);
     key->_val = _z_rid_with_suffix(id, NULL);
@@ -1296,7 +1296,7 @@ z_result_t z_declare_keyexpr(z_owned_keyexpr_t *key, const z_loaned_session_t *z
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs) {
+z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr) {
     z_result_t ret = _Z_RES_OK;
 
     ret = _z_undeclare_resource(_Z_RC_IN_VAL(zs), keyexpr->_this._val._id);

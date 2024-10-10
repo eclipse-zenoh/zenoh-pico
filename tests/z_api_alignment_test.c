@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t s1_key;
     z_view_keyexpr_from_str(&s1_key, s1_res);
     z_owned_keyexpr_t _ret_expr;
-    z_declare_keyexpr(&_ret_expr, z_loan(s1), z_loan(s1_key));
+    z_declare_keyexpr(z_loan(s1), &_ret_expr, z_loan(s1_key));
     assert(z_internal_check(_ret_expr));
     printf("Ok\n");
 
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
     assert_eq(datas, 2);
 
     printf("Undeclaring Keyexpr...");
-    _ret_res = z_undeclare_keyexpr(z_move(_ret_expr), z_loan(s1));
+    _ret_res = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
     printf(" %02x\n", _ret_res);
     assert_eq(_ret_res, 0);
     assert(!z_internal_check(_ret_expr));

@@ -1899,7 +1899,7 @@ z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const 
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
+z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *declared_keyexpr,
                              const z_loaned_keyexpr_t *keyexpr);
 
 /**
@@ -1912,7 +1912,7 @@ z_result_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned
  * Return:
  *   ``0`` if undeclare is successful, ``negative value`` otherwise.
  */
-z_result_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
+z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr);
 
 /**
  * Constructs a new empty string array.
