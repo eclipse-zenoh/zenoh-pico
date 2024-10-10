@@ -139,7 +139,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             }
         }
     }
-    // Warning: list must be release with _z_list_free(&strs, _z_noop_free) or will release the suffix as well
+    // Warning: list must be released with _z_list_free(&strs, _z_noop_free) or will release the suffix as well
     _z_list_free(&strs, _z_noop_free);
     return ret;
 }
