@@ -59,9 +59,9 @@ z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     return _Z_RES_OK;
 }
 
-_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
     _z_keyexpr_t dst;
-    _z_keyexpr_copy(&dst, &src);
+    _z_keyexpr_copy(&dst, src);
     return dst;
 }
 
@@ -106,11 +106,11 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     return _z_string_equals(&left->_suffix, &right->_suffix);
 }
 
-_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
+_z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
     _z_keyexpr_t alias = {
-        ._id = src._id,
-        ._mapping = src._mapping,
-        ._suffix = _z_string_alias(&src._suffix),
+        ._id = src->_id,
+        ._mapping = src->_mapping,
+        ._suffix = _z_string_alias(&src->_suffix),
     };
     return alias;
 }

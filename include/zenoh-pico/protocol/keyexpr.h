@@ -29,8 +29,8 @@ bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *righ
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str);
 _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len);
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src);
-_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
+_z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src);
 /// Returns either keyexpr defined by id + mapping with null suffix if try_declared is true and id is non-zero,
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.
