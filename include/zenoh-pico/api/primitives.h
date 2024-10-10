@@ -1721,8 +1721,8 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Note that dropping queryable drops its callback.
  *
  * Parameters:
- *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
+ *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
  *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
@@ -1730,7 +1730,7 @@ void z_queryable_options_default(z_queryable_options_t *options);
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options);
 
@@ -1747,7 +1747,7 @@ z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_se
  * Return:
  *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-z_result_t z_queryable_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                           z_moved_closure_query_t *callback, const z_queryable_options_t *options);
 
 /**

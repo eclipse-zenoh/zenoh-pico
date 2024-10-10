@@ -190,7 +190,7 @@ typedef struct {
 } z_publisher_options_t;
 
 /**
- * Represents the configuration used to configure a queryable upon declaration :c:func:`z_queryable_declare`.
+ * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.
  *
  * Members:
  *   bool complete: The completeness of the queryable.

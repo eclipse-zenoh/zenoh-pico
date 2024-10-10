@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
         z_owned_queryable_t *qle = (z_owned_queryable_t *)z_malloc(sizeof(z_owned_queryable_t));
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str(&ke, s1_res);
-        assert(z_queryable_declare(qle, z_loan(s2), z_loan(ke), z_move(callback), NULL) == _Z_RES_OK);
+        assert(z_declare_queryable(z_loan(s2), qle, z_loan(ke), z_move(callback), NULL) == _Z_RES_OK);
         printf("Declared queryable on session 2: %ju %zu %s\n", (uintmax_t)qle->_val._entity_id, (z_zint_t)0, s1_res);
         qles2 = _z_list_push(qles2, qle);
     }

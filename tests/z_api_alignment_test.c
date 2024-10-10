@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
     z_queryable_options_t _ret_qle_opt;
     z_queryable_options_default(&_ret_qle_opt);
     z_owned_queryable_t qle;
-    assert(z_queryable_declare(&qle, z_loan(s1), z_loan(s1_key), z_move(_ret_closure_query), &_ret_qle_opt) ==
+    assert(z_declare_queryable(z_loan(s1), &qle, z_loan(s1_key), z_move(_ret_closure_query), &_ret_qle_opt) ==
            _Z_RES_OK);
     printf("Ok\n");
 

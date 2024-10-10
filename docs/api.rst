@@ -1027,8 +1027,8 @@ Option Types
 
 Functions
 ---------
-.. autocfunction:: primitives.h::z_queryable_declare
-.. autocfunction:: primitives.h::z_queryable_declare_background
+.. autocfunction:: primitives.h::z_declare_queryable
+.. autocfunction:: primitives.h::z_declare_background_queryable
 
 .. autocfunction:: primitives.h::z_queryable_options_default
 .. autocfunction:: primitives.h::z_query_reply_options_default

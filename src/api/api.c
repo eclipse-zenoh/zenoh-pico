@@ -1103,15 +1103,15 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_queryable_t, queryable, _z_queryable_ch
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
 
-z_result_t z_queryable_declare_background(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                           z_moved_closure_query_t *callback, const z_queryable_options_t *options) {
     z_owned_queryable_t qle;
-    _Z_RETURN_IF_ERR(z_queryable_declare(&qle, zs, keyexpr, callback, options));
+    _Z_RETURN_IF_ERR(z_declare_queryable(zs, &qle, keyexpr, callback, options));
     _z_queryable_clear(&qle._val);
     return _Z_RES_OK;
 }
 
-z_result_t z_queryable_declare(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
+z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options) {
     void *ctx = callback->_this._val.context;
@@ -1319,7 +1319,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options) { options->__
 z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
     z_owned_subscriber_t sub;
-    _Z_RETURN_IF_ERR(z_declare_subscriber(sz, &sub, keyexpr, callback, options));
+    _Z_RETURN_IF_ERR(z_declare_subscriber(zs, &sub, keyexpr, callback, options));
     _z_subscriber_clear(&sub._val);
     return _Z_RES_OK;
 }
