@@ -16,6 +16,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "zenoh-pico/utils/pointers.h"
@@ -46,10 +47,11 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
 
     // Check the string contains only the right
     const char *start = s;
-    const char *end = &s[n];
-    while (start < end) {
+    const char *end = &s[n - 1];
+    size_t curr_len = n;
+    while (curr_len > 0) {
         const char *p_key_start = start;
-        const char *p_key_end = strchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR);
+        const char *p_key_end = memchr(p_key_start, INT_STR_MAP_KEYVALUE_SEPARATOR, curr_len);
 
         if (p_key_end != NULL) {
             // Verify the key is valid based on the provided mapping
@@ -75,20 +77,25 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
 
             // Read and populate the value
             const char *p_value_start = _z_cptr_char_offset(p_key_end, 1);
-            const char *p_value_end = strchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR);
+            size_t value_max_size = curr_len - _z_ptr_char_diff(p_value_start, start);
+            const char *p_value_end = memchr(p_key_end, INT_STR_MAP_LIST_SEPARATOR, value_max_size);
+
+            size_t p_value_len = 0;
             if (p_value_end == NULL) {
                 p_value_end = end;
+                p_value_len = value_max_size;
+            } else {
+                p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
             }
-
-            size_t p_value_len = _z_ptr_char_diff(p_value_end, p_value_start) + (size_t)1;
-            char *p_value = (char *)z_malloc(p_value_len);
+            char *p_value = (char *)z_malloc(p_value_len + 1);
             if (p_value != NULL) {
-                _z_str_n_copy(p_value, p_value_start, p_value_len);
-
+                memcpy(p_value, p_value_start, p_value_len);
+                p_value[p_value_len] = '\0';
                 _z_str_intmap_insert(strint, key, p_value);
 
                 // Process next key value
                 start = _z_cptr_char_offset(p_value_end, 1);
+                curr_len -= _z_ptr_char_diff(start, s);
             } else {
                 ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
