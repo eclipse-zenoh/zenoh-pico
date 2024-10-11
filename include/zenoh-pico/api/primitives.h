@@ -1074,7 +1074,7 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
- *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zit_t`.
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zid_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.

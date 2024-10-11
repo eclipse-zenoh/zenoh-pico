@@ -462,7 +462,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_sample_t
 .. c:type:: z_loaned_closure_sample_t
 .. c:type:: z_moved_closure_sample_t
-   
+
+.. c:type:: void (* z_sample_handler_t)(z_loaned_sample_t * sample, void * arg);
+
+    Function pointer type for handling samples.
+    Represents a callback function that is invoked when a sample is available for processing.
+
+    Parameters:
+      - **sample** - Pointer to a :c:type:`z_loaned_sample_t` representing the sample to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the sample.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_sample
@@ -486,7 +495,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_query_t
 .. c:type:: z_loaned_closure_query_t
 .. c:type:: z_moved_closure_query_t
-   
+
+.. c:type:: void (* z_query_handler_t)(z_loaned_query_t * query, void * arg);
+
+    Function pointer type for handling queries.
+    Represents a callback function that is invoked when a query is available for processing.
+
+    Parameters:
+      - **query** - Pointer to a :c:type:`z_loaned_query_t` representing the query to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the query.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_query
@@ -511,7 +529,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_reply_t
 .. c:type:: z_loaned_closure_reply_t
 .. c:type:: z_moved_closure_reply_t
-   
+ 
+.. c:type:: void (* z_reply_handler_t)(z_loaned_reply_t * reply, void * arg);
+
+    Function pointer type for handling replies.
+    Represents a callback function that is invoked when a reply is available for processing.
+
+    Parameters:
+      - **reply** - Pointer to a :c:type:`z_loaned_reply_t` representing the reply to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the reply.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_reply
@@ -536,6 +563,15 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_hello_t
 .. c:type:: z_loaned_closure_hello_t
 .. c:type:: z_moved_closure_hello_t
+ 
+.. c:type:: void (* z_hello_handler_t)(z_loaned_hello_t * hello, void * arg);
+
+    Function pointer type for handling scouting response.
+    Represents a callback function that is invoked when a hello is available for processing.
+
+    Parameters:
+      - **hello** - Pointer to a :c:type:`z_loaned_hello_t` representing the hello to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the hello.
    
 Functions
 ^^^^^^^^^
@@ -561,6 +597,15 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_zid_t
 .. c:type:: z_loaned_closure_zid_t
 .. c:type:: z_moved_closure_zid_t
+ 
+.. c:type:: void (* z_zid_handler_t)(z_loaned_zid_t * zid, void * arg);
+
+    Function pointer type for handling Zenoh ID routers response.
+    Represents a callback function that is invoked when a zid is available for processing.
+
+    Parameters:
+      - **zid** - Pointer to a :c:type:`z_loaned_zid_t` representing the zid to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the zid.
    
 Functions
 ^^^^^^^^^
