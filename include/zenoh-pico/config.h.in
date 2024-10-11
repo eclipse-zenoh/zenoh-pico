@@ -42,6 +42,7 @@
 #define Z_FEATURE_FRAGMENTATION @Z_FEATURE_FRAGMENTATION@
 #define Z_FEATURE_ENCODING_VALUES @Z_FEATURE_ENCODING_VALUES@
 #define Z_FEATURE_TCP_NODELAY @Z_FEATURE_TCP_NODELAY@
+#define Z_FEATURE_LOCAL_SUBSCRIBER @Z_FEATURE_LOCAL_SUBSCRIBER@
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
