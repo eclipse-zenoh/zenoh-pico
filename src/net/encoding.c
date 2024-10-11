@@ -53,7 +53,9 @@ z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     dst->id = src->id;
     src->id = _Z_ENCODING_ID_DEFAULT;
-    _z_string_move(&dst->schema, &src->schema);
+    if (_z_string_check(&src->schema)) {
+        _z_string_move(&dst->schema, &src->schema);
+    }
 }
 
 _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
