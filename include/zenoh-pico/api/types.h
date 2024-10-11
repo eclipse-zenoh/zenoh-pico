@@ -416,7 +416,6 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  * Represents an array of non null-terminated string.
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
-_Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
 typedef void (*z_dropper_handler_t)(void *arg);
 typedef _z_data_handler_t z_data_handler_t;
