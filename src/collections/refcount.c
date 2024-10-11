@@ -246,6 +246,7 @@ bool _z_simple_rc_decrease(void** cnt) {
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return false;
     }
+    z_free(*cnt);
     return true;
 }
 
