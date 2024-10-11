@@ -45,8 +45,9 @@ typedef struct {
     _z_arc_slice_svec_t _slices;
 } _z_bytes_t;
 
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
 bool _z_bytes_check(const _z_bytes_t *bytes);
-_z_bytes_t _z_bytes_null(void);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);

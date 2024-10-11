@@ -72,11 +72,6 @@ _z_push_body_t _z_push_body_steal(_z_push_body_t *msg) {
     *msg = _z_push_body_null();
     return ret;
 }
-_z_push_body_t _z_push_body_null(void) {
-    return (_z_push_body_t){
-        ._is_put = false,
-        ._body._del._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()}};
-}
 
 void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg) { (void)(msg); }
 

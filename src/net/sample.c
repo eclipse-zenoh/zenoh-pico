@@ -16,24 +16,6 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_sample_t _z_sample_null(void) {
-    _z_sample_t s = {
-        .keyexpr = _z_keyexpr_null(),
-        .payload = _z_bytes_null(),
-        .encoding = _z_encoding_null(),
-        .timestamp = _z_timestamp_null(),
-        .kind = 0,
-        .qos = {0},
-        .attachment = _z_bytes_null(),
-    };
-    return s;
-}
-
-bool _z_sample_check(const _z_sample_t *sample) {
-    return _z_keyexpr_check(&sample->keyexpr) || _z_bytes_check(&sample->payload) ||
-           _z_bytes_check(&sample->attachment) || _z_encoding_check(&sample->encoding);
-}
-
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     _z_keyexpr_move(&dst->keyexpr, &src->keyexpr);
     _z_bytes_move(&dst->payload, &src->payload);

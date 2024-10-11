@@ -28,13 +28,7 @@ void _z_default_deleter(void *data, void *context) {
     z_free(data);
 }
 
-_z_delete_context_t _z_delete_context_null(void) { return _z_delete_context_create(NULL, NULL); }
-
 bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
-
-_z_delete_context_t _z_delete_context_create(void (*deleter)(void *data, void *context), void *context) {
-    return (_z_delete_context_t){.deleter = deleter, .context = context};
-}
 
 _z_delete_context_t _z_delete_context_default(void) { return _z_delete_context_create(_z_default_deleter, NULL); }
 
@@ -45,27 +39,16 @@ void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
 }
 
 /*-------- Slice --------*/
-_z_slice_t _z_slice_empty(void) {
-    return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
-}
-
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
-    z_result_t ret = _Z_RES_OK;
-
-    bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
-    if (bs->start != NULL) {
-        bs->len = capacity;
-        bs->_delete_context = _z_delete_context_default();
-    } else {
+    bs->start = (uint8_t *)z_malloc(capacity);
+    if (bs->start == NULL) {
         bs->len = 0;
         bs->_delete_context = _z_delete_context_null();
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-
-    if (bs->len != capacity) {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
+    bs->len = capacity;
+    bs->_delete_context = _z_delete_context_default();
+    return _Z_RES_OK;
 }
 
 _z_slice_t _z_slice_make(size_t capacity) {
@@ -80,11 +63,6 @@ _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_del
     bs.len = len;
     bs._delete_context = dc;
     return bs;
-}
-
-_z_slice_t _z_slice_alias(const _z_slice_t *bs) {
-    _z_slice_t alias = {.len = bs->len, .start = bs->start, ._delete_context = _z_delete_context_null()};
-    return alias;
 }
 
 _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
@@ -153,8 +131,6 @@ _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
     _z_slice_copy(&dst, src);
     return dst;
 }
-
-bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
 
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;

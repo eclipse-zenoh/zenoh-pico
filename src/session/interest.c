@@ -228,7 +228,7 @@ static _z_keyexpr_t _unsafe_z_get_key_from_declare(_z_session_t *zn, uint32_t id
     while (xs != NULL) {
         _z_declare_data_t *decl = _z_declare_data_list_head(xs);
         if (_z_declare_data_eq(&comp, decl)) {
-            return _z_keyexpr_duplicate(decl->_key);
+            return _z_keyexpr_duplicate(&decl->_key);
         }
         xs = _z_declare_data_list_tail(xs);
     }

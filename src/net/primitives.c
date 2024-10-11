@@ -108,7 +108,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
-    ret._key = _z_keyexpr_duplicate(keyexpr);
+    ret._key = _z_keyexpr_duplicate(&keyexpr);
     ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     ret._congestion_control = congestion_control;
     ret._priority = priority;

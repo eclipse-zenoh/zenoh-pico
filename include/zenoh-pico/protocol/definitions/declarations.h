@@ -24,22 +24,26 @@ typedef struct {
     uint16_t _id;
     _z_keyexpr_t _keyexpr;
 } _z_decl_kexpr_t;
-_z_decl_kexpr_t _z_decl_kexpr_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_decl_kexpr_t _z_decl_kexpr_null(void) { return (_z_decl_kexpr_t){0}; }
 typedef struct {
     uint16_t _id;
 } _z_undecl_kexpr_t;
-_z_undecl_kexpr_t _z_undecl_kexpr_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_undecl_kexpr_t _z_undecl_kexpr_null(void) { return (_z_undecl_kexpr_t){0}; }
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
 } _z_decl_subscriber_t;
-_z_decl_subscriber_t _z_decl_subscriber_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_decl_subscriber_t _z_decl_subscriber_null(void) { return (_z_decl_subscriber_t){0}; }
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_subscriber_t;
-_z_undecl_subscriber_t _z_undecl_subscriber_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_undecl_subscriber_t _z_undecl_subscriber_null(void) { return (_z_undecl_subscriber_t){0}; }
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
@@ -49,28 +53,33 @@ typedef struct {
         uint16_t _distance;
     } _ext_queryable_info;
 } _z_decl_queryable_t;
-_z_decl_queryable_t _z_decl_queryable_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_decl_queryable_t _z_decl_queryable_null(void) { return (_z_decl_queryable_t){0}; }
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_queryable_t;
-_z_undecl_queryable_t _z_undecl_queryable_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_undecl_queryable_t _z_undecl_queryable_null(void) { return (_z_undecl_queryable_t){0}; }
 
 typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
 } _z_decl_token_t;
-_z_decl_token_t _z_decl_token_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_decl_token_t _z_decl_token_null(void) { return (_z_decl_token_t){0}; }
 typedef struct {
     uint32_t _id;
     _z_keyexpr_t _ext_keyexpr;
 } _z_undecl_token_t;
-_z_undecl_token_t _z_undecl_token_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_undecl_token_t _z_undecl_token_null(void) { return (_z_undecl_token_t){0}; }
 
 typedef struct {
     bool _placeholder;  // In case we add extensions
 } _z_decl_final_t;
-_z_decl_final_t _z_decl_final_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_decl_final_t _z_decl_final_null(void) { return (_z_decl_final_t){0}; }
 
 typedef struct {
     enum {

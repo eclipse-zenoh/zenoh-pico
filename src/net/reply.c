@@ -17,15 +17,6 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-_z_reply_data_t _z_reply_data_null(void) {
-    return (_z_reply_data_t){.replier_id = {.id = {0}}, ._result.sample = _z_sample_null(), ._tag = _Z_REPLY_TAG_NONE};
-}
-
-_z_reply_t _z_reply_null(void) {
-    _z_reply_t r = {.data = _z_reply_data_null()};
-    return r;
-}
-
 #if Z_FEATURE_QUERY == 1
 void _z_reply_data_clear(_z_reply_data_t *reply_data) {
     if (reply_data->_tag == _Z_REPLY_TAG_DATA) {
@@ -48,14 +39,14 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
 }
 
 z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
-    *dst = _z_reply_data_null();
+    *dst = _z_reply_data_init();
     if (src->_tag == _Z_REPLY_TAG_DATA) {
         _Z_RETURN_IF_ERR(_z_sample_copy(&dst->_result.sample, &src->_result.sample));
     } else if (src->_tag == _Z_REPLY_TAG_ERROR) {
         _Z_RETURN_IF_ERR(_z_value_copy(&dst->_result.error, &src->_result.error));
     }
-    dst->replier_id = src->replier_id;
     dst->_tag = src->_tag;
+    dst->replier_id = src->replier_id;
     return _Z_RES_OK;
 }
 

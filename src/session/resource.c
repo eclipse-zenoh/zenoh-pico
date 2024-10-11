@@ -88,23 +88,28 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
 }
 
 _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
-    _z_keyexpr_t ret = {._id = Z_RESOURCE_ID_NONE, ._suffix = _z_string_null(), ._mapping = _z_keyexpr_mapping(0)};
+    _z_zint_t id = keyexpr->_id;
+
+    // Check if ke is already expanded
+    if (id == Z_RESOURCE_ID_NONE) {
+        if (!_z_keyexpr_has_suffix(keyexpr)) {
+            return _z_keyexpr_null();
+        }
+        return _z_keyexpr_duplicate(keyexpr);
+    }
 
     // Need to build the complete resource name, by recursively look at RIDs
     // Resource names are looked up from right to left
+    _z_keyexpr_t ret = _z_keyexpr_null();
     _z_string_list_t *strs = NULL;
     size_t len = 0;
 
     // Append suffix as the right-most segment
     if (_z_keyexpr_has_suffix(keyexpr)) {
         len = len + _z_string_len(&keyexpr->_suffix);
-        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);  // Warning: list must be release with
-                                                                             //   _z_list_free(&strs, _z_noop_free);
-                                                                             //   or will release the suffix as well
+        strs = _z_string_list_push(strs, (_z_string_t *)&keyexpr->_suffix);
     }
-
     // Recursively go through all the RIDs
-    _z_zint_t id = keyexpr->_id;
     uint16_t mapping = _z_keyexpr_mapping_id(keyexpr);
     while (id != Z_RESOURCE_ID_NONE) {
         _z_resource_t *res = __z_get_resource_by_id(xs, mapping, id);
@@ -114,9 +119,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         }
         if (_z_keyexpr_has_suffix(&res->_key)) {
             len = len + _z_string_len(&res->_key._suffix);
-            strs = _z_string_list_push(strs, &res->_key._suffix);  // Warning: list must be release with
-                                                                   //   _z_list_free(&strs, _z_noop_free);
-                                                                   //   or will release the suffix as well
+            strs = _z_string_list_push(strs, &res->_key._suffix);
         }
         id = res->_key._id;
     }
@@ -136,6 +139,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
             }
         }
     }
+    // Warning: list must be released with _z_list_free(&strs, _z_noop_free) or will release the suffix as well
     _z_list_free(&strs, _z_noop_free);
     return ret;
 }
@@ -205,7 +209,6 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 /// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
 uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
-    key = _z_keyexpr_alias(key);
     uint16_t mapping = register_to_mapping;
     uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);
 
@@ -226,7 +229,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
             ret = Z_RESOURCE_ID_NONE;
         } else {
             res->_refcount = 1;
-            res->_key = _z_keyexpr_duplicate(key);
+            res->_key = _z_keyexpr_duplicate(&key);
             ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
             res->_id = ret;
             // Register the resource

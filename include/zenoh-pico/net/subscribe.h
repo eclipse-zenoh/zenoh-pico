@@ -29,11 +29,12 @@ typedef struct {
 } _z_subscriber_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_subscriber_t _z_subscriber_null(void) { return (_z_subscriber_t){0}; }
+static inline bool _z_subscriber_check(const _z_subscriber_t *subscriber) { return !_Z_RC_IS_NULL(&subscriber->_zn); }
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
-bool _z_subscriber_check(const _z_subscriber_t *subscriber);
-_z_subscriber_t _z_subscriber_null(void);
+
 #endif
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */
