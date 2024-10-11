@@ -288,7 +288,7 @@ z_result_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, _z_string_t *
     char *p_start = (char *)memchr(_z_string_data(str), ENDPOINT_CONFIG_SEPARATOR, _z_string_len(str));
     if (p_start != NULL) {
         p_start = _z_ptr_char_offset(p_start, 1);
-        size_t cfg_size = _z_string_len(str) - _z_ptr_char_diff(_z_string_data(str), p_start);
+        size_t cfg_size = _z_string_len(str) - _z_ptr_char_diff(p_start, _z_string_data(str));
 
         // Call the right configuration parser depending on the protocol
         _z_string_t cmp_str = _z_string_null();
