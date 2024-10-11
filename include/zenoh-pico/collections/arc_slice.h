@@ -24,20 +24,20 @@
 #include "slice.h"
 #include "zenoh-pico/system/platform_common.h"
 
-_Z_REFCOUNT_DEFINE(_z_slice, _z_slice)
+_Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
 
 /*-------- ArcSlice --------*/
 /**
  * An atomically reference counted subslice.
  *
  * Members:
- *   _z_slice_rc_t len: Rc counted slice.
+ *   _z_slice_simple_rc_t len: Rc counted slice.
  *   size_t start: Offset to the subslice start.
  *   size_t len: Length of the subslice.
  */
 
 typedef struct {
-    _z_slice_rc_t slice;
+    _z_slice_simple_rc_t slice;
     size_t start;
     size_t len;
 } _z_arc_slice_t;
