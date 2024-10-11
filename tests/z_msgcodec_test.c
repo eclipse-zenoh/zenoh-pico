@@ -589,6 +589,7 @@ void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
 /*------------------ Timestamp field ------------------*/
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
+    ts.valid = true;
     ts.time = gen_uint64();
     for (size_t i = 0; i < 16; i++) {
         ts.id.id[i] = gen_uint8() & 0x7f;  // 0b01111111

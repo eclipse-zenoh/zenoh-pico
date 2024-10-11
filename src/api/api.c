@@ -385,6 +385,7 @@ z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
     *ts = _z_timestamp_null();
     _z_time_since_epoch t;
     _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+    ts->valid = true;
     ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
     ts->id = _Z_RC_IN_VAL(zs)->_local_zid;
     return _Z_RES_OK;
