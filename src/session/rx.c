@@ -101,8 +101,8 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
                     _z_msg_put_t put = req->_body._put;
-                    ret = _z_trigger_subscriptions(zn, req->_key, put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
-                                                   &put._commons._timestamp, req->_ext_qos, put._attachment,
+                    ret = _z_trigger_subscriptions(zn, &req->_key, &put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
+                                                   &put._commons._timestamp, req->_ext_qos, &put._attachment,
                                                    msg->_reliability);
 #endif
                     if (ret == _Z_RES_OK) {
@@ -114,8 +114,9 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
 #if Z_FEATURE_SUBSCRIPTION == 1
                     _z_msg_del_t del = req->_body._del;
                     _z_encoding_t encoding = _z_encoding_null();
-                    ret = _z_trigger_subscriptions(zn, req->_key, _z_bytes_null(), &encoding, Z_SAMPLE_KIND_DELETE,
-                                                   &del._commons._timestamp, req->_ext_qos, del._attachment,
+                    _z_bytes_t empty_payload = _z_bytes_null();
+                    ret = _z_trigger_subscriptions(zn, &req->_key, &empty_payload, &encoding, Z_SAMPLE_KIND_DELETE,
+                                                   &del._commons._timestamp, req->_ext_qos, &del._attachment,
                                                    msg->_reliability);
 #endif
                     if (ret == _Z_RES_OK) {
