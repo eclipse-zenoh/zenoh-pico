@@ -832,10 +832,11 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
 
     // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
     _z_trigger_local_subscriptions(
         _Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        opt.timestamp, &attachment_bytes, reliability);
+        &local_timestamp, &attachment_bytes, reliability);
 #endif
     // Clean-up
     z_encoding_drop(opt.encoding);
@@ -978,10 +979,11 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         }
         // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+        _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
         _z_trigger_local_subscriptions(
             session, &pub_keyexpr, &payload_bytes, &encoding,
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-            opt.timestamp, &attachment_bytes, reliability);
+            &local_timestamp, &attachment_bytes, reliability);
 #endif
     }
 
