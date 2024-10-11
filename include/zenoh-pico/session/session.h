@@ -54,13 +54,13 @@ typedef struct _z_sample_t _z_sample_t;
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_data_handler_t)(_z_sample_t *sample, void *arg);
+typedef void (*_z_sample_handler_t)(_z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     uint16_t _key_id;
     uint32_t _id;
-    _z_data_handler_t _callback;
+    _z_sample_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
 } _z_subscription_t;
@@ -85,12 +85,12 @@ typedef struct _z_query_rc_t _z_query_rc_t;
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_queryable_handler_t)(_z_query_rc_t *query, void *arg);
+typedef void (*_z_query_handler_t)(_z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
-    _z_queryable_handler_t _callback;
+    _z_query_handler_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
     bool _complete;

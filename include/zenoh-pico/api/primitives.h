@@ -982,7 +982,7 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
+z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_sample_handler_t call, z_dropper_handler_t drop,
                             void *context);
 
 /**
@@ -1007,7 +1007,7 @@ void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sa
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
+z_result_t z_closure_query(z_owned_closure_query_t *closure, z_query_handler_t call, z_dropper_handler_t drop,
                            void *context);
 
 /**
@@ -1082,7 +1082,7 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
+z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_zid_handler_t call, z_dropper_handler_t drop, void *context);
 
 /**
  * Calls a zid closure.

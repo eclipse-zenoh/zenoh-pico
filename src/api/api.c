@@ -549,11 +549,11 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_clear)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_data_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_queryable_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_sample_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_query_handler_t, z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_reply_handler_t, z_dropper_handler_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_id_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_zid_handler_t, z_dropper_handler_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {

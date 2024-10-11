@@ -418,11 +418,11 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 
 typedef void (*z_dropper_handler_t)(void *arg);
-typedef _z_data_handler_t z_data_handler_t;
+typedef _z_sample_handler_t z_sample_handler_t;
 
 typedef struct {
     void *context;
-    z_data_handler_t call;
+    z_sample_handler_t call;
     z_dropper_handler_t drop;
 } _z_closure_sample_t;
 
@@ -431,11 +431,11 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
 
-typedef _z_queryable_handler_t z_queryable_handler_t;
+typedef _z_query_handler_t z_query_handler_t;
 
 typedef struct {
     void *context;
-    z_queryable_handler_t call;
+    z_query_handler_t call;
     z_dropper_handler_t drop;
 } _z_closure_query_t;
 
@@ -470,11 +470,11 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
-typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
+typedef void (*z_zid_handler_t)(const z_id_t *id, void *arg);
 
 typedef struct {
     void *context;
-    z_id_handler_t call;
+    z_zid_handler_t call;
     z_dropper_handler_t drop;
 } _z_closure_zid_t;
 
