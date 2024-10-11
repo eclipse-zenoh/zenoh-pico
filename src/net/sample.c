@@ -20,10 +20,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     _z_keyexpr_move(&dst->keyexpr, &src->keyexpr);
     _z_bytes_move(&dst->payload, &src->payload);
     _z_encoding_move(&dst->encoding, &src->encoding);
+    _z_timestamp_move(&dst->timestamp, &src->timestamp);
     _z_bytes_move(&dst->attachment, &src->attachment);
-
-    dst->timestamp.time = src->timestamp.time;  // FIXME: call the z_timestamp_move
-    dst->timestamp.id = src->timestamp.id;      // FIXME: call the z_timestamp_move
 }
 
 void _z_sample_clear(_z_sample_t *sample) {

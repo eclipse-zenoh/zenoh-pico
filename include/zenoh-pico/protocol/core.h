@@ -72,7 +72,7 @@ static inline _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){0
 static inline bool _z_timestamp_check(const _z_timestamp_t *stamp) { return stamp->valid; }
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
-bool _z_timestamp_check(const _z_timestamp_t *stamp);
+void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**

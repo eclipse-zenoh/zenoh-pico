@@ -34,6 +34,13 @@ _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
     return ts;
 }
 
+void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
+    dst->valid = src->valid;
+    dst->id = src->id;
+    dst->time = src->time;
+    *src = _z_timestamp_null();
+}
+
 void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->valid = false;
     memset(&tstamp->id, 0, sizeof(_z_id_t));
