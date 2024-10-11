@@ -149,6 +149,7 @@ _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *m
 void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef _z_reply_body_t _z_push_body_t;
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_push_body_t _z_push_body_null(void) { return (_z_push_body_t){0}; }
 
 _z_push_body_t _z_push_body_steal(_z_push_body_t *msg);

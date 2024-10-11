@@ -66,6 +66,7 @@ typedef struct {
     _z_slice_t _slice;
 } _z_string_t;
 
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_string_t _z_string_null(void) { return (_z_string_t){0}; }
 static inline bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
 static inline _z_string_t _z_string_alias(const _z_string_t str) {

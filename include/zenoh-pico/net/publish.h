@@ -37,10 +37,11 @@ typedef struct _z_publisher_t {
 } _z_publisher_t;
 
 #if Z_FEATURE_PUBLICATION == 1
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_publisher_t _z_publisher_null(void) { return (_z_publisher_t){0}; }
+static inline bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
 void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
-static inline bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
-static inline _z_publisher_t _z_publisher_null(void) { return (_z_publisher_t){0}; }
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

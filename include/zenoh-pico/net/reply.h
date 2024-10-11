@@ -57,6 +57,7 @@ typedef struct _z_reply_data_t {
     _z_reply_tag_t _tag;
 } _z_reply_data_t;
 
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_reply_data_t _z_reply_data_null(void) { return (_z_reply_data_t){0}; }
 void _z_reply_data_clear(_z_reply_data_t *rd);
 z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
@@ -77,8 +78,9 @@ typedef struct _z_reply_t {
     _z_reply_data_t data;
 } _z_reply_t;
 
-_z_reply_t _z_reply_move(_z_reply_t *src_reply);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
+_z_reply_t _z_reply_move(_z_reply_t *src_reply);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);

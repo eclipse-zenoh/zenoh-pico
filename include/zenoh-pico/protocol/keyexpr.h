@@ -26,6 +26,7 @@ bool _z_keyexpr_suffix_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *
 bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
 static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t src) {
     return (_z_keyexpr_t){

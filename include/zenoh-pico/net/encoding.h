@@ -26,6 +26,8 @@ typedef struct _z_encoding_t {
     _z_string_t schema;
     uint16_t id;
 } _z_encoding_t;
+
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_encoding_t _z_encoding_null(void) { return (_z_encoding_t){0}; }
 static inline bool _z_encoding_check(const _z_encoding_t *encoding) {
     return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(&encoding->schema));

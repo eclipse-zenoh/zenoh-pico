@@ -26,6 +26,7 @@ typedef struct {
     void *context;
 } _z_delete_context_t;
 
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_delete_context_t _z_delete_context_null(void) { return (_z_delete_context_t){0}; }
 
 static inline _z_delete_context_t _z_delete_context_create(void (*deleter)(void *context, void *data), void *context) {
