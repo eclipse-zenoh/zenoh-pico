@@ -83,14 +83,13 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
             size_t p_value_len = 0;
             if (p_value_end == NULL) {
                 p_value_end = end;
-                p_value_len = value_max_size;
+                p_value_len = value_max_size + 1;
             } else {
-                p_value_len = _z_ptr_char_diff(p_value_end, p_value_start);
+                p_value_len = _z_ptr_char_diff(p_value_end, p_value_start) + 1;
             }
-            char *p_value = (char *)z_malloc(p_value_len + 1);
+            char *p_value = (char *)z_malloc(p_value_len);
             if (p_value != NULL) {
-                memcpy(p_value, p_value_start, p_value_len);
-                p_value[p_value_len] = '\0';
+                _z_str_n_copy(p_value, p_value_start, p_value_len);
                 _z_str_intmap_insert(strint, key, p_value);
 
                 // Process next key value
