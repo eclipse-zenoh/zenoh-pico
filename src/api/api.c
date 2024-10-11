@@ -1008,16 +1008,27 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
+    _z_session_t *session = NULL;
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
-    if (_Z_RC_IS_NULL(&sess_rc)) {
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
         return _Z_ERR_SESSION_CLOSED;
     }
-    z_result_t ret = _z_write(_Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
+#else
+    session = _Z_RC_IN_VAL(&pub->_zn);
+#endif
+
+    z_result_t ret = _z_write(session, pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
                               pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
                               _z_bytes_null(), reliability);
+
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Clean up
     _z_session_rc_drop(&sess_rc);
+#endif
     return ret;
 }
 
