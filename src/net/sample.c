@@ -28,7 +28,6 @@ void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
     _z_bytes_drop(&sample->payload);
     _z_encoding_clear(&sample->encoding);
-    _z_timestamp_clear(&sample->timestamp);
     _z_bytes_drop(&sample->attachment);
 }
 
@@ -65,7 +64,7 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t *payload, const
     _z_sample_t s = _z_sample_null();
     s.keyexpr = _z_keyexpr_steal(key);
     s.kind = kind;
-    if (timestamp != NULL) {
+    if (_z_timestamp_check(timestamp)) {
         s.timestamp = _z_timestamp_duplicate(timestamp);
     }
     s.qos = qos;
