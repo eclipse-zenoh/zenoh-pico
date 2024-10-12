@@ -69,14 +69,16 @@ void *_zp_raweth_read_task(void *ztm_arg) {
                 break;
             default:
                 // Drop message & stop task
-                _Z_ERROR("Connection closed due to malformed message");
+                _Z_ERROR("Connection closed due to malformed message: %d", ret);
                 ztm->_read_task_running = false;
                 _z_slice_clear(&addr);
                 continue;
                 break;
         }
         // Process message
-        if (_z_multicast_handle_transport_message(ztm, &t_msg, &addr) != _Z_RES_OK) {
+        ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
+        if (ret != _Z_RES_OK) {
+            _Z_ERROR("Connection closed due to message processing error: %d", ret);
             ztm->_read_task_running = false;
             _z_slice_clear(&addr);
             continue;
