@@ -101,7 +101,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
-            _Z_INFO("Received Z_FRAME message");
+            _Z_DEBUG("Received Z_FRAME message");
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
@@ -139,7 +139,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         }
 
         case _Z_MID_T_FRAGMENT: {
-            _Z_INFO("Received Z_FRAGMENT message");
+            _Z_DEBUG("Received Z_FRAGMENT message");
 #if Z_FEATURE_FRAGMENTATION == 1
             _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
                                   ? &ztu->_dbuf_reliable
@@ -187,7 +187,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
-            _Z_INFO("Received Z_KEEP_ALIVE message");
+            _Z_DEBUG("Received Z_KEEP_ALIVE message");
             break;
         }
 

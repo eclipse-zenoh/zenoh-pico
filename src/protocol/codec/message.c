@@ -201,6 +201,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, info->_id.id, 0, zidlen);
         } else {
+            _Z_INFO("Not enough bytes to read");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -209,6 +210,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
         if (intbuf <= UINT32_MAX) {
             info->_entity_id = (uint32_t)intbuf;
         } else {
+            _Z_INFO("Invalid value decoded");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -217,6 +219,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
         if (intbuf <= UINT32_MAX) {
             info->_source_sn = (uint32_t)intbuf;
         } else {
+            _Z_INFO("Invalid value decoded");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
