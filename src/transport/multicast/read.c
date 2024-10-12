@@ -111,7 +111,6 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                     _z_slice_clear(&addr);
                 } else {
                     _Z_ERROR("Dropping message due to processing error: %d", ret);
-                    ztm->_read_task_running = false;
                     continue;
                 }
             } else {
