@@ -313,7 +313,7 @@ z_result_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             if (_z_slice_is_alloced(&extension->_body._zbuf._val)) {
                 s = _z_slice_steal(&extension->_body._zbuf._val);
             } else {
-                s = _z_slice_alias_non_alloced_slice(&extension->_body._zbuf._val);
+                _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
             }
             ret = _z_bytes_from_slice(&pshb->_body._put._attachment, s);
             break;
@@ -454,7 +454,7 @@ z_result_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             if (_z_slice_is_alloced(&extension->_body._zbuf._val)) {
                 s = _z_slice_steal(&extension->_body._zbuf._val);
             } else {
-                s = _z_slice_alias_non_alloced_slice(&extension->_body._zbuf._val);
+                _Z_RETURN_IF_ERR(_z_slice_copy(&s, &extension->_body._zbuf._val));
             }
             ret = _z_bytes_from_slice(&msg->_ext_attachment, s);
             break;

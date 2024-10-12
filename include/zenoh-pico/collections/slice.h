@@ -61,7 +61,6 @@ static inline _z_slice_t _z_slice_alias(const _z_slice_t bs) {
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
 _z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);
-_z_slice_t _z_slice_alias_non_alloced_slice(_z_slice_t *bs);
 _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc);
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);

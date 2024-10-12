@@ -67,10 +67,6 @@ _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
     return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_null());
 }
 
-_z_slice_t _z_slice_alias_non_alloced_slice(_z_slice_t *bs) {
-    return _z_slice_from_buf_custom_deleter(bs->start, bs->len, _z_delete_context_null());
-}
-
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
     _z_slice_t bs = _z_slice_alias_buf(p, len);
     return _z_slice_duplicate(&bs);
