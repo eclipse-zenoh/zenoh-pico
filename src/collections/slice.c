@@ -28,8 +28,6 @@ void _z_default_deleter(void *data, void *context) {
     z_free(data);
 }
 
-bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
-
 _z_delete_context_t _z_delete_context_default(void) { return _z_delete_context_create(_z_default_deleter, NULL); }
 
 void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
@@ -72,12 +70,6 @@ _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
     _z_slice_t bs = _z_slice_alias_buf(p, len);
     return _z_slice_duplicate(&bs);
-}
-
-void _z_slice_reset(_z_slice_t *bs) {
-    bs->start = NULL;
-    bs->len = 0;
-    bs->_delete_context = _z_delete_context_null();
 }
 
 void _z_slice_clear(_z_slice_t *bs) {

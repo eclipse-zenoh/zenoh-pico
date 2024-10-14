@@ -26,19 +26,17 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
-_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
-    _z_timestamp_t ts;
-    ts.id = tstamp->id;
-    ts.time = tstamp->time;
-    return ts;
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) { return *tstamp; }
+
+void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
+    *dst = *src;
+    _z_timestamp_clear(src);
 }
 
 void _z_timestamp_clear(_z_timestamp_t *tstamp) {
-    memset(&tstamp->id, 0, sizeof(_z_id_t));
+    tstamp->valid = false;
     tstamp->time = 0;
 }
-
-bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
 z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     z_result_t ret = _Z_RES_OK;

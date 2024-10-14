@@ -67,7 +67,7 @@ z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     if (_z_zbuf_can_read(zbf) == true) {
         *u8 = _z_zbuf_read(zbf);
     } else {
-        _Z_DEBUG("WARNING: Not enough bytes to read");
+        _Z_INFO("Not enough bytes to read");
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
@@ -182,6 +182,7 @@ z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t
     uint64_t i = 0;
     z_result_t res = _z_zint64_decode_with_reader(&i, reader, context);
     if (res != _Z_RES_OK || i > SIZE_MAX) {
+        _Z_INFO("Reader decode failed");
         res = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     } else {
         *zint = (_z_zint_t)i;
@@ -202,6 +203,7 @@ z_result_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
     if (buf <= UINT16_MAX) {
         *zint = (uint16_t)buf;
     } else {
+        _Z_INFO("Invalid zint16 value decoded");
         ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
     return ret;
@@ -214,6 +216,7 @@ z_result_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
     if (buf <= UINT32_MAX) {
         *zint = (uint32_t)buf;
     } else {
+        _Z_INFO("Invalid zint32 value decoded");
         ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
     return ret;
@@ -255,7 +258,7 @@ z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
             *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
             _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read");
+            _Z_INFO("Not enough bytes to read");
             bs->len = 0;
             bs->start = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -326,11 +329,12 @@ z_result_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
             }
             *str = tmp;
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read");
+            _Z_INFO("Not enough bytes to read");
             *str = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } else {
+        _Z_INFO("Size decode failed");
         *str = NULL;
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
@@ -350,7 +354,7 @@ z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len) {
-        _Z_DEBUG("WARNING: Not enough bytes to read");
+        _Z_INFO("Not enough bytes to read");
         return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
     // Allocate space for the string terminator

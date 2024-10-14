@@ -110,11 +110,11 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                     _z_t_msg_clear(&t_msg);
                     _z_slice_clear(&addr);
                 } else {
-                    ztm->_read_task_running = false;
+                    _Z_ERROR("Dropping message due to processing error: %d", ret);
                     continue;
                 }
             } else {
-                _Z_ERROR("Connection closed due to malformed message");
+                _Z_ERROR("Connection closed due to malformed message: %d", ret);
                 ztm->_read_task_running = false;
                 continue;
             }

@@ -62,15 +62,17 @@ _z_id_t _z_id_empty(void);
  * A zenoh timestamp.
  */
 typedef struct {
+    bool valid;
     _z_id_t id;
     uint64_t time;
 } _z_timestamp_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){0}; }
+static inline bool _z_timestamp_check(const _z_timestamp_t *stamp) { return stamp->valid; }
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
-bool _z_timestamp_check(const _z_timestamp_t *stamp);
+void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**

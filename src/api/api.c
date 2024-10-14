@@ -385,6 +385,7 @@ z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs) {
     *ts = _z_timestamp_null();
     _z_time_since_epoch t;
     _Z_RETURN_IF_ERR(_z_get_time_since_epoch(&t));
+    ts->valid = true;
     ts->time = _z_timestamp_ntp64_from_time(t.secs, t.nanos);
     ts->id = _Z_RC_IN_VAL(zs)->_local_zid;
     return _Z_RES_OK;
@@ -822,19 +823,20 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     reliability = opt.reliability;
 #endif
 
+    _z_bytes_t payload_bytes = _z_bytes_from_owned_bytes(&payload->_this);
+    _z_bytes_t attachment_bytes = _z_bytes_from_owned_bytes(&opt.attachment->_this);
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(&payload->_this),
+    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, payload_bytes,
                    opt.encoding == NULL ? NULL : &opt.encoding->_this._val, Z_SAMPLE_KIND_PUT, opt.congestion_control,
-                   opt.priority, opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this),
-                   reliability);
+                   opt.priority, opt.is_express, opt.timestamp, attachment_bytes, reliability);
 
     // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
     _z_trigger_local_subscriptions(
-        _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(&payload->_this),
-        opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
+        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
+        &local_timestamp, &attachment_bytes, reliability);
 #endif
     // Clean-up
     z_encoding_drop(opt.encoding);
@@ -952,29 +954,42 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
+    _z_session_t *session = NULL;
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
-
     if (!_Z_RC_IS_NULL(&sess_rc)) {
-        // Check if write filter is active before writing
-        if (!_z_write_filter_active(pub)) {
-            // Write value
-            ret = _z_write(_Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
-                           Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
-                           _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
-        }
-        // Trigger local subscriptions
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-        _z_trigger_local_subscriptions(
-            _Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
-            _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-            opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
-#endif
-
-        _z_session_rc_drop(&sess_rc);
+        session = _Z_RC_IN_VAL(&sess_rc);
     } else {
         ret = _Z_ERR_SESSION_CLOSED;
     }
+#else
+    session = _Z_RC_IN_VAL(&pub->_zn);
+#endif
+
+    if (session != NULL) {
+        _z_bytes_t payload_bytes = _z_bytes_from_owned_bytes(&payload->_this);
+        _z_bytes_t attachment_bytes = _z_bytes_from_owned_bytes(&opt.attachment->_this);
+
+        // Check if write filter is active before writing
+        if (!_z_write_filter_active(pub)) {
+            // Write value
+            ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+                           pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability);
+        }
+        // Trigger local subscriptions
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+        _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
+        _z_trigger_local_subscriptions(
+            session, &pub_keyexpr, &payload_bytes, &encoding,
+            _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
+            &local_timestamp, &attachment_bytes, reliability);
+#endif
+    }
+
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
 
     // Clean-up
     _z_encoding_clear(&encoding);
@@ -997,16 +1012,27 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
 
+    _z_session_t *session = NULL;
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
-    if (_Z_RC_IS_NULL(&sess_rc)) {
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
         return _Z_ERR_SESSION_CLOSED;
     }
-    z_result_t ret = _z_write(_Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE,
-                              pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
-                              _z_bytes_null(), reliability);
+#else
+    session = _Z_RC_IN_VAL(&pub->_zn);
+#endif
+
+    z_result_t ret =
+        _z_write(session, pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
+                 pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null(), reliability);
+
+#if Z_FEATURE_PUBLISHER_SESSION_CHECK == 1
     // Clean up
     _z_session_rc_drop(&sess_rc);
+#endif
     return ret;
 }
 

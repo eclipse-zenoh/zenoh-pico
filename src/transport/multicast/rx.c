@@ -133,7 +133,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
-            _Z_INFO("Received _Z_FRAME message");
+            _Z_DEBUG("Received _Z_FRAME message");
             if (entry == NULL) {
                 break;
             }
@@ -181,7 +181,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         }
 
         case _Z_MID_T_FRAGMENT: {
-            _Z_INFO("Received Z_FRAGMENT message");
+            _Z_DEBUG("Received Z_FRAGMENT message");
 #if Z_FEATURE_FRAGMENTATION == 1
             if (entry == NULL) {
                 break;
@@ -234,7 +234,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
-            _Z_INFO("Received _Z_KEEP_ALIVE message");
+            _Z_DEBUG("Received _Z_KEEP_ALIVE message");
             if (entry == NULL) {
                 break;
             }
@@ -254,7 +254,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         }
 
         case _Z_MID_T_JOIN: {
-            _Z_INFO("Received _Z_JOIN message");
+            _Z_DEBUG("Received _Z_JOIN message");
             if (t_msg->_body._join._version != Z_PROTO_VERSION) {
                 break;
             }

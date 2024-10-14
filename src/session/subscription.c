@@ -138,24 +138,24 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
     return ret;
 }
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t attachment, z_reliability_t reliability) {
+                                    const _z_bytes_t *attachment, z_reliability_t reliability) {
     z_result_t ret = _z_trigger_subscriptions(zn, keyexpr, payload, encoding, Z_SAMPLE_KIND_PUT, timestamp, qos,
                                               attachment, reliability);
     (void)ret;
 }
 
-z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_zint_t kind, const _z_timestamp_t *timestamp,
-                                    const _z_n_qos_t qos, const _z_bytes_t attachment, z_reliability_t reliability) {
+                                    const _z_n_qos_t qos, const _z_bytes_t *attachment, z_reliability_t reliability) {
     z_result_t ret = _Z_RES_OK;
 
     _zp_session_lock_mutex(zn);
 
-    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr._id, (int)_z_string_len(&keyexpr._suffix),
-             _z_string_data(&keyexpr._suffix), _z_keyexpr_mapping_id(&keyexpr));
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
+    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr->_id, (int)_z_string_len(&keyexpr->_suffix),
+             _z_string_data(&keyexpr->_suffix), _z_keyexpr_mapping_id(keyexpr));
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
     _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
     if (_z_keyexpr_has_suffix(&key)) {
         _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
@@ -211,9 +211,9 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 }
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t attachment, z_reliability_t reliability) {
+                                    const _z_bytes_t *attachment, z_reliability_t reliability) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
