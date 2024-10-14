@@ -54,13 +54,13 @@ typedef struct _z_sample_t _z_sample_t;
 /**
  * The callback signature of the functions handling data messages.
  */
-typedef void (*_z_sample_handler_t)(_z_sample_t *sample, void *arg);
+typedef void (*_z_closure_sample_callback_t)(_z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     uint16_t _key_id;
     uint32_t _id;
-    _z_sample_handler_t _callback;
+    _z_closure_sample_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
 } _z_subscription_t;
@@ -85,12 +85,12 @@ typedef struct _z_query_rc_t _z_query_rc_t;
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_query_handler_t)(_z_query_rc_t *query, void *arg);
+typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
-    _z_query_handler_t _callback;
+    _z_closure_query_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
     bool _complete;
@@ -114,12 +114,12 @@ typedef struct _z_reply_t _z_reply_t;
 /**
  * The callback signature of the functions handling query replies.
  */
-typedef void (*_z_reply_handler_t)(_z_reply_t *reply, void *arg);
+typedef void (*_z_closure_reply_callback_t)(_z_reply_t *reply, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
     _z_zint_t _id;
-    _z_reply_handler_t _callback;
+    _z_closure_reply_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
     _z_pending_reply_list_t *_pending_replies;
@@ -142,11 +142,11 @@ typedef struct {
     _z_reply_data_list_t *_replies;
 } _z_pending_query_collect_t;
 
-struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_hello_handler_t
+struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_closure_hello_callback_t
 /**
  * The callback signature of the functions handling hello messages.
  */
-typedef void (*_z_hello_handler_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
+typedef void (*_z_closure_hello_callback_t)(_z_hello_t *hello, struct __z_hello_handler_wrapper_t *arg);
 
 z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size);
 

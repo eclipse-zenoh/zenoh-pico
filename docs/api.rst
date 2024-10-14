@@ -463,7 +463,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_sample_t
 .. c:type:: z_moved_closure_sample_t
 
-.. c:type:: void (* z_sample_handler_t)(z_loaned_sample_t * sample, void * arg);
+.. c:type:: void (* z_closure_sample_callback_t)(z_loaned_sample_t * sample, void * arg);
 
     Function pointer type for handling samples.
     Represents a callback function that is invoked when a sample is available for processing.
@@ -496,7 +496,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_query_t
 .. c:type:: z_moved_closure_query_t
 
-.. c:type:: void (* z_query_handler_t)(z_loaned_query_t * query, void * arg);
+.. c:type:: void (* z_closure_query_callback_t)(z_loaned_query_t * query, void * arg);
 
     Function pointer type for handling queries.
     Represents a callback function that is invoked when a query is available for processing.
@@ -530,7 +530,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_reply_t
 .. c:type:: z_moved_closure_reply_t
  
-.. c:type:: void (* z_reply_handler_t)(z_loaned_reply_t * reply, void * arg);
+.. c:type:: void (* z_closure_reply_callback_t)(z_loaned_reply_t * reply, void * arg);
 
     Function pointer type for handling replies.
     Represents a callback function that is invoked when a reply is available for processing.
@@ -564,7 +564,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_hello_t
 .. c:type:: z_moved_closure_hello_t
  
-.. c:type:: void (* z_hello_handler_t)(z_loaned_hello_t * hello, void * arg);
+.. c:type:: void (* z_closure_hello_callback_t)(z_loaned_hello_t * hello, void * arg);
 
     Function pointer type for handling scouting response.
     Represents a callback function that is invoked when a hello is available for processing.
@@ -598,7 +598,7 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_zid_t
 .. c:type:: z_moved_closure_zid_t
  
-.. c:type:: void (* z_zid_handler_t)(z_loaned_zid_t * zid, void * arg);
+.. c:type:: void (* z_closure_zid_callback_t)(z_loaned_zid_t * zid, void * arg);
 
     Function pointer type for handling Zenoh ID routers response.
     Represents a callback function that is invoked when a zid is available for processing.

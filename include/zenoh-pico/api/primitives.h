@@ -982,8 +982,8 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_sample_handler_t call, z_dropper_handler_t drop,
-                            void *context);
+z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_closure_sample_callback_t call,
+                            z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a sample closure.
@@ -1007,8 +1007,8 @@ void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sa
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_query(z_owned_closure_query_t *closure, z_query_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_query(z_owned_closure_query_t *closure, z_closure_query_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a query closure.
@@ -1032,8 +1032,8 @@ void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_quer
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_closure_reply_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a reply closure.
@@ -1057,8 +1057,8 @@ void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_repl
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a hello closure.
@@ -1082,7 +1082,8 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_zid_handler_t call, z_dropper_handler_t drop, void *context);
+z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_t call, z_closure_drop_callback_t drop,
+                         void *context);
 
 /**
  * Calls a zid closure.
