@@ -102,10 +102,11 @@ z_result_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *zbf) {
     _Z_DEBUG("Decoding _TIMESTAMP");
     z_result_t ret = _Z_RES_OK;
 
-    ts->valid = true;
     ret |= _z_zint64_decode(&ts->time, zbf);
     ret |= _z_id_decode_as_slice(&ts->id, zbf);
-
+    if (ret == _Z_RES_OK) {
+        ts->valid = true;
+    }
     return ret;
 }
 
