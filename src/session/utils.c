@@ -26,18 +26,10 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
-_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
-    _z_timestamp_t ts;
-    ts.valid = tstamp->valid;
-    ts.id = tstamp->id;
-    ts.time = tstamp->time;
-    return ts;
-}
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) { return *tstamp; }
 
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
-    dst->valid = src->valid;
-    dst->id = src->id;
-    dst->time = src->time;
+    *dst = *src;
     _z_timestamp_clear(src);
 }
 
