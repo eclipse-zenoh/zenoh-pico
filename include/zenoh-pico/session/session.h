@@ -26,6 +26,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/manager.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The callback signature of the cleanup functions.
  */
@@ -202,5 +206,9 @@ typedef struct {
 void _z_declare_data_clear(_z_declare_data_t *data);
 _Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

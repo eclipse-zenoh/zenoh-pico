@@ -23,6 +23,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Reply tag values.
  *
@@ -96,5 +100,9 @@ void _z_pending_reply_clear(_z_pending_reply_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_REPLY_NETAPI_H */
