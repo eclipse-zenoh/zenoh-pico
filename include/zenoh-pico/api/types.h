@@ -35,13 +35,6 @@ extern "C" {
 #endif
 
 /**
- * Represents a variable-length encoding unsigned integer.
- *
- * It is equivalent to the size of a ``size_t``.
- */
-typedef _z_zint_t z_zint_t;
-
-/**
  * Represents a Zenoh ID.
  *
  * In general, valid Zenoh IDs are LSB-first 128bit unsigned and non-zero integers.

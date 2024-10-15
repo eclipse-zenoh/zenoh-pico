@@ -1275,8 +1275,6 @@ Others
 Data Structures
 ---------------
 
-.. autoctype:: types.h::z_zint_t
-   
 .. autoctype:: types.h::zp_task_read_options_t
 .. autoctype:: types.h::zp_task_lease_options_t
 .. autoctype:: types.h::zp_read_options_t
