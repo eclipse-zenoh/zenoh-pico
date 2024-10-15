@@ -24,6 +24,10 @@
 #include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef z_result_t (*__z_single_byte_reader_t)(uint8_t *, void *context);
 /*------------------ Internal Zenoh-net Macros ------------------*/
 z_result_t _z_consolidation_mode_encode(_z_wbuf_t *wbf, z_consolidation_mode_t en);
@@ -83,5 +87,9 @@ z_result_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, bool has_suffix);
 z_result_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 z_result_t _z_timestamp_encode_ext(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 z_result_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_CORE_H */

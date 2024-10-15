@@ -19,6 +19,10 @@
 
 #include "zenoh-pico/collections/element.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- Ring Buffer --------*/
 typedef struct {
     void **_val;
@@ -60,5 +64,9 @@ void _z_lifo_free(_z_lifo_t **xs, z_element_free_f f_f);
     static inline type *name##_lifo_pull(name##_lifo_t *r) { return (type *)_z_lifo_pull(r); }             \
     static inline void name##_lifo_clear(name##_lifo_t *r) { _z_lifo_clear(r, name##_elem_free); }         \
     static inline void name##_lifo_free(name##_lifo_t **r) { _z_lifo_free(r, name##_elem_free); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_LIFO_H */

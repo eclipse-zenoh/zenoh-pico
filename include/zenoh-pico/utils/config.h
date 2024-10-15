@@ -21,6 +21,10 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Properties returned by _z_info()
 #define Z_INFO_PID_KEY 0x00
 #define Z_INFO_PEER_PID_KEY 0x01
@@ -108,5 +112,9 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key);
  *
  */
 #define _z_config_free _z_str_intmap_free
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_UTILS_PROPERTY_H */

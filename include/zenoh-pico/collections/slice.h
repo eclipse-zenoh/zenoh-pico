@@ -21,6 +21,10 @@
 
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     void (*deleter)(void *data, void *context);
     void *context;
@@ -66,5 +70,9 @@ bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
 void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
 bool _z_slice_is_alloced(const _z_slice_t *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_SLICE_H */

@@ -19,6 +19,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Return type when declaring a publisher.
  */
@@ -41,6 +45,10 @@ void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
 bool _z_publisher_check(const _z_publisher_t *publisher);
 _z_publisher_t _z_publisher_null(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

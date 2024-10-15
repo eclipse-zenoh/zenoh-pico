@@ -25,6 +25,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
@@ -181,5 +185,9 @@ typedef struct {
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

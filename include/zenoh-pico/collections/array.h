@@ -19,6 +19,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_ARRAY_DEFINE(name, type)                                                                 \
     typedef struct {                                                                                \
@@ -70,5 +74,9 @@
             *a = NULL;                                                                              \
         }                                                                                           \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARRAY_H */

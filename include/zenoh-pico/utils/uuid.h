@@ -14,6 +14,13 @@
 
 #include <stdint.h>
 
+#ifndef ZENOH_PICO_UTILS_UUID_H
+#define ZENOH_PICO_UTILS_UUID_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Converts an UUID in string format to a byte array.
  *
@@ -22,3 +29,9 @@
  *   uuid_str: A valid UUID string.
  */
 void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ZENOH_PICO_UTILS_UUID_H */

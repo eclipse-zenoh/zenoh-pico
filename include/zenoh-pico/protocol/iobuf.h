@@ -23,6 +23,10 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ IOSli ------------------*/
 
 typedef struct {
@@ -128,5 +132,9 @@ void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src);
 void _z_wbuf_reset(_z_wbuf_t *wbf);
 void _z_wbuf_clear(_z_wbuf_t *wbf);
 void _z_wbuf_free(_z_wbuf_t **wbf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_PROTOCOL_IOBUF_H */

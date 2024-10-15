@@ -26,6 +26,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Discovery ------------------*/
 
 /**
@@ -255,6 +259,10 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
 uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
                          void *arg);
 z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */

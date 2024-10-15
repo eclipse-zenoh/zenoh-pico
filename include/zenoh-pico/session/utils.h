@@ -22,6 +22,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Session ------------------*/
 _z_hello_list_t *_z_scout_inner(const z_what_t what, _z_id_t id, _z_string_t *locator, const uint32_t timeout,
                                 const bool exit_on_first);
@@ -36,5 +40,9 @@ z_result_t _z_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliab
 
 void _zp_session_lock_mutex(_z_session_t *zn);
 void _zp_session_unlock_mutex(_z_session_t *zn);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_UTILS_H */

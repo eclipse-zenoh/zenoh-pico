@@ -21,6 +21,10 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- str --------*/
 typedef char *_z_str_t;
 
@@ -99,5 +103,9 @@ static inline void _z_string_elem_move(void *dst, void *src) { _z_string_move((_
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

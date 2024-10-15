@@ -20,6 +20,10 @@
 
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*=============================*/
 /*       Message header        */
 /*=============================*/
@@ -98,5 +102,9 @@ void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, const _z_msg_ext_zbuf_t *ext
 
 _Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy)
 _Z_VEC_DEFINE(_z_msg_ext, _z_msg_ext_t)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_PROTOCOL_EXTENSION_H */
