@@ -17,6 +17,10 @@
 
 #include "zenoh-pico/transport/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _zp_multicast_send_join(_z_transport_multicast_t *ztm);
 z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm);
 z_result_t _zp_multicast_stop_lease_task(_z_transport_multicast_t *ztm);
@@ -27,5 +31,9 @@ z_result_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_
 #else
 z_result_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, void *attr, void *task);
 #endif /* Z_FEATURE_MULTI_THREAD == 1 &&  (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_MULTICAST_LEASE_H */

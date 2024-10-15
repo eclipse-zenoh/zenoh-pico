@@ -19,6 +19,10 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
 bool _z_keyexpr_suffix_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
@@ -44,5 +48,9 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src);
 void _z_keyexpr_clear(_z_keyexpr_t *rk);
 void _z_keyexpr_free(_z_keyexpr_t **rk);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_KEYEXPR_H */

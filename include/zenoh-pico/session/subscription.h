@@ -18,6 +18,10 @@
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/net/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Subscription ------------------*/
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
                                     _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
@@ -33,6 +37,10 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
                                     const _z_n_qos_t qos, const _z_bytes_t attachment, z_reliability_t reliability);
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H */

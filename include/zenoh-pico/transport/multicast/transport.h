@@ -17,6 +17,10 @@
 
 #include "zenoh-pico/api/types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
                                          _z_transport_multicast_establish_param_t *param);
 z_result_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *param, const _z_link_t *zl,
@@ -26,4 +30,9 @@ z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *pa
 z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only);
 z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
 void _z_multicast_transport_clear(_z_transport_t *zt);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */

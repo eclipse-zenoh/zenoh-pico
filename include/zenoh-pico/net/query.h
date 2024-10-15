@@ -21,6 +21,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The query to be answered by a queryable.
  */
@@ -56,6 +60,10 @@ void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
 _z_queryable_t _z_queryable_null(void);
 bool _z_queryable_check(const _z_queryable_t *queryable);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

@@ -18,6 +18,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn);
@@ -31,6 +35,10 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id);
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
 void _z_flush_pending_queries(_z_session_t *zn);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SESSION_QUERY_H */

@@ -17,7 +17,15 @@
 
 #include "zenoh-pico/transport/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _z_read(_z_transport_t *zt);
 void *_zp_read_task(void *zt_arg);  // The argument is void* to avoid incompatible pointer types in tasks
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_TRANSPORT_READ_H */

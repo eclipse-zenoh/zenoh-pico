@@ -21,6 +21,10 @@
 #include <pthread.h>
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef void *_z_task_t;
 typedef void *z_task_attr_t;  // Not used in ESP32
@@ -55,5 +59,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_ESP32_TYPES_H */

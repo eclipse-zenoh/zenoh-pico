@@ -15,9 +15,17 @@
 #ifndef ZENOH_PICO_LOGGER_NETAPI_H
 #define ZENOH_PICO_LOGGER_NETAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialise the zenoh runtime logger
  */
 void _z_init_logger(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_LOGGER_NETAPI_H */

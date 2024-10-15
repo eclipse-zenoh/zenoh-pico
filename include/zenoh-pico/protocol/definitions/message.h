@@ -18,6 +18,11 @@
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Zenoh Messages */
 #define _Z_MID_Z_OAM 0x00
 #define _Z_MID_Z_PUT 0x01
@@ -139,5 +144,9 @@ typedef struct {
 } _z_msg_reply_t;
 void _z_msg_reply_clear(_z_msg_reply_t *msg);
 #define _Z_FLAG_Z_R_C 0x20
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H */
