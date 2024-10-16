@@ -1087,6 +1087,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &rep
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data._result.error; }
 
+#ifdef Z_FEATURE_UNSTABLE_API
 bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     if (_z_id_check(reply->data.replier_id)) {
         *out_id = reply->data.replier_id;
@@ -1094,7 +1095,9 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     }
     return false;
 }
-#endif
+#endif  // Z_FEATURE_UNSTABLE_API
+
+#endif  // Z_FEATURE_QUERY == 1
 
 #if Z_FEATURE_QUERYABLE == 1
 _Z_OWNED_FUNCTIONS_RC_IMPL(query)
