@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -164,6 +165,10 @@ _z_zbuf_t _z_zbuf_make(size_t capacity) {
     zbf._ios = _z_iosli_make(capacity);
     _z_slice_t s = _z_slice_alias_buf(zbf._ios._buf, zbf._ios._capacity);
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
+    if (_Z_RC_IS_NULL(&zbf._slice)) {
+        _Z_ERROR("slice rc creation failed");
+        _z_zbuf_clear(&zbf);
+    }
     return zbf;
 }
 
@@ -171,6 +176,7 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     assert(_z_iosli_readable(&zbf->_ios) >= length);
     _z_zbuf_t v;
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
+    v._slice = zbf->_slice;
     return v;
 }
 _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
