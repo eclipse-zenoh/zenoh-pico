@@ -1315,10 +1315,52 @@ Functions
 .. autocfunction:: primitives.h::zp_send_join_options_default
 .. autocfunction:: primitives.h::zp_send_join
 
-.. TODO Logging
-.. TODO =======
+Logging
+=======
 
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
 
+Zenoh-Pico provides a flexible logging system to assist with debugging and monitoring.
+By default, logging is disabled in release builds, but it can be enabled and configured 
+based on the desired level of verbosity.
 
+Logging Levels
+--------------
 
+Zenoh-Pico supports three logging levels:
 
+- **Error**: Only error messages are logged. This is the least verbose level.
+- **Info**: Logs informational messages and error messages.
+- **Debug**: Logs debug messages, informational messages, and error messages. This is the most verbose level.
+
+Enabling Logging
+----------------
+
+To enable logging, you can adjust the logging level by defining the ``ZENOH_DEBUG`` macro at compile time.
+
+- Set ``ZENOH_DEBUG`` to ``1`` to enable error messages.
+- Set ``ZENOH_DEBUG`` to ``2`` to enable informational messages.
+- Set ``ZENOH_DEBUG`` to ``3`` to enable debug messages (includes info and error).
+
+Additionally, logging can be automatically enabled in **debug builds** by defining the ``Z_BUILD_DEBUG`` macro.
+In release builds, logging is disabled unless ``ZENOH_DEBUG`` is explicitly set.
+
+Example of Enabling Logging
+---------------------------
+
+To enable **debug-level logging** in your build, you would add the following flags during compilation:
+
+.. code-block:: bash
+
+    gcc -DZENOH_DEBUG=3 -o my_program my_program.c
+
+This will enable the most verbose logging, printing debug, info, and error messages.
+
+Disabling Logging
+-----------------
+
+To disable all logging, set ``ZENOH_DEBUG`` to ``0`` or ensure it is undefined in release builds:
+
+.. code-block:: bash
+
+    gcc -DZENOH_DEBUG=0 -o my_program my_program.c
