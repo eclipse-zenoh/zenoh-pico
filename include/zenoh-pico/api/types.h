@@ -450,11 +450,11 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
 
-typedef void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg);
+typedef void (*z_closure_hello_callback_t)(z_loaned_hello_t *hello, void *arg);
 
 typedef struct {
     void *context;
-    z_loaned_hello_handler_t call;
+    z_closure_hello_callback_t call;
     z_closure_drop_callback_t drop;
 } _z_closure_hello_t;
 
