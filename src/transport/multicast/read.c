@@ -57,11 +57,11 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
+    _z_slice_t addr = _z_slice_empty();
     while (ztm->_read_task_running == true) {
-        // Read bytes from socket to the main buffer
         size_t to_read = 0;
 
+        // Read bytes from socket to the main buffer
         switch (ztm->_link._cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -119,9 +119,14 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 continue;
             }
         }
-
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
+        // Check if user or defragment buffer took ownership of buffer
+        if (!_z_zbuf_is_last_ref(&ztm->_zbuf)) {
+            // Drop this buffer and allocate a new one
+            _z_zbuf_clear(&ztm->_zbuf);
+            ztm->_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
+        }
     }
     _z_mutex_unlock(&ztm->_mutex_rx);
     return NULL;
