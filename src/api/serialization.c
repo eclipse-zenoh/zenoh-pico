@@ -84,9 +84,13 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
     return Z_OK;
 }
 
+z_result_t ze_serializer_serialize_substr(ze_loaned_serializer_t *serializer, const char *start, size_t len) {
+    // TODO: perform a UTF-8 correctness check.
+    return ze_serializer_serialize_buf(serializer, (const uint8_t *)start, len);
+}
+
 z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const char *val) {
-    size_t len = strlen(val);
-    return ze_serializer_serialize_buf(serializer, (const uint8_t *)val, len);
+    return ze_serializer_serialize_substr(serializer, val, strlen(val));
 }
 
 z_result_t ze_serializer_serialize_string(ze_loaned_serializer_t *serializer, const z_loaned_string_t *val) {
@@ -119,6 +123,11 @@ z_result_t ze_serialize_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *da
 z_result_t ze_deserialize_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *data) {
     ze_deserializer_t deserializer = ze_deserializer_from_bytes(bytes);
     return ze_deserializer_deserialize_slice(&deserializer, data);
+}
+
+z_result_t ze_serialize_substr(z_owned_bytes_t *bytes, const char *start, size_t len) {
+    _Z_BUILD_BYTES_FROM_SERIALIZER(ze_serializer_serialize_substr(&serializer, start, len));
+    return _Z_RES_OK;
 }
 
 z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *data) {

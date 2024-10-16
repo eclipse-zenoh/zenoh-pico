@@ -1237,6 +1237,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serializer_serialize_buf
 .. autocfunction:: serialization.h::ze_serializer_serialize_string
 .. autocfunction:: serialization.h::ze_serializer_serialize_str
+.. autocfunction:: serialization.h::ze_serializer_serialize_substr
 .. autocfunction:: serialization.h::ze_serializer_serialize_sequence_length
 .. autocfunction:: serialization.h::ze_deserialize_int8
 .. autocfunction:: serialization.h::ze_deserialize_int16
@@ -1267,6 +1268,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_buf
 .. autocfunction:: serialization.h::ze_serialize_string
 .. autocfunction:: serialization.h::ze_serialize_str
+.. autocfunction:: serialization.h::ze_serialize_substr
 
 
 Others
