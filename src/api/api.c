@@ -552,12 +552,12 @@ _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_closure_sample_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_closure_query_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_closure_reply_callback_t, z_closure_drop_callback_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_loaned_hello_handler_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_closure_hello_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure_drop_callback_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
-    z_loaned_hello_handler_t user_call;
+    z_closure_hello_callback_t user_call;
     void *ctx;
 } __z_hello_handler_wrapper_t;
 

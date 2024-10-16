@@ -1057,7 +1057,7 @@ void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_repl
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call,
+z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_closure_hello_callback_t call,
                            z_closure_drop_callback_t drop, void *context);
 
 /**
