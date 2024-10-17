@@ -85,6 +85,24 @@ void *_zp_raweth_read_task(void *ztm_arg) {
         }
         _z_t_msg_clear(&t_msg);
         _z_slice_clear(&addr);
+
+        // Check if user or defragment buffer took ownership of buffer
+        if (!_z_zbuf_is_last_ref(&ztm->_zbuf)) {
+            // Allocate a new buffer
+            _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
+            if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
+                _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
+                ztm->_read_task_running = false;
+            }
+            // Recopy leftover bytes
+            size_t leftovers = _z_zbuf_len(&ztm->_zbuf);
+            if (leftovers > 0) {
+                _z_zbuf_copy_bytes(&new_zbuf, &ztm->_zbuf);
+            }
+            // Drop buffer & update
+            _z_zbuf_clear(&ztm->_zbuf);
+            ztm->_zbuf = new_zbuf;
+        }
     }
     return NULL;
 }
