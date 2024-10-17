@@ -133,7 +133,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 _z_zbuf_copy_bytes(&new_zbuf, &ztm->_zbuf);
             }
             // Drop buffer & update
-            _z_zbuf_clear(&ztm->_zbuf);  // FIXME MEMORY LEAK BECAUSE OF HOW ITS FREED
+            _z_zbuf_clear(&ztm->_zbuf);
             ztm->_zbuf = new_zbuf;
         }
     }

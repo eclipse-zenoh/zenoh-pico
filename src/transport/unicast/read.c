@@ -119,7 +119,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) + to_read);
         // Check if user or defragment buffer took ownership of buffer
         if (!_z_zbuf_is_last_ref(&ztu->_zbuf)) {
-            // Allocate a new one
+            // Allocate a new buffer
             size_t buff_capacity = _z_zbuf_capacity(&ztu->_zbuf);
             _z_zbuf_t new_zbuf = _z_zbuf_make(buff_capacity);
             if (_z_zbuf_capacity(&new_zbuf) != buff_capacity) {
@@ -132,7 +132,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 _z_zbuf_copy_bytes(&new_zbuf, &ztu->_zbuf);
             }
             // Drop buffer & update
-            _z_zbuf_clear(&ztu->_zbuf);  // FIXME MEMORY LEAK BECAUSE OF HOW ITS FREED
+            _z_zbuf_clear(&ztu->_zbuf);
             ztu->_zbuf = new_zbuf;
         }
     }
