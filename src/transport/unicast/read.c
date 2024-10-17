@@ -33,7 +33,10 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
         ret = _z_unicast_handle_transport_message(ztu, &t_msg);
         _z_t_msg_clear(&t_msg);
     }
-
+    ret = _z_unicast_update_rx_buffer(ztu);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR("Failed to allocate rx buffer");
+    }
     return ret;
 }
 #else
@@ -95,27 +98,33 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         // Mark the session that we have received data
         ztu->_received = true;
 
-        // Decode one session message
-        _z_transport_message_t t_msg;
-        z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf);
+        while (_z_zbuf_len(&zbuf) > 0) {
+            // Decode one session message
+            _z_transport_message_t t_msg;
+            z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf);
 
-        if (ret == _Z_RES_OK) {
-            ret = _z_unicast_handle_transport_message(ztu, &t_msg);
             if (ret == _Z_RES_OK) {
-                _z_t_msg_clear(&t_msg);
+                ret = _z_unicast_handle_transport_message(ztu, &t_msg);
+                if (ret == _Z_RES_OK) {
+                    _z_t_msg_clear(&t_msg);
+                } else {
+                    _Z_ERROR("Connection closed due to message processing error: %d", ret);
+                    ztu->_read_task_running = false;
+                    continue;
+                }
             } else {
-                _Z_ERROR("Connection closed due to message processing error: %d", ret);
+                _Z_ERROR("Connection closed due to malformed message: %d", ret);
                 ztu->_read_task_running = false;
                 continue;
             }
-        } else {
-            _Z_ERROR("Connection closed due to malformed message: %d", ret);
-            ztu->_read_task_running = false;
-            continue;
         }
-
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) + to_read);
+
+        if (_z_unicast_update_rx_buffer(ztu) != _Z_RES_OK) {
+            _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
+            ztu->_read_task_running = false;
+        }
     }
     _z_mutex_unlock(&ztu->_mutex_rx);
     return NULL;
