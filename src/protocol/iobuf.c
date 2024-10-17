@@ -76,6 +76,13 @@ void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t le
     ios->_r_pos = ios->_r_pos + length;
 }
 
+void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
+    size_t length = _z_iosli_readable(src);
+    assert(_z_iosli_readable(dst) >= length);
+    (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
+    dst->_w_pos += length;
+}
+
 uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos) {
     assert(pos < ios->_capacity);
     return ios->_buf[pos];
@@ -195,6 +202,8 @@ uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
     return _z_ptr_u8_offset(zbf->_ios._buf, (ptrdiff_t)zbf->_ios._r_pos);
 }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
+
+void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src) { _z_iosli_copy_bytes(&dst->_ios, &src->_ios); }
 
 bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 
