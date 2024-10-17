@@ -262,4 +262,6 @@ z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_str
     return _Z_RES_OK;
 }
 
+#if Z_FEATURE_ENCODING_VALUES == 1
 const z_loaned_encoding_t *z_encoding_loan_default(void) { return z_encoding_zenoh_bytes(); }
+#endif
