@@ -168,13 +168,16 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 
 /*------------------ ZBuf ------------------*/
 _z_zbuf_t _z_zbuf_make(size_t capacity) {
-    _z_zbuf_t zbf;
+    _z_zbuf_t zbf = {0};
     zbf._ios = _z_iosli_make(capacity);
+    if (_z_zbuf_capacity(&zbf) == 0) {
+        return zbf;
+    }
     _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
     if (_Z_RC_IS_NULL(&zbf._slice)) {
         _Z_ERROR("slice rc creation failed");
-        _z_zbuf_clear(&zbf);
+        _z_iosli_clear(&zbf._ios);
     }
     zbf._ios._is_alloc = false;
     return zbf;
