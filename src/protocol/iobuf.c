@@ -170,12 +170,13 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 _z_zbuf_t _z_zbuf_make(size_t capacity) {
     _z_zbuf_t zbf;
     zbf._ios = _z_iosli_make(capacity);
-    _z_slice_t s = _z_slice_alias_buf(zbf._ios._buf, zbf._ios._capacity);
+    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
     if (_Z_RC_IS_NULL(&zbf._slice)) {
         _Z_ERROR("slice rc creation failed");
         _z_zbuf_clear(&zbf);
     }
+    zbf._ios._is_alloc = false;
     return zbf;
 }
 
@@ -236,9 +237,8 @@ uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf) { return zbf->_ios._buf + zbf->_
 void _z_zbuf_reset(_z_zbuf_t *zbf) { _z_iosli_reset(&zbf->_ios); }
 
 void _z_zbuf_clear(_z_zbuf_t *zbf) {
-    if (_z_slice_simple_rc_drop(&zbf->_slice)) {
-        _z_iosli_clear(&zbf->_ios);
-    }
+    _z_iosli_clear(&zbf->_ios);
+    _z_slice_simple_rc_drop(&zbf->_slice);
 }
 
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
