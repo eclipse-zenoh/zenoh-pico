@@ -94,7 +94,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             default:
                 break;
         }
-        // Wrap the main buffer for to_read bytes
+        // Wrap the main buffer to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
         while (_z_zbuf_len(&zbuf) > 0) {
