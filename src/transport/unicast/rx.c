@@ -215,6 +215,28 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
     return ret;
 }
+
+z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu) {
+    // Check if user or defragment buffer took ownership of buffer
+    if (!_z_zbuf_is_last_ref(&ztu->_zbuf)) {
+        // Allocate a new buffer
+        size_t buff_capacity = _z_zbuf_capacity(&ztu->_zbuf);
+        _z_zbuf_t new_zbuf = _z_zbuf_make(buff_capacity);
+        if (_z_zbuf_capacity(&new_zbuf) != buff_capacity) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        // Recopy leftover bytes
+        size_t leftovers = _z_zbuf_len(&ztu->_zbuf);
+        if (leftovers > 0) {
+            _z_zbuf_copy_bytes(&new_zbuf, &ztu->_zbuf);
+        }
+        // Drop buffer & update
+        _z_zbuf_clear(&ztu->_zbuf);
+        ztu->_zbuf = new_zbuf;
+    }
+    return _Z_RES_OK;
+}
+
 #else
 z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztu);

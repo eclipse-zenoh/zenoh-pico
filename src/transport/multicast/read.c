@@ -36,7 +36,10 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         _z_t_msg_clear(&t_msg);
     }
-
+    ret = _z_multicast_update_rx_buffer(ztm);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR("Failed to allocate rx buffer");
+    }
     return ret;
 }
 #else
@@ -119,22 +122,9 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         }
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
-        // Check if user or defragment buffer took ownership of buffer
-        if (!_z_zbuf_is_last_ref(&ztm->_zbuf)) {
-            // Allocate a new buffer
-            _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
-            if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
-                _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-                ztm->_read_task_running = false;
-            }
-            // Recopy leftover bytes
-            size_t leftovers = _z_zbuf_len(&ztm->_zbuf);
-            if (leftovers > 0) {
-                _z_zbuf_copy_bytes(&new_zbuf, &ztm->_zbuf);
-            }
-            // Drop buffer & update
-            _z_zbuf_clear(&ztm->_zbuf);
-            ztm->_zbuf = new_zbuf;
+        if (_z_multicast_update_rx_buffer(ztm) != _Z_RES_OK) {
+            _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
+            ztm->_read_task_running = false;
         }
     }
     _z_mutex_unlock(&ztm->_mutex_rx);

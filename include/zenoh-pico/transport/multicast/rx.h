@@ -20,5 +20,6 @@
 z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr);
 z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                                  _z_slice_t *addr);
+z_result_t _z_multicast_update_rx_buffer(_z_transport_multicast_t *ztm);
 
 #endif /* ZENOH_PICO_TRANSPORT_LINK_RX_H */
