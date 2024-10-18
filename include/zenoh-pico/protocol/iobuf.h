@@ -67,7 +67,7 @@ typedef struct {
     _z_slice_simple_rc_t _slice;
 } _z_zbuf_t;
 
-static inline bool _z_zbuf_is_last_ref(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_is_last_ref(&zbf->_slice); }
+static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_count(&zbf->_slice); }
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 /// Constructs a _borrowing_ reader on `slice`

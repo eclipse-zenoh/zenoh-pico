@@ -353,7 +353,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
 z_result_t _z_multicast_update_rx_buffer(_z_transport_multicast_t *ztm) {
     // Check if user or defragment buffer took ownership of buffer
-    if (!_z_zbuf_is_last_ref(&ztm->_zbuf)) {
+    if (_z_zbuf_get_ref_count(&ztm->_zbuf) != 1) {
         // Allocate a new buffer
         _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
         if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {

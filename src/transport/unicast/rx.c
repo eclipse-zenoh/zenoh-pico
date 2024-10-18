@@ -218,7 +218,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
 z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu) {
     // Check if user or defragment buffer took ownership of buffer
-    if (!_z_zbuf_is_last_ref(&ztu->_zbuf)) {
+    if (_z_zbuf_get_ref_count(&ztu->_zbuf) != 1) {
         // Allocate a new buffer
         size_t buff_capacity = _z_zbuf_capacity(&ztu->_zbuf);
         _z_zbuf_t new_zbuf = _z_zbuf_make(buff_capacity);

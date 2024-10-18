@@ -326,11 +326,10 @@ void test_simple_rc_clone_as_ptr(void) {
     _dummy_simple_rc_t *drc2 = _dummy_simple_rc_clone_as_ptr(&drc1);
     assert(drc2->_val != NULL);
     assert(!_Z_RC_IS_NULL(drc2));
-    assert(!_dummy_simple_rc_is_last_ref(drc2));
-    assert(_z_simple_rc_strong_count(drc2->_cnt) == 2);
+    assert(_dummy_simple_rc_count(drc2) == 2);
     assert(_dummy_simple_rc_eq(&drc1, drc2));
     assert(!_dummy_simple_rc_drop(&drc1));
-    assert(_dummy_simple_rc_is_last_ref(drc2));
+    assert(_dummy_simple_rc_count(drc2) == 1);
     assert(_dummy_simple_rc_drop(drc2));
     z_free(drc2);
 }
@@ -341,7 +340,7 @@ void test_simple_rc_copy(void) {
     _dummy_simple_rc_t drc2 = _dummy_simple_rc_null();
     assert(!_dummy_simple_rc_eq(&drc1, &drc2));
     _dummy_simple_rc_copy(&drc2, &drc1);
-    assert(_z_simple_rc_strong_count(drc2._cnt) == 2);
+    assert(_dummy_simple_rc_count(&drc2) == 2);
     assert(_dummy_simple_rc_eq(&drc1, &drc2));
     assert(!_dummy_simple_rc_drop(&drc2));
     assert(_dummy_simple_rc_drop(&drc1));
