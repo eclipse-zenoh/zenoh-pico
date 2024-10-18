@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 
     ze_owned_serializer_t serializer;
     ze_serializer_empty(&serializer);
-    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
+    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 1);
     for (size_t i = 0; i < 1; ++i) {
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].key));
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].value));

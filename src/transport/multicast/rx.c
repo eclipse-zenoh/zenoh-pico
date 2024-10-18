@@ -350,6 +350,27 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
     return ret;
 }
+
+z_result_t _z_multicast_update_rx_buffer(_z_transport_multicast_t *ztm) {
+    // Check if user or defragment buffer took ownership of buffer
+    if (_z_zbuf_get_ref_count(&ztm->_zbuf) != 1) {
+        // Allocate a new buffer
+        _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
+        if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        // Recopy leftover bytes
+        size_t leftovers = _z_zbuf_len(&ztm->_zbuf);
+        if (leftovers > 0) {
+            _z_zbuf_copy_bytes(&new_zbuf, &ztm->_zbuf);
+        }
+        // Drop buffer & update
+        _z_zbuf_clear(&ztm->_zbuf);
+        ztm->_zbuf = new_zbuf;
+    }
+    return _Z_RES_OK;
+}
+
 #else
 z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                                  _z_slice_t *addr) {

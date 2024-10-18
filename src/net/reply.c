@@ -87,18 +87,19 @@ void _z_pending_reply_clear(_z_pending_reply_t *pr) {
     _z_timestamp_clear(&pr->_tstamp);
 }
 
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_id_t id, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
-                           _z_encoding_t *encoding, z_sample_kind_t kind, const _z_bytes_t attachment) {
+_z_reply_t _z_reply_create(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
+                           const _z_bytes_t *attachment) {
     _z_reply_t reply = _z_reply_null();
     reply.data._tag = _Z_REPLY_TAG_DATA;
     reply.data.replier_id = id;
 
     // Create reply sample
-    reply.data._result.sample.keyexpr = _z_keyexpr_steal(&keyexpr);
+    reply.data._result.sample.keyexpr = _z_keyexpr_steal(keyexpr);
     reply.data._result.sample.kind = kind;
     reply.data._result.sample.timestamp = _z_timestamp_duplicate(timestamp);
-    _z_bytes_copy(&reply.data._result.sample.payload, &payload);
-    _z_bytes_copy(&reply.data._result.sample.attachment, &attachment);
+    _z_bytes_copy(&reply.data._result.sample.payload, payload);
+    _z_bytes_copy(&reply.data._result.sample.attachment, attachment);
     _z_encoding_move(&reply.data._result.sample.encoding, encoding);
 
     return reply;
@@ -112,8 +113,9 @@ _z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding
     return reply;
 }
 #else
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_id_t id, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
-                           _z_encoding_t *encoding, z_sample_kind_t kind, const _z_bytes_t attachment) {
+_z_reply_t _z_reply_create(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
+                           const _z_bytes_t *attachment) {
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(id);
     _ZP_UNUSED(payload);

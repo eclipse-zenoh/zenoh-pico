@@ -46,6 +46,7 @@ static inline _z_arc_slice_t _z_arc_slice_empty(void) { return (_z_arc_slice_t){
 static inline size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
 static inline bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len);
+_z_arc_slice_t _z_arc_slice_wrap_slice_rc(_z_slice_simple_rc_t* slice_rc, size_t offset, size_t len);
 _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset, size_t len);
 const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s);
 z_result_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src);
