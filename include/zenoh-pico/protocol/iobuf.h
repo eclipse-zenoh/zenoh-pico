@@ -34,9 +34,11 @@ typedef struct {
     bool _is_alloc;
 } _z_iosli_t;
 
+static inline _z_iosli_t _z_iosli_null(void) { return (_z_iosli_t){0}; }
 _z_iosli_t _z_iosli_make(size_t capacity);
 _z_iosli_t *_z_iosli_new(size_t capacity);
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos);
+_z_iosli_t _z_iosli_steal(_z_iosli_t *ios);
 
 size_t _z_iosli_readable(const _z_iosli_t *ios);
 uint8_t _z_iosli_read(_z_iosli_t *ios);

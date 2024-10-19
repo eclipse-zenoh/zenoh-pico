@@ -36,6 +36,12 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t
     return ios;
 }
 
+_z_iosli_t _z_iosli_steal(_z_iosli_t *ios) {
+    _z_iosli_t new_ios = *ios;
+    *ios = _z_iosli_null();
+    return new_ios;
+}
+
 void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
     ios->_r_pos = 0;
     ios->_w_pos = 0;
@@ -540,14 +546,14 @@ _z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf) {
 
     _z_zbuf_t zbf = _z_zbuf_null();
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, 0);
-    zbf._ios = *ios;
+    zbf._ios = _z_iosli_steal(ios);
     _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
     if (_Z_RC_IS_NULL(&zbf._slice)) {
         _Z_ERROR("slice rc creation failed");
     }
     zbf._ios._is_alloc = false;
-    *wbf = _z_wbuf_null();
+    _z_wbuf_clear(wbf);
     return zbf;
 }
 
