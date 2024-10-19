@@ -201,7 +201,8 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
                     _z_msg_clear(&zm);
                 } else {
-                    _Z_DEBUG("Failed to decode defragmented message");
+                    _Z_INFO("Failed to decode defragmented message");
+                    ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
                 }
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);

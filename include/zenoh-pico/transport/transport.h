@@ -34,6 +34,8 @@ enum _z_dbuf_state_e {
 typedef struct {
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
+    uint8_t _state_reliable;
+    uint8_t _state_best_effort;
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 #endif
