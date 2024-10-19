@@ -168,7 +168,7 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 
 /*------------------ ZBuf ------------------*/
 _z_zbuf_t _z_zbuf_make(size_t capacity) {
-    _z_zbuf_t zbf = {0};
+    _z_zbuf_t zbf = _z_zbuf_null();
     zbf._ios = _z_iosli_make(capacity);
     if (_z_zbuf_capacity(&zbf) == 0) {
         return zbf;
@@ -586,7 +586,10 @@ void _z_wbuf_reset(_z_wbuf_t *wbf) {
     }
 }
 
-void _z_wbuf_clear(_z_wbuf_t *wbf) { _z_iosli_vec_clear(&wbf->_ioss); }
+void _z_wbuf_clear(_z_wbuf_t *wbf) {
+    _z_iosli_vec_clear(&wbf->_ioss);
+    *wbf = _z_wbuf_null();
+}
 
 void _z_wbuf_free(_z_wbuf_t **wbf) {
     _z_wbuf_t *ptr = *wbf;

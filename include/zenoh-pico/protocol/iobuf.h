@@ -68,6 +68,7 @@ typedef struct {
 } _z_zbuf_t;
 
 static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_count(&zbf->_slice); }
+static inline _z_zbuf_t _z_zbuf_null(void) { return (_z_zbuf_t){0}; }
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 /// Constructs a _borrowing_ reader on `slice`
@@ -106,6 +107,7 @@ typedef struct {
     size_t _expansion_step;
 } _z_wbuf_t;
 
+static inline _z_wbuf_t _z_wbuf_null(void) { return (_z_wbuf_t){0}; }
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
