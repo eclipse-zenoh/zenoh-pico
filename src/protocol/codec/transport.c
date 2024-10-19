@@ -410,9 +410,7 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
     }
-
-    _z_slice_t slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_slice_copy(&msg->_payload, &slice);
+    msg->_payload = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
     zbf->_ios._r_pos = zbf->_ios._w_pos;
 
     return ret;
