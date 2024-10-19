@@ -534,6 +534,23 @@ _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     return zbf;
 }
 
+_z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf) {
+    // Can only move single buffer wbuf
+    assert(_z_iosli_vec_len(&wbf->_ioss) == 1);
+
+    _z_zbuf_t zbf = _z_zbuf_null();
+    _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, 0);
+    zbf._ios = *ios;
+    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
+    zbf._slice = _z_slice_simple_rc_new_from_val(&s);
+    if (_Z_RC_IS_NULL(&zbf._slice)) {
+        _Z_ERROR("slice rc creation failed");
+    }
+    zbf._ios._is_alloc = false;
+    *wbf = _z_wbuf_null();
+    return zbf;
+}
+
 z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
     z_result_t ret = _Z_RES_OK;
     size_t llength = length;
