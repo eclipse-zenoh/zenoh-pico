@@ -284,15 +284,8 @@ size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     _z_wbuf_t wbf;
-    if (is_expandable == true) {
-        // Preallocate 4 slots, this is usually what we expect
-        // when fragmenting a zenoh data message with attachment
-        wbf._ioss = _z_iosli_vec_make(4);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
-    } else {
-        wbf._ioss = _z_iosli_vec_make(1);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
-    }
+    wbf._ioss = _z_iosli_vec_make(1);
+    _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
     wbf._w_idx = 0;  // This __must__ come after adding ioslices to reset w_idx
     wbf._r_idx = 0;
     wbf._expansion_step = is_expandable ? capacity : 0;
