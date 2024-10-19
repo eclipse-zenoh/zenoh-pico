@@ -184,8 +184,15 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     break;
                 }
                 // Convert the defragmentation buffer into a decoding buffer
-                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);
-
+                _z_zbuf_t zbf = _z_wbuf_moved_as_zbuf(dbuf);
+                if (_z_zbuf_capacity(&zbf) == 0) {
+                    _Z_ERROR("Failed to convert defragmentation buffer into a decoding buffer!");
+                    _z_wbuf_clear(dbuf);
+                    *dbuf_state = _Z_DBUF_STATE_NULL;
+                    ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    break;
+                }
+                // Decode message
                 _z_zenoh_message_t zm;
                 ret = _z_network_message_decode(&zm, &zbf);
                 zm._reliability = _z_t_msg_get_reliability(t_msg);
@@ -198,8 +205,6 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 }
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
-                // Reset the defragmentation buffer
-                _z_wbuf_reset(dbuf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;
             }
 #else
