@@ -251,12 +251,12 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     uint16_t mapping = entry->_peer_id;
                     _z_msg_fix_mapping(&zm, mapping);
                     _z_handle_network_message(ztm->_session, &zm, mapping);
-                    // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
-                    _z_msg_clear(&zm);
                 } else {
                     _Z_INFO("Failed to decode defragmented message");
                     ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
                 }
+                // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
+                _z_msg_clear(&zm);
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;

@@ -198,12 +198,12 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 zm._reliability = _z_t_msg_get_reliability(t_msg);
                 if (ret == _Z_RES_OK) {
                     _z_handle_network_message(ztu->_session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-                    // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
-                    _z_msg_clear(&zm);
                 } else {
                     _Z_INFO("Failed to decode defragmented message");
                     ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
                 }
+                // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
+                _z_msg_clear(&zm);
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;
