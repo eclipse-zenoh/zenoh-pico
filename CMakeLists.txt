@@ -43,8 +43,10 @@ set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 if(NOT DEFINED PROJECT_VERSION_TWEAK)
 	set(project_version "${project_version}")
 elseif(PROJECT_VERSION_TWEAK EQUAL 0)
+	set(debian_version "${project_version}~dev-1")
 	set(project_version "${project_version}-dev")
 elseif(PROJECT_VERSION_TWEAK GREATER 1)
+	set(debian_version "${project_version}~pre.${PROJECT_VERSION_TWEAK}-1")
 	set(project_version "${project_version}-pre.${PROJECT_VERSION_TWEAK}")
 endif()
 status_print(project_version)
@@ -126,9 +128,11 @@ endfunction()
 
 add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
 
-# while in development, use timestamp for patch version:
-string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
-set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+if (NOT CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release") 
+  # while in development, use timestamp for patch version:
+  string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
+  set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+endif()
 
 set(CHECK_THREADS "ON")
 
@@ -523,7 +527,7 @@ if(PACKAGING)
 
   # Sources package
   set(CPACK_SOURCE_GENERATOR "TGZ")
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${project_version}")
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
@@ -547,9 +551,11 @@ if(PACKAGING)
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
     set(CPACK_DEB_COMPONENT_INSTALL ON)
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
+    set(CPACK_DEBIAN_PACKAGE_VERSION ${debian_version})
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${PROJECT_NAME}")
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
-    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${PROJECT_VERSION})")
+    set(CPACK_DEBIAN_DEV_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
+    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${debian_version})")
   endif()
 
   if(PACKAGING MATCHES "RPM")
