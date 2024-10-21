@@ -39,18 +39,18 @@ configure_file(
   @ONLY
 )
 
-set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
-if(NOT DEFINED PROJECT_VERSION_TWEAK)
-	set(debian_version "${project_version}")
-	set(project_version "${project_version}")
-elseif(PROJECT_VERSION_TWEAK EQUAL 0)
-	set(debian_version "${project_version}~dev-1")
-	set(project_version "${project_version}-dev")
-elseif(PROJECT_VERSION_TWEAK GREATER 1)
-	set(debian_version "${project_version}~pre.${PROJECT_VERSION_TWEAK}-1")
-	set(project_version "${project_version}-pre.${PROJECT_VERSION_TWEAK}")
+if(NOT CPACK_PACKAGE_VERSION)
+  set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+    set(SEM_VER "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+    if(NOT DEFINED PROJECT_VERSION_TWEAK)
+        set(CPACK_PACKAGE_VERSION ${SEM_VER})
+    elseif(PROJECT_VERSION_TWEAK EQUAL 0)
+        set(CPACK_PACKAGE_VERSION "${SEM_VER}~dev-1")
+    elseif(PROJECT_VERSION_TWEAK GREATER 0)
+        set(CPACK_PACKAGE_VERSION "${SEM_VER}~pre.${PROJECT_VERSION_TWEAK}-1")
+    endif()
 endif()
-status_print(project_version)
+
 
 
 include(CMakePackageConfigHelpers)
@@ -556,7 +556,7 @@ if(PACKAGING)
     set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${PROJECT_NAME}")
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
     set(CPACK_DEBIAN_DEV_PACKAGE_NAME "lib${PROJECT_NAME}-dev")
-    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${debian_version})")
+    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${CPACK_PACKAGE_VERSION})")
   endif()
 
   if(PACKAGING MATCHES "RPM")
@@ -577,7 +577,7 @@ if(PACKAGING)
     set(CPACK_RPM_COMPONENT_INSTALL ON)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
     set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
-    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
+    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${CPACK_PACKAGE_VERSION}")
   endif()
 
   include(CPack)
