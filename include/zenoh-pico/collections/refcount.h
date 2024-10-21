@@ -244,6 +244,9 @@ size_t _z_simple_rc_strong_count(void *cnt);
         *p = name##_simple_rc_null();                                                                         \
         return res;                                                                                           \
     }                                                                                                         \
+    static inline size_t name##_simple_rc_count(const name##_simple_rc_t *p) {                                \
+        return _z_simple_rc_strong_count(p->_cnt);                                                            \
+    }                                                                                                         \
     static inline size_t name##_simple_rc_size(name##_simple_rc_t *p) {                                       \
         _ZP_UNUSED(p);                                                                                        \
         return sizeof(name##_simple_rc_t);                                                                    \

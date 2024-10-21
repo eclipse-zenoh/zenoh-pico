@@ -36,7 +36,10 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         _z_t_msg_clear(&t_msg);
     }
-
+    ret = _z_multicast_update_rx_buffer(ztm);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR("Failed to allocate rx buffer");
+    }
     return ret;
 }
 #else
@@ -57,11 +60,11 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
+    _z_slice_t addr = _z_slice_empty();
     while (ztm->_read_task_running == true) {
-        // Read bytes from socket to the main buffer
         size_t to_read = 0;
 
+        // Read bytes from socket to the main buffer
         switch (ztm->_link._cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -94,15 +97,13 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             default:
                 break;
         }
-        // Wrap the main buffer for to_read bytes
+        // Wrap the main buffer to_read bytes
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
         while (_z_zbuf_len(&zbuf) > 0) {
-            z_result_t ret = _Z_RES_OK;
-
             // Decode one session message
             _z_transport_message_t t_msg;
-            ret = _z_transport_message_decode(&t_msg, &zbuf);
+            z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf);
             if (ret == _Z_RES_OK) {
                 ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
 
@@ -119,9 +120,12 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 continue;
             }
         }
-
         // Move the read position of the read buffer
         _z_zbuf_set_rpos(&ztm->_zbuf, _z_zbuf_get_rpos(&ztm->_zbuf) + to_read);
+        if (_z_multicast_update_rx_buffer(ztm) != _Z_RES_OK) {
+            _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
+            ztm->_read_task_running = false;
+        }
     }
     _z_mutex_unlock(&ztm->_mutex_rx);
     return NULL;

@@ -89,8 +89,9 @@ _z_reply_t _z_reply_move(_z_reply_t *src_reply);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
-_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_id_t id, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
-                           _z_encoding_t *encoding, z_sample_kind_t kind, const _z_bytes_t attachment);
+_z_reply_t _z_reply_create(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
+                           const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
+                           const _z_bytes_t *attachment);
 _z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding);
 
 typedef struct _z_pending_reply_t {

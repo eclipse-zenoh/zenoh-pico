@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/collections/arc_slice.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
@@ -40,6 +41,7 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t
 size_t _z_iosli_readable(const _z_iosli_t *ios);
 uint8_t _z_iosli_read(_z_iosli_t *ios);
 void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dest, size_t offset, size_t length);
+void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src);
 uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos);
 
 size_t _z_iosli_writable(const _z_iosli_t *ios);
@@ -62,8 +64,10 @@ _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 /*------------------ ZBuf ------------------*/
 typedef struct {
     _z_iosli_t _ios;
+    _z_slice_simple_rc_t _slice;
 } _z_zbuf_t;
 
+static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_count(&zbf->_slice); }
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 /// Constructs a _borrowing_ reader on `slice`
@@ -72,6 +76,7 @@ _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
+void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src);
 bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 

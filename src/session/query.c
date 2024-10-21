@@ -112,8 +112,8 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
     }
 
     // Build the reply
-    _z_reply_t reply = _z_reply_create(expanded_ke, zn->_local_zid, msg->_payload, &msg->_commons._timestamp,
-                                       &msg->_encoding, kind, msg->_attachment);
+    _z_reply_t reply = _z_reply_create(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
+                                       &msg->_encoding, kind, &msg->_attachment);
 
     bool drop = false;
     // Verify if this is a newer reply, free the old one in case it is
