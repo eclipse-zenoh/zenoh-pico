@@ -151,7 +151,7 @@ void app_main() {
 
     printf("Declaring Subscriber on '%s'...", KEYEXPR);
     z_owned_closure_sample_t callback;
-    z_closure(&callback, data_handler);
+    z_closure(&callback, data_handler, NULL, NULL);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
