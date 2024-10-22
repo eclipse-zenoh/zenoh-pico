@@ -114,7 +114,7 @@ static z_result_t __unsafe_z_multicast_message_send(_z_transport_multicast_t *zt
 #if Z_FEATURE_BATCHING == 1
 static z_result_t __unsafe_z_multicast_message_batch(_z_transport_multicast_t *ztm, const _z_network_message_t *n_msg) {
     _Z_DEBUG("Batching network message");
-    // Copy network message (STEAL?)
+    // Copy network message
     _z_network_message_t *batch_msg = z_malloc(sizeof(_z_network_message_t));
     if (batch_msg == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
