@@ -154,7 +154,7 @@ static z_result_t __unsafe_unicast_batch_send(_z_transport_unicast_t *ztu, z_rel
                 _Z_INFO("Dropping batch because one message is too big (need to be fragmented)");
                 return _Z_ERR_TRANSPORT_TX_FAILED;
             } else {  // Frame has messages but is full
-                _Z_INFO("Sending batch in uniple frames because it is too big for one");
+                _Z_INFO("Sending batch in multiple frames because it is too big for one");
                 // Send frame
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
                 _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));

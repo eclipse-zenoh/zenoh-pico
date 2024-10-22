@@ -31,4 +31,6 @@ z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block)
 void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm);
 void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm);
 void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm);
+void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm);
+void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm);
 #endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */

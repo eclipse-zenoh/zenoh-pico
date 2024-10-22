@@ -117,7 +117,7 @@ static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_lis
 z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                                  _z_slice_t *addr) {
     z_result_t ret = _Z_RES_OK;
-    _z_multicast_rx_mutex_lock(ztm);
+    _z_multicast_peer_mutex_lock(ztm);
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
@@ -358,7 +358,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             break;
         }
     }
-    _z_multicast_rx_mutex_unlock(ztm);
+    _z_multicast_peer_mutex_unlock(ztm);
     return ret;
 }
 
