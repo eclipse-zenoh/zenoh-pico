@@ -26,4 +26,9 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
 z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only);
 z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reason);
 void _z_unicast_transport_clear(_z_transport_t *zt);
+
+z_result_t _z_unicast_tx_mutex_lock(_z_transport_unicast_t *ztu, z_congestion_control_t cc);
+void _z_unicast_tx_mutex_unlock(_z_transport_unicast_t *ztu);
+void _z_unicast_rx_mutex_lock(_z_transport_unicast_t *ztu);
+void _z_unicast_rx_mutex_unlock(_z_transport_unicast_t *ztu);
 #endif /* ZENOH_PICO_UNICAST_TRANSPORT_H */

@@ -44,11 +44,7 @@ z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_trans
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Acquire the lock
-    _z_mutex_lock(&ztm->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_multicast_tx_mutex_lock(ztm, true);
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_z_prepare_wbuf(&ztm->_wbuf, ztm->_link._cap._flow);
 
@@ -60,14 +56,10 @@ z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_trans
         // Send the wbuf on the socket
         ret = _z_link_send_wbuf(&ztm->_link, &ztm->_wbuf);
         if (ret == _Z_RES_OK) {
-            ztm->_transmitted = true;  // Mark the session that we have transmitted data
+            ztm->_transmitted = true;  // Tell session we transmitted data
         }
     }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_multicast_tx_mutex_unlock(ztm);
     return ret;
 }
 
@@ -154,9 +146,6 @@ z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t 
             }
         }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_unlock(&ztm->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
     }
 
     return ret;

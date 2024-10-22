@@ -20,6 +20,7 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
@@ -47,11 +48,7 @@ z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Acquire the lock
-    _z_mutex_lock(&ztu->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_unicast_tx_mutex_lock(ztu, true);
     // Prepare the buffer eventually reserving space for the message length
     __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
 
@@ -66,11 +63,7 @@ z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport
             ztu->_transmitted = true;  // Mark the session that we have transmitted data
         }
     }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztu->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_unicast_tx_mutex_unlock(ztu);
     return ret;
 }
 
@@ -83,21 +76,12 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
 
     // Acquire the lock and drop the message if needed
     bool drop = false;
-    if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_lock(&ztu->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-    } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_result_t locked = _z_mutex_try_lock(&ztu->_mutex_tx);
-        if (locked != 0) {
-            _Z_INFO("Dropping zenoh message because of congestion control");
-            // We failed to acquire the lock, drop the message
-            drop = true;
-        }
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+    ret = _z_unicast_tx_mutex_lock(ztu, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
+    if (ret != _Z_RES_OK) {
+        _Z_INFO("Dropping zenoh message because of congestion control");
+        // We failed to acquire the lock, drop the message
+        drop = true;
     }
-
     if (drop == false) {
         // Prepare the buffer eventually reserving space for the message length
         __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
@@ -163,10 +147,7 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
 #endif
             }
         }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_unlock(&ztu->_mutex_tx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
+        _z_unicast_tx_mutex_unlock(ztu);
     }
 
     return ret;

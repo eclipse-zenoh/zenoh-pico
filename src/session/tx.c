@@ -21,7 +21,6 @@
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                          z_congestion_control_t cong_ctrl) {
     z_result_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send network message");
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:

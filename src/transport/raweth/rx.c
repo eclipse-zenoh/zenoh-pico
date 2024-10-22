@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -77,11 +78,7 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Acquire the lock
-    _z_mutex_lock(&ztm->_mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_multicast_rx_mutex_lock(ztm);
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
@@ -105,11 +102,7 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
         _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
         ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
     }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztm->_mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_multicast_rx_mutex_unlock(ztm);
     return ret;
 }
 

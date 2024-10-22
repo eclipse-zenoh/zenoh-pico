@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/transport/multicast/transport.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -205,6 +207,35 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     _z_transport_peer_entry_list_free(&ztm->_peers);
     _z_link_clear(&ztm->_link);
 }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block) {
+    if (block) {
+        _z_mutex_lock(&ztm->_mutex_tx);
+        return _Z_RES_OK;
+    } else {
+        return _z_mutex_try_lock(&ztm->_mutex_tx);
+    }
+}
+
+void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_tx); }
+
+void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock(&ztm->_mutex_rx); }
+
+void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_rx); }
+
+#else
+z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, z_congestion_control_t cc) {
+    _ZP_UNUSED(ztm);
+    _ZP_UNUSED(cc);
+    return _Z_RES_OK;
+}
+void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
+
+void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
+
+void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #else
 

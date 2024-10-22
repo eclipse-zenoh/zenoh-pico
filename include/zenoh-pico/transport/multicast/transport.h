@@ -26,4 +26,9 @@ z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *pa
 z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only);
 z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
 void _z_multicast_transport_clear(_z_transport_t *zt);
+
+z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block);
+void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm);
+void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm);
+void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm);
 #endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */
