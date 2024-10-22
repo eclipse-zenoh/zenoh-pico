@@ -240,9 +240,9 @@ void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock
 void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_peer); }
 
 #else
-z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, z_congestion_control_t cc) {
+z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block) {
     _ZP_UNUSED(ztm);
-    _ZP_UNUSED(cc);
+    _ZP_UNUSED(block);
     return _Z_RES_OK;
 }
 void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
