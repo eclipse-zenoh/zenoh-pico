@@ -281,11 +281,11 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     // Clean up tasks
     if (ztu->_read_task != NULL) {
         _z_task_join(ztu->_read_task);
-        _z_task_free(&ztu->_read_task);
+        z_free(ztu->_read_task);
     }
     if (ztu->_lease_task != NULL) {
         _z_task_join(ztu->_lease_task);
-        _z_task_free(&ztu->_lease_task);
+        z_free(ztu->_lease_task);
     }
 
     // Clean up the mutexes
