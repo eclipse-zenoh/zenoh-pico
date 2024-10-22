@@ -302,5 +302,6 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
+z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */
