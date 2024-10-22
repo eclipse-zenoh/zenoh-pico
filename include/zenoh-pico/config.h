@@ -44,6 +44,7 @@
 #define Z_FEATURE_TCP_NODELAY 1
 #define Z_FEATURE_LOCAL_SUBSCRIBER 0
 #define Z_FEATURE_PUBLISHER_SESSION_CHECK 1
+#define Z_FEATURE_BATCHING 1
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
