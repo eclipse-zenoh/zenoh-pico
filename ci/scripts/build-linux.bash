@@ -9,7 +9,7 @@ readonly version=${VERSION:?input VERSION is required}
 # Build target
 readonly target=${TARGET:?input TARGET is required}
 
-BUILD_TYPE=RELEASE make "$target"
+BUILD_SHARED_LIBS=ON BUILD_TYPE=RELEASE make "$target"
 
 readonly out=$GITHUB_WORKSPACE
 readonly repo_name=${repo#*/}
