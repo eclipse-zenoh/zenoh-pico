@@ -41,6 +41,11 @@ void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f) {
     }
 }
 
+void _z_vec_steal(_z_vec_t *dst, _z_vec_t *src) {
+    *dst = *src;
+    *src = _z_vec_null();
+}
+
 void _z_vec_reset(_z_vec_t *v, z_element_free_f free_f) {
     for (size_t i = 0; i < v->_len; i++) {
         free_f(&v->_val[i]);

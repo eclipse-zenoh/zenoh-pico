@@ -29,8 +29,10 @@ typedef struct {
     void **_val;
 } _z_vec_t;
 
+static inline _z_vec_t _z_vec_null(void) { return (_z_vec_t){0}; }
 _z_vec_t _z_vec_make(size_t capacity);
 void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f f);
+void _z_vec_steal(_z_vec_t *dst, _z_vec_t *src);
 
 size_t _z_vec_len(const _z_vec_t *v);
 bool _z_vec_is_empty(const _z_vec_t *v);
@@ -59,6 +61,7 @@ void _z_vec_release(_z_vec_t *v);
     static inline void name##_vec_copy(name##_vec_t *dst, const name##_vec_t *src) {                               \
         _z_vec_copy(dst, src, name##_elem_clone);                                                                  \
     }                                                                                                              \
+    static inline void name##_vec_steal(name##_vec_t *dst, name##_vec_t *src) { _z_vec_steal(dst, src); }          \
     static inline void name##_vec_reset(name##_vec_t *v) { _z_vec_reset(v, name##_elem_free); }                    \
     static inline void name##_vec_clear(name##_vec_t *v) { _z_vec_clear(v, name##_elem_free); }                    \
     static inline void name##_vec_free(name##_vec_t **v) { _z_vec_free(v, name##_elem_free); }                     \
