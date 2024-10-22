@@ -25,9 +25,17 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 
+enum _z_dbuf_state_e {
+    _Z_DBUF_STATE_NULL = 0,
+    _Z_DBUF_STATE_INIT = 1,
+    _Z_DBUF_STATE_OVERFLOW = 2,
+};
+
 typedef struct {
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
+    uint8_t _state_reliable;
+    uint8_t _state_best_effort;
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 #endif
@@ -77,6 +85,8 @@ typedef struct {
 
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffer
+    uint8_t _state_reliable;
+    uint8_t _state_best_effort;
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
 #endif

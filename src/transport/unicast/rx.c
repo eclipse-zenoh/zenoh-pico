@@ -111,6 +111,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 } else {
 #if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
+                    ztu->_state_reliable = _Z_DBUF_STATE_NULL;
 #endif
                     _Z_INFO("Reliable message dropped because it is out of order");
                     break;
@@ -121,6 +122,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 } else {
 #if Z_FEATURE_FRAGMENTATION == 1
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
+                    ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
 #endif
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
@@ -141,44 +143,70 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         case _Z_MID_T_FRAGMENT: {
             _Z_DEBUG("Received Z_FRAGMENT message");
 #if Z_FEATURE_FRAGMENTATION == 1
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
-                                  ? &ztu->_dbuf_reliable
-                                  : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
-
-            bool drop = false;
-            if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
-                // Filling the wbuf capacity as a way to signal the last fragment to reset the dbuf
-                // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0, _z_wbuf_space_left(dbuf));
-                drop = true;
+            _z_wbuf_t *dbuf;
+            uint8_t *dbuf_state;
+            // Select the right defragmentation buffer
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)) {
+                dbuf = &ztu->_dbuf_reliable;
+                dbuf_state = &ztu->_state_reliable;
             } else {
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0,
-                                    t_msg->_body._fragment._payload.len);
+                dbuf = &ztu->_dbuf_best_effort;
+                dbuf_state = &ztu->_state_best_effort;
             }
-
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_M) == false) {
-                if (drop == true) {  // Drop message if it exceeds the fragmentation size
-                    _z_wbuf_reset(dbuf);
+            // Allocate buffer if needed
+            if (*dbuf_state == _Z_DBUF_STATE_NULL) {
+                *dbuf = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
+                if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
+                    _Z_ERROR("Not enough memory to allocate transport defragmentation buffer");
+                    ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                     break;
                 }
-
-                _z_zbuf_t zbf = _z_wbuf_to_zbuf(dbuf);  // Convert the defragmentation buffer into a decoding buffer
-
+                *dbuf_state = _Z_DBUF_STATE_INIT;
+            }
+            // Process fragment data
+            if (*dbuf_state == _Z_DBUF_STATE_INIT) {
+                // Check overflow
+                if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
+                    *dbuf_state = _Z_DBUF_STATE_OVERFLOW;
+                } else {
+                    // Fill buffer
+                    _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0,
+                                        t_msg->_body._fragment._payload.len);
+                }
+            }
+            // Process final fragment
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_M) == false) {
+                // Drop message if it exceeds the fragmentation size
+                if (*dbuf_state == _Z_DBUF_STATE_OVERFLOW) {
+                    _Z_INFO("Fragment dropped because defragmentation buffer has overflown");
+                    _z_wbuf_clear(dbuf);
+                    *dbuf_state = _Z_DBUF_STATE_NULL;
+                    break;
+                }
+                // Convert the defragmentation buffer into a decoding buffer
+                _z_zbuf_t zbf = _z_wbuf_moved_as_zbuf(dbuf);
+                if (_z_zbuf_capacity(&zbf) == 0) {
+                    _Z_ERROR("Failed to convert defragmentation buffer into a decoding buffer!");
+                    _z_wbuf_clear(dbuf);
+                    *dbuf_state = _Z_DBUF_STATE_NULL;
+                    ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    break;
+                }
+                // Decode message
                 _z_zenoh_message_t zm;
                 ret = _z_network_message_decode(&zm, &zbf);
                 zm._reliability = _z_t_msg_get_reliability(t_msg);
                 if (ret == _Z_RES_OK) {
                     _z_handle_network_message(ztu->_session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-                    _z_msg_clear(&zm);  // Clear must be explicitly called for fragmented zenoh messages. Non-fragmented
-                                        // zenoh messages are released when their transport message is released.
                 } else {
-                    _Z_DEBUG("Failed to decode defragmented message");
+                    _Z_INFO("Failed to decode defragmented message");
+                    ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
                 }
-
+                // Fragmented messages must be cleared. Non-fragmented messages are released with their transport.
+                _z_msg_clear(&zm);
                 // Free the decoding buffer
                 _z_zbuf_clear(&zbf);
-                // Reset the defragmentation buffer
-                _z_wbuf_reset(dbuf);
+                *dbuf_state = _Z_DBUF_STATE_NULL;
             }
 #else
             _Z_INFO("Fragment dropped because fragmentation feature is deactivated");

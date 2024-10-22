@@ -51,19 +51,8 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
-        size_t dbuf_size = 0;
         size_t wbuf_size = mtu;
         size_t zbuf_size = param->_batch_size;
-        bool expandable = false;
-
-        // Set expandable on stream link
-        if (zl->_cap._flow == Z_LINK_CAP_FLOW_STREAM) {
-            expandable = true;
-        }
-#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
-        expandable = false;
-        dbuf_size = Z_FRAG_MAX_SIZE;
-#endif
 
         // Initialize tx rx buffers
         zt->_transport._unicast._wbuf = _z_wbuf_make(wbuf_size, false);
@@ -86,35 +75,10 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 #if Z_FEATURE_FRAGMENTATION == 1
         // Initialize the defragmentation buffers
-        zt->_transport._unicast._dbuf_reliable = _z_wbuf_make(dbuf_size, expandable);
-        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_make(dbuf_size, expandable);
-
-        // Clean up the buffers if one of them failed to be allocated
-        if (
-#if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 0
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != dbuf_size) ||
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != dbuf_size)) {
-#else
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_reliable) != Z_IOSLICE_SIZE) ||
-            (_z_wbuf_capacity(&zt->_transport._unicast._dbuf_best_effort) != Z_IOSLICE_SIZE)) {
-#endif
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            _Z_ERROR("Not enough memory to allocate transport defragmentation buffers!");
-
-            _z_wbuf_clear(&zt->_transport._unicast._dbuf_reliable);
-            _z_wbuf_clear(&zt->_transport._unicast._dbuf_best_effort);
-
-#if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
-            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-            _z_wbuf_clear(&zt->_transport._unicast._wbuf);
-            _z_zbuf_clear(&zt->_transport._unicast._zbuf);
-        }
-#else
-        _ZP_UNUSED(dbuf_size);
-        _ZP_UNUSED(expandable);
+        zt->_transport._unicast._state_reliable = _Z_DBUF_STATE_NULL;
+        zt->_transport._unicast._state_best_effort = _Z_DBUF_STATE_NULL;
+        zt->_transport._unicast._dbuf_reliable = _z_wbuf_null();
+        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_null();
 #endif  // Z_FEATURE_FRAGMENTATION == 1
     }
 

@@ -34,9 +34,11 @@ typedef struct {
     bool _is_alloc;
 } _z_iosli_t;
 
+static inline _z_iosli_t _z_iosli_null(void) { return (_z_iosli_t){0}; }
 _z_iosli_t _z_iosli_make(size_t capacity);
 _z_iosli_t *_z_iosli_new(size_t capacity);
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos);
+_z_iosli_t _z_iosli_steal(_z_iosli_t *ios);
 
 size_t _z_iosli_readable(const _z_iosli_t *ios);
 uint8_t _z_iosli_read(_z_iosli_t *ios);
@@ -68,6 +70,7 @@ typedef struct {
 } _z_zbuf_t;
 
 static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_slice_simple_rc_count(&zbf->_slice); }
+static inline _z_zbuf_t _z_zbuf_null(void) { return (_z_zbuf_t){0}; }
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
 /// Constructs a _borrowing_ reader on `slice`
@@ -106,6 +109,7 @@ typedef struct {
     size_t _expansion_step;
 } _z_wbuf_t;
 
+static inline _z_wbuf_t _z_wbuf_null(void) { return (_z_wbuf_t){0}; }
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
@@ -127,6 +131,7 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);
+_z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf);
 z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
 
 void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src);
