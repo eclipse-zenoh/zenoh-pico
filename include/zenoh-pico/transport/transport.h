@@ -31,6 +31,11 @@ enum _z_dbuf_state_e {
     _Z_DBUF_STATE_OVERFLOW = 2,
 };
 
+enum _z_batching_state_e {
+    _Z_BATCHING_IDLE = 0,
+    _Z_BATCHING_ACTIVE = 1,
+};
+
 typedef struct {
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
@@ -105,6 +110,12 @@ typedef struct {
     _z_zint_t _sn_rx_best_effort;
     volatile _z_zint_t _lease;
 
+// Transport batching
+#if Z_FEATURE_BATCHING == 1
+    uint8_t _batch_state;
+    _z_network_message_vec_t _batch;
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
@@ -128,6 +139,12 @@ typedef struct _z_transport_multicast_t {
     // Peer list mutex
     _z_mutex_t _mutex_peer;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+// Transport batching
+#if Z_FEATURE_BATCHING == 1
+    uint8_t _batch_state;
+    _z_network_message_vec_t _batch;
+#endif
 
     _z_link_t _link;
 
@@ -191,5 +208,10 @@ typedef struct {
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
+
+#if Z_FEATURE_BATCHING == 1
+bool _z_transport_start_batching(_z_transport_t *zt);
+void _z_transport_stop_batching(_z_transport_t *zt);
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */
