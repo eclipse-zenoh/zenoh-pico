@@ -140,12 +140,15 @@ static z_result_t __unsafe_multicast_batch_send(_z_transport_multicast_t *ztm, z
     _z_zint_t sn = __unsafe_z_multicast_get_sn(ztm, reliability);
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
     _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_wbuf, &t_msg));
+    size_t curr_wpos = _z_wbuf_get_wpos(&ztm->_wbuf);
     // Process batch
     while (msg_idx < msg_nb) {
         // Encode a network message
         _z_network_message_t *n_msg = _z_network_message_vec_get(&ztm->_batch, msg_idx);
         assert(n_msg != NULL);
         if (_z_network_message_encode(&ztm->_wbuf, n_msg) != _Z_RES_OK) {
+            // Remove partially encoded data
+            _z_wbuf_set_wpos(&ztm->_wbuf, curr_wpos);
             // Handle case where one message is too big to fit in frame
             if (curr_msg_nb == 0) {
                 _Z_INFO("Dropping batch because one message is too big (need to be fragmented)");
@@ -165,6 +168,7 @@ static z_result_t __unsafe_multicast_batch_send(_z_transport_multicast_t *ztm, z
                 curr_msg_nb = 0;
             }
         } else {
+            curr_wpos = _z_wbuf_get_wpos(&ztm->_wbuf);
             msg_idx++;
             curr_msg_nb++;
         }
