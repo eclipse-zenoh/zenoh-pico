@@ -47,9 +47,9 @@ static _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliab
 #if Z_FEATURE_FRAGMENTATION == 1
 static z_result_t __unsafe_z_unicast_send_fragment(_z_transport_unicast_t *ztu, _z_wbuf_t *fbf,
                                                    const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                                   _z_zint_t *first_sn) {
+                                                   _z_zint_t first_sn) {
     bool is_first = true;
-    _z_zint_t sn = *first_sn;
+    _z_zint_t sn = first_sn;
     // Encode message on temp buffer
     _Z_RETURN_IF_ERR(_z_network_message_encode(fbf, n_msg));
     // Fragment message
@@ -76,7 +76,7 @@ static z_result_t __unsafe_z_unicast_send_fragment(_z_transport_unicast_t *ztu, 
 #else
 static z_result_t __unsafe_z_unicast_send_fragment(_z_transport_unicast_t *ztu, _z_wbuf_t *fbf,
                                                    const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                                   _z_zint_t *first_sn) {
+                                                   _z_zint_t first_sn) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(fbf);
     _ZP_UNUSED(n_msg);
@@ -102,7 +102,7 @@ static z_result_t __unsafe_z_unicast_message_send(_z_transport_unicast_t *ztu, c
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
         // Send message as fragments
-        ret = __unsafe_z_unicast_send_fragment(ztu, &fbf, n_msg, reliability, &sn);
+        ret = __unsafe_z_unicast_send_fragment(ztu, &fbf, n_msg, reliability, sn);
         // Clear the buffer as it's no longer required
         _z_wbuf_clear(&fbf);
         return ret;
