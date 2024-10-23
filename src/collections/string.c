@@ -121,7 +121,7 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
         return s;
     }
 
-    const char c[] = "0123456789ABCDEF";
+    const char c[] = "0123456789abcdef";
     for (size_t i = 0; i < bs->len; i++) {
         s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
         s_val[(i * (size_t)2) + 1] = c[bs->start[i] & (uint8_t)0x0F];
