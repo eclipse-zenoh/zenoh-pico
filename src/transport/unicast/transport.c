@@ -280,35 +280,6 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     _z_link_clear(&ztu->_link);
 }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-z_result_t _z_unicast_tx_mutex_lock(_z_transport_unicast_t *ztu, bool block) {
-    if (block) {
-        _z_mutex_lock(&ztu->_mutex_tx);
-        return _Z_RES_OK;
-    } else {
-        return _z_mutex_try_lock(&ztu->_mutex_tx);
-    }
-}
-
-void _z_unicast_tx_mutex_unlock(_z_transport_unicast_t *ztu) { _z_mutex_unlock(&ztu->_mutex_tx); }
-
-void _z_unicast_rx_mutex_lock(_z_transport_unicast_t *ztu) { _z_mutex_lock(&ztu->_mutex_rx); }
-
-void _z_unicast_rx_mutex_unlock(_z_transport_unicast_t *ztu) { _z_mutex_unlock(&ztu->_mutex_rx); }
-
-#else
-z_result_t _z_unicast_tx_mutex_lock(_z_transport_unicast_t *ztu, z_congestion_control_t cc) {
-    _ZP_UNUSED(ztu);
-    _ZP_UNUSED(cc);
-    return _Z_RES_OK;
-}
-void _z_unicast_tx_mutex_unlock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
-
-void _z_unicast_rx_mutex_lock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
-
-void _z_unicast_rx_mutex_unlock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
 #else
 
 z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,

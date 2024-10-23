@@ -219,44 +219,6 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     _z_link_clear(&ztm->_link);
 }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block) {
-    if (block) {
-        _z_mutex_lock(&ztm->_mutex_tx);
-        return _Z_RES_OK;
-    } else {
-        return _z_mutex_try_lock(&ztm->_mutex_tx);
-    }
-}
-
-void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_tx); }
-
-void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock(&ztm->_mutex_rx); }
-
-void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_rx); }
-
-void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock(&ztm->_mutex_peer); }
-
-void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_peer); }
-
-#else
-z_result_t _z_multicast_tx_mutex_lock(_z_transport_multicast_t *ztm, bool block) {
-    _ZP_UNUSED(ztm);
-    _ZP_UNUSED(block);
-    return _Z_RES_OK;
-}
-void _z_multicast_tx_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-
-void _z_multicast_rx_mutex_lock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-
-void _z_multicast_rx_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-
-void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-
-void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
 #else
 
 z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
@@ -294,7 +256,6 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(reason);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-    ;
 }
 
 void _z_multicast_transport_clear(_z_transport_t *zt) { _ZP_UNUSED(zt); }
