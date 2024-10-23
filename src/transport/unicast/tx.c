@@ -131,6 +131,7 @@ static z_result_t __unsafe_z_unicast_message_batch(_z_transport_unicast_t *ztu, 
 }
 
 static z_result_t __unsafe_unicast_batch_send(_z_transport_unicast_t *ztu, z_reliability_t reliability) {
+    z_result_t ret = _Z_RES_OK;
     // Get network message number
     size_t msg_nb = _z_network_message_vec_len(&ztu->_batch);
     size_t msg_idx = 0;
@@ -154,21 +155,31 @@ static z_result_t __unsafe_unicast_batch_send(_z_transport_unicast_t *ztu, z_rel
             _z_wbuf_set_wpos(&ztu->_wbuf, curr_wpos);
             // Handle case where one message is too big to fit in frame
             if (curr_msg_nb == 0) {
-                _Z_INFO("Dropping batch because one message is too big (need to be fragmented)");
-                return _Z_ERR_TRANSPORT_TX_FAILED;
+                _Z_INFO("Batch sending interrupted by a message needing to be fragmented.");
+                // Create an expandable wbuf for fragmentation
+                _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
+                // Send message as fragments
+                ret = __unsafe_z_unicast_send_fragment(ztu, &fbf, n_msg, reliability, sn);
+                // Clear the buffer as it's no longer required
+                _z_wbuf_clear(&fbf);
+                if (ret != _Z_RES_OK) {
+                    _Z_ERROR("Send fragmented message failed with err %d.", ret);
+                }
+                // Message is sent or skipped
+                msg_idx++;
             } else {  // Frame has messages but is full
                 _Z_INFO("Sending batch in multiple frames because it is too big for one");
                 // Send frame
                 __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
                 _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));
                 ztu->_transmitted = true;
-                // Reset frame
-                __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-                sn = __unsafe_z_unicast_get_sn(ztu, reliability);
-                t_msg = _z_t_msg_make_frame_header(sn, reliability);
-                _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztu->_wbuf, &t_msg));
                 curr_msg_nb = 0;
             }
+            // Reset frame
+            __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
+            sn = __unsafe_z_unicast_get_sn(ztu, reliability);
+            t_msg = _z_t_msg_make_frame_header(sn, reliability);
+            _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztu->_wbuf, &t_msg));
         } else {
             curr_wpos = _z_wbuf_get_wpos(&ztu->_wbuf);
             msg_idx++;
@@ -179,7 +190,7 @@ static z_result_t __unsafe_unicast_batch_send(_z_transport_unicast_t *ztu, z_rel
     __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
     _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));
     ztu->_transmitted = true;  // Tell session we transmitted data
-    return _Z_RES_OK;
+    return ret;
 }
 #endif
 
