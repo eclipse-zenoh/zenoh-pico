@@ -163,7 +163,6 @@ static z_result_t __unsafe_unicast_batch_send(_z_transport_unicast_t *ztu, z_rel
                 _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));
                 ztu->_transmitted = true;
                 // Reset frame
-                _z_wbuf_reset(&ztu->_wbuf);
                 __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
                 sn = __unsafe_z_unicast_get_sn(ztu, reliability);
                 t_msg = _z_t_msg_make_frame_header(sn, reliability);
@@ -242,7 +241,6 @@ z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_reliability_t reliability
     // Send batch
     ret = __unsafe_unicast_batch_send(ztu, reliability);
     // Clean up
-    _z_wbuf_reset(&ztu->_wbuf);
     _z_network_message_vec_clear(&ztu->_batch);
     _z_unicast_tx_mutex_unlock(ztu);
     return ret;
