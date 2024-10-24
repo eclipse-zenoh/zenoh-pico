@@ -55,7 +55,7 @@ static z_result_t __unsafe_z_unicast_send_fragment(_z_transport_unicast_t *ztu, 
     // Fragment message
     while (_z_wbuf_len(fbf) > 0) {
         // Get fragment sequence number
-        if (is_first == false) {
+        if (!is_first) {
             sn = __unsafe_z_unicast_get_sn(ztu, reliability);
         }
         is_first = false;

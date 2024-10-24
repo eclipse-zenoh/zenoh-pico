@@ -52,7 +52,7 @@ static z_result_t __unsafe_z_multicast_send_fragment(_z_transport_multicast_t *z
     // Fragment message
     while (_z_wbuf_len(fbf) > 0) {
         // Get fragment sequence number
-        if (is_first == false) {
+        if (!is_first) {
             sn = __unsafe_z_multicast_get_sn(ztm, reliability);
         }
         is_first = false;
