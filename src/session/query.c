@@ -35,6 +35,23 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
 
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
 
+static bool _z_pending_query_timeout(const _z_pending_query_t *foo, const _z_pending_query_t *pq) {
+    _ZP_UNUSED(foo);
+    bool result = z_clock_elapsed_ms((z_clock_t *)&pq->_start_time) >= pq->_timeout;
+    if (result) {
+        _Z_INFO("Dropping query because of timeout");
+    }
+    return result;
+}
+
+void _z_pending_query_process_timeout(_z_session_t *zn) {
+    // Lock session
+    _z_session_mutex_lock(zn);
+    // Drop all queries with timeout elapsed
+    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
+    _z_session_mutex_unlock(zn);
+}
+
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
 
@@ -259,4 +276,11 @@ void _z_flush_pending_queries(_z_session_t *zn) {
 
     _z_session_mutex_unlock(zn);
 }
+#else
+
+void _z_pending_query_process_timeout(_z_session_t *zn) {
+    _ZP_UNUSED(zn);
+    return;
+}
+
 #endif

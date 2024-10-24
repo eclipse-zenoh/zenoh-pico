@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/transport/unicast/lease.h"
 
+#include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/unicast/tx.h"
@@ -38,28 +39,6 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
-
-bool _z_pending_query_timeout(const _z_pending_query_t *foo, const _z_pending_query_t *pq) {
-    _ZP_UNUSED(foo);
-    bool result = z_clock_elapsed_ms((z_clock_t *)&pq->_start_time) >= pq->_timeout;
-    if (result) {
-        _Z_INFO("Dropping query because of timeout");
-    }
-    return result;
-}
-
-static void _z_process_query_timeout(_z_transport_unicast_t *ztu) {
-#if Z_FEATURE_QUERY == 1
-    _z_session_t *zn = _Z_RC_IN_VAL(ztu->_session);
-    _z_session_mutex_lock(zn);
-    // Drop all queries with timeout elapsed
-    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
-    _z_session_mutex_unlock(zn);
-#else
-    _ZP_UNUSED(ztu);
-    return;
-#endif
-}
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
@@ -97,7 +76,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
         // Query timeout process
-        _z_process_query_timeout(ztu);
+        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztu->_session));
 
         // Compute the target interval
         int interval;
