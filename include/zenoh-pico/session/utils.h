@@ -35,7 +35,12 @@ z_result_t _z_send_n_msg(_z_session_t *zn, _z_network_message_t *n_msg, z_reliab
                          z_congestion_control_t cong_ctrl);
 z_result_t _z_send_n_batch(_z_session_t *zn, z_reliability_t reliability, z_congestion_control_t cong_ctrl);
 
-void _zp_session_lock_mutex(_z_session_t *zn);
-void _zp_session_unlock_mutex(_z_session_t *zn);
+#if Z_FEATURE_MULTI_THREAD == 1
+static inline void _z_session_mutex_lock(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
+static inline void _z_session_mutex_unlock(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
+#else
+static inline void _z_session_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_UTILS_H */

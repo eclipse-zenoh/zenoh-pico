@@ -94,22 +94,22 @@ _z_session_queryable_rc_list_t *__unsafe_z_get_session_queryable_by_key(_z_sessi
 }
 
 _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_session_queryable_rc_t *qle = __unsafe_z_get_session_queryable_by_id(zn, id);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return qle;
 }
 
 _z_session_queryable_rc_list_t *_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
     _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return qles;
 }
@@ -119,7 +119,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
              _z_string_data(&q->_key._suffix));
     _z_session_queryable_rc_t *ret = NULL;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     ret = (_z_session_queryable_rc_t *)z_malloc(sizeof(_z_session_queryable_rc_t));
     if (ret != NULL) {
@@ -127,7 +127,7 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
         zn->_local_queryable = _z_session_queryable_rc_list_push(zn->_local_queryable, ret);
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
@@ -137,13 +137,13 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, co
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
     if (_z_keyexpr_has_suffix(&key)) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
 
         // Build the z_query
         _z_query_t q = _z_query_create(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, attachment);
@@ -159,7 +159,7 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, co
         _z_query_rc_drop(&query);
         _z_session_queryable_rc_list_free(&qles);
     } else {
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
@@ -167,20 +167,20 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, co
 }
 
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *qle) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     zn->_local_queryable =
         _z_session_queryable_rc_list_drop_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_session_queryable(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_session_queryable_rc_list_free(&zn->_local_queryable);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 #endif

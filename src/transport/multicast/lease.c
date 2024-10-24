@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/utils/logging.h"
@@ -131,14 +132,15 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
             // Check if need to send a keep alive
             if (ztm->_transmitted == false) {
                 if (_zp_multicast_send_keep_alive(ztm) < 0) {
-                    // TODO: Handle retransmission or error
+                    _Z_INFO("Send keep alive failed.");
                 }
             }
-
             // Reset the keep alive parameters
             ztm->_transmitted = false;
             next_keep_alive = (int)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
+        // Query timeout process
+        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztm->_session));
 
         // Compute the target interval to sleep
         int interval;
