@@ -121,6 +121,8 @@ typedef struct {
     _z_zint_t _id;
     _z_reply_handler_t _callback;
     _z_drop_handler_t _dropper;
+    z_clock_t _start_time;
+    uint64_t _timeout;
     void *_arg;
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;
