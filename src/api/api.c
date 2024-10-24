@@ -1438,6 +1438,25 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
 }
 #endif
 
+#if Z_FEATURE_BATCHING == 1
+z_result_t zp_batch_start(const z_loaned_session_t *zs) {
+    if (_Z_RC_IS_NULL(zs)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    return _z_transport_start_batching(&session->_tp) ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
+
+z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    if (_Z_RC_IS_NULL(zs)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    _z_transport_stop_batching(&session->_tp);
+    return _z_send_n_batch(session, Z_RELIABILITY_DEFAULT, Z_CONGESTION_CONTROL_DEFAULT);
+}
+#endif
+
 /**************** Tasks ****************/
 void zp_task_read_options_default(zp_task_read_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1

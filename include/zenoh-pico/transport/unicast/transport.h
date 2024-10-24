@@ -26,4 +26,28 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
 z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only);
 z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reason);
 void _z_unicast_transport_clear(_z_transport_t *zt);
-#endif /* ZENOH_PICO_UNICAST_TRANSPORT_H */
+
+#if Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+static inline z_result_t _z_unicast_tx_mutex_lock(_z_transport_unicast_t *ztu, bool block) {
+    if (block) {
+        _z_mutex_lock(&ztu->_mutex_tx);
+        return _Z_RES_OK;
+    } else {
+        return _z_mutex_try_lock(&ztu->_mutex_tx);
+    }
+}
+static inline void _z_unicast_tx_mutex_unlock(_z_transport_unicast_t *ztu) { _z_mutex_unlock(&ztu->_mutex_tx); }
+static inline void _z_unicast_rx_mutex_lock(_z_transport_unicast_t *ztu) { _z_mutex_lock(&ztu->_mutex_rx); }
+static inline void _z_unicast_rx_mutex_unlock(_z_transport_unicast_t *ztu) { _z_mutex_unlock(&ztu->_mutex_rx); }
+
+#else
+static inline z_result_t _z_unicast_tx_mutex_lock(_z_transport_unicast_t *ztu, bool block) {
+    _ZP_UNUSED(ztu);
+    _ZP_UNUSED(block);
+    return _Z_RES_OK;
+}
+static inline void _z_unicast_tx_mutex_unlock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
+static inline void _z_unicast_rx_mutex_lock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
+static inline void _z_unicast_rx_mutex_unlock(_z_transport_unicast_t *ztu) { _ZP_UNUSED(ztu); }
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+#endif  /* ZENOH_PICO_UNICAST_TRANSPORT_H */

@@ -21,7 +21,6 @@
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
                          z_congestion_control_t cong_ctrl) {
     z_result_t ret = _Z_RES_OK;
-    _Z_DEBUG(">> send network message");
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -32,6 +31,27 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
             ret = _z_raweth_send_n_msg(zn, z_msg, reliability, cong_ctrl);
+            break;
+        default:
+            ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+            break;
+    }
+    return ret;
+}
+
+z_result_t _z_send_n_batch(_z_session_t *zn, z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
+    z_result_t ret = _Z_RES_OK;
+    // Call transport function
+    switch (zn->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            ret = _z_unicast_send_n_batch(zn, reliability, cong_ctrl);
+            break;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            ret = _z_multicast_send_n_batch(zn, reliability, cong_ctrl);
+            break;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            _Z_INFO("Batching not yet supported on raweth transport");
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;

@@ -23,6 +23,7 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/unicast/rx.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -31,11 +32,7 @@
 z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Acquire the lock
-    _z_mutex_lock(&ztu->_mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_unicast_rx_mutex_lock(ztu);
     size_t to_read = 0;
     do {
         switch (ztu->_link._cap._flow) {
@@ -84,11 +81,7 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
             ztu->_received = true;
         }
     }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_unlock(&ztu->_mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+    _z_unicast_rx_mutex_unlock(ztu);
     return ret;
 }
 

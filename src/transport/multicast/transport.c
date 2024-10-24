@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/transport/multicast/transport.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -50,6 +52,13 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         default:
             return _Z_ERR_GENERIC;
     }
+
+// Initialize batching data
+#if Z_FEATURE_BATCHING == 1
+    ztm->_batch_state = _Z_BATCHING_IDLE;
+    ztm->_batch = _z_network_message_vec_make(0);
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
     ret = _z_mutex_init(&ztm->_mutex_tx);
@@ -197,6 +206,10 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+#if Z_FEATURE_BATCHING == 1
+    _z_network_message_vec_clear(&ztm->_batch);
+#endif
+
     // Clean up the buffers
     _z_wbuf_clear(&ztm->_wbuf);
     _z_zbuf_clear(&ztm->_zbuf);
@@ -243,7 +256,6 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(reason);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-    ;
 }
 
 void _z_multicast_transport_clear(_z_transport_t *zt) { _ZP_UNUSED(zt); }

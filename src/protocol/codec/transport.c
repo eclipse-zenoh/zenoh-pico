@@ -368,6 +368,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
                 _z_network_message_vec_append(&msg->_messages, nm);
             } else {
                 _z_n_msg_free(&nm);
+                _z_network_message_vec_clear(&msg->_messages);
 
                 _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
 

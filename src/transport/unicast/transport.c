@@ -36,14 +36,21 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     z_result_t ret = _Z_RES_OK;
 
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
+    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
+
+// Initialize batching data
+#if Z_FEATURE_BATCHING == 1
+    ztu->_batch_state = _Z_BATCHING_IDLE;
+    ztu->_batch = _z_network_message_vec_make(0);
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&zt->_transport._unicast._mutex_tx);
+    ret = _z_mutex_init(&ztu->_mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&zt->_transport._unicast._mutex_rx);
+        ret = _z_mutex_init(&ztu->_mutex_rx);
         if (ret != _Z_RES_OK) {
-            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
+            _z_mutex_drop(&ztu->_mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -55,66 +62,65 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         size_t zbuf_size = param->_batch_size;
 
         // Initialize tx rx buffers
-        zt->_transport._unicast._wbuf = _z_wbuf_make(wbuf_size, false);
-        zt->_transport._unicast._zbuf = _z_zbuf_make(zbuf_size);
+        ztu->_wbuf = _z_wbuf_make(wbuf_size, false);
+        ztu->_zbuf = _z_zbuf_make(zbuf_size);
 
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&zt->_transport._unicast._wbuf) != wbuf_size) ||
-            (_z_zbuf_capacity(&zt->_transport._unicast._zbuf) != zbuf_size)) {
+        if ((_z_wbuf_capacity(&ztu->_wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&zt->_transport._unicast._mutex_tx);
-            _z_mutex_drop(&zt->_transport._unicast._mutex_rx);
+            _z_mutex_drop(&ztu->_mutex_tx);
+            _z_mutex_drop(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-            _z_wbuf_clear(&zt->_transport._unicast._wbuf);
-            _z_zbuf_clear(&zt->_transport._unicast._zbuf);
+            _z_wbuf_clear(&ztu->_wbuf);
+            _z_zbuf_clear(&ztu->_zbuf);
         }
 
 #if Z_FEATURE_FRAGMENTATION == 1
         // Initialize the defragmentation buffers
-        zt->_transport._unicast._state_reliable = _Z_DBUF_STATE_NULL;
-        zt->_transport._unicast._state_best_effort = _Z_DBUF_STATE_NULL;
-        zt->_transport._unicast._dbuf_reliable = _z_wbuf_null();
-        zt->_transport._unicast._dbuf_best_effort = _z_wbuf_null();
+        ztu->_state_reliable = _Z_DBUF_STATE_NULL;
+        ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
+        ztu->_dbuf_reliable = _z_wbuf_null();
+        ztu->_dbuf_best_effort = _z_wbuf_null();
 #endif  // Z_FEATURE_FRAGMENTATION == 1
     }
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        zt->_transport._unicast._sn_res = _z_sn_max(param->_seq_num_res);
+        ztu->_sn_res = _z_sn_max(param->_seq_num_res);
 
         // The initial SN at TX side
-        zt->_transport._unicast._sn_tx_reliable = param->_initial_sn_tx;
-        zt->_transport._unicast._sn_tx_best_effort = param->_initial_sn_tx;
+        ztu->_sn_tx_reliable = param->_initial_sn_tx;
+        ztu->_sn_tx_best_effort = param->_initial_sn_tx;
 
         // The initial SN at RX side
-        _z_zint_t initial_sn_rx = _z_sn_decrement(zt->_transport._unicast._sn_res, param->_initial_sn_rx);
-        zt->_transport._unicast._sn_rx_reliable = initial_sn_rx;
-        zt->_transport._unicast._sn_rx_best_effort = initial_sn_rx;
+        _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_sn_res, param->_initial_sn_rx);
+        ztu->_sn_rx_reliable = initial_sn_rx;
+        ztu->_sn_rx_best_effort = initial_sn_rx;
 
 #if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
-        zt->_transport._unicast._read_task_running = false;
-        zt->_transport._unicast._read_task = NULL;
-        zt->_transport._unicast._lease_task_running = false;
-        zt->_transport._unicast._lease_task = NULL;
+        ztu->_read_task_running = false;
+        ztu->_read_task = NULL;
+        ztu->_lease_task_running = false;
+        ztu->_lease_task = NULL;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
         // Notifiers
-        zt->_transport._unicast._received = 0;
-        zt->_transport._unicast._transmitted = 0;
+        ztu->_received = 0;
+        ztu->_transmitted = 0;
 
         // Transport lease
-        zt->_transport._unicast._lease = param->_lease;
+        ztu->_lease = param->_lease;
 
         // Transport link for unicast
-        zt->_transport._unicast._link = *zl;
+        ztu->_link = *zl;
 
         // Remote peer PID
-        zt->_transport._unicast._remote_zid = param->_remote_zid;
+        ztu->_remote_zid = param->_remote_zid;
     } else {
         param->_remote_zid = _z_id_empty();
     }
@@ -256,6 +262,10 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     _z_mutex_drop(&ztu->_mutex_tx);
     _z_mutex_drop(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#if Z_FEATURE_BATCHING == 1
+    _z_network_message_vec_clear(&ztu->_batch);
+#endif
 
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_wbuf);
