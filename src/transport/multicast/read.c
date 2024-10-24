@@ -26,10 +26,13 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
+#define _Z_MULTICAST_ADDR_BUFF_SIZE 32  // Arbitrary size that must be able to contain any link address.
+
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     z_result_t ret = _Z_RES_OK;
 
-    _z_slice_t addr;
+    static uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
+    _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
     _z_transport_message_t t_msg;
     ret = _z_multicast_recv_t_msg(ztm, &t_msg, &addr);
     if (ret == _Z_RES_OK) {
@@ -60,7 +63,8 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_zbuf);
 
-    _z_slice_t addr = _z_slice_empty();
+    uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
+    _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
     while (ztm->_read_task_running == true) {
         size_t to_read = 0;
 
@@ -70,7 +74,6 @@ void *_zp_multicast_read_task(void *ztm_arg) {
                 if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, &addr);
                     if (_z_zbuf_len(&ztm->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                        _z_slice_clear(&addr);
                         _z_zbuf_compact(&ztm->_zbuf);
                         continue;
                     }
@@ -109,10 +112,8 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
                 if (ret == _Z_RES_OK) {
                     _z_t_msg_clear(&t_msg);
-                    _z_slice_clear(&addr);
                 } else {
                     _Z_ERROR("Dropping message due to processing error: %d", ret);
-                    _z_slice_clear(&addr);
                     continue;
                 }
             } else {
