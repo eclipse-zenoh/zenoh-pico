@@ -175,11 +175,11 @@ _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_key
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_resource_t *res = __unsafe_z_get_resource_by_id(zn, mapping, rid);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return res;
 }
@@ -188,20 +188,20 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keye
     if (!_z_keyexpr_has_suffix(keyexpr)) {
         return _z_get_resource_by_id(zn, _z_keyexpr_mapping_id(keyexpr), keyexpr->_id);
     }
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_resource_t *res = __unsafe_z_get_resource_by_key(zn, keyexpr);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return res;
 }
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return res;
 }
@@ -212,7 +212,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
     uint16_t mapping = register_to_mapping;
     uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     if (key._id != Z_RESOURCE_ID_NONE) {
         if (parent_mapping == mapping) {
@@ -241,7 +241,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
         }
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
@@ -249,7 +249,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
 void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, mapping);
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &zn->_remote_resources;
     while (id != 0) {
         _z_resource_list_t *parent = *parent_mut;
@@ -271,7 +271,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
             parent = *parent_mut;
         }
     }
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, const _z_resource_t *ctx) {
@@ -279,19 +279,19 @@ bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, cons
     return _z_keyexpr_mapping_id(&candidate->_key) == mapping;
 }
 void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_resource_t ctx = {._id = mapping, ._refcount = 0, ._key = {0}};
     zn->_remote_resources =
         _z_resource_list_drop_filter(zn->_remote_resources, _z_unregister_resource_for_peer_filter, &ctx);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_resources(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_resource_list_free(&zn->_local_resources);
     _z_resource_list_free(&zn->_remote_resources);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }

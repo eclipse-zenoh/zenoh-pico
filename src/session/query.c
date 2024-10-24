@@ -66,11 +66,11 @@ _z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const 
 }
 
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     return pql;
 }
 
@@ -80,7 +80,7 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_q
     _Z_DEBUG(">>> Allocating query for (%ju:%.*s)", (uintmax_t)pen_qry->_key._id,
              (int)_z_string_len(&pen_qry->_key._suffix), _z_string_data(&pen_qry->_key._suffix));
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, pen_qry->_id);
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
@@ -89,7 +89,7 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_q
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
@@ -98,7 +98,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
                                           _z_msg_put_t *msg, z_sample_kind_t kind) {
     z_result_t ret = _Z_RES_OK;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
@@ -162,7 +162,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
         }
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
@@ -183,7 +183,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
     z_result_t ret = _Z_RES_OK;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
@@ -193,7 +193,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
     // Build the reply
     _z_reply_t reply = _z_reply_err_create(msg->_payload, &msg->_encoding);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     // Trigger the user callback
     if (ret == _Z_RES_OK) {
@@ -213,7 +213,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     z_result_t ret = _Z_RES_OK;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
@@ -239,24 +239,24 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
         zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_pending_queries(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_pending_query_list_free(&zn->_pending_queries);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 #endif
