@@ -136,6 +136,7 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
+    z_sleep_ms(1);
     _Z_DEBUG("Sending Z_INIT(Syn)");
     z_result_t ret = _z_link_send_t_msg(zl, &ism);
     _z_t_msg_clear(&ism);
