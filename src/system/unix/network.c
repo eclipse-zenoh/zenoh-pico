@@ -121,12 +121,6 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
         return _Z_ERR_GENERIC;
     }
     // Set options
-    z_time_t tv;
-    tv.tv_sec = tout / (uint32_t)1000;
-    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-    if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-        ret = _Z_ERR_GENERIC;
-    }
     int value = true;
     if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) < 0)) {
         ret = _Z_ERR_GENERIC;
@@ -147,19 +141,37 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
         (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
         ret = _Z_ERR_GENERIC;
     }
-
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
     setsockopt(sock->_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
 #endif
-
+    if (ret != _Z_RES_OK) {
+        close(sock->_fd);
+        return ret;
+    }
     struct addrinfo *it = NULL;
     for (it = lep._iptcp; it != NULL; it = it->ai_next) {
-        if ((ret == _Z_RES_OK) && (bind(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
+        if (bind(sock->_fd, it->ai_addr, it->ai_addrlen) < 0) {
+            if (it->ai_next == NULL) {
+                ret = _Z_ERR_GENERIC;
+                break;
+            }
+        }
+        if (listen(sock->_fd, 1) < 0) {
+            if (it->ai_next == NULL) {
+                ret = _Z_ERR_GENERIC;
+                break;
+            }
+        }
+        struct sockaddr naddr;
+        unsigned int nlen = sizeof(naddr);
+        int con_socket = accept(sock->_fd, &naddr, &nlen);
+        if (con_socket < 0) {
             if (it->ai_next == NULL) {
                 ret = _Z_ERR_GENERIC;
                 break;
             }
         } else {
+            sock->_fd = con_socket;
             break;
         }
     }
