@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
     z_config_default(&config);
     zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, argv[1]);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, argv[1]);
 
     z_owned_session_t s2;
     assert(z_open(&s2, z_move(config), NULL) == Z_OK);
