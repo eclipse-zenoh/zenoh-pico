@@ -18,6 +18,8 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+void _z_pending_query_process_timeout(_z_session_t *zn);
+
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn);

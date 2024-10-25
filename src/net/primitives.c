@@ -469,6 +469,8 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
         pq->_arg = arg;
+        pq->_timeout = timeout_ms;
+        pq->_start_time = z_clock_now();
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {

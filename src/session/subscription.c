@@ -97,21 +97,21 @@ _z_subscription_rc_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn,
 }
 
 _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_subscription_rc_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return sub;
 }
 
 _z_subscription_rc_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, key);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return subs;
 }
@@ -121,7 +121,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
              _z_string_data(&s->_key._suffix));
     _z_subscription_rc_t *ret = NULL;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     ret = (_z_subscription_rc_t *)z_malloc(sizeof(_z_subscription_rc_t));
     if (ret != NULL) {
@@ -133,7 +133,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
         }
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
@@ -151,7 +151,7 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
                                     const _z_n_qos_t qos, const _z_bytes_t *attachment, z_reliability_t reliability) {
     z_result_t ret = _Z_RES_OK;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr->_id, (int)_z_string_len(&keyexpr->_suffix),
              _z_string_data(&keyexpr->_suffix), _z_keyexpr_mapping_id(keyexpr));
@@ -159,7 +159,7 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
     _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
     if (_z_keyexpr_has_suffix(&key)) {
         _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
 
         // Check if there is subs
         size_t sub_nb = _z_subscription_rc_list_len(subs);
@@ -180,7 +180,7 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         _z_sample_clear(&sample);
         _z_subscription_rc_list_free(&subs);
     } else {
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
     }
 
@@ -188,7 +188,7 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
 }
 
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     if (is_local == _Z_RESOURCE_IS_LOCAL) {
         zn->_local_subscriptions =
@@ -198,16 +198,16 @@ void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscript
             _z_subscription_rc_list_drop_filter(zn->_remote_subscriptions, _z_subscription_rc_eq, sub);
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_subscriptions(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     _z_subscription_rc_list_free(&zn->_local_subscriptions);
     _z_subscription_rc_list_free(&zn->_remote_subscriptions);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 

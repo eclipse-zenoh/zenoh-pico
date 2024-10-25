@@ -1076,14 +1076,7 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     z_get_options_t opt;
     z_get_options_default(&opt);
     if (options != NULL) {
-        opt.consolidation = options->consolidation;
-        opt.target = options->target;
-        opt.encoding = options->encoding;
-        opt.payload = options->payload;
-        opt.attachment = options->attachment;
-        opt.congestion_control = options->congestion_control;
-        opt.priority = options->priority;
-        opt.is_express = options->is_express;
+        opt = *options;
     }
 
     if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
@@ -1170,7 +1163,7 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     z_queryable_options_t opt;
     z_queryable_options_default(&opt);
     if (options != NULL) {
-        opt.complete = options->complete;
+        opt = *options;
     }
 
     queryable->_val =
@@ -1472,7 +1465,7 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
     zp_task_read_options_t opt;
     zp_task_read_options_default(&opt);
     if (options != NULL) {
-        opt.task_attributes = options->task_attributes;
+        opt = *options;
     }
     return _zp_start_read_task(_Z_RC_IN_VAL(zs), opt.task_attributes);
 #else
@@ -1504,7 +1497,7 @@ z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_optio
     zp_task_lease_options_t opt;
     zp_task_lease_options_default(&opt);
     if (options != NULL) {
-        opt.task_attributes = options->task_attributes;
+        opt = *options;
     }
     return _zp_start_lease_task(_Z_RC_IN_VAL(zs), opt.task_attributes);
 #else

@@ -14,6 +14,8 @@
 
 #include "zenoh-pico/transport/unicast/lease.h"
 
+#include "zenoh-pico/session/query.h"
+#include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -66,14 +68,15 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             // Check if need to send a keep alive
             if (ztu->_transmitted == false) {
                 if (_zp_unicast_send_keep_alive(ztu) < 0) {
-                    // TODO: Handle retransmission or error
+                    _Z_INFO("Send keep alive failed.");
                 }
             }
-
             // Reset the keep alive parameters
             ztu->_transmitted = false;
             next_keep_alive = (int)(ztu->_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
+        // Query timeout process
+        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztu->_session));
 
         // Compute the target interval
         int interval;
