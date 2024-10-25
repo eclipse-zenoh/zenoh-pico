@@ -223,7 +223,7 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid) {
+                                const _z_id_t *local_zid, bool is_open) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
@@ -299,10 +299,11 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid) {
+                                const _z_id_t *local_zid, bool is_open) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
+    _ZP_UNUSED(is_open);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 

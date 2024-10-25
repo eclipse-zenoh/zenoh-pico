@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
+static z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode, bool is_open) {
     z_result_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -46,7 +46,7 @@ z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode, is_open);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;
