@@ -24,11 +24,7 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-/**
- * This function is unsafe because it operates in potentially concurrent data.
- * Make sure that the tx mutex is locked before calling this function
- */
-static _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_common_t *ztc, z_reliability_t reliability) {
+static _z_zint_t _z_transport_tx_get_sn(_z_transport_common_t *ztc, z_reliability_t reliability) {
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
         sn = ztc->_sn_tx_reliable;
@@ -41,9 +37,9 @@ static _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_common_t *ztc, z_relia
 }
 
 #if Z_FEATURE_FRAGMENTATION == 1
-static z_result_t _z_multicast_send_fragment_inner(_z_transport_common_t *ztc, _z_wbuf_t *frag_buff,
-                                                   const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                                   _z_zint_t first_sn) {
+static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc, _z_wbuf_t *frag_buff,
+                                                      const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                                      _z_zint_t first_sn) {
     bool is_first = true;
     _z_zint_t sn = first_sn;
     // Encode message on temp buffer
@@ -52,7 +48,7 @@ static z_result_t _z_multicast_send_fragment_inner(_z_transport_common_t *ztc, _
     while (_z_wbuf_len(frag_buff) > 0) {
         // Get fragment sequence number
         if (!is_first) {
-            sn = __unsafe_z_multicast_get_sn(ztc, reliability);
+            sn = _z_transport_tx_get_sn(ztc, reliability);
         }
         is_first = false;
         // Serialize fragment
@@ -70,20 +66,20 @@ static z_result_t _z_multicast_send_fragment_inner(_z_transport_common_t *ztc, _
     return _Z_RES_OK;
 }
 
-static z_result_t _z_multicast_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
-                                             z_reliability_t reliability, _z_zint_t first_sn) {
+static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                                z_reliability_t reliability, _z_zint_t first_sn) {
     // Create an expandable wbuf for fragmentation
     _z_wbuf_t frag_buff = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
     // Send message as fragments
-    z_result_t ret = _z_multicast_send_fragment_inner(ztc, &frag_buff, n_msg, reliability, first_sn);
+    z_result_t ret = _z_transport_tx_send_fragment_inner(ztc, &frag_buff, n_msg, reliability, first_sn);
     // Clear the buffer as it's no longer required
     _z_wbuf_clear(&frag_buff);
     return ret;
 }
 
 #else
-static z_result_t _z_multicast_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
-                                             z_reliability_t reliability, _z_zint_t first_sn) {
+static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                                z_reliability_t reliability, _z_zint_t first_sn) {
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(fbf);
     _ZP_UNUSED(n_msg);
@@ -94,7 +90,7 @@ static z_result_t _z_multicast_send_fragment(_z_transport_common_t *ztc, const _
 }
 #endif
 
-static inline bool _z_multicast_batch_has_data(_z_transport_common_t *ztc) {
+static inline bool _z_transport_tx_batch_has_data(_z_transport_common_t *ztc) {
 #if Z_FEATURE_BATCHING == 1
     return (ztc->_batch_state == _Z_BATCHING_ACTIVE) && (ztc->_batch_count > 0);
 #else
@@ -103,7 +99,7 @@ static inline bool _z_multicast_batch_has_data(_z_transport_common_t *ztc) {
 #endif
 }
 
-static z_result_t __unsafe_z_multicast_flush_buffer(_z_transport_common_t *ztc) {
+static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc) {
     // Send network message
     __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
     _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf));
@@ -114,37 +110,37 @@ static z_result_t __unsafe_z_multicast_flush_buffer(_z_transport_common_t *ztc) 
     return _Z_RES_OK;
 }
 
-static z_result_t _z_multicast_flush_or_incr_batch(_z_transport_common_t *ztc) {
+static z_result_t _z_transport_tx_flush_or_incr_batch(_z_transport_common_t *ztc) {
 #if Z_FEATURE_BATCHING == 1
     if (ztc->_batch_state == _Z_BATCHING_ACTIVE) {
         // Increment batch count
         ztc->_batch_count++;
         return _Z_RES_OK;
     } else {
-        return __unsafe_z_multicast_flush_buffer(ztc);
+        return _z_transport_tx_flush_buffer(ztc);
     }
 #else
-    return __unsafe_z_multicast_flush_buffer(ztc);
+    return _z_transport_tx_flush_buffer(ztc);
 #endif
 }
 
-static z_result_t _z_multicast_batch_overflow(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
-                                              z_reliability_t reliability, _z_zint_t sn, size_t prev_wpos) {
+static z_result_t _z_transport_tx_batch_overflow(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                                 z_reliability_t reliability, _z_zint_t sn, size_t prev_wpos) {
 #if Z_FEATURE_BATCHING == 1
     // Remove partially encoded data
     _z_wbuf_set_wpos(&ztc->_wbuf, prev_wpos);
     // Send batch
-    _Z_RETURN_IF_ERR(__unsafe_z_multicast_flush_buffer(ztc));
+    _Z_RETURN_IF_ERR(_z_transport_tx_flush_buffer(ztc));
     // Init buffer
     __unsafe_z_prepare_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
-    sn = __unsafe_z_multicast_get_sn(ztc, reliability);
+    sn = _z_transport_tx_get_sn(ztc, reliability);
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
     _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztc->_wbuf, &t_msg));
     // Retry encode
     z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret != _Z_RES_OK) {
         // Message still doesn't fit in buffer, send as fragments
-        return _z_multicast_send_fragment(ztc, n_msg, reliability, sn);
+        return _z_transport_tx_send_fragment(ztc, n_msg, reliability, sn);
     } else {
         // Increment batch
         ztc->_batch_count++;
@@ -160,7 +156,7 @@ static z_result_t _z_multicast_batch_overflow(_z_transport_common_t *ztc, const 
 #endif
 }
 
-static size_t _z_multicast_save_wpos(_z_wbuf_t *wbuf) {
+static size_t _z_transport_tx_save_wpos(_z_wbuf_t *wbuf) {
 #if Z_FEATURE_BATCHING == 1
     return _z_wbuf_get_wpos(wbuf);
 #else
@@ -169,34 +165,34 @@ static size_t _z_multicast_save_wpos(_z_wbuf_t *wbuf) {
 #endif
 }
 
-static z_result_t __unsafe_z_multicast_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
-                                                  z_reliability_t reliability) {
+static z_result_t __unsafe_z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                                     z_reliability_t reliability) {
     // Init buffer
     _z_zint_t sn = 0;
-    bool batch_has_data = _z_multicast_batch_has_data(ztc);
+    bool batch_has_data = _z_transport_tx_batch_has_data(ztc);
     if (!batch_has_data) {
         __unsafe_z_prepare_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
-        sn = __unsafe_z_multicast_get_sn(ztc, reliability);
+        sn = _z_transport_tx_get_sn(ztc, reliability);
         _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
         _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztc->_wbuf, &t_msg));
     }
     // Try encoding the network message
-    size_t prev_wpos = _z_multicast_save_wpos(&ztc->_wbuf);
+    size_t prev_wpos = _z_transport_tx_save_wpos(&ztc->_wbuf);
     z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret == _Z_RES_OK) {
         // Flush buffer or increase batch
-        return _z_multicast_flush_or_incr_batch(ztc);
+        return _z_transport_tx_flush_or_incr_batch(ztc);
     } else if (!batch_has_data) {
         // Message doesn't fit in buffer, send as fragments
-        return _z_multicast_send_fragment(ztc, n_msg, reliability, sn);
+        return _z_transport_tx_send_fragment(ztc, n_msg, reliability, sn);
     } else {
         // Buffer is too full for message
-        return _z_multicast_batch_overflow(ztc, n_msg, reliability, sn, prev_wpos);
+        return _z_transport_tx_batch_overflow(ztc, n_msg, reliability, sn, prev_wpos);
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_multicast_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
+z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send session message");
     _z_transport_tx_mutex_lock(ztc, true);
@@ -216,8 +212,8 @@ z_result_t _z_multicast_send_t_msg(_z_transport_common_t *ztc, const _z_transpor
     return ret;
 }
 
-z_result_t _z_multicast_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                   z_congestion_control_t cong_ctrl) {
+z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                      z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send network message");
 
@@ -228,15 +224,15 @@ z_result_t _z_multicast_send_n_msg(_z_transport_common_t *ztc, const _z_network_
         return ret;
     }
     // Process message
-    ret = __unsafe_z_multicast_send_n_msg(ztc, n_msg, reliability);
+    ret = __unsafe_z_transport_tx_send_n_msg(ztc, n_msg, reliability);
     _z_transport_tx_mutex_unlock(ztc);
     return ret;
 }
 
-z_result_t _z_multicast_send_n_batch(_z_transport_common_t *ztc, z_congestion_control_t cong_ctrl) {
+z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_congestion_control_t cong_ctrl) {
 #if Z_FEATURE_BATCHING == 1
     // Check batch size
-    if (ztm->_batch_count > 0) {
+    if (ztc->_batch_count > 0) {
         // Acquire the lock and drop the message if needed
         z_result_t ret = _z_transport_tx_mutex_lock(ztc, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
         if (ret != _Z_RES_OK) {
@@ -245,7 +241,7 @@ z_result_t _z_multicast_send_n_batch(_z_transport_common_t *ztc, z_congestion_co
         }
         // Send batch
         _Z_DEBUG("Send network batch");
-        ret = __unsafe_z_multicast_flush_buffer(ztc);
+        ret = _z_transport_tx_flush_buffer(ztc);
         _z_transport_tx_mutex_unlock(ztc);
         return ret;
     }
@@ -258,14 +254,14 @@ z_result_t _z_multicast_send_n_batch(_z_transport_common_t *ztc, z_congestion_co
 }
 
 #else
-z_result_t _z_multicast_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
+z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-z_result_t _z_multicast_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                                   z_congestion_control_t cong_ctrl) {
+z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
+                                      z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);
@@ -273,7 +269,7 @@ z_result_t _z_multicast_send_n_msg(_z_transport_common_t *ztc, const _z_network_
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-z_result_t _z_multicast_send_n_batch(_z_transport_common_t *ztc, z_congestion_control_t cong_ctrl) {
+z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(cong_ctrl);
