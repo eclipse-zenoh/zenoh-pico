@@ -113,7 +113,7 @@ typedef struct {
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
     uint8_t _batch_state;
-    _z_network_message_vec_t _batch;
+    size_t _batch_count;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -143,7 +143,7 @@ typedef struct _z_transport_multicast_t {
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
     uint8_t _batch_state;
-    _z_network_message_vec_t _batch;
+    size_t _batch_count;
 #endif
 
     _z_link_t _link;

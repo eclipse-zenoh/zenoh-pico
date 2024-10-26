@@ -81,15 +81,19 @@ void _z_transport_free(_z_transport_t **zt) {
 #if Z_FEATURE_BATCHING == 1
 bool _z_transport_start_batching(_z_transport_t *zt) {
     uint8_t *batch_state = NULL;
+    size_t *batch_count = NULL;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             batch_state = &zt->_transport._unicast._batch_state;
+            batch_count = &zt->_transport._unicast._batch_count;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             batch_state = &zt->_transport._multicast._batch_state;
+            batch_count = &zt->_transport._multicast._batch_count;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
             batch_state = &zt->_transport._raweth._batch_state;
+            batch_count = &zt->_transport._multicast._batch_count;
             break;
         default:
             break;
@@ -97,6 +101,7 @@ bool _z_transport_start_batching(_z_transport_t *zt) {
     if (*batch_state == _Z_BATCHING_ACTIVE) {
         return false;
     }
+    *batch_count = 0;
     *batch_state = _Z_BATCHING_ACTIVE;
     return true;
 }

@@ -280,10 +280,8 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_reliability_t reliability, z_congestion_control_t cong_ctrl) {
+z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(zn);
-    _ZP_UNUSED(reliability);
-    _ZP_UNUSED(cong_ctrl);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

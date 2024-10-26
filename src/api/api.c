@@ -1446,7 +1446,8 @@ z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
         return _Z_ERR_SESSION_CLOSED;
     }
     _z_transport_stop_batching(&session->_tp);
-    return _z_send_n_batch(session, Z_RELIABILITY_DEFAULT, Z_CONGESTION_CONTROL_DEFAULT);
+    // Send remaining batch
+    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
 }
 #endif
 

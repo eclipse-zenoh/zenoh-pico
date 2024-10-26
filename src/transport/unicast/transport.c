@@ -41,7 +41,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztu->_batch_state = _Z_BATCHING_IDLE;
-    ztu->_batch = _z_network_message_vec_make(0);
+    ztu->_batch_count = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -335,10 +335,6 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     _z_mutex_drop(&ztu->_mutex_tx);
     _z_mutex_drop(&ztu->_mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
-
-#if Z_FEATURE_BATCHING == 1
-    _z_network_message_vec_clear(&ztu->_batch);
-#endif
 
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_wbuf);
