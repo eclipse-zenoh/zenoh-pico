@@ -19,7 +19,12 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/transport/transport.h"
 
-z_result_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, _z_string_t *locator, z_whatami_t mode, bool is_open);
+enum _z_peer_op_e {
+    _Z_PEER_OP_OPEN = 0,
+    _Z_PEER_OP_LISTEN = 1,
+};
+
+z_result_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, _z_string_t *locator, z_whatami_t mode, int peer_op);
 void _z_free_transport(_z_transport_t **zt);
 
 #endif /* INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H */

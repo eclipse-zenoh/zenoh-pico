@@ -136,7 +136,6 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
-    z_sleep_ms(1);
     _Z_DEBUG("Sending Z_INIT(Syn)");
     z_result_t ret = _z_link_send_t_msg(zl, &ism);
     _z_t_msg_clear(&ism);
@@ -298,9 +297,10 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid, bool is_open) {
+                                const _z_id_t *local_zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
-    if (is_open) {
+    if (peer_op == _Z_PEER_OP_OPEN) {
+        z_sleep_ms(1);
         ret = _z_unicast_handshake_client(param, zl, local_zid, Z_WHATAMI_PEER);
     } else {
         ret = _z_unicast_handshake_listener(param, zl, local_zid, Z_WHATAMI_PEER);
@@ -375,11 +375,11 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid, bool is_open) {
+                                const _z_id_t *local_zid, int peer_op) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
-    _ZP_UNUSED(is_open);
+    _ZP_UNUSED(peer_op);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 

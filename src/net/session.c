@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-static z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode, bool is_open) {
+static z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode, int peer_op) {
     z_result_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -46,7 +46,7 @@ static z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_wh
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode, is_open);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode, peer_op);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;
@@ -68,7 +68,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
         _Z_ERROR("A valid config is missing.");
         return _Z_ERR_GENERIC;
     }
-    bool is_open = false;
+    int peer_op = _Z_PEER_OP_LISTEN;
     _z_string_svec_t locators = _z_string_svec_make(0);
     char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
     char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
@@ -108,7 +108,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
                 return _Z_ERR_GENERIC;
             }
         } else {
-            is_open = true;
+            peer_op = _Z_PEER_OP_OPEN;
         }
         locators = _z_string_svec_make(1);
         _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
@@ -138,7 +138,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
         }
 
         if (ret == _Z_RES_OK) {
-            ret = __z_open_inner(zn, locator, mode, is_open);
+            ret = __z_open_inner(zn, locator, mode, peer_op);
             if (ret == _Z_RES_OK) {
                 break;
             }

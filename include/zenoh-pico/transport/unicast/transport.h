@@ -22,7 +22,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                   const _z_id_t *local_zid);
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid, bool is_open);
+                                const _z_id_t *local_zid, int peer_op);
 z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only);
 z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reason);
 void _z_unicast_transport_clear(_z_transport_t *zt);
