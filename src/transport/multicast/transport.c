@@ -25,7 +25,6 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"

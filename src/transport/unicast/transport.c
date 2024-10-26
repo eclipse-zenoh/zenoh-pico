@@ -25,7 +25,6 @@
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/read.h"
 #include "zenoh-pico/transport/unicast/rx.h"
-#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -310,7 +309,7 @@ z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bo
     z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-    ret = _z_unicast_send_t_msg(ztu, &cm);
+    ret = _z_transport_tx_send_t_msg(&ztu->_common, &cm);
     _z_t_msg_clear(&cm);
     return ret;
 }

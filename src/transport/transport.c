@@ -22,13 +22,11 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/raweth/rx.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/unicast/transport.h"
-#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 

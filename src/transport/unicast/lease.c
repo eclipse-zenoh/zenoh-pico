@@ -16,8 +16,8 @@
 
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/unicast/transport.h"
-#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
@@ -26,7 +26,7 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
     z_result_t ret = _Z_RES_OK;
 
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    ret = _z_unicast_send_t_msg(ztu, &t_msg);
+    ret = _z_transport_tx_send_t_msg(&ztu->_common, &t_msg);
 
     return ret;
 }
