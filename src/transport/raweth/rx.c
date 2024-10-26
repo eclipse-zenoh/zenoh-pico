@@ -78,16 +78,16 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
 
-    _z_multicast_rx_mutex_lock(ztm);
+    _z_transport_rx_mutex_lock(&ztm->_common);
     // Prepare the buffer
-    _z_zbuf_reset(&ztm->_zbuf);
+    _z_zbuf_reset(&ztm->_common._zbuf);
 
-    switch (ztm->_link._cap._flow) {
+    switch (ztm->_common._link._cap._flow) {
         // Datagram capable links
         case Z_LINK_CAP_FLOW_DATAGRAM: {
-            _z_zbuf_compact(&ztm->_zbuf);
+            _z_zbuf_compact(&ztm->_common._zbuf);
             // Read from link
-            size_t to_read = _z_raweth_link_recv_zbuf(&ztm->_link, &ztm->_zbuf, addr);
+            size_t to_read = _z_raweth_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
             if (to_read == SIZE_MAX) {
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
@@ -99,10 +99,10 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     }
     // Decode message
     if (ret == _Z_RES_OK) {
-        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_zbuf));
-        ret = _z_transport_message_decode(t_msg, &ztm->_zbuf);
+        _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
+        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
-    _z_multicast_rx_mutex_unlock(ztm);
+    _z_transport_rx_mutex_unlock(&ztm->_common);
     return ret;
 }
 
@@ -112,20 +112,20 @@ z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_mess
 
 z_result_t _z_raweth_update_rx_buff(_z_transport_multicast_t *ztm) {
     // Check if user or defragment buffer took ownership of buffer
-    if (_z_zbuf_get_ref_count(&ztm->_zbuf) != 1) {
+    if (_z_zbuf_get_ref_count(&ztm->_common._zbuf) != 1) {
         // Allocate a new buffer
         _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
         if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         // Recopy leftover bytes
-        size_t leftovers = _z_zbuf_len(&ztm->_zbuf);
+        size_t leftovers = _z_zbuf_len(&ztm->_common._zbuf);
         if (leftovers > 0) {
-            _z_zbuf_copy_bytes(&new_zbuf, &ztm->_zbuf);
+            _z_zbuf_copy_bytes(&new_zbuf, &ztm->_common._zbuf);
         }
         // Drop buffer & update
-        _z_zbuf_clear(&ztm->_zbuf);
-        ztm->_zbuf = new_zbuf;
+        _z_zbuf_clear(&ztm->_common._zbuf);
+        ztm->_common._zbuf = new_zbuf;
     }
     return _Z_RES_OK;
 }

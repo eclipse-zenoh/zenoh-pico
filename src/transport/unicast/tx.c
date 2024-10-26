@@ -35,11 +35,11 @@
 static _z_zint_t __unsafe_z_unicast_get_sn(_z_transport_unicast_t *ztu, z_reliability_t reliability) {
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
-        sn = ztu->_sn_tx_reliable;
-        ztu->_sn_tx_reliable = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_reliable);
+        sn = ztu->_common._sn_tx_reliable;
+        ztu->_common._sn_tx_reliable = _z_sn_increment(ztu->_common._sn_res, ztu->_common._sn_tx_reliable);
     } else {
-        sn = ztu->_sn_tx_best_effort;
-        ztu->_sn_tx_best_effort = _z_sn_increment(ztu->_sn_res, ztu->_sn_tx_best_effort);
+        sn = ztu->_common._sn_tx_best_effort;
+        ztu->_common._sn_tx_best_effort = _z_sn_increment(ztu->_common._sn_res, ztu->_common._sn_tx_best_effort);
     }
     return sn;
 }
@@ -60,16 +60,16 @@ static z_result_t _z_unicast_send_fragment_inner(_z_transport_unicast_t *ztu, _z
         }
         is_first = false;
         // Serialize fragment
-        __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-        z_result_t ret = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, fbf, reliability, sn);
+        __unsafe_z_prepare_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
+        z_result_t ret = __unsafe_z_serialize_zenoh_fragment(&ztu->_common._wbuf, fbf, reliability, sn);
         if (ret != _Z_RES_OK) {
             _Z_ERROR("Fragment serialization failed with err %d", ret);
             return ret;
         }
         // Send fragment
-        __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-        _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));
-        ztu->_transmitted = true;  // Tell session we transmitted data
+        __unsafe_z_finalize_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
+        _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_common._link, &ztu->_common._wbuf));
+        ztu->_common._transmitted = true;  // Tell session we transmitted data
     }
     return _Z_RES_OK;
 }
@@ -109,9 +109,9 @@ static inline bool _z_unicast_batch_has_data(_z_transport_unicast_t *ztu) {
 
 static z_result_t __unsafe_z_unicast_flush_buffer(_z_transport_unicast_t *ztu) {
     // Send network message
-    __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-    _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_link, &ztu->_wbuf));
-    ztu->_transmitted = true;  // Tell session we transmitted data
+    __unsafe_z_finalize_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
+    _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_common._link, &ztu->_common._wbuf));
+    ztu->_common._transmitted = true;  // Tell session we transmitted data
 #if Z_FEATURE_BATCHING == 1
     ztu->_batch_count = 0;
 #endif
@@ -139,15 +139,15 @@ static z_result_t __unsafe_z_unicast_send_n_msg(_z_transport_unicast_t *ztu, con
     _z_zint_t sn = 0;
     bool batch_has_data = _z_unicast_batch_has_data(ztu);
     if (!batch_has_data) {
-        __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
+        __unsafe_z_prepare_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
         // Encode frame header
         sn = __unsafe_z_unicast_get_sn(ztu, reliability);
         _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
-        _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztu->_wbuf, &t_msg));
+        _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztu->_common._wbuf, &t_msg));
     }
     // Try encoding the network message
-    size_t curr_wpos = _z_wbuf_get_wpos(&ztu->_wbuf);
-    z_result_t ret = _z_network_message_encode(&ztu->_wbuf, n_msg);
+    size_t curr_wpos = _z_wbuf_get_wpos(&ztu->_common._wbuf);
+    z_result_t ret = _z_network_message_encode(&ztu->_common._wbuf, n_msg);
     if (ret == _Z_RES_OK) {
         // Flush buffer or increase batch
         return _z_unicast_flush_or_incr_batch(ztu);
@@ -156,11 +156,11 @@ static z_result_t __unsafe_z_unicast_send_n_msg(_z_transport_unicast_t *ztu, con
         return __unsafe_z_unicast_send_fragment(ztu, n_msg, reliability, sn);
     } else {
         // Buffer is too full for message
-        _z_wbuf_set_wpos(&ztu->_wbuf, curr_wpos);  // Remove partially encoded data
+        _z_wbuf_set_wpos(&ztu->_common._wbuf, curr_wpos);  // Remove partially encoded data
         // Send batch
         _Z_RETURN_IF_ERR(__unsafe_z_unicast_flush_buffer(ztu));
         // Retry encode
-        ret = _z_network_message_encode(&ztu->_wbuf, n_msg);
+        ret = _z_network_message_encode(&ztu->_common._wbuf, n_msg);
         if (ret != _Z_RES_OK) {
             // Message still doesn't fit in buffer, send as fragments
             return __unsafe_z_unicast_send_fragment(ztu, n_msg, reliability, sn);
@@ -176,20 +176,20 @@ static z_result_t __unsafe_z_unicast_send_n_msg(_z_transport_unicast_t *ztu, con
 z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send session message");
-    _z_unicast_tx_mutex_lock(ztu, true);
+    _z_transport_tx_mutex_lock(&ztu->_common, true);
 
     // Encode transport message
-    __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-    ret = _z_transport_message_encode(&ztu->_wbuf, t_msg);
+    __unsafe_z_prepare_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
+    ret = _z_transport_message_encode(&ztu->_common._wbuf, t_msg);
     if (ret == _Z_RES_OK) {
         // Send message
-        __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
-        ret = _z_link_send_wbuf(&ztu->_link, &ztu->_wbuf);
+        __unsafe_z_finalize_wbuf(&ztu->_common._wbuf, ztu->_common._link._cap._flow);
+        ret = _z_link_send_wbuf(&ztu->_common._link, &ztu->_common._wbuf);
         if (ret == _Z_RES_OK) {
-            ztu->_transmitted = true;  // Tell session we transmitted data
+            ztu->_common._transmitted = true;  // Tell session we transmitted data
         }
     }
-    _z_unicast_tx_mutex_unlock(ztu);
+    _z_transport_tx_mutex_unlock(&ztu->_common);
     return ret;
 }
 
@@ -200,14 +200,14 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
     _z_transport_unicast_t *ztu = &zn->_tp._transport._unicast;
 
     // Acquire the lock and drop the message if needed
-    ret = _z_unicast_tx_mutex_lock(ztu, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_transport_tx_mutex_lock(&ztu->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
     if (ret != _Z_RES_OK) {
         _Z_INFO("Dropping zenoh message because of congestion control");
         return ret;
     }
     // Process message
     ret = __unsafe_z_unicast_send_n_msg(ztu, n_msg, reliability);
-    _z_unicast_tx_mutex_unlock(ztu);
+    _z_transport_tx_mutex_unlock(&ztu->_common);
     return ret;
 }
 
@@ -217,7 +217,7 @@ z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_congestion_control_t cong
     // Check batch size
     if (ztu->_batch_count > 0) {
         // Acquire the lock and drop the message if needed
-        z_result_t ret = _z_unicast_tx_mutex_lock(ztu, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
+        z_result_t ret = _z_transport_tx_mutex_lock(&ztu->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
         if (ret != _Z_RES_OK) {
             _Z_INFO("Dropping zenoh batch because of congestion control");
             return ret;
@@ -225,7 +225,7 @@ z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_congestion_control_t cong
         // Send batch
         _Z_DEBUG("Send network batch");
         ret = __unsafe_z_unicast_flush_buffer(ztu);
-        _z_unicast_tx_mutex_unlock(ztu);
+        _z_transport_tx_mutex_unlock(&ztu->_common);
         return ret;
     }
     return _Z_RES_OK;

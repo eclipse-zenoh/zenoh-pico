@@ -80,13 +80,13 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     // Note session in transport
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._session = zsrc;
+            zn->_tp._transport._unicast._common._session = zsrc;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._session = zsrc;
+            zn->_tp._transport._multicast._common._session = zsrc;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._session = zsrc;
+            zn->_tp._transport._raweth._common._session = zsrc;
             break;
         default:
             break;

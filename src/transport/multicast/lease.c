@@ -27,10 +27,10 @@
 z_result_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_conduit_sn_list_t next_sn;
     next_sn._is_qos = false;
-    next_sn._val._plain._best_effort = ztm->_sn_tx_best_effort;
-    next_sn._val._plain._reliable = ztm->_sn_tx_reliable;
+    next_sn._val._plain._best_effort = ztm->_common._sn_tx_best_effort;
+    next_sn._val._plain._reliable = ztm->_common._sn_tx_reliable;
 
-    _z_id_t zid = _Z_RC_IN_VAL(ztm->_session)->_local_zid;
+    _z_id_t zid = _Z_RC_IN_VAL(ztm->_common._session)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     return ztm->_send_f(ztm, &jsm);
@@ -91,15 +91,15 @@ static _z_zint_t _z_get_next_lease(_z_transport_peer_entry_list_t *peers) {
 
 void *_zp_multicast_lease_task(void *ztm_arg) {
     _z_transport_multicast_t *ztm = (_z_transport_multicast_t *)ztm_arg;
-    ztm->_transmitted = false;
+    ztm->_common._transmitted = false;
 
     // From all peers, get the next lease time (minimum)
-    int next_lease = (int)_z_get_minimum_lease(ztm->_peers, ztm->_lease);
+    int next_lease = (int)_z_get_minimum_lease(ztm->_peers, ztm->_common._lease);
     int next_keep_alive = (int)(next_lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
     int next_join = Z_JOIN_INTERVAL;
 
     _z_transport_peer_entry_list_t *it = NULL;
-    while (ztm->_lease_task_running == true) {
+    while (ztm->_common._lease_task_running == true) {
         _z_mutex_lock(&ztm->_mutex_peer);
 
         if (next_lease <= 0) {
@@ -122,7 +122,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         if (next_join <= 0) {
             _zp_multicast_send_join(ztm);
-            ztm->_transmitted = true;
+            ztm->_common._transmitted = true;
 
             // Reset the join parameters
             next_join = Z_JOIN_INTERVAL;
@@ -130,17 +130,18 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         if (next_keep_alive <= 0) {
             // Check if need to send a keep alive
-            if (ztm->_transmitted == false) {
+            if (ztm->_common._transmitted == false) {
                 if (_zp_multicast_send_keep_alive(ztm) < 0) {
                     _Z_INFO("Send keep alive failed.");
                 }
             }
             // Reset the keep alive parameters
-            ztm->_transmitted = false;
-            next_keep_alive = (int)(_z_get_minimum_lease(ztm->_peers, ztm->_lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
+            ztm->_common._transmitted = false;
+            next_keep_alive =
+                (int)(_z_get_minimum_lease(ztm->_peers, ztm->_common._lease) / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
         }
         // Query timeout process
-        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztm->_session));
+        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztm->_common._session));
 
         // Compute the target interval to sleep
         int interval;
@@ -191,19 +192,19 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 z_result_t _zp_multicast_start_lease_task(_z_transport_multicast_t *ztm, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
-    ztm->_lease_task_running = true;  // Init before z_task_init for concurrency issue
+    ztm->_common._lease_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
     if (_z_task_init(task, attr, _zp_multicast_lease_task, ztm) != _Z_RES_OK) {
-        ztm->_lease_task_running = false;
+        ztm->_common._lease_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
-    ztm->_lease_task = task;
+    ztm->_common._lease_task = task;
     return _Z_RES_OK;
 }
 
 z_result_t _zp_multicast_stop_lease_task(_z_transport_multicast_t *ztm) {
-    ztm->_lease_task_running = false;
+    ztm->_common._lease_task_running = false;
     return _Z_RES_OK;
 }
 #else

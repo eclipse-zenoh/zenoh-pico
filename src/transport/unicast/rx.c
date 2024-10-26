@@ -32,28 +32,29 @@
 z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
-    _z_unicast_rx_mutex_lock(ztu);
+    _z_transport_rx_mutex_lock(&ztu->_common);
     size_t to_read = 0;
     do {
-        switch (ztu->_link._cap._flow) {
+        switch (ztu->_common._link._cap._flow) {
             // Stream capable links
             case Z_LINK_CAP_FLOW_STREAM:
-                if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
-                    if (_z_zbuf_len(&ztu->_zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                        _z_zbuf_compact(&ztu->_zbuf);
+                if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                    _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                        _z_zbuf_compact(&ztu->_common._zbuf);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         continue;
                     }
                 }
                 // Get stream size
-                to_read = _z_read_stream_size(&ztu->_zbuf);
+                to_read = _z_read_stream_size(&ztu->_common._zbuf);
                 // Read data
-                if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                    _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
-                    if (_z_zbuf_len(&ztu->_zbuf) < to_read) {
-                        _z_zbuf_set_rpos(&ztu->_zbuf, _z_zbuf_get_rpos(&ztu->_zbuf) - _Z_MSG_LEN_ENC_SIZE);
-                        _z_zbuf_compact(&ztu->_zbuf);
+                if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
+                    _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
+                    if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
+                        _z_zbuf_set_rpos(&ztu->_common._zbuf,
+                                         _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
+                        _z_zbuf_compact(&ztu->_common._zbuf);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         continue;
                     }
@@ -61,8 +62,8 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
                 break;
             // Datagram capable links
             case Z_LINK_CAP_FLOW_DATAGRAM:
-                _z_zbuf_compact(&ztu->_zbuf);
-                to_read = _z_link_recv_zbuf(&ztu->_link, &ztu->_zbuf, NULL);
+                _z_zbuf_compact(&ztu->_common._zbuf);
+                to_read = _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
                 if (to_read == SIZE_MAX) {
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
@@ -74,14 +75,14 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode");
-        ret = _z_transport_message_decode(t_msg, &ztu->_zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztu->_common._zbuf);
 
         // Mark the session that we have received data
         if (ret == _Z_RES_OK) {
             ztu->_received = true;
         }
     }
-    _z_unicast_rx_mutex_unlock(ztu);
+    _z_transport_rx_mutex_unlock(&ztu->_common);
     return ret;
 }
 
@@ -99,7 +100,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
-                if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
+                if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_reliable = t_msg->_body._frame._sn;
                 } else {
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -110,7 +111,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     break;
                 }
             } else {
-                if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) == true) {
+                if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -127,7 +128,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             for (size_t i = 0; i < len; i++) {
                 _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
                 zm->_reliability = _z_t_msg_get_reliability(t_msg);
-                _z_handle_network_message(ztu->_session, zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+                _z_handle_network_message(ztu->_common._session, zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
             }
 
             break;
@@ -190,7 +191,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 ret = _z_network_message_decode(&zm, &zbf);
                 zm._reliability = _z_t_msg_get_reliability(t_msg);
                 if (ret == _Z_RES_OK) {
-                    _z_handle_network_message(ztu->_session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+                    _z_handle_network_message(ztu->_common._session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
                 } else {
                     _Z_INFO("Failed to decode defragmented message");
                     ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -239,21 +240,21 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
 z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu) {
     // Check if user or defragment buffer took ownership of buffer
-    if (_z_zbuf_get_ref_count(&ztu->_zbuf) != 1) {
+    if (_z_zbuf_get_ref_count(&ztu->_common._zbuf) != 1) {
         // Allocate a new buffer
-        size_t buff_capacity = _z_zbuf_capacity(&ztu->_zbuf);
+        size_t buff_capacity = _z_zbuf_capacity(&ztu->_common._zbuf);
         _z_zbuf_t new_zbuf = _z_zbuf_make(buff_capacity);
         if (_z_zbuf_capacity(&new_zbuf) != buff_capacity) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         // Recopy leftover bytes
-        size_t leftovers = _z_zbuf_len(&ztu->_zbuf);
+        size_t leftovers = _z_zbuf_len(&ztu->_common._zbuf);
         if (leftovers > 0) {
-            _z_zbuf_copy_bytes(&new_zbuf, &ztu->_zbuf);
+            _z_zbuf_copy_bytes(&new_zbuf, &ztu->_common._zbuf);
         }
         // Drop buffer & update
-        _z_zbuf_clear(&ztu->_zbuf);
-        ztu->_zbuf = new_zbuf;
+        _z_zbuf_clear(&ztu->_common._zbuf);
+        ztu->_common._zbuf = new_zbuf;
     }
     return _Z_RES_OK;
 }

@@ -994,7 +994,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     // Clean-up
     _z_encoding_clear(&encoding);
     z_bytes_drop(opt.attachment);
-    // z_bytes_drop(payload);
+    z_bytes_drop(payload);
     return ret;
 }
 
