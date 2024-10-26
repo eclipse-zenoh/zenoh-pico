@@ -40,8 +40,8 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
-    ztu->_batch_state = _Z_BATCHING_IDLE;
-    ztu->_batch_count = 0;
+    ztu->_common._batch_state = _Z_BATCHING_IDLE;
+    ztu->_common._batch_count = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1

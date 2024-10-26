@@ -100,7 +100,7 @@ static z_result_t __unsafe_z_unicast_send_fragment(_z_transport_unicast_t *ztu, 
 
 static inline bool _z_unicast_batch_has_data(_z_transport_unicast_t *ztu) {
 #if Z_FEATURE_BATCHING == 1
-    return (ztu->_batch_state == _Z_BATCHING_ACTIVE) && (ztu->_batch_count > 0);
+    return (ztu->_common._batch_state == _Z_BATCHING_ACTIVE) && (ztu->_common._batch_count > 0);
 #else
     _ZP_UNUSED(ztu);
     return false;
@@ -113,16 +113,16 @@ static z_result_t __unsafe_z_unicast_flush_buffer(_z_transport_unicast_t *ztu) {
     _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztu->_common._link, &ztu->_common._wbuf));
     ztu->_common._transmitted = true;  // Tell session we transmitted data
 #if Z_FEATURE_BATCHING == 1
-    ztu->_batch_count = 0;
+    ztu->_common._batch_count = 0;
 #endif
     return _Z_RES_OK;
 }
 
 static z_result_t _z_unicast_flush_or_incr_batch(_z_transport_unicast_t *ztu) {
 #if Z_FEATURE_BATCHING == 1
-    if (ztu->_batch_state == _Z_BATCHING_ACTIVE) {
+    if (ztu->_common._batch_state == _Z_BATCHING_ACTIVE) {
         // Increment batch count
-        ztu->_batch_count++;
+        ztu->_common._batch_count++;
         return _Z_RES_OK;
     } else {
         return __unsafe_z_unicast_flush_buffer(ztu);
@@ -167,7 +167,7 @@ static z_result_t __unsafe_z_unicast_send_n_msg(_z_transport_unicast_t *ztu, con
         }
         // Increment batch
 #if Z_FEATURE_BATCHING == 1
-        ztu->_batch_count++;
+        ztu->_common._batch_count++;
 #endif
     }
     return _Z_RES_OK;
@@ -215,7 +215,7 @@ z_result_t _z_unicast_send_n_batch(_z_session_t *zn, z_congestion_control_t cong
 #if Z_FEATURE_BATCHING == 1
     _z_transport_unicast_t *ztu = &zn->_tp._transport._unicast;
     // Check batch size
-    if (ztu->_batch_count > 0) {
+    if (ztu->_common._batch_count > 0) {
         // Acquire the lock and drop the message if needed
         z_result_t ret = _z_transport_tx_mutex_lock(&ztu->_common, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
         if (ret != _Z_RES_OK) {

@@ -69,11 +69,6 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
-// Forward declaration to be used in _zp_f_send_tmsg*
-typedef struct _z_transport_multicast_t _z_transport_multicast_t;
-// Send function prototype
-typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
-
 typedef struct {
     _z_session_rc_ref_t *_session;
     _z_link_t _link;
@@ -102,6 +97,9 @@ typedef struct {
     size_t _batch_count;
 #endif
 } _z_transport_common_t;
+
+// Send function prototype
+typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_transport_message_t *t_msg);
 
 typedef struct {
     _z_transport_common_t _common;

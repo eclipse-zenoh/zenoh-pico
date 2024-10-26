@@ -55,8 +55,8 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
-    ztm->_batch_state = _Z_BATCHING_IDLE;
-    ztm->_batch_count = 0;
+    ztm->_common._batch_state = _Z_BATCHING_IDLE;
+    ztm->_common._batch_count = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -180,7 +180,7 @@ z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason
     z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-    ret = ztm->_send_f(ztm, &cm);
+    ret = ztm->_send_f(&ztm->_common, &cm);
     _z_t_msg_clear(&cm);
     return ret;
 }

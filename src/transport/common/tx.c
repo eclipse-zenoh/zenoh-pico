@@ -77,10 +77,10 @@ z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg
             ret = _z_unicast_send_t_msg(&zt->_transport._unicast, t_msg);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _z_multicast_send_t_msg(&zt->_transport._multicast, t_msg);
+            ret = _z_multicast_send_t_msg(&zt->_transport._multicast._common, t_msg);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            ret = _z_raweth_send_t_msg(&zt->_transport._raweth, t_msg);
+            ret = _z_raweth_send_t_msg(&zt->_transport._raweth._common, t_msg);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;

@@ -33,12 +33,12 @@ z_result_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     _z_id_t zid = _Z_RC_IN_VAL(ztm->_common._session)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
-    return ztm->_send_f(ztm, &jsm);
+    return ztm->_send_f(&ztm->_common, &jsm);
 }
 
 z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
-    return ztm->_send_f(ztm, &t_msg);
+    return ztm->_send_f(&ztm->_common, &t_msg);
 }
 
 #else

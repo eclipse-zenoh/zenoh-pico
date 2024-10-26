@@ -27,7 +27,7 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             ret = _z_unicast_send_n_msg(zn, z_msg, reliability, cong_ctrl);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _z_multicast_send_n_msg(zn, z_msg, reliability, cong_ctrl);
+            ret = _z_multicast_send_n_msg(&zn->_tp._transport._multicast._common, z_msg, reliability, cong_ctrl);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
             ret = _z_raweth_send_n_msg(zn, z_msg, reliability, cong_ctrl);
@@ -47,7 +47,7 @@ z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
             ret = _z_unicast_send_n_batch(zn, cong_ctrl);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _z_multicast_send_n_batch(zn, cong_ctrl);
+            ret = _z_multicast_send_n_batch(&zn->_tp._transport._multicast._common, cong_ctrl);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
             _Z_INFO("Batching not yet supported on raweth transport");
