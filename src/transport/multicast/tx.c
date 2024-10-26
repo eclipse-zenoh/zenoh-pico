@@ -189,7 +189,6 @@ static z_result_t __unsafe_z_transport_tx_send_n_msg(_z_transport_common_t *ztc,
         // Buffer is too full for message
         return _z_transport_tx_batch_overflow(ztc, n_msg, reliability, sn, prev_wpos);
     }
-    return _Z_RES_OK;
 }
 
 z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
