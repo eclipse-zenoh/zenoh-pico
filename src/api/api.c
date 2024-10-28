@@ -39,6 +39,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/utils/endianness.h"
@@ -1440,13 +1441,14 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs) {
     return _z_transport_start_batching(&session->_tp) ? _Z_RES_OK : _Z_ERR_GENERIC;
 }
 
-z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
+z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
     if (_Z_RC_IS_NULL(zs)) {
         return _Z_ERR_SESSION_CLOSED;
     }
     _z_transport_stop_batching(&session->_tp);
-    return _z_send_n_batch(session, Z_RELIABILITY_DEFAULT, Z_CONGESTION_CONTROL_DEFAULT);
+    // Send remaining batch
+    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
 }
 #endif
 

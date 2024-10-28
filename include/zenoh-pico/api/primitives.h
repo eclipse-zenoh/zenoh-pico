@@ -2060,7 +2060,7 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subs
 /**
  * Activate the batching mechanism.
  * Any message that would have been sent on the network by a subsequent api call (e.g z_put, z_get)
- * will be instead stored until the batch is flushed with :c:func:`zp_batch_flush`.
+ * will be instead stored until the batch is full or batching is stopped with :c:func:`zp_batch_stop`.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` that will start batching messages.
@@ -2071,7 +2071,7 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subs
 z_result_t zp_batch_start(const z_loaned_session_t *zs);
 
 /**
- * Deactivate the batching mechanism and flush the messages that were stored.
+ * Deactivate the batching mechanism and flush the remaining messages.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` that will stop batching messages.
@@ -2079,7 +2079,7 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs);
  * Return:
  *   ``0`` if batching stopped and batch successfully sent, ``negative value`` otherwise.
  */
-z_result_t zp_batch_flush(const z_loaned_session_t *zs);
+z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 #endif
 
 /************* Multi Thread Tasks helpers **************/

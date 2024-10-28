@@ -25,7 +25,6 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/raweth/tx.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
@@ -42,7 +41,7 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         case Z_LINK_CAP_TRANSPORT_MULTICAST:
             zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
             ztm = &zt->_transport._multicast;
-            ztm->_send_f = _z_multicast_send_t_msg;
+            ztm->_send_f = _z_transport_tx_send_t_msg;
             break;
         case Z_LINK_CAP_TRANSPORT_RAWETH:
             zt->_type = _Z_TRANSPORT_RAWETH_TYPE;
@@ -55,23 +54,23 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
-    ztm->_batch_state = _Z_BATCHING_IDLE;
-    ztm->_batch = _z_network_message_vec_make(0);
+    ztm->_common._batch_state = _Z_BATCHING_IDLE;
+    ztm->_common._batch_count = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&ztm->_mutex_tx);
+    ret = _z_mutex_init(&ztm->_common._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztm->_mutex_rx);
+        ret = _z_mutex_init(&ztm->_common._mutex_rx);
         if (ret == _Z_RES_OK) {
             ret = _z_mutex_init(&ztm->_mutex_peer);
             if (ret != _Z_RES_OK) {
-                _z_mutex_drop(&ztm->_mutex_tx);
-                _z_mutex_drop(&ztm->_mutex_rx);
+                _z_mutex_drop(&ztm->_common._mutex_tx);
+                _z_mutex_drop(&ztm->_common._mutex_rx);
             }
         } else {
-            _z_mutex_drop(&ztm->_mutex_tx);
+            _z_mutex_drop(&ztm->_common._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -79,51 +78,52 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     // Initialize the read and write buffers
     if (ret == _Z_RES_OK) {
         uint16_t mtu = (zl->_mtu < Z_BATCH_MULTICAST_SIZE) ? zl->_mtu : Z_BATCH_MULTICAST_SIZE;
-        ztm->_wbuf = _z_wbuf_make(mtu, false);
-        ztm->_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
+        ztm->_common._wbuf = _z_wbuf_make(mtu, false);
+        ztm->_common._zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
 
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztm->_wbuf) != mtu) || (_z_zbuf_capacity(&ztm->_zbuf) != Z_BATCH_MULTICAST_SIZE)) {
+        if ((_z_wbuf_capacity(&ztm->_common._wbuf) != mtu) ||
+            (_z_zbuf_capacity(&ztm->_common._zbuf) != Z_BATCH_MULTICAST_SIZE)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&ztm->_mutex_tx);
-            _z_mutex_drop(&ztm->_mutex_rx);
+            _z_mutex_drop(&ztm->_common._mutex_tx);
+            _z_mutex_drop(&ztm->_common._mutex_rx);
             _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-            _z_wbuf_clear(&ztm->_wbuf);
-            _z_zbuf_clear(&ztm->_zbuf);
+            _z_wbuf_clear(&ztm->_common._wbuf);
+            _z_zbuf_clear(&ztm->_common._zbuf);
         }
     }
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        ztm->_sn_res = _z_sn_max(param->_seq_num_res);
+        ztm->_common._sn_res = _z_sn_max(param->_seq_num_res);
 
         // The initial SN at TX side
-        ztm->_sn_tx_reliable = param->_initial_sn_tx._val._plain._reliable;
-        ztm->_sn_tx_best_effort = param->_initial_sn_tx._val._plain._best_effort;
+        ztm->_common._sn_tx_reliable = param->_initial_sn_tx._val._plain._reliable;
+        ztm->_common._sn_tx_best_effort = param->_initial_sn_tx._val._plain._best_effort;
 
         // Initialize peer list
         ztm->_peers = _z_transport_peer_entry_list_new();
 
 #if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
-        ztm->_read_task_running = false;
-        ztm->_read_task = NULL;
-        ztm->_lease_task_running = false;
-        ztm->_lease_task = NULL;
+        ztm->_common._read_task_running = false;
+        ztm->_common._read_task = NULL;
+        ztm->_common._lease_task_running = false;
+        ztm->_common._lease_task = NULL;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-        ztm->_lease = Z_TRANSPORT_LEASE;
+        ztm->_common._lease = Z_TRANSPORT_LEASE;
 
         // Notifiers
-        ztm->_transmitted = false;
+        ztm->_common._transmitted = false;
 
         // Transport link for multicast
-        ztm->_link = *zl;
+        ztm->_common._link = *zl;
     }
     return ret;
 }
@@ -179,7 +179,7 @@ z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason
     z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-    ret = ztm->_send_f(ztm, &cm);
+    ret = ztm->_send_f(&ztm->_common, &cm);
     _z_t_msg_clear(&cm);
     return ret;
 }
@@ -192,31 +192,27 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     _z_transport_multicast_t *ztm = &zt->_transport._multicast;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
-    if (ztm->_read_task != NULL) {
-        _z_task_join(ztm->_read_task);
-        _z_task_free(&ztm->_read_task);
+    if (ztm->_common._read_task != NULL) {
+        _z_task_join(ztm->_common._read_task);
+        _z_task_free(&ztm->_common._read_task);
     }
-    if (ztm->_lease_task != NULL) {
-        _z_task_join(ztm->_lease_task);
-        _z_task_free(&ztm->_lease_task);
+    if (ztm->_common._lease_task != NULL) {
+        _z_task_join(ztm->_common._lease_task);
+        _z_task_free(&ztm->_common._lease_task);
     }
     // Clean up the mutexes
-    _z_mutex_drop(&ztm->_mutex_tx);
-    _z_mutex_drop(&ztm->_mutex_rx);
+    _z_mutex_drop(&ztm->_common._mutex_tx);
+    _z_mutex_drop(&ztm->_common._mutex_rx);
     _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-#if Z_FEATURE_BATCHING == 1
-    _z_network_message_vec_clear(&ztm->_batch);
-#endif
-
     // Clean up the buffers
-    _z_wbuf_clear(&ztm->_wbuf);
-    _z_zbuf_clear(&ztm->_zbuf);
+    _z_wbuf_clear(&ztm->_common._wbuf);
+    _z_zbuf_clear(&ztm->_common._zbuf);
 
     // Clean up peer list
     _z_transport_peer_entry_list_free(&ztm->_peers);
-    _z_link_clear(&ztm->_link);
+    _z_link_clear(&ztm->_common._link);
 }
 
 #else

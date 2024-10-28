@@ -27,6 +27,8 @@
 
 #define _Z_ID_LEN (16)
 
+const _z_id_t empty_id = {0};
+
 uint8_t _z_id_len(_z_id_t id) {
     uint8_t len = _Z_ID_LEN;
     while (len > 0) {
@@ -37,33 +39,6 @@ uint8_t _z_id_len(_z_id_t id) {
         }
     }
     return len;
-}
-bool _z_id_check(_z_id_t id) {
-    bool ret = false;
-    for (int i = 0; !ret && i < _Z_ID_LEN; i++) {
-        ret |= id.id[i] != 0;
-    }
-    return ret;
-}
-_z_id_t _z_id_empty(void) {
-    return (_z_id_t){.id = {
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                     }};
 }
 
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {

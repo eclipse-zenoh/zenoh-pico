@@ -59,7 +59,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
     _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
 
     // Task loop
-    while (ztm->_read_task_running == true) {
+    while (ztm->_common._read_task_running == true) {
         // Read message from link
         z_result_t ret = _z_raweth_recv_t_msg(ztm, &t_msg, &addr);
         switch (ret) {
@@ -74,7 +74,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
             default:
                 // Drop message & stop task
                 _Z_ERROR("Connection closed due to malformed message: %d", ret);
-                ztm->_read_task_running = false;
+                ztm->_common._read_task_running = false;
                 _z_slice_clear(&addr);
                 continue;
                 break;
@@ -83,7 +83,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
         ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
         if (ret != _Z_RES_OK) {
             _Z_ERROR("Connection closed due to message processing error: %d", ret);
-            ztm->_read_task_running = false;
+            ztm->_common._read_task_running = false;
             _z_slice_clear(&addr);
             continue;
         }
@@ -91,7 +91,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
         _z_slice_clear(&addr);
         if (_z_raweth_update_rx_buff(ztm) != _Z_RES_OK) {
             _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-            ztm->_read_task_running = false;
+            ztm->_common._read_task_running = false;
         }
     }
     return NULL;
@@ -100,19 +100,19 @@ void *_zp_raweth_read_task(void *ztm_arg) {
 z_result_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
-    zt->_transport._unicast._lease_task_running = true;  // Init before z_task_init for concurrency issue
+    zt->_transport._unicast._common._lease_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
     if (_z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
-        zt->_transport._unicast._lease_task_running = false;
+        zt->_transport._unicast._common._lease_task_running = false;
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Attach task
-    zt->_transport._raweth._read_task = task;
+    zt->_transport._raweth._common._read_task = task;
     return _Z_RES_OK;
 }
 
 z_result_t _zp_raweth_stop_read_task(_z_transport_t *zt) {
-    zt->_transport._raweth._read_task_running = false;
+    zt->_transport._raweth._common._read_task_running = false;
     return _Z_RES_OK;
 }
 #else

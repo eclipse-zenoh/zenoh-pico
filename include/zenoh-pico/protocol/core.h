@@ -54,9 +54,10 @@ typedef size_t _z_zint_t;
 typedef struct {
     uint8_t id[16];
 } _z_id_t;
+extern const _z_id_t empty_id;
 uint8_t _z_id_len(_z_id_t id);
-bool _z_id_check(_z_id_t id);
-_z_id_t _z_id_empty(void);
+static inline bool _z_id_check(_z_id_t id) { return memcmp(&id, &empty_id, sizeof(id)) != 0; }
+static inline _z_id_t _z_id_empty(void) { return (_z_id_t){0}; }
 
 /**
  * A zenoh timestamp.

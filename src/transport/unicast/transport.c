@@ -25,7 +25,6 @@
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/read.h"
 #include "zenoh-pico/transport/unicast/rx.h"
-#include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -40,17 +39,17 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
-    ztu->_batch_state = _Z_BATCHING_IDLE;
-    ztu->_batch = _z_network_message_vec_make(0);
+    ztu->_common._batch_state = _Z_BATCHING_IDLE;
+    ztu->_common._batch_count = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&ztu->_mutex_tx);
+    ret = _z_mutex_init(&ztu->_common._mutex_tx);
     if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztu->_mutex_rx);
+        ret = _z_mutex_init(&ztu->_common._mutex_rx);
         if (ret != _Z_RES_OK) {
-            _z_mutex_drop(&ztu->_mutex_tx);
+            _z_mutex_drop(&ztu->_common._mutex_tx);
         }
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -62,21 +61,22 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         size_t zbuf_size = param->_batch_size;
 
         // Initialize tx rx buffers
-        ztu->_wbuf = _z_wbuf_make(wbuf_size, false);
-        ztu->_zbuf = _z_zbuf_make(zbuf_size);
+        ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
+        ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
 
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztu->_wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_zbuf) != zbuf_size)) {
+        if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
+            (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&ztu->_mutex_tx);
-            _z_mutex_drop(&ztu->_mutex_rx);
+            _z_mutex_drop(&ztu->_common._mutex_tx);
+            _z_mutex_drop(&ztu->_common._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-            _z_wbuf_clear(&ztu->_wbuf);
-            _z_zbuf_clear(&ztu->_zbuf);
+            _z_wbuf_clear(&ztu->_common._wbuf);
+            _z_zbuf_clear(&ztu->_common._zbuf);
         }
 
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -90,34 +90,34 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
     if (ret == _Z_RES_OK) {
         // Set default SN resolution
-        ztu->_sn_res = _z_sn_max(param->_seq_num_res);
+        ztu->_common._sn_res = _z_sn_max(param->_seq_num_res);
 
         // The initial SN at TX side
-        ztu->_sn_tx_reliable = param->_initial_sn_tx;
-        ztu->_sn_tx_best_effort = param->_initial_sn_tx;
+        ztu->_common._sn_tx_reliable = param->_initial_sn_tx;
+        ztu->_common._sn_tx_best_effort = param->_initial_sn_tx;
 
         // The initial SN at RX side
-        _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_sn_res, param->_initial_sn_rx);
+        _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_common._sn_res, param->_initial_sn_rx);
         ztu->_sn_rx_reliable = initial_sn_rx;
         ztu->_sn_rx_best_effort = initial_sn_rx;
 
 #if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
-        ztu->_read_task_running = false;
-        ztu->_read_task = NULL;
-        ztu->_lease_task_running = false;
-        ztu->_lease_task = NULL;
+        ztu->_common._read_task_running = false;
+        ztu->_common._read_task = NULL;
+        ztu->_common._lease_task_running = false;
+        ztu->_common._lease_task = NULL;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
         // Notifiers
         ztu->_received = 0;
-        ztu->_transmitted = 0;
+        ztu->_common._transmitted = 0;
 
         // Transport lease
-        ztu->_lease = param->_lease;
+        ztu->_common._lease = param->_lease;
 
         // Transport link for unicast
-        ztu->_link = *zl;
+        ztu->_common._link = *zl;
 
         // Remote peer PID
         ztu->_remote_zid = param->_remote_zid;
@@ -309,7 +309,7 @@ z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bo
     z_result_t ret = _Z_RES_OK;
     // Send and clear message
     _z_transport_message_t cm = _z_t_msg_make_close(reason, link_only);
-    ret = _z_unicast_send_t_msg(ztu, &cm);
+    ret = _z_transport_tx_send_t_msg(&ztu->_common, &cm);
     _z_t_msg_clear(&cm);
     return ret;
 }
@@ -322,27 +322,23 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     _z_transport_unicast_t *ztu = &zt->_transport._unicast;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
-    if (ztu->_read_task != NULL) {
-        _z_task_join(ztu->_read_task);
-        _z_task_free(&ztu->_read_task);
+    if (ztu->_common._read_task != NULL) {
+        _z_task_join(ztu->_common._read_task);
+        _z_task_free(&ztu->_common._read_task);
     }
-    if (ztu->_lease_task != NULL) {
-        _z_task_join(ztu->_lease_task);
-        _z_task_free(&ztu->_lease_task);
+    if (ztu->_common._lease_task != NULL) {
+        _z_task_join(ztu->_common._lease_task);
+        _z_task_free(&ztu->_common._lease_task);
     }
 
     // Clean up the mutexes
-    _z_mutex_drop(&ztu->_mutex_tx);
-    _z_mutex_drop(&ztu->_mutex_rx);
+    _z_mutex_drop(&ztu->_common._mutex_tx);
+    _z_mutex_drop(&ztu->_common._mutex_rx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-#if Z_FEATURE_BATCHING == 1
-    _z_network_message_vec_clear(&ztu->_batch);
-#endif
-
     // Clean up the buffers
-    _z_wbuf_clear(&ztu->_wbuf);
-    _z_zbuf_clear(&ztu->_zbuf);
+    _z_wbuf_clear(&ztu->_common._wbuf);
+    _z_zbuf_clear(&ztu->_common._zbuf);
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&ztu->_dbuf_reliable);
     _z_wbuf_clear(&ztu->_dbuf_best_effort);
@@ -350,7 +346,7 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 
     // Clean up PIDs
     ztu->_remote_zid = _z_id_empty();
-    _z_link_clear(&ztu->_link);
+    _z_link_clear(&ztu->_common._link);
 }
 
 #else
