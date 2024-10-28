@@ -55,9 +55,9 @@ FetchContent_MakeAvailable(freertos_kernel freertos_plus_tcp)
 set(BUILD_SHARED_LIBS OFF)
 set(WITH_FREERTOS_PLUS_TCP ON)
 set(ZENOH_DEBUG 3)
-configure_include_project(ZENOHPICO zenohpico zenohpico "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
+configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 
-target_link_libraries(zenohpico
+target_link_libraries(zenohpico_static
   freertos_kernel
   freertos_plus_tcp
 )
@@ -74,7 +74,7 @@ function(add_example name)
     main
     freertos_kernel
     freertos_plus_tcp
-    zenohpico
+    zenohpico::lib
   )
 endfunction()
 
