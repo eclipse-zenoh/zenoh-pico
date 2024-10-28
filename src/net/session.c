@@ -37,7 +37,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
-z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
+static z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode, int peer_op) {
     z_result_t ret = _Z_RES_OK;
 
     _z_id_t local_zid = _z_id_empty();
@@ -46,7 +46,7 @@ z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t
         local_zid = _z_id_empty();
         return ret;
     }
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode, peer_op);
     if (ret != _Z_RES_OK) {
         local_zid = _z_id_empty();
         return ret;
@@ -64,89 +64,89 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
     if (opt_as_str != NULL) {
         _z_uuid_to_bytes(zid.id, opt_as_str);
     }
-
-    if (config != NULL) {
-        _z_string_svec_t locators = _z_string_svec_make(0);
-        char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
-        char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
-        if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
-            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
-            }
-            z_what_t what = strtol(opt_as_str, NULL, 10);
-
-            opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
-            }
-            _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
-
-            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
-            }
-            uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
-
-            // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
-            if (hellos != NULL) {
-                _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_string_svec_copy(&locators, &hello->_locators);
-            }
-            _z_hello_list_free(&hellos);
-        } else {
-            uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
-            if (listen != NULL) {
-                if (connect == NULL) {
-                    key = Z_CONFIG_LISTEN_KEY;
-                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-                } else {
-                    return _Z_ERR_GENERIC;
-                }
-            }
-            locators = _z_string_svec_make(1);
-            _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
-            _z_string_svec_append(&locators, &s);
-        }
-
-        ret = _Z_ERR_SCOUT_NO_RESULTS;
-        size_t len = _z_string_svec_len(&locators);
-        for (size_t i = 0; i < len; i++) {
-            ret = _Z_RES_OK;
-
-            _z_string_t *locator = _z_string_svec_get(&locators, i);
-            // @TODO: check invalid configurations
-            // For example, client mode in multicast links
-
-            // Check operation mode
-            char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
-            z_whatami_t mode = Z_WHATAMI_CLIENT;  // By default, zenoh-pico will operate as a client
-            if (s_mode != NULL) {
-                if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT) == true) {
-                    mode = Z_WHATAMI_CLIENT;
-                } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) == true) {
-                    mode = Z_WHATAMI_PEER;
-                } else {
-                    ret = _Z_ERR_CONFIG_INVALID_MODE;
-                }
-            }
-
-            if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, locator, mode);
-                if (ret == _Z_RES_OK) {
-                    break;
-                }
-            } else {
-                _Z_ERROR("Trying to configure an invalid mode.");
-            }
-        }
-        _z_string_svec_clear(&locators);
-    } else {
+    if (config == NULL) {
         _Z_ERROR("A valid config is missing.");
-        ret = _Z_ERR_GENERIC;
+        return _Z_ERR_GENERIC;
+    }
+    int peer_op = _Z_PEER_OP_LISTEN;
+    _z_string_svec_t locators = _z_string_svec_make(0);
+    char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
+    char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
+    if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
+        opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
+        }
+        z_what_t what = strtol(opt_as_str, NULL, 10);
+
+        opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
+        }
+        _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
+
+        opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+        if (opt_as_str == NULL) {
+            opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+        }
+        uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
+
+        // Scout and return upon the first result
+        _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
+        if (hellos != NULL) {
+            _z_hello_t *hello = _z_hello_list_head(hellos);
+            _z_string_svec_copy(&locators, &hello->_locators);
+        }
+        _z_hello_list_free(&hellos);
+    } else {
+        uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
+        if (listen != NULL) {
+            if (connect == NULL) {
+                key = Z_CONFIG_LISTEN_KEY;
+                _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+            } else {
+                return _Z_ERR_GENERIC;
+            }
+        } else {
+            peer_op = _Z_PEER_OP_OPEN;
+        }
+        locators = _z_string_svec_make(1);
+        _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
+        _z_string_svec_append(&locators, &s);
     }
 
+    ret = _Z_ERR_SCOUT_NO_RESULTS;
+    size_t len = _z_string_svec_len(&locators);
+    for (size_t i = 0; i < len; i++) {
+        ret = _Z_RES_OK;
+
+        _z_string_t *locator = _z_string_svec_get(&locators, i);
+        // @TODO: check invalid configurations
+        // For example, client mode in multicast links
+
+        // Check operation mode
+        char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
+        z_whatami_t mode = Z_WHATAMI_CLIENT;  // By default, zenoh-pico will operate as a client
+        if (s_mode != NULL) {
+            if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT) == true) {
+                mode = Z_WHATAMI_CLIENT;
+            } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) == true) {
+                mode = Z_WHATAMI_PEER;
+            } else {
+                ret = _Z_ERR_CONFIG_INVALID_MODE;
+            }
+        }
+
+        if (ret == _Z_RES_OK) {
+            ret = __z_open_inner(zn, locator, mode, peer_op);
+            if (ret == _Z_RES_OK) {
+                break;
+            }
+        } else {
+            _Z_ERROR("Trying to configure an invalid mode.");
+        }
+    }
+    _z_string_svec_clear(&locators);
     return ret;
 }
 

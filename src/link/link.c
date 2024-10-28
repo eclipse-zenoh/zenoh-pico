@@ -27,13 +27,10 @@ z_result_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
-        // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
-#if Z_FEATURE_LINK_TCP == 1
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
-#endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
             if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);
@@ -80,10 +77,12 @@ z_result_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
-        // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
+        if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tcp(zl, &ep);
+        } else
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-        if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
+            if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
         } else
 #endif
