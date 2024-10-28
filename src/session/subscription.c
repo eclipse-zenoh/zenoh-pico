@@ -156,15 +156,18 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         if (sub_nb == 0) {
             return _Z_RES_OK;
         }
-        // Build the sample
-        _z_sample_t sample = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        // Parse subscription list
-        _z_subscription_rc_list_t *xs = subs;
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_nb);
-        while (xs != NULL) {
-            _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-            _Z_RC_IN_VAL(sub)->_callback(&sample, _Z_RC_IN_VAL(sub)->_arg);
-            xs = _z_subscription_rc_list_tail(xs);
+        // Build the sample
+        _z_sample_t sample;
+        ret = _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
+        if (ret == _Z_RES_OK) {
+            // Parse subscription list
+            _z_subscription_rc_list_t *xs = subs;
+            while (xs != NULL) {
+                _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+                _Z_RC_IN_VAL(sub)->_callback(&sample, _Z_RC_IN_VAL(sub)->_arg);
+                xs = _z_subscription_rc_list_tail(xs);
+            }
         }
         // Clean up
         _z_sample_clear(&sample);
