@@ -115,6 +115,7 @@ void _z_svec_release(_z_svec_t *v);
     }                                                                                                              \
     static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }  \
     static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); }  \
+    static inline void name##_svec_release(name##_svec_t *v) { _z_svec_release(v); }                               \
     static inline void name##_svec_free(name##_svec_t **v) { _z_svec_free(v, name##_elem_clear, sizeof(type)); }
 
 #endif /* ZENOH_PICO_COLLECTIONS_VECTOR_H */
