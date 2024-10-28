@@ -15,4 +15,15 @@ endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/zenohpicoTargets.cmake")
 
-add_library(zenohpico::lib ALIAS zenohpico::zenohpico)
+if(@PICO_SHARED@)
+  add_library(zenohpico::shared ALIAS zenohpico::zenohpico_shared)
+endif()
+if(@PICO_STATIC@)
+  add_library(zenohpico::static ALIAS zenohpico::zenohpico_static)
+endif()
+
+if(@BUILD_SHARED_LIBS@)
+  add_library(zenohpico::lib ALIAS zenohpico::zenohpico_shared)
+else()
+  add_library(zenohpico::lib ALIAS zenohpico::zenohpico_static)
+endif()
