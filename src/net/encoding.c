@@ -55,6 +55,8 @@ void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     src->id = _Z_ENCODING_ID_DEFAULT;
     if (_z_string_check(&src->schema)) {
         _z_string_move(&dst->schema, &src->schema);
+    } else {
+        dst->schema = _z_string_null();
     }
 }
 
