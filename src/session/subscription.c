@@ -29,6 +29,37 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
+
+#define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
+
+// Subscription infos
+typedef struct {
+    _z_sample_handler_t callback;
+    void *arg;
+} _z_subscription_infos_t;
+
+static inline void _z_subscription_infos_elem_move(void *dst, void *src) {
+    *(_z_subscription_infos_t *)dst = *(_z_subscription_infos_t *)src;
+}
+
+typedef _z_svec_t _z_subscription_infos_svec_t;
+static inline _z_subscription_infos_svec_t _z_subscription_infos_svec_make(size_t capacity) {
+    return _z_svec_make(capacity, sizeof(_z_subscription_infos_t));
+}
+static inline size_t _z_subscription_infos_svec_len(const _z_subscription_infos_svec_t *v) { return _z_svec_len(v); }
+
+static inline _Bool _z_subscription_infos_svec_append(_z_subscription_infos_svec_t *v,
+                                                      const _z_subscription_infos_t *e) {
+    return _z_svec_append(v, e, _z_subscription_infos_elem_move, sizeof(_z_subscription_infos_t));
+}
+static inline _z_subscription_infos_t *_z_subscription_infos_svec_get(const _z_subscription_infos_svec_t *v,
+                                                                      size_t pos) {
+    return (_z_subscription_infos_t *)_z_svec_get(v, pos, sizeof(_z_subscription_infos_t));
+}
+
+static inline void _z_subscription_infos_svec_release(_z_subscription_infos_svec_t *v) { _z_svec_release(v); }
+
+// Subscription
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
     return this_->_id == other->_id;
 }
@@ -57,22 +88,6 @@ _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs
     return ret;
 }
 
-_z_subscription_rc_list_t *__z_get_subscriptions_by_key(_z_subscription_rc_list_t *subs, const _z_keyexpr_t *key) {
-    _z_subscription_rc_list_t *ret = NULL;
-
-    _z_subscription_rc_list_t *xs = subs;
-    while (xs != NULL) {
-        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key) == true) {
-            ret = _z_subscription_rc_list_push(ret, _z_subscription_rc_clone_as_ptr(sub));
-        }
-
-        xs = _z_subscription_rc_list_tail(xs);
-    }
-
-    return ret;
-}
-
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
@@ -89,11 +104,27 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_rc_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
-                                                               const _z_keyexpr_t *key) {
+static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key,
+                                                      _z_subscription_infos_svec_t *sub_infos) {
     _z_subscription_rc_list_t *subs =
         (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
-    return __z_get_subscriptions_by_key(subs, key);
+
+    *sub_infos = _z_subscription_infos_svec_make(_Z_SUBINFOS_VEC_SIZE);
+    _z_subscription_rc_list_t *xs = subs;
+    while (xs != NULL) {
+        // Parse subscription list
+        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
+            _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
+                                                    .callback = _Z_RC_IN_VAL(sub)->_callback};
+            if (!_z_subscription_infos_svec_append(sub_infos, &new_sub_info)) {
+                _Z_ERROR("Failed to allocate subscription info vector");
+                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            }
+        }
+        xs = _z_subscription_rc_list_tail(xs);
+    }
+    return _Z_RES_OK;
 }
 
 _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
@@ -148,11 +179,14 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
     _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true);
     _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
     if (_z_keyexpr_has_suffix(&key)) {
-        _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
+        _z_subscription_infos_svec_t subs;
+        ret = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key, &subs);
         _z_session_mutex_unlock(zn);
-
+        if (ret != _Z_RES_OK) {
+            return ret;
+        }
         // Check if there is subs
-        size_t sub_nb = _z_subscription_rc_list_len(subs);
+        size_t sub_nb = _z_subscription_infos_svec_len(&subs);
         if (sub_nb == 0) {
             return _Z_RES_OK;
         }
@@ -161,17 +195,15 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         _z_sample_t sample;
         ret = _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
         if (ret == _Z_RES_OK) {
-            // Parse subscription list
-            _z_subscription_rc_list_t *xs = subs;
-            while (xs != NULL) {
-                _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-                _Z_RC_IN_VAL(sub)->_callback(&sample, _Z_RC_IN_VAL(sub)->_arg);
-                xs = _z_subscription_rc_list_tail(xs);
+            // Parse subscription infos svec
+            for (size_t i = 0; i < sub_nb; i++) {
+                _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&subs, i);
+                sub_info->callback(&sample, sub_info->arg);
             }
         }
         // Clean up
         _z_sample_clear(&sample);
-        _z_subscription_rc_list_free(&subs);
+        _z_subscription_infos_svec_release(&subs);
     } else {
         _z_session_mutex_unlock(zn);
         ret = _Z_ERR_KEYEXPR_UNKNOWN;
