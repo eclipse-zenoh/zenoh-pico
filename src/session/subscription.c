@@ -106,16 +106,6 @@ _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_loc
     return sub;
 }
 
-_z_subscription_rc_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key) {
-    _z_session_mutex_lock(zn);
-
-    _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, key);
-
-    _z_session_mutex_unlock(zn);
-
-    return subs;
-}
-
 _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *s) {
     _Z_DEBUG(">>> Allocating sub decl for (%ju:%.*s)", (uintmax_t)s->_key._id, (int)_z_string_len(&s->_key._suffix),
              _z_string_data(&s->_key._suffix));
