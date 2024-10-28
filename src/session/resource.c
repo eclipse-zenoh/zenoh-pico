@@ -95,7 +95,7 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         if (!_z_keyexpr_has_suffix(keyexpr)) {
             return _z_keyexpr_null();
         }
-        return _z_keyexpr_duplicate(keyexpr);
+        return _z_keyexpr_alias(*keyexpr);
     }
 
     // Need to build the complete resource name, by recursively look at RIDs

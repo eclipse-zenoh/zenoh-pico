@@ -360,13 +360,9 @@ z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
         _Z_INFO("Not enough bytes to read");
         return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    // Allocate space for the string terminator
-    *str = _z_string_preallocate(len);
-    if (str->_slice.start == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Read bytes
-    _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(str), 0, len);
+    // Alias string
+    *str = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
     return _Z_RES_OK;
 }
 
