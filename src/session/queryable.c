@@ -106,7 +106,7 @@ _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, cons
 _z_session_queryable_rc_list_t *_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     _z_session_mutex_lock(zn);
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, false);
     _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 
     _z_session_mutex_unlock(zn);
@@ -139,7 +139,7 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, co
 
     _z_session_mutex_lock(zn);
 
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &q_key, true);
     if (_z_keyexpr_has_suffix(&key)) {
         _z_session_queryable_rc_list_t *qles = __unsafe_z_get_session_queryable_by_key(zn, key);
 

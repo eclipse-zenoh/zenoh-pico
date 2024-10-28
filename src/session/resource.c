@@ -87,7 +87,8 @@ _z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_
     return ret;
 }
 
-_z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr) {
+static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr,
+                                                  bool force_alias) {
     _z_zint_t id = keyexpr->_id;
 
     // Check if ke is already expanded
@@ -95,7 +96,12 @@ _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keye
         if (!_z_keyexpr_has_suffix(keyexpr)) {
             return _z_keyexpr_null();
         }
-        return _z_keyexpr_alias(*keyexpr);
+        // Keyexpr can be aliased from a rx buffer
+        if (force_alias) {
+            return _z_keyexpr_alias(*keyexpr);
+        } else {
+            return _z_keyexpr_duplicate(keyexpr);
+        }
     }
 
     // Need to build the complete resource name, by recursively look at RIDs
@@ -169,9 +175,9 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
+_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, bool force_alias) {
     _z_resource_list_t *decls = _z_keyexpr_is_local(keyexpr) ? zn->_local_resources : zn->_remote_resources;
-    return __z_get_expanded_key_from_key(decls, keyexpr);
+    return __z_get_expanded_key_from_key(decls, keyexpr, force_alias);
 }
 
 _z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid) {
@@ -199,7 +205,7 @@ _z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keye
 
 _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     _z_session_mutex_lock(zn);
-    _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr);
+    _z_keyexpr_t res = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, false);
 
     _z_session_mutex_unlock(zn);
 
@@ -219,7 +225,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
             _z_resource_t *parent = __unsafe_z_get_resource_by_id(zn, parent_mapping, key._id);
             parent->_refcount++;
         } else {
-            key = __unsafe_z_get_expanded_key_from_key(zn, &key);
+            key = __unsafe_z_get_expanded_key_from_key(zn, &key, false);
         }
     }
     ret = key._id;
