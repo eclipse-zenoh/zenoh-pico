@@ -98,7 +98,7 @@ void _z_svec_release(_z_svec_t *v);
     static inline name##_svec_t name##_svec_make(size_t capacity) { return _z_svec_make(capacity, sizeof(type)); } \
     static inline size_t name##_svec_len(const name##_svec_t *v) { return _z_svec_len(v); }                        \
     static inline bool name##_svec_is_empty(const name##_svec_t *v) { return _z_svec_is_empty(v); }                \
-    static inline bool name##_svec_append(name##_svec_t *v, type *e) {                                             \
+    static inline bool name##_svec_append(name##_svec_t *v, const type *e) {                                       \
         return _z_svec_append(v, e, name##_elem_move, sizeof(type));                                               \
     }                                                                                                              \
     static inline type *name##_svec_get(const name##_svec_t *v, size_t pos) {                                      \
