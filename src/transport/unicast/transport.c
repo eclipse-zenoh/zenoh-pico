@@ -142,8 +142,6 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     if (ret != _Z_RES_OK) {
         return ret;
     }
-    // Wait for socket to stabilize
-    z_sleep_ms(1);
     // Try to receive response
     _z_transport_message_t iam;
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl));
@@ -300,7 +298,6 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
                                 const _z_id_t *local_zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
     if (peer_op == _Z_PEER_OP_OPEN) {
-        z_sleep_ms(1);
         ret = _z_unicast_handshake_client(param, zl, local_zid, Z_WHATAMI_PEER);
     } else {
         ret = _z_unicast_handshake_listener(param, zl, local_zid, Z_WHATAMI_PEER);
