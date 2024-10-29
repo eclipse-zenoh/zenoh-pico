@@ -159,7 +159,7 @@ _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
-    dst->_slices = src->_slices;
+    *dst = *src;
     *src = _z_bytes_null();
 }
 

@@ -216,17 +216,17 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_loca
     return ret;
 }
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t *attachment, z_reliability_t reliability) {
+                                    _z_bytes_t *attachment, z_reliability_t reliability) {
     z_result_t ret = _z_trigger_subscriptions(zn, keyexpr, payload, encoding, Z_SAMPLE_KIND_PUT, timestamp, qos,
                                               attachment, reliability);
     (void)ret;
 }
 
-z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
+z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_zint_t kind, const _z_timestamp_t *timestamp,
-                                    const _z_n_qos_t qos, const _z_bytes_t *attachment, z_reliability_t reliability) {
+                                    const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability) {
     _z_sample_t sample;
     _z_keyexpr_t key;
     z_result_t ret = _Z_RES_OK;
@@ -242,13 +242,11 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_cache.info_nb);
         // Build the sample
         key = _z_keyexpr_alias(sub_cache.ke_out);
-        ret = _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        if (ret == _Z_RES_OK) {
-            // Parse subscription infos
-            for (size_t i = 0; i < sub_cache.info_nb; i++) {
-                _z_subscription_infos_t *sub_info = &sub_cache.infos[i];
-                sub_info->callback(&sample, sub_info->arg);
-            }
+        _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
+        // Parse subscription infos
+        for (size_t i = 0; i < sub_cache.info_nb; i++) {
+            _z_subscription_infos_t *sub_info = &sub_cache.infos[i];
+            sub_info->callback(&sample, sub_info->arg);
         }
         // Clean up
         _z_sample_clear(&sample);
@@ -275,13 +273,11 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         }
         _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_nb);
         // Build the sample
-        ret = _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        if (ret == _Z_RES_OK) {
-            // Parse subscription infos svec
-            for (size_t i = 0; i < sub_nb; i++) {
-                _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&subs, i);
-                sub_info->callback(&sample, sub_info->arg);
-            }
+        _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
+        // Parse subscription infos svec
+        for (size_t i = 0; i < sub_nb; i++) {
+            _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&subs, i);
+            sub_info->callback(&sample, sub_info->arg);
         }
         // Clean up
         _z_sample_clear(&sample);
@@ -318,9 +314,9 @@ void _z_flush_subscriptions(_z_session_t *zn) {
 }
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
+void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                     _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t *attachment, z_reliability_t reliability) {
+                                    _z_bytes_t *attachment, z_reliability_t reliability) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
