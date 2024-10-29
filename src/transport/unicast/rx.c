@@ -96,8 +96,10 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
             _Z_DEBUG("Received Z_FRAME message");
+            z_reliability_t tmsg_reliability;
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
+                tmsg_reliability = Z_RELIABILITY_RELIABLE;
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
                 if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_reliable, t_msg->_body._frame._sn) == true) {
@@ -111,6 +113,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     break;
                 }
             } else {
+                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
                 if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_best_effort, t_msg->_body._frame._sn) == true) {
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                 } else {
@@ -127,7 +130,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             size_t len = _z_vec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
                 _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
-                zm->_reliability = _z_t_msg_get_reliability(t_msg);
+                zm->_reliability = tmsg_reliability;
                 _z_handle_network_message(ztu->_common._session, zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
             }
 
@@ -139,11 +142,14 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 #if Z_FEATURE_FRAGMENTATION == 1
             _z_wbuf_t *dbuf;
             uint8_t *dbuf_state;
+            z_reliability_t tmsg_reliability;
             // Select the right defragmentation buffer
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)) {
+                tmsg_reliability = Z_RELIABILITY_RELIABLE;
                 dbuf = &ztu->_dbuf_reliable;
                 dbuf_state = &ztu->_state_reliable;
             } else {
+                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
                 dbuf = &ztu->_dbuf_best_effort;
                 dbuf_state = &ztu->_state_best_effort;
             }
@@ -189,7 +195,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 // Decode message
                 _z_zenoh_message_t zm;
                 ret = _z_network_message_decode(&zm, &zbf);
-                zm._reliability = _z_t_msg_get_reliability(t_msg);
+                zm._reliability = tmsg_reliability;
                 if (ret == _Z_RES_OK) {
                     _z_handle_network_message(ztu->_common._session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
                 } else {
