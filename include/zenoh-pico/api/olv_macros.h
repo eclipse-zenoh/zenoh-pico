@@ -68,9 +68,10 @@
     void prefix##_##name##_take(prefix##_owned_##name##_t *obj, prefix##_moved_##name##_t *src);    \
     void prefix##_##name##_drop(prefix##_moved_##name##_t *obj);
 
-#define _Z_OWNED_FUNCTIONS_DEF_PREFIX(prefix, name)     \
-    _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name) \
-    z_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj, const prefix##_loaned_##name##_t *src);
+#define _Z_OWNED_FUNCTIONS_DEF_PREFIX(prefix, name)                                                            \
+    _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name)                                                        \
+    z_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj, const prefix##_loaned_##name##_t *src); \
+    z_result_t prefix##_##name##_take_loaned(prefix##_owned_##name##_t *dst, prefix##_loaned_##name##_t *src);
 
 #define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(name) _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(z, name)
 #define _Z_OWNED_FUNCTIONS_DEF(name) _Z_OWNED_FUNCTIONS_DEF_PREFIX(z, name)
@@ -117,15 +118,21 @@
         if (obj != NULL) f_drop((&obj->_this._val));                                                               \
     }
 
-#define _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_copy, f_drop, attribute) \
-    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute)     \
-    attribute prefix##_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj,                            \
-                                                        const prefix##_loaned_##name##_t *src) {                   \
-        return f_copy((&obj->_val), src);                                                                          \
+#define _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_copy, f_move, f_drop, \
+                                                   attribute)                                                   \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute)  \
+    attribute z_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj,                                \
+                                                 const prefix##_loaned_##name##_t *src) {                       \
+        return f_copy((&obj->_val), src);                                                                       \
+    }                                                                                                           \
+    attribute z_result_t prefix##_##name##_take_loaned(prefix##_owned_##name##_t *obj,                          \
+                                                       prefix##_loaned_##name##_t *src) {                       \
+        f_move((&obj->_val), src);                                                                              \
+        return _Z_RES_OK;                                                                                       \
     }
 
-#define _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(prefix, type, name, f_check, f_null, f_copy, f_drop) \
-    _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_copy, f_drop, _ZP_NOTHING)
+#define _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(prefix, type, name, f_check, f_null, f_copy, f_move, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_copy, f_move, f_drop, _ZP_NOTHING)
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(prefix, type, name, f_check, f_null, f_drop) \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, _ZP_NOTHING)
@@ -133,8 +140,8 @@
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(type, name, f_check, f_null, f_drop) \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(z, type, name, f_check, f_null, f_drop)
 
-#define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_drop) \
-    _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(z, type, name, f_check, f_null, f_copy, f_drop)
+#define _Z_OWNED_FUNCTIONS_VALUE_IMPL(type, name, f_check, f_null, f_copy, f_move, f_drop) \
+    _Z_OWNED_FUNCTIONS_VALUE_IMP_PREFIX(z, type, name, f_check, f_null, f_copy, f_move, f_drop)
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(type, name, f_check, f_null, f_drop) \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_drop, static inline)

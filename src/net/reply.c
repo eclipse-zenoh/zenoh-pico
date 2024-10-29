@@ -59,10 +59,9 @@ z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) 
     return _Z_RES_OK;
 }
 
-_z_reply_t _z_reply_move(_z_reply_t *src_reply) {
-    _z_reply_t reply = *src_reply;
-    *src_reply = _z_reply_null();
-    return reply;
+void _z_reply_move(_z_reply_t *dst, _z_reply_t *src) {
+    *dst = *src;
+    *src = _z_reply_null();
 }
 
 void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }

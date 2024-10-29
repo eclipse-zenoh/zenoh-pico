@@ -105,6 +105,11 @@ _z_hello_t _z_hello_null(void) {
     return (_z_hello_t){._zid = _z_id_empty(), ._version = 0, ._whatami = 0x0, ._locators = _z_string_svec_make(0)};
 }
 
+void _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
+    *dst = *src;
+    *src = _z_hello_null();
+}
+
 void _z_value_move(_z_value_t *dst, _z_value_t *src) {
     _z_encoding_move(&dst->encoding, &src->encoding);
     _z_bytes_move(&dst->payload, &src->payload);

@@ -80,7 +80,7 @@ typedef struct _z_reply_t {
     _z_reply_data_t data;
 } _z_reply_t;
 
-_z_reply_t _z_reply_move(_z_reply_t *src_reply);
+void _z_reply_move(_z_reply_t *dst, _z_reply_t *src);
 
 _z_reply_t _z_reply_null(void);
 void _z_reply_clear(_z_reply_t *src);
