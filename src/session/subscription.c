@@ -98,7 +98,7 @@ static inline void _z_subscription_update_cache(const _z_keyexpr_t *ke_in, const
     if (!_z_keyexpr_has_suffix(ke_in)) {
         sub_cache.ke_in = _z_keyexpr_alias(*ke_in);
     } else {
-        sub_cache.ke_in = _z_keyexpr_alias(*ke_out);
+        sub_cache.ke_in = _z_keyexpr_alias(sub_cache.ke_out);
     }
 }
 #else
