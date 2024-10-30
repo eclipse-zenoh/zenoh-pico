@@ -269,6 +269,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_bytes_writer_clone(z_owned_bytes_writer_t * dst, const z_loaned_bytes_writer_t * bytes_writer) 
 .. c:function:: const z_loaned_bytes_writer_t * z_bytes_writer_loan(const z_owned_bytes_writer_t * bytes_writer)
 .. c:function:: z_loaned_bytes_writer_t * z_bytes_writer_loan_mut(z_owned_bytes_writer_t * bytes_writer)
+.. c:function:: z_result_t z_bytes_writer_loaned_take(z_owned_bytes_writer_t *dst, z_loaned_bytes_writer_t *src)
 
 Encoding
 --------
@@ -1283,6 +1284,16 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_str
 .. autocfunction:: serialization.h::ze_serialize_substr
 
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: void ze_serializer_drop(ze_moved_serializer_t * serializer) 
+.. c:function:: void ze_serializer_clone(ze_owned_serializer_t * dst, const ze_loaned_serializer_t * serializer) 
+.. c:function:: const ze_loaned_serializer_t * ze_serializer_loan(const ze_owned_serializer_t * serializer)
+.. c:function:: ze_loaned_serializer_t * ze_serializer_loan_mut(ze_owned_serializer_t * serializer)
+.. c:function:: z_result_t ze_serializer_loaned_take(ze_owned_serializer_t *dst, ze_loaned_serializer_t *src)
 
 Others
 ======

@@ -346,6 +346,8 @@
                   z_owned_slice_t* : z_slice_loaned_take,                     \
                   z_owned_string_array_t* : z_string_array_loaned_take,       \
                   z_owned_config_t* : z_config_loaned_take                    \
+                  z_owned_bytes_writer_t* : z_bytes_writer_loaned_take,       \
+                  ze_owned_serializer_t* : ze_serializer_loaned_take,         \
             )(dst, src)
 
 /**
@@ -791,6 +793,12 @@ inline z_result_t z_loaned_take(z_owned_string_array_t* dst, z_loaned_string_arr
 }
 inline z_result_t z_loaned_take(z_owned_hello_t* dst, z_loaned_hello_t* this_) {
     return z_hello_loaned_take(dst, this_);
+}
+inline z_result_t z_loaned_take(z_owned_bytes_writer_t* dst, z_loaned_bytes_writer_t* this_) {
+    return z_bytes_writer_loaned_take(dst, this_);
+}
+inline z_result_t z_loaned_take(ze_owned_serializer_t* dst, ze_loaned_serializer_t* this_) {
+    return ze_serializer_loaned_take(dst, this_);
 }
 
 template <class T>

@@ -529,7 +529,7 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_empty,
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_move,
                               _z_bytes_drop)
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_writer_check, _z_bytes_writer_empty,
-                                      _z_bytes_writer_clear)
+                                      _z_bytes_writer_move, _z_bytes_writer_clear)
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
@@ -790,8 +790,8 @@ void _z_publisher_drop(_z_publisher_t *pub) {
     _z_publisher_clear(pub);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
-                                      _z_publisher_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
+                                              _z_publisher_drop)
 
 void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
@@ -1127,8 +1127,8 @@ void _z_queryable_drop(_z_queryable_t *queryable) {
     _z_queryable_clear(queryable);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_queryable_t, queryable, _z_queryable_check, _z_queryable_null,
-                                      _z_queryable_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_queryable_t, queryable, _z_queryable_check, _z_queryable_null,
+                                              _z_queryable_drop)
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
 
@@ -1346,8 +1346,8 @@ void _z_subscriber_drop(_z_subscriber_t *sub) {
     _z_subscriber_clear(sub);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
-                                      _z_subscriber_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
+                                              _z_subscriber_drop)
 
 void z_subscriber_options_default(z_subscriber_options_t *options) { options->__dummy = 0; }
 
