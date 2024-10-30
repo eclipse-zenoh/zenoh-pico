@@ -1110,7 +1110,7 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
 #if Z_FEATURE_QUERYABLE == 1
 _Z_OWNED_FUNCTIONS_RC_IMPL(query)
 
-z_result_t z_query_loaned_take(z_owned_query_t *dst, z_loaned_query_t *src) {
+z_result_t z_query_take_loaned(z_owned_query_t *dst, z_loaned_query_t *src) {
     dst->_rc = *src;
     _z_query_t q = _z_query_null();
     *src = _z_query_rc_new_from_val(&q);
