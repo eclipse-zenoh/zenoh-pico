@@ -120,28 +120,28 @@ crossbuild: check-docker
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
 
 linux-armv5:
-	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv6:
 	PACKAGE_NAME="zenohpico-armv6" CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv7:
-	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-armv7a:
 	PACKAGE_NAME="zenohpico-armv7a" CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-arm64:
-	CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
 
 linux-mips:
-	CROSSIMG=$@ DEBARCH=mips RPMARCH=mips make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=mips RPMARCH=mips make crossbuild
 
 linux-x86:
-	CROSSIMG=$@ DEBARCH=i386 RPMARCH=x86 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=i386 RPMARCH=x86 make crossbuild
 
 linux-x64:
-	CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
 
 clean:
 	rm -fr $(BUILD_DIR)
