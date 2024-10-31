@@ -115,7 +115,7 @@ endif
 crossbuild: check-docker
 	@echo "FROM dockcross/$(CROSSIMG)\nRUN apt-get update && apt-get -y install rpm" | docker build -t $(CROSSIMG_PREFIX)$(CROSSIMG) -
 	docker run --rm -v $(ROOT_DIR):/workdir -w /workdir $(CROSSIMG_PREFIX)$(CROSSIMG) bash -c "\
-		cmake $(CMAKE_OPT) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
+		cmake $(CMAKE_OPT) -DCPACK_PACKAGE_NAME=$(PACKAGE_NAME) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
 		make VERBOSE=1 -C$(CROSSBUILD_DIR)/$(CROSSIMG) all package"
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
 
@@ -123,13 +123,13 @@ linux-armv5:
 	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv6:
-	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
+	PACKAGE_NAME="zenohpico-armv6" CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv7:
 	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-armv7a:
-	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
+	PACKAGE_NAME="zenohpico-armv7a" CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-arm64:
 	CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
