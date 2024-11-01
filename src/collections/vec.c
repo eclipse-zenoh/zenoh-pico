@@ -41,7 +41,7 @@ void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f d_f) {
     }
 }
 
-void _z_vec_steal(_z_vec_t *dst, _z_vec_t *src) {
+void _z_vec_move(_z_vec_t *dst, _z_vec_t *src) {
     *dst = *src;
     *src = _z_vec_null();
 }
@@ -167,6 +167,11 @@ void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num
             offset += element_size;
         }
     }
+}
+
+void _z_svec_move(_z_svec_t *dst, _z_svec_t *src) {
+    *dst = *src;
+    *src = _z_svec_null();
 }
 
 bool _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size) {
