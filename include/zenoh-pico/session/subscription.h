@@ -16,7 +16,29 @@
 #define INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 
 #include "zenoh-pico/net/encoding.h"
-#include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
+
+// Forward declaration to avoid cyclical include
+typedef struct _z_session_t _z_session_t;
+
+// Subscription infos
+typedef struct {
+    _z_sample_handler_t callback;
+    void *arg;
+} _z_subscription_infos_t;
+
+static inline void _z_subscription_infos_elem_move(void *dst, void *src) {
+    *(_z_subscription_infos_t *)dst = *(_z_subscription_infos_t *)src;
+}
+_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+_Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t)
+
+typedef struct {
+    _z_keyexpr_t ke_in;
+    _z_keyexpr_t ke_out;
+    _z_subscription_infos_svec_t infos;
+} _z_subscription_cache_t;
 
 /*------------------ Subscription ------------------*/
 void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
@@ -24,6 +46,11 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
                                     _z_bytes_t *attachment, z_reliability_t reliability);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
+
+#if Z_FEATURE_MEMOIZATION == 1
+void _z_subscription_cache_clear(_z_subscription_cache_t *cache);
+#endif
+
 _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id);
 _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *sub);
 z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,

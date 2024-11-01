@@ -32,83 +32,43 @@
 
 #define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
 
-// Subscription infos
-typedef struct {
-    _z_sample_handler_t callback;
-    void *arg;
-} _z_subscription_infos_t;
-
-static inline void _z_subscription_infos_elem_move(void *dst, void *src) {
-    *(_z_subscription_infos_t *)dst = *(_z_subscription_infos_t *)src;
-}
-
-typedef _z_svec_t _z_subscription_infos_svec_t;
-static inline _z_subscription_infos_svec_t _z_subscription_infos_svec_make(size_t capacity) {
-    return _z_svec_make(capacity, sizeof(_z_subscription_infos_t));
-}
-static inline size_t _z_subscription_infos_svec_len(const _z_subscription_infos_svec_t *v) { return _z_svec_len(v); }
-
-static inline _Bool _z_subscription_infos_svec_append(_z_subscription_infos_svec_t *v,
-                                                      const _z_subscription_infos_t *e) {
-    return _z_svec_append(v, e, _z_subscription_infos_elem_move, sizeof(_z_subscription_infos_t));
-}
-static inline _z_subscription_infos_t *_z_subscription_infos_svec_get(const _z_subscription_infos_svec_t *v,
-                                                                      size_t pos) {
-    return (_z_subscription_infos_t *)_z_svec_get(v, pos, sizeof(_z_subscription_infos_t));
-}
-
-static inline void _z_subscription_infos_svec_release(_z_subscription_infos_svec_t *v) { _z_svec_release(v); }
-
-// Keyexpr cache entry for memoization
-#define Z_FEATURE_MEMOIZATION 1
-#define Z_CONFIG_CACHE_ENTRY_SIZE 4
-#define Z_CONFIG_CACHE_BUFFER_SIZE 32
-
 #if Z_FEATURE_MEMOIZATION == 1
-typedef struct {
-    size_t info_nb;
-    _z_keyexpr_t ke_in;
-    _z_keyexpr_t ke_out;
-    _z_subscription_infos_t infos[Z_CONFIG_CACHE_ENTRY_SIZE];
-    uint8_t cache_buffer[Z_CONFIG_CACHE_BUFFER_SIZE];
-} _z_subscription_cache_t;
-
-static _z_subscription_cache_t sub_cache = {0};
-
-static inline bool _z_subscription_check_cache(const _z_keyexpr_t *ke) {
-    return _z_keyexpr_equals(ke, &sub_cache.ke_in);
+static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke, _z_keyexpr_t *ke_val,
+                                                  _z_subscription_infos_svec_t *infos_val) {
+    if (!_z_keyexpr_equals(ke, &zn->_subscription_cache.ke_in)) {
+        return false;
+    }
+    *ke_val = _z_keyexpr_alias(zn->_subscription_cache.ke_out);
+    *infos_val = _z_subscription_infos_svec_alias(&zn->_subscription_cache.infos);
+    return true;
 }
 
-static inline void _z_subscription_update_cache(const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
-                                                const _z_subscription_infos_svec_t *infos) {
-    size_t vec_len = _z_subscription_infos_svec_len(infos);
-    if ((vec_len > Z_CONFIG_CACHE_ENTRY_SIZE) || (_z_string_len(&ke_out->_suffix) > Z_CONFIG_CACHE_BUFFER_SIZE)) {
-        return;
-    }
-    if (_z_keyexpr_has_suffix(ke_in) && !_z_keyexpr_equals(ke_in, ke_out)) {
-        return;
-    }
-    sub_cache.ke_out = _z_keyexpr_alias(*ke_out);
-    memcpy(sub_cache.cache_buffer, _z_string_data(&ke_out->_suffix), _z_string_len(&ke_out->_suffix));
-    sub_cache.ke_out._suffix._slice.start = sub_cache.cache_buffer;
-    sub_cache.info_nb = vec_len;
-    for (size_t i = 0; i < vec_len; i++) {
-        sub_cache.infos[i] = *_z_subscription_infos_svec_get(infos, i);
-    }
-    if (!_z_keyexpr_has_suffix(ke_in)) {
-        sub_cache.ke_in = _z_keyexpr_alias(*ke_in);
-    } else {
-        sub_cache.ke_in = _z_keyexpr_alias(sub_cache.ke_out);
-    }
+static inline void _z_subscription_update_cache(_z_session_t *zn, const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
+                                                _z_subscription_infos_svec_t *infos) {
+    // Clear previous data
+    _z_subscription_cache_clear(&zn->_subscription_cache);
+    // Register new info
+    zn->_subscription_cache.ke_in = _z_keyexpr_duplicate(ke_in);
+    zn->_subscription_cache.ke_out = _z_keyexpr_duplicate(ke_out);
+    _z_subscription_infos_svec_move(&zn->_subscription_cache.infos, infos);
 }
+
+void _z_subscription_cache_clear(_z_subscription_cache_t *cache) {
+    _z_subscription_infos_svec_clear(&cache->infos);
+    _z_keyexpr_clear(&cache->ke_in);
+    _z_keyexpr_clear(&cache->ke_out);
+}
+
 #else
-static inline bool _z_subscription_check_cache(const _z_keyexpr_t *ke) {
+static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke) {
+    _ZP_UNUSED(zn);
     _ZP_UNUSED(ke);
     return false;
 }
 
-static inline void _z_subscription_update_cache(const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
-                                                const _z_subscription_infos_svec_t *infos) {
+static inline void _z_subscription_update_cache(_z_session_t *zn, const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
+                                                _z_subscription_infos_svec_t *infos) {
+    _ZP_UNUSED(zn);
     _ZP_UNUSED(ke_in);
     _ZP_UNUSED(ke_out);
     _ZP_UNUSED(infos);
@@ -229,65 +189,48 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
                                     const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability) {
     _z_sample_t sample;
     _z_keyexpr_t key;
-    z_result_t ret = _Z_RES_OK;
-    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr->_id, (int)_z_string_len(&keyexpr->_suffix),
-             _z_string_data(&keyexpr->_suffix), _z_keyexpr_mapping_id(keyexpr));
-
+    _z_subscription_infos_svec_t subs;
     // Check cache
-    if (_z_subscription_check_cache(keyexpr)) {
-        // Key is cached but no subs
-        if (sub_cache.info_nb == 0) {
-            return _Z_RES_OK;
-        }
-        _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_cache.info_nb);
-        // Build the sample
-        key = _z_keyexpr_alias(sub_cache.ke_out);
-        _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        // Parse subscription infos
-        for (size_t i = 0; i < sub_cache.info_nb; i++) {
-            _z_subscription_infos_t *sub_info = &sub_cache.infos[i];
-            sub_info->callback(&sample, sub_info->arg);
-        }
-        // Clean up
-        _z_sample_clear(&sample);
-        return ret;
-    }
+    if (!_z_subscription_get_from_cache(zn, keyexpr, &key, &subs)) {
+        _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr->_id, (int)_z_string_len(&keyexpr->_suffix),
+                 _z_string_data(&keyexpr->_suffix), _z_keyexpr_mapping_id(keyexpr));
+        _z_session_mutex_lock(zn);
+        key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true);
 
-    _z_session_mutex_lock(zn);
-    key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true);
-    _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
-    if (_z_keyexpr_has_suffix(&key)) {
+        if (!_z_keyexpr_has_suffix(&key)) {
+            _z_session_mutex_unlock(zn);
+            return _Z_ERR_KEYEXPR_UNKNOWN;
+        }
         // Get subscription list
-        _z_subscription_infos_svec_t subs;
-        ret = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key, &subs);
+        z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key, &subs);
         _z_session_mutex_unlock(zn);
         if (ret != _Z_RES_OK) {
             return ret;
         }
-        // Check if there is subs
-        size_t sub_nb = _z_subscription_infos_svec_len(&subs);
         // Update cache
-        _z_subscription_update_cache(keyexpr, &key, &subs);
-        if (sub_nb == 0) {
-            return _Z_RES_OK;
-        }
-        _Z_DEBUG("Triggering %ju subs", (uintmax_t)sub_nb);
-        // Build the sample
-        _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        // Parse subscription infos svec
-        for (size_t i = 0; i < sub_nb; i++) {
-            _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&subs, i);
-            sub_info->callback(&sample, sub_info->arg);
-        }
-        // Clean up
-        _z_sample_clear(&sample);
-        _z_subscription_infos_svec_release(&subs);
-    } else {
-        _z_session_mutex_unlock(zn);
-        ret = _Z_ERR_KEYEXPR_UNKNOWN;
+        _z_subscription_update_cache(zn, keyexpr, &key, &subs);
+        subs = _z_subscription_infos_svec_alias(&zn->_subscription_cache.infos);
     }
-
-    return ret;
+    // Check if there is subs
+    size_t sub_nb = _z_subscription_infos_svec_len(&subs);
+    _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_nb, key._id, (int)_z_string_len(&key._suffix),
+             _z_string_data(&key._suffix));
+    if (sub_nb == 0) {
+        return _Z_RES_OK;
+    }
+    // Build the sample
+    _z_sample_create(&sample, &key, payload, timestamp, encoding, kind, qos, attachment, reliability);
+    // Parse subscription infos svec
+    for (size_t i = 0; i < sub_nb; i++) {
+        _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&subs, i);
+        sub_info->callback(&sample, sub_info->arg);
+    }
+    // Clean up
+    _z_sample_clear(&sample);
+#if Z_FEATURE_MEMOIZATION != 1
+    _z_subscription_infos_svec_release(&subs);  // Otherwise it's released with cache
+#endif
+    return _Z_RES_OK;
 }
 
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub) {
