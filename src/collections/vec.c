@@ -145,6 +145,8 @@ _z_svec_t _z_svec_make(size_t capacity, size_t element_size) {
     return v;
 }
 
+void _z_svec_init(_z_svec_t *dst, size_t element_size) { memset(dst->_val, 0, dst->_capacity * element_size); }
+
 static inline void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num_elements,
                                        size_t element_size, bool use_elem_f) {
     if (use_elem_f) {
@@ -204,10 +206,7 @@ void _z_svec_clear(_z_svec_t *v, z_element_clear_f clear_f, size_t element_size)
 
 void _z_svec_release(_z_svec_t *v) {
     z_free(v->_val);
-    v->_val = NULL;
-
-    v->_capacity = 0;
-    v->_len = 0;
+    *v = _z_svec_null();
 }
 
 void _z_svec_free(_z_svec_t **v, z_element_clear_f clear, size_t element_size) {

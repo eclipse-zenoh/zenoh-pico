@@ -366,16 +366,17 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     if (msg->_messages._capacity == 0) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    _z_network_message_svec_init(&msg->_messages);
     size_t msg_idx = 0;
     while (_z_zbuf_len(zbf) > 0) {
         // Expand message vector if needed
         if (msg_idx >= msg->_messages._capacity) {
             _Z_RETURN_IF_ERR(_z_network_message_svec_expand(&msg->_messages));
+            _z_network_message_svec_init(&msg->_messages);
         }
         // Mark the reading position of the iobfer
         size_t r_pos = _z_zbuf_get_rpos(zbf);
         _z_network_message_t *nm = _z_network_message_svec_get_mut(&msg->_messages, msg_idx);
-        memset(nm, 0, sizeof(_z_network_message_t));
         ret = _z_network_message_decode(nm, zbf);
         if (ret != _Z_RES_OK) {
             _z_network_message_svec_clear(&msg->_messages);

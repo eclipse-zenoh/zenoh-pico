@@ -1140,7 +1140,7 @@ void interest_message(void) {
     // Encode
     assert(_z_n_interest_encode(&wbf, &expected._body._interest) == _Z_RES_OK);
     // Decode
-    _z_n_msg_interest_t decoded;
+    _z_n_msg_interest_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     assert(_z_n_interest_decode(&decoded, &zbf, header) == _Z_RES_OK);
@@ -1236,7 +1236,7 @@ void query_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_query_t expected = gen_query();
     assert(_z_query_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_query_t decoded;
+    _z_msg_query_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     z_result_t res = _z_query_decode(&decoded, &zbf, header);
@@ -1268,7 +1268,7 @@ void err_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_err_t expected = gen_err();
     assert(_z_err_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_err_t decoded;
+    _z_msg_err_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_err_decode(&decoded, &zbf, header));
@@ -1296,7 +1296,7 @@ void reply_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_msg_reply_t expected = gen_reply();
     assert(_z_reply_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_msg_reply_t decoded;
+    _z_msg_reply_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_reply_decode(&decoded, &zbf, header));
@@ -1328,7 +1328,7 @@ void push_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_push_t expected = gen_push();
     assert(_z_push_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_n_msg_push_t decoded;
+    _z_n_msg_push_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     assert(_Z_RES_OK == _z_push_decode(&decoded, &zbf, header));
@@ -1398,7 +1398,7 @@ void request_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_request_t expected = gen_request();
     assert(_z_request_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_n_msg_request_t decoded;
+    _z_n_msg_request_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     z_result_t ret = _z_request_decode(&decoded, &zbf, header);
@@ -1456,7 +1456,7 @@ void response_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_response_t expected = gen_response();
     assert(_z_response_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_n_msg_response_t decoded;
+    _z_n_msg_response_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     z_result_t ret = _z_response_decode(&decoded, &zbf, header);
@@ -1477,7 +1477,7 @@ void response_final_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_response_final_t expected = gen_response_final();
     assert(_z_response_final_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_n_msg_response_final_t decoded;
+    _z_n_msg_response_final_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
     z_result_t ret = _z_response_final_decode(&decoded, &zbf, header);
@@ -1526,7 +1526,7 @@ void join_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_join();
     assert(_z_join_encode(&wbf, expected._header, &expected._body._join) == _Z_RES_OK);
-    _z_t_msg_join_t decoded;
+    _z_t_msg_join_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_join_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1558,7 +1558,7 @@ void init_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_init();
     assert(_z_init_encode(&wbf, expected._header, &expected._body._init) == _Z_RES_OK);
-    _z_t_msg_init_t decoded;
+    _z_t_msg_init_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_init_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1586,7 +1586,7 @@ void open_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_open();
     assert(_z_open_encode(&wbf, expected._header, &expected._body._open) == _Z_RES_OK);
-    _z_t_msg_open_t decoded;
+    _z_t_msg_open_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_open_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1606,7 +1606,7 @@ void close_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_close();
     assert(_z_close_encode(&wbf, expected._header, &expected._body._close) == _Z_RES_OK);
-    _z_t_msg_close_t decoded;
+    _z_t_msg_close_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_close_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1627,7 +1627,7 @@ void keep_alive_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_keep_alive();
     assert(_z_keep_alive_encode(&wbf, expected._header, &expected._body._keep_alive) == _Z_RES_OK);
-    _z_t_msg_keep_alive_t decoded;
+    _z_t_msg_keep_alive_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_keep_alive_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1691,7 +1691,7 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
 _z_network_message_svec_t gen_net_msgs(size_t n) {
     _z_network_message_svec_t ret = _z_network_message_svec_make(n);
     for (size_t i = 0; i < n; i++) {
-        _z_network_message_t *msg = _z_network_message_svec_get(&ret, i);
+        _z_network_message_t *msg = _z_network_message_svec_get_mut(&ret, i);
         memset(msg, 0, sizeof(_z_network_message_t));
         *msg = gen_net_msg();
     }
@@ -1714,7 +1714,7 @@ void frame_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_frame();
     assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
-    _z_t_msg_frame_t decoded;
+    _z_t_msg_frame_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_frame_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1737,7 +1737,7 @@ void fragment_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_fragment();
     assert(_z_fragment_encode(&wbf, expected._header, &expected._body._fragment) == _Z_RES_OK);
-    _z_t_msg_fragment_t decoded;
+    _z_t_msg_fragment_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_fragment_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
@@ -1807,7 +1807,7 @@ void transport_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_transport_message_t expected = gen_transport();
     assert(_z_transport_message_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_transport_message_t decoded;
+    _z_transport_message_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_transport_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);
@@ -1849,7 +1849,7 @@ void scouting_message(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_scouting_message_t expected = gen_scouting();
     assert(_z_scouting_message_encode(&wbf, &expected) == _Z_RES_OK);
-    _z_scouting_message_t decoded;
+    _z_scouting_message_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     z_result_t ret = _z_scouting_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);

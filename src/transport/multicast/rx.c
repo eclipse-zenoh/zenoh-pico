@@ -239,7 +239,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     break;
                 }
                 // Decode message
-                _z_zenoh_message_t zm;
+                _z_zenoh_message_t zm = {0};
                 ret = _z_network_message_decode(&zm, &zbf);
                 zm._reliability = tmsg_reliability;
                 if (ret == _Z_RES_OK) {
