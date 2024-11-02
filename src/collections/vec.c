@@ -158,7 +158,7 @@ void __z_svec_copy_inner(void *dst, const void *src, z_element_copy_f copy, size
 }
 
 void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num_elements, size_t element_size) {
-    if (move == NULL) {
+    if (move == _z_noop_move) {
         memcpy(dst, src, num_elements * element_size);
     } else {
         size_t offset = 0;

@@ -60,7 +60,7 @@ void _z_iosli_free(_z_iosli_t **ios);
 void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
-_Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_copy)
+_Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_copy, _z_noop_move)
 _Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/

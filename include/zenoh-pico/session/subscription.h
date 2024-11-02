@@ -28,10 +28,7 @@ typedef struct {
     void *arg;
 } _z_subscription_infos_t;
 
-static inline void _z_subscription_infos_elem_move(void *dst, void *src) {
-    *(_z_subscription_infos_t *)dst = *(_z_subscription_infos_t *)src;
-}
-_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
 _Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t)
 
 typedef struct {

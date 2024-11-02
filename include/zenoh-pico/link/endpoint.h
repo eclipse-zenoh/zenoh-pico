@@ -54,7 +54,7 @@ z_result_t _z_locator_from_string(_z_locator_t *lc, _z_string_t *s);
 
 size_t _z_locator_size(_z_locator_t *lc);
 void _z_locator_clear(_z_locator_t *lc);
-_Z_ELEM_DEFINE(_z_locator, _z_locator_t, _z_locator_size, _z_locator_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_locator, _z_locator_t, _z_locator_size, _z_locator_clear, _z_noop_copy, _z_noop_move)
 
 /*------------------ Locator array ------------------*/
 _Z_ARRAY_DEFINE(_z_locator, _z_locator_t)

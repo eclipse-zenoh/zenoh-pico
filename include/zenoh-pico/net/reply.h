@@ -67,7 +67,7 @@ static inline _z_reply_data_t _z_reply_data_init(void) {
 void _z_reply_data_clear(_z_reply_data_t *rd);
 z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
 
-_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
 
 /**
@@ -102,7 +102,7 @@ typedef struct _z_pending_reply_t {
 bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
 void _z_pending_reply_clear(_z_pending_reply_t *res);
 
-_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 
 #endif /* ZENOH_PICO_REPLY_NETAPI_H */
