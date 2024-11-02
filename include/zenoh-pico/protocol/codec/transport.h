@@ -17,7 +17,6 @@
 
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
 
 z_result_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
 z_result_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);

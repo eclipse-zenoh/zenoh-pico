@@ -127,9 +127,9 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             }
 
             // Handle all the zenoh message, one by one
-            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            size_t len = _z_svec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
+                _z_network_message_t *zm = _z_network_message_svec_get(&t_msg->_body._frame._messages, i);
                 zm->_reliability = tmsg_reliability;
                 _z_handle_network_message(ztu->_common._session, zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
             }

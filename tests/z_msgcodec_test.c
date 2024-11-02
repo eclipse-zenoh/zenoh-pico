@@ -1688,13 +1688,12 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
             break;
     }
 }
-_z_network_message_vec_t gen_net_msgs(size_t n) {
-    _z_network_message_vec_t ret = _z_network_message_vec_make(n);
+_z_network_message_svec_t gen_net_msgs(size_t n) {
+    _z_network_message_svec_t ret = _z_network_message_svec_make(n);
     for (size_t i = 0; i < n; i++) {
-        _z_network_message_t *msg = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
+        _z_network_message_t *msg = _z_network_message_svec_get(&ret, i);
         memset(msg, 0, sizeof(_z_network_message_t));
         *msg = gen_net_msg();
-        _z_network_message_vec_append(&ret, msg);
     }
     return ret;
 }
@@ -1706,7 +1705,8 @@ void assert_eq_frame(const _z_t_msg_frame_t *left, const _z_t_msg_frame_t *right
     assert(left->_sn == right->_sn);
     assert(left->_messages._len == right->_messages._len);
     for (size_t i = 0; i < left->_messages._len; i++) {
-        assert_eq_net_msg(left->_messages._val[i], right->_messages._val[i]);
+        assert_eq_net_msg(_z_network_message_svec_get(&left->_messages, i),
+                          _z_network_message_svec_get(&right->_messages, i));
     }
 }
 void frame_message(void) {

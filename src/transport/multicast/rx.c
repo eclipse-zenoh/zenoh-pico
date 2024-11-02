@@ -164,9 +164,9 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
             // Handle all the zenoh message, one by one
             uint16_t mapping = entry->_peer_id;
-            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            size_t len = _z_svec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
+                _z_network_message_t *zm = _z_network_message_svec_get(&t_msg->_body._frame._messages, i);
                 zm->_reliability = tmsg_reliability;
 
                 _z_msg_fix_mapping(zm, mapping);
