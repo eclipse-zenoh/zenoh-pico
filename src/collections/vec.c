@@ -225,28 +225,32 @@ size_t _z_svec_len(const _z_svec_t *v) { return v->_len; }
 
 bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
 
+bool _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_size) {
+    // Allocate a new vector
+    size_t _capacity = v->_capacity == 0 ? 1 : (v->_capacity << 1);
+    void *_val = (void *)z_malloc(_capacity * element_size);
+    if (_val == NULL) {
+        return false;
+    }
+    __z_svec_move_inner(_val, v->_val, move, v->_len, element_size);
+    // Free the old data
+    z_free(v->_val);
+
+    // Update the current vector
+    v->_val = _val;
+    v->_capacity = _capacity;
+    return true;
+}
+
 bool _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t element_size) {
     if (v->_len == v->_capacity) {
-        // Allocate a new vector
-        size_t _capacity = v->_capacity == 0 ? 1 : (v->_capacity << 1);
-        void *_val = (void *)z_malloc(_capacity * element_size);
-        if (_val != NULL) {
-            __z_svec_move_inner(_val, v->_val, move, v->_len, element_size);
-            // Free the old data
-            z_free(v->_val);
-
-            // Update the current vector
-            v->_val = _val;
-            v->_capacity = _capacity;
-            memcpy((uint8_t *)v->_val + v->_len * element_size, e, element_size);
-            v->_len++;
-        } else {
+        if (!_z_svec_expand(v, move, element_size)) {
             return false;
         }
-    } else {
-        memcpy((uint8_t *)v->_val + v->_len * element_size, e, element_size);
-        v->_len++;
     }
+    // Append element
+    memcpy((uint8_t *)v->_val + v->_len * element_size, e, element_size);
+    v->_len++;
     return true;
 }
 
