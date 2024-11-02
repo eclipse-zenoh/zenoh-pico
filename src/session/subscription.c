@@ -137,10 +137,7 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t 
         if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
             _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
                                                     .callback = _Z_RC_IN_VAL(sub)->_callback};
-            if (!_z_subscription_infos_svec_append(sub_infos, &new_sub_info)) {
-                _Z_ERROR("Failed to allocate subscription info vector");
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
+            _Z_RETURN_IF_ERR(_z_subscription_infos_svec_append(sub_infos, &new_sub_info));
         }
         xs = _z_subscription_rc_list_tail(xs);
     }
