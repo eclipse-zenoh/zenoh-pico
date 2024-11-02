@@ -50,7 +50,7 @@ static inline void _z_subscription_update_cache(_z_session_t *zn, const _z_keyex
     // Register new info
     zn->_subscription_cache.ke_in = _z_keyexpr_duplicate(ke_in);
     zn->_subscription_cache.ke_out = _z_keyexpr_duplicate(ke_out);
-    _z_subscription_infos_svec_move(&zn->_subscription_cache.infos, infos);
+    zn->_subscription_cache.infos = _z_subscription_infos_svec_alias(infos);
 }
 
 void _z_subscription_cache_clear(_z_subscription_cache_t *cache) {
@@ -60,9 +60,12 @@ void _z_subscription_cache_clear(_z_subscription_cache_t *cache) {
 }
 
 #else
-static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke) {
+static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke, _z_keyexpr_t *ke_val,
+                                                  _z_subscription_infos_svec_t *infos_val) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(ke);
+    _ZP_UNUSED(ke_val);
+    _ZP_UNUSED(infos_val);
     return false;
 }
 
@@ -209,7 +212,6 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
         }
         // Update cache
         _z_subscription_update_cache(zn, keyexpr, &key, &subs);
-        subs = _z_subscription_infos_svec_alias(&zn->_subscription_cache.infos);
     }
     // Check if there is subs
     size_t sub_nb = _z_subscription_infos_svec_len(&subs);
