@@ -257,6 +257,8 @@ void *_z_svec_get(const _z_svec_t *v, size_t i, size_t element_size) {
     return (uint8_t *)v->_val + i * element_size;
 }
 
+void *_z_svec_get_mut(_z_svec_t *v, size_t i, size_t element_size) { return (uint8_t *)v->_val + i * element_size; }
+
 void _z_svec_set(_z_svec_t *v, size_t i, void *e, z_element_clear_f clear, size_t element_size) {
     assert(i < v->_len);
     clear((uint8_t *)v->_val + i * element_size);
