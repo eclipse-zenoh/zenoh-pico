@@ -178,6 +178,11 @@
 #define Z_GET_TIMEOUT_DEFAULT 10000
 
 /**
+ * Average size of a frame message (bytes). Used to evaluate initial decoding frame size.
+ */
+#define Z_CONFIG_FRAME_AVG_MSG_SIZE 32
+
+/**
  * Default "nop" instruction
  */
 #define ZP_ASM_NOP __asm__("nop")

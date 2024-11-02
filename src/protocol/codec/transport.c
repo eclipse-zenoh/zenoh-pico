@@ -28,8 +28,9 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
+#define _Z_FRAME_VEC_BASE_SIZE 8  // Abritrary small value
 #define _Z_FRAME_VEC_SIZE_FROM_ZBUF_LEN(len) \
-    16 + (len) / 32  // Arbritrary values to approximate number of messages in frame
+    _Z_FRAME_VEC_BASE_SIZE + (len) / Z_CONFIG_FRAME_AVG_MSG_SIZE  // Approximate number of messages in frame
 
 uint8_t _z_whatami_to_uint8(z_whatami_t whatami) {
     return (whatami >> 1) & 0x03;  // get set bit index; only first 3 bits can be set
@@ -361,7 +362,6 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     }
     // Create message vector
     size_t var_size = _Z_FRAME_VEC_SIZE_FROM_ZBUF_LEN(_z_zbuf_len(zbf));
-    // printf("Pouet %ld\n", var_size);
     msg->_messages = _z_network_message_svec_make(var_size);
     if (msg->_messages._capacity == 0) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
