@@ -70,7 +70,7 @@
 
 #define _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name)     \
     _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(prefix, name) \
-    z_result_t prefix##_##name##_take_loaned(prefix##_owned_##name##_t *dst, prefix##_loaned_##name##_t *src);
+    z_result_t prefix##_##name##_take_from_loaned(prefix##_owned_##name##_t *dst, prefix##_loaned_##name##_t *src);
 
 #define _Z_OWNED_FUNCTIONS_DEF_PREFIX(prefix, name)     \
     _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name) \
@@ -126,8 +126,8 @@
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_move, f_drop,        \
                                                            attribute)                                                  \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute) \
-    attribute z_result_t prefix##_##name##_take_loaned(prefix##_owned_##name##_t *obj,                                 \
-                                                       prefix##_loaned_##name##_t *src) {                              \
+    attribute z_result_t prefix##_##name##_take_from_loaned(prefix##_owned_##name##_t *obj,                            \
+                                                            prefix##_loaned_##name##_t *src) {                         \
         f_move((&obj->_val), src);                                                                                     \
         return _Z_RES_OK;                                                                                              \
     }
