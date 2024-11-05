@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     z_owned_publisher_t pub;
     if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
