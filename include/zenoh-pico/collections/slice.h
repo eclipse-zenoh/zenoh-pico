@@ -51,8 +51,8 @@ typedef struct {
     _z_delete_context_t _delete_context;
 } _z_slice_t;
 
-static inline _z_slice_t _z_slice_empty(void) { return (_z_slice_t){0}; }
-static inline void _z_slice_reset(_z_slice_t *bs) { *bs = _z_slice_empty(); }
+static inline _z_slice_t _z_slice_null(void) { return (_z_slice_t){0}; }
+static inline void _z_slice_reset(_z_slice_t *bs) { *bs = _z_slice_null(); }
 static inline bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
 static inline bool _z_slice_check(const _z_slice_t *slice) { return slice->start != NULL; }
 static inline _z_slice_t _z_slice_alias(const _z_slice_t bs) {

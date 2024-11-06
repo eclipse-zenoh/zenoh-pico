@@ -172,7 +172,7 @@ _z_wbuf_t gen_wbuf(size_t len) {
 
 _z_slice_t gen_slice(size_t len) {
     if (len == 0) {
-        return _z_slice_empty();
+        return _z_slice_null();
     }
 
     uint8_t *p = (uint8_t *)z_malloc(sizeof(uint8_t) * len);

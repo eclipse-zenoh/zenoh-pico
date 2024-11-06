@@ -225,7 +225,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
     } else {
-        msg->_cookie = _z_slice_empty();
+        msg->_cookie = _z_slice_null();
     }
 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
@@ -270,10 +270,10 @@ z_result_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_slice_empty();
+            msg->_cookie = _z_slice_null();
         }
     } else {
-        msg->_cookie = _z_slice_empty();
+        msg->_cookie = _z_slice_null();
     }
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x02);

@@ -149,7 +149,7 @@ _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, 0);
         return _z_slice_alias_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
     }
-    return _z_slice_empty();
+    return _z_slice_null();
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {

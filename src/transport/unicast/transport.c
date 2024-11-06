@@ -227,7 +227,7 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
     // Encode InitAck
-    _z_slice_t cookie = _z_slice_empty();
+    _z_slice_t cookie = _z_slice_null();
     _z_transport_message_t iam = _z_t_msg_make_init_ack(whatami, *local_zid, cookie);
     // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
     if (iam._body._init._seq_num_res > tmsg._body._init._seq_num_res) {
