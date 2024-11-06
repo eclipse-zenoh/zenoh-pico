@@ -554,7 +554,7 @@ void payload_field(void) {
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
 
-    _z_bytes_t d_pld;
+    _z_bytes_t d_pld = _z_bytes_null();
     res = _z_bytes_decode(&d_pld, &zbf);
     assert(res == _Z_RES_OK);
     printf("   ");

@@ -282,7 +282,6 @@ z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice
 z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
 z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
-    *bs = _z_bytes_null();
     // Decode slice
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
@@ -351,7 +350,6 @@ z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
 }
 
 z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
-    *str = _z_string_null();
     _z_zint_t len = 0;
     // Decode string length
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
