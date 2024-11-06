@@ -76,11 +76,10 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return p;                                                                                                    \
     }                                                                                                                \
     static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                                                \
-        name##_rc_t c = name##_rc_null();                                                                            \
         if (_z_rc_increase_strong(p->_cnt) == _Z_RES_OK) {                                                           \
-            c = *p;                                                                                                  \
+            return *p;                                                                                               \
         }                                                                                                            \
-        return c;                                                                                                    \
+        return name##_rc_null();                                                                                     \
     }                                                                                                                \
     static inline name##_rc_t *name##_rc_clone_as_ptr(const name##_rc_t *p) {                                        \
         name##_rc_t *c = (name##_rc_t *)z_malloc(sizeof(name##_rc_t));                                               \
@@ -93,12 +92,10 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return c;                                                                                                    \
     }                                                                                                                \
     static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                                      \
-        name##_weak_t c = name##_weak_null();                                                                        \
         if (_z_rc_increase_weak(p->_cnt) == _Z_RES_OK) {                                                             \
-            c._val = p->_val;                                                                                        \
-            c._cnt = p->_cnt;                                                                                        \
+            return (name##_weak_t){._val = p->_val, ._cnt = p->_cnt};                                                \
         }                                                                                                            \
-        return c;                                                                                                    \
+        return name##_weak_null();                                                                                   \
     }                                                                                                                \
     static inline name##_weak_t *name##_rc_clone_as_weak_ptr(const name##_rc_t *p) {                                 \
         name##_weak_t *c = (name##_weak_t *)z_malloc(sizeof(name##_weak_t));                                         \
@@ -137,20 +134,17 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return res;                                                                                                  \
     }                                                                                                                \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                                          \
-        name##_weak_t c = name##_weak_null();                                                                        \
         if (_z_rc_increase_weak(p->_cnt) == _Z_RES_OK) {                                                             \
-            c = *p;                                                                                                  \
+            return *p;                                                                                               \
         }                                                                                                            \
-        return c;                                                                                                    \
+        return name##_weak_null();                                                                                   \
     }                                                                                                                \
     static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) { *dst = name##_weak_clone(p); } \
     static inline name##_rc_t name##_weak_upgrade(const name##_weak_t *p) {                                          \
-        name##_rc_t c = name##_rc_null();                                                                            \
         if (_z_rc_weak_upgrade(p->_cnt) == _Z_RES_OK) {                                                              \
-            c._val = p->_val;                                                                                        \
-            c._cnt = p->_cnt;                                                                                        \
+            return (name##_rc_t){._val = p->_val, ._cnt = p->_cnt};                                                  \
         }                                                                                                            \
-        return c;                                                                                                    \
+        return name##_rc_null();                                                                                     \
     }                                                                                                                \
     static inline bool name##_weak_eq(const name##_weak_t *left, const name##_weak_t *right) {                       \
         return (left->_val == right->_val);                                                                          \
@@ -200,11 +194,10 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return p;                                                                                             \
     }                                                                                                         \
     static inline name##_simple_rc_t name##_simple_rc_clone(const name##_simple_rc_t *p) {                    \
-        name##_simple_rc_t c = name##_simple_rc_null();                                                       \
         if (_z_simple_rc_increase(p->_cnt) == _Z_RES_OK) {                                                    \
-            c = *p;                                                                                           \
+            return *p;                                                                                        \
         }                                                                                                     \
-        return c;                                                                                             \
+        return name##_simple_rc_null();                                                                       \
     }                                                                                                         \
     static inline name##_simple_rc_t *name##_simple_rc_clone_as_ptr(const name##_simple_rc_t *p) {            \
         name##_simple_rc_t *c = (name##_simple_rc_t *)z_malloc(sizeof(name##_simple_rc_t));                   \
