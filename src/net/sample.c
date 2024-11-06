@@ -65,10 +65,14 @@ void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, co
     s->qos = qos;
     s->reliability = reliability;
     s->keyexpr = _z_keyexpr_steal(key);
-    s->timestamp = _z_timestamp_check(timestamp) ? _z_timestamp_duplicate(timestamp) : _z_timestamp_null();
     _z_encoding_move(&s->encoding, encoding);
     _z_bytes_move(&s->attachment, attachment);
     _z_bytes_move(&s->payload, payload);
+    if (_z_timestamp_check(timestamp)) {
+        _z_timestamp_copy(&s->timestamp, timestamp);
+    } else {
+        _z_timestamp_invalid(&s->timestamp);
+    }
 }
 #else
 void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,

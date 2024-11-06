@@ -26,6 +26,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
+void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src) { *dst = *src; }
+
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) { return *tstamp; }
 
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {

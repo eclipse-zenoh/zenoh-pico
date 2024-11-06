@@ -70,7 +70,9 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){0}; }
-static inline bool _z_timestamp_check(const _z_timestamp_t *stamp) { return stamp->valid; }
+static inline void _z_timestamp_invalid(_z_timestamp_t *tstamp) { tstamp->valid = false; }
+static inline bool _z_timestamp_check(const _z_timestamp_t *tstamp) { return tstamp->valid; }
+void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
