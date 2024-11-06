@@ -125,8 +125,12 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
 }
 
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    _Z_CLEAN_RETURN_IF_ERR(_z_arc_slice_svec_append(&dst->_slices, s), _z_arc_slice_drop(s));
-    return _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
+    ret = _z_arc_slice_svec_append(&dst->_slices, s);
+    if (ret != _Z_RES_OK) {
+        _z_arc_slice_drop(s);
+    }
+    return ret;
 }
 
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
