@@ -55,16 +55,13 @@
 extern "C" {
 #endif
 
-void _z_report_system_error(int errcode);
-
-#define _Z_CHECK_SYS_ERR(expr)             \
-    do {                                   \
-        int __res = expr;                  \
-        if (__res != 0) {                  \
-            _z_report_system_error(__res); \
-            return _Z_ERR_SYSTEM_GENERIC;  \
-        }                                  \
-        return _Z_RES_OK;                  \
+#define _Z_CHECK_SYS_ERR(expr)            \
+    do {                                  \
+        int __res = expr;                 \
+        if (__res > 0) {                  \
+            return _Z_ERR_SYSTEM_GENERIC; \
+        }                                 \
+        return __res;                     \
     } while (false)
 
 /*------------------ Random ------------------*/
