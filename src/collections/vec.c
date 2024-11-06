@@ -206,7 +206,7 @@ void _z_svec_clear(_z_svec_t *v, z_element_clear_f clear_f, size_t element_size)
 
 void _z_svec_release(_z_svec_t *v) {
     z_free(v->_val);
-    *v = _z_svec_null();
+    v->_capacity = 0;
 }
 
 void _z_svec_free(_z_svec_t **v, z_element_clear_f clear, size_t element_size) {
