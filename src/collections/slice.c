@@ -111,10 +111,7 @@ z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset
 }
 
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
-    dst->start = src->start;
-    dst->len = src->len;
-    dst->_delete_context = src->_delete_context;
-
+    *dst = *src;
     _z_slice_reset(src);
 }
 

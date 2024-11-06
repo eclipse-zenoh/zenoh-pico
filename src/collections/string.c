@@ -71,7 +71,7 @@ z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, si
     return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
 }
 
-void _z_string_move(_z_string_t *dst, _z_string_t *src) { *dst = _z_string_steal(src); }
+void _z_string_move(_z_string_t *dst, _z_string_t *src) { _z_slice_move(&dst->_slice, &src->_slice); }
 
 _z_string_t _z_string_steal(_z_string_t *str) {
     _z_string_t ret;
