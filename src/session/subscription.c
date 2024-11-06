@@ -32,7 +32,7 @@
 
 #define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
 
-#if Z_FEATURE_MEMOIZATION == 1
+#if Z_FEATURE_RX_CACHE == 1
 static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke, _z_keyexpr_t *ke_val,
                                                   _z_subscription_infos_svec_t *infos_val) {
     if (!_z_keyexpr_equals(ke, &zn->_subscription_cache.ke_in)) {
@@ -77,7 +77,7 @@ static inline void _z_subscription_update_cache(_z_session_t *zn, const _z_keyex
     _ZP_UNUSED(infos);
     return;
 }
-#endif  // Z_FEATURE_MEMOIZATION == 1
+#endif  // Z_FEATURE_RX_CACHE == 1
 
 // Subscription
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
@@ -226,7 +226,7 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
     }
     // Clean up
     _z_sample_clear(&sample);
-#if Z_FEATURE_MEMOIZATION != 1
+#if Z_FEATURE_RX_CACHE != 1
     _z_subscription_infos_svec_release(&subs);  // Otherwise it's released with cache
 #endif
     return _Z_RES_OK;

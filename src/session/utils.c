@@ -60,7 +60,7 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_local_subscriptions = NULL;
     zn->_remote_subscriptions = NULL;
-#if Z_FEATURE_MEMOIZATION == 1
+#if Z_FEATURE_RX_CACHE == 1
     memset(&zn->_subscription_cache, 0, sizeof(zn->_subscription_cache));
 #endif
 #endif
@@ -114,7 +114,7 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
-#if Z_FEATURE_MEMOIZATION == 1
+#if Z_FEATURE_RX_CACHE == 1
     _z_subscription_cache_clear(&zn->_subscription_cache);
 #endif
 #endif

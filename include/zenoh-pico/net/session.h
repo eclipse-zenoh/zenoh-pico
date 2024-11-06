@@ -53,7 +53,7 @@ typedef struct _z_session_t {
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_rc_list_t *_local_subscriptions;
     _z_subscription_rc_list_t *_remote_subscriptions;
-#if Z_FEATURE_MEMOIZATION == 1
+#if Z_FEATURE_RX_CACHE == 1
     _z_subscription_cache_t _subscription_cache;
 #endif
 #endif

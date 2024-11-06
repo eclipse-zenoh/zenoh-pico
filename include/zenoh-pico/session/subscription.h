@@ -44,7 +44,7 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t *keyexp
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 
-#if Z_FEATURE_MEMOIZATION == 1
+#if Z_FEATURE_RX_CACHE == 1
 void _z_subscription_cache_clear(_z_subscription_cache_t *cache);
 #endif
 

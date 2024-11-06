@@ -30,7 +30,7 @@
 
 #define _Z_FRAME_VEC_BASE_SIZE 8  // Abritrary small value
 #define _Z_FRAME_VEC_SIZE_FROM_ZBUF_LEN(len) \
-    _Z_FRAME_VEC_BASE_SIZE + (len) / Z_CONFIG_FRAME_AVG_MSG_SIZE  // Approximate number of messages in frame
+    (_Z_FRAME_VEC_BASE_SIZE + (len) / Z_CONFIG_FRAME_AVG_MSG_SIZE)  // Approximate number of messages in frame
 
 uint8_t _z_whatami_to_uint8(z_whatami_t whatami) {
     return (whatami >> 1) & 0x03;  // get set bit index; only first 3 bits can be set
