@@ -82,7 +82,6 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     if (_z_keyexpr_has_suffix(rk)) {
         _z_string_clear(&rk->_suffix);
     }
-    rk->_suffix = _z_string_null();
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
