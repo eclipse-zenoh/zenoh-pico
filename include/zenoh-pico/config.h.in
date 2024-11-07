@@ -183,6 +183,11 @@
 #define Z_CONFIG_FRAME_AVG_MSG_SIZE 32
 
 /**
+ * Size of the rx pool. Size according to expected number of messages per frame for best batching performance.
+ */
+#define Z_CONFIG_RX_POOL_SIZE 8
+
+/**
  * Default "nop" instruction
  */
 #define ZP_ASM_NOP __asm__("nop")
