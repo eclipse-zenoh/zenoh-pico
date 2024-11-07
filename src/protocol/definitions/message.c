@@ -23,7 +23,6 @@
 void _z_msg_reply_clear(_z_msg_reply_t *msg) { _z_push_body_clear(&msg->_body); }
 
 void _z_msg_put_clear(_z_msg_put_t *msg) {
-    // TODO: systematically move everything so there's nothing to clear
     _z_bytes_drop(&msg->_payload);
     _z_bytes_drop(&msg->_attachment);
     _z_encoding_clear(&msg->_encoding);
