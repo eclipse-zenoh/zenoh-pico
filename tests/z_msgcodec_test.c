@@ -1724,8 +1724,9 @@ void frame_message(void) {
     assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
     _z_t_msg_frame_t decoded = {0};
     _z_arc_slice_svec_t arcs = _z_arc_slice_svec_make(1);
+    _z_network_message_svec_t msg = _z_network_message_svec_make(1);
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    z_result_t ret = _z_frame_decode(&decoded, &zbf, expected._header, &arcs);
+    z_result_t ret = _z_frame_decode(&decoded, &zbf, expected._header, &arcs, &msg);
     assert(_Z_RES_OK == ret);
     assert_eq_frame(&expected._body._frame, &decoded);
     _z_t_msg_frame_clear(&decoded);
@@ -1818,8 +1819,9 @@ void transport_message(void) {
     assert(_z_transport_message_encode(&wbf, &expected) == _Z_RES_OK);
     _z_transport_message_t decoded = {0};
     _z_arc_slice_svec_t arcs = _z_arc_slice_svec_make(1);
+    _z_network_message_svec_t msg = _z_network_message_svec_make(1);
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    z_result_t ret = _z_transport_message_decode(&decoded, &zbf, &arcs);
+    z_result_t ret = _z_transport_message_decode(&decoded, &zbf, &arcs, &msg);
     assert(_Z_RES_OK == ret);
     assert_eq_transport(&expected, &decoded);
     _z_t_msg_clear(&decoded);

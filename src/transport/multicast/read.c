@@ -107,7 +107,8 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         while (_z_zbuf_len(&zbuf) > 0) {
             // Decode one session message
             _z_transport_message_t t_msg;
-            z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf, &ztm->_common._arc_pool);
+            z_result_t ret =
+                _z_transport_message_decode(&t_msg, &zbuf, &ztm->_common._arc_pool, &ztm->_common._msg_pool);
             if (ret == _Z_RES_OK) {
                 ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
 

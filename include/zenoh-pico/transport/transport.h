@@ -82,6 +82,7 @@ typedef struct {
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
     _z_arc_slice_svec_t _arc_pool;
+    _z_network_message_svec_t _msg_pool;
     volatile _z_zint_t _lease;
     volatile bool _transmitted;
 #if Z_FEATURE_MULTI_THREAD == 1
