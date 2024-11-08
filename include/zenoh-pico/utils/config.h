@@ -50,6 +50,7 @@ z_result_t _z_config_init(_z_config_t *ps);
  *   value: The value of the property to add.
  */
 z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value);
+z_result_t _zp_config_insert_string(_z_config_t *ps, uint8_t key, const _z_string_t *value);
 
 /**
  * Get the property with the given key from a properties map.

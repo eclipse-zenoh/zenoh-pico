@@ -14,6 +14,9 @@
 
 #include <stdint.h>
 
+#include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/protocol/core.h"
+
 #ifndef ZENOH_PICO_UTILS_UUID_H
 #define ZENOH_PICO_UTILS_UUID_H
 
@@ -29,6 +32,17 @@ extern "C" {
  *   uuid_str: A valid UUID string.
  */
 void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str);
+
+/**
+ * Converts an Zenoh ID to string.
+ *
+ * Parameters:
+ *   id: Zenoh ID.
+ *
+ * Returns:
+ *   ID string representation
+ */
+_z_string_t _z_id_to_string(const _z_id_t *id);
 
 #ifdef __cplusplus
 }

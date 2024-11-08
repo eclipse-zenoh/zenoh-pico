@@ -132,11 +132,9 @@ int main(int argc, char **argv) {
     zc_init_logger();
     const char *encoding_expected =
         z_sample_kind(sample) == Z_SAMPLE_KIND_PUT ? "zenoh/bytes" : "zenoh/bytes;test_encoding";
-    z_pu
 #endif
 
-        z_view_keyexpr_t key_demo_example,
-        key_demo_example_a, key_demo_example_starstar;
+    z_view_keyexpr_t key_demo_example, key_demo_example_a, key_demo_example_starstar;
     z_view_keyexpr_from_str(&key_demo_example, "demo/example");
     z_view_keyexpr_from_str(&key_demo_example_a, "demo/example/a");
     z_view_keyexpr_from_str(&key_demo_example_starstar, "demo/example/**");
@@ -199,10 +197,9 @@ int main(int argc, char **argv) {
     assert(z_internal_check(s1));
     z_id_t _ret_zid = z_info_zid(z_loan(s1));
     printf("Session 1 with PID: 0x");
-    for (unsigned long i = 0; i < sizeof(_ret_zid); i++) {
-        printf("%.2X", _ret_zid.id[i]);
-    }
-    printf("\n");
+    z_owned_string_t id_str;
+    z_id_to_string(&_ret_zid, &id_str);
+    printf("%.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
 
     z_owned_closure_zid_t _ret_closure_zid;
     z_closure(&_ret_closure_zid, zid_handler, NULL, NULL);
@@ -243,10 +240,8 @@ int main(int argc, char **argv) {
     assert(z_internal_check(s2));
     _ret_zid = z_info_zid(z_loan(s2));
     printf("Session 2 with PID: 0x");
-    for (unsigned long i = 0; i < sizeof(_ret_zid); i++) {
-        printf("%.2X", _ret_zid.id[i]);
-    }
-    printf("\n");
+    z_id_to_string(&_ret_zid, &id_str);
+    printf("%.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
 
 #ifdef ZENOH_PICO
     zp_start_read_task(z_loan_mut(s2), NULL);
