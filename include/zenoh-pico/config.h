@@ -45,6 +45,7 @@
 #define Z_FEATURE_LOCAL_SUBSCRIBER 0
 #define Z_FEATURE_PUBLISHER_SESSION_CHECK 1
 #define Z_FEATURE_BATCHING 1
+#define Z_FEATURE_RX_CACHE 0
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
@@ -175,6 +176,11 @@
  * Default get timeout in milliseconds.
  */
 #define Z_GET_TIMEOUT_DEFAULT 10000
+
+/**
+ * Average size of a frame message (bytes). Used to evaluate initial decoding frame size.
+ */
+#define Z_CONFIG_FRAME_AVG_MSG_SIZE 32
 
 /**
  * Default "nop" instruction

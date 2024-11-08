@@ -27,11 +27,8 @@ inline size_t _z_arc_slice_size(const _z_arc_slice_t *s) {
     (void)s;
     return sizeof(_z_arc_slice_t);
 }
-static inline void _z_arc_slice_elem_move(void *dst, void *src) {
-    _z_arc_slice_move((_z_arc_slice_t *)dst, (_z_arc_slice_t *)src);
-}
-_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy)
-_Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
+_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move)
+_Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t, true)
 
 /*-------- Bytes --------*/
 /**

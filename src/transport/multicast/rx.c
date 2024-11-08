@@ -130,9 +130,10 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             }
             // Note that we receive data from peer
             entry->_received = true;
-
+            z_reliability_t tmsg_reliability;
             // Check if the SN is correct
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
+                tmsg_reliability = Z_RELIABILITY_RELIABLE;
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) ==
@@ -147,6 +148,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     break;
                 }
             } else {
+                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
                                    t_msg->_body._frame._sn) == true) {
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
@@ -162,10 +164,10 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
             // Handle all the zenoh message, one by one
             uint16_t mapping = entry->_peer_id;
-            size_t len = _z_vec_len(&t_msg->_body._frame._messages);
+            size_t len = _z_svec_len(&t_msg->_body._frame._messages);
             for (size_t i = 0; i < len; i++) {
-                _z_network_message_t *zm = _z_network_message_vec_get(&t_msg->_body._frame._messages, i);
-                zm->_reliability = _z_t_msg_get_reliability(t_msg);
+                _z_network_message_t *zm = _z_network_message_svec_get(&t_msg->_body._frame._messages, i);
+                zm->_reliability = tmsg_reliability;
 
                 _z_msg_fix_mapping(zm, mapping);
                 _z_handle_network_message(ztm->_common._session, zm, mapping);
@@ -186,11 +188,14 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 
             _z_wbuf_t *dbuf;
             uint8_t *dbuf_state;
+            z_reliability_t tmsg_reliability;
             // Select the right defragmentation buffer
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)) {
+                tmsg_reliability = Z_RELIABILITY_RELIABLE;
                 dbuf = &entry->_dbuf_reliable;
                 dbuf_state = &entry->_state_reliable;
             } else {
+                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
                 dbuf = &entry->_dbuf_best_effort;
                 dbuf_state = &entry->_state_best_effort;
             }
@@ -234,9 +239,9 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     break;
                 }
                 // Decode message
-                _z_zenoh_message_t zm;
+                _z_zenoh_message_t zm = {0};
                 ret = _z_network_message_decode(&zm, &zbf);
-                zm._reliability = _z_t_msg_get_reliability(t_msg);
+                zm._reliability = tmsg_reliability;
                 if (ret == _Z_RES_OK) {
                     uint16_t mapping = entry->_peer_id;
                     _z_msg_fix_mapping(&zm, mapping);

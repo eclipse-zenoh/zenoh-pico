@@ -94,7 +94,6 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
 
 z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     z_result_t ret = _Z_RES_OK;
-    *msg = (_z_n_msg_push_t){0};
     msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
@@ -208,7 +207,6 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return _Z_RES_OK;
 }
 z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header) {
-    *msg = (_z_n_msg_request_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
@@ -338,7 +336,6 @@ z_result_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
 
 z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
-    *msg = (_z_n_msg_response_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     z_result_t ret = _Z_RES_OK;
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
@@ -384,8 +381,6 @@ z_result_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_fina
 
 z_result_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
-
-    *msg = (_z_n_msg_response_final_t){0};
     z_result_t ret = _Z_RES_OK;
     ret |= _z_zsize_decode(&msg->_request_id, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
@@ -444,7 +439,6 @@ z_result_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return _Z_RES_OK;
 }
 z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = (_z_n_msg_declare_t){0};
     decl->_ext_qos = _Z_N_QOS_DEFAULT;
     // Retrieve interest id
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {

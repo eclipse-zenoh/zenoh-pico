@@ -28,6 +28,10 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
+#define _Z_FRAME_VEC_BASE_SIZE 8  // Abritrary small value
+#define _Z_FRAME_VEC_SIZE_FROM_ZBUF_LEN(len) \
+    (_Z_FRAME_VEC_BASE_SIZE + (len) / Z_CONFIG_FRAME_AVG_MSG_SIZE)  // Approximate number of messages in frame
+
 uint8_t _z_whatami_to_uint8(z_whatami_t whatami) {
     return (whatami >> 1) & 0x03;  // get set bit index; only first 3 bits can be set
 }
@@ -339,9 +343,9 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
     if (ret == _Z_RES_OK) {
-        size_t len = _z_network_message_vec_len(&msg->_messages);
+        size_t len = _z_network_message_svec_len(&msg->_messages);
         for (size_t i = 0; i < len; i++) {
-            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
+            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_svec_get(&msg->_messages, i)))
         }
     }
 
@@ -352,38 +356,45 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     z_result_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_frame_t){0};
 
-    ret |= _z_zsize_decode(&msg->_sn, zbf);
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x04);
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_sn, zbf));
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x04));
     }
-    if (ret == _Z_RES_OK) {
-        msg->_messages = _z_network_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-        while (_z_zbuf_len(zbf) > 0) {
-            // Mark the reading position of the iobfer
-            size_t r_pos = _z_zbuf_get_rpos(zbf);
-            _z_network_message_t *nm = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
-            memset(nm, 0, sizeof(_z_network_message_t));
-            ret |= _z_network_message_decode(nm, zbf);
-            if (ret == _Z_RES_OK) {
-                _z_network_message_vec_append(&msg->_messages, nm);
-            } else {
-                _z_n_msg_free(&nm);
-                _z_network_message_vec_clear(&msg->_messages);
-
-                _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
-
-                // FIXME: Check for the return error, since not all of them means a decoding error
-                //        in this particular case. As of now, we roll-back the reading position
-                //        and return to the Zenoh transport-level decoder.
-                //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
-                if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
-                    ret = _Z_RES_OK;
-                }
-                break;
-            }
+    // Create message vector
+    size_t var_size = _Z_FRAME_VEC_SIZE_FROM_ZBUF_LEN(_z_zbuf_len(zbf));
+    msg->_messages = _z_network_message_svec_make(var_size);
+    if (msg->_messages._capacity == 0) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_network_message_svec_init(&msg->_messages);
+    size_t msg_idx = 0;
+    while (_z_zbuf_len(zbf) > 0) {
+        // Expand message vector if needed
+        if (msg_idx >= msg->_messages._capacity) {
+            _Z_RETURN_IF_ERR(_z_network_message_svec_expand(&msg->_messages));
+            _z_network_message_svec_init(&msg->_messages);
         }
+        // Mark the reading position of the iobfer
+        size_t r_pos = _z_zbuf_get_rpos(zbf);
+        _z_network_message_t *nm = _z_network_message_svec_get_mut(&msg->_messages, msg_idx);
+        ret = _z_network_message_decode(nm, zbf);
+        if (ret != _Z_RES_OK) {
+            _z_network_message_svec_clear(&msg->_messages);
+            _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
+
+            // FIXME: Check for the return error, since not all of them means a decoding error
+            //        in this particular case. As of now, we roll-back the reading position
+            //        and return to the Zenoh transport-level decoder.
+            //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
+            if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
+                ret = _Z_RES_OK;
+            }
+            return ret;
+        }
+        msg->_messages._len++;
+        msg_idx++;
     }
-    return ret;
+    return _Z_RES_OK;
 }
 
 /*------------------ Fragment Message ------------------*/

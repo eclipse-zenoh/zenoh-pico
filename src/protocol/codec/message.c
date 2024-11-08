@@ -332,7 +332,6 @@ z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t hea
     switch (_Z_MID(header)) {
         case _Z_MID_Z_PUT: {
             pshb->_is_put = true;
-            pshb->_body._put = (_z_msg_put_t){0};
             if (_Z_HAS_FLAG(header, _Z_FLAG_Z_P_T)) {
                 _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
             }
@@ -349,7 +348,6 @@ z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t hea
         }
         case _Z_MID_Z_DEL: {
             pshb->_is_put = false;
-            pshb->_body._del = (_z_msg_del_t){0};
             if (_Z_HAS_FLAG(header, _Z_FLAG_Z_D_T)) {
                 _Z_RETURN_IF_ERR(_z_timestamp_decode(&pshb->_body._put._commons._timestamp, zbf));
             }
@@ -470,7 +468,6 @@ z_result_t _z_query_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
 
 z_result_t _z_query_decode(_z_msg_query_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     _Z_DEBUG("Decoding _Z_MID_Z_QUERY");
-    *msg = (_z_msg_query_t){0};
     z_result_t ret = _Z_RES_OK;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Q_C)) {
@@ -513,7 +510,6 @@ z_result_t _z_reply_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 z_result_t _z_reply_decode(_z_msg_reply_t *reply, _z_zbuf_t *zbf, uint8_t header) {
-    *reply = (_z_msg_reply_t){0};
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_R_C)) {
         _Z_RETURN_IF_ERR(_z_uint8_decode((uint8_t *)&reply->_consolidation, zbf));
     } else {
@@ -574,8 +570,6 @@ z_result_t _z_err_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 z_result_t _z_err_decode(_z_msg_err_t *err, _z_zbuf_t *zbf, uint8_t header) {
-    *err = (_z_msg_err_t){0};
-
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_E_E)) {
         _Z_RETURN_IF_ERR(_z_encoding_decode(&err->_encoding, zbf));
     }

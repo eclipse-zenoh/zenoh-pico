@@ -45,7 +45,7 @@ void _z_resource_clear(_z_resource_t *res);
 void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
 
-_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy)
+_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 // Forward declaration to avoid cyclical include
@@ -69,9 +69,9 @@ bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *t
 void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
-_Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy, _z_noop_move)
 _Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_subscription_rc_size, _z_subscription_rc_drop,
-               _z_subscription_rc_copy)
+               _z_subscription_rc_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
@@ -100,9 +100,10 @@ bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session
 void _z_session_queryable_clear(_z_session_queryable_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
-_Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy,
+               _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size, _z_session_queryable_rc_drop,
-               _z_noop_copy)
+               _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes
@@ -133,7 +134,7 @@ typedef struct {
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
 void _z_pending_query_clear(_z_pending_query_t *res);
 
-_Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
@@ -184,9 +185,10 @@ bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_i
 void _z_session_interest_clear(_z_session_interest_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
-_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy,
+               _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
-               _z_noop_copy)
+               _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
 
 typedef enum {
@@ -202,7 +204,7 @@ typedef struct {
 } _z_declare_data_t;
 
 void _z_declare_data_clear(_z_declare_data_t *data);
-_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SESSION_H */

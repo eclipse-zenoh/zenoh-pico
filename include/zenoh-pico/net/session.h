@@ -22,6 +22,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
 
 /**
@@ -52,6 +53,9 @@ typedef struct _z_session_t {
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_subscription_rc_list_t *_local_subscriptions;
     _z_subscription_rc_list_t *_remote_subscriptions;
+#if Z_FEATURE_RX_CACHE == 1
+    _z_subscription_cache_t _subscription_cache;
+#endif
 #endif
 
     // Session queryables

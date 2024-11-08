@@ -38,7 +38,11 @@ z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *sc
     return _Z_RES_OK;
 }
 
-void _z_encoding_clear(_z_encoding_t *encoding) { _z_string_clear(&encoding->schema); }
+void _z_encoding_clear(_z_encoding_t *encoding) {
+    if (_z_string_check(&encoding->schema)) {
+        _z_string_clear(&encoding->schema);
+    }
+}
 
 z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
     dst->id = src->id;
@@ -55,6 +59,8 @@ void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     src->id = _Z_ENCODING_ID_DEFAULT;
     if (_z_string_check(&src->schema)) {
         _z_string_move(&dst->schema, &src->schema);
+    } else {
+        dst->schema = _z_string_null();
     }
 }
 

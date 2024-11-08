@@ -517,8 +517,7 @@ z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_ou
 
 bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 z_result_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
-    _z_string_svec_copy(dst, src);
-    return dst->_len == src->_len ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return _z_string_svec_copy(dst, src);
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
                               _z_string_array_copy, _z_string_svec_clear)
@@ -833,9 +832,10 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
 
     // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-    _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
+    _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
+    _z_encoding_t local_encoding = (opt.encoding != NULL) ? &opt.encoding->_this._val : _z_encoding_null();
     _z_trigger_local_subscriptions(
-        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
+        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, &local_encoding,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
         &local_timestamp, &attachment_bytes, reliability);
 #endif
@@ -980,7 +980,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         }
         // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-        _z_timestamp_t local_timestamp = ((opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null());
+        _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
         _z_trigger_local_subscriptions(
             session, &pub_keyexpr, &payload_bytes, &encoding,
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),

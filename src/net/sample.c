@@ -58,28 +58,22 @@ _z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-_z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                             _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                             const _z_bytes_t *attachment, z_reliability_t reliability) {
-    _z_sample_t s = _z_sample_null();
-    s.keyexpr = _z_keyexpr_steal(key);
-    s.kind = kind;
-    if (_z_timestamp_check(timestamp)) {
-        s.timestamp = _z_timestamp_duplicate(timestamp);
-    }
-    s.qos = qos;
-    s.reliability = reliability;
-    _z_bytes_copy(&s.payload, payload);
-    _z_bytes_copy(&s.attachment, attachment);
-    if (encoding != NULL) {
-        _z_encoding_move(&s.encoding, encoding);
-    }
-    return s;
+void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
+                      _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos, _z_bytes_t *attachment,
+                      z_reliability_t reliability) {
+    s->kind = kind;
+    s->qos = qos;
+    s->reliability = reliability;
+    s->keyexpr = _z_keyexpr_steal(key);
+    s->timestamp = _z_timestamp_check(timestamp) ? _z_timestamp_duplicate(timestamp) : _z_timestamp_null();
+    _z_encoding_move(&s->encoding, encoding);
+    _z_bytes_move(&s->attachment, attachment);
+    _z_bytes_move(&s->payload, payload);
 }
 #else
-_z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                             _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                             const _z_bytes_t *attachment, z_reliability_t reliability) {
+void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
+                      _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos, _z_bytes_t *attachment,
+                      z_reliability_t reliability) {
     _ZP_UNUSED(key);
     _ZP_UNUSED(payload);
     _ZP_UNUSED(timestamp);
@@ -88,6 +82,6 @@ _z_sample_t _z_sample_create(_z_keyexpr_t *key, const _z_bytes_t *payload, const
     _ZP_UNUSED(qos);
     _ZP_UNUSED(attachment);
     _ZP_UNUSED(reliability);
-    return _z_sample_null();
+    *s = _z_sample_null();
 }
 #endif
