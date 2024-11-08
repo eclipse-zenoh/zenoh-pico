@@ -359,13 +359,13 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     }
     // Init message vector
     msg_pool->_len = 0;
-    _z_network_message_svec_init(msg_pool);
+    _z_network_message_svec_init(msg_pool, 0);
     size_t msg_idx = 0;
     while (_z_zbuf_len(zbf) > 0) {
         // Expand message vector if needed
         if (msg_idx >= msg_pool->_capacity) {
             _Z_RETURN_IF_ERR(_z_network_message_svec_expand(msg_pool));
-            _z_network_message_svec_init(msg_pool);
+            _z_network_message_svec_init(msg_pool, msg_pool->_len);
         }
         // Expand arc pool if needed
         if (msg_idx >= arc_pool->_capacity) {

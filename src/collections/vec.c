@@ -145,7 +145,11 @@ _z_svec_t _z_svec_make(size_t capacity, size_t element_size) {
     return v;
 }
 
-void _z_svec_init(_z_svec_t *dst, size_t element_size) { memset(dst->_val, 0, dst->_capacity * element_size); }
+void _z_svec_init(_z_svec_t *v, size_t offset, size_t element_size) {
+    assert(offset <= v->_capacity);
+    void *start = _z_svec_get_mut(v, offset, element_size);
+    memset(start, 0, (v->_capacity - offset) * element_size);
+}
 
 static inline void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num_elements,
                                        size_t element_size, bool use_elem_f) {
