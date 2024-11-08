@@ -352,7 +352,7 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
     return ret;
 }
 
-z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_svec_t *arc_pool) {
     z_result_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_frame_t){0};
 
@@ -374,10 +374,17 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
             _Z_RETURN_IF_ERR(_z_network_message_svec_expand(&msg->_messages));
             _z_network_message_svec_init(&msg->_messages);
         }
+        // Expand arc pool if needed
+        if (msg_idx >= arc_pool->_capacity) {
+            _Z_RETURN_IF_ERR(_z_arc_slice_svec_expand(arc_pool));
+        }
         // Mark the reading position of the iobfer
         size_t r_pos = _z_zbuf_get_rpos(zbf);
+        // Retrieve storage in svecs
         _z_network_message_t *nm = _z_network_message_svec_get_mut(&msg->_messages, msg_idx);
-        ret = _z_network_message_decode(nm, zbf);
+        _z_arc_slice_t *arcs = _z_arc_slice_svec_get_mut(arc_pool, msg_idx);
+        // Decode message
+        ret = _z_network_message_decode(nm, zbf, arcs);
         if (ret != _Z_RES_OK) {
             _z_network_message_svec_clear(&msg->_messages);
             _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
@@ -493,7 +500,7 @@ z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_messag
     return ret;
 }
 
-z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf) {
+z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_svec_t *arc_pool) {
     z_result_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header
@@ -501,7 +508,7 @@ z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *z
         uint8_t mid = _Z_MID(msg->_header);
         switch (mid) {
             case _Z_MID_T_FRAME: {
-                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
+                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header, arc_pool);
             } break;
             case _Z_MID_T_FRAGMENT: {
                 ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);

@@ -26,8 +26,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 
 void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
-    _z_bytes_drop(&sample->payload);
     _z_encoding_clear(&sample->encoding);
+    _z_bytes_aliased_drop(&sample->payload);
     _z_bytes_drop(&sample->attachment);
 }
 

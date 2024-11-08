@@ -77,7 +77,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
-        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf, &ztm->_common._arc_pool);
     }
     _z_transport_rx_mutex_unlock(&ztm->_common);
     return ret;
@@ -240,7 +240,9 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 }
                 // Decode message
                 _z_zenoh_message_t zm = {0};
-                ret = _z_network_message_decode(&zm, &zbf);
+                assert(ztm->_common._arc_pool._capacity >= 1);
+                _z_arc_slice_t *arcs = _z_arc_slice_svec_get_mut(&ztm->_common._arc_pool, 0);
+                ret = _z_network_message_decode(&zm, &zbf, arcs);
                 zm._reliability = tmsg_reliability;
                 if (ret == _Z_RES_OK) {
                     uint16_t mapping = entry->_peer_id;

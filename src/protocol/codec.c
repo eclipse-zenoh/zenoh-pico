@@ -295,15 +295,16 @@ z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice
 
 z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
     // Decode slice
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
     // Calc offset
     size_t offset = _z_ptr_u8_diff(s.start, _Z_RC_IN_VAL(&zbf->_slice)->start);
     // Get ownership of subslice
-    _z_arc_slice_t arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
-    return _z_bytes_append_slice(bs, &arcs);
+    *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
+    _z_bytes_alias_arc_slice(bs, arcs);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {

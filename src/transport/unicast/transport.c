@@ -64,8 +64,11 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
         ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
 
+        // Initialize rx pool
+        ztu->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
+
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
+        if ((ztu->_common._arc_pool._capacity == 0) || (_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
             (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
@@ -339,6 +342,7 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_common._wbuf);
     _z_zbuf_clear(&ztu->_common._zbuf);
+    _z_arc_slice_svec_release(&ztu->_common._arc_pool);
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&ztu->_dbuf_reliable);
     _z_wbuf_clear(&ztu->_dbuf_best_effort);

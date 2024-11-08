@@ -75,7 +75,7 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode");
-        ret = _z_transport_message_decode(t_msg, &ztu->_common._zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztu->_common._zbuf, &ztu->_common._arc_pool);
 
         // Mark the session that we have received data
         if (ret == _Z_RES_OK) {
@@ -194,7 +194,9 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 }
                 // Decode message
                 _z_zenoh_message_t zm = {0};
-                ret = _z_network_message_decode(&zm, &zbf);
+                assert(ztu->_common._arc_pool._capacity >= 1);
+                _z_arc_slice_t *arcs = _z_arc_slice_svec_get_mut(&ztu->_common._arc_pool, 0);
+                ret = _z_network_message_decode(&zm, &zbf, arcs);
                 zm._reliability = tmsg_reliability;
                 if (ret == _Z_RES_OK) {
                     _z_handle_network_message(ztu->_common._session, &zm, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
