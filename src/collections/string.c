@@ -113,7 +113,7 @@ bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
     return (strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(left)) == 0);
 }
 
-_z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
+_z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs) {
     _z_string_t s = _z_string_null();
     size_t len = bs->len * (size_t)2;
     char *s_val = (char *)z_malloc((len) * sizeof(char));
@@ -122,9 +122,10 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     }
 
     const char c[] = "0123456789abcdef";
+    size_t pos = bs->len * 2;
     for (size_t i = 0; i < bs->len; i++) {
-        s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
-        s_val[(i * (size_t)2) + 1] = c[bs->start[i] & (uint8_t)0x0F];
+        s_val[--pos] = c[bs->start[i] & (uint8_t)0x0F];
+        s_val[--pos] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
     }
     s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
     return s;
@@ -218,6 +219,10 @@ char *_z_str_n_clone(const char *src, size_t len) {
     }
 
     return dst;
+}
+
+char *_z_str_from_string_clone(const _z_string_t *str) {
+    return _z_str_n_clone((const char *)str->_slice.start, str->_slice.len);
 }
 
 bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }

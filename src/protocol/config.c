@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/pointers.h"
 
 z_result_t _z_config_init(_z_config_t *ps) {
@@ -33,6 +34,18 @@ z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
     if (strcmp(res, value) != 0) {
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
+
+    return ret;
+}
+
+z_result_t _zp_config_insert_string(_z_config_t *ps, uint8_t key, const _z_string_t *value) {
+    z_result_t ret = _Z_RES_OK;
+    char *str = _z_str_from_string_clone(value);
+    char *res = _z_str_intmap_insert(ps, key, str);
+    if (strcmp(res, str) != 0) {
+        ret = _Z_ERR_CONFIG_FAILED_INSERT;
+    }
+    z_free(str);
 
     return ret;
 }

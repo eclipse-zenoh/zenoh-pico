@@ -20,6 +20,7 @@
 #include "zenoh-pico.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/string.h"
+#include "zenoh-pico/utils/uuid.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -116,11 +117,6 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
     free(res);
 }
 
-_z_string_t format_id(const z_id_t *id) {
-    _z_slice_t id_as_bytes = _z_slice_alias_buf(id->id, _z_id_len(*id));
-    return _z_string_convert_bytes(&id_as_bytes);
-}
-
 int main(int argc, char **argv) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
@@ -137,8 +133,8 @@ int main(int argc, char **argv) {
 
     z_owned_session_t s1;
     assert(z_open(&s1, z_move(config), NULL) == Z_OK);
-    _z_string_t zid1 = format_id(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
-    printf("Session 1 with PID: %s\n", _z_string_data(&zid1));
+    _z_string_t zid1 = _z_id_to_string(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
+    printf("Session 1 with PID: %*.s\n", (int)_z_string_len(&zid1), _z_string_data(&zid1));
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
@@ -153,8 +149,8 @@ int main(int argc, char **argv) {
     z_owned_session_t s2;
     assert(z_open(&s2, z_move(config), NULL) == Z_OK);
     assert(z_internal_check(s2));
-    _z_string_t zid2 = format_id(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
-    printf("Session 2 with PID: %s\n", _z_string_data(&zid2));
+    _z_string_t zid2 = _z_id_to_string(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
+    printf("Session 2 with PID: %*.s\n", (int)_z_string_len(&zid2), _z_string_data(&zid2));
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops

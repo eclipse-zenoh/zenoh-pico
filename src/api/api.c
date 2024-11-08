@@ -715,8 +715,7 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
 
 z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str) {
-    _z_slice_t buf = _z_slice_alias_buf(id->id, sizeof(id->id));
-    str->_val = _z_string_convert_bytes(&buf);
+    str->_val = _z_id_to_string(id);
     if (!_z_string_check(&str->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
