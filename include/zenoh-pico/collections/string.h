@@ -76,6 +76,7 @@ static inline _z_string_t _z_string_alias(const _z_string_t str) {
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice);
 _z_string_t _z_string_alias_str(const char *value);
 _z_string_t _z_string_alias_substr(const char *value, size_t len);
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);

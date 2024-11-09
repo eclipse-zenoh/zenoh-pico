@@ -33,6 +33,12 @@ _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     return s;
 }
 
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice) {
+    _z_string_t s;
+    s._slice = _z_slice_alias(*slice);
+    return s;
+}
+
 _z_string_t _z_string_alias_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_alias_buf((const uint8_t *)(value), strlen(value));
