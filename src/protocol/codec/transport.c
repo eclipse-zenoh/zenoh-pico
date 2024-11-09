@@ -348,6 +348,48 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
     return ret;
 }
 
+static void _z_frame_update_arcs_msg_pool(_z_network_message_svec_t *msg_pool, _z_arc_slice_svec_t *arc_pool) {
+    for (size_t i = 0; i < arc_pool->_len; i++) {
+        _z_network_message_t *nm = _z_network_message_svec_get(msg_pool, i);
+        switch (nm->_tag) {
+            case _Z_N_PUSH: {
+                if (!nm->_body._push._body._is_put) {
+                    continue;
+                }
+                _z_bytes_alias_arc_slice(&nm->_body._push._body._body._put._payload,
+                                         _z_arc_slice_svec_get(arc_pool, i));
+            } break;
+            case _Z_N_REQUEST: {
+                if (nm->_body._request._tag != _Z_REQUEST_PUT) {
+                    continue;
+                }
+                _z_bytes_alias_arc_slice(&nm->_body._request._body._put._payload, _z_arc_slice_svec_get(arc_pool, i));
+            } break;
+            case _Z_N_RESPONSE: {
+                switch (nm->_body._response._tag) {
+                    case _Z_RESPONSE_BODY_REPLY:
+                        if (!nm->_body._response._body._reply._body._is_put) {
+                            continue;
+                        }
+                        _z_bytes_alias_arc_slice(&nm->_body._response._body._reply._body._body._put._payload,
+                                                 _z_arc_slice_svec_get(arc_pool, i));
+                        break;
+
+                    case _Z_RESPONSE_BODY_ERR:
+                        _z_bytes_alias_arc_slice(&nm->_body._response._body._err._payload,
+                                                 _z_arc_slice_svec_get(arc_pool, i));
+                        break;
+
+                    default:
+                        continue;
+                }
+            }
+            default:
+                continue;
+        }
+    }
+}
+
 z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_svec_t *arc_pool,
                            _z_network_message_svec_t *msg_pool) {
     z_result_t ret = _Z_RES_OK;
@@ -359,6 +401,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     }
     // Init message vector
     msg_pool->_len = 0;
+    arc_pool->_len = 0;
     _z_network_message_svec_init(msg_pool, 0);
     size_t msg_idx = 0;
     while (_z_zbuf_len(zbf) > 0) {
@@ -370,6 +413,8 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
         // Expand arc pool if needed
         if (msg_idx >= arc_pool->_capacity) {
             _Z_RETURN_IF_ERR(_z_arc_slice_svec_expand(arc_pool, false));
+            // Update arcs references in msg pool
+            _z_frame_update_arcs_msg_pool(msg_pool, arc_pool);
         }
         // Mark the reading position of the iobfer
         size_t r_pos = _z_zbuf_get_rpos(zbf);
@@ -379,7 +424,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
         // Decode message
         ret = _z_network_message_decode(nm, zbf, arcs);
         if (ret != _Z_RES_OK) {
-            _z_network_message_svec_clear(msg_pool);
+            _z_network_message_svec_reset(msg_pool);
             _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
 
             // FIXME: Check for the return error, since not all of them means a decoding error
@@ -391,6 +436,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
             }
             return ret;
         }
+        arc_pool->_len++;
         msg_pool->_len++;
         msg_idx++;
     }
