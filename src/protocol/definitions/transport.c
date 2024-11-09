@@ -307,7 +307,7 @@ void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_
 
 void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
     clone->_sn = msg->_sn;
-    _z_network_message_svec_copy(&clone->_messages, &msg->_messages);
+    _z_network_message_svec_copy(&clone->_messages, &msg->_messages, false);
 }
 
 /*------------------ Transport Message ------------------*/

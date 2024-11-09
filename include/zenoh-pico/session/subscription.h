@@ -29,7 +29,7 @@ typedef struct {
 } _z_subscription_infos_t;
 
 _Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
-_Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t, false)
+_Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t)
 
 typedef struct {
     _z_keyexpr_t ke_in;

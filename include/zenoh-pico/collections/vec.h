@@ -106,17 +106,17 @@ void _z_svec_clear(_z_svec_t *v, z_element_clear_f f, size_t element_size);
 void _z_svec_free(_z_svec_t **v, z_element_clear_f f, size_t element_size);
 void _z_svec_release(_z_svec_t *v);
 
-#define _Z_SVEC_DEFINE(name, type, use_elem_f)                                                                      \
+#define _Z_SVEC_DEFINE(name, type)                                                                                  \
     typedef _z_svec_t name##_svec_t;                                                                                \
     static inline name##_svec_t name##_svec_null(void) { return _z_svec_null(); }                                   \
     static inline name##_svec_t name##_svec_make(size_t capacity) { return _z_svec_make(capacity, sizeof(type)); }  \
     static inline void name##_svec_init(name##_svec_t *v, size_t offset) { _z_svec_init(v, offset, sizeof(type)); } \
     static inline size_t name##_svec_len(const name##_svec_t *v) { return _z_svec_len(v); }                         \
     static inline bool name##_svec_is_empty(const name##_svec_t *v) { return _z_svec_is_empty(v); }                 \
-    static inline z_result_t name##_svec_expand(name##_svec_t *v) {                                                 \
+    static inline z_result_t name##_svec_expand(name##_svec_t *v, bool use_elem_f) {                                \
         return _z_svec_expand(v, name##_elem_move, sizeof(type), use_elem_f);                                       \
     }                                                                                                               \
-    static inline z_result_t name##_svec_append(name##_svec_t *v, const type *e) {                                  \
+    static inline z_result_t name##_svec_append(name##_svec_t *v, const type *e, bool use_elem_f) {                 \
         return _z_svec_append(v, e, name##_elem_move, sizeof(type), use_elem_f);                                    \
     }                                                                                                               \
     static inline type *name##_svec_get(const name##_svec_t *v, size_t pos) {                                       \
@@ -128,10 +128,10 @@ void _z_svec_release(_z_svec_t *v);
     static inline void name##_svec_set(name##_svec_t *v, size_t pos, type *e) {                                     \
         _z_svec_set(v, pos, e, name##_elem_clear, sizeof(type));                                                    \
     }                                                                                                               \
-    static inline void name##_svec_remove(name##_svec_t *v, size_t pos) {                                           \
+    static inline void name##_svec_remove(name##_svec_t *v, size_t pos, bool use_elem_f) {                          \
         _z_svec_remove(v, pos, name##_elem_clear, name##_elem_move, sizeof(type), use_elem_f);                      \
     }                                                                                                               \
-    static inline z_result_t name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src) {                       \
+    static inline z_result_t name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src, bool use_elem_f) {      \
         return _z_svec_copy(dst, src, name##_elem_copy, sizeof(type), use_elem_f);                                  \
     }                                                                                                               \
     static inline name##_svec_t name##_svec_alias(const name##_svec_t *v) { return _z_svec_alias(v); }              \

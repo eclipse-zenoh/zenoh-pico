@@ -66,7 +66,7 @@ void z_string_array_new(z_owned_string_array_t *a) { a->_val = _z_string_array_n
 
 size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value) {
     _z_string_t str = _z_string_alias(*value);
-    _z_string_svec_append(a, &str);
+    _z_string_svec_append(a, &str, true);
 
     return _z_string_svec_len(a);
 }
@@ -74,7 +74,7 @@ size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_s
 size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value) {
     _z_string_t str;
     _z_string_copy(&str, value);
-    _z_string_svec_append(a, &str);
+    _z_string_svec_append(a, &str, true);
 
     return _z_string_svec_len(a);
 }
@@ -517,7 +517,7 @@ z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_ou
 
 bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 z_result_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
-    return _z_string_svec_copy(dst, src);
+    return _z_string_svec_copy(dst, src, true);
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
                               _z_string_array_copy, _z_string_svec_clear)

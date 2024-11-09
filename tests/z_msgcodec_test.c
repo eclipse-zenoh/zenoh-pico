@@ -225,7 +225,7 @@ _z_string_svec_t gen_str_array(size_t size) {
     _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
         _z_string_t s = _z_string_copy_from_str(gen_str(16));
-        _z_string_svec_append(&sa, &s);
+        _z_string_svec_append(&sa, &s, true);
     }
 
     return sa;

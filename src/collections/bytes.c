@@ -28,7 +28,7 @@
 bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
 
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
-    return _z_arc_slice_svec_copy(&dst->_slices, &src->_slices);
+    return _z_arc_slice_svec_copy(&dst->_slices, &src->_slices, true);
 }
 
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
@@ -95,7 +95,7 @@ z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
     *b = _z_bytes_null();
     _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, s.len);
     if (_z_arc_slice_len(&arc_s) != s.len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    return _z_arc_slice_svec_append(&b->_slices, &arc_s);
+    return _z_arc_slice_svec_append(&b->_slices, &arc_s, true);
 }
 
 z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
@@ -128,7 +128,7 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
 
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
     z_result_t ret = _Z_RES_OK;
-    ret = _z_arc_slice_svec_append(&dst->_slices, s);
+    ret = _z_arc_slice_svec_append(&dst->_slices, s, true);
     if (ret != _Z_RES_OK) {
         _z_arc_slice_drop(s);
     }

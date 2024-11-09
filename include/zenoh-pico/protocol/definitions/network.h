@@ -290,7 +290,7 @@ void _z_n_msg_free(_z_network_message_t **m);
 inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
 inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy, _z_noop_move)
-_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t, false)
+_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,

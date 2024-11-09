@@ -364,12 +364,12 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
     while (_z_zbuf_len(zbf) > 0) {
         // Expand message vector if needed
         if (msg_idx >= msg_pool->_capacity) {
-            _Z_RETURN_IF_ERR(_z_network_message_svec_expand(msg_pool));
+            _Z_RETURN_IF_ERR(_z_network_message_svec_expand(msg_pool, false));
             _z_network_message_svec_init(msg_pool, msg_pool->_len);
         }
         // Expand arc pool if needed
         if (msg_idx >= arc_pool->_capacity) {
-            _Z_RETURN_IF_ERR(_z_arc_slice_svec_expand(arc_pool));
+            _Z_RETURN_IF_ERR(_z_arc_slice_svec_expand(arc_pool, false));
         }
         // Mark the reading position of the iobfer
         size_t r_pos = _z_zbuf_get_rpos(zbf);

@@ -98,7 +98,7 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move)
-_Z_SVEC_DEFINE(_z_string, _z_string_t, true)
+_Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 
