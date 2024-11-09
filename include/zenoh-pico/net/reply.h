@@ -59,11 +59,6 @@ typedef struct _z_reply_data_t {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_reply_data_t _z_reply_data_null(void) { return (_z_reply_data_t){0}; }
-static inline _z_reply_data_t _z_reply_data_init(void) {
-    _z_reply_data_t reply_data = _z_reply_data_null();
-    reply_data._tag = _Z_REPLY_TAG_NONE;
-    return reply_data;
-}
 void _z_reply_data_clear(_z_reply_data_t *rd);
 z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
 
@@ -85,14 +80,31 @@ typedef struct _z_reply_t {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
+static inline _z_reply_t _z_reply_alias(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
+                                        const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
+                                        const _z_bytes_t *attachment) {
+    return (_z_reply_t){
+        .data.replier_id = id,
+        .data._tag = _Z_REPLY_TAG_DATA,
+        .data._result.sample.keyexpr = *keyexpr,
+        .data._result.sample.kind = kind,
+        .data._result.sample.timestamp = *timestamp,
+        .data._result.sample.payload = *payload,
+        .data._result.sample.attachment = *attachment,
+        .data._result.sample.encoding = *encoding,
+    };
+}
+static inline _z_reply_t _z_reply_err_alias(const _z_bytes_t *payload, _z_encoding_t *encoding) {
+    return (_z_reply_t){
+        .data._tag = _Z_REPLY_TAG_ERROR,
+        .data._result.error.payload = *payload,
+        .data._result.error.encoding = *encoding,
+    };
+}
 _z_reply_t _z_reply_move(_z_reply_t *src_reply);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
-_z_reply_t _z_reply_create(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
-                           const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
-                           const _z_bytes_t *attachment);
-_z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding);
 
 typedef struct _z_pending_reply_t {
     _z_reply_t _reply;
