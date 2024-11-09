@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
@@ -55,6 +56,7 @@ typedef struct _z_session_t {
     _z_subscription_rc_list_t *_remote_subscriptions;
 #if Z_FEATURE_RX_CACHE == 1
     _z_subscription_cache_t _subscription_cache;
+    _z_queryable_cache_t _queryable_cache;
 #endif
 #endif
 

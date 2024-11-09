@@ -29,8 +29,8 @@ typedef struct _z_query_t {
     _z_keyexpr_t _key;
     uint32_t _request_id;
     _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
-    _z_bytes_t attachment;
-    char *_parameters;
+    _z_bytes_t _attachment;
+    _z_string_t _parameters;
     bool _anyke;
 } _z_query_t;
 
@@ -54,8 +54,19 @@ typedef struct {
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0}; }
 static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
-_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_rc_t *zn,
-                           uint32_t request_id, const _z_bytes_t attachment);
+static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters,
+                                        _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
+                                        bool anyke) {
+    return (_z_query_t){
+        ._request_id = request_id,
+        ._zn = _z_session_rc_clone_as_weak(zn),
+        ._parameters = _z_string_alias_slice(parameters),
+        ._anyke = anyke,
+        ._key = *key,
+        ._attachment = *attachment,
+        ._value = *value,
+    };
+}
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
 
