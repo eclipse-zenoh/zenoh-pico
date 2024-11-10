@@ -166,7 +166,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
     // Trigger the user callback
     if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
         _z_reply_t cb_reply = _z_reply_null();
-        cb_reply = _z_reply_move(&reply);
+        _z_reply_move(&cb_reply, &reply);
         pen_qry->_callback(&cb_reply, pen_qry->_arg);
         _z_reply_clear(&cb_reply);
         return ret;
@@ -197,7 +197,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
     // Trigger the user callback
     if (ret == _Z_RES_OK) {
         _z_reply_t cb_reply = _z_reply_null();
-        cb_reply = _z_reply_move(&reply);
+        _z_reply_move(&cb_reply, &reply);
         pen_qry->_callback(&cb_reply, pen_qry->_arg);
         _z_reply_clear(&cb_reply);
     }
@@ -226,7 +226,7 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
 
             // Trigger the query handler
             _z_reply_t cb_reply = _z_reply_null();
-            cb_reply = _z_reply_move(&pen_rep->_reply);
+            _z_reply_move(&cb_reply, &pen_rep->_reply);
             pen_qry->_callback(&cb_reply, pen_qry->_arg);
             pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
             _z_reply_clear(&cb_reply);

@@ -70,6 +70,10 @@ _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_
 
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f);
 void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
+static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_t *src) {
+    *dst = *src;
+    *src = _z_int_void_map_make(src->_capacity);
+}
 
 #define _Z_INT_MAP_DEFINE(name, type)                                                                           \
     typedef _z_int_void_map_entry_t name##_intmap_entry_t;                                                      \
@@ -115,6 +119,9 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     }                                                                                                           \
     static inline void name##_intmap_free(name##_intmap_t **m) {                                                \
         _z_int_void_map_free(m, name##_intmap_entry_elem_free);                                                 \
+    }                                                                                                           \
+    static inline void name##_intmap_move(name##_intmap_t *dst, name##_intmap_t *src) {                         \
+        _z_int_void_map_move(dst, src);                                                                         \
     }
 
 #ifdef __cplusplus

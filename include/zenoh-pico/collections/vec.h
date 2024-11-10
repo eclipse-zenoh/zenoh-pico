@@ -80,6 +80,10 @@ typedef struct {
 
 _z_svec_t _z_svec_make(size_t capacity, size_t element_size);
 bool _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size);
+static inline void _z_svec_move(_z_svec_t *dst, _z_svec_t *src) {
+    *dst = *src;
+    *src = _z_svec_make(0, 0);
+}
 
 size_t _z_svec_len(const _z_svec_t *v);
 bool _z_svec_is_empty(const _z_svec_t *v);
@@ -116,7 +120,8 @@ void _z_svec_release(_z_svec_t *v);
     }                                                                                                              \
     static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }  \
     static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); }  \
-    static inline void name##_svec_free(name##_svec_t **v) { _z_svec_free(v, name##_elem_clear, sizeof(type)); }
+    static inline void name##_svec_free(name##_svec_t **v) { _z_svec_free(v, name##_elem_clear, sizeof(type)); }   \
+    static inline void name##_svec_move(name##_svec_t *dst, name##_svec_t *src) { _z_svec_move(dst, src); }
 
 #ifdef __cplusplus
 }

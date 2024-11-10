@@ -1098,10 +1098,10 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
 _Z_OWNED_FUNCTIONS_DEF(string)
 _Z_OWNED_FUNCTIONS_DEF(keyexpr)
 _Z_OWNED_FUNCTIONS_DEF(config)
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF(session)
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF(subscriber)
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF(publisher)
-_Z_OWNED_FUNCTIONS_NO_COPY_DEF(queryable)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(session)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(subscriber)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(queryable)
 _Z_OWNED_FUNCTIONS_DEF(hello)
 _Z_OWNED_FUNCTIONS_DEF(reply)
 _Z_OWNED_FUNCTIONS_DEF(string_array)
@@ -1803,6 +1803,8 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  */
 z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
                          const z_query_reply_options_t *options);
+
+z_result_t z_query_take_from_loaned(z_owned_query_t *dst, z_loaned_query_t *src);
 
 /**
  * Builds a :c:type:`z_query_reply_del_options_t` with default values.
