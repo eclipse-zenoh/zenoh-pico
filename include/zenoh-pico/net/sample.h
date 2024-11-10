@@ -46,18 +46,19 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
-static inline _z_sample_t _z_sample_alias(_z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                                          _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos,
-                                          _z_bytes_t *attachment, z_reliability_t reliability) {
+static inline _z_sample_t _z_sample_alias(const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                                          const _z_timestamp_t *timestamp, const _z_encoding_t *encoding,
+                                          const z_sample_kind_t kind, const _z_qos_t qos, const _z_bytes_t *attachment,
+                                          z_reliability_t reliability) {
     return (_z_sample_t){
-        .kind = kind,
-        .qos = qos,
-        .reliability = reliability,
         .keyexpr = *key,
-        .encoding = *encoding,
-        .attachment = *attachment,
         .payload = *payload,
         .timestamp = *timestamp,
+        .encoding = *encoding,
+        .kind = kind,
+        .qos = qos,
+        .attachment = *attachment,
+        .reliability = reliability,
     };
 }
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);

@@ -64,11 +64,13 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     zn->_remote_subscriptions = NULL;
 #if Z_FEATURE_RX_CACHE == 1
     memset(&zn->_subscription_cache, 0, sizeof(zn->_subscription_cache));
-    memset(&zn->_queryable_cache, 0, sizeof(zn->_queryable_cache));
 #endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     zn->_local_queryable = NULL;
+#if Z_FEATURE_RX_CACHE == 1
+    memset(&zn->_queryable_cache, 0, sizeof(zn->_queryable_cache));
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
@@ -119,11 +121,13 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_subscriptions(zn);
 #if Z_FEATURE_RX_CACHE == 1
     _z_subscription_cache_clear(&zn->_subscription_cache);
-    _z_queryable_cache_clear(&zn->_queryable_cache);
 #endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     _z_flush_session_queryable(zn);
+#if Z_FEATURE_RX_CACHE == 1
+    _z_queryable_cache_clear(&zn->_queryable_cache);
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);

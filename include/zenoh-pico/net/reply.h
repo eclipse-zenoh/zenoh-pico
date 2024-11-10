@@ -83,24 +83,18 @@ static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
 static inline _z_reply_t _z_reply_alias(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
                                         const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
                                         const _z_bytes_t *attachment) {
-    _z_reply_t r = {
-        .data.replier_id = id,
-        .data._tag = _Z_REPLY_TAG_DATA,
-        .data._result.sample.keyexpr = *keyexpr,
-        .data._result.sample.kind = kind,
-        .data._result.sample.timestamp = *timestamp,
-        .data._result.sample.payload = *payload,
-        .data._result.sample.attachment = *attachment,
-        .data._result.sample.encoding = *encoding,
-    };
+    _z_reply_t r;
+    r.data.replier_id = id;
+    r.data._tag = _Z_REPLY_TAG_DATA;
+    r.data._result.sample = _z_sample_alias(keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT, attachment,
+                                            Z_RELIABILITY_DEFAULT);
     return r;
 }
 static inline _z_reply_t _z_reply_err_alias(const _z_bytes_t *payload, _z_encoding_t *encoding) {
-    _z_reply_t r = {
-        .data._tag = _Z_REPLY_TAG_ERROR,
-        .data._result.error.payload = *payload,
-        .data._result.error.encoding = *encoding,
-    };
+    _z_reply_t r;
+    r.data._tag = _Z_REPLY_TAG_ERROR;
+    r.data._result.error.payload = *payload;
+    r.data._result.error.encoding = *encoding;
     return r;
 }
 _z_reply_t _z_reply_move(_z_reply_t *src_reply);

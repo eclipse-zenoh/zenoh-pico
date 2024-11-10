@@ -56,13 +56,15 @@ typedef struct _z_session_t {
     _z_subscription_rc_list_t *_remote_subscriptions;
 #if Z_FEATURE_RX_CACHE == 1
     _z_subscription_cache_t _subscription_cache;
-    _z_queryable_cache_t _queryable_cache;
 #endif
 #endif
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
     _z_session_queryable_rc_list_t *_local_queryable;
+#if Z_FEATURE_RX_CACHE == 1
+    _z_queryable_cache_t _queryable_cache;
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;

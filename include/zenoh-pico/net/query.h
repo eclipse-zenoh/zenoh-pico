@@ -25,8 +25,8 @@
  * The query to be answered by a queryable.
  */
 typedef struct _z_query_t {
-    _z_value_t _value;
     _z_keyexpr_t _key;
+    _z_value_t _value;
     uint32_t _request_id;
     _z_session_rc_t _zn;
     _z_bytes_t _attachment;
@@ -60,13 +60,13 @@ static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, co
                                         _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
                                         bool anyke) {
     return (_z_query_t){
+        ._key = *key,
+        ._value = *value,
         ._request_id = request_id,
         ._zn = *zn,
+        ._attachment = *attachment,
         ._parameters = _z_string_alias_slice(parameters),
         ._anyke = anyke,
-        ._key = *key,
-        ._attachment = *attachment,
-        ._value = *value,
     };
 }
 void _z_queryable_clear(_z_queryable_t *qbl);

@@ -47,8 +47,8 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')..."""
 
     # Expected z_sub output & status
     if args.sub == 1:
-        z_sub_expected_status = -2
         if args.pub == 1:
+            z_sub_expected_status = 0
             z_sub_expected_output = """Opening session...
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit...
@@ -63,6 +63,7 @@ Press CTRL-C to quit...
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')"""
         else:
+            z_sub_expected_status = -2
             z_sub_expected_output = """Opening session...
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit..."""
@@ -72,7 +73,7 @@ Press CTRL-C to quit..."""
 
     print("Start subscriber")
     # Start z_sub in the background
-    z_sub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub"
+    z_sub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub -n 10"
     z_sub_process = subprocess.Popen(
         z_sub_command,
         shell=True,
@@ -175,14 +176,15 @@ Sending Query 'demo/example/**'...
 
     # Expected z_queryable output & status
     if args.queryable == 1:
-        z_queryable_expected_status = -2
         if args.query == 1:
+            z_queryable_expected_status = 0
             z_queryable_expected_output = """Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
  >> [Queryable handler] Received Query 'demo/example/**'
 """
         else:
+            z_queryable_expected_status = -2
             z_queryable_expected_output = """Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit..."""
@@ -192,7 +194,7 @@ Press CTRL-C to quit..."""
 
     print("Start queryable")
     # Start z_queryable in the background
-    z_queryable_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_queryable"
+    z_queryable_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_queryable -n 1"
     z_queryable_process = subprocess.Popen(
         z_queryable_command,
         shell=True,
