@@ -28,7 +28,7 @@ typedef struct _z_query_t {
     _z_value_t _value;
     _z_keyexpr_t _key;
     uint32_t _request_id;
-    _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
+    _z_session_rc_t _zn;
     _z_bytes_t _attachment;
     _z_string_t _parameters;
     bool _anyke;
@@ -36,11 +36,13 @@ typedef struct _z_query_t {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_query_t _z_query_null(void) { return (_z_query_t){0}; }
+static inline bool _z_query_check(const _z_query_t *query) {
+    return _z_keyexpr_check(&query->_key) || _z_value_check(&query->_value) || _z_bytes_check(&query->_attachment) ||
+           _z_string_check(&query->_parameters);
+}
 void _z_query_clear(_z_query_t *q);
 z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
-
-_Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
  * Return type when declaring a queryable.
@@ -59,7 +61,7 @@ static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, co
                                         bool anyke) {
     return (_z_query_t){
         ._request_id = request_id,
-        ._zn = _z_session_rc_clone_as_weak(zn),
+        ._zn = *zn,
         ._parameters = _z_string_alias_slice(parameters),
         ._anyke = anyke,
         ._key = *key,

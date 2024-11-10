@@ -224,9 +224,8 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         }
     }
     // Build the z_query
-    _z_query_t q =
+    _z_query_t query =
         _z_query_alias(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
-    _z_query_rc_t query = _z_query_rc_new_from_val(&q);
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_nb; i++) {
         _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qles, i);
@@ -234,7 +233,6 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
     }
     // Clean up
     _z_keyexpr_clear(&key);
-    _z_query_rc_drop(&query);
 #if Z_FEATURE_RX_CACHE != 1
     _z_queryable_infos_svec_release(&qles);  // Otherwise it's released with cache
 #endif
@@ -246,7 +244,7 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z
     // Clean up
     _z_keyexpr_clear(q_key);
     _z_encoding_clear(&msgq->_ext_value.encoding);
-    _z_bytes_aliased_drop(&msgq->_ext_value.payload);
+    _z_bytes_drop(&msgq->_ext_value.payload);
     _z_bytes_drop(&msgq->_ext_attachment);
     _z_slice_clear(&msgq->_parameters);
     return ret;

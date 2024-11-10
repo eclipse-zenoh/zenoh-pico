@@ -22,13 +22,11 @@ void _z_query_clear_inner(_z_query_t *q) {
     _z_value_clear(&q->_value);
     _z_bytes_drop(&q->_attachment);
     _z_string_clear(&q->_parameters);
-    _z_session_weak_drop(&q->_zn);
+    _z_session_rc_drop(&q->_zn);
 }
 
 void _z_query_clear(_z_query_t *q) {
-    // Try to upgrade session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&q->_zn);
-    if (!_Z_RC_IS_NULL(&sess_rc)) {
+    if (!_Z_RC_IS_NULL(&q->_zn)) {
         // Send REPLY_FINAL message
         _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
         if (_z_send_n_msg(_Z_RC_IN_VAL(&q->_zn), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
@@ -36,7 +34,6 @@ void _z_query_clear(_z_query_t *q) {
             _Z_ERROR("Query send REPLY_FINAL transport failure !");
         }
         _z_msg_clear(&z_msg);
-        _z_session_rc_drop(&sess_rc);
     }
     // Clean up memory
     _z_query_clear_inner(q);
@@ -48,7 +45,7 @@ z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_value_copy(&dst->_value, &src->_value), _z_query_clear_inner(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->_attachment, &src->_attachment), _z_query_clear_inner(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_parameters, &src->_parameters), _z_query_clear_inner(dst));
-    _z_session_weak_copy(&dst->_zn, &src->_zn);
+    _z_session_rc_copy(&dst->_zn, &src->_zn);
     if (_Z_RC_IS_NULL(&dst->_zn)) {
         _z_query_clear_inner(dst);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
