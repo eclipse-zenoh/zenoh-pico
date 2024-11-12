@@ -174,8 +174,8 @@ jobs:
           version: ${{ needs.tag.outputs.version }}
           ssh-host: genie.zenoh@projects-storage.eclipse.org
           ssh-host-path: /home/data/httpd/download.eclipse.org/zenoh/zenoh-pico
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          ssh-private-key: ${{ secrets.ORG_GPG_PRIVATE_KEY }}
+          ssh-passphrase: ${{ secrets.ORG_GPG_PASSPHRASE }}
           archive-patterns: '.*\.zip'
 
   github:
