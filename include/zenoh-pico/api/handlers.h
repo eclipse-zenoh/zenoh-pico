@@ -145,22 +145,37 @@ extern "C" {
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
                            /* elem_null                       */ z_internal_##item_name##_null)
 
-#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name)        \
-    typedef struct {                                         \
-        uint8_t _foo;                                        \
-    } z_owned_##kind_name##_handler_##item_name##_t;         \
-    typedef struct {                                         \
-        uint8_t _foo;                                        \
-    } z_loaned_##kind_name##_handler_##item_name##_t;        \
-    typedef struct {                                         \
-        z_owned_##kind_name##_handler_##item_name##_t *_ptr; \
-    } z_moved_##kind_name##_handler_##item_name##_t;         \
-    void *z_##kind_name##_handler_##item_name##_loan(void);  \
-    void *z_##kind_name##_handler_##item_name##_move(void);  \
-    void *z_##kind_name##_handler_##item_name##_drop(void);  \
-    void *z_##kind_name##_handler_##item_name##_recv(void);  \
-    void *z_##kind_name##_handler_##item_name##_take(void);  \
-    void *z_##kind_name##_handler_##item_name##_try_recv(void);
+#define _Z_CHANNEL_DUMMY_IMPL(handler_type, handler_name, item_name)                                    \
+    _Z_OWNED_TYPE_VALUE(handler_type, handler_name)                                                     \
+    static inline void _z_##handler_name##_clear(handler_type *handler) { _ZP_UNUSED(handler); }        \
+    static inline bool _z_##handler_name##_check(const handler_type *handler) {                         \
+        _ZP_UNUSED(handler);                                                                            \
+        return false;                                                                                   \
+    }                                                                                                   \
+    static inline handler_type _z_##handler_name##_null(void) {                                         \
+        handler_type h = {0};                                                                           \
+        return h;                                                                                       \
+    }                                                                                                   \
+    _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(handler_type, handler_name, _z_##handler_name##_check, \
+                                                 _z_##handler_name##_null, _z_##handler_name##_clear)   \
+    static inline z_result_t z_##handler_name##_try_recv(const z_loaned_##handler_name##_t *handler,    \
+                                                         z_owned_##item_name##_t *e) {                  \
+        _ZP_UNUSED(handler);                                                                            \
+        _ZP_UNUSED(e);                                                                                  \
+        return Z_CHANNEL_DISCONNECTED;                                                                  \
+    }                                                                                                   \
+    static inline z_result_t z_##handler_name##_recv(const z_loaned_##handler_name##_t *handler,        \
+                                                     z_owned_##item_name##_t *e) {                      \
+        _ZP_UNUSED(handler);                                                                            \
+        _ZP_UNUSED(e);                                                                                  \
+        return Z_CHANNEL_DISCONNECTED;                                                                  \
+    }
+
+#define _Z_CHANNEL_DEFINE_DUMMY(item_name, kind_name) \
+    typedef struct {                                  \
+        uint8_t _foo;                                 \
+    } _z_##kind_name##_handler_##item_name##_t;       \
+    _Z_CHANNEL_DUMMY_IMPL(_z_##kind_name##_handler_##item_name##_t, kind_name##_handler_##item_name, item_name)
 
 // This macro defines:
 //   z_ring_channel_sample_new()

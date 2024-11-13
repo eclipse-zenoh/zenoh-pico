@@ -19,6 +19,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
 z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *ep);
 
@@ -41,6 +45,10 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
 #if Z_FEATURE_LINK_WS == 1
 z_result_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
 z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

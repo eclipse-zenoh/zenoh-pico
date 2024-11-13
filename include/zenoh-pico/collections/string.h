@@ -21,6 +21,10 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- str --------*/
 typedef char *_z_str_t;
 
@@ -95,12 +99,18 @@ void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
-_z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
+_z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
+
+char *_z_str_from_string_clone(const _z_string_t *str);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move)
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_STRING_H */

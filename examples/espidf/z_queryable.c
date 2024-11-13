@@ -169,7 +169,7 @@ void app_main() {
     // Declare Zenoh queryable
     printf("Declaring Queryable on %s...", KEYEXPR);
     z_owned_closure_query_t callback;
-    z_closure(&callback, query_handler);
+    z_closure(&callback, query_handler, NULL, NULL);
     z_owned_queryable_t qable;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);

@@ -19,6 +19,10 @@
 
 #include "zenoh-pico/net/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Entity ------------------*/
 uint32_t _z_get_entity_id(_z_session_t *zn);
 
@@ -35,5 +39,9 @@ void _z_flush_resources(_z_session_t *zn);
 _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, bool force_alias);
 _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t id);
 _z_resource_t *__unsafe_z_get_resource_matching_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_RESOURCE_H */

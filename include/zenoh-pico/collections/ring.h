@@ -19,6 +19,10 @@
 
 #include "zenoh-pico/collections/element.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- Ring Buffer --------*/
 typedef struct {
     void **_val;
@@ -64,5 +68,9 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
     static inline type *name##_ring_pull(name##_ring_t *r) { return (type *)_z_ring_pull(r); }                         \
     static inline void name##_ring_clear(name##_ring_t *r) { _z_ring_clear(r, name##_elem_free); }                     \
     static inline void name##_ring_free(name##_ring_t **r) { _z_ring_free(r, name##_elem_free); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_RING_H */

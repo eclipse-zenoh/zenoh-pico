@@ -26,6 +26,10 @@
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A zenoh-net session.
  */
@@ -206,5 +210,9 @@ z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
  */
 z_result_t _zp_stop_lease_task(_z_session_t *z);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

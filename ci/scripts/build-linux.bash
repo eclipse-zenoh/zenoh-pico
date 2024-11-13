@@ -9,13 +9,13 @@ readonly version=${VERSION:?input VERSION is required}
 # Build target
 readonly target=${TARGET:?input TARGET is required}
 
-BUILD_TYPE=RELEASE make "$target"
+BUILD_SHARED_LIBS=ON BUILD_TYPE=RELEASE make "$target"
 
 readonly out=$GITHUB_WORKSPACE
 readonly repo_name=${repo#*/}
-readonly archive_lib=$out/$repo_name-$version-$target.zip
-readonly archive_deb=$out/$repo_name-$version-$target-deb-pkgs.zip
-readonly archive_rpm=$out/$repo_name-$version-$target-rpm-pkgs.zip
+readonly archive_lib=$out/$repo_name-$version-$target-standalone.zip
+readonly archive_deb=$out/$repo_name-$version-$target-debian.zip
+readonly archive_rpm=$out/$repo_name-$version-$target-rpm.zip
 readonly archive_examples=$out/$repo_name-$version-$target-examples.zip
 
 cd crossbuilds/"$target"
@@ -24,8 +24,8 @@ cd -
 zip -r "$archive_lib" include
 
 cd crossbuilds/"$target"/packages
-zip "$archive_deb" ./*.deb
-zip "$archive_rpm" ./*.rpm
+zip -9 -j "$archive_deb" ./*.deb
+zip -9 -j "$archive_rpm" ./*.rpm
 cd -
 
 cd crossbuilds/"$target"/examples

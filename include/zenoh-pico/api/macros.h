@@ -545,8 +545,8 @@ inline void z_call(const z_loaned_closure_zid_t &closure, const z_id_t *zid)
 inline void z_closure(
     z_owned_closure_hello_t* closure,
     void (*call)(z_loaned_hello_t*, void*),
-    void (*drop)(void*) = NULL,
-    void *context = NULL) {
+    void (*drop)(void*),
+    void *context) {
     closure->_val.context = context;
     closure->_val.drop = drop;
     closure->_val.call = call;
@@ -554,8 +554,8 @@ inline void z_closure(
 inline void z_closure(
     z_owned_closure_query_t* closure,
     void (*call)(z_loaned_query_t*, void*),
-    void (*drop)(void*) = NULL,
-    void *context = NULL) {
+    void (*drop)(void*),
+    void *context) {
     closure->_val.context = context;
     closure->_val.drop = drop;
     closure->_val.call = call;
@@ -563,8 +563,8 @@ inline void z_closure(
 inline void z_closure(
     z_owned_closure_reply_t* closure,
     void (*call)(z_loaned_reply_t*, void*),
-    void (*drop)(void*) = NULL,
-    void *context = NULL) {
+    void (*drop)(void*),
+    void *context) {
     closure->_val.context = context;
     closure->_val.drop = drop;
     closure->_val.call = call;
@@ -572,8 +572,8 @@ inline void z_closure(
 inline void z_closure(
     z_owned_closure_sample_t* closure,
     void (*call)(z_loaned_sample_t*, void*),
-    void (*drop)(void*) = NULL,
-    void *context = NULL) {
+    void (*drop)(void*),
+    void *context) {
     closure->_val.context = context;
     closure->_val.drop = drop;
     closure->_val.call = call;
@@ -581,8 +581,8 @@ inline void z_closure(
 inline void z_closure(
     z_owned_closure_zid_t* closure,
     void (*call)(const z_id_t*, void*),
-    void (*drop)(void*) = NULL,
-    void *context = NULL) {
+    void (*drop)(void*),
+    void *context) {
     closure->_val.context = context;
     closure->_val.drop = drop;
     closure->_val.call = call;

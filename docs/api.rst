@@ -462,7 +462,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_sample_t
 .. c:type:: z_loaned_closure_sample_t
 .. c:type:: z_moved_closure_sample_t
-   
+
+.. c:type:: void (* z_closure_sample_callback_t)(z_loaned_sample_t * sample, void * arg);
+
+    Function pointer type for handling samples.
+    Represents a callback function that is invoked when a sample is available for processing.
+
+    Parameters:
+      - **sample** - Pointer to a :c:type:`z_loaned_sample_t` representing the sample to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the sample.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_sample
@@ -486,7 +495,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_query_t
 .. c:type:: z_loaned_closure_query_t
 .. c:type:: z_moved_closure_query_t
-   
+
+.. c:type:: void (* z_closure_query_callback_t)(z_loaned_query_t * query, void * arg);
+
+    Function pointer type for handling queries.
+    Represents a callback function that is invoked when a query is available for processing.
+
+    Parameters:
+      - **query** - Pointer to a :c:type:`z_loaned_query_t` representing the query to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the query.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_query
@@ -511,7 +529,16 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_reply_t
 .. c:type:: z_loaned_closure_reply_t
 .. c:type:: z_moved_closure_reply_t
-   
+ 
+.. c:type:: void (* z_closure_reply_callback_t)(z_loaned_reply_t * reply, void * arg);
+
+    Function pointer type for handling replies.
+    Represents a callback function that is invoked when a reply is available for processing.
+
+    Parameters:
+      - **reply** - Pointer to a :c:type:`z_loaned_reply_t` representing the reply to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the reply.
+
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_closure_reply
@@ -536,6 +563,15 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_hello_t
 .. c:type:: z_loaned_closure_hello_t
 .. c:type:: z_moved_closure_hello_t
+ 
+.. c:type:: void (* z_closure_hello_callback_t)(z_loaned_hello_t * hello, void * arg);
+
+    Function pointer type for handling scouting response.
+    Represents a callback function that is invoked when a hello is available for processing.
+
+    Parameters:
+      - **hello** - Pointer to a :c:type:`z_loaned_hello_t` representing the hello to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the hello.
    
 Functions
 ^^^^^^^^^
@@ -561,6 +597,15 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_owned_closure_zid_t
 .. c:type:: z_loaned_closure_zid_t
 .. c:type:: z_moved_closure_zid_t
+ 
+.. c:type:: void (* z_closure_zid_callback_t)(z_loaned_zid_t * zid, void * arg);
+
+    Function pointer type for handling Zenoh ID routers response.
+    Represents a callback function that is invoked when a zid is available for processing.
+
+    Parameters:
+      - **zid** - Pointer to a :c:type:`z_loaned_zid_t` representing the zid to be processed.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the zid.
    
 Functions
 ^^^^^^^^^
@@ -1192,6 +1237,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serializer_serialize_buf
 .. autocfunction:: serialization.h::ze_serializer_serialize_string
 .. autocfunction:: serialization.h::ze_serializer_serialize_str
+.. autocfunction:: serialization.h::ze_serializer_serialize_substr
 .. autocfunction:: serialization.h::ze_serializer_serialize_sequence_length
 .. autocfunction:: serialization.h::ze_deserialize_int8
 .. autocfunction:: serialization.h::ze_deserialize_int16
@@ -1222,6 +1268,7 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_buf
 .. autocfunction:: serialization.h::ze_serialize_string
 .. autocfunction:: serialization.h::ze_serialize_str
+.. autocfunction:: serialization.h::ze_serialize_substr
 
 
 Others
@@ -1230,8 +1277,6 @@ Others
 Data Structures
 ---------------
 
-.. autoctype:: types.h::z_zint_t
-   
 .. autoctype:: types.h::zp_task_read_options_t
 .. autoctype:: types.h::zp_task_lease_options_t
 .. autoctype:: types.h::zp_read_options_t
@@ -1270,10 +1315,52 @@ Functions
 .. autocfunction:: primitives.h::zp_send_join_options_default
 .. autocfunction:: primitives.h::zp_send_join
 
-.. TODO Logging
-.. TODO =======
+Logging
+=======
 
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
 
+Zenoh-Pico provides a flexible logging system to assist with debugging and monitoring.
+By default, logging is disabled in release builds, but it can be enabled and configured 
+based on the desired level of verbosity.
 
+Logging Levels
+--------------
 
+Zenoh-Pico supports three logging levels:
 
+- **Error**: Only error messages are logged. This is the least verbose level.
+- **Info**: Logs informational messages and error messages.
+- **Debug**: Logs debug messages, informational messages, and error messages. This is the most verbose level.
+
+Enabling Logging
+----------------
+
+To enable logging, you can adjust the logging level by defining the ``ZENOH_DEBUG`` macro at compile time.
+
+- Set ``ZENOH_DEBUG`` to ``1`` to enable error messages.
+- Set ``ZENOH_DEBUG`` to ``2`` to enable informational messages.
+- Set ``ZENOH_DEBUG`` to ``3`` to enable debug messages (includes info and error).
+
+Additionally, logging can be automatically enabled in **debug builds** by defining the ``Z_BUILD_DEBUG`` macro.
+In release builds, logging is disabled unless ``ZENOH_DEBUG`` is explicitly set.
+
+Example of Enabling Logging
+---------------------------
+
+To enable **debug-level logging** in your build, you would add the following flags during compilation:
+
+.. code-block:: bash
+
+    gcc -DZENOH_DEBUG=3 -o my_program my_program.c
+
+This will enable the most verbose logging, printing debug, info, and error messages.
+
+Disabling Logging
+-----------------
+
+To disable all logging, set ``ZENOH_DEBUG`` to ``0`` or ensure it is undefined in release builds:
+
+.. code-block:: bash
+
+    gcc -DZENOH_DEBUG=0 -o my_program my_program.c

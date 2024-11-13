@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _ZP_UNUSED(x) (void)(x)
 #define _ZP_ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
@@ -105,5 +109,9 @@ typedef enum {
 
 #define _Z_IS_OK(expr) (expr == _Z_RES_OK)
 #define _Z_IS_ERR(expr) (expr != _Z_RES_OK)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_UTILS_RESULT_H */

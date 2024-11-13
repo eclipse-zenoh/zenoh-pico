@@ -35,13 +35,6 @@ extern "C" {
 #endif
 
 /**
- * Represents a variable-length encoding unsigned integer.
- *
- * It is equivalent to the size of a ``size_t``.
- */
-typedef _z_zint_t z_zint_t;
-
-/**
  * Represents a Zenoh ID.
  *
  * In general, valid Zenoh IDs are LSB-first 128bit unsigned and non-zero integers.
@@ -417,13 +410,13 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 
-typedef void (*z_dropper_handler_t)(void *arg);
-typedef _z_sample_handler_t z_sample_handler_t;
+typedef void (*z_closure_drop_callback_t)(void *arg);
+typedef _z_closure_sample_callback_t z_closure_sample_callback_t;
 
 typedef struct {
     void *context;
-    z_sample_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_sample_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_sample_t;
 
 /**
@@ -431,12 +424,12 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
 
-typedef _z_query_handler_t z_query_handler_t;
+typedef _z_closure_query_callback_t z_closure_query_callback_t;
 
 typedef struct {
     void *context;
-    z_query_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_query_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_query_t;
 
 /**
@@ -444,12 +437,12 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
 
-typedef _z_reply_handler_t z_reply_handler_t;
+typedef _z_closure_reply_callback_t z_closure_reply_callback_t;
 
 typedef struct {
     void *context;
-    z_reply_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_reply_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_reply_t;
 
 /**
@@ -457,12 +450,12 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
 
-typedef void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg);
+typedef void (*z_closure_hello_callback_t)(z_loaned_hello_t *hello, void *arg);
 
 typedef struct {
     void *context;
-    z_loaned_hello_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_hello_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_hello_t;
 
 /**
@@ -470,12 +463,12 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
-typedef void (*z_zid_handler_t)(const z_id_t *id, void *arg);
+typedef void (*z_closure_zid_callback_t)(const z_id_t *id, void *arg);
 
 typedef struct {
     void *context;
-    z_zid_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_zid_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_zid_t;
 
 /**

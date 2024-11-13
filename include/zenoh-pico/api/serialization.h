@@ -458,6 +458,7 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
 
 /**
  * Serializes a null-terminated string and writes it into an underlying :c:type:`z_owned_bytes_t`.
+ * The string should be a valid UTF-8.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -469,7 +470,22 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
 z_result_t ze_serializer_serialize_str(ze_loaned_serializer_t *serializer, const char *val);
 
 /**
+ * Serializes a substring and writes it into an underlying :c:type:`z_owned_bytes_t`.
+ * The substring should be a valid UTF-8.
+ *
+ * Parameters:
+ *   serializer: A serializer instance.
+ *   start: Pointer to the start of the substring to serialize.
+ *   len: Length of the substring to serialize.
+ *
+ * Return:
+ *   ``0`` if serialization is successful, ``negative value`` otherwise.
+ */
+z_result_t ze_serializer_serialize_substr(ze_loaned_serializer_t *serializer, const char *start, size_t len);
+
+/**
  * Serializes a string and writes it into an underlying :c:type:`z_owned_bytes_t`.
+ * The string should be a valid UTF-8.
  *
  * Parameters:
  *   serializer: A serializer instance.
@@ -523,7 +539,7 @@ z_result_t ze_deserializer_deserialize_sequence_length(ze_deserializer_t *deseri
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized data.
- *   data: Pointer to the data to serialize. Ownership is transferred to the `bytes`.
+ *   data: Pointer to the data to serialize.
  *   len: Number of bytes to serialize.
  *
  * Return:
@@ -534,6 +550,7 @@ z_result_t ze_serialize_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t 
 /**
  * Serializes a string into a :c:type:`z_owned_bytes_t`.
  *
+ * The string should be a valid UTF-8.
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized string.
  *   s: Pointer to the string to serialize.
@@ -545,15 +562,30 @@ z_result_t ze_serialize_string(z_owned_bytes_t *bytes, const z_loaned_string_t *
 
 /**
  * Serializes a null-terminated string into a :c:type:`z_owned_bytes_t`.
+ * The string should be a valid UTF-8.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized string.
- *   value: Pointer to the string to serialize. Ownership is transferred to the `bytes`.
+ *   value: Pointer to the string to serialize.
  *
  * Return:
  *   ``0`` if serialization is successful, ``negative value`` otherwise.
  */
 z_result_t ze_serialize_str(z_owned_bytes_t *bytes, const char *value);
+
+/**
+ * Serializes a substring into a :c:type:`z_owned_bytes_t`.
+ * The substring should be a valid UTF-8.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the serialized string.
+ *   start: Pointer to the the start of string to serialize.
+ *   len: Length of the substring to serialize.
+ *
+ * Return:
+ *   ``0`` if serialization is successful, ``negative value`` otherwise.
+ */
+z_result_t ze_serialize_substr(z_owned_bytes_t *bytes, const char *start, size_t len);
 
 /**
  * Serializes a slice into a :c:type:`z_owned_bytes_t`.

@@ -18,7 +18,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 size_t _z_cobs_encode(const uint8_t *input, size_t input_len, uint8_t *output);
 size_t _z_cobs_decode(const uint8_t *input, size_t input_len, uint8_t *output);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_UTILS_ENCODING_H */

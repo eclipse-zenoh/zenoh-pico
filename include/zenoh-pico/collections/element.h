@@ -21,6 +21,10 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- element functions --------*/
 typedef size_t (*z_element_size_f)(void *e);
 typedef void (*z_element_clear_f)(void *e);
@@ -74,5 +78,9 @@ static inline void _z_noop_move(void *dst, void *src) {
 }
 
 _Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

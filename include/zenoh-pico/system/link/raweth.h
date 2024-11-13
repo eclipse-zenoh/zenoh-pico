@@ -21,6 +21,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 // Ethernet types (big endian)
@@ -91,6 +95,10 @@ z_result_t _z_close_raweth(_z_sys_net_socket_t *sock);
 uint16_t _z_raweth_ntohs(uint16_t val);
 uint16_t _z_raweth_htons(uint16_t val);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_RAWETH_H */

@@ -20,6 +20,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Return type when declaring a subscriber.
  */
@@ -35,6 +39,10 @@ static inline bool _z_subscriber_check(const _z_subscriber_t *subscriber) { retu
 void _z_subscriber_clear(_z_subscriber_t *sub);
 void _z_subscriber_free(_z_subscriber_t **sub);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

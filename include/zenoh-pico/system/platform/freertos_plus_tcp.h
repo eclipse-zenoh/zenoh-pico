@@ -18,6 +18,10 @@
 #include "FreeRTOS_IP.h"
 #include "semphr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef struct {
     const char *name;
@@ -57,5 +61,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -18,6 +18,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * A zenoh-net data sample.
  *
@@ -74,4 +78,7 @@ void _z_sample_free(_z_sample_t **sample);
 z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* ZENOH_PICO_SAMPLE_NETAPI_H */

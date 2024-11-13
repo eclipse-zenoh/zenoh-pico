@@ -20,6 +20,10 @@
 
 #include "zenoh-pico/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int _z_socket_t;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -60,5 +64,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_MBED_TYPES_H */

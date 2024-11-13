@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_session_drop(z_session_move(&s));
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_from_str(&ke, KEYEXPR);
     if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Pulling data every %zu ms... Ring size: %zd\n", INTERVAL, SIZE);

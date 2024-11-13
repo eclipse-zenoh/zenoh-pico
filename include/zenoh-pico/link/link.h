@@ -46,6 +46,10 @@
 
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Link transport capability enum.
  *
@@ -143,5 +147,9 @@ z_result_t _z_listen_link(_z_link_t *zl, _z_string_t *locator);
 z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
 size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_LINK_H */

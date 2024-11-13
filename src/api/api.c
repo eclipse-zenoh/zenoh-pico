@@ -546,15 +546,15 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_clear)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_sample_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_query_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_reply_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_loaned_hello_handler_t, z_dropper_handler_t)
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_zid_handler_t, z_dropper_handler_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_closure_sample_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_closure_query_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_closure_reply_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_closure_hello_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure_drop_callback_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
-    z_loaned_hello_handler_t user_call;
+    z_closure_hello_callback_t user_call;
     void *ctx;
 } __z_hello_handler_wrapper_t;
 
@@ -712,8 +712,7 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
 
 z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str) {
-    _z_slice_t buf = _z_slice_alias_buf(id->id, sizeof(id->id));
-    str->_val = _z_string_convert_bytes(&buf);
+    str->_val = _z_id_to_string(id);
     if (!_z_string_check(&str->_val)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -1107,6 +1106,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &rep
 
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply) { return &reply->data._result.error; }
 
+#ifdef Z_FEATURE_UNSTABLE_API
 bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     if (_z_id_check(reply->data.replier_id)) {
         *out_id = reply->data.replier_id;
@@ -1114,7 +1114,9 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
     }
     return false;
 }
-#endif
+#endif  // Z_FEATURE_UNSTABLE_API
+
+#endif  // Z_FEATURE_QUERY == 1
 
 #if Z_FEATURE_QUERYABLE == 1
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_query_t, query, _z_query_check, _z_query_null, _z_query_copy, _z_query_clear)

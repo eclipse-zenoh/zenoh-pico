@@ -24,6 +24,10 @@
 #include "slice.h"
 #include "zenoh-pico/system/platform_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 _Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
 
 /*-------- ArcSlice --------*/
@@ -52,5 +56,9 @@ const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s);
 z_result_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src);
 z_result_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src);
 z_result_t _z_arc_slice_drop(_z_arc_slice_t* s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARC_SLICE_H */

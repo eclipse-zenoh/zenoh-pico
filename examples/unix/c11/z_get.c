@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     }
 
     z_owned_closure_reply_t callback;
-    z_closure(&callback, reply_handler, reply_dropper);
+    z_closure(&callback, reply_handler, reply_dropper, NULL);
     if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;

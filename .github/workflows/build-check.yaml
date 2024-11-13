@@ -34,13 +34,15 @@ jobs:
 
   check_format:
     name: Check codebase format with clang-format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run clang-format dry-run
-        run: find include/ src/ tests/ examples/ -iname "*.ino" -o -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
+        run: |
+          clang-format --version
+          find include/ src/ tests/ examples/ -iname "*.ino" -o -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
 
   c99_build:
     name: Check c99 compilation

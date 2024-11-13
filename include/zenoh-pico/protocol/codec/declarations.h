@@ -17,6 +17,11 @@
 
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/iobuf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_DECL_KEXPR_MID 0
 #define _Z_DECL_KEXPR_FLAG_N 0x20
 #define _Z_UNDECL_KEXPR_MID 1
@@ -49,5 +54,9 @@ z_result_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8
 
 z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl);
 z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_DECLARATIONS_H */

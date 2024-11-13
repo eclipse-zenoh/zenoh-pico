@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -87,12 +87,12 @@ int main(int argc, char **argv) {
             opts.payload = z_move(payload);
         }
         z_owned_closure_reply_t callback;
-        z_closure(&callback, reply_handler, reply_dropper);
+        z_closure(&callback, reply_handler, reply_dropper, NULL);
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
         if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
             printf("Unable to send query.\n");
-            exit(-1);
+            return -1;
         }
     }
 

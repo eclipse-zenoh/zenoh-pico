@@ -12,9 +12,16 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#ifndef ZENOH_PICO_UTILS_STRING_H
+#define ZENOH_PICO_UTILS_STRING_H
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     char const *start;
@@ -55,3 +62,9 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
 size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const char *needle_start);
 
 size_t _z_str_startswith(const char *s, const char *needle);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ZENOH_PICO_UTILS_STRING_H */
