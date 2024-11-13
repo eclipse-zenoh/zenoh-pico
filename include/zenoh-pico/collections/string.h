@@ -76,6 +76,7 @@ static inline _z_string_t _z_string_alias(const _z_string_t str) {
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice);
 _z_string_t _z_string_alias_str(const char *value);
 _z_string_t _z_string_alias_substr(const char *value, size_t len);
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
@@ -98,7 +99,7 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
 
 _Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move)
-_Z_SVEC_DEFINE(_z_string, _z_string_t, true)
+_Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)
 

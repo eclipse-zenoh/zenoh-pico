@@ -93,8 +93,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
                     _z_msg_query_t *query = &req->_body._query;
-                    ret = _z_trigger_queryables(zsrc, query, req->_key, (uint32_t)req->_rid,
-                                                req->_body._query._ext_attachment);
+                    ret = _z_trigger_queryables(zsrc, query, &req->_key, (uint32_t)req->_rid);
 #else
                     _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
 #endif
@@ -133,7 +132,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
             switch (response->_tag) {
                 case _Z_RESPONSE_BODY_REPLY: {
                     _z_msg_reply_t *reply = &response->_body._reply;
-                    ret = _z_trigger_reply_partial(zn, response->_request_id, response->_key, reply);
+                    ret = _z_trigger_reply_partial(zn, response->_request_id, &response->_key, reply);
                 } break;
                 case _Z_RESPONSE_BODY_ERR: {
                     _z_msg_err_t *error = &response->_body._err;

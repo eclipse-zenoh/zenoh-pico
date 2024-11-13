@@ -69,6 +69,8 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
+#define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
+
 typedef struct {
     _z_session_rc_ref_t *_session;
     _z_link_t _link;
@@ -79,6 +81,8 @@ typedef struct {
     _z_zint_t _sn_res;
     _z_zint_t _sn_tx_reliable;
     _z_zint_t _sn_tx_best_effort;
+    _z_arc_slice_svec_t _arc_pool;
+    _z_network_message_svec_t _msg_pool;
     volatile _z_zint_t _lease;
     volatile bool _transmitted;
 #if Z_FEATURE_MULTI_THREAD == 1

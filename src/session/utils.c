@@ -26,6 +26,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
+void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src) { *dst = *src; }
+
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) { return *tstamp; }
 
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
@@ -66,6 +68,9 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     zn->_local_queryable = NULL;
+#if Z_FEATURE_RX_CACHE == 1
+    memset(&zn->_queryable_cache, 0, sizeof(zn->_queryable_cache));
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
@@ -120,6 +125,9 @@ void _z_session_clear(_z_session_t *zn) {
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     _z_flush_session_queryable(zn);
+#if Z_FEATURE_RX_CACHE == 1
+    _z_queryable_cache_clear(&zn->_queryable_cache);
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);

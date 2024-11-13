@@ -92,7 +92,7 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
     z_result_t ret = _Z_RES_OK;
     msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
@@ -104,7 +104,7 @@ z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if (ret == _Z_RES_OK) {
         uint8_t msgheader;
         _Z_RETURN_IF_ERR(_z_uint8_decode(&msgheader, zbf));
-        _Z_RETURN_IF_ERR(_z_push_body_decode(&msg->_body, zbf, msgheader));
+        _Z_RETURN_IF_ERR(_z_push_body_decode(&msg->_body, zbf, msgheader, arcs));
     }
 
     return ret;
@@ -206,7 +206,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header) {
+z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header, _z_arc_slice_t *arcs) {
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
@@ -224,7 +224,7 @@ z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint
         } break;
         case _Z_MID_Z_PUT: {
             msg->_tag = _Z_REQUEST_PUT;
-            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, zheader));
+            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, zheader, arcs));
         } break;
         case _Z_MID_Z_DEL: {
             msg->_tag = _Z_REQUEST_DEL;
@@ -334,7 +334,7 @@ z_result_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     z_result_t ret = _Z_RES_OK;
@@ -352,12 +352,12 @@ z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t 
     switch (_Z_MID(inner_header)) {
         case _Z_MID_Z_REPLY: {
             msg->_tag = _Z_RESPONSE_BODY_REPLY;
-            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header);
+            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header, arcs);
             break;
         }
         case _Z_MID_Z_ERR: {
             msg->_tag = _Z_RESPONSE_BODY_ERR;
-            ret = _z_err_decode(&msg->_body._err, zbf, inner_header);
+            ret = _z_err_decode(&msg->_body._err, zbf, inner_header, arcs);
             break;
         }
         default: {
@@ -513,7 +513,7 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
             return _Z_ERR_GENERIC;
     }
 }
-z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
+z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
     switch (_Z_MID(header)) {
@@ -523,15 +523,15 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) 
         } break;
         case _Z_MID_N_PUSH: {
             msg->_tag = _Z_N_PUSH;
-            return _z_push_decode(&msg->_body._push, zbf, header);
+            return _z_push_decode(&msg->_body._push, zbf, header, arcs);
         } break;
         case _Z_MID_N_REQUEST: {
             msg->_tag = _Z_N_REQUEST;
-            return _z_request_decode(&msg->_body._request, zbf, header);
+            return _z_request_decode(&msg->_body._request, zbf, header, arcs);
         } break;
         case _Z_MID_N_RESPONSE: {
             msg->_tag = _Z_N_RESPONSE;
-            return _z_response_decode(&msg->_body._response, zbf, header);
+            return _z_response_decode(&msg->_body._response, zbf, header, arcs);
         } break;
         case _Z_MID_N_RESPONSE_FINAL: {
             msg->_tag = _Z_N_RESPONSE_FINAL;

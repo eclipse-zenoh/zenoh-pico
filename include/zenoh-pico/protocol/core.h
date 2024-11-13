@@ -70,7 +70,9 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){0}; }
-static inline bool _z_timestamp_check(const _z_timestamp_t *stamp) { return stamp->valid; }
+static inline void _z_timestamp_invalid(_z_timestamp_t *tstamp) { tstamp->valid = false; }
+static inline bool _z_timestamp_check(const _z_timestamp_t *tstamp) { return tstamp->valid; }
+void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
@@ -170,6 +172,9 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_value_t _z_value_null(void) { return (_z_value_t){0}; }
+static inline bool _z_value_check(const _z_value_t *value) {
+    return _z_bytes_check(&value->payload) || _z_encoding_check(&value->encoding);
+}
 _z_value_t _z_value_steal(_z_value_t *value);
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 void _z_value_move(_z_value_t *dst, _z_value_t *src);

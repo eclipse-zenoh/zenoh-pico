@@ -81,8 +81,13 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         ztm->_common._wbuf = _z_wbuf_make(mtu, false);
         ztm->_common._zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
 
+        // Initialize resource pool
+        ztm->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
+        ztm->_common._msg_pool = _z_network_message_svec_make(_Z_RES_POOL_INIT_SIZE);
+
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztm->_common._wbuf) != mtu) ||
+        if ((ztm->_common._msg_pool._capacity == 0) || (ztm->_common._arc_pool._capacity == 0) ||
+            (_z_wbuf_capacity(&ztm->_common._wbuf) != mtu) ||
             (_z_zbuf_capacity(&ztm->_common._zbuf) != Z_BATCH_MULTICAST_SIZE)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
@@ -209,6 +214,8 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     // Clean up the buffers
     _z_wbuf_clear(&ztm->_common._wbuf);
     _z_zbuf_clear(&ztm->_common._zbuf);
+    _z_arc_slice_svec_release(&ztm->_common._arc_pool);
+    _z_network_message_svec_release(&ztm->_common._msg_pool);
 
     // Clean up peer list
     _z_transport_peer_entry_list_free(&ztm->_peers);

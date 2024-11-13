@@ -111,22 +111,19 @@ z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset
 }
 
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
-    dst->start = src->start;
-    dst->len = src->len;
-    dst->_delete_context = src->_delete_context;
-
+    *dst = *src;
     _z_slice_reset(src);
 }
 
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
-    _z_slice_t dst = _z_slice_empty();
+    _z_slice_t dst = _z_slice_null();
     _z_slice_copy(&dst, src);
     return dst;
 }
 
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;
-    *b = _z_slice_empty();
+    *b = _z_slice_null();
     return ret;
 }
 bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {

@@ -194,37 +194,51 @@ z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t
 z_result_t _z_uint8_decode_reader(uint8_t *zint, void *context) { return _z_uint8_decode(zint, (_z_zbuf_t *)context); }
 
 z_result_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
-    return _z_zint64_decode_with_reader(zint, _z_uint8_decode_reader, (void *)zbf);
+    *zint = 0;
+    uint8_t b = 0;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+
+    uint8_t i = 0;
+    while (((b & 0x80) != 0) && (i != 7 * (VLE_LEN - 1))) {
+        *zint = *zint | ((uint64_t)(b & 0x7f)) << i;
+        _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+        i = i + (uint8_t)7;
+    }
+    *zint = *zint | ((uint64_t)b << i);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
-    z_result_t ret = _Z_RES_OK;
     uint64_t buf;
     _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
-    if (buf <= UINT16_MAX) {
-        *zint = (uint16_t)buf;
-    } else {
+    if (buf > UINT16_MAX) {
         _Z_INFO("Invalid zint16 value decoded");
-        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    return ret;
+    *zint = (uint16_t)buf;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
-    z_result_t ret = _Z_RES_OK;
     uint64_t buf;
     _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
-    if (buf <= UINT32_MAX) {
-        *zint = (uint32_t)buf;
-    } else {
+    if (buf > UINT32_MAX) {
         _Z_INFO("Invalid zint32 value decoded");
-        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    return ret;
+    *zint = (uint32_t)buf;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
-    return _z_zsize_decode_with_reader(zint, _z_uint8_decode_reader, (void *)zbf);
+    uint64_t buf;
+    _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
+    if (buf > SIZE_MAX) {
+        _Z_INFO("Invalide zsize value decoded");
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    *zint = (_z_zint_t)buf;
+    return _Z_RES_OK;
 }
 
 /*------------------ uint8_array ------------------*/
@@ -281,15 +295,16 @@ z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice
 
 z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
     // Decode slice
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
     // Calc offset
     size_t offset = _z_ptr_u8_diff(s.start, _Z_RC_IN_VAL(&zbf->_slice)->start);
     // Get ownership of subslice
-    _z_arc_slice_t arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
-    return _z_bytes_append_slice(bs, &arcs);
+    *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
+    _z_bytes_alias_arc_slice(bs, arcs);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {

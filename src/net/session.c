@@ -95,7 +95,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
         _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
         if (hellos != NULL) {
             _z_hello_t *hello = _z_hello_list_head(hellos);
-            _z_string_svec_copy(&locators, &hello->_locators);
+            _z_string_svec_copy(&locators, &hello->_locators, true);
         }
         _z_hello_list_free(&hellos);
     } else {
@@ -112,7 +112,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
         }
         locators = _z_string_svec_make(1);
         _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
-        _z_string_svec_append(&locators, &s);
+        _z_string_svec_append(&locators, &s, true);
     }
 
     ret = _Z_ERR_SCOUT_NO_RESULTS;

@@ -100,7 +100,7 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     // Decode message
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
-        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
+        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf, &ztm->_common._arc_pool, &ztm->_common._msg_pool);
     }
     _z_transport_rx_mutex_unlock(&ztm->_common);
     return ret;

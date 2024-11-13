@@ -64,8 +64,13 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
         ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
 
+        // Initialize resources pool
+        ztu->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
+        ztu->_common._msg_pool = _z_network_message_svec_make(_Z_RES_POOL_INIT_SIZE);
+
         // Clean up the buffers if one of them failed to be allocated
-        if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
+        if ((ztu->_common._msg_pool._capacity == 0) || (ztu->_common._arc_pool._capacity == 0) ||
+            (_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
             (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
@@ -227,7 +232,7 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
     // Encode InitAck
-    _z_slice_t cookie = _z_slice_empty();
+    _z_slice_t cookie = _z_slice_null();
     _z_transport_message_t iam = _z_t_msg_make_init_ack(whatami, *local_zid, cookie);
     // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
     if (iam._body._init._seq_num_res > tmsg._body._init._seq_num_res) {
@@ -339,6 +344,8 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
     // Clean up the buffers
     _z_wbuf_clear(&ztu->_common._wbuf);
     _z_zbuf_clear(&ztu->_common._zbuf);
+    _z_arc_slice_svec_release(&ztu->_common._arc_pool);
+    _z_network_message_svec_release(&ztu->_common._msg_pool);
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&ztu->_dbuf_reliable);
     _z_wbuf_clear(&ztu->_dbuf_best_effort);

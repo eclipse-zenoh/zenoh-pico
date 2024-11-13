@@ -135,7 +135,7 @@ void _z_vec_remove(_z_vec_t *v, size_t pos, z_element_free_f free_f) {
 
 /*-------- svec --------*/
 _z_svec_t _z_svec_make(size_t capacity, size_t element_size) {
-    _z_svec_t v = {._capacity = 0, ._len = 0, ._val = NULL};
+    _z_svec_t v = _z_svec_null();
     if (capacity != 0) {
         v._val = z_malloc(element_size * capacity);
     }
@@ -145,7 +145,11 @@ _z_svec_t _z_svec_make(size_t capacity, size_t element_size) {
     return v;
 }
 
-void _z_svec_init(_z_svec_t *dst, size_t element_size) { memset(dst->_val, 0, dst->_capacity * element_size); }
+void _z_svec_init(_z_svec_t *v, size_t offset, size_t element_size) {
+    assert(offset <= v->_capacity);
+    void *start = _z_svec_get_mut(v, offset, element_size);
+    memset(start, 0, (v->_capacity - offset) * element_size);
+}
 
 static inline void __z_svec_move_inner(void *dst, void *src, z_element_move_f move, size_t num_elements,
                                        size_t element_size, bool use_elem_f) {
@@ -206,7 +210,7 @@ void _z_svec_clear(_z_svec_t *v, z_element_clear_f clear_f, size_t element_size)
 
 void _z_svec_release(_z_svec_t *v) {
     z_free(v->_val);
-    *v = _z_svec_null();
+    v->_capacity = 0;
 }
 
 void _z_svec_free(_z_svec_t **v, z_element_clear_f clear, size_t element_size) {
@@ -226,13 +230,13 @@ bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
 
 z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_size, bool use_elem_f) {
     // Allocate a new vector
-    size_t _capacity = v->_capacity == 0 ? 1 : (v->_capacity << 1);
+    size_t _capacity = v->_capacity << 1;
     void *_val = (void *)z_malloc(_capacity * element_size);
     if (_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    // Move and clear old data
     __z_svec_move_inner(_val, v->_val, move, v->_len, element_size, use_elem_f);
-    // Free the old data
     z_free(v->_val);
     // Update the current vector
     v->_val = _val;
@@ -241,7 +245,9 @@ z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_si
 }
 
 z_result_t _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t element_size, bool use_elem_f) {
-    if (v->_len == v->_capacity) {
+    if (v->_capacity == 0) {
+        *v = _z_svec_make(1, element_size);
+    } else if (v->_len == v->_capacity) {
         _Z_RETURN_IF_ERR(_z_svec_expand(v, move, element_size, use_elem_f));
     }
     // Append element

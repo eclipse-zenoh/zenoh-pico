@@ -82,7 +82,6 @@ void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     if (_z_keyexpr_has_suffix(rk)) {
         _z_string_clear(&rk->_suffix);
     }
-    rk->_suffix = _z_string_null();
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
@@ -103,7 +102,15 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     if (_z_keyexpr_mapping_id(left) != _z_keyexpr_mapping_id(right)) {
         return false;
     }
-    return _z_string_equals(&left->_suffix, &right->_suffix);
+    bool l_suffix = _z_keyexpr_has_suffix(left);
+    bool r_suffix = _z_keyexpr_has_suffix(right);
+    if (l_suffix != r_suffix) {
+        return false;
+    }
+    if (l_suffix && r_suffix) {
+        return _z_string_equals(&left->_suffix, &right->_suffix);
+    }
+    return true;
 }
 
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_declared) {

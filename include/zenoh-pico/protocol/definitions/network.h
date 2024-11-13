@@ -91,7 +91,7 @@ static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (bool)(n_qos.
 #define _z_n_qos_make(express, nodrop, priority)                                                    \
     _z_n_qos_create((bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
                     (z_priority_t)priority)
-#define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
+#define _Z_N_QOS_DEFAULT ((_z_qos_t){._val = 5})
 
 // RESPONSE FINAL message flags:
 //      Z Extensions       if Z==1 then Zenoh extensions are present
@@ -290,7 +290,7 @@ void _z_n_msg_free(_z_network_message_t **m);
 inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
 inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
 _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy, _z_noop_move)
-_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t, false)
+_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,

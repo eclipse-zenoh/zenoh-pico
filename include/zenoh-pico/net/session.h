@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/utils/config.h"
@@ -61,6 +62,9 @@ typedef struct _z_session_t {
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
     _z_session_queryable_rc_list_t *_local_queryable;
+#if Z_FEATURE_RX_CACHE == 1
+    _z_queryable_cache_t _queryable_cache;
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;

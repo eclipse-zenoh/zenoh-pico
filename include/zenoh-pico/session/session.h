@@ -80,12 +80,12 @@ typedef struct {
 } _z_publication_t;
 
 // Forward type declaration to avoid cyclical include
-typedef struct _z_query_rc_t _z_query_rc_t;
+typedef struct _z_query_t _z_query_t;
 
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_query_handler_t)(_z_query_rc_t *query, void *arg);
+typedef void (*_z_query_handler_t)(_z_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

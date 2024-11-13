@@ -26,8 +26,8 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 
 void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
-    _z_bytes_drop(&sample->payload);
     _z_encoding_clear(&sample->encoding);
+    _z_bytes_drop(&sample->payload);
     _z_bytes_drop(&sample->attachment);
 }
 
@@ -56,32 +56,3 @@ _z_sample_t _z_sample_duplicate(const _z_sample_t *src) {
     _z_sample_copy(&dst, src);
     return dst;
 }
-
-#if Z_FEATURE_SUBSCRIPTION == 1
-void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                      _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos, _z_bytes_t *attachment,
-                      z_reliability_t reliability) {
-    s->kind = kind;
-    s->qos = qos;
-    s->reliability = reliability;
-    s->keyexpr = _z_keyexpr_steal(key);
-    s->timestamp = _z_timestamp_check(timestamp) ? _z_timestamp_duplicate(timestamp) : _z_timestamp_null();
-    _z_encoding_move(&s->encoding, encoding);
-    _z_bytes_move(&s->attachment, attachment);
-    _z_bytes_move(&s->payload, payload);
-}
-#else
-void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                      _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos, _z_bytes_t *attachment,
-                      z_reliability_t reliability) {
-    _ZP_UNUSED(key);
-    _ZP_UNUSED(payload);
-    _ZP_UNUSED(timestamp);
-    _ZP_UNUSED(encoding);
-    _ZP_UNUSED(kind);
-    _ZP_UNUSED(qos);
-    _ZP_UNUSED(attachment);
-    _ZP_UNUSED(reliability);
-    *s = _z_sample_null();
-}
-#endif

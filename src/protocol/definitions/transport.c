@@ -40,7 +40,7 @@ void _z_t_msg_close_clear(_z_t_msg_close_t *msg) { (void)(msg); }
 
 void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
 
-void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) { _z_network_message_svec_clear(&msg->_messages); }
+void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) { (void)(msg); }
 
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg) { _z_slice_clear(&msg->_payload); }
 
@@ -248,7 +248,7 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t 
 
 /*------------------ Fragment Message ------------------*/
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last) {
-    return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last);
+    return _z_t_msg_make_fragment(sn, _z_slice_null(), reliability, is_last);
 }
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, z_reliability_t reliability,
                                               bool is_last) {
@@ -307,7 +307,7 @@ void _z_t_msg_copy_keep_alive(_z_t_msg_keep_alive_t *clone, _z_t_msg_keep_alive_
 
 void _z_t_msg_copy_frame(_z_t_msg_frame_t *clone, _z_t_msg_frame_t *msg) {
     clone->_sn = msg->_sn;
-    _z_network_message_svec_copy(&clone->_messages, &msg->_messages);
+    _z_network_message_svec_copy(&clone->_messages, &msg->_messages, false);
 }
 
 /*------------------ Transport Message ------------------*/

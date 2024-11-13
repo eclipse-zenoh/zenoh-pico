@@ -111,39 +111,38 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_q
     return ret;
 }
 
-z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, const _z_keyexpr_t keyexpr,
-                                          _z_msg_put_t *msg, z_sample_kind_t kind) {
-    z_result_t ret = _Z_RES_OK;
-
+static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id,
+                                                       const _z_keyexpr_t *keyexpr, _z_msg_put_t *msg,
+                                                       z_sample_kind_t kind) {
     _z_session_mutex_lock(zn);
 
+    // Get query infos
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
-    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
+    if (pen_qry == NULL) {
+        _z_session_mutex_unlock(zn);
+        return _Z_ERR_ENTITY_UNKNOWN;
     }
-
-    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr, true);
-    if ((ret == _Z_RES_OK) &&
-        ((pen_qry->_anykey == false) && (_z_keyexpr_suffix_intersects(&pen_qry->_key, &keyexpr) == false))) {
-        ret = _Z_ERR_QUERY_NOT_MATCH;
+    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true);
+    if (!pen_qry->_anykey && !_z_keyexpr_suffix_intersects(&pen_qry->_key, keyexpr)) {
+        _z_session_mutex_unlock(zn);
+        return _Z_ERR_QUERY_NOT_MATCH;
     }
-
     // Build the reply
-    _z_reply_t reply = _z_reply_create(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                                       &msg->_encoding, kind, &msg->_attachment);
-
-    bool drop = false;
-    // Verify if this is a newer reply, free the old one in case it is
-    if ((ret == _Z_RES_OK) && ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
-                               (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC))) {
+    _z_reply_t reply = _z_reply_alias(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
+                                      &msg->_encoding, kind, &msg->_attachment);
+    // Process monotonic & latest consolidation mode
+    if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
+        (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
+        bool drop = false;
         _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
+
+        // Verify if this is a newer reply, free the old one in case it is
         while (pen_rps != NULL) {
             pen_rep = _z_pending_reply_list_head(pen_rps);
-
             // Check if this is the same resource key
             if (_z_string_equals(&pen_rep->_reply.data._result.sample.keyexpr._suffix,
-                                 &reply.data._result.sample.keyexpr._suffix) == true) {
+                                 &reply.data._result.sample.keyexpr._suffix)) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -154,87 +153,74 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
             }
             pen_rps = _z_pending_reply_list_tail(pen_rps);
         }
-
-        if (drop == false) {
+        if (!drop) {
             // Cache most recent reply
             pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
-            if (pen_rep != NULL) {
-                if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
-                    // No need to store the whole reply in the monotonic mode.
-                    _z_reply_t partial_reply;
-                    (void)memset(&partial_reply, 0,
-                                 sizeof(_z_reply_t));  // Avoid warnings on uninitialized values on the reply
-                    partial_reply.data._tag = _Z_REPLY_TAG_DATA;
-                    partial_reply.data._result.sample.keyexpr =
-                        _z_keyexpr_duplicate(&reply.data._result.sample.keyexpr);
-                    pen_rep->_reply = partial_reply;
-                } else {
-                    pen_rep->_reply = reply;  // Store the whole reply in the latest mode
-                }
-                pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
-                pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
-            } else {
-                ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            if (pen_rep == NULL) {
+                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
+            if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
+                // No need to store the whole reply in the monotonic mode.
+                pen_rep->_reply = _z_reply_null();
+                pen_rep->_reply.data._tag = _Z_REPLY_TAG_DATA;
+                pen_rep->_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(&reply.data._result.sample.keyexpr);
+            } else {
+                // Copy the reply to store it out of context
+                _Z_RETURN_IF_ERR(_z_reply_copy(&pen_rep->_reply, &reply));
+            }
+            pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+            pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
         }
     }
-
     _z_session_mutex_unlock(zn);
 
-    // Trigger the user callback
-    if ((ret == _Z_RES_OK) && (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST)) {
-        _z_reply_t cb_reply = _z_reply_null();
-        cb_reply = _z_reply_move(&reply);
-        pen_qry->_callback(&cb_reply, pen_qry->_arg);
-        _z_reply_clear(&cb_reply);
-        return ret;
+    // Trigger callback if applicable
+    if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
+        pen_qry->_callback(&reply, pen_qry->_arg);
     }
-    // Other cases
-    if (drop || (ret != _Z_RES_OK)) {
-        _z_reply_clear(&reply);
-    }
+    return _Z_RES_OK;
+}
 
+z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
+                                          _z_msg_put_t *msg, z_sample_kind_t kind) {
+    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind);
+    // Clean up
+    _z_keyexpr_clear(keyexpr);
+    _z_bytes_aliased_drop(&msg->_payload);
+    _z_bytes_drop(&msg->_attachment);
+    _z_encoding_clear(&msg->_encoding);
     return ret;
 }
 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
     z_result_t ret = _Z_RES_OK;
 
+    // Retrieve query
     _z_session_mutex_lock(zn);
-
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
-    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
+    if (pen_qry == NULL) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
-
-    // Build the reply
-    _z_reply_t reply = _z_reply_err_create(msg->_payload, &msg->_encoding);
-
     _z_session_mutex_unlock(zn);
 
     // Trigger the user callback
     if (ret == _Z_RES_OK) {
-        _z_reply_t cb_reply = _z_reply_null();
-        cb_reply = _z_reply_move(&reply);
-        pen_qry->_callback(&cb_reply, pen_qry->_arg);
-        _z_reply_clear(&cb_reply);
+        _z_reply_t reply = _z_reply_err_alias(&msg->_payload, &msg->_encoding);
+        pen_qry->_callback(&reply, pen_qry->_arg);
     }
-
-    if (ret != _Z_RES_OK) {
-        _z_reply_clear(&reply);
-    }
-
+    // Clean up
+    _z_bytes_aliased_drop(&msg->_payload);
+    _z_encoding_clear(&msg->_encoding);
     return ret;
 }
 
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     z_result_t ret = _Z_RES_OK;
 
+    // Retrieve query
     _z_session_mutex_lock(zn);
-
-    // Final reply received for unknown query id
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
-    if ((ret == _Z_RES_OK) && (pen_qry == NULL)) {
+    if (pen_qry == NULL) {
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
     // The reply is the final one, apply consolidation if needed
@@ -243,21 +229,15 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
             // Trigger the query handler
-            _z_reply_t cb_reply = _z_reply_null();
-            cb_reply = _z_reply_move(&pen_rep->_reply);
-            pen_qry->_callback(&cb_reply, pen_qry->_arg);
+            pen_qry->_callback(&pen_rep->_reply, pen_qry->_arg);
             pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
-            _z_reply_clear(&cb_reply);
         }
     }
-
     if (ret == _Z_RES_OK) {
         // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
         zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     }
-
     _z_session_mutex_unlock(zn);
-
     return ret;
 }
 

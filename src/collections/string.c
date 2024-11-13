@@ -33,6 +33,12 @@ _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     return s;
 }
 
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice) {
+    _z_string_t s;
+    s._slice = _z_slice_alias(*slice);
+    return s;
+}
+
 _z_string_t _z_string_alias_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_alias_buf((const uint8_t *)(value), strlen(value));
@@ -71,7 +77,7 @@ z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, si
     return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
 }
 
-void _z_string_move(_z_string_t *dst, _z_string_t *src) { *dst = _z_string_steal(src); }
+void _z_string_move(_z_string_t *dst, _z_string_t *src) { _z_slice_move(&dst->_slice, &src->_slice); }
 
 _z_string_t _z_string_steal(_z_string_t *str) {
     _z_string_t ret;

@@ -46,6 +46,21 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
+static inline _z_sample_t _z_sample_alias(const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                                          const _z_timestamp_t *timestamp, const _z_encoding_t *encoding,
+                                          const z_sample_kind_t kind, const _z_qos_t qos, const _z_bytes_t *attachment,
+                                          z_reliability_t reliability) {
+    return (_z_sample_t){
+        .keyexpr = *key,
+        .payload = *payload,
+        .timestamp = *timestamp,
+        .encoding = *encoding,
+        .kind = kind,
+        .qos = qos,
+        .attachment = *attachment,
+        .reliability = reliability,
+    };
+}
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 
 /**
@@ -58,9 +73,5 @@ void _z_sample_free(_z_sample_t **sample);
 
 z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
-
-void _z_sample_create(_z_sample_t *s, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                      _z_encoding_t *encoding, const z_sample_kind_t kind, const _z_qos_t qos, _z_bytes_t *attachment,
-                      z_reliability_t reliability);
 
 #endif /* ZENOH_PICO_SAMPLE_NETAPI_H */
