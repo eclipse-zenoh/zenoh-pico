@@ -24,7 +24,7 @@ typedef struct _z_session_t _z_session_t;
 
 // Subscription infos
 typedef struct {
-    _z_sample_handler_t callback;
+    _z_closure_sample_callback_t callback;
     void *arg;
 } _z_subscription_infos_t;
 

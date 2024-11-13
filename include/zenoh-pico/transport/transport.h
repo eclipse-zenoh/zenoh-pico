@@ -203,4 +203,4 @@ static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _Z
 #ifdef __cplusplus
 }
 #endif
-#endif  /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */
+#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

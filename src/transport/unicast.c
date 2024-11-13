@@ -26,6 +26,7 @@
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/uuid.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {

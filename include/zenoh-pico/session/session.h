@@ -89,7 +89,7 @@ typedef struct _z_query_t _z_query_t;
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
+typedef void (*_z_closure_query_callback_t)(_z_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;

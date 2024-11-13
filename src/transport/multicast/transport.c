@@ -199,11 +199,11 @@ void _z_multicast_transport_clear(_z_transport_t *zt) {
     // Clean up tasks
     if (ztm->_common._read_task != NULL) {
         _z_task_join(ztm->_common._read_task);
-        _z_task_free(&ztm->_common._read_task);
+        z_free(ztm->_common._read_task);
     }
     if (ztm->_common._lease_task != NULL) {
         _z_task_join(ztm->_common._lease_task);
-        _z_task_free(&ztm->_common._lease_task);
+        z_free(ztm->_common._lease_task);
     }
     // Clean up the mutexes
     _z_mutex_drop(&ztm->_common._mutex_tx);

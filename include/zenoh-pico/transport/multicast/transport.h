@@ -42,4 +42,4 @@ static inline void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm)
 #ifdef __cplusplus
 }
 #endif
-#endif  /* ZENOH_PICO_MULTICAST_TRANSPORT_H */
+#endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */

@@ -18,8 +18,8 @@
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
 
-extern "C" {
 #ifdef __cplusplus
+extern "C" {
 #endif
 
 z_result_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
@@ -52,7 +52,7 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
 z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
 #ifdef __cplusplus
-#endif
 }
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_TRANSPORT_H */
