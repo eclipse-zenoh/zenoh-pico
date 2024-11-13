@@ -64,12 +64,10 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         printf("    with timestamp: %" PRIu64 "\n", z_timestamp_ntp64_time(ts));
     }
     // Check attachment
-
     const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
-    if (attachment != NULL) {
-        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
-        size_t attachment_len;
-        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
+    ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
+    size_t attachment_len;
+    if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) == Z_OK) {
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);

@@ -70,7 +70,7 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
         const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
-        if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) != 0) {
+        if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) < 0) {
             return;
         }
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
