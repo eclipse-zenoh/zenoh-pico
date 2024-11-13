@@ -102,7 +102,12 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     if (_z_keyexpr_mapping_id(left) != _z_keyexpr_mapping_id(right)) {
         return false;
     }
-    if (_z_keyexpr_has_suffix(left) || _z_keyexpr_has_suffix(right)) {
+    bool l_suffix = _z_keyexpr_has_suffix(left);
+    bool r_suffix = _z_keyexpr_has_suffix(right);
+    if (l_suffix != r_suffix) {
+        return false;
+    }
+    if (l_suffix && r_suffix) {
         return _z_string_equals(&left->_suffix, &right->_suffix);
     }
     return true;
