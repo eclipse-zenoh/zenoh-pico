@@ -2060,6 +2060,7 @@ z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
 #endif
 
+#ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_BATCHING == 1
 /**
  * Activate the batching mechanism.
@@ -2084,6 +2085,7 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs);
  *   ``0`` if batching stopped and batch successfully sent, ``negative value`` otherwise.
  */
 z_result_t zp_batch_stop(const z_loaned_session_t *zs);
+#endif
 #endif
 
 /************* Multi Thread Tasks helpers **************/
