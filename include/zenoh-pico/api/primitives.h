@@ -982,8 +982,8 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_sample_handler_t call, z_dropper_handler_t drop,
-                            void *context);
+z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_closure_sample_callback_t call,
+                            z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a sample closure.
@@ -1007,8 +1007,8 @@ void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sa
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_query(z_owned_closure_query_t *closure, z_query_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_query(z_owned_closure_query_t *closure, z_closure_query_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a query closure.
@@ -1032,8 +1032,8 @@ void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_quer
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_closure_reply_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a reply closure.
@@ -1057,8 +1057,8 @@ void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_repl
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
-                           void *context);
+z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_closure_hello_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
 
 /**
  * Calls a hello closure.
@@ -1074,7 +1074,7 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
- *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zit_t`.
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zid_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
@@ -1082,7 +1082,8 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
  * Return:
  *   ``0`` in case of success, negative error code otherwise
  */
-z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_zid_handler_t call, z_dropper_handler_t drop, void *context);
+z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_t call, z_closure_drop_callback_t drop,
+                         void *context);
 
 /**
  * Calls a zid closure.
@@ -1706,6 +1707,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  */
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
 
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  * Gets the id of the zenoh instance that answered this Reply.
  *
@@ -1716,7 +1718,9 @@ const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
  * 	 `true` if id is present
  */
 bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
-#endif
+#endif  // Z_FEATURE_UNSTABLE_API
+
+#endif  // Z_FEATURE_QUERY == 1
 
 #if Z_FEATURE_QUERYABLE == 1
 /**
@@ -2056,6 +2060,7 @@ z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
 #endif
 
+#ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_BATCHING == 1
 /**
  * Activate the batching mechanism.
@@ -2080,6 +2085,7 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs);
  *   ``0`` if batching stopped and batch successfully sent, ``negative value`` otherwise.
  */
 z_result_t zp_batch_stop(const z_loaned_session_t *zs);
+#endif
 #endif
 
 /************* Multi Thread Tasks helpers **************/

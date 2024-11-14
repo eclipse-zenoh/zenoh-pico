@@ -23,6 +23,10 @@
 #include "vec.h"
 #include "zenoh-pico/protocol/iobuf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 inline size_t _z_arc_slice_size(const _z_arc_slice_t *s) {
     (void)s;
     return sizeof(_z_arc_slice_t);
@@ -95,5 +99,9 @@ _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer);
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
 void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
 size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_BYTES_H */

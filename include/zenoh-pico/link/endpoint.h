@@ -21,6 +21,10 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Locator ------------------*/
 #if Z_FEATURE_LINK_TCP == 1
 #define TCP_SCHEMA "tcp"
@@ -71,5 +75,9 @@ _z_string_t _z_endpoint_to_string(const _z_endpoint_t *e);
 z_result_t _z_endpoint_from_string(_z_endpoint_t *ep, _z_string_t *s);
 void _z_endpoint_clear(_z_endpoint_t *ep);
 void _z_endpoint_free(_z_endpoint_t **ep);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_LINK_ENDPOINT_H */

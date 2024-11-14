@@ -18,6 +18,10 @@
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/iobuf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb);
 z_result_t _z_push_body_decode(_z_push_body_t *body, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs);
 
@@ -35,5 +39,9 @@ z_result_t _z_put_decode(_z_msg_put_t *put, _z_zbuf_t *zbf, uint8_t header, _z_a
 
 z_result_t _z_del_encode(_z_wbuf_t *wbf, const _z_msg_del_t *del);
 z_result_t _z_del_decode(_z_msg_del_t *del, _z_zbuf_t *zbf, uint8_t header);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_MESSAGE_H */

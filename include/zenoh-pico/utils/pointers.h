@@ -18,6 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Computes the distance between two ``uint8_t`` pointers as an absolute value.
  * Note that ``l_ptr`` must be higher than ``r_ptr``.
@@ -91,5 +95,9 @@ const char *_z_cptr_char_offset(const char *ptr, ptrdiff_t off);
  *   Returns a ``char`` pointer, pointing to the offset position.
  */
 char *_z_ptr_char_offset(char *ptr, ptrdiff_t off);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_UTILS_POINTERS_H */

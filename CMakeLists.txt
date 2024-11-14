@@ -39,17 +39,6 @@ configure_file(
   @ONLY
 )
 
-set(project_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
-if(NOT DEFINED PROJECT_VERSION_TWEAK)
-	set(project_version "${project_version}")
-elseif(PROJECT_VERSION_TWEAK EQUAL 0)
-	set(project_version "${project_version}-dev")
-elseif(PROJECT_VERSION_TWEAK GREATER 1)
-	set(project_version "${project_version}-pre.${PROJECT_VERSION_TWEAK}")
-endif()
-status_print(project_version)
-
-
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
 
@@ -69,6 +58,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   endif()
 elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
   if(WITH_ZEPHYR)
+    set(PACKAGING OFF) # no packaging support for zephyr
     set(BUILD_SHARED_LIBS "OFF")
   endif()
 endif()
@@ -115,44 +105,83 @@ else()
   endif()
 endif()
 
-set(Libname "zenohpico")
-add_library(${Libname})
-add_library(zenohpico::lib ALIAS ${Libname})
+if (PACKAGING)
+  set(PICO_STATIC ON)
+  set(PICO_SHARED ON)
+endif()
+if(BUILD_SHARED_LIBS)
+  set(PICO_SHARED ON)
+else()
+  set(PICO_STATIC ON)
+endif()
 
-function(add_definition value)
+set(Libname "zenohpico")
+if(PICO_STATIC)
+  add_library(${Libname}_static STATIC)
+  set_target_properties(${Libname}_static PROPERTIES OUTPUT_NAME ${Libname})
+  add_library(zenohpico::static ALIAS ${Libname}_static)
+endif()
+if(PICO_SHARED)
+  add_library(${Libname}_shared SHARED)
+  set_target_properties(${Libname}_shared PROPERTIES OUTPUT_NAME ${Libname})
+  add_library(zenohpico::shared ALIAS ${Libname}_shared)
+endif()
+if(BUILD_SHARED_LIBS)
+  add_library(zenohpico::lib ALIAS ${Libname}_shared)
+else()
+  add_library(zenohpico::lib ALIAS ${Libname}_static)
+endif()
+
+function(pico_add_compile_definition value)
   add_definitions(-D${value})
-  target_compile_definitions(${Libname} PUBLIC ${value})
+  if(PICO_STATIC)
+    target_compile_definitions(zenohpico_static PUBLIC ${value})
+  endif()
+  if(PICO_SHARED)
+    target_compile_definitions(zenohpico_shared PUBLIC ${value})
+  endif()
 endfunction()
 
-add_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+function(pico_target_link_library value)
+  if(PICO_STATIC)
+    target_link_libraries(zenohpico_static ${value})
+  endif()
+  if(PICO_SHARED)
+    target_link_libraries(zenohpico_shared ${value})
+  endif()
+endfunction()
 
-# while in development, use timestamp for patch version:
-string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
-set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+pico_add_compile_definition(ZENOH_C_STANDARD=${CMAKE_C_STANDARD})
+
+if (NOT CMAKE_BUILD_TYPE MATCHES "RELEASE" OR "Release") 
+  # while in development, use timestamp for patch version:
+  string(TIMESTAMP PROJECT_VERSION_PATCH "%Y%m%ddev")
+  set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+endif()
 
 set(CHECK_THREADS "ON")
 
 # System definition
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  add_definition(ZENOH_LINUX)
+  pico_add_compile_definition(ZENOH_LINUX)
 elseif(POSIX_COMPATIBLE)
-  add_definition(ZENOH_LINUX)
+  pico_add_compile_definition(ZENOH_LINUX)
   set(CHECK_THREADS "OFF")
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
-  add_definition(ZENOH_BSD)
+  pico_add_compile_definition(ZENOH_BSD)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  add_definition(ZENOH_MACOS)
+  pico_add_compile_definition(ZENOH_MACOS)
   set(MACOSX_RPATH "ON")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-  add_definition(ZENOH_EMSCRIPTEN)
+  pico_add_compile_definition(ZENOH_EMSCRIPTEN)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  add_definition(ZENOH_WINDOWS)
-  add_definition(_CRT_SECURE_NO_WARNINGS)
+  pico_add_compile_definition(ZENOH_WINDOWS)
+  pico_add_compile_definition(_CRT_SECURE_NO_WARNINGS)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
   if(WITH_ZEPHYR)
-    add_definition(ZENOH_ZEPHYR)
+    pico_add_compile_definition(ZENOH_ZEPHYR)
   elseif(WITH_FREERTOS_PLUS_TCP)
-    add_definition(ZENOH_FREERTOS_PLUS_TCP)
+    pico_add_compile_definition(ZENOH_FREERTOS_PLUS_TCP)
   endif()
 else()
   message(FATAL_ERROR "zenoh-pico is not yet available on ${CMAKE_SYSTEM_NAME} platform")
@@ -162,18 +191,18 @@ endif()
 # Compiler definition
 message("Compilers in use: ${CMAKE_C_COMPILER_ID}, ${CMAKE_CXX_COMPILER_ID}")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  add_definition(ZENOH_COMPILER_CLANG)
+  pico_add_compile_definition(ZENOH_COMPILER_CLANG)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  add_definition(ZENOH_COMPILER_GCC)
+  pico_add_compile_definition(ZENOH_COMPILER_GCC)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" OR CMAKE_C_COMPILER_ID STREQUAL "Intel")
-  add_definition(ZENOH_COMPILER_INTEL)
+  pico_add_compile_definition(ZENOH_COMPILER_INTEL)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-  add_definition(ZENOH_COMPILER_MSVC)
+  pico_add_compile_definition(ZENOH_COMPILER_MSVC)
 else()
-  add_definition(ZENOH_COMPILER_OTHER)
+  pico_add_compile_definition(ZENOH_COMPILER_OTHER)
 endif()
 
-add_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
+pico_add_compile_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
 
 
 # Zenoh pico feature configuration options
@@ -270,10 +299,19 @@ file(GLOB_RECURSE PublicHeaders
   "include/zenoh-pico/utils/*.h"
   "include/zenoh-pico/config.h"
 )
-target_include_directories(${Libname}
-  PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
+if(PICO_STATIC)
+  target_include_directories(${Libname}_static
+    PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+endif()
+if(PICO_SHARED)
+  target_include_directories(${Libname}_shared
+    PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:include>)
+endif()
+
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
@@ -307,18 +345,24 @@ endif()
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 link_directories(${LIBRARY_OUTPUT_PATH})
 
-target_sources(${Libname} PRIVATE ${Sources})
+if(PICO_STATIC)
+  target_sources(zenohpico_static PRIVATE ${Sources})
+endif()
+if(PICO_SHARED)
+  target_sources(zenohpico_shared PRIVATE ${Sources})
+endif()
 
 if(CHECK_THREADS)
-  target_link_libraries(${Libname} Threads::Threads)
+  pico_target_link_library(Threads::Threads)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  target_link_libraries(${Libname} rt)
+  pico_target_link_library(rt)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-  target_link_libraries(${Libname} Ws2_32 Iphlpapi)
+  pico_target_link_library(Ws2_32)
+  pico_target_link_library(Iphlpapi)
 endif()
 
 #
@@ -338,12 +382,22 @@ message(STATUS "Build tools: ${BUILD_TOOLS}")
 message(STATUS "Build tests: ${BUILD_TESTING}")
 message(STATUS "Build integration: ${BUILD_INTEGRATION}")
 
-install(TARGETS ${Libname}
+set(PICO_LIBS "")
+if(PICO_STATIC)
+  list(APPEND PICO_LIBS zenohpico_static)
+endif()
+if(PICO_SHARED)
+  list(APPEND PICO_LIBS zenohpico_shared)
+endif()
+
+install(TARGETS ${PICO_LIBS}
   EXPORT zenohpicoTargets
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
-  COMPONENT Library
+  LIBRARY COMPONENT Runtime
+  ARCHIVE COMPONENT Dev
+  RUNTIME COMPONENT Runtime
 )
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
   DESTINATION include
@@ -377,17 +431,18 @@ install(
         "${CMAKE_CURRENT_BINARY_DIR}/zenohpicoConfigVersion.cmake"
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   CONFIGURATIONS ${configurations}
-  COMPONENT dev)
+  COMPONENT Dev)
 
 # Generate <Package>Targets.cmake
 install(
   EXPORT zenohpicoTargets
   NAMESPACE zenohpico::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  COMPONENT Dev)
 
 if(UNIX)
   configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
-  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
 endif()
 
 if(BUILD_EXAMPLES)
@@ -398,7 +453,7 @@ if(UNIX OR MSVC)
   if(BUILD_TOOLS)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tools)
     add_executable(z_keyexpr_canonizer ${PROJECT_SOURCE_DIR}/tools/z_keyexpr_canonizer.c)
-    target_link_libraries(z_keyexpr_canonizer ${Libname})
+    target_link_libraries(z_keyexpr_canonizer zenohpico::lib)
   endif()
 
   if(BUILD_TESTING AND CMAKE_C_STANDARD MATCHES "11")
@@ -422,23 +477,23 @@ if(UNIX OR MSVC)
     add_executable(z_api_encoding_test ${PROJECT_SOURCE_DIR}/tests/z_api_encoding_test.c)
     add_executable(z_refcount_test ${PROJECT_SOURCE_DIR}/tests/z_refcount_test.c)
 
-    target_link_libraries(z_data_struct_test ${Libname})
-    target_link_libraries(z_channels_test ${Libname})
-    target_link_libraries(z_collections_test ${Libname})
-    target_link_libraries(z_endpoint_test ${Libname})
-    target_link_libraries(z_iobuf_test ${Libname})
-    target_link_libraries(z_msgcodec_test ${Libname})
-    target_link_libraries(z_keyexpr_test ${Libname})
-    target_link_libraries(z_api_null_drop_test ${Libname})
-    target_link_libraries(z_api_double_drop_test ${Libname})
-    target_link_libraries(z_test_fragment_tx ${Libname})
-    target_link_libraries(z_test_fragment_rx ${Libname})
-    target_link_libraries(z_perf_tx ${Libname})
-    target_link_libraries(z_perf_rx ${Libname})
-    target_link_libraries(z_bytes_test ${Libname})
-    target_link_libraries(z_api_bytes_test ${Libname})
-    target_link_libraries(z_api_encoding_test ${Libname})
-    target_link_libraries(z_refcount_test ${Libname})
+    target_link_libraries(z_data_struct_test zenohpico::lib)
+    target_link_libraries(z_channels_test zenohpico::lib)
+    target_link_libraries(z_collections_test zenohpico::lib)
+    target_link_libraries(z_endpoint_test zenohpico::lib)
+    target_link_libraries(z_iobuf_test zenohpico::lib)
+    target_link_libraries(z_msgcodec_test zenohpico::lib)
+    target_link_libraries(z_keyexpr_test zenohpico::lib)
+    target_link_libraries(z_api_null_drop_test zenohpico::lib)
+    target_link_libraries(z_api_double_drop_test zenohpico::lib)
+    target_link_libraries(z_test_fragment_tx zenohpico::lib)
+    target_link_libraries(z_test_fragment_rx zenohpico::lib)
+    target_link_libraries(z_perf_tx zenohpico::lib)
+    target_link_libraries(z_perf_rx zenohpico::lib)
+    target_link_libraries(z_bytes_test zenohpico::lib)
+    target_link_libraries(z_api_bytes_test zenohpico::lib)
+    target_link_libraries(z_api_encoding_test zenohpico::lib)
+    target_link_libraries(z_refcount_test zenohpico::lib)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
@@ -469,7 +524,7 @@ if(UNIX OR MSVC)
 
     if(CMAKE_C_STANDARD MATCHES "11")
       add_executable(z_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/z_peer_multicast_test.c)
-      target_link_libraries(z_peer_multicast_test ${Libname})
+      target_link_libraries(z_peer_multicast_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/multicast.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh COPYONLY)
 
@@ -486,9 +541,9 @@ if(UNIX OR MSVC)
       add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
       add_executable(z_session_test ${PROJECT_SOURCE_DIR}/tests/z_session_test.c)
 
-      target_link_libraries(z_client_test ${Libname})
-      target_link_libraries(z_api_alignment_test ${Libname})
-      target_link_libraries(z_session_test ${Libname})
+      target_link_libraries(z_client_test zenohpico::lib)
+      target_link_libraries(z_api_alignment_test zenohpico::lib)
+      target_link_libraries(z_session_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
@@ -503,36 +558,43 @@ endif()
 
 # For packaging
 if(PACKAGING)
+
   set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")
 
-  set(CPACK_COMPONENTS_ALL Library Headers)
-  set(CPACK_COMPONENT_LIBRARY_GROUP "lib")
+  set(CPACK_COMPONENTS_ALL Runtime Headers Dev)
+
+  set(CPACK_COMPONENT_RUNTIME_GROUP "lib")
   set(CPACK_COMPONENT_HEADERS_GROUP "dev")
-  set(CPACK_COMPONENT_HEADERS_DEPENDS Library)
+  set(CPACK_COMPONENT_DEV_GROUP "dev")
+  set(CPACK_COMPONENT_HEADERS_DEPENDS Runtime)
+  set(CPACK_COMPONENT_DEV_DEPENDS Runtime)
 
   set(CPACK_PACKAGE_CHECKSUM MD5)
   set(CPACK_PACKAGE_VENDOR "The Eclipse Foundation")
-  set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-  set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-  set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-  set(CPACK_COMPONENT_LIB_DESCRIPTION "The C client library for Eclipse zenoh targeting pico devices")
-  set(CPACK_COMPONENT_DEV_DESCRIPTION "${CPACK_COMPONENT_LIB_DESCRIPTION} - devel files")
+  if(NOT CPACK_PACKAGE_VERSION)
+      set(SEM_VER "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+      if(PROJECT_VERSION_TWEAK STREQUAL "")
+          set(CPACK_PACKAGE_VERSION ${SEM_VER})
+      elseif(PROJECT_VERSION_TWEAK EQUAL 0)
+          set(CPACK_PACKAGE_VERSION "${SEM_VER}~dev-1")
+      elseif(PROJECT_VERSION_TWEAK GREATER 0)
+          set(CPACK_PACKAGE_VERSION "${SEM_VER}~pre.${PROJECT_VERSION_TWEAK}-1")
+      endif()
+  endif()
+  set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "The C client library for Eclipse zenoh targeting pico devices")
+  set(CPACK_COMPONENT_HEADERS_DESCRIPTION "${CPACK_COMPONENT_LIB_DESCRIPTION} - headers")
+  set(CPACK_COMPONENT_DEV_DESCRIPTION "${CPACK_COMPONENT_LIB_DESCRIPTION} - config files")
 
   # Sources package
   set(CPACK_SOURCE_GENERATOR "TGZ")
-  set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.github/;/build/;/crossbuilds/")
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${PROJECT_VERSION}")
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-src-${project_version}")
+
+  set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
   if(PACKAGING MATCHES "DEB")
     if(NOT DEBARCH)
-      execute_process(
-        COMMAND dpkg --print-architecture
-        OUTPUT_VARIABLE DEBARCH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
+      set(DEBARCH ${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_SYSTEM_NAME})
     endif()
-
-    message(STATUS "Configure DEB packaging for Linux ${DEBARCH}")
 
     if(CPACK_GENERATOR)
       set(CPACK_GENERATOR "${CPACK_GENERATOR};DEB")
@@ -545,17 +607,16 @@ if(PACKAGING)
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${DEBARCH})
     set(CPACK_DEB_COMPONENT_INSTALL ON)
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${CPACK_PACKAGE_NAME}")
     set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libc6 (>=2.12)")
-    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${PROJECT_VERSION})")
+    set(CPACK_DEBIAN_DEV_PACKAGE_NAME "lib${CPACK_PACKAGE_NAME}-dev")
+    set(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_NAME} (=${CPACK_PACKAGE_VERSION})")
   endif()
 
   if(PACKAGING MATCHES "RPM")
     if(NOT RPMARCH)
       set(RPMARCH ${CMAKE_SYSTEM_PROCESSOR})
     endif()
-
-    message(STATUS "Configure RPM packaging for Linux ${RPMARCH}")
 
     if(CPACK_GENERATOR)
       set(CPACK_GENERATOR "${CPACK_GENERATOR};RPM")
@@ -567,8 +628,8 @@ if(PACKAGING)
     set(CPACK_RPM_PACKAGE_ARCHITECTURE ${RPMARCH})
     set(CPACK_RPM_COMPONENT_INSTALL ON)
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
-    set(CPACK_RPM_LIB_PACKAGE_NAME ${PROJECT_NAME}) # avoid "-lib" suffix for "lib" package
-    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${PROJECT_VERSION}")
+    set(CPACK_RPM_LIB_PACKAGE_NAME ${CPACK_PACKAGE_NAME}) # avoid "-lib" suffix for "lib" package
+    set(CPACK_RPM_DEV_PACKAGE_REQUIRES "${CPACK_RPM_LIB_PACKAGE_NAME} = ${CPACK_PACKAGE_VERSION}")
   endif()
 
   include(CPack)

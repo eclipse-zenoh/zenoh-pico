@@ -19,12 +19,17 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/time.h>
+#if Z_FEATURE_MULTI_THREAD == 1
+#include <pthread.h>
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #include "zenoh-pico/config.h"
 
-#if Z_FEATURE_MULTI_THREAD == 1
-#include <pthread.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#if Z_FEATURE_MULTI_THREAD == 1
 typedef pthread_t _z_task_t;
 typedef pthread_attr_t z_task_attr_t;
 typedef pthread_mutex_t _z_mutex_t;
@@ -50,5 +55,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_UNIX_TYPES_H */

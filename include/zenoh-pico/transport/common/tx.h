@@ -19,6 +19,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
 /*This function is unsafe because it operates in potentially concurrent
@@ -32,5 +36,9 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
                          z_congestion_control_t cong_ctrl);
 z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_TRANSPORT_TX_H */

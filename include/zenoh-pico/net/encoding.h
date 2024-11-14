@@ -17,6 +17,10 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_ENCODING_ID_DEFAULT 0
 
 /**
@@ -38,5 +42,9 @@ void _z_encoding_clear(_z_encoding_t *encoding);
 z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
 void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
 _z_encoding_t _z_encoding_steal(_z_encoding_t *val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_ENCODING_NETAPI_H */

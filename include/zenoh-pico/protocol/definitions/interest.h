@@ -20,6 +20,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_INTEREST_FLAG_KEYEXPRS (1)
 #define _Z_INTEREST_FLAG_SUBSCRIBERS (1 << 1)
 #define _Z_INTEREST_FLAG_QUERYABLES (1 << 2)
@@ -42,5 +46,9 @@ static inline _z_interest_t _z_interest_null(void) { return (_z_interest_t){0}; 
 void _z_interest_clear(_z_interest_t* decl);
 _z_interest_t _z_make_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint8_t flags);
 _z_interest_t _z_make_interest_final(uint32_t id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_INTEREST_H */

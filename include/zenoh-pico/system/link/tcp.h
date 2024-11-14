@@ -20,6 +20,10 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_TCP == 1
 
 typedef struct {
@@ -36,6 +40,10 @@ void _z_close_tcp(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_TCP_H */

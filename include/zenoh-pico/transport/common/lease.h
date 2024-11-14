@@ -17,7 +17,15 @@
 
 #include "zenoh-pico/transport/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 z_result_t _z_send_join(_z_transport_t *zt);
 z_result_t _z_send_keep_alive(_z_transport_t *zt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_TRANSPORT_LEASE_H */

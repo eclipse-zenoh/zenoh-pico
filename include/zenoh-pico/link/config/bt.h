@@ -19,6 +19,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_BLUETOOTH == 1
 
 #define BT_CONFIG_ARGC 3
@@ -48,6 +52,10 @@ char *_z_bt_config_to_str(const _z_str_intmap_t *s);
 
 z_result_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s);
 z_result_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_BT_H */

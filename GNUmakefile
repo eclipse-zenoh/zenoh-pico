@@ -63,7 +63,7 @@ Z_FEATURE_RAWETH_TRANSPORT?=0
 # Buffer sizes
 FRAG_MAX_SIZE?=300000
 BATCH_UNICAST_SIZE?=65535
-BATCH_MULTICAST_SIZE?=8096
+BATCH_MULTICAST_SIZE?=8192
 
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -115,33 +115,33 @@ endif
 crossbuild: check-docker
 	@echo "FROM dockcross/$(CROSSIMG)\nRUN apt-get update && apt-get -y install rpm" | docker build -t $(CROSSIMG_PREFIX)$(CROSSIMG) -
 	docker run --rm -v $(ROOT_DIR):/workdir -w /workdir $(CROSSIMG_PREFIX)$(CROSSIMG) bash -c "\
-		cmake $(CMAKE_OPT) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
+		cmake $(CMAKE_OPT) -DCPACK_PACKAGE_NAME=$(PACKAGE_NAME) -DPACKAGING=DEB,RPM -DDEBARCH=$(DEBARCH) -DRPMARCH=$(RPMARCH) -B$(CROSSBUILD_DIR)/$(CROSSIMG) && \
 		make VERBOSE=1 -C$(CROSSBUILD_DIR)/$(CROSSIMG) all package"
 	docker rmi $(CROSSIMG_PREFIX)$(CROSSIMG)
 
 linux-armv5:
-	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv6:
-	CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
+	PACKAGE_NAME="zenohpico-armv6" CROSSIMG=$@ DEBARCH=arm RPMARCH=arm make crossbuild
 
 linux-armv7:
-	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-armv7a:
-	CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
+	PACKAGE_NAME="zenohpico-armv7a" CROSSIMG=$@ DEBARCH=armhf RPMARCH=armhf make crossbuild
 
 linux-arm64:
-	CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=arm64 RPMARCH=aarch64 make crossbuild
 
 linux-mips:
-	CROSSIMG=$@ DEBARCH=mips RPMARCH=mips make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=mips RPMARCH=mips make crossbuild
 
 linux-x86:
-	CROSSIMG=$@ DEBARCH=i386 RPMARCH=x86 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=i386 RPMARCH=x86 make crossbuild
 
 linux-x64:
-	CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
+	PACKAGE_NAME="zenohpico" CROSSIMG=$@ DEBARCH=amd64 RPMARCH=x86_64 make crossbuild
 
 clean:
 	rm -fr $(BUILD_DIR)

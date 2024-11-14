@@ -39,7 +39,7 @@
 
 /*------------------ Scouting ------------------*/
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
-              _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
+              _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     _z_hello_list_t *hellos = _z_scout_inner(what, zid, locator, timeout, false);
 
     while (hellos != NULL) {
@@ -193,8 +193,8 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_sample_handler_t callback,
-                                      _z_drop_handler_t dropper, void *arg) {
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                      _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr._id;
@@ -257,7 +257,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
 _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, bool complete,
-                                    _z_query_handler_t callback, _z_drop_handler_t dropper, void *arg) {
+                                    _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     q._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr);
@@ -453,7 +453,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                    const z_consolidation_mode_t consolidation, _z_value_t value, _z_reply_handler_t callback,
+                    const z_consolidation_mode_t consolidation, _z_value_t value, _z_closure_reply_callback_t callback,
                     _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, const _z_bytes_t attachment,
                     z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express) {
     z_result_t ret = _Z_RES_OK;

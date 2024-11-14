@@ -19,6 +19,10 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_WS == 1
 
 #define WS_CONFIG_TOUT_KEY 0x01
@@ -37,6 +41,10 @@ char *_z_ws_config_to_str(const _z_str_intmap_t *s);
 
 z_result_t _z_ws_config_from_str(_z_str_intmap_t *strint, const char *s);
 z_result_t _z_ws_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_WS_H */

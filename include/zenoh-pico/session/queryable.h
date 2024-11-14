@@ -24,7 +24,7 @@ typedef struct _z_session_rc_t _z_session_rc_t;
 
 // Queryable infos
 typedef struct {
-    _z_query_handler_t callback;
+    _z_closure_query_callback_t callback;
     void *arg;
 } _z_queryable_infos_t;
 

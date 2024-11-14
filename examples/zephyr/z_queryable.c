@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -82,13 +82,13 @@ int main(int argc, char **argv) {
     // Declare Zenoh queryable
     printf("Declaring Queryable on %s...", KEYEXPR);
     z_owned_closure_query_t callback;
-    z_closure(&callback, query_handler);
+    z_closure(&callback, query_handler, NULL, NULL);
     z_owned_queryable_t qable;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_queryable(z_loan(s), &qable, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare queryable.\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
     printf("Zenoh setup finished!\n");

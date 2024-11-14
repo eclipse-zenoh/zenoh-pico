@@ -29,6 +29,10 @@
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_OPTIONAL
 #define _Z_MOVE(x) x *
 
@@ -224,5 +228,9 @@ typedef struct {
     uint32_t _request_id;
     uint32_t _entity_id;
 } _z_reply_context_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H */

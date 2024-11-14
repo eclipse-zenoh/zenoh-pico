@@ -16,8 +16,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/transport/common/rx.h"
@@ -28,6 +26,7 @@
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/uuid.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
@@ -38,9 +37,9 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback)
 
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps) {
     _z_id_t remote_zid = zt->_transport._unicast._remote_zid;
-    _z_slice_t remote_zid_bytes = _z_slice_alias_buf(remote_zid.id, _z_id_len(remote_zid));
-    _z_string_t remote_zid_str = _z_string_convert_bytes(&remote_zid_bytes);
-    _zp_config_insert(ps, Z_INFO_ROUTER_PID_KEY, _z_string_data(&remote_zid_str));
+
+    _z_string_t remote_zid_str = _z_id_to_string(&remote_zid);
+    _zp_config_insert_string(ps, Z_INFO_ROUTER_PID_KEY, &remote_zid_str);
     _z_string_clear(&remote_zid_str);
 }
 

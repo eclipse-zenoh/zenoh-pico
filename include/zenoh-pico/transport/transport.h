@@ -25,6 +25,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum _z_dbuf_state_e {
     _Z_DBUF_STATE_NULL = 0,
     _Z_DBUF_STATE_INIT = 1,
@@ -195,4 +199,8 @@ static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _Z
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
-#endif  /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

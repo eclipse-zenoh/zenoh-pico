@@ -24,7 +24,7 @@ typedef struct _z_session_t _z_session_t;
 
 // Subscription infos
 typedef struct {
-    _z_sample_handler_t callback;
+    _z_closure_sample_callback_t callback;
     void *arg;
 } _z_subscription_infos_t;
 
@@ -37,6 +37,10 @@ typedef struct {
     _z_subscription_infos_svec_t infos;
     size_t sub_nb;
 } _z_subscription_cache_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*------------------ Subscription ------------------*/
 void _z_trigger_local_subscriptions(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
@@ -56,6 +60,10 @@ z_result_t _z_trigger_subscriptions(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_
                                     const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability);
 void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H */

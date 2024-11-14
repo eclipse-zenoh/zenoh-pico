@@ -21,6 +21,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_SERIAL == 1
 
 #define _Z_SERIAL_MTU_SIZE 1500
@@ -41,6 +45,10 @@ size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_BT_H */

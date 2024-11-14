@@ -21,6 +21,10 @@
 
 #include "zenoh-pico/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FLIPPER_DEFAULT_THREAD_STACK_SIZE 2048
 #define FLIPPER_SERIAL_STREAM_BUFFER_SIZE 512
 #define FLIPPER_SERIAL_STREAM_TRIGGERED_LEVEL 10
@@ -42,5 +46,9 @@ typedef struct {
     FuriHalSerialHandle* _serial;
 #endif
 } _z_sys_net_socket_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_FLIPPER_TYPES_H */

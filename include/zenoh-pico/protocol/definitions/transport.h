@@ -21,6 +21,10 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_MID_SCOUT 0x01
 #define _Z_MID_HELLO 0x02
 
@@ -540,5 +544,9 @@ _z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_l
 void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg);
 void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg);
 void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_TRANSPORT_H */

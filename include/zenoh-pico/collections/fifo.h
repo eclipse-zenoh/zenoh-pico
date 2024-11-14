@@ -20,6 +20,10 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/ring.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- Fifo Buffer --------*/
 typedef struct {
     _z_ring_t _ring;
@@ -59,5 +63,9 @@ void _z_fifo_free(_z_fifo_t **xs, z_element_free_f f_f);
     static inline type *name##_fifo_pull(name##_fifo_t *r) { return (type *)_z_fifo_pull(r); }             \
     static inline void name##_fifo_clear(name##_fifo_t *r) { _z_fifo_clear(r, name##_elem_free); }         \
     static inline void name##_fifo_free(name##_fifo_t **r) { _z_fifo_free(r, name##_elem_free); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_FIFO_H */

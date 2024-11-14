@@ -22,6 +22,10 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- int-void map --------*/
 #define _Z_DEFAULT_INT_MAP_CAPACITY 16
 
@@ -112,5 +116,9 @@ void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
     static inline void name##_intmap_free(name##_intmap_t **m) {                                                \
         _z_int_void_map_free(m, name##_intmap_entry_elem_free);                                                 \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_INTMAP_H */

@@ -233,11 +233,24 @@ void z_string_array_test(void) {
     z_string_array_drop(z_string_array_move(&a));
 }
 
+void z_id_to_string_test(void) {
+    z_id_t id;
+    for (uint8_t i = 0; i < sizeof(id.id); i++) {
+        id.id[i] = i;
+    }
+    z_owned_string_t id_str;
+    z_id_to_string(&id, &id_str);
+    assert(z_string_len(z_string_loan(&id_str)) == 32);
+    assert(strncmp("0f0e0d0c0b0a09080706050403020100", z_string_data(z_string_loan(&id_str)),
+                   z_string_len(z_string_loan(&id_str))) == 0);
+}
+
 int main(void) {
     entry_list_test();
     str_vec_list_intmap_test();
     z_slice_custom_delete_test();
     z_string_array_test();
+    z_id_to_string_test();
 
     return 0;
 }

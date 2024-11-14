@@ -19,6 +19,10 @@
 
 #include "zenoh-pico/net/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_INTEREST == 1
 _z_session_interest_rc_t *_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_interest_t *intr);
@@ -31,5 +35,9 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
 z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id);
 z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
 z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SESSION_INTEREST_H */

@@ -25,6 +25,11 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Network Messages */
 #define _Z_MID_N_OAM 0x1f
 #define _Z_MID_N_DECLARE 0x1e
@@ -303,5 +308,9 @@ _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool ha
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
 z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */
