@@ -19,6 +19,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Forward declaration to avoid cyclical include
 typedef struct _z_session_t _z_session_t;
 
@@ -38,14 +42,19 @@ typedef struct {
     size_t sub_nb;
 } _z_subscription_cache_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*------------------ Subscription ------------------*/
-void _z_trigger_local_subscriptions(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
-                                    _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    _z_bytes_t *attachment, z_reliability_t reliability);
+z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                        _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                                        _z_bytes_t *attachment, z_reliability_t reliability);
+
+z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr, const _z_timestamp_t *timestamp,
+                                        const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability);
+
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                       const _z_timestamp_t *timestamp);
+
+z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                         const _z_timestamp_t *timestamp);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 
@@ -53,12 +62,13 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_
 void _z_subscription_cache_clear(_z_subscription_cache_t *cache);
 #endif
 
-_z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id);
-_z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *sub);
-z_result_t _z_trigger_subscriptions(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
-                                    _z_encoding_t *encoding, const _z_zint_t kind, const _z_timestamp_t *timestamp,
-                                    const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability);
-void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub);
+_z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id);
+_z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *sub);
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
+                                         _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
+                                         const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
+                                         z_reliability_t reliability);
+void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
 #endif
 

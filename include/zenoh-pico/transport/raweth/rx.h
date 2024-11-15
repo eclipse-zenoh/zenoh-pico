@@ -29,4 +29,8 @@ z_result_t _z_raweth_update_rx_buff(_z_transport_multicast_t *ztm);
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_RAWETH_RX_H */

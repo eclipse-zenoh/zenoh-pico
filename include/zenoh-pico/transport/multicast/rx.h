@@ -30,4 +30,8 @@ z_result_t _z_multicast_update_rx_buffer(_z_transport_multicast_t *ztm);
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_TRANSPORT_LINK_RX_H */

@@ -21,16 +21,17 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
-#include "zenoh-pico/net/logger.h"
-#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/tx.h"
@@ -99,6 +100,27 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     }
 
     return ret;
+}
+
+// TODO(sashacmc): currently used only for liveliness, because it have little bit different behavior from others
+// It seems also correct for z_declare_queryable and z_declare_publisher, but it need to be verified
+_z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr) {
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased);
+        if (r != NULL) {
+            key = _z_rid_with_suffix(r->_id, NULL);
+        } else {
+            uint16_t id = _z_declare_resource(zs, keyexpr_aliased);
+            key = _z_rid_with_suffix(id, NULL);
+        }
+    }
+    return key;
 }
 
 #if Z_FEATURE_PUBLICATION == 1
@@ -205,7 +227,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
 
     _z_subscriber_t ret = _z_subscriber_null();
     // Register subscription, stored at session-level, do not drop it by the end of this function.
-    _z_subscription_rc_t *sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, &s);
+    _z_subscription_rc_t *sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (sp_s == NULL) {
         _z_subscriber_clear(&ret);
         return ret;
@@ -214,7 +236,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     if (_z_send_n_msg(_Z_RC_IN_VAL(zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, sp_s);
+        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sp_s);
         _z_subscriber_clear(&ret);
         return ret;
     }
@@ -230,7 +252,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find subscription entry
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    _z_subscription_rc_t *s =
+        _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sub->_entity_id);
     if (s == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -249,7 +272,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
-    _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, s);
+    _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
     return _Z_RES_OK;
 }
 #endif

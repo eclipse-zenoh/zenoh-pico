@@ -83,4 +83,8 @@ _Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

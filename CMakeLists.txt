@@ -216,6 +216,7 @@ set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
+set(Z_FEATURE_LIVELINESS 1 CACHE STRING "Toggle liveliness feature")
 set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interests")
 set(Z_FEATURE_FRAGMENTATION 1 CACHE STRING "Toggle fragmentation")
 set(Z_FEATURE_ENCODING_VALUES 1 CACHE STRING "Toggle encoding values")
@@ -246,6 +247,7 @@ message(STATUS "Building with feature confing:\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
+* LIVELINESS: ${Z_FEATURE_LIVELINESS}\n\
 * INTEREST: ${Z_FEATURE_INTEREST}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
 
@@ -540,10 +542,12 @@ if(UNIX OR MSVC)
       add_executable(z_client_test ${PROJECT_SOURCE_DIR}/tests/z_client_test.c)
       add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
       add_executable(z_session_test ${PROJECT_SOURCE_DIR}/tests/z_session_test.c)
+      add_executable(z_api_liveliness_test ${PROJECT_SOURCE_DIR}/tests/z_api_liveliness_test.c)
 
       target_link_libraries(z_client_test zenohpico::lib)
       target_link_libraries(z_api_alignment_test zenohpico::lib)
       target_link_libraries(z_session_test zenohpico::lib)
+      target_link_libraries(z_api_liveliness_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
@@ -552,6 +556,7 @@ if(UNIX OR MSVC)
       add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
       add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
       add_test(z_session_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_session_test)
+      add_test(z_api_liveliness_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_liveliness_test)
     endif()
   endif()
 endif()

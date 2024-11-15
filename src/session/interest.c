@@ -21,10 +21,12 @@
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -118,7 +120,7 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
 #if Z_FEATURE_SUBSCRIPTION == 1
 static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t interest_id) {
     _z_session_mutex_lock(zn);
-    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_local_subscriptions);
+    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_subscriptions);
     _z_session_mutex_unlock(zn);
     _z_subscription_rc_list_t *xs = sub_list;
     while (xs != NULL) {
@@ -168,6 +170,35 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
 }
 #else
 static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interest_id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(interest_id);
+    return _Z_RES_OK;
+}
+#endif
+
+#if Z_FEATURE_LIVELINESS == 1
+static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
+    _zp_session_lock_mutex(zn);
+    _z_keyexpr_intmap_t token_list = _z_keyexpr_intmap_clone(&zn->_local_tokens);
+    _zp_session_unlock_mutex(zn);
+    _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
+    while (_z_keyexpr_intmap_iterator_next(&iter)) {
+        // Build the declare message to send on the wire
+        uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
+        _z_keyexpr_t key = *_z_keyexpr_intmap_iterator_value(&iter);
+        _z_declaration_t declaration = _z_make_decl_token(&key, id);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
+    }
+    _z_keyexpr_intmap_clear(&token_list);
+
+    return _Z_RES_OK;
+}
+#else
+static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(interest_id);
     return _Z_RES_OK;
@@ -266,6 +297,13 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
+        case _Z_DECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_DECL_TOKEN;
+            msg.id = decl->_body._decl_token._id;
+            decl_key = &decl->_body._decl_token._keyexpr;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
+            break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
     }
@@ -312,6 +350,12 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
             msg.id = decl->_body._undecl_queryable._id;
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
+            break;
+        case _Z_UNDECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN;
+            msg.id = decl->_body._undecl_token._id;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
             break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
@@ -403,7 +447,8 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint
             _Z_RETURN_IF_ERR(_z_interest_send_decl_queryable(zn, id));
         }
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
-            // Zenoh pico doesn't support liveliness token for now
+            _Z_DEBUG("Sending declare tokens");
+            _Z_RETURN_IF_ERR(_z_interest_send_decl_token(zn, id));
         }
         // Send final declare
         _Z_RETURN_IF_ERR(_z_interest_send_declare_final(zn, id));

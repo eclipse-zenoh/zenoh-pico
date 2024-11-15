@@ -25,11 +25,11 @@
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/push.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/reply.h"
 #include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/tx.h"
@@ -42,8 +42,8 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
 
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
-            _Z_DEBUG("Handling _Z_N_DECLARE");
             _z_n_msg_declare_t *decl = &msg->_body._declare;
+            _Z_DEBUG("Handling _Z_N_DECLARE: %i", decl->_decl._tag);
             switch (decl->_decl._tag) {
                 case _Z_DECL_KEXPR: {
                     if (_z_register_resource(zn, decl->_decl._body._decl_kexpr._keyexpr,
@@ -60,19 +60,28 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 case _Z_DECL_QUERYABLE: {
                     _z_interest_process_declares(zn, &decl->_decl);
                 } break;
+                case _Z_DECL_TOKEN: {
+#if Z_FEATURE_LIVELINESS == 1
+                    _z_liveliness_process_token_declare(zn, decl);
+#endif
+                    _z_interest_process_declares(zn, &decl->_decl);
+                } break;
                 case _Z_UNDECL_SUBSCRIBER: {
                     _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_UNDECL_QUERYABLE: {
                     _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
-                case _Z_DECL_TOKEN: {
-                    // TODO: add support or explicitly discard
-                } break;
                 case _Z_UNDECL_TOKEN: {
-                    // TODO: add support or explicitly discard
+#if Z_FEATURE_LIVELINESS == 1
+                    _z_liveliness_process_token_undeclare(zn, decl);
+#endif
+                    _z_interest_process_undeclares(zn, &decl->_decl);
                 } break;
                 case _Z_DECL_FINAL: {
+#if Z_FEATURE_LIVELINESS == 1
+                    _z_liveliness_process_declare_final(zn, decl);
+#endif
                     // Check that interest id is valid
                     if (!decl->has_interest_id) {
                         return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
@@ -101,7 +110,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1
                     _z_msg_put_t put = req->_body._put;
-                    ret = _z_trigger_subscriptions(zn, &req->_key, &put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
+                    ret = _z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &put._encoding, Z_SAMPLE_KIND_PUT,
                                                    &put._commons._timestamp, req->_ext_qos, &put._attachment,
                                                    msg->_reliability);
 #endif
@@ -115,7 +124,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                     _z_msg_del_t del = req->_body._del;
                     _z_encoding_t encoding = _z_encoding_null();
                     _z_bytes_t empty_payload = _z_bytes_null();
-                    ret = _z_trigger_subscriptions(zn, &req->_key, &empty_payload, &encoding, Z_SAMPLE_KIND_DELETE,
+                    ret = _z_trigger_subscriptions_del(zn, &req->_key, &empty_payload, &encoding, Z_SAMPLE_KIND_DELETE,
                                                    &del._commons._timestamp, req->_ext_qos, &del._attachment,
                                                    msg->_reliability);
 #endif

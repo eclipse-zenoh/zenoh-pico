@@ -844,6 +844,49 @@ void queryable_declaration(void) {
     _z_wbuf_clear(&wbf);
 }
 
+/*------------------ Token declaration ------------------*/
+_z_decl_token_t gen_token_declaration(void) {
+    _z_decl_token_t e_qd = {._keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
+
+    return e_qd;
+}
+
+void assert_eq_token_declaration(const _z_decl_token_t *left, const _z_decl_token_t *right) {
+    assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
+    assert(left->_id == right->_id);
+}
+
+void token_declaration(void) {
+    printf("\n>> Queryable declaration\n");
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    // Initialize
+    _z_decl_token_t e_qd = gen_token_declaration();
+
+    // Encode
+    int8_t res = _z_decl_token_encode(&wbf, &e_qd);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_decl_token_t d_qd;
+    uint8_t e_hdr = 0;
+    _z_uint8_decode(&e_hdr, &zbf);
+    res = _z_decl_token_decode(&d_qd, &zbf, e_hdr);
+    assert(res == _Z_RES_OK);
+
+    printf("   ");
+    assert_eq_token_declaration(&e_qd, &d_qd);
+    printf("\n");
+
+    // Free
+    _z_keyexpr_clear(&e_qd._keyexpr);
+    _z_keyexpr_clear(&d_qd._keyexpr);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*------------------ Forget Resource declaration ------------------*/
 _z_undecl_kexpr_t gen_forget_resource_declaration(void) {
     _z_undecl_kexpr_t e_frd;
@@ -971,12 +1014,52 @@ void forget_queryable_declaration(void) {
     _z_wbuf_clear(&wbf);
 }
 
+/*------------------ Forget Token declaration ------------------*/
+_z_undecl_token_t gen_forget_token_declaration(void) {
+    _z_undecl_token_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_zint()};
+    return e_fqd;
+}
+
+void assert_eq_forget_token_declaration(const _z_undecl_token_t *left, const _z_undecl_token_t *right) {
+    assert_eq_keyexpr(&left->_ext_keyexpr, &right->_ext_keyexpr);
+    assert(left->_id == right->_id);
+}
+
+void forget_token_declaration(void) {
+    printf("\n>> Forget token declaration\n");
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    // Initialize
+    _z_undecl_token_t e_fqd = gen_forget_token_declaration();
+
+    // Encode
+    int8_t res = _z_undecl_token_encode(&wbf, &e_fqd);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t e_hdr = 0;
+    _z_uint8_decode(&e_hdr, &zbf);
+    _z_undecl_token_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
+    res = _z_undecl_token_decode(&d_fqd, &zbf, e_hdr);
+    assert(res == _Z_RES_OK);
+
+    printf("   ");
+    assert_eq_forget_token_declaration(&e_fqd, &d_fqd);
+    printf("\n");
+
+    // Free
+    _z_keyexpr_clear(&e_fqd._ext_keyexpr);
+    _z_keyexpr_clear(&d_fqd._ext_keyexpr);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*------------------ Declaration ------------------*/
 _z_declaration_t gen_declaration(void) {
-    uint8_t decl[] = {
-        _Z_DECL_KEXPR,        _Z_UNDECL_KEXPR,   _Z_DECL_SUBSCRIBER,
-        _Z_UNDECL_SUBSCRIBER, _Z_DECL_QUERYABLE, _Z_UNDECL_QUERYABLE,
-    };
+    uint8_t decl[] = {_Z_DECL_KEXPR,     _Z_UNDECL_KEXPR,     _Z_DECL_SUBSCRIBER, _Z_UNDECL_SUBSCRIBER,
+                      _Z_DECL_QUERYABLE, _Z_UNDECL_QUERYABLE, _Z_DECL_TOKEN,      _Z_UNDECL_TOKEN};
 
     _z_declaration_t d;
     d._tag = decl[gen_uint8() % (sizeof(decl) / sizeof(uint8_t))];
@@ -1000,6 +1083,12 @@ _z_declaration_t gen_declaration(void) {
         case _Z_UNDECL_QUERYABLE: {
             d._body._undecl_queryable = gen_forget_queryable_declaration();
         } break;
+        case _Z_DECL_TOKEN: {
+            d._body._decl_token = gen_token_declaration();
+        } break;
+        case _Z_UNDECL_TOKEN: {
+            d._body._undecl_token = gen_forget_token_declaration();
+        } break;
         default:
             assert(false);
     }
@@ -1022,6 +1111,9 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
         case _Z_DECL_QUERYABLE:
             assert_eq_queryable_declaration(&left->_body._decl_queryable, &right->_body._decl_queryable);
             break;
+        case _Z_DECL_TOKEN:
+            assert_eq_token_declaration(&left->_body._decl_token, &right->_body._decl_token);
+            break;
         case _Z_UNDECL_KEXPR:
             assert_eq_forget_resource_declaration(&left->_body._undecl_kexpr, &right->_body._undecl_kexpr);
             break;
@@ -1030,6 +1122,9 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
             break;
         case _Z_UNDECL_QUERYABLE:
             assert_eq_forget_queryable_declaration(&left->_body._undecl_queryable, &right->_body._undecl_queryable);
+            break;
+        case _Z_UNDECL_TOKEN:
+            assert_eq_forget_token_declaration(&left->_body._undecl_token, &right->_body._undecl_token);
             break;
         default:
             assert(false);

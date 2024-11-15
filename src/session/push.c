@@ -27,17 +27,14 @@ z_result_t _z_trigger_push(_z_session_t *zn, _z_n_msg_push_t *push, z_reliabilit
 
     // TODO check body to know where to dispatch
 
-    size_t kind = push->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE;
     if (push->_body._is_put) {
         _z_msg_put_t *put = &push->_body._body._put;
-        ret = _z_trigger_subscriptions(zn, &push->_key, &put->_payload, &put->_encoding, kind,
-                                       &put->_commons._timestamp, push->_qos, &put->_attachment, reliability);
+        ret = _z_trigger_subscriptions_put(zn, push->_key, put->_payload, &put->_encoding, &put->_commons._timestamp,
+                                           push->_qos, put->_attachment, reliability);
     } else {
-        _z_encoding_t encoding = _z_encoding_null();
-        _z_bytes_t payload = _z_bytes_null();
         _z_msg_del_t *del = &push->_body._body._del;
-        ret = _z_trigger_subscriptions(zn, &push->_key, &payload, &encoding, kind, &del->_commons._timestamp,
-                                       push->_qos, &del->_attachment, reliability);
+        ret = _z_trigger_subscriptions_del(zn, push->_key, &del->_commons._timestamp, push->_qos, del->_attachment,
+                                           reliability);
     }
     return ret;
 }

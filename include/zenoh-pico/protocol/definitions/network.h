@@ -313,4 +313,8 @@ z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */

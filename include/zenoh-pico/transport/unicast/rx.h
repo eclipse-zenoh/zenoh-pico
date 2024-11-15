@@ -30,4 +30,8 @@ z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu);
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_UNICAST_RX_H */

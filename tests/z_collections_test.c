@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/collections/fifo.h"
 #include "zenoh-pico/collections/lifo.h"
+#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/collections/string.h"
 
@@ -308,6 +309,46 @@ void fifo_test_init_free(void) {
     assert(r == NULL);
 }
 
+void int_map_iterator_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, "A");
+    _z_str_intmap_insert(&map, 20, "B");
+    _z_str_intmap_insert(&map, 30, "C");
+    _z_str_intmap_insert(&map, 40, "D");
+
+#define TEST_MAP(map)                                                      \
+    {                                                                      \
+        _z_str_intmap_iterator_t iter = _z_str_intmap_iterator_make(&map); \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 20);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "B") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 40);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "D") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 10);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "A") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 30);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "C") == 0);     \
+                                                                           \
+        assert(!_z_str_intmap_iterator_next(&iter));                       \
+    }
+
+    TEST_MAP(map);
+
+    _z_str_intmap_t map2 = _z_str_intmap_clone(&map);
+
+    TEST_MAP(map2);
+
+#undef TEST_MAP
+}
+
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -315,4 +356,6 @@ int main(void) {
     lifo_test_init_free();
     fifo_test();
     fifo_test_init_free();
+
+    int_map_iterator_test();
 }

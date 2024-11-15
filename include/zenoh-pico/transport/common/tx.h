@@ -41,4 +41,8 @@ z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl);
 }
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_TRANSPORT_TX_H */

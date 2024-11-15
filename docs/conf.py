@@ -36,7 +36,8 @@ c_autodoc_compilation_args = [
     "-DZ_FEATURE_SUBSCRIPTION=1",
     "-DZ_FEATURE_QUERY=1",
     "-DZ_FEATURE_QUERYABLE=1",
-    "-DZ_FEATURE_ENCODING_VALUES=1"
+    "-DZ_FEATURE_ENCODING_VALUES=1",
+    "-DZ_FEATURE_LIVELINESS=1",
 ]
 
 # -- Options for HTML output -------------------------------------------------
