@@ -48,6 +48,11 @@ _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len) {
     };
 }
 
+size_t _z_keyexpr_size(_z_keyexpr_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_keyexpr_t);
+}
+
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     *dst = _z_keyexpr_null();
     dst->_id = src->_id;
@@ -65,17 +70,21 @@ _z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
     return dst;
 }
 
+_z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src) {
+    _z_keyexpr_t *dst = z_malloc(sizeof(_z_keyexpr_t));
+    if (dst != NULL) {
+        _z_keyexpr_copy(dst, src);
+    }
+    return dst;
+}
+
 _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
     return stolen;
 }
 
-void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
-    dst->_id = src->_id;
-    dst->_mapping = src->_mapping;
-    _z_string_move(&dst->_suffix, &src->_suffix);
-}
+void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) { *dst = _z_keyexpr_steal(src); }
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;

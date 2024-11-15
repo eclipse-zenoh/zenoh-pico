@@ -31,6 +31,11 @@ bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { re
 
 void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
 
+size_t _z_resource_size(_z_resource_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_resource_t);
+}
+
 void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src) {
     _z_keyexpr_copy(&dst->_key, &src->_key);
     dst->_id = src->_id;

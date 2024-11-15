@@ -827,12 +827,12 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
                    opt.priority, opt.is_express, opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this),
                    reliability);
 
-    // Trigger local subscriptions
-    _z_trigger_local_subscriptions(
+    // Trigger subscriptions
+    _z_trigger_subscriptions_put(
         _Z_RC_IN_VAL(zs), keyexpr_aliased, _z_bytes_from_owned_bytes(&payload->_this),
-        opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
+        opt.encoding == NULL ? NULL : &opt.encoding->_this._val, opt.timestamp,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
+        _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
@@ -960,11 +960,11 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
                            Z_SAMPLE_KIND_PUT, pub->_congestion_control, pub->_priority, pub->_is_express, opt.timestamp,
                            _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
         }
-        // Trigger local subscriptions
-        _z_trigger_local_subscriptions(
-            _Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding,
+        // Trigger subscriptions
+        _z_trigger_subscriptions_put(
+            _Z_RC_IN_VAL(&sess_rc), pub_keyexpr, _z_bytes_from_owned_bytes(&payload->_this), &encoding, opt.timestamp,
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-            opt.timestamp, _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
+            _z_bytes_from_owned_bytes(&opt.attachment->_this), reliability);
 
         _z_session_rc_drop(&sess_rc);
     } else {
@@ -1398,7 +1398,7 @@ z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
     // Retrieve keyexpr from session
     uint32_t lookup = sub->_entity_id;
-    _z_subscription_rc_list_t *tail = _Z_RC_IN_VAL(&sub->_zn)->_local_subscriptions;
+    _z_subscription_rc_list_t *tail = _Z_RC_IN_VAL(&sub->_zn)->_subscriptions;
     while (tail != NULL) {
         _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
         if (_Z_RC_IN_VAL(head)->_id == lookup) {
