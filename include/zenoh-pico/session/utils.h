@@ -48,8 +48,4 @@ static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* INCLUDE_ZENOH_PICO_SESSION_UTILS_H */

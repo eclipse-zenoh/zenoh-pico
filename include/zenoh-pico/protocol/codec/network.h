@@ -44,8 +44,4 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, 
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_NETWORK_H */

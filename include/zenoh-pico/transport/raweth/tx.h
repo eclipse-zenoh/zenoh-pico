@@ -31,8 +31,4 @@ z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_m
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* ZENOH_PICO_RAWETH_TX_H */

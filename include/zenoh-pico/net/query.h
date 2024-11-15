@@ -82,8 +82,4 @@ void _z_queryable_free(_z_queryable_t **qbl);
 }
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* ZENOH_PICO_QUERY_NETAPI_H */

@@ -178,9 +178,9 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
 
 #if Z_FEATURE_LIVELINESS == 1
 static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_keyexpr_intmap_t token_list = _z_keyexpr_intmap_clone(&zn->_local_tokens);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
         // Build the declare message to send on the wire

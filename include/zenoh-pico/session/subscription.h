@@ -44,7 +44,7 @@ typedef struct {
 
 /*------------------ Subscription ------------------*/
 z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
-                                        _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                                        _z_encoding_t *encoding, const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
                                         _z_bytes_t *attachment, z_reliability_t reliability);
 
 z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr, const _z_timestamp_t *timestamp,
