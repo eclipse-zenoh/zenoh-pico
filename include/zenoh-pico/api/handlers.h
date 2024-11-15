@@ -140,10 +140,10 @@ extern "C" {
                            /* collection_close_f              */ _z_##kind_name##_mt_close,                 \
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
-                           /* elem_clone_f                     */ z_##item_name##_clone,                    \
+                           /* elem_clone_f                    */ z_##item_name##_clone,                     \
                            /* elem_move_f                     */ z_##item_name##_move,                      \
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
-                           /* elem_null                       */ z_internal_##item_name##_null)
+                           /* elem_null_f                     */ z_internal_##item_name##_null)
 
 #define _Z_CHANNEL_DUMMY_IMPL(handler_type, handler_name, item_name)                                    \
     _Z_OWNED_TYPE_VALUE(handler_type, handler_name)                                                     \

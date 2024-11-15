@@ -24,7 +24,6 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/utils/config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,6 +74,18 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  *    0 if success, or a negative value identifying the error.
  */
 z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
+
+/**
+ * Declare keyexpr if it is necessary and allowed.
+ * Returns updated keyexpr.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to declare.
+ * Returns:
+ *     Updated keyexpr.
+ */
+_z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr);
 
 #if Z_FEATURE_PUBLICATION == 1
 /**

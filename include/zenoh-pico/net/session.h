@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/config.h"
 
@@ -54,8 +55,17 @@ typedef struct _z_session_t {
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_subscription_rc_list_t *_local_subscriptions;
-    _z_subscription_rc_list_t *_remote_subscriptions;
+    _z_subscription_rc_list_t *_subscriptions;
+    _z_subscription_rc_list_t *_liveliness_subscriptions;
+#endif
+
+#if Z_FEATURE_LIVELINESS == 1
+    _z_keyexpr_intmap_t _local_tokens;
+    _z_keyexpr_intmap_t _remote_tokens;
+#if Z_FEATURE_QUERY == 1
+    uint32_t _liveliness_query_id;
+    _z_liveliness_pending_query_intmap_t _liveliness_pending_queries;
+#endif
 #endif
 
     // Session queryables
