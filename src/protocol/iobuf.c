@@ -84,7 +84,7 @@ void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t le
 
 void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
     size_t length = _z_iosli_readable(src);
-    assert(_z_iosli_readable(dst) >= length);
+    assert(dst->_capacity >= length);
     (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
     dst->_w_pos += length;
 }

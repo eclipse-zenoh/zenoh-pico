@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s1;
     assert(z_open(&s1, z_move(config), NULL) == Z_OK);
     _z_string_t zid1 = _z_id_to_string(&(_Z_RC_IN_VAL(z_loan(s1))->_local_zid));
-    printf("Session 1 with PID: %*.s\n", (int)_z_string_len(&zid1), _z_string_data(&zid1));
+    printf("Session 1 with PID: %.*s\n", (int)_z_string_len(&zid1), _z_string_data(&zid1));
     _z_string_clear(&zid1);
 
     // Start the read session session lease loops
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
     assert(z_open(&s2, z_move(config), NULL) == Z_OK);
     assert(z_internal_check(s2));
     _z_string_t zid2 = _z_id_to_string(&(_Z_RC_IN_VAL(z_loan(s2))->_local_zid));
-    printf("Session 2 with PID: %*.s\n", (int)_z_string_len(&zid2), _z_string_data(&zid2));
+    printf("Session 2 with PID: %.*s\n", (int)_z_string_len(&zid2), _z_string_data(&zid2));
     _z_string_clear(&zid2);
 
     // Start the read session session lease loops
