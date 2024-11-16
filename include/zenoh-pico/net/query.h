@@ -44,6 +44,7 @@ static inline bool _z_query_check(const _z_query_t *query) {
     return _z_keyexpr_check(&query->_key) || _z_value_check(&query->_value) || _z_bytes_check(&query->_attachment) ||
            _z_string_check(&query->_parameters);
 }
+z_result_t _z_query_send_reply_final(_z_query_t *q);
 void _z_query_clear(_z_query_t *q);
 z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);

@@ -231,6 +231,8 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qles, i);
         qle_info->callback(&query, qle_info->arg);
     }
+    // Send reply final message
+    _z_query_send_reply_final(&query);
     // Clean up
     _z_keyexpr_clear(&key);
 #if Z_FEATURE_RX_CACHE != 1
