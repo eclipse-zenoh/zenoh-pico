@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,8 +144,20 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_co
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 
-z_result_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
-    _Z_CHECK_SYS_ERR(pthread_cond_timedwait(cv, m, abstime));
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    int error = pthread_cond_timedwait(cv, m, abstime);
+
+    if (error == ETIMEDOUT) {
+        if (timeout != NULL) {
+            *timeout = true;
+        }
+        return 0;
+    }
+
+    if (timeout != NULL) {
+        *timeout = false;
+    }
+    _Z_CHECK_SYS_ERR(error);
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

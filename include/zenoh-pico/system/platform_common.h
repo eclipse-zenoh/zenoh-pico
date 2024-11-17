@@ -272,7 +272,7 @@ z_result_t _z_condvar_drop(_z_condvar_t *cv);
 z_result_t _z_condvar_signal(_z_condvar_t *cv);
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv);
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
-z_result_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime);
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout);
 
 /**
  * Initializes a condition variable.
@@ -322,7 +322,7 @@ z_result_t z_condvar_signal(z_loaned_condvar_t *cv);
  */
 z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m);
 
-z_result_t z_condvar_timedwait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, const z_clock_t *abstime);
+z_result_t z_condvar_wait_until(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, const z_clock_t *abstime, bool *timeout);
 
 /*------------------ Sleep ------------------*/
 /**
