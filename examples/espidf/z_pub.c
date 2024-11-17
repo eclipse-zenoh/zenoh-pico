@@ -143,7 +143,7 @@ void app_main() {
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
+    if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         exit(-1);
     }
@@ -157,15 +157,15 @@ void app_main() {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_copy_from_str(&payload, buf);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 }
 #else

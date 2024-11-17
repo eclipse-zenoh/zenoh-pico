@@ -19,6 +19,10 @@
 
 #include "zenoh-pico/collections/element.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- Ring Buffer --------*/
 typedef struct {
     void **_val;
@@ -28,7 +32,7 @@ typedef struct {
     size_t _w_idx;
 } _z_ring_t;
 
-int8_t _z_ring_init(_z_ring_t *ring, size_t capacity);
+z_result_t _z_ring_init(_z_ring_t *ring, size_t capacity);
 _z_ring_t _z_ring_make(size_t capacity);
 
 size_t _z_ring_capacity(const _z_ring_t *r);
@@ -48,7 +52,7 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
 
 #define _Z_RING_DEFINE(name, type)                                                                                     \
     typedef _z_ring_t name##_ring_t;                                                                                   \
-    static inline int8_t name##_ring_init(name##_ring_t *ring, size_t capacity) {                                      \
+    static inline z_result_t name##_ring_init(name##_ring_t *ring, size_t capacity) {                                  \
         return _z_ring_init(ring, capacity);                                                                           \
     }                                                                                                                  \
     static inline name##_ring_t name##_ring_make(size_t capacity) { return _z_ring_make(capacity); }                   \
@@ -64,5 +68,9 @@ void _z_ring_free(_z_ring_t **xs, z_element_free_f f_f);
     static inline type *name##_ring_pull(name##_ring_t *r) { return (type *)_z_ring_pull(r); }                         \
     static inline void name##_ring_clear(name##_ring_t *r) { _z_ring_clear(r, name##_elem_free); }                     \
     static inline void name##_ring_free(name##_ring_t **r) { _z_ring_free(r, name##_elem_free); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_RING_H */

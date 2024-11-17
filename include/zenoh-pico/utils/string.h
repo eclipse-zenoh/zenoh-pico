@@ -12,9 +12,16 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#ifndef ZENOH_PICO_UTILS_STRING_H
+#define ZENOH_PICO_UTILS_STRING_H
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
     char const *start;
@@ -47,7 +54,7 @@ char const *_z_strstr(char const *haystack_start, char const *haystack_end, cons
 char const *_z_strstr_skipneedle(char const *haystack_start, char const *haystack_end, const char *needle_start);
 char const *_z_bstrstr_skipneedle(_z_str_se_t haystack, _z_str_se_t needle);
 
-_Bool _z_splitstr_is_empty(const _z_splitstr_t *src);
+bool _z_splitstr_is_empty(const _z_splitstr_t *src);
 _z_str_se_t _z_splitstr_next(_z_splitstr_t *str);
 _z_str_se_t _z_splitstr_split_once(_z_splitstr_t src, _z_str_se_t *next);
 _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
@@ -55,3 +62,9 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
 size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const char *needle_start);
 
 size_t _z_str_startswith(const char *s, const char *needle);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ZENOH_PICO_UTILS_STRING_H */

@@ -21,8 +21,13 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/utils/config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * A zenoh-net session.
@@ -50,8 +55,17 @@ typedef struct _z_session_t {
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_subscription_rc_list_t *_local_subscriptions;
-    _z_subscription_rc_list_t *_remote_subscriptions;
+    _z_subscription_rc_list_t *_subscriptions;
+    _z_subscription_rc_list_t *_liveliness_subscriptions;
+#endif
+
+#if Z_FEATURE_LIVELINESS == 1
+    _z_keyexpr_intmap_t _local_tokens;
+    _z_keyexpr_intmap_t _remote_tokens;
+#if Z_FEATURE_QUERY == 1
+    uint32_t _liveliness_query_id;
+    _z_liveliness_pending_query_intmap_t _liveliness_pending_queries;
+#endif
 #endif
 
     // Session queryables
@@ -84,7 +98,7 @@ _Z_REFCOUNT_DEFINE(_z_session, _z_session)
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
  *
  */
-int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
 
 /**
  * Close a zenoh-net session.
@@ -93,6 +107,16 @@ int8_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
  *     session: A zenoh-net session. The callee releases session upon successful return.
  */
 void _z_close(_z_session_t *session);
+
+/**
+ * Return true is session and all associated transports were closed.
+ */
+bool _z_session_is_closed(const _z_session_t *session);
+
+/**
+ * Upgrades weak session session, than resets it to null if session is closed.
+ */
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session);
 
 /**
  * Get informations about an zenoh-net session.
@@ -115,7 +139,7 @@ _z_config_t *_z_info(const _z_session_t *session);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_read(_z_session_t *z);
+z_result_t _zp_read(_z_session_t *z);
 
 /**
  * Send a KeepAlive message.
@@ -125,7 +149,7 @@ int8_t _zp_read(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_send_keep_alive(_z_session_t *z);
+z_result_t _zp_send_keep_alive(_z_session_t *z);
 
 /**
  * Send a Join message.
@@ -135,7 +159,7 @@ int8_t _zp_send_keep_alive(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_send_join(_z_session_t *z);
+z_result_t _zp_send_join(_z_session_t *z);
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /**
@@ -148,7 +172,7 @@ int8_t _zp_send_join(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
+z_result_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
 
 /**
  * Stop the read task. This may result in stopping a thread or a process depending
@@ -159,7 +183,7 @@ int8_t _zp_start_read_task(_z_session_t *z, z_task_attr_t *attr);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_stop_read_task(_z_session_t *z);
+z_result_t _zp_stop_read_task(_z_session_t *z);
 
 /**
  * Start a separate task to handle the session lease. This task will send ``KeepAlive``
@@ -175,7 +199,7 @@ int8_t _zp_stop_read_task(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
+z_result_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
 
 /**
  * Stop the lease task. This may result in stopping a thread or a process depending
@@ -186,7 +210,11 @@ int8_t _zp_start_lease_task(_z_session_t *z, z_task_attr_t *attr);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _zp_stop_lease_task(_z_session_t *z);
+z_result_t _zp_stop_lease_task(_z_session_t *z);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_SESSION_H */

@@ -35,13 +35,13 @@ char *_z_bt_config_to_str(const _z_str_intmap_t *s) {
     return _z_str_intmap_to_str(s, BT_CONFIG_ARGC, args);
 }
 
-int8_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
+z_result_t _z_bt_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_from_strn(strint, s, BT_CONFIG_ARGC, args, n);
 }
 
-int8_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s) {
+z_result_t _z_bt_config_from_str(_z_str_intmap_t *strint, const char *s) {
     BT_CONFIG_MAPPING_BUILD
 
     return _z_str_intmap_from_str(strint, s, BT_CONFIG_ARGC, args);

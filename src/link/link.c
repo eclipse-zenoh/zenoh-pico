@@ -21,8 +21,8 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-int8_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
@@ -74,8 +74,8 @@ int8_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
     return ret;
 }
 
-int8_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
@@ -151,9 +151,9 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
     return rb;
 }
 
-int8_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
-    int8_t ret = _Z_RES_OK;
-    _Bool link_is_streamed = false;
+z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
+    z_result_t ret = _Z_RES_OK;
+    bool link_is_streamed = false;
 
     switch (link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:

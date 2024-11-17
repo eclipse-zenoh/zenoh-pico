@@ -19,11 +19,11 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/utils/logging.h"
 
 /*------------------ clone helpers ------------------*/
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
@@ -38,17 +38,17 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->time = 0;
 }
 
-_Bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
+bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
-int8_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
+    z_result_t ret = _Z_RES_OK;
     z_random_fill((uint8_t *)bs->id, size);
     return ret;
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
+    z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Initialize the counters to 1
@@ -60,8 +60,8 @@ int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     zn->_local_resources = NULL;
     zn->_remote_resources = NULL;
 #if Z_FEATURE_SUBSCRIPTION == 1
-    zn->_local_subscriptions = NULL;
-    zn->_remote_subscriptions = NULL;
+    zn->_subscriptions = NULL;
+    zn->_liveliness_subscriptions = NULL;
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     zn->_local_queryable = NULL;
@@ -77,6 +77,10 @@ int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
         return ret;
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#if Z_FEATURE_LIVELINESS == 1
+    _z_liveliness_init(zn);
+#endif
 
     zn->_local_zid = *zid;
     // Note session in transport
@@ -97,6 +101,9 @@ int8_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 }
 
 void _z_session_clear(_z_session_t *zn) {
+    if (_z_session_is_closed(zn)) {
+        return;
+    }
 #if Z_FEATURE_MULTI_THREAD == 1
     _zp_stop_read_task(zn);
     _zp_stop_lease_task(zn);
@@ -117,6 +124,9 @@ void _z_session_clear(_z_session_t *zn) {
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
 #endif
+#if Z_FEATURE_LIVELINESS == 1
+    _z_liveliness_clear(zn);
+#endif
     _z_flush_interest(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -124,8 +134,8 @@ void _z_session_clear(_z_session_t *zn) {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 }
 
-int8_t _z_session_close(_z_session_t *zn, uint8_t reason) {
-    int8_t ret = _Z_ERR_GENERIC;
+z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {
+    z_result_t ret = _Z_ERR_GENERIC;
 
     if (zn != NULL) {
         ret = _z_transport_close(&zn->_tp, reason);

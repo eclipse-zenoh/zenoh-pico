@@ -41,11 +41,11 @@ static void _z_serial_received_byte_callback(FuriHalSerialHandle* handle, FuriHa
     }
 }
 
-int8_t _z_open_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     return _Z_ERR_GENERIC;
 }
 
-int8_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
+z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
     if (furi_hal_serial_control_is_busy(FuriHalSerialIdUsart)) {
         _Z_ERROR("Serial port is busy");
         return _Z_ERR_TRANSPORT_OPEN_FAILED;
@@ -80,7 +80,7 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t ba
     return _Z_RES_OK;
 }
 
-int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     (void)(sock);
     (void)(txpin);
     (void)(rxpin);
@@ -89,7 +89,7 @@ int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uin
     return _Z_ERR_GENERIC;
 }
 
-int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
+z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
     (void)(sock);
     (void)(dev);
     (void)(baudrate);
@@ -117,7 +117,7 @@ void _z_close_serial(_z_sys_net_socket_t* sock) {
 }
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t len) {
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     uint8_t* before_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
@@ -189,7 +189,7 @@ size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t* ptr, size_t
 }
 
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t* ptr, size_t len) {
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
     uint8_t* before_cobs = (uint8_t*)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t i = 0;

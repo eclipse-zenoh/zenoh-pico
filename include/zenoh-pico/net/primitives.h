@@ -24,7 +24,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/utils/config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*------------------ Discovery ------------------*/
 
@@ -38,7 +41,7 @@
  *     timeout: The time that should be spent scouting before returning the results.
  */
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
-              _z_hello_handler_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
+              _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
 
 /*------------------ Declarations ------------------*/
 
@@ -70,7 +73,19 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
+z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
+
+/**
+ * Declare keyexpr if it is necessary and allowed.
+ * Returns updated keyexpr.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to declare.
+ * Returns:
+ *     Updated keyexpr.
+ */
+_z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr);
 
 #if Z_FEATURE_PUBLICATION == 1
 /**
@@ -90,7 +105,7 @@ int8_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
  *    The created :c:type:`_z_publisher_t` (in null state if the declaration failed)..
  */
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
-                                    z_congestion_control_t congestion_control, z_priority_t priority, _Bool is_express,
+                                    z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
                                     z_reliability_t reliability);
 
 /**
@@ -102,7 +117,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int8_t _z_undeclare_publisher(_z_publisher_t *pub);
+z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
 
 /**
  * Write data corresponding to a given resource key, allowing the definition of
@@ -124,10 +139,10 @@ int8_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t *encoding,
-                const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                _Bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
-                z_reliability_t reliability);
+z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t *encoding,
+                    const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                    bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
+                    z_reliability_t reliability);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -144,8 +159,8 @@ int8_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload
  * Returns:
  *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_data_handler_t callback,
-                                      _z_drop_handler_t dropper, void *arg);
+_z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                      _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -156,7 +171,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
+z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub);
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
@@ -174,8 +189,8 @@ int8_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    The created :c:type:`_z_queryable_t` (in null state if the declaration failed)..
  */
-_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _Bool complete,
-                                    _z_queryable_handler_t callback, _z_drop_handler_t dropper, void *arg);
+_z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, bool complete,
+                                    _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -186,7 +201,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
  * Returns:
  *    0 if success, or a negative value identifying the error.
  */
-int8_t _z_undeclare_queryable(_z_queryable_t *qle);
+z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
 
 /**
  * Send a reply to a query.
@@ -203,10 +218,10 @@ int8_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
  */
-int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
-                     const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                     z_priority_t priority, _Bool is_express, const _z_timestamp_t *timestamp,
-                     const _z_bytes_t attachment);
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+                         const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                         z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
+                         const _z_bytes_t attachment);
 /**
  * Send a reply error to a query.
  *
@@ -220,7 +235,7 @@ int8_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
  */
-int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
+z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -244,16 +259,21 @@ int8_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, c
  *     priority: The priority of the query.
  *
  */
-int8_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                const z_consolidation_mode_t consolidation, const _z_value_t value, _z_reply_handler_t callback,
-                _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, const _z_bytes_t attachment,
-                z_congestion_control_t cong_ctrl, z_priority_t priority, _Bool is_express);
+z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
+                    const z_consolidation_mode_t consolidation, const _z_value_t value,
+                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
+                    const _z_bytes_t attachment, z_congestion_control_t cong_ctrl, z_priority_t priority,
+                    bool is_express);
 #endif
 
 #if Z_FEATURE_INTEREST == 1
 uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
                          void *arg);
-int8_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
+z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_ZENOH_PICO_NET_PRIMITIVES_H */

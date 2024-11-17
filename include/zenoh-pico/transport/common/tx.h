@@ -19,14 +19,22 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void __unsafe_z_prepare_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
 void __unsafe_z_finalize_wbuf(_z_wbuf_t *buf, uint8_t link_flow_capability);
 /*This function is unsafe because it operates in potentially concurrent
         data.*Make sure that the following mutexes are locked before calling this function : *-ztu->mutex_tx */
-int8_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
+z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn);
 
 /*------------------ Transmission and Reception helpers ------------------*/
-int8_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);
-int8_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
+z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);
+z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_TRANSPORT_TX_H */

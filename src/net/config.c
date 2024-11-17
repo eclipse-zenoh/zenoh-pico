@@ -23,9 +23,9 @@ _z_config_t _z_config_empty(void) {
     return config;
 }
 
-int8_t _z_config_default(_z_config_t *config) { return _z_config_client(config, NULL); }
+z_result_t _z_config_default(_z_config_t *config) { return _z_config_client(config, NULL); }
 
-int8_t _z_config_client(_z_config_t *ps, const char *locator) {
+z_result_t _z_config_client(_z_config_t *ps, const char *locator) {
     *ps = _z_config_empty();
     _Z_RETURN_IF_ERR(_zp_config_insert(ps, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_CLIENT));
     if (locator != NULL) {

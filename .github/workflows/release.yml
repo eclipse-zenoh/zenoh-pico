@@ -59,6 +59,7 @@ jobs:
       - name: Bump and tag project
         run: bash ci/scripts/bump-and-tag.bash
         env:
+          LIVE_RUN: ${{ inputs.live-run || false }}
           VERSION: ${{ steps.create-release-branch.outputs.version }}
           GIT_USER_NAME: eclipse-zenoh-bot
           GIT_USER_EMAIL: eclipse-zenoh-bot@users.noreply.github.com
@@ -150,6 +151,19 @@ jobs:
           name: ${{ steps.build-linux.outputs.archive-deb }}
           path: ${{ steps.build-linux.outputs.archive-deb }}
 
+  debian:
+    name: Publish Debian packages
+    needs: [tag, build-linux]
+    uses: eclipse-zenoh/ci/.github/workflows/release-crates-debian.yml@main
+    with:
+      no-build: true
+      live-run: ${{ inputs.live-run || false }}
+      version: ${{ needs.tag.outputs.version }}
+      repo: ${{ github.repository }}
+      branch: ${{ needs.tag.outputs.branch }}
+      installation-test: false
+    secrets: inherit
+
   eclipse:
     needs: [tag, build-macos, build-linux]
     runs-on: ubuntu-latest
@@ -160,8 +174,8 @@ jobs:
           version: ${{ needs.tag.outputs.version }}
           ssh-host: genie.zenoh@projects-storage.eclipse.org
           ssh-host-path: /home/data/httpd/download.eclipse.org/zenoh/zenoh-pico
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          ssh-passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          ssh-private-key: ${{ secrets.ORG_GPG_PRIVATE_KEY }}
+          ssh-passphrase: ${{ secrets.ORG_GPG_PASSPHRASE }}
           archive-patterns: '.*\.zip'
 
   github:

@@ -20,6 +20,7 @@
 void _z_publisher_clear(_z_publisher_t *pub) {
     _z_keyexpr_clear(&pub->_key);
     _z_session_weak_drop(&pub->_zn);
+    _z_encoding_clear(&pub->_encoding);
     *pub = _z_publisher_null();
 }
 
@@ -34,15 +35,16 @@ void _z_publisher_free(_z_publisher_t **pub) {
     }
 }
 
-_Bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
+bool _z_publisher_check(const _z_publisher_t *publisher) { return !_Z_RC_IS_NULL(&publisher->_zn); }
 _z_publisher_t _z_publisher_null(void) {
-    return (_z_publisher_t) {
-        ._congestion_control = Z_CONGESTION_CONTROL_DEFAULT, ._id = 0, ._key = _z_keyexpr_null(),
-        ._priority = Z_PRIORITY_DEFAULT, ._zn = _z_session_weak_null(),
+    return (_z_publisher_t){._congestion_control = Z_CONGESTION_CONTROL_DEFAULT,
+                            ._id = 0,
+                            ._key = _z_keyexpr_null(),
+                            ._priority = Z_PRIORITY_DEFAULT,
+                            ._zn = _z_session_weak_null(),
+                            ._encoding = _z_encoding_null(),
 #if Z_FEATURE_INTEREST == 1
-        ._filter = (_z_write_filter_t) {
-            ._interest_id = 0, .ctx = NULL
-        }
+                            ._filter = (_z_write_filter_t){._interest_id = 0, .ctx = NULL}
 #endif
     };
 }

@@ -25,6 +25,11 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/keyexpr.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Network Messages */
 #define _Z_MID_N_OAM 0x1f
 #define _Z_MID_N_DECLARE 0x1e
@@ -75,10 +80,9 @@
 
 typedef _z_qos_t _z_n_qos_t;
 
-static inline _z_qos_t _z_n_qos_create(_Bool express, z_congestion_control_t congestion_control,
-                                       z_priority_t priority) {
+static inline _z_qos_t _z_n_qos_create(bool express, z_congestion_control_t congestion_control, z_priority_t priority) {
     _z_n_qos_t ret;
-    _Bool nodrop = congestion_control == Z_CONGESTION_CONTROL_DROP ? 0 : 1;
+    bool nodrop = congestion_control == Z_CONGESTION_CONTROL_DROP ? 0 : 1;
     ret._val = (uint8_t)((express << 4) | (nodrop << 3) | priority);
     return ret;
 }
@@ -88,9 +92,9 @@ static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
 static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t n_qos) {
     return (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
 }
-static inline _Bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (_Bool)(n_qos._val & 0x10 /* 0b10000 */); }
-#define _z_n_qos_make(express, nodrop, priority)                                                     \
-    _z_n_qos_create((_Bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
+static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (bool)(n_qos._val & 0x10 /* 0b10000 */); }
+#define _z_n_qos_make(express, nodrop, priority)                                                    \
+    _z_n_qos_create((bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
                     (z_priority_t)priority)
 #define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
 
@@ -139,11 +143,11 @@ typedef struct {
     } _body;
 } _z_n_msg_request_t;
 typedef struct {
-    _Bool ext_qos;
-    _Bool ext_tstamp;
-    _Bool ext_target;
-    _Bool ext_budget;
-    _Bool ext_timeout_ms;
+    bool ext_qos;
+    bool ext_tstamp;
+    bool ext_target;
+    bool ext_budget;
+    bool ext_timeout_ms;
     uint8_t n;
 } _z_n_msg_request_exts_t;
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg);
@@ -226,7 +230,7 @@ typedef struct {
     _z_timestamp_t _ext_timestamp;
     _z_n_qos_t _ext_qos;
     uint32_t _interest_id;
-    _Bool has_interest_id;
+    bool has_interest_id;
 } _z_n_msg_declare_t;
 static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
 
@@ -295,11 +299,15 @@ void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
                                        uint64_t timeout_ms, _z_bytes_t attachment, z_congestion_control_t cong_ctrl,
-                                       z_priority_t priority, _Bool is_express);
+                                       z_priority_t priority, bool is_express);
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
-_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, _Bool has_interest_id, uint32_t interest_id);
+_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */

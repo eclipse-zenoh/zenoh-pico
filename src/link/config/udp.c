@@ -38,12 +38,12 @@ char *_z_udp_config_to_str(const _z_str_intmap_t *s) {
     return _z_str_intmap_to_str(s, UDP_CONFIG_ARGC, args);
 }
 
-int8_t _z_udp_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
+z_result_t _z_udp_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n) {
     UDP_CONFIG_MAPPING_BUILD
     return _z_str_intmap_from_strn(strint, s, UDP_CONFIG_ARGC, args, n);
 }
 
-int8_t _z_udp_config_from_str(_z_str_intmap_t *strint, const char *s) {
+z_result_t _z_udp_config_from_str(_z_str_intmap_t *strint, const char *s) {
     return _z_udp_config_from_strn(strint, s, strlen(s));
 }
 

@@ -44,14 +44,14 @@ int main(int argc, char** argv) {
 
     if (zp_start_read_task(z_loan_mut(session), NULL) < 0 || zp_start_lease_task(z_loan_mut(session), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&session), NULL);
+        z_drop(z_move(session));
         return -1;
     }
 
     z_view_keyexpr_t pong;
     z_view_keyexpr_from_str_unchecked(&pong, "test/pong");
     z_owned_publisher_t pub;
-    if (z_declare_publisher(&pub, z_loan(session), z_loan(pong), NULL) < 0) {
+    if (z_declare_publisher(z_loan(session), &pub, z_loan(pong), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -60,8 +60,7 @@ int main(int argc, char** argv) {
     z_view_keyexpr_from_str_unchecked(&ping, "test/ping");
     z_owned_closure_sample_t respond;
     z_closure(&respond, callback, drop, (void*)(&pub));
-    z_owned_subscriber_t sub;
-    if (z_declare_subscriber(&sub, z_loan(session), z_loan(ping), z_move(respond), NULL) < 0) {
+    if (z_declare_background_subscriber(z_loan(session), z_loan(ping), z_move(respond), NULL) < 0) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }
@@ -69,9 +68,7 @@ int main(int argc, char** argv) {
     while (getchar() != 'q') {
     }
 
-    z_drop(z_move(sub));
-
-    z_close(z_move(session), NULL);
+    z_drop(z_move(session));
 }
 #else
 int main(void) {

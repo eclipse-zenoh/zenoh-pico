@@ -29,6 +29,10 @@
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_OPTIONAL
 #define _Z_MOVE(x) x *
 
@@ -55,7 +59,7 @@ typedef struct {
     uint8_t id[16];
 } _z_id_t;
 uint8_t _z_id_len(_z_id_t id);
-_Bool _z_id_check(_z_id_t id);
+bool _z_id_check(_z_id_t id);
 _z_id_t _z_id_empty(void);
 
 /**
@@ -69,7 +73,7 @@ typedef struct {
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 _z_timestamp_t _z_timestamp_null(void);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
-_Bool _z_timestamp_check(const _z_timestamp_t *stamp);
+bool _z_timestamp_check(const _z_timestamp_t *stamp);
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
@@ -101,7 +105,7 @@ typedef struct {
 } _z_keyexpr_t;
 
 static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
-static inline _Bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
+static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
     return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
 }
 static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id) {
@@ -119,8 +123,8 @@ static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
         _z_keyexpr_set_mapping(ke, id);
     }
 }
-static inline _Bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
-static inline _Bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
+static inline bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
+static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
 
 /**
  * Create a resource key from a resource name.
@@ -165,7 +169,7 @@ typedef struct {
 } _z_value_t;
 _z_value_t _z_value_null(void);
 _z_value_t _z_value_steal(_z_value_t *value);
-int8_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
+z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 void _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
@@ -186,9 +190,9 @@ typedef struct {
 } _z_hello_t;
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
-int8_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
+z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
 _z_hello_t _z_hello_null(void);
-_Bool _z_hello_check(const _z_hello_t *hello);
+bool _z_hello_check(const _z_hello_t *hello);
 
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_hello, _z_hello_t)
@@ -208,5 +212,9 @@ typedef struct {
     uint32_t _request_id;
     uint32_t _entity_id;
 } _z_reply_context_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CORE_H */

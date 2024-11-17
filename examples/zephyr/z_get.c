@@ -40,7 +40,7 @@ void reply_handler(z_loaned_reply_t *oreply, void *ctx) {
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_to_string(z_sample_payload(sample), &replystr);
 
         printf(" >> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)),
                (int)z_string_len(z_loan(replystr)), z_string_data(z_loan(replystr)));
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -87,18 +87,18 @@ int main(int argc, char **argv) {
             opts.payload = z_move(payload);
         }
         z_owned_closure_reply_t callback;
-        z_closure(&callback, reply_handler, reply_dropper);
+        z_closure(&callback, reply_handler, reply_dropper, NULL);
         z_view_keyexpr_t ke;
         z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
         if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
             printf("Unable to send query.\n");
-            exit(-1);
+            return -1;
         }
     }
 
     printf("Closing Zenoh Session...");
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

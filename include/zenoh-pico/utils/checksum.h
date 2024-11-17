@@ -18,6 +18,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint32_t _z_crc32(const uint8_t *message, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_UTILS_CHECKSUM_H */

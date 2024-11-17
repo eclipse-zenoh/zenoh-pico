@@ -18,6 +18,10 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/utils/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Create an empty set of properties for zenoh-net session configuration.
  *
@@ -35,7 +39,7 @@ _z_config_t _z_config_empty(void);
  * Returns:
  *   `0`` in case of success, or a ``negative value`` otherwise.
  */
-int8_t _z_config_default(_z_config_t *config);
+z_result_t _z_config_default(_z_config_t *config);
 
 /**
  * Create a default set of properties for client mode zenoh-net session configuration.
@@ -48,6 +52,10 @@ int8_t _z_config_default(_z_config_t *config);
  * Returns:
  *     `0`` in case of success, or a ``negative value`` otherwise.
  */
-int8_t _z_config_client(_z_config_t *config, const char *locator);
+z_result_t _z_config_client(_z_config_t *config, const char *locator);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_CONFIG_NETAPI_H */

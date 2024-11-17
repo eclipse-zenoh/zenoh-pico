@@ -16,9 +16,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/transport.h"
 
 #undef NDEBUG
@@ -167,10 +168,89 @@ void z_slice_custom_delete_test(void) {
     assert(counter == 2);
 }
 
+void z_string_array_test(void) {
+    // create new array
+    z_owned_string_array_t a;
+    z_string_array_new(&a);
+
+    char s1[] = "string1";
+    char s2[] = "string2";
+    char s3[] = "string3";
+    char s4[] = "string4";
+
+    // add by copy
+    z_view_string_t vs1;
+    z_view_string_from_str(&vs1, s1);
+    assert(z_string_array_push_by_copy(z_string_array_loan_mut(&a), z_view_string_loan(&vs1)) == 1);
+
+    z_view_string_t vs2;
+    z_view_string_from_str(&vs2, s2);
+    assert(z_string_array_push_by_copy(z_string_array_loan_mut(&a), z_view_string_loan(&vs2)) == 2);
+
+    // add by alias
+    z_view_string_t vs3;
+    z_view_string_from_str(&vs3, s3);
+    assert(z_string_array_push_by_alias(z_string_array_loan_mut(&a), z_view_string_loan(&vs3)) == 3);
+
+    z_view_string_t vs4;
+    z_view_string_from_str(&vs4, s4);
+    assert(z_string_array_push_by_alias(z_string_array_loan_mut(&a), z_view_string_loan(&vs4)) == 4);
+
+    // check values
+    const z_loaned_string_t *ls1 = z_string_array_get(z_string_array_loan(&a), 0);
+    assert(strncmp(z_string_data(ls1), s1, z_string_len(ls1)) == 0);
+
+    const z_loaned_string_t *ls2 = z_string_array_get(z_string_array_loan(&a), 1);
+    assert(strncmp(z_string_data(ls2), s2, z_string_len(ls2)) == 0);
+
+    const z_loaned_string_t *ls3 = z_string_array_get(z_string_array_loan(&a), 2);
+    assert(strncmp(z_string_data(ls3), s3, z_string_len(ls3)) == 0);
+
+    const z_loaned_string_t *ls4 = z_string_array_get(z_string_array_loan(&a), 3);
+    assert(strncmp(z_string_data(ls4), s4, z_string_len(ls4)) == 0);
+
+    // modify original strings values
+    s1[0] = 'X';
+    s2[0] = 'X';
+    s3[0] = 'X';
+    s4[0] = 'X';
+
+    // values passed by copy should NOT be changed
+    ls1 = z_string_array_get(z_string_array_loan(&a), 0);
+    assert(strncmp(z_string_data(ls1), "string1", z_string_len(ls1)) == 0);
+
+    ls2 = z_string_array_get(z_string_array_loan(&a), 1);
+    assert(strncmp(z_string_data(ls2), "string2", z_string_len(ls2)) == 0);
+
+    // values passed by alias should be changed
+    ls3 = z_string_array_get(z_string_array_loan(&a), 2);
+    assert(strncmp(z_string_data(ls3), s3, z_string_len(ls3)) == 0);
+
+    ls4 = z_string_array_get(z_string_array_loan(&a), 3);
+    assert(strncmp(z_string_data(ls4), s4, z_string_len(ls4)) == 0);
+
+    // cleanup
+    z_string_array_drop(z_string_array_move(&a));
+}
+
+void z_id_to_string_test(void) {
+    z_id_t id;
+    for (uint8_t i = 0; i < sizeof(id.id); i++) {
+        id.id[i] = i;
+    }
+    z_owned_string_t id_str;
+    z_id_to_string(&id, &id_str);
+    assert(z_string_len(z_string_loan(&id_str)) == 32);
+    assert(strncmp("0f0e0d0c0b0a09080706050403020100", z_string_data(z_string_loan(&id_str)),
+                   z_string_len(z_string_loan(&id_str))) == 0);
+}
+
 int main(void) {
     entry_list_test();
     str_vec_list_intmap_test();
     z_slice_custom_delete_test();
+    z_string_array_test();
+    z_id_to_string_test();
 
     return 0;
 }

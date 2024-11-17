@@ -29,7 +29,7 @@ _z_sample_t _z_sample_null(void) {
     return s;
 }
 
-_Bool _z_sample_check(const _z_sample_t *sample) {
+bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_bytes_check(&sample->payload) ||
            _z_bytes_check(&sample->attachment) || _z_encoding_check(&sample->encoding);
 }
@@ -61,7 +61,7 @@ void _z_sample_free(_z_sample_t **sample) {
     }
 }
 
-int8_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
+z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     *dst = _z_sample_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->keyexpr, &src->keyexpr));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_sample_clear(dst));

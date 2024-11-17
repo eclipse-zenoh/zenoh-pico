@@ -27,9 +27,14 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-_Bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { return this_->_id == other->_id; }
+bool _z_resource_eq(const _z_resource_t *other, const _z_resource_t *this_) { return this_->_id == other->_id; }
 
 void _z_resource_clear(_z_resource_t *res) { _z_keyexpr_clear(&res->_key); }
+
+size_t _z_resource_size(_z_resource_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_resource_t);
+}
 
 void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src) {
     _z_keyexpr_copy(&dst->_key, &src->_key);
@@ -244,7 +249,7 @@ uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, u
 }
 
 void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
-    _Bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
+    bool is_local = mapping == _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, mapping);
     _zp_session_lock_mutex(zn);
     _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &zn->_remote_resources;
@@ -271,7 +276,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
     _zp_session_unlock_mutex(zn);
 }
 
-_Bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, const _z_resource_t *ctx) {
+bool _z_unregister_resource_for_peer_filter(const _z_resource_t *candidate, const _z_resource_t *ctx) {
     uint16_t mapping = ctx->_id;
     return _z_keyexpr_mapping_id(&candidate->_key) == mapping;
 }

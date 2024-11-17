@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/multicast/transport.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -22,18 +22,18 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/raweth/rx.h"
 #include "zenoh-pico/transport/raweth/tx.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/unicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_send_close(_z_transport_t *zt, uint8_t reason, bool link_only) {
+    z_result_t ret = _Z_RES_OK;
     // Call transport function
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -50,7 +50,7 @@ int8_t _z_send_close(_z_transport_t *zt, uint8_t reason, _Bool link_only) {
     return ret;
 }
 
-int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, false); }
+z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason) { return _z_send_close(zt, reason, false); }
 
 void _z_transport_clear(_z_transport_t *zt) {
     switch (zt->_type) {
@@ -64,6 +64,7 @@ void _z_transport_clear(_z_transport_t *zt) {
         default:
             break;
     }
+    zt->_type = _Z_TRANSPORT_NONE;
 }
 
 void _z_transport_free(_z_transport_t **zt) {

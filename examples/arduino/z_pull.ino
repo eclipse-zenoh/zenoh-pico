@@ -73,7 +73,7 @@ void setup() {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         Serial.println("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         while (1) {
             ;
         }
@@ -84,7 +84,7 @@ void setup() {
     z_ring_channel_sample_new(&closure, &handler, SIZE);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, KEYEXPR);
-    if (z_declare_subscriber(&sub, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),
+    if (z_declare_subscriber(z_session_loan(&s), &sub, z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),
                              NULL) < 0) {
         Serial.println("Unable to declare subscriber.");
         return;
@@ -104,7 +104,7 @@ void loop() {
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_sample_keyexpr(z_sample_loan(&sample)), &keystr);
         z_owned_string_t value;
-        z_bytes_deserialize_into_string(z_sample_payload(z_sample_loan(&sample)), &value);
+        z_bytes_to_string(z_sample_payload(z_sample_loan(&sample)), &value);
         Serial.print(">> [Subscriber] Pulled (");
         Serial.write(z_string_data(z_view_string_loan(&keystr)), z_string_len(z_view_string_loan(&keystr)));
         Serial.print(": ");

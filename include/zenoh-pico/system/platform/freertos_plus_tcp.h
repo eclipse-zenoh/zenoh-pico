@@ -18,13 +18,17 @@
 #include "FreeRTOS_IP.h"
 #include "semphr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef struct {
     const char *name;
     UBaseType_t priority;
     size_t stack_depth;
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    _Bool static_allocation;
+    bool static_allocation;
     StackType_t *stack_buffer;
     StaticTask_t *task_buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
@@ -57,5 +61,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -35,13 +35,6 @@ extern "C" {
 #endif
 
 /**
- * Represents a variable-length encoding unsigned integer.
- *
- * It is equivalent to the size of a ``size_t``.
- */
-typedef _z_zint_t z_zint_t;
-
-/**
  * Represents a Zenoh ID.
  *
  * In general, valid Zenoh IDs are LSB-first 128bit unsigned and non-zero integers.
@@ -58,10 +51,6 @@ typedef _z_timestamp_t z_timestamp_t;
 
 /**
  * Represents an array of bytes.
- *
- * Members:
- *   size_t len: The length of the bytes array.
- *   uint8_t *start: A pointer to the bytes array.
  */
 _Z_OWNED_TYPE_VALUE(_z_slice_t, slice)
 _Z_VIEW_TYPE(_z_slice_t, slice)
@@ -72,22 +61,17 @@ _Z_VIEW_TYPE(_z_slice_t, slice)
 _Z_OWNED_TYPE_VALUE(_z_bytes_t, bytes)
 
 /**
- * Represents a writer for serialized data.
+ * Represents a writer for data.
  */
-typedef _z_bytes_iterator_writer_t z_bytes_writer_t;
+_Z_OWNED_TYPE_VALUE(_z_bytes_writer_t, bytes_writer)
 
 /**
- * An iterator over multi-element serialized data.
+ * A reader for data.
  */
-typedef _z_bytes_iterator_t z_bytes_iterator_t;
+typedef _z_bytes_reader_t z_bytes_reader_t;
 
 /**
- * A reader for serialized data.
- */
-typedef _z_bytes_iterator_t z_bytes_reader_t;
-
-/**
- * An iterator over slices of serialized data.
+ * An iterator over slices of data.
  */
 typedef struct {
     const _z_bytes_t *_bytes;
@@ -96,34 +80,18 @@ typedef struct {
 
 /**
  * Represents a string without null-terminator.
- *
- * Members:
- *   size_t len: The length of the string.
- *   const char *val: A pointer to the string.
  */
 _Z_OWNED_TYPE_VALUE(_z_string_t, string)
 _Z_VIEW_TYPE(_z_string_t, string)
 
 /**
  * Represents a key expression in Zenoh.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_keyexpr_from_str`
- *   - :c:func:`z_keyexpr_as_view_string`
  */
 _Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
 _Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_config_new`
- *   - :c:func:`z_config_default`
- *   - :c:func:`zp_config_get`
- *   - :c:func:`zp_config_insert`
  */
 _Z_OWNED_TYPE_VALUE(_z_config_t, config)
 
@@ -134,63 +102,36 @@ _Z_OWNED_TYPE_RC(_z_session_rc_t, session)
 
 /**
  * Represents a Zenoh Subscriber entity.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_declare_subscriber`
- *   - :c:func:`z_undeclare_subscriber`
  */
 _Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 
 /**
  * Represents a Zenoh Publisher entity.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_declare_publisher`
- *   - :c:func:`z_undeclare_publisher`
- *   - :c:func:`z_publisher_put`
- *   - :c:func:`z_publisher_delete`
  */
 _Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 
 /**
  * Represents a Zenoh Queryable entity.
- *
- * Members are private and operations must be done using the provided functions:
- *
- *   - :c:func:`z_declare_queryable`
- *   - :c:func:`z_undeclare_queryable`
  */
 _Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
 
 /**
  * Represents a Zenoh Query entity, received by Zenoh Queryable entities.
- *
  */
 _Z_OWNED_TYPE_RC(_z_query_rc_t, query)
 
 /**
  * Represents the encoding of a payload, in a MIME-like format.
- *
- * Members:
- *   uint16_t prefix: The integer prefix of this encoding.
- *   z_loaned_slice_t* suffix: The suffix of this encoding. It MUST be a valid UTF-8 string.
  */
 _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
 
 /**
  * Represents a Zenoh reply error.
- *
- * Members:
- *   z_loaned_encoding_t encoding: The encoding of the error `payload`.
- *   z_loaned_bytes_t* payload: The payload of this zenoh reply error.
  */
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
- *.
  */
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -226,17 +167,17 @@ typedef struct {
  * Members:
  *   z_owned_encoding_t *encoding: Default encoding for messages put by this publisher.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
- * publisher.
+ *     publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
-#if Z_FEATURE_UNSTABLE_API == 1
+    bool is_express;
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_publisher_options_t;
@@ -245,21 +186,21 @@ typedef struct {
  * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.
  *
  * Members:
- *   _Bool complete: The completeness of the queryable.
+ *   bool complete: The completeness of the queryable.
  */
 typedef struct {
-    _Bool complete;
+    bool complete;
 } z_queryable_options_t;
 
 /**
- * Represents the configuration used to configure a query reply sent via :c:func:`z_query_reply.
+ * Represents the configuration used to configure a query reply sent via :c:func:`z_query_reply`.
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
@@ -267,30 +208,30 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
 } z_query_reply_options_t;
 
 /**
- * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del.
+ * Represents the configuration used to configure a query reply delete sent via :c:func:`z_query_reply_del`.
  *
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
 } z_query_reply_del_options_t;
 
 /**
- * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err.
+ * Represents the configuration used to configure a query reply error sent via :c:func:`z_query_reply_err`.
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
@@ -300,25 +241,25 @@ typedef struct {
 } z_query_reply_err_options_t;
 
 /**
- * Represents the configuration used to configure a put operation sent via via :c:func:`z_put`.
+ * Represents the configuration used to configure a put operation sent via :c:func:`z_put`.
  *
  * Members:
  *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when routed.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     z_timestamp_t *timestamp;
-    _Bool is_express;
+    bool is_express;
     z_moved_bytes_t *attachment;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_put_options_t;
@@ -329,16 +270,16 @@ typedef struct {
  * Members:
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing this message.
  *   z_priority_t priority: The priority of this message when router.
- *   _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   (unstable) z_reliability_t reliability: The reliability that should be used to transmit the data.
+ *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
+    bool is_express;
     z_timestamp_t *timestamp;
-#if Z_FEATURE_UNSTABLE_API == 1
+#ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
 } z_delete_options_t;
@@ -378,7 +319,7 @@ typedef struct {
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing the query.
  *   z_priority_t priority: The priority of the query.
- *  _Bool is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  */
@@ -388,7 +329,7 @@ typedef struct {
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     z_priority_t priority;
-    _Bool is_express;
+    bool is_express;
     z_query_target_t target;
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
@@ -451,19 +392,11 @@ typedef struct {
 
 /**
  * Represents a data sample.
- *
- * A sample is the value associated to a given key-expression at a given point in time.
- *
  */
 _Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
 
 /**
  * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
- *
- * Members:
- *   z_whatami_t whatami: The kind of zenoh entity.
- *   z_loaned_slice_t* zid: The Zenoh ID of the scouted entity (empty if absent).
- *   z_loaned_string_array_t locators: The locators of the scouted entity.
  */
 _Z_OWNED_TYPE_VALUE(_z_hello_t, hello)
 
@@ -474,132 +407,74 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
 
 /**
  * Represents an array of non null-terminated string.
- *
- * Operations over :c:type:`z_loaned_string_array_t` must be done using the provided functions:
- *
- *   - :c:func:`z_string_array_get`
- *   - :c:func:`z_string_array_len`
- *   - :c:func:`z_str_array_array_is_empty`
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
-_Z_VIEW_TYPE(_z_string_svec_t, string_array)
 
-const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
-size_t z_string_array_len(const z_loaned_string_array_t *a);
-_Bool z_string_array_is_empty(const z_loaned_string_array_t *a);
-
-typedef void (*z_dropper_handler_t)(void *arg);
-typedef _z_data_handler_t z_data_handler_t;
+typedef void (*z_closure_drop_callback_t)(void *arg);
+typedef _z_closure_sample_callback_t z_closure_sample_callback_t;
 
 typedef struct {
     void *context;
-    z_data_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_sample_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_sample_t;
+
 /**
  * Represents the sample closure.
- *
- * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Members:
- *   void *context: a pointer to an arbitrary state.
- *   z_data_handler_t call: `void *call(z_loaned_sample_t*, const void *context)` is the callback function.
- *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_sample_t, closure_sample)
 
-void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample);
-
-typedef _z_queryable_handler_t z_queryable_handler_t;
+typedef _z_closure_query_callback_t z_closure_query_callback_t;
 
 typedef struct {
     void *context;
-    z_queryable_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_query_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_query_t;
+
 /**
  * Represents the query callback closure.
- *
- * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Members:
- *   void *context: a pointer to an arbitrary state.
- *   _z_queryable_handler_t call: `void (*_z_queryable_handler_t)(z_loaned_query_t *query, void *arg)` is the
- * callback function.
- *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
- *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_query_t, closure_query)
 
-void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query);
-
-typedef _z_reply_handler_t z_reply_handler_t;
+typedef _z_closure_reply_callback_t z_closure_reply_callback_t;
 
 typedef struct {
     void *context;
-    z_reply_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_reply_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_reply_t;
+
 /**
  * Represents the query reply callback closure.
- *
- * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Members:
- *   void *context: a pointer to an arbitrary state.
- *   z_reply_handler_t call: `void (*_z_reply_handler_t)(z_loaned_reply_t *reply, void *arg)` is the
- * callback function.
- *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
- *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_reply_t, closure_reply)
 
-void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply);
-
-typedef void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg);
+typedef void (*z_closure_hello_callback_t)(z_loaned_hello_t *hello, void *arg);
 
 typedef struct {
     void *context;
-    z_loaned_hello_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_hello_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_hello_t;
+
 /**
  * Represents the Zenoh ID callback closure.
- *
- * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Members:
- *   void *context: a pointer to an arbitrary state.
- *   z_loaned_hello_handler_t call: `void (*z_loaned_hello_handler_t)(z_loaned_hello_t *hello, void *arg)` is the
- * callback function.
- *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
- *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_hello_t, closure_hello)
 
-void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
-
-typedef void (*z_id_handler_t)(const z_id_t *id, void *arg);
+typedef void (*z_closure_zid_callback_t)(const z_id_t *id, void *arg);
 
 typedef struct {
     void *context;
-    z_id_handler_t call;
-    z_dropper_handler_t drop;
+    z_closure_zid_callback_t call;
+    z_closure_drop_callback_t drop;
 } _z_closure_zid_t;
+
 /**
  * Represents the Zenoh ID callback closure.
- *
- * A closure is a structure that contains all the elements for stateful, memory-leak-free callbacks.
- *
- * Members:
- *   void *context: a pointer to an arbitrary state.
- *   z_id_handler_t call: `void (*z_id_handler_t)(const z_id_t *id, void *arg)` is the callback function.
- *   z_dropper_handler_t drop: `void *drop(void*)` allows the callback's state to be freed.
- *   void *context: a pointer to an arbitrary state.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
-
-void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 #ifdef __cplusplus
 }

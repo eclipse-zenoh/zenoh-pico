@@ -39,7 +39,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
            z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 0) {
         printf("     with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
                z_string_data(z_loan(payload_string)));
@@ -73,7 +73,7 @@ void app_main(void) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return;
     }
 
@@ -85,9 +85,9 @@ void app_main(void) {
 
     printf("Creating Queryable on '%s'...\n", KEYEXPR);
     z_owned_closure_query_t callback;
-    z_closure(&callback, query_handler);
+    z_closure(&callback, query_handler, NULL, NULL);
     z_owned_queryable_t qable;
-    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_queryable(z_loan(s), &qable, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create queryable.\n");
         return;
     }
@@ -96,9 +96,9 @@ void app_main(void) {
         z_sleep_s(1);
     }
 
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
 }
 #else
 void app_main(void) {

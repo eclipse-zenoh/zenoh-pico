@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/utils/result.h"
+
 #if defined(ZENOH_LINUX)
 #include <sys/random.h>
 #include <sys/time.h>
@@ -101,69 +104,70 @@ void z_free(void *ptr) { free(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 /*------------------ Task ------------------*/
-int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     _Z_CHECK_SYS_ERR(pthread_create(task, attr, fun, arg));
 }
 
-int8_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
+z_result_t _z_task_join(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_join(*task, NULL)); }
 
-int8_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
+z_result_t _z_task_detach(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_detach(*task)); }
 
-void _z_task_free(_z_task_t **task) {
-    _z_task_t *ptr = *task;
-    z_free(ptr);
-    *task = NULL;
-}
+z_result_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
+
+void _z_task_free(_z_task_t **task) { *task = NULL; }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, 0)); }
+z_result_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, 0)); }
 
-int8_t _z_mutex_drop(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_destroy(m)); }
+z_result_t _z_mutex_drop(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_destroy(m)); }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_lock(m)); }
+z_result_t _z_mutex_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_lock(m)); }
 
-int8_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_trylock(m)); }
+z_result_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_trylock(m)); }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
+z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
 
 /*------------------ Condvar ------------------*/
-int8_t _z_condvar_init(_z_condvar_t *cv) {
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
     _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
 }
 
-int8_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
+z_result_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
 
-int8_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signal(cv)); }
+z_result_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_signal(cv)); }
 
-int8_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
 
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 
-int8_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
+z_result_t _z_condvar_timedwait(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
     _Z_CHECK_SYS_ERR(pthread_cond_timedwait(cv, m, abstime));
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) { return usleep((unsigned int)time); }
+z_result_t z_sleep_us(size_t time) { _Z_CHECK_SYS_ERR(usleep((unsigned int)time)); }
 
-int z_sleep_ms(size_t time) {
+z_result_t z_sleep_ms(size_t time) {
     z_time_t start = z_time_now();
 
     // Most sleep APIs promise to sleep at least whatever you asked them to.
     // This may compound, so this approach may make sleeps longer than expected.
     // This extra check tries to minimize the amount of extra time it might sleep.
     while (z_time_elapsed_ms(&start) < time) {
-        z_sleep_us(1000);
+        z_result_t ret = z_sleep_us(1000);
+        if (ret != _Z_RES_OK) {
+            return ret;
+        }
     }
 
-    return 0;
+    return _Z_RES_OK;
 }
 
-int z_sleep_s(size_t time) { return (int)sleep((unsigned int)time); }
+z_result_t z_sleep_s(size_t time) { _Z_CHECK_SYS_ERR((int)sleep((unsigned int)time)); }
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
@@ -259,7 +263,7 @@ unsigned long z_time_elapsed_s(z_time_t *time) {
     return elapsed;
 }
 
-int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) {
+z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     z_time_t now;
     gettimeofday(&now, NULL);
     t->secs = (uint32_t)now.tv_sec;

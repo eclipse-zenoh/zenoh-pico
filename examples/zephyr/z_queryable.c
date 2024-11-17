@@ -41,7 +41,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
            z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_loan(payload_string)) > 0) {
         printf("     with value '%.*s'\n", (int)z_string_len(z_loan(payload_string)),
                z_string_data(z_loan(payload_string)));
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -82,13 +82,13 @@ int main(int argc, char **argv) {
     // Declare Zenoh queryable
     printf("Declaring Queryable on %s...", KEYEXPR);
     z_owned_closure_query_t callback;
-    z_closure(&callback, query_handler);
+    z_closure(&callback, query_handler, NULL, NULL);
     z_owned_queryable_t qable;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_queryable(&qable, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_queryable(z_loan(s), &qable, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare queryable.\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
     printf("Zenoh setup finished!\n");
@@ -98,9 +98,9 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_queryable(z_move(qable));
+    z_drop(z_move(qable));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

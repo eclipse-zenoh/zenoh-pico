@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -60,9 +60,9 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     z_owned_publisher_t pub;
-    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
+    if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -74,15 +74,15 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_copy_from_str(&payload, buf);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_publisher(z_move(pub));
+    z_drop(z_move(pub));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
             z_view_string_t keystr;
             z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
             z_owned_string_t replystr;
-            z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+            z_bytes_to_string(z_sample_payload(sample), &replystr);
 
             printf(">> Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)),
                    (int)z_string_len(z_loan(replystr)), z_string_data(z_loan(replystr)));
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
     z_drop(z_move(handler));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
 
     return 0;
 }

@@ -23,6 +23,10 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/vec.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ IOSli ------------------*/
 
 typedef struct {
@@ -30,7 +34,7 @@ typedef struct {
     size_t _w_pos;
     size_t _capacity;
     uint8_t *_buf;
-    _Bool _is_alloc;
+    bool _is_alloc;
 } _z_iosli_t;
 
 _z_iosli_t _z_iosli_make(size_t capacity);
@@ -72,7 +76,7 @@ _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
-_Bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
+bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf);
@@ -101,15 +105,15 @@ typedef struct {
     size_t _expansion_step;
 } _z_wbuf_t;
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable);
+_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
 size_t _z_wbuf_len(const _z_wbuf_t *wbf);
 size_t _z_wbuf_space_left(const _z_wbuf_t *wbf);
 
-int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b);
-int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
-int8_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b);
+z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
+z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length);
 void _z_wbuf_put(_z_wbuf_t *wbf, uint8_t b, size_t pos);
 
 size_t _z_wbuf_get_rpos(const _z_wbuf_t *wbf);
@@ -122,11 +126,15 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);
-int8_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
+z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length);
 
 void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src);
 void _z_wbuf_reset(_z_wbuf_t *wbf);
 void _z_wbuf_clear(_z_wbuf_t *wbf);
 void _z_wbuf_free(_z_wbuf_t **wbf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_PROTOCOL_IOBUF_H */

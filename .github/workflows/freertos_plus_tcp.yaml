@@ -33,7 +33,7 @@ jobs:
     - name: Install requirements
       run: |
         sudo apt update
-        sudo apt install -y ninja-build libslirp-dev
+        sudo apt install -y ninja-build libslirp-dev libglib2.0-dev
     - name: Build examples
       run: |
         cd examples/freertos_plus_tcp

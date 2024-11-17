@@ -71,7 +71,7 @@ void fprinthello(const z_loaned_hello_t *hello) {
     Serial.print(", whatami: ");
     fprintwhatami(z_hello_whatami(hello));
     Serial.print(", locators: ");
-    fprintlocators(z_hello_locators(hello));
+    fprintlocators(zp_hello_locators(hello));
     Serial.println(" }");
 }
 

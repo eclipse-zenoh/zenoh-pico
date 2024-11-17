@@ -30,7 +30,7 @@ void _z_default_deleter(void *data, void *context) {
 
 _z_delete_context_t _z_delete_context_null(void) { return _z_delete_context_create(NULL, NULL); }
 
-_Bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
+bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
 
 _z_delete_context_t _z_delete_context_create(void (*deleter)(void *data, void *context), void *context) {
     return (_z_delete_context_t){.deleter = deleter, .context = context};
@@ -49,8 +49,8 @@ _z_slice_t _z_slice_empty(void) {
     return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
 }
 
-int8_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
+    z_result_t ret = _Z_RES_OK;
 
     bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
     if (bs->start != NULL) {
@@ -120,19 +120,19 @@ void _z_slice_free(_z_slice_t **bs) {
     }
 }
 
-int8_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
+z_result_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src) {
     // Make sure dst slice is not init beforehand, or suffer memory leak
-    int8_t ret = _z_slice_init(dst, src->len);
+    z_result_t ret = _z_slice_init(dst, src->len);
     if (ret == _Z_RES_OK) {
         (void)memcpy((uint8_t *)dst->start, src->start, src->len);
     }
     return ret;
 }
 
-int8_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
+z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset, size_t len) {
     assert(offset + len <= src->len);
     // Make sure dst slice is not init beforehand, or suffer memory leak
-    int8_t ret = _z_slice_init(dst, len);
+    z_result_t ret = _z_slice_init(dst, len);
     if (ret == _Z_RES_OK) {
         const uint8_t *start = _z_cptr_u8_offset(src->start, (ptrdiff_t)offset);
         (void)memcpy((uint8_t *)dst->start, start, len);
@@ -154,15 +154,15 @@ _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
     return dst;
 }
 
-_Bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
+bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
 
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;
     *b = _z_slice_empty();
     return ret;
 }
-_Bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
+bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {
     return left->len == right->len && memcmp(left->start, right->start, left->len) == 0;
 }
 
-_Bool _z_slice_is_alloced(const _z_slice_t *s) { return !_z_delete_context_is_null(&s->_delete_context); }
+bool _z_slice_is_alloced(const _z_slice_t *s) { return !_z_delete_context_is_null(&s->_delete_context); }

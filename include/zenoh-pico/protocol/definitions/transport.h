@@ -21,6 +21,10 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_MID_SCOUT 0x01
 #define _Z_MID_HELLO 0x02
 
@@ -220,7 +224,7 @@ typedef struct {
         _z_coundit_sn_t _plain;
         _z_coundit_sn_t _qos[Z_PRIORITIES_NUM];
     } _val;
-    _Bool _is_qos;
+    bool _is_qos;
 } _z_conduit_sn_list_t;
 typedef struct {
     _z_id_t _zid;
@@ -505,14 +509,14 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid);
 _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, _z_slice_t cookie);
 _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial_sn, _z_slice_t cookie);
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
-_z_transport_message_t _z_t_msg_make_close(uint8_t reason, _Bool link_only);
+_z_transport_message_t _z_t_msg_make_close(uint8_t reason, bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages,
                                            z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability);
-_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, _Bool is_last);
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last);
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t messages, z_reliability_t reliability,
-                                              _Bool is_last);
+                                              bool is_last);
 
 /*------------------ Copy ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
@@ -540,5 +544,9 @@ _z_scouting_message_t _z_s_msg_make_hello(z_whatami_t whatami, _z_id_t zid, _z_l
 void _z_s_msg_copy(_z_scouting_message_t *clone, _z_scouting_message_t *msg);
 void _z_s_msg_copy_scout(_z_s_msg_scout_t *clone, _z_s_msg_scout_t *msg);
 void _z_s_msg_copy_hello(_z_s_msg_hello_t *clone, _z_s_msg_hello_t *msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_TRANSPORT_H */

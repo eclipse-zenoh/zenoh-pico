@@ -34,13 +34,15 @@ jobs:
 
   check_format:
     name: Check codebase format with clang-format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run clang-format dry-run
-        run: find include/ src/ tests/ examples/ -iname "*.ino" -o -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
+        run: |
+          clang-format --version
+          find include/ src/ tests/ examples/ -iname "*.ino" -o -iname "*.h" -o -iname "*.c" | xargs clang-format -n -Werror
 
   c99_build:
     name: Check c99 compilation
@@ -234,7 +236,7 @@ jobs:
       - name: Build project and run test
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make
+          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/attachment.py
         timeout-minutes: 5
 
@@ -265,7 +267,7 @@ jobs:
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
       - name: Install valgrind
-        uses: taiki-e/install-action@valgrind
+        run: sudo apt install -y valgrind
 
       - name: Build project and run test
         run: |

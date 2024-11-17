@@ -42,7 +42,7 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
            z_string_data(z_view_string_loan(&params)));
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         printf("     with value '%.*s'\n", (int)z_string_len(z_string_loan(&payload_string)),
                z_string_data(z_string_loan(&payload_string)));
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     z_owned_queryable_t qable;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+    if (z_declare_queryable(z_session_loan(&s), &qable, z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
                             NULL) < 0) {
         printf("Unable to declare queryable.\n");
         exit(-1);
@@ -104,9 +104,9 @@ int main(int argc, char **argv) {
     }
 
     printf("Closing Zenoh Session...");
-    z_undeclare_queryable(z_queryable_move(&qable));
+    z_queryable_drop(z_queryable_move(&qable));
 
-    z_close(z_session_move(&s), NULL);
+    z_session_drop(z_session_move(&s));
     printf("OK!\n");
 
     return 0;

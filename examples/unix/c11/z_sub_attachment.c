@@ -26,48 +26,23 @@ typedef struct kv_pair_t {
     z_owned_string_t value;
 } kv_pair_t;
 
-typedef struct kv_pairs_t {
-    kv_pair_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_t;
-
-#define KVP_LEN 16
-
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 static int msg_nb = 0;
 
-void parse_attachment(kv_pairs_t *kvp, const z_loaned_bytes_t *attachment) {
-    z_owned_bytes_t kv, first, second;
-    z_bytes_iterator_t iter = z_bytes_get_iterator(attachment);
-
-    while (kvp->current_idx < kvp->len && z_bytes_iterator_next(&iter, &kv)) {
-        z_bytes_deserialize_into_pair(z_loan(kv), &first, &second);
-        z_bytes_deserialize_into_string(z_loan(first), &kvp->data[kvp->current_idx].key);
-        z_bytes_deserialize_into_string(z_loan(second), &kvp->data[kvp->current_idx].value);
-        z_bytes_drop(z_bytes_move(&first));
-        z_bytes_drop(z_bytes_move(&second));
-        z_bytes_drop(z_bytes_move(&kv));
-        kvp->current_idx++;
-    }
-}
-
-void print_attachment(kv_pairs_t *kvp) {
+void print_attachment(const kv_pair_t *kvp, size_t len) {
     printf("    with attachment:\n");
-    for (uint32_t i = 0; i < kvp->current_idx; i++) {
-        printf("     %d: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp->data[i].key)),
-               z_string_data(z_loan(kvp->data[i].key)), (int)z_string_len(z_loan(kvp->data[i].value)),
-               z_string_data(z_loan(kvp->data[i].value)));
+    for (size_t i = 0; i < len; i++) {
+        printf("     %zu: %.*s, %.*s\n", i, (int)z_string_len(z_loan(kvp[i].key)), z_string_data(z_loan(kvp[i].key)),
+               (int)z_string_len(z_loan(kvp[i].value)), z_string_data(z_loan(kvp[i].value)));
     }
 }
 
-void drop_attachment(kv_pairs_t *kvp) {
-    for (size_t i = 0; i < kvp->current_idx; i++) {
-        z_string_drop(z_string_move(&kvp->data[i].key));
-        z_string_drop(z_string_move(&kvp->data[i].value));
+void drop_attachment(kv_pair_t *kvp, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        z_drop(z_move(kvp[i].key));
+        z_drop(z_move(kvp[i].value));
     }
-    z_free(kvp->data);
 }
 
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
@@ -75,7 +50,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
-    z_bytes_deserialize_into_string(z_sample_payload(sample), &value);
+    z_bytes_to_string(z_sample_payload(sample), &value);
     z_owned_string_t encoding;
     z_encoding_to_string(z_sample_encoding(sample), &encoding);
 
@@ -89,12 +64,24 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         printf("    with timestamp: %" PRIu64 "\n", z_timestamp_ntp64_time(ts));
     }
     // Check attachment
-    kv_pairs_t kvp = {.current_idx = 0, .len = KVP_LEN, .data = (kv_pair_t *)malloc(KVP_LEN * sizeof(kv_pair_t))};
-    parse_attachment(&kvp, z_sample_attachment(sample));
-    if (kvp.current_idx > 0) {
-        print_attachment(&kvp);
+
+    const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
+    if (attachment != NULL) {
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
+        size_t attachment_len;
+        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
+        kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
+        for (size_t i = 0; i < attachment_len; ++i) {
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
+            ze_deserializer_deserialize_string(&deserializer, &kvp[i].value);
+        }
+        if (attachment_len > 0) {
+            print_attachment(kvp, attachment_len);
+        }
+        drop_attachment(kvp, attachment_len);
+        free(kvp);
     }
-    drop_attachment(&kvp);
+
     z_drop(z_move(value));
     z_drop(z_move(encoding));
     msg_nb++;
@@ -157,17 +144,17 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
 
     z_owned_closure_sample_t callback;
-    z_closure(&callback, data_handler);
+    z_closure(&callback, data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
@@ -180,8 +167,8 @@ int main(int argc, char **argv) {
         sleep(1);
     }
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(sub));
+    z_drop(z_move(s));
     return 0;
 }
 #else

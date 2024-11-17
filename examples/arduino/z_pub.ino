@@ -72,7 +72,7 @@ void setup() {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         Serial.println("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         while (1) {
             ;
         }
@@ -84,7 +84,7 @@ void setup() {
     Serial.println("...");
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_publisher(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
+    if (z_declare_publisher(z_session_loan(&s), &pub, z_view_keyexpr_loan(&ke), NULL) < 0) {
         Serial.println("Unable to declare publisher for key expression!");
         while (1) {
             ;
@@ -109,7 +109,7 @@ void loop() {
 
     // Create payload
     z_owned_bytes_t payload;
-    z_bytes_serialize_from_str(&payload, buf);
+    z_bytes_copy_from_str(&payload, buf);
 
     if (z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL) < 0) {
         Serial.println("Error while publishing data");

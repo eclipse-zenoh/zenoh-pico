@@ -48,15 +48,15 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
-        exit(-1);
+        z_session_drop(z_session_move(&s));
+        return -1;
     }
 
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
@@ -66,9 +66,9 @@ int main(int argc, char **argv) {
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, KEYEXPR);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(closure), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Pulling data every %zu ms... Ring size: %zd\n", INTERVAL, SIZE);
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
             z_view_string_t keystr;
             z_keyexpr_as_view_string(z_sample_keyexpr(z_loan(sample)), &keystr);
             z_owned_string_t value;
-            z_bytes_deserialize_into_string(z_sample_payload(z_loan(sample)), &value);
+            z_bytes_to_string(z_sample_payload(z_loan(sample)), &value);
             printf(">> [Subscriber] Pulled ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)),
                    z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(value)), z_string_data(z_loan(value)));
             z_drop(z_move(value));
@@ -93,10 +93,10 @@ int main(int argc, char **argv) {
         }
     }
 
-    z_undeclare_subscriber(z_move(sub));
+    z_drop(z_move(sub));
     z_drop(z_move(handler));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     printf("OK!\n");
 
     return 0;

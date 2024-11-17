@@ -18,6 +18,11 @@
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/core.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Zenoh Messages */
 #define _Z_MID_Z_OAM 0x00
 #define _Z_MID_Z_PUT 0x01
@@ -104,15 +109,15 @@ typedef struct {
     _z_bytes_t _ext_attachment;
 } _z_msg_query_t;
 typedef struct {
-    _Bool info;
-    _Bool body;
-    _Bool attachment;
+    bool info;
+    bool body;
+    bool attachment;
 } _z_msg_query_reqexts_t;
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg);
 void _z_msg_query_clear(_z_msg_query_t *msg);
 
 typedef struct {
-    _Bool _is_put;
+    bool _is_put;
     union {
         _z_msg_del_t _del;
         _z_msg_put_t _put;
@@ -139,5 +144,9 @@ typedef struct {
 } _z_msg_reply_t;
 void _z_msg_reply_clear(_z_msg_reply_t *msg);
 #define _Z_FLAG_Z_R_C 0x20
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_MESSAGE_H */

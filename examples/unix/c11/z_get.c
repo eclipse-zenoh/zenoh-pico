@@ -38,7 +38,7 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
         z_view_string_t keystr;
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
-        z_bytes_deserialize_into_string(z_sample_payload(sample), &replystr);
+        z_bytes_to_string(z_sample_payload(sample), &replystr);
 
         printf(">> Received %s ('%.*s': '%.*s')\n", kind_to_str(z_sample_kind(sample)),
                (int)z_string_len(z_loan(keystr)), z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(replystr)),
@@ -47,7 +47,7 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
     } else {
         const z_loaned_reply_err_t *err = z_reply_err(reply);
         z_owned_string_t errstr;
-        z_bytes_deserialize_into_string(z_reply_err_payload(err), &errstr);
+        z_bytes_to_string(z_reply_err_payload(err), &errstr);
         printf(">> Received an error: %.*s\n", (int)z_string_len(z_loan(errstr)), z_string_data(z_loan(errstr)));
         z_drop(z_move(errstr));
     }
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
 
@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
     }
 
     z_owned_closure_reply_t callback;
-    z_closure(&callback, reply_handler, reply_dropper);
+    z_closure(&callback, reply_handler, reply_dropper, NULL);
     if (z_get(z_loan(s), z_loan(ke), "", z_move(callback), &opts) < 0) {
         printf("Unable to send query.\n");
         return -1;
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     z_condvar_wait(z_loan_mut(cond), z_loan_mut(mutex));
     z_mutex_unlock(z_loan_mut(mutex));
 
-    z_close(z_move(s), NULL);
+    z_drop(z_move(s));
     return 0;
 }
 

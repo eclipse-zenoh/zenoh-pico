@@ -12,12 +12,12 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/multicast/tx.h"
+#include "zenoh-pico/transport/common/tx.h"
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
-#include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/transport/multicast/tx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -40,8 +40,8 @@ _z_zint_t __unsafe_z_multicast_get_sn(_z_transport_multicast_t *ztm, z_reliabili
     return sn;
 }
 
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -71,23 +71,23 @@ int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport
     return ret;
 }
 
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                   z_congestion_control_t cong_ctrl) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send network message");
 
     _z_transport_multicast_t *ztm = &zn->_tp._transport._multicast;
 
     // Acquire the lock and drop the message if needed
-    _Bool drop = false;
+    bool drop = false;
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_lock(&ztm->_mutex_tx);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        int8_t locked = _z_mutex_try_lock(&ztm->_mutex_tx);
-        if (locked != (int8_t)0) {
+        z_result_t locked = _z_mutex_try_lock(&ztm->_mutex_tx);
+        if (locked != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             drop = true;
@@ -121,7 +121,7 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 
                 ret = _z_network_message_encode(&fbf, n_msg);  // Encode the message on the expandable wbuf
                 if (ret == _Z_RES_OK) {
-                    _Bool is_first = true;  // Fragment and send the message
+                    bool is_first = true;  // Fragment and send the message
                     while (_z_wbuf_len(&fbf) > 0) {
                         if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_multicast_get_sn(ztm, reliability);
@@ -141,6 +141,8 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
                             if (ret == _Z_RES_OK) {
                                 ztm->_transmitted = true;  // Mark the session that we have transmitted data
                             }
+                        } else {
+                            _Z_ERROR("Fragment serialization failed with err %d", ret);
                         }
                     }
                 }
@@ -161,14 +163,14 @@ int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_m
 }
 
 #else
-int8_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                               z_congestion_control_t cong_ctrl) {
+z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                   z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);

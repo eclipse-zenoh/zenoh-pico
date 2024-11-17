@@ -1,7 +1,6 @@
 <img src="https://raw.githubusercontent.com/eclipse-zenoh/zenoh/master/zenoh-dragon.png" height="150">
 
 ![Build](https://github.com/eclipse-zenoh/zenoh-pico/workflows/build/badge.svg)
-![Crossbuild](https://github.com/eclipse-zenoh/zenoh-pico/workflows/crossbuild/badge.svg)
 ![integration](https://github.com/eclipse-zenoh/zenoh-pico/workflows/integration/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/zenoh-pico/badge/?version=latest)](https://zenoh-pico.readthedocs.io/en/latest/?badge=latest)
 [![Discussion](https://img.shields.io/badge/discussion-on%20github-blue)](https://github.com/eclipse-zenoh/roadmap/discussions)
@@ -12,14 +11,14 @@
 # Eclipse Zenoh
 The Eclipse Zenoh: Zero Overhead Pub/sub, Store/Query and Compute.
 
-Zenoh (pronounce _/zeno/_) unifies data in motion, data at rest and computations. It carefully blends traditional pub/sub with geo-distributed storages, queries and computations, while retaining a level of time and space efficiency that is well beyond any of the mainstream stacks.
+Zenoh (pronounce _/zeno/_) unifies data in motion, data at rest, and computations. It carefully blends traditional pub/sub with geo-distributed storages, queries and computations, while retaining a level of time and space efficiency that is well beyond any of the mainstream stacks.
 
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
 -------------------------------
 # Zenoh-Pico: native C library for constrained devices
 
-zenoh-pico is the [Eclipse zenoh](http://zenoh.io) implementation that targets constrained devices and offers a native C API.
+zenoh-pico is the [Eclipse zenoh](http://zenoh.io) implementation that targets constrained devices, offering a native C API.
 It is fully compatible with its main [Rust Zenoh implementation](https://github.com/eclipse-zenoh/zenoh), providing a lightweight implementation of most functionalities.
 
 Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
@@ -42,11 +41,11 @@ Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.c
 ## 1. How to install it
 
 The Eclipse zenoh-pico library is available as **Debian**, **RPM**, and **tgz** packages in the [Eclipse zenoh-pico download area](https://download.eclipse.org/zenoh/zenoh-pico/).
-Those packages are built using manylinux2010 x86-32 and x86-64 to be compatible with most of the Linux platforms.
-There are 2 kind of packages:
+Those packages are built using manylinux2010 x86-32 and x86-64 for compatibility with most Linux platforms.
+There are two kind of packages:
 
 - **libzenohpico**: only contains the library file (.so)
-- **libzenohpico-dev**: contains the zenoh-pico header files for development. Depends on *libzenohpico* package
+- **libzenohpico-dev**: contains the zenoh-pico header files for development and depends on the *libzenohpico* package
 
 For other platforms - like RTOS for embedded systems / microcontrollers -, you will need to clone and build the sources. Check [below](#how-to-build-for-microcontrollers) for more details.
 
@@ -381,6 +380,14 @@ And on another shell, do:
 $ ./z_pub -m peer -l udp/224.0.0.123:7447#iface=lo0
 ```
 where `lo0` is the network interface you want to use for multicast communication.
+
+> [!WARNING]
+> Multicast communication does not perform any negotiation upon group joining. Because of that, it is important that all transport parameters are the same to make sure all your nodes in the system can communicate.
+> One common parameter to configure is the batch size since its default value depends on the actual platform when operating on multicast:
+>  - with zenoh-pico you can configure it via the `BATCH_MULTICAST_SIZE` build option (see [below](#error-when-opening-a-session-on-a-microcontroller))
+>  - with other Zenoh APIs, set the "transport/link/tx/batch_size" value in configuration file
+>
+> E.g., the batch size on Linux and Windows is 65535 bytes, on Mac OS X is 9216, anything else is 8192.
 
 ### 3.4. Basic Pub/Sub Example - Mixing Client and P2P communication
 To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, as well as with any other Zenoh client/peer, you need to start a Zenoh Router that listens on both multicast and unicast: 

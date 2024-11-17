@@ -47,7 +47,7 @@ void _z_reply_data_free(_z_reply_data_t **reply_data) {
     }
 }
 
-int8_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
+z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) {
     *dst = _z_reply_data_null();
     if (src->_tag == _Z_REPLY_TAG_DATA) {
         _Z_RETURN_IF_ERR(_z_sample_copy(&dst->_result.sample, &src->_result.sample));
@@ -78,13 +78,13 @@ void _z_reply_free(_z_reply_t **reply) {
     }
 }
 
-int8_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
+z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src) {
     *dst = _z_reply_null();
     _Z_RETURN_IF_ERR(_z_reply_data_copy(&dst->data, &src->data));
     return _Z_RES_OK;
 }
 
-_Bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
+bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two) {
     return one->_tstamp.time == two->_tstamp.time;
 }
 

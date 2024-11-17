@@ -54,7 +54,7 @@ char const *_z_bstrstr(_z_str_se_t haystack, _z_str_se_t needle) {
     char const *result = NULL;
     for (; (result == false) && (haystack.start <= haystack.end);
          haystack.start = _z_cptr_char_offset(haystack.start, 1)) {
-        _Bool found = true;
+        bool found = true;
         char const *n = needle.start;
         char const *h = haystack.start;
         while (_z_ptr_char_diff(needle.end, n) > 0) {
@@ -91,7 +91,7 @@ char const *_z_bstrstr_skipneedle(_z_str_se_t haystack, _z_str_se_t needle) {
     return result;
 }
 
-_Bool _z_splitstr_is_empty(const _z_splitstr_t *src) { return src->s.start == NULL; }
+bool _z_splitstr_is_empty(const _z_splitstr_t *src) { return src->s.start == NULL; }
 _z_str_se_t _z_splitstr_next(_z_splitstr_t *str) {
     _z_str_se_t result = str->s;
     if (str->s.start != NULL) {

@@ -72,7 +72,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
     }
 }
 
-int8_t _z_write_filter_create(_z_publisher_t *pub) {
+z_result_t _z_write_filter_create(_z_publisher_t *pub) {
     uint8_t flags = _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_SUBSCRIBERS | _Z_INTEREST_FLAG_RESTRICTED |
                     _Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE | _Z_INTEREST_FLAG_AGGREGATE;
     _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
@@ -94,26 +94,31 @@ int8_t _z_write_filter_create(_z_publisher_t *pub) {
     return _Z_RES_OK;
 }
 
-int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
-    _Z_RETURN_IF_ERR(_z_remove_interest(_Z_RC_IN_VAL(&pub->_zn), pub->_filter._interest_id));
-    z_free(pub->_filter.ctx);
+z_result_t _z_write_filter_destroy(_z_publisher_t *pub) {
+    if (pub->_filter.ctx != NULL) {
+        _Z_RETURN_IF_ERR(_z_remove_interest(_Z_RC_IN_VAL(&pub->_zn), pub->_filter._interest_id));
+        z_free(pub->_filter.ctx);
+        pub->_filter.ctx = NULL;
+    }
     return _Z_RES_OK;
 }
 
-_Bool _z_write_filter_active(const _z_publisher_t *pub) { return (pub->_filter.ctx->state == WRITE_FILTER_ACTIVE); }
+bool _z_write_filter_active(const _z_publisher_t *pub) {
+    return pub->_filter.ctx != NULL && pub->_filter.ctx->state == WRITE_FILTER_ACTIVE;
+}
 
 #else
-int8_t _z_write_filter_create(_z_publisher_t *pub) {
+z_result_t _z_write_filter_create(_z_publisher_t *pub) {
     _ZP_UNUSED(pub);
     return _Z_RES_OK;
 }
 
-int8_t _z_write_filter_destroy(const _z_publisher_t *pub) {
+z_result_t _z_write_filter_destroy(_z_publisher_t *pub) {
     _ZP_UNUSED(pub);
     return _Z_RES_OK;
 }
 
-_Bool _z_write_filter_active(const _z_publisher_t *pub) {
+bool _z_write_filter_active(const _z_publisher_t *pub) {
     _ZP_UNUSED(pub);
     return false;
 }

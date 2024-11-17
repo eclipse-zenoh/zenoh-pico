@@ -19,7 +19,7 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
-int8_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len) {
+z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *schema, size_t len) {
     encoding->id = id;
     // Clone schema
     if (schema != NULL) {
@@ -42,11 +42,11 @@ _z_encoding_t _z_encoding_null(void) { return _z_encoding_wrap(_Z_ENCODING_ID_DE
 
 void _z_encoding_clear(_z_encoding_t *encoding) { _z_string_clear(&encoding->schema); }
 
-_Bool _z_encoding_check(const _z_encoding_t *encoding) {
+bool _z_encoding_check(const _z_encoding_t *encoding) {
     return ((encoding->id != _Z_ENCODING_ID_DEFAULT) || _z_string_check(&encoding->schema));
 }
 
-int8_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
+z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
     *dst = _z_encoding_null();
     _Z_RETURN_IF_ERR(_z_string_copy(&dst->schema, &src->schema));
     dst->id = src->id;

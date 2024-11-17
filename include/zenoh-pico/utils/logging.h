@@ -17,7 +17,11 @@
 
 #include <stdio.h>
 
-#include "zenoh-pico/system/platform-common.h"
+#include "zenoh-pico/system/platform_common.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Logging values
 #define _Z_LOG_LVL_ERROR 1
@@ -71,5 +75,9 @@ static inline void __z_print_timestamp(void) {
         }                                      \
     } while (false)
 #endif  // ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // ZENOH_PICO_UTILS_LOGGING_H

@@ -43,7 +43,7 @@ void query_handler(z_loaned_query_t *query, void *arg) {
 
     // Process value
     z_owned_string_t payload_string;
-    z_bytes_deserialize_into_string(z_query_payload(query), &payload_string);
+    z_bytes_to_string(z_query_payload(query), &payload_string);
     if (z_string_len(z_string_loan(&payload_string)) > 1) {
         Serial.print("     with value '");
         Serial.write(z_string_data(z_string_loan(&payload_string)), z_string_len(z_string_loan(&payload_string)));
@@ -98,7 +98,7 @@ void setup() {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         Serial.println("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         while (1) {
             ;
         }
@@ -112,7 +112,7 @@ void setup() {
     z_closure_query(&callback, query_handler, NULL, NULL);
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
-    if (z_declare_queryable(&qable, z_session_loan(&s), z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
+    if (z_declare_queryable(z_session_loan(&s), &qable, z_view_keyexpr_loan(&ke), z_closure_query_move(&callback),
                             NULL) < 0) {
         Serial.println("Unable to declare queryable.");
         while (1) {

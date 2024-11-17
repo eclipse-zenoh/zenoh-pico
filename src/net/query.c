@@ -38,7 +38,7 @@ void _z_query_clear_inner(_z_query_t *q) {
 
 void _z_query_clear(_z_query_t *q) {
     // Try to upgrade session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&q->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&q->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         // Send REPLY_FINAL message
         _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
@@ -53,7 +53,7 @@ void _z_query_clear(_z_query_t *q) {
     _z_query_clear_inner(q);
 }
 
-int8_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
+z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
     *dst = _z_query_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_key, &src->_key));
     _Z_CLEAN_RETURN_IF_ERR(_z_value_copy(&dst->_value, &src->_value), _z_query_clear_inner(dst));
@@ -101,7 +101,7 @@ _z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_
 
 _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){._entity_id = 0, ._zn = _z_session_weak_null()}; }
 
-_Bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
+bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
 
 void _z_queryable_clear(_z_queryable_t *qbl) {
     _z_session_weak_drop(&qbl->_zn);

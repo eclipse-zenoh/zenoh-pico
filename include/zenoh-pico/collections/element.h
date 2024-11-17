@@ -21,6 +21,10 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*-------- element functions --------*/
 typedef size_t (*z_element_size_f)(void *e);
 typedef void (*z_element_clear_f)(void *e);
@@ -28,10 +32,10 @@ typedef void (*z_element_free_f)(void **e);
 typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
-typedef _Bool (*z_element_eq_f)(const void *left, const void *right);
+typedef bool (*z_element_eq_f)(const void *left, const void *right);
 
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f)                                     \
-    typedef _Bool (*name##_eq_f)(const type *left, const type *right);                                         \
+    typedef bool (*name##_eq_f)(const type *left, const type *right);                                          \
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
         type *ptr = (type *)*e;                                                                                \
@@ -73,5 +77,9 @@ static inline void _z_noop_move(void *dst, void *src) {
 }
 
 _Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_ELEMENT_H */

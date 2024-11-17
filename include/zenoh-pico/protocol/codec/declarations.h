@@ -17,6 +17,11 @@
 
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/iobuf.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _Z_DECL_KEXPR_MID 0
 #define _Z_DECL_KEXPR_FLAG_N 0x20
 #define _Z_UNDECL_KEXPR_MID 1
@@ -30,24 +35,28 @@
 #define _Z_UNDECL_TOKEN_MID 7
 #define _Z_DECL_FINAL_MID 0x1a
 
-int8_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl);
-int8_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl);
-int8_t _z_undecl_kexpr_decode(_z_undecl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *decl);
-int8_t _z_decl_subscriber_decode(_z_decl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_undecl_subscriber_encode(_z_wbuf_t *wbf, const _z_undecl_subscriber_t *decl);
-int8_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_decl_queryable_encode(_z_wbuf_t *wbf, const _z_decl_queryable_t *decl);
-int8_t _z_decl_queryable_decode(_z_decl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_undecl_queryable_encode(_z_wbuf_t *wbf, const _z_undecl_queryable_t *decl);
-int8_t _z_undecl_queryable_decode(_z_undecl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_decl_token_encode(_z_wbuf_t *wbf, const _z_decl_token_t *decl);
-int8_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
-int8_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl);
-int8_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_decl_kexpr_encode(_z_wbuf_t *wbf, const _z_decl_kexpr_t *decl);
+z_result_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_undecl_kexpr_encode(_z_wbuf_t *wbf, const _z_undecl_kexpr_t *decl);
+z_result_t _z_undecl_kexpr_decode(_z_undecl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_decl_subscriber_encode(_z_wbuf_t *wbf, const _z_decl_subscriber_t *decl);
+z_result_t _z_decl_subscriber_decode(_z_decl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_undecl_subscriber_encode(_z_wbuf_t *wbf, const _z_undecl_subscriber_t *decl);
+z_result_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_decl_queryable_encode(_z_wbuf_t *wbf, const _z_decl_queryable_t *decl);
+z_result_t _z_decl_queryable_decode(_z_decl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_undecl_queryable_encode(_z_wbuf_t *wbf, const _z_undecl_queryable_t *decl);
+z_result_t _z_undecl_queryable_decode(_z_undecl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_decl_token_encode(_z_wbuf_t *wbf, const _z_decl_token_t *decl);
+z_result_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_undecl_token_encode(_z_wbuf_t *wbf, const _z_undecl_token_t *decl);
+z_result_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header);
 
-int8_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl);
-int8_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf);
+z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl);
+z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_CODEC_DECLARATIONS_H */

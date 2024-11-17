@@ -36,7 +36,7 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
         return SIZE_MAX;
     }
     // Check if header has vlan
-    _Bool has_vlan = false;
+    bool has_vlan = false;
     _zp_eth_header_t *header = (_zp_eth_header_t *)buff;
     if (header->ethtype == _ZP_ETH_TYPE_VLAN) {
         has_vlan = true;
@@ -73,9 +73,9 @@ static size_t _z_raweth_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z
 }
 
 /*------------------ Reception helper ------------------*/
-int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _Z_DEBUG(">> recv session msg");
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
@@ -113,12 +113,12 @@ int8_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_messa
     return ret;
 }
 
-int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     return _z_raweth_recv_t_msg_na(ztm, t_msg, addr);
 }
 
 #else
-int8_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
+z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);

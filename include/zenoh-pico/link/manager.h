@@ -19,29 +19,37 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_TCP == 1
-int8_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *ep);
+z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *ep);
 #endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
-int8_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t ep);
+z_result_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_udp_unicast(_z_link_t *zl, _z_endpoint_t ep);
 #endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-int8_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t ep);
+z_result_t _z_endpoint_udp_multicast_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t ep);
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-int8_t _z_endpoint_bt_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t ep);
+z_result_t _z_endpoint_bt_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t ep);
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-int8_t _z_endpoint_serial_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
+z_result_t _z_endpoint_serial_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
 #endif
 #if Z_FEATURE_LINK_WS == 1
-int8_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
-int8_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
+z_result_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
+z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_LINK_MANAGER_H */

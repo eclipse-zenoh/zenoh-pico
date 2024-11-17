@@ -19,6 +19,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*------------------ Internal Array Macros ------------------*/
 #define _Z_ARRAY_DEFINE(name, type)                                                                 \
     typedef struct {                                                                                \
@@ -53,7 +57,7 @@
     }                                                                                               \
     static inline type *name##_array_get(const name##_array_t *a, size_t k) { return &a->_val[k]; } \
     static inline size_t name##_array_len(const name##_array_t *a) { return a->_len; }              \
-    static inline _Bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }     \
+    static inline bool name##_array_is_empty(const name##_array_t *a) { return a->_len == 0; }      \
     static inline void name##_array_clear(name##_array_t *a) {                                      \
         for (size_t i = 0; i < a->_len; i++) {                                                      \
             name##_elem_clear(&a->_val[i]);                                                         \
@@ -70,5 +74,9 @@
             *a = NULL;                                                                              \
         }                                                                                           \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_COLLECTIONS_ARRAY_H */

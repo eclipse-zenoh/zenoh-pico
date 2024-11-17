@@ -48,8 +48,8 @@ static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_sock
     return -1;
 }
 
-static int8_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
-    int8_t ret = _Z_RES_OK;
+static z_result_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_socket_t *sock) {
+    z_result_t ret = _Z_RES_OK;
 
     if (_zp_raweth_mapping_array_len(&sock->_mapping) < 1) {
         return _Z_ERR_GENERIC;
@@ -116,7 +116,7 @@ static void __unsafe_z_raweth_prepare_header(_z_link_t *zl, _z_wbuf_t *wbf) {
  * Make sure that the following mutexes are locked before calling this function:
  *  - ztm->_mutex_inner
  */
-static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
+static z_result_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
     _z_raweth_socket_t *resocket = &zl->_socket._raweth;
     // Save and reset buffer position
     size_t wpos = _z_wbuf_len(wbf);
@@ -149,8 +149,8 @@ static int8_t __unsafe_z_raweth_write_header(_z_link_t *zl, _z_wbuf_t *wbf) {
     return _Z_RES_OK;
 }
 
-static int8_t _z_raweth_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf) {
-    int8_t ret = _Z_RES_OK;
+static z_result_t _z_raweth_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf) {
+    z_result_t ret = _Z_RES_OK;
     for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)) && (ret == _Z_RES_OK); i++) {
         _z_slice_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
@@ -168,8 +168,8 @@ static int8_t _z_raweth_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf
     return ret;
 }
 
-int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer to serialize the message on
     uint16_t mtu = (zl->_mtu < Z_BATCH_UNICAST_SIZE) ? zl->_mtu : Z_BATCH_UNICAST_SIZE;
@@ -192,8 +192,8 @@ int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message
     return ret;
 }
 
-int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
     _Z_DEBUG(">> send session message");
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -221,9 +221,9 @@ int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_me
     return ret;
 }
 
-int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                            z_congestion_control_t cong_ctrl) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                z_congestion_control_t cong_ctrl) {
+    z_result_t ret = _Z_RES_OK;
     _z_transport_multicast_t *ztm = &zn->_tp._transport._raweth;
     _Z_DEBUG(">> send network message");
 
@@ -232,7 +232,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
     if (cong_ctrl == Z_CONGESTION_CONTROL_BLOCK) {
         _z_mutex_lock(&ztm->_mutex_tx);
     } else {
-        if (_z_mutex_try_lock(&ztm->_mutex_tx) != (int8_t)0) {
+        if (_z_mutex_try_lock(&ztm->_mutex_tx) != 0) {
             _Z_INFO("Dropping zenoh message because of congestion control");
             // We failed to acquire the lock, drop the message
             return ret;
@@ -286,7 +286,7 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
         // Encode the message on the expandable wbuf
         _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _zp_raweth_unlock_tx_mutex(ztm));
         // Fragment and send the message
-        _Bool is_first = true;
+        bool is_first = true;
         while (_z_wbuf_len(&fbf) > 0) {
             if (is_first) {
                 // Get the fragment sequence number
@@ -321,19 +321,19 @@ int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg,
 }
 
 #else
-int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(zl);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
-int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
+z_result_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
-                            z_congestion_control_t cong_ctrl) {
+z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
+                                z_congestion_control_t cong_ctrl) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);

@@ -24,7 +24,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     bool is_valid = true;
     z_owned_slice_t value;
-    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
+    z_bytes_to_slice(z_sample_payload(sample), &value);
     const uint8_t *data = z_slice_data(z_loan(value));
     size_t data_len = z_slice_len(z_loan(value));
     for (size_t i = 0; i < data_len; i++) {
@@ -75,16 +75,16 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
     // Declare subscriber
     z_owned_closure_sample_t callback;
-    z_closure(&callback, data_handler);
+    z_closure(&callback, data_handler, NULL, NULL);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;
     }
@@ -96,8 +96,8 @@ int main(int argc, char **argv) {
         (void)ret;  // Remove unused result warning
     }
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(sub));
+    z_drop(z_move(s));
     return 0;
 }
 #else

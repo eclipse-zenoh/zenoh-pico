@@ -20,6 +20,10 @@
 
 #include "zenoh-pico/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef void *_z_task_t;
 typedef void *z_task_attr_t;
@@ -42,7 +46,7 @@ typedef struct {
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
 #endif
-        _Bool _err;
+        bool _err;
     };
 } _z_sys_net_socket_t;
 
@@ -57,7 +61,11 @@ typedef struct {
         __z_net_iptcp_addr_t _iptcp;
 #endif
     };
-    _Bool _err;
+    bool _err;
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H */

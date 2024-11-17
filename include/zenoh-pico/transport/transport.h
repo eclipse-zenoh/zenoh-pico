@@ -25,6 +25,10 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
@@ -42,13 +46,13 @@ typedef struct {
     volatile _z_zint_t _next_lease;
 
     uint16_t _peer_id;
-    volatile _Bool _received;
+    volatile bool _received;
 } _z_transport_peer_entry_t;
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
-_Bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
+bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
                _z_transport_peer_entry_clear, _z_transport_peer_entry_copy)
 _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
@@ -61,7 +65,7 @@ typedef struct _z_session_rc_t _z_session_rc_ref_t;
 // Forward declaration to be used in _zp_f_send_tmsg*
 typedef struct _z_transport_multicast_t _z_transport_multicast_t;
 // Send function prototype
-typedef int8_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
+typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_multicast_t *self, const _z_transport_message_t *t_msg);
 
 typedef struct {
     // Session associated to the transport
@@ -98,12 +102,12 @@ typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
-    volatile _Bool _read_task_running;
-    volatile _Bool _lease_task_running;
+    volatile bool _read_task_running;
+    volatile bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    volatile _Bool _received;
-    volatile _Bool _transmitted;
+    volatile bool _received;
+    volatile bool _transmitted;
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
@@ -140,11 +144,11 @@ typedef struct _z_transport_multicast_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
-    volatile _Bool _read_task_running;
-    volatile _Bool _lease_task_running;
+    volatile bool _read_task_running;
+    volatile bool _lease_task_running;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    volatile _Bool _transmitted;
+    volatile bool _transmitted;
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -154,11 +158,7 @@ typedef struct {
         _z_transport_multicast_t _raweth;
     } _transport;
 
-    enum {
-        _Z_TRANSPORT_UNICAST_TYPE,
-        _Z_TRANSPORT_MULTICAST_TYPE,
-        _Z_TRANSPORT_RAWETH_TYPE,
-    } _type;
+    enum { _Z_TRANSPORT_UNICAST_TYPE, _Z_TRANSPORT_MULTICAST_TYPE, _Z_TRANSPORT_RAWETH_TYPE, _Z_TRANSPORT_NONE } _type;
 } _z_transport_t;
 
 _Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
@@ -174,7 +174,7 @@ typedef struct {
     uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
-    _Bool _is_qos;
+    bool _is_qos;
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
@@ -182,8 +182,12 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
-int8_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
+z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_ZENOH_PICO_TRANSPORT_TRANSPORT_H */

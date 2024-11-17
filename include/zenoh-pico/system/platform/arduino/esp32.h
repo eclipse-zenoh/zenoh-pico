@@ -15,16 +15,18 @@
 #ifndef ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 
-#include <Arduino.h>
-
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
 #include <pthread.h>
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef TaskHandle_t _z_task_t;
+typedef void *_z_task_t;
 typedef void *z_task_attr_t;  // Not used in ESP32
 typedef pthread_mutex_t _z_mutex_t;
 typedef pthread_cond_t _z_condvar_t;
@@ -57,5 +59,9 @@ typedef struct {
 #endif
     };
 } _z_sys_net_endpoint_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_ESP32_TYPES_H */

@@ -21,6 +21,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_SERIAL == 1
 
 #define _Z_SERIAL_MTU_SIZE 1500
@@ -32,15 +36,19 @@ typedef struct {
     _z_sys_net_socket_t _sock;
 } _z_serial_socket_t;
 
-int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate);
-int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
-int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate);
+z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate);
+z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate);
+z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate);
 void _z_close_serial(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
 size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_SYSTEM_LINK_BT_H */

@@ -188,7 +188,7 @@ uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
 }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
-_Bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
+bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 
 uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
 
@@ -223,7 +223,7 @@ void _z_zbuf_clear(_z_zbuf_t *zbf) { _z_iosli_clear(&zbf->_ios); }
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
     if ((zbf->_ios._r_pos != 0) || (zbf->_ios._w_pos != 0)) {
         size_t len = _z_iosli_readable(&zbf->_ios);
-        (void)memcpy(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
+        (void)memmove(zbf->_ios._buf, _z_zbuf_get_rptr(zbf), len);
         _z_zbuf_set_rpos(zbf, 0);
         _z_zbuf_set_wpos(zbf, len);
     }
@@ -258,7 +258,7 @@ _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) { return _z_iosl
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_ioss); }
 
-_z_wbuf_t _z_wbuf_make(size_t capacity, _Bool is_expandable) {
+_z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     _z_wbuf_t wbf;
     if (is_expandable == true) {
         // Preallocate 4 slots, this is usually what we expect
@@ -357,7 +357,7 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
     return _z_iosli_get(ios, current);
 }
 
-int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
+z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
     if (writable == (size_t)0) {
@@ -376,8 +376,8 @@ int8_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     return _Z_RES_OK;
 }
 
-int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
+    z_result_t ret = _Z_RES_OK;
 
     size_t loffset = offset;
     size_t llength = length;
@@ -410,8 +410,8 @@ int8_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, siz
     return ret;
 }
 
-int8_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
@@ -517,16 +517,32 @@ _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     return zbf;
 }
 
-int8_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
+    z_result_t ret = _Z_RES_OK;
+    size_t llength = length;
+    _z_iosli_t *wios = _z_wbuf_get_iosli(dst, dst->_w_idx);
+    size_t writable = _z_iosli_writable(wios);
 
-    for (size_t i = 0; i < length; i++) {
-        ret = _z_wbuf_write(dst, _z_wbuf_read(src));
-        if (ret != _Z_RES_OK) {
-            break;
-        }
+    // Siphon does not work (as of now) on expandable dst buffers
+    if (writable >= length) {
+        do {
+            assert(src->_r_idx <= src->_w_idx);
+            _z_iosli_t *rios = _z_wbuf_get_iosli(src, src->_r_idx);
+            size_t readable = _z_iosli_readable(rios);
+            if (readable > (size_t)0) {
+                size_t to_read = (readable <= llength) ? readable : llength;
+                uint8_t *w_pos = _z_ptr_u8_offset(wios->_buf, (ptrdiff_t)wios->_w_pos);
+                (void)memcpy(w_pos, rios->_buf + rios->_r_pos, to_read);
+                rios->_r_pos = rios->_r_pos + to_read;
+                llength -= to_read;
+                wios->_w_pos += to_read;
+            } else {
+                src->_r_idx++;
+            }
+        } while (llength > (size_t)0);
+    } else {
+        ret = _Z_ERR_TRANSPORT_NO_SPACE;
     }
-
     return ret;
 }
 

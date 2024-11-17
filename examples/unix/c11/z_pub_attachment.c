@@ -20,35 +20,14 @@
 #include <time.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
-
-#include "zenoh-pico/system/platform.h"
+#include <zenoh-pico/system/platform.h>
 
 typedef struct kv_pair_t {
     const char *key;
     const char *value;
 } kv_pair_t;
 
-typedef struct kv_pairs_t {
-    const kv_pair_t *data;
-    uint32_t len;
-    uint32_t current_idx;
-} kv_pairs_t;
-
 #if Z_FEATURE_PUBLICATION == 1
-
-_Bool create_attachment_iter(z_owned_bytes_t *kv_pair, void *context) {
-    kv_pairs_t *kvs = (kv_pairs_t *)(context);
-    z_owned_bytes_t k, v;
-    if (kvs->current_idx >= kvs->len) {
-        return false;
-    } else {
-        z_bytes_serialize_from_str(&k, kvs->data[kvs->current_idx].key);
-        z_bytes_serialize_from_str(&v, kvs->data[kvs->current_idx].value);
-        z_bytes_from_pair(kv_pair, z_move(k), z_move(v));
-        kvs->current_idx++;
-        return true;
-    }
-}
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
@@ -113,7 +92,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_move(s), NULL);
+        z_drop(z_move(s));
         return -1;
     }
     // Wait for joins in peer mode
@@ -126,7 +105,7 @@ int main(int argc, char **argv) {
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
     z_owned_publisher_t pub;
-    if (z_declare_publisher(&pub, z_loan(s), z_loan(ke), NULL) < 0) {
+    if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -137,10 +116,9 @@ int main(int argc, char **argv) {
     // Allocate attachment
     kv_pair_t kvs[2];
     kvs[0] = (kv_pair_t){.key = "source", .value = "C"};
-    z_owned_bytes_t attachment;
 
-    // Allocate buffer
-    char buf_ind[16];
+    z_owned_bytes_t attachment;
+    z_bytes_empty(&attachment);
 
     // Create encoding
     z_owned_encoding_t encoding;
@@ -159,13 +137,20 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_copy_from_str(&payload, buf);
 
         // Add attachment value
+        char buf_ind[16];
         sprintf(buf_ind, "%d", idx);
         kvs[1] = (kv_pair_t){.key = "index", .value = buf_ind};
-        kv_pairs_t ctx = (kv_pairs_t){.data = kvs, .current_idx = 0, .len = 2};
-        z_bytes_from_iter(&attachment, create_attachment_iter, (void *)&ctx);
+        ze_owned_serializer_t serializer;
+        ze_serializer_empty(&serializer);
+        ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
+        for (size_t i = 0; i < 2; ++i) {
+            ze_serializer_serialize_str(z_loan_mut(serializer), kvs[i].key);
+            ze_serializer_serialize_str(z_loan_mut(serializer), kvs[i].value);
+        }
+        ze_serializer_finish(z_move(serializer), &attachment);
         options.attachment = z_move(attachment);
 
         // Add encoding value
@@ -178,8 +163,8 @@ int main(int argc, char **argv) {
         z_publisher_put(z_loan(pub), z_move(payload), &options);
     }
     // Clean up
-    z_undeclare_publisher(z_move(pub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(pub));
+    z_drop(z_move(s));
     return 0;
 }
 #else

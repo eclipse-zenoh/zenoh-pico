@@ -20,6 +20,10 @@
 
 #include "zenoh-pico/config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef HANDLE *_z_task_t;
 typedef void *z_task_attr_t;  // Not used in Windows
@@ -46,6 +50,10 @@ typedef struct {
     } _ep;
 } _z_sys_net_endpoint_t;
 
-inline void __asm__(char *asm) { (void)(asm); }
+inline void __asm__(char *instruction) { (void)(instruction); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_SYSTEM_VOID_H */

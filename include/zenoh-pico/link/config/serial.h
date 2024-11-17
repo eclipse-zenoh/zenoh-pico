@@ -20,6 +20,10 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if Z_FEATURE_LINK_SERIAL == 1
 
 #define SERIAL_CONFIG_ARGC 1
@@ -62,8 +66,12 @@ size_t _z_serial_config_strlen(const _z_str_intmap_t *s);
 void _z_serial_config_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s);
 char *_z_serial_config_to_str(const _z_str_intmap_t *s);
 
-int8_t _z_serial_config_from_str(_z_str_intmap_t *strint, const char *s);
-int8_t _z_serial_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
+z_result_t _z_serial_config_from_str(_z_str_intmap_t *strint, const char *s);
+z_result_t _z_serial_config_from_strn(_z_str_intmap_t *strint, const char *s, size_t n);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* ZENOH_PICO_LINK_CONFIG_SERIAL_H */

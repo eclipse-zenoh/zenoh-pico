@@ -26,8 +26,8 @@
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1
 
-int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_slice_t addr;
     _z_transport_message_t t_msg;
@@ -40,7 +40,7 @@ int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     return ret;
 }
 #else
-int8_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
+z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm) {
     _ZP_UNUSED(ztm);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
@@ -98,7 +98,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
         _z_zbuf_t zbuf = _z_zbuf_view(&ztm->_zbuf, to_read);
 
         while (_z_zbuf_len(&zbuf) > 0) {
-            int8_t ret = _Z_RES_OK;
+            z_result_t ret = _Z_RES_OK;
 
             // Decode one session message
             _z_transport_message_t t_msg;
@@ -127,7 +127,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     return NULL;
 }
 
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
+z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z_task_t *task) {
     // Init memory
     (void)memset(task, 0, sizeof(_z_task_t));
     zt->_transport._multicast._read_task_running = true;  // Init before z_task_init for concurrency issue
@@ -141,7 +141,7 @@ int8_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _z
     return _Z_RES_OK;
 }
 
-int8_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
+z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
     zt->_transport._multicast._read_task_running = false;
     return _Z_RES_OK;
 }
@@ -152,14 +152,14 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     return NULL;
 }
 
-int8_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task) {
+z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *task) {
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
+z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }

@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/transport/unicast/rx.h"
+#include "zenoh-pico/transport/common/rx.h"
 
 #include <stddef.h>
 
@@ -22,15 +22,15 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/common/rx.h"
+#include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
-int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg");
-    int8_t ret = _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
     // Acquire the lock
     _z_mutex_lock(&ztu->_mutex_rx);
@@ -92,12 +92,12 @@ int8_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_messag
     return ret;
 }
 
-int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     return _z_unicast_recv_t_msg_na(ztu, t_msg);
 }
 
-int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+    z_result_t ret = _Z_RES_OK;
 
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
@@ -145,7 +145,7 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
                                   ? &ztu->_dbuf_reliable
                                   : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
 
-            _Bool drop = false;
+            bool drop = false;
             if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
                 // Filling the wbuf capacity as a way to signal the last fragment to reset the dbuf
                 // Otherwise, last (smaller) fragments can be understood as a complete message
@@ -216,13 +216,13 @@ int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_trans
     return ret;
 }
 #else
-int8_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-int8_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;

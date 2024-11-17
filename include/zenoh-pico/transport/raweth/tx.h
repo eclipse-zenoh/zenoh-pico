@@ -18,9 +18,17 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
-int8_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
-int8_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
-                            z_congestion_control_t cong_ctrl);
-int8_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg);
+z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
+                                z_congestion_control_t cong_ctrl);
+z_result_t _z_raweth_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_RAWETH_TX_H */

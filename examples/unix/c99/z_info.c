@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
 
@@ -96,5 +96,5 @@ int main(int argc, char **argv) {
     z_closure_zid(&callback2, print_zid, NULL, NULL);
     z_info_peers_zid(z_session_loan(&s), z_closure_zid_move(&callback2));
 
-    z_close(z_session_move(&s), NULL);
+    z_session_drop(z_session_move(&s));
 }

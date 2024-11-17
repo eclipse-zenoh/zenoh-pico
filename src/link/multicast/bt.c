@@ -25,8 +25,8 @@
 
 #define SPP_MAXIMUM_PAYLOAD 128
 
-int8_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
+    z_result_t ret = _Z_RES_OK;
 
     _z_string_t bt_str = _z_string_alias_str(BT_SCHEMA);
     if (!_z_string_equals(&ep->_locator._protocol, &bt_str)) {
@@ -51,8 +51,8 @@ static char *__z_convert_address_bt(_z_string_t *address) {
     return ret;
 }
 
-int8_t _z_f_link_open_bt(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_open_bt(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
@@ -70,8 +70,8 @@ int8_t _z_f_link_open_bt(_z_link_t *self) {
     return ret;
 }
 
-int8_t _z_f_link_listen_bt(_z_link_t *self) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_f_link_listen_bt(_z_link_t *self) {
+    z_result_t ret = _Z_RES_OK;
 
     const char *mode_str = _z_str_intmap_get(&self->_endpoint._config, BT_CONFIG_MODE_KEY);
     uint8_t mode = (strcmp(mode_str, "master") == 0) ? _Z_BT_MODE_MASTER : _Z_BT_MODE_SLAVE;
@@ -123,8 +123,8 @@ size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, 
 
 uint16_t _z_get_link_mtu_bt(void) { return SPP_MAXIMUM_PAYLOAD; }
 
-int8_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
+    z_result_t ret = _Z_RES_OK;
 
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_MULTICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_STREAM;

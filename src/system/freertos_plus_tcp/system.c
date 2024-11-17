@@ -85,7 +85,7 @@ static z_task_attr_t z_default_task_attr = {
 };
 
 /*------------------ Thread ------------------*/
-int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
     z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
     if (z_arg == NULL) {
         return -1;
@@ -119,12 +119,17 @@ int8_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), 
     return 0;
 }
 
-int8_t _z_task_join(_z_task_t *task) {
+z_result_t _z_task_join(_z_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
     return 0;
 }
 
-int8_t _z_task_cancel(_z_task_t *task) {
+z_result_t _z_task_detach(_z_task_t *task) {
+    // Not implemented
+    return _Z_ERR_GENERIC;
+}
+
+z_result_t _z_task_cancel(_z_task_t *task) {
     vTaskDelete(task->handle);
     return 0;
 }
@@ -135,43 +140,43 @@ void _z_task_free(_z_task_t **task) {
 }
 
 /*------------------ Mutex ------------------*/
-int8_t _z_mutex_init(_z_mutex_t *m) {
+z_result_t _z_mutex_init(_z_mutex_t *m) {
     *m = xSemaphoreCreateRecursiveMutex();
     return *m == NULL ? -1 : 0;
 }
 
-int8_t _z_mutex_drop(_z_mutex_t *m) {
+z_result_t _z_mutex_drop(_z_mutex_t *m) {
     z_free(*m);
     return 0;
 }
 
-int8_t _z_mutex_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
 
-int8_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
 
-int8_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
 // Condition variables not supported in FreeRTOS
-int8_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
-int8_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-int z_sleep_us(size_t time) {
+z_result_t z_sleep_us(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time / 1000));
     return 0;
 }
 
-int z_sleep_ms(size_t time) {
+z_result_t z_sleep_ms(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time));
     return 0;
 }
 
-int z_sleep_s(size_t time) {
+z_result_t z_sleep_s(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time * 1000));
     return 0;
 }
@@ -204,4 +209,4 @@ unsigned long z_time_elapsed_ms(z_time_t *time) {
 
 unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) / 1000; }
 
-int8_t zp_get_time_since_epoch(zp_time_since_epoch *t) { return -1; }
+z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) { return -1; }

@@ -20,6 +20,10 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     WRITE_FILTER_INIT = 0,
     WRITE_FILTER_ACTIVE = 1,
@@ -41,8 +45,12 @@ typedef struct _z_write_filter_t {
 
 typedef struct _z_publisher_t _z_publisher_t;
 
-int8_t _z_write_filter_create(_z_publisher_t *pub);
-int8_t _z_write_filter_destroy(const _z_publisher_t *pub);
-_Bool _z_write_filter_active(const _z_publisher_t *pub);
+z_result_t _z_write_filter_create(_z_publisher_t *pub);
+z_result_t _z_write_filter_destroy(_z_publisher_t *pub);
+bool _z_write_filter_active(const _z_publisher_t *pub);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZENOH_PICO_FILTERING_NETAPI_H */

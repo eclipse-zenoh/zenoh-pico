@@ -15,7 +15,10 @@
 #ifndef INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 #define INCLUDE_ZENOH_PICO_API_PRIMITIVES_H
 
+#ifndef SPHINX_DOCS
+// For some reason sphinx/clang doesn't handle bool types correctly if stdbool.h is included
 #include <stdbool.h>
+#endif
 #include <stdint.h>
 
 #include "olv_macros.h"
@@ -36,13 +39,13 @@ extern "C" {
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` string.
  *
  * Parameters:
- *   value: Pointer to a null terminated string.
  *   str: Pointer to an uninitialized :c:type:`z_view_string_t`.
+ *   value: Pointer to a null terminated string.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
+z_result_t z_view_string_from_str(z_view_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_view_string_t` by wrapping a ``const char *`` substring.
@@ -55,7 +58,7 @@ int8_t z_view_string_from_str(z_view_string_t *str, const char *value);
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len);
+z_result_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t len);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
@@ -63,13 +66,13 @@ int8_t z_view_string_from_substr(z_view_string_t *str, const char *value, size_t
  * This function will fail if the string is not in canon form.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
+z_result_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` from a null-terminated string.
@@ -77,8 +80,8 @@ int8_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name);
  * Input key expression is not checked for correctness.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
  */
 void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name);
 
@@ -90,13 +93,13 @@ void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *na
  * `name` must outlive the constructed key expression.
  *
  * Parameters:
- *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *   keyexpr: Pointer to an uninitialized :c:type:`z_view_keyexpr_t`.
+ *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
+z_result_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char *name);
 
 /**
  * Builds a :c:type:`z_keyexpr_t` by aliasing a substring.
@@ -152,11 +155,10 @@ void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char 
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
+z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *str);
 
 /**
  * Constructs key expression by concatenation of key expression in `left` with a string in `right`.
- * Returns 0 in case of success, negative error code otherwise.
  *
  * To avoid odd behaviors, concatenating a key expression starting with `*` to one ending with `*` is forbidden by this
  * operation, as this would extremely likely cause bugs.
@@ -170,7 +172,7 @@ int8_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
+z_result_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len);
 
 /**
  * Constructs key expression by performing path-joining (automatically inserting '/'). The resulting key expression is
@@ -178,26 +180,26 @@ int8_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, 
  *
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
- *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to the left part of resulting key expression.
- *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the right part of resulting key expression.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` to the left part of the resulting key expression.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the right part of the resulting key expression.
  *
  * Return:
  *   ``0`` if creation successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
+z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
- * Returns the relation between `left` and `right` from `left`'s point of view.
+ * Returns the relation between `left` and `right` from the `left`'s point of view.
  *
  * Note that this is slower than `z_keyexpr_intersects` and `keyexpr_includes`, so you should favor these methods for
  * most applications.
  *
  * Parameters:
- *  left: Pointer to :c:type:`z_loaned_keyexpr_t` representing left key expression.
- *  right: Pointer to :c:type:`z_loaned_keyexpr_t` representing right key expression.
+ *   left: Pointer to :c:type:`z_loaned_keyexpr_t` representing left key expression.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` representing right key expression.
  *
  * Return:
- *  Relation between `left` and `right` from `left`'s point of view.
+ *   Relation between `left` and `right` from the `left`'s point of view.
  */
 z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
@@ -209,10 +211,10 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
  *   len: Number of characters in ``start``.
  *
  * Return:
- *   ``0`` if passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
+ *   ``0`` if the passed string is a valid (and canon) key expression, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_is_canon(const char *start, size_t len);
+z_result_t z_keyexpr_is_canon(const char *start, size_t len);
 
 /**
  * Canonizes of a given keyexpr in string representation.
@@ -226,7 +228,7 @@ int8_t z_keyexpr_is_canon(const char *start, size_t len);
  *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_canonize(char *start, size_t *len);
+z_result_t z_keyexpr_canonize(char *start, size_t *len);
 
 /**
  * Canonizes of a given keyexpr in string representation.
@@ -239,7 +241,7 @@ int8_t z_keyexpr_canonize(char *start, size_t *len);
  *   ``0`` if canonization successful, or a ``negative value`` otherwise.
  *   Error codes are defined in :c:enum:`zp_keyexpr_canon_status_t`.
  */
-int8_t z_keyexpr_canonize_null_terminated(char *start);
+z_result_t z_keyexpr_canonize_null_terminated(char *start);
 
 /**
  * Checks if a given keyexpr contains another keyexpr in its set.
@@ -250,9 +252,9 @@ int8_t z_keyexpr_canonize_null_terminated(char *start);
  *
  * Return:
  *   ``true`` if ``l`` includes ``r``, i.e. the set defined by ``l`` contains every key belonging to the set
- * defined by ``r``. Otherwise, returns ``false``.
+ *   defined by ``r``. Otherwise, returns ``false``.
  */
-_Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Checks if a given keyexpr intersects with another keyexpr.
@@ -263,9 +265,9 @@ _Bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *
  *
  * Return:
  *   ``true`` if keyexprs intersect, i.e. there exists at least one key which is contained in both of the
- * sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
+ *   sets defined by ``l`` and ``r``. Otherwise, returns ``false``.
  */
-_Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
+bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Checks if two keyexpr are equal.
@@ -277,16 +279,7 @@ _Bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t
  * Return:
  *   ``true`` if both ``l`` and ``r`` are equal. Otherwise, returns  ``false``.
  */
-_Bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
-
-/**
- * Builds a new, zenoh-allocated, empty configuration.
- * It consists in an empty set of properties for zenoh session configuration.
- *
- * Parameters:
- *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
- */
-void z_config_new(z_owned_config_t *config);
+bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r);
 
 /**
  * Builds a new, zenoh-allocated, default configuration.
@@ -296,9 +289,9 @@ void z_config_new(z_owned_config_t *config);
  *   config: Pointer to uninitialized :c:type:`z_owned_config_t`.
  *
  * Return:
- *   `0`` in case of success, or a ``negative value`` otherwise.
+ *   ``0`` in case of success, or a ``negative value`` otherwise.
  */
-int8_t z_config_default(z_owned_config_t *config);
+z_result_t z_config_default(z_owned_config_t *config);
 
 /**
  * Gets the property with the given integer key from the configuration.
@@ -321,9 +314,9 @@ const char *zp_config_get(const z_loaned_config_t *config, uint8_t key);
  *   value: Property value to be inserted.
  *
  * Return:
- *   ``0`` if insertion successful, ``negative value`` otherwise.
+ *   ``0`` if insertion is successful, ``negative value`` otherwise.
  */
-int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
+z_result_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *value);
 
 /**
  * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
@@ -333,9 +326,9 @@ int8_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *valu
  *   s: Pointer to the null terminated string to use.
  *
  * Return:
- *   ``0`` if creation successful,``negative value`` otherwise.
+ *   ``0`` if creation is successful,``negative value`` otherwise.
  */
-int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
+z_result_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
 
 /**
  * Builds a :c:type:`z_owned_encoding_t` from a null terminated string.
@@ -346,9 +339,9 @@ int8_t z_encoding_from_str(z_owned_encoding_t *encoding, const char *s);
  *   len: Number of characters from the string s to use.
  *
  * Return:
- *   ``0`` if creation successful,``negative value`` otherwise.
+ *   ``0`` if creation is successful,``negative value`` otherwise.
  */
-int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
+z_result_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_t len);
 
 /**
  * Sets a schema to this encoding from a null-terminated string. Zenoh does not define what a schema is and its
@@ -357,10 +350,11 @@ int8_t z_encoding_from_substr(z_owned_encoding_t *encoding, const char *s, size_
  * Parameters:
  *   encoding: Pointer to initialized :c:type:`z_loaned_encoding_t`.
  *   schema: Pointer to the null terminated string to use as a schema.
+ *
  * Return:
  *   ``0`` in case of success,``negative value`` otherwise.
  */
-int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema);
+z_result_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char *schema);
 
 /**
  * Sets a schema to this encoding from a substring. Zenoh does not define what a schema is and its semantics is left
@@ -370,10 +364,11 @@ int8_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const char 
  *   encoding: Pointer to initialized :c:type:`z_loaned_encoding_t`.
  *   schema: Pointer to the substring start.
  *   len: Number of characters to consider.
+ *
  * Return:
  *   ``0`` if in case of success,``negative value`` otherwise.
  */
-int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len);
+z_result_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len);
 
 /**
  * Builds a string from a :c:type:`z_loaned_encoding_t`.
@@ -383,18 +378,30 @@ int8_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const ch
  *   string: Pointer to an uninitialized :c:type:`z_owned_string_t` to store the string.
  *
  * Return:
- *   ``0`` if creation successful,``negative value`` otherwise.
+ *   ``0`` if creation is successful,``negative value`` otherwise.
  */
-int8_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
+z_result_t z_encoding_to_string(const z_loaned_encoding_t *encoding, z_owned_string_t *string);
+
+/**
+ * Checks if two encodings are equal.
+ *
+ * Parameters:
+ *   left: Pointer to the first :c:type:`z_loaned_encoding_t` to compare.
+ *   right: Pointer to the second :c:type:`z_loaned_encoding_t` to compare.
+ *
+ * Return:
+ *   ``true`` if `left` equals `right`, ``false`` otherwise.
+ */
+bool z_encoding_equals(const z_loaned_encoding_t *left, const z_loaned_encoding_t *right);
 
 /**
  * Gets the bytes data from a reply error payload by aliasing it.
  *
  * Parameters:
- *    reply_err: Pointer to a :c:type:`z_loaned_reply_err_t` to get data from.
+ *   reply_err: Pointer to a :c:type:`z_loaned_reply_err_t` to get data from.
  *
  * Return:
- *    Pointer to the data as a :c:type:`z_loaned_bytes_t`.
+ *   Pointer to the data as a :c:type:`z_loaned_bytes_t`.
  */
 const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_err);
 
@@ -402,7 +409,7 @@ const z_loaned_bytes_t *z_reply_err_payload(const z_loaned_reply_err_t *reply_er
  * Gets a reply error encoding by aliasing it.
  *
  * Parameters:
- *   query: Pointer to the :c:type:`z_loaned_reply_err_t` to get the encoding from.
+ *   reply_err: Pointer to the :c:type:`z_loaned_reply_err_t` to get the encoding from.
  *
  * Return:
  *   Pointer to the encoding as a :c:type:`z_loaned_encoding_t`.
@@ -418,9 +425,9 @@ const z_loaned_encoding_t *z_reply_err_encoding(const z_loaned_reply_err_t *repl
  *   len: Number of bytes to copy.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
+z_result_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_slice_t` by transferring ownership over a data to it.
@@ -429,21 +436,34 @@ int8_t z_slice_copy_from_buf(z_owned_slice_t *slice, const uint8_t *data, size_t
  *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
  *   data: Pointer to the data to be owned by `slice`.
  *   len: Number of bytes in `data`.
- *  deleter: A thread-safe delete function to free the `data`. Will be called once when `slice` is dropped. Can be
- * NULL, in case if `data` is allocated in static memory.
- *    context: An optional context to be passed to the `deleter`.
+ *   deleter: A thread-safe delete function to free the `data`. Will be called once when `slice` is dropped.
+ *     Can be NULL in the case where `data` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                        void *context);
+z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
+                            void (*deleter)(void *data, void *context), void *context);
+
+/**
+ * Builds a :c:type:`z_view_slice_t`.
+ *
+ * Parameters:
+ *   slice: Pointer to an uninitialized :c:type:`z_view_slice_t`.
+ *   data: Pointer to the data to be pointed by `slice`.
+ *   len: Number of bytes in `data`.
+ *
+ * Return:
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
+ */
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len);
 
 /**
  * Builds an empty :c:type:`z_owned_slice_t`.
  *
  * Parameters:
- *   str: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
+ *   slice: Pointer to an uninitialized :c:type:`z_owned_slice_t`.
  */
 void z_slice_empty(z_owned_slice_t *slice);
 
@@ -451,21 +471,21 @@ void z_slice_empty(z_owned_slice_t *slice);
  * Gets date pointer of a bytes array.
  *
  * Parameters:
- *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
+ *   slice: Pointer to a :c:type:`z_loaned_slice_t` to get data from.
  *
  * Return:
- *    The data pointer.
+ *   The data pointer.
  */
 const uint8_t *z_slice_data(const z_loaned_slice_t *slice);
 
 /**
- * Gets total number of bytes in a bytes array.
+ * Gets the total number of bytes in a bytes array.
  *
  * Parameters:
- *    slice: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
+ *   slice: Pointer to a :c:type:`z_loaned_slice_t` to get length from.
  *
  * Return:
- *    The number of bytes.
+ *   The number of bytes.
  */
 size_t z_slice_len(const z_loaned_slice_t *slice);
 
@@ -473,447 +493,173 @@ size_t z_slice_len(const z_loaned_slice_t *slice);
  * Checks if slice is empty
  *
  * Parameters:
- *   str: Pointer to a :c:type:`z_loaned_slice_t` to check.
+ *   slice: Pointer to a :c:type:`z_loaned_slice_t` to check.
+ *
  * Return:
- *  ``true`` if conainer is empty, ``false`` otherwise.
+ *   ``true`` if the container is empty, ``false`` otherwise.
  */
 bool z_slice_is_empty(const z_loaned_slice_t *slice);
 
 /**
- * Decodes data into a `int8_t` signed integer.
+ * Converts data into a :c:type:`z_owned_slice_t`
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`int8_t` to contain the decoded int.
+ *   dst: Pointer to an uninitialized :c:type:`z_owned_slice_t` to contain the decoded slice.
  *
  * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ *   ``0`` if decode is successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_int8(const z_loaned_bytes_t *bytes, int8_t *dst);
+z_result_t z_bytes_to_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
 
 /**
- * Decodes data into a `int16_t` signed integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`int16_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_int16(const z_loaned_bytes_t *bytes, int16_t *dst);
-
-/**
- * Decodes data into a `int32_t` signed integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`int32_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_int32(const z_loaned_bytes_t *bytes, int32_t *dst);
-
-/**
- * Decodes data into a `int64_t` signed integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`int64_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_int64(const z_loaned_bytes_t *bytes, int64_t *dst);
-
-/**
- * Decodes data into a `uint8_t` unsigned integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`uint8_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_uint8(const z_loaned_bytes_t *bytes, uint8_t *dst);
-
-/**
- * Decodes data into a `uint16_t` unsigned integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`uint16_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_uint16(const z_loaned_bytes_t *bytes, uint16_t *dst);
-
-/**
- * Decodes data into a `uint32_t` unsigned integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`uint32_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_uint32(const z_loaned_bytes_t *bytes, uint32_t *dst);
-
-/**
- * Decodes data into a `uint64_t` unsigned integer.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`uint64_t` to contain the decoded int.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_uint64(const z_loaned_bytes_t *bytes, uint64_t *dst);
-
-/**
- * Decodes data into a `float` floating number.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`float` to contain the decoded float.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_float(const z_loaned_bytes_t *bytes, float *dst);
-
-/**
- * Decodes data into a `double` floating number.
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   dst: Pointer to an uninitialized :c:type:`double` to contain the decoded float.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_double(const z_loaned_bytes_t *bytes, double *dst);
-
-/**
- * Decodes data into a :c:type:`z_owned_slice_t`
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   str: Pointer to an uninitialized :c:type:`z_owned_slice_t` to contain the decoded slice.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_slice(const z_loaned_bytes_t *bytes, z_owned_slice_t *dst);
-
-/**
- * Decodes data into a :c:type:`z_owned_string_t`
+ * Converts data into a :c:type:`z_owned_string_t`
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t` to contain the decoded string.
  *
  * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
+ *   ``0`` if decode is successful, or a ``negative value`` otherwise.
  */
-int8_t z_bytes_deserialize_into_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
+z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *str);
 
 /**
- * Decodes data into a pair of :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- *   first: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the first element.
- *   second: Pointer to an uninitialized :c:type:`z_owned_bytes_t` to contain the second element.
- *
- * Return:
- *   ``0`` if decode successful, or a ``negative value`` otherwise.
- */
-int8_t z_bytes_deserialize_into_pair(const z_loaned_bytes_t *bytes, z_owned_bytes_t *first, z_owned_bytes_t *second);
-
-/**
- * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `int8_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_int8(z_owned_bytes_t *bytes, int8_t val);
-
-/**
- * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `int16_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_int16(z_owned_bytes_t *bytes, int16_t val);
-
-/**
- * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `int32_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_int32(z_owned_bytes_t *bytes, int32_t val);
-
-/**
- * Encodes a signed integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `int64_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_int64(z_owned_bytes_t *bytes, int64_t val);
-
-/**
- * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `uint8_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_uint8(z_owned_bytes_t *bytes, uint8_t val);
-
-/**
- * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `uint16_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_uint16(z_owned_bytes_t *bytes, uint16_t val);
-
-/**
- * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `uint32_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_uint32(z_owned_bytes_t *bytes, uint32_t val);
-
-/**
- * Encodes an unsigned integer into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `uint64_t` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_uint64(z_owned_bytes_t *bytes, uint64_t val);
-
-/**
- * Encodes a floating number into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `float` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_float(z_owned_bytes_t *bytes, float val);
-
-/**
- * Encodes a floating number into a :c:type:`z_owned_bytes_t`
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded int.
- *   val: `double` value to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_double(z_owned_bytes_t *bytes, double val);
-
-/**
- * Encodes a slice into a :c:type:`z_owned_bytes_t` by copying.
+ * Converts a slice into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
- *   slice: Pointer to the slice to encode.
+ *   slice: Pointer to the slice to convert. The slice will be consumed upon function return.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
+z_result_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
 
 /**
- * Encodes a slice into a :c:type:`z_owned_bytes_t`.
+ * Converts a slice into a :c:type:`z_owned_bytes_t` by copying.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded slice.
- *   slice: Pointer to the slice to encode. The slice will be consumed upon function return.
+ *   slice: Pointer to the slice to convert.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice);
+z_result_t z_bytes_copy_from_slice(z_owned_bytes_t *bytes, const z_loaned_slice_t *slice);
 
 /**
- * Encodes data into a :c:type:`z_owned_bytes_t`.
+ * Converts data into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
- *   data: Pointer to the data to encode. Ownership is transferred to the `bytes`.
- *   len: Number of bytes to encode.
- *   deleter: A thread-safe delete function to free the `data`. Will be called once when `bytes` is dropped. Can be
- * NULL, in case if `data` is allocated in static memory.
- *    context: An optional context to be passed to the `deleter`.
+ *   data: Pointer to the data to convert. Ownership is transferred to the `bytes`.
+ *   len: Number of bytes to consider.
+ *   deleter: A thread-safe delete function to free the `data`. Will be called once when `bytes` is dropped.
+ *     Can be NULL in the case where `data` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len, void (*deleter)(void *data, void *context),
-                        void *context);
+z_result_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
+                            void (*deleter)(void *data, void *context), void *context);
 
 /**
- * Encodes statically allocated constant data into a :c:type:`z_owned_bytes_t` by aliasing.
+ * Converts data into a :c:type:`z_owned_bytes_t` by copying.
+ *
+ * Parameters:
+ *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
+ *   data: Pointer to the data to convert.
+ *   len: Number of bytes to consider.
+ *
+ * Return:
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_copy_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+
+/**
+ * Converts statically allocated constant data into a :c:type:`z_owned_bytes_t` by aliasing.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
  *   data: Pointer to the statically allocated constant data to encode.
- *   len: Number of bytes to encode.
+ *   len: Number of bytes to consider.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
+z_result_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
 
 /**
- * Encodes data into a :c:type:`z_owned_bytes_t` by copying.
- *
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded data.
- *   data: Pointer to the data to encode. Ownership is transferred to the `bytes`.
- *   len: Number of bytes to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_serialize_from_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len);
-
-/**
- * Encodes a string into a :c:type:`z_owned_bytes_t` by copying.
+ * Converts a string into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   s: Pointer to the string to encode.
+ *   s: Pointer to the string to convert. The string will be consumed upon function return.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
+z_result_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
 
 /**
- * Encodes a string into a :c:type:`z_owned_bytes_t`.
+ * Converts a string into a :c:type:`z_owned_bytes_t` by copying.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   s: Pointer to the string to encode. The string will be consumed upon function return.
+ *   s: Pointer to the string to convert.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_string(z_owned_bytes_t *bytes, z_moved_string_t *s);
+z_result_t z_bytes_copy_from_string(z_owned_bytes_t *bytes, const z_loaned_string_t *s);
 
 /**
- * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t`.
+ * Converts a null-terminated string into a :c:type:`z_owned_bytes_t`.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   value: Pointer to the string to encode. Ownership is transferred to the `bytes`.
- *   deleter: A thread-safe delete function to free the `value`. Will be called once when `bytes` is dropped. Can be
- * NULL, in case if `value` is allocated in static memory. context: An optional context to be passed to the `deleter`.
+ *   value: Pointer to the string to converts. Ownership is transferred to the `bytes`.
+ *   deleter: A thread-safe delete function to free the `value`. Will be called once when `bytes` is dropped.
+ *     Can be NULL in the case where `value` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
-                        void *context);
+z_result_t z_bytes_from_str(z_owned_bytes_t *bytes, char *value, void (*deleter)(void *value, void *context),
+                            void *context);
 
 /**
- * Encodes a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
+ * Converts a null-terminated string into a :c:type:`z_owned_bytes_t` by copying.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   value: Pointer to the statically allocated constant string to encode.
+ *   value: Pointer to the string to converts.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
+z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value);
+
 /**
- * Encodes a null-terminated string into a :c:type:`z_owned_bytes_t` by copying.
+ * Converts a statically allocated constant null-terminated string into a :c:type:`z_owned_bytes_t` by aliasing.
  *
  * Parameters:
  *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded string.
- *   value: Pointer to the string to encode. Ownership is transferred to the `bytes`.
+ *   value: Pointer to the statically allocated constant string to convert.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if conversion is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_serialize_from_str(z_owned_bytes_t *bytes, const char *value);
+z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value);
 
 /**
- * Constructs payload from an iterator to `z_owned_bytes_t`.
- * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded payload.
- *   iterator_body: Iterator body function, providing data items. Returning false is treated as iteration end.
- *   context: Arbitrary context that will be passed to iterator_body.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_from_iter(z_owned_bytes_t *bytes, _Bool (*iterator_body)(z_owned_bytes_t *data, void *context),
-                         void *context);
-
-/**
- * Append a pair of `z_owned_bytes` objects which are consumed in the process.
+ * Constructs an empty payload.
  *
  * Parameters:
- *   bytes: An uninitialized :c:type:`z_owned_bytes_t` to contain the encoded pair.
- *   first: Moved first `z_owned_bytes` to encode.
- *   second: Moved second `z_owned_bytes` to encode.
- *
- * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
- */
-int8_t z_bytes_from_pair(z_owned_bytes_t *bytes, z_moved_bytes_t *first, z_moved_bytes_t *second);
-
-/**
- * Parameters:
- *   bytes: Pointer to an unitialized :c:type:`z_lowned_bytes_t` instance.
+ *   bytes: Pointer to an unitialized :c:type:`z_loaned_bytes_t` instance.
  */
 void z_bytes_empty(z_owned_bytes_t *bytes);
 
@@ -922,8 +668,9 @@ void z_bytes_empty(z_owned_bytes_t *bytes);
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
+ *
  * Return:
- *  Number of bytes in the container.
+ *   Number of the bytes in the container.
  */
 size_t z_bytes_len(const z_loaned_bytes_t *bytes);
 
@@ -932,34 +679,11 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
  *
  * Parameters:
  *   bytes: Pointer to a :c:type:`z_loaned_bytes_t` to decode.
- * Return:
- *  ``true`` if conainer is empty,  ``false`` otherwise.
- */
-_Bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
-
-/**
- * Returns an iterator for multi-element serialized data.
- *
- * Parameters:
- *   bytes: Data to iterate over.
  *
  * Return:
- *   The constructed :c:type:`z_bytes_iterator_t`.
+ *   ``true`` if conainer is empty,  ``false`` otherwise.
  */
-z_bytes_iterator_t z_bytes_get_iterator(const z_loaned_bytes_t *bytes);
-
-/**
- * Constructs :c:type:`z_owned_bytes_t` object corresponding to the next element of serialized data.
- *
- * Will construct null-state `z_owned_bytes_t` when iterator reaches the end (or in case of error).
- *
- * Parameters:
- *   iter: An iterator over multi-element serialized data.
- *   out: An uninitialized :c:type:`z_owned_bytes_t` that will contain next serialized element.
- * Return:
- *  ``false`` when iterator reaches the end,  ``true`` otherwise.
- */
-_Bool z_bytes_iterator_next(z_bytes_iterator_t *iter, z_owned_bytes_t *out);
+bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
 
 /**
  * Returns an iterator on raw bytes slices contained in the `z_loaned_bytes_t`.
@@ -980,14 +704,14 @@ z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *byte
 /**
  * Constructs :c:type:`z_view_slice_t` providing view to the next slice.
  *
- *
  * Parameters:
  *   iter: An iterator over slices of serialized data.
  *   out: An uninitialized :c:type:`z_view_slice_t` that will contain next slice.
+ *
  * Return:
- *  ``false`` when iterator reaches the end,  ``true`` otherwise.
+ *   ``false`` when iterator reaches the end,  ``true`` otherwise.
  */
-_Bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out);
+bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out);
 
 /**
  * Returns a reader for the `bytes`.
@@ -1006,25 +730,12 @@ z_bytes_reader_t z_bytes_get_reader(const z_loaned_bytes_t *bytes);
  * Reads data into specified destination.
  *
  * Parameters:
- *  reader: Data reader to read from.
- *  dst: An uninitialized memory location where a new piece of data will be read. Note that it does not involve a copy,
- * but only increases reference count.
+ *   reader: Data reader to read from.
+ *   dst: Buffer where the read data is written.
+ *   len: Maximum number of bytes to read.
  *
  * Return:
- *  ​0​ upon success, negative error code otherwise.
- */
-int8_t z_bytes_reader_read_bounded(z_bytes_reader_t *reader, z_owned_bytes_t *dst);
-
-/**
- * Reads data into specified destination.
- *
- * Parameters:
- *  reader: Data reader to read from.
- *  dst: Buffer where the read data is written.
- *  len: Maximum number of bytes to read.
- *
- * Return:
- *  Number of bytes read. If return value is smaller than `len`, it means that the end of the data was reached.
+ *   Number of bytes read. If return value is smaller than `len`, it means that the end of the data was reached.
  */
 size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
 
@@ -1034,38 +745,59 @@ size_t z_bytes_reader_read(z_bytes_reader_t *reader, uint8_t *dst, size_t len);
  * from the current reader position if origin is `SEEK_CUR`, and from the end of the payload if origin is `SEEK_END`.
  *
  * Parameters:
- *  reader: Data reader to reposition.
- *  offset: New position ffset in bytes.
- *  origin: Origin for the new position.
+ *   reader: Data reader to reposition.
+ *   offset: New position ffset in bytes.
+ *   origin: Origin for the new position.
  *
  * Return:
- *  ​0​ upon success, negative error code otherwise.
+ *   ``0`` in case of success, ``negative value`` otherwise.
  */
-int8_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+z_result_t z_bytes_reader_seek(z_bytes_reader_t *reader, int64_t offset, int origin);
+
 /**
  * Gets the read position indicator.
  *
  * Parameters:
- *  reader: Data reader to get position of.
+ *   reader: Data reader to get position of.
  *
  * Return:
- *  Read position indicator on success or -1L if failure occurs.
+ *   Read position indicator on success or -1L if failure occurs.
  */
 int64_t z_bytes_reader_tell(z_bytes_reader_t *reader);
 
 /**
- * Constructs writer for :c:type:`z_loaned_bytes_t`.
- * Note: creating another writer while previous one is still in use is undefined behaviour.
+ * Gets number of bytes that can still be read.
  *
  * Parameters:
- *   bytes: Data container to write to.
- *   writer: Uninitialized memory location where writer is to be constructed.
+ *   reader: Data reader.
  *
+ * Return:
+ *   Number of bytes that can still be read.
  */
-z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
+size_t z_bytes_reader_remaining(const z_bytes_reader_t *reader);
 
 /**
- * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t.
+ * Constructs an empty writer for payload.
+ *
+ * Parameters:
+ *   writer: An uninitialized memory location where writer is to be constructed.
+ *
+ * Return:
+ *   ``0`` in case of success, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_writer_empty(z_owned_bytes_writer_t *writer);
+
+/**
+ * Finishes writing and returns underlying bytes.
+ *
+ * Parameters:
+ *   writer: A data writer.
+ *   bytes: An uninitialized memory location where bytes is to be constructed.
+ */
+void z_bytes_writer_finish(z_moved_bytes_writer_t *writer, z_owned_bytes_t *bytes);
+
+/**
+ * Writes `len` bytes from `src` into underlying :c:type:`z_loaned_bytes_t`.
  *
  * Parameters:
  *   writer: A data writer.
@@ -1073,9 +805,9 @@ z_bytes_writer_t z_bytes_get_writer(z_loaned_bytes_t *bytes);
  *   len: Number of bytes to write.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise.
+ *   ``0`` if write is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, size_t len);
+z_result_t z_bytes_writer_write_all(z_loaned_bytes_writer_t *writer, const uint8_t *src, size_t len);
 
 /**
  * Appends bytes.
@@ -1087,22 +819,9 @@ int8_t z_bytes_writer_write_all(z_bytes_writer_t *writer, const uint8_t *src, si
  *   bytes: A data to append.
  *
  * Return:
- *  0 in case of success, negative error code otherwise
+ *   ``0`` if write is successful, ``negative value`` otherwise.
  */
-int8_t z_bytes_writer_append(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
-
-/**
- * Appends bytes, with boundaries information. It would allow to read the same piece of data using
- * :c:func:`z_bytes_reader_read_bounded`.
- *
- * Parameters:
- *   writer: A data writer.
- *   bytes: A data to append.
- *
- * Return:
- *  0 in case of success, negative error code otherwise
- */
-int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *bytes);
+z_result_t z_bytes_writer_append(z_loaned_bytes_writer_t *writer, z_moved_bytes_t *bytes);
 
 /**
  * Create timestamp.
@@ -1112,30 +831,31 @@ int8_t z_bytes_writer_append_bounded(z_bytes_writer_t *writer, z_moved_bytes_t *
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to get the id from.
  *
  * Return:
- *   ``0`` if encode successful, ``negative value`` otherwise (for example if RTC is not available on the system).
+ *   ``0`` if encode is successful, ``negative value`` otherwise (for example if RTC is not available on the system).
  */
-int8_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
+z_result_t z_timestamp_new(z_timestamp_t *ts, const z_loaned_session_t *zs);
 
 /**
  * Returns NTP64 time associated with this timestamp.
+ *
+ * Parameters:
+ *   ts: Pointer to the valid :c:type:`z_timestamp_t`.
+ *
+ * Return:
+ *   NTP64 time value
  */
 uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts);
 
 /**
  * Returns id associated with this timestamp.
- */
-z_id_t z_timestamp_id(const z_timestamp_t *ts);
-
-/**
- * Checks validity of a timestamp
  *
  * Parameters:
- *   ts: Timestamp value to check validity of.
+ *   ts: Pointer to the valid :c:type:`z_timestamp_t`.
  *
  * Return:
- *   ``true`` if timestamp is valid, ``false`` otherwise.
+ *   Associated id represented by c:type:`z_id_t`
  */
-_Bool z_timestamp_check(z_timestamp_t ts);
+z_id_t z_timestamp_id(const z_timestamp_t *ts);
 
 /**
  * Builds a default query target.
@@ -1254,74 +974,125 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_sample_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The sample closure.
+ *   ``0`` in case of success, negative error code otherwise
  */
-int8_t z_closure_sample(z_owned_closure_sample_t *closure, z_data_handler_t call, z_dropper_handler_t drop,
-                        void *context);
+z_result_t z_closure_sample(z_owned_closure_sample_t *closure, z_closure_sample_callback_t call,
+                            z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a sample closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_sample_t` to call.
+ *   sample: Pointer to the :c:type:`z_loaned_sample_t` to pass to the closure.
+ */
+void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample);
 
 /**
  * Builds a new query closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_query_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The query closure.
+ *   ``0`` in case of success, negative error code otherwise
  */
-int8_t z_closure_query(z_owned_closure_query_t *closure, z_queryable_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_query(z_owned_closure_query_t *closure, z_closure_query_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a query closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_query_t` to call.
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to pass to the closure.
+ */
+void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_query_t *query);
 
 /**
  * Builds a new reply closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_reply_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The reply closure.
+ *   ``0`` in case of success, negative error code otherwise
  */
-int8_t z_closure_reply(z_owned_closure_reply_t *closure, z_reply_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_reply(z_owned_closure_reply_t *closure, z_closure_reply_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a reply closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_reply_t` to call.
+ *   reply: Pointer to the :c:type:`z_loaned_reply_t` to pass to the closure.
+ */
+void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_reply_t *reply);
 
 /**
  * Builds a new hello closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_hello_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The hello closure.
+ *   ``0`` in case of success, negative error code otherwise
  */
-int8_t z_closure_hello(z_owned_closure_hello_t *closure, z_loaned_hello_handler_t call, z_dropper_handler_t drop,
-                       void *context);
+z_result_t z_closure_hello(z_owned_closure_hello_t *closure, z_closure_hello_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a hello closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_hello_t` to call.
+ *   hello: Pointer to the :c:type:`z_loaned_hello_t` to pass to the closure.
+ */
+void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hello_t *hello);
 
 /**
  * Builds a new zid closure.
  * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zid_t`.
  *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
  *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
  *   context: Pointer to an arbitrary state.
  *
  * Return:
- *   The hello closure.
+ *   ``0`` in case of success, negative error code otherwise
  */
-int8_t z_closure_zid(z_owned_closure_zid_t *closure, z_id_handler_t call, z_dropper_handler_t drop, void *context);
+z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_t call, z_closure_drop_callback_t drop,
+                         void *context);
+
+/**
+ * Calls a zid closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_zid_t` to call.
+ *   zid: Pointer to the :c:type:`z_loaned_zid_t` to pass to the closure.
+ */
+void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
@@ -1338,6 +1109,7 @@ _Z_OWNED_FUNCTIONS_DEF(sample)
 _Z_OWNED_FUNCTIONS_DEF(query)
 _Z_OWNED_FUNCTIONS_DEF(slice)
 _Z_OWNED_FUNCTIONS_DEF(bytes)
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF(bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(reply_err)
 _Z_OWNED_FUNCTIONS_DEF(encoding)
 
@@ -1392,9 +1164,9 @@ size_t z_string_len(const z_loaned_string_t *str);
  *   value: Pointer to a null terminated string to be copied.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
+z_result_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
 
 /**
  * Builds a :c:type:`z_owned_string_t` by transferring ownership over a null-terminated string to it.
@@ -1402,15 +1174,15 @@ int8_t z_string_copy_from_str(z_owned_string_t *str, const char *value);
  * Parameters:
  *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *   value: Pointer to a null terminated string to be owned by `str`.
- *   deleter: A thread-safe delete function to free the `value`. Will be called once when `str` is dropped. Can be
- * NULL, in case if `value` is allocated in static memory.
- *    context: An optional context to be passed to the `deleter`.
+ *   deleter: A thread-safe delete function to free the `value`. Will be called once when `str` is dropped.
+ *     Can be NULL in the case where `value` is allocated in static memory.
+ *   context: An optional context to be passed to the `deleter`.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
-                         void *context);
+z_result_t z_string_from_str(z_owned_string_t *str, char *value, void (*deleter)(void *value, void *context),
+                             void *context);
 
 /**
  * Builds an empty :c:type:`z_owned_string_t`.
@@ -1424,22 +1196,23 @@ void z_string_empty(z_owned_string_t *str);
  * Builds a :c:type:`z_string_t` by wrapping a substring specified by ``const char *`` and length `len`.
  *
  * Parameters:
+ *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *   value: Pointer to a string.
  *   len: String size.
- *   str: Pointer to an uninitialized :c:type:`z_owned_string_t`.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len);
+z_result_t z_string_copy_from_substr(z_owned_string_t *str, const char *value, size_t len);
 
 /**
  * Checks if string is empty
  *
  * Parameters:
  *   str: Pointer to a :c:type:`z_loaned_string_t` to check.
+ *
  * Return:
- *  ``true`` if conainer is empty, ``false`` otherwise.
+ *  ``true`` if the string is empty, ``false`` otherwise.
  */
 bool z_string_is_empty(const z_loaned_string_t *str);
 
@@ -1447,19 +1220,26 @@ bool z_string_is_empty(const z_loaned_string_t *str);
  * Returns :c:type:`z_loaned_slice_t` for the string
  *
  * Parameters:
- *   str: Pointer to a :c:type:`z_loaned_string_t` to get slice.
+ *   str: Pointer to a :c:type:`z_loaned_string_t` to get a slice.
+ *
  * Return:
  *   slice containing string data
  */
 const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str);
 
 /**
+ * Returns default :c:type:`z_priority_t` value
+ */
+z_priority_t z_priority_default(void);
+
+/**
  * Returns id of Zenoh entity that transmitted hello message.
  *
  * Parameters:
  *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ *
  * Return:
- *  Id of the Zenoh entity that transmitted hello message.
+ *   Id of the Zenoh entity that transmitted hello message.
  */
 z_id_t z_hello_zid(const z_loaned_hello_t *hello);
 
@@ -1468,33 +1248,48 @@ z_id_t z_hello_zid(const z_loaned_hello_t *hello);
  *
  * Parameters:
  *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ *
  * Return:
- *  Type of the Zenoh entity that transmitted hello message.
+ *   Type of the Zenoh entity that transmitted hello message.
  */
 z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello);
 
 /**
- * Constructs an array of locators of Zenoh entity that sent hello message.
+ * Returns an array of locators of Zenoh entity that sent hello message.
  *
  * Parameters:
  *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ *
  * Return:
  *   :c:type:`z_loaned_string_array_t` containing locators.
  */
-const z_loaned_string_array_t *z_hello_locators(const z_loaned_hello_t *hello);
+const z_loaned_string_array_t *zp_hello_locators(const z_loaned_hello_t *hello);
+
+/**
+ * Constructs an array of locators of Zenoh entity that sent hello message.
+ *
+ * Note that it is a method for zenoh-c compatiblity, in zenoh-pico :c:func:`zp_hello_locators`
+ * can be used.
+ *
+ * Parameters:
+ *   hello: Pointer to a :c:type:`z_loaned_hello_t` message.
+ *   locators_out: An uninitialized memory location where :c:type:`z_owned_string_array_t` will be constructed.
+ */
+void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *locators_out);
 
 /**
  * Constructs a non-owned non-null-terminated string from the kind of zenoh entity.
  *
  * The string has static storage (i.e. valid until the end of the program).
+ *
  * Parameters:
  *   whatami: A whatami bitmask of zenoh entity kind.
  *   str_out: An uninitialized memory location where strring will be constructed.
  *
  * Return:
- *  ``0`` in case of success, ``negative value`` otherwise.
+ *   ``0`` in case of success, ``negative value`` otherwise.
  */
-int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
+z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
 
 /************* Primitives **************/
 /**
@@ -1506,9 +1301,9 @@ int8_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
  *   options: Pointer to a :c:type:`z_scout_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if scouting successfully triggered, ``negative value`` otherwise.
+ *   ``0`` if scouting was successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
+z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
 
 /**
  * Opens a Zenoh session.
@@ -1516,22 +1311,35 @@ int8_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, cons
  * Parameters:
  *   zs: Pointer to an uninitialized :c:type:`z_owned_session_t` to store the session info.
  *   config: Moved :c:type:`z_owned_config_t` to configure the session with.
+ *   options: Pointer to a :c:type:`z_open_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if open successful, ``negative value`` otherwise.
+ *   ``0`` if open is successful, ``negative value`` otherwise.
  */
-int8_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
+z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
 
 /**
  * Closes a Zenoh session.
  *
  * Parameters:
- *   zs: Moved :c:type:`z_owned_session_t` to close.
+ *   zs: Loaned :c:type:`z_owned_session_t` to close.
+ *   options: Pointer to a :c:type:`z_close_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if close successful, ``negative value`` otherwise.
+ *   ``0`` if close is successful, ``negative value`` otherwise.
  */
-int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
+z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options);
+
+/**
+ * Checks if Zenoh session is closed.
+ *
+ * Parameters:
+ *   zs: Loaned :c:type:`z_owned_session_t`.
+ *
+ * Return:
+ *   ``true`` if session is closed, ``false`` otherwise.
+ */
+bool z_session_is_closed(const z_loaned_session_t *zs);
 
 /**
  * Fetches Zenoh IDs of all connected peers.
@@ -1544,9 +1352,9 @@ int8_t z_close(z_moved_session_t *zs, const z_close_options_t *options);
  *   callback: Moved :c:type:`z_owned_closure_zid_t` callback.
  *
  * Return:
- *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
+ *   ``0`` if operation was successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
+z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Fetches Zenoh IDs of all connected routers.
@@ -1559,9 +1367,9 @@ int8_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *cal
  *   callback: Moved :c:type:`z_owned_closure_zid_t` callback.
  *
  * Return:
- *   ``0`` if operation successfully triggered, ``negative value`` otherwise.
+ *   ``0`` if operation was successfully triggered, ``negative value`` otherwise.
  */
-int8_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
+z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback);
 
 /**
  * Gets the local Zenoh ID associated to a given Zenoh session.
@@ -1584,7 +1392,7 @@ z_id_t z_info_zid(const z_loaned_session_t *zs);
  *   str: Pointer to uninitialized :c:type:`z_owned_string_t` to store the string.
  *
  * Return:
- *   ``0`` if operation successful, ``negative value`` otherwise.
+ *   ``0`` if operation is successful, ``negative value`` otherwise.
  */
 z_result_t z_id_to_string(const z_id_t *id, z_owned_string_t *str);
 
@@ -1628,7 +1436,7 @@ const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample);
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the encoding from.
  *
  * Return:
- *   The encoding wrapped as a :c:type:`z_loaned_encoding_t*`.
+ *   The encoding wrapped as a :c:type:`z_loaned_encoding_t`.
  */
 const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
 
@@ -1643,21 +1451,23 @@ const z_loaned_encoding_t *z_sample_encoding(const z_loaned_sample_t *sample);
  */
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
 
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
- * (unstable) Gets the reliability a sample was received with.
+ * Gets the reliability a sample was received with (unstable).
  *
  * Parameters:
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the reliability from.
  *
  * Return:
  *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
-#if Z_FEATURE_UNSTABLE_API == 1
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
 #endif
 
 /**
- * Got sample qos congestion control value.
+ * Got a sample qos congestion control value.
  *
  * Parameters:
  *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the congestion control from.
@@ -1679,13 +1489,13 @@ z_congestion_control_t z_sample_congestion_control(const z_loaned_sample_t *samp
 bool z_sample_express(const z_loaned_sample_t *sample);
 
 /**
+ * Gets sample qos priority value.
  *
  * Parameters:
- *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos from.
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the qos priority from.
  *
  * Return:
  *   The priority wrapped as a :c:type:`z_priority_t`.
- * Got sample qos priority value.
  */
 z_priority_t z_sample_priority(const z_loaned_sample_t *sample);
 
@@ -1705,16 +1515,15 @@ const z_loaned_bytes_t *z_sample_attachment(const z_loaned_sample_t *sample);
  * Builds a :c:type:`z_put_options_t` with default values.
  *
  * Parameters:
- *   Pointer to an uninitialized :c:type:`z_put_options_t`.
+ *   options: Pointer to an uninitialized :c:type:`z_put_options_t`.
  */
-
 void z_put_options_default(z_put_options_t *options);
 
 /**
  * Builds a :c:type:`z_delete_options_t` with default values.
  *
  * Parameters:
- *   Pointer to an uninitialized :c:type:`z_delete_options_t`.
+ *   options: Pointer to an uninitialized :c:type:`z_delete_options_t`.
  */
 void z_delete_options_default(z_delete_options_t *options);
 
@@ -1728,10 +1537,10 @@ void z_delete_options_default(z_delete_options_t *options);
  *   options: Pointer to a :c:type:`z_put_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if put operation successful, ``negative value`` otherwise.
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
  */
-int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
-             const z_put_options_t *options);
+z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
+                 const z_put_options_t *options);
 
 /**
  * Deletes data for a given keyexpr.
@@ -1742,15 +1551,15 @@ int8_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, z_
  *   options: Pointer to a :c:type:`z_delete_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if delete operation successful, ``negative value`` otherwise.
+ *   ``0`` if delete operation is successful, ``negative value`` otherwise.
  */
-int8_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options);
+z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const z_delete_options_t *options);
 
 /**
  * Builds a :c:type:`z_publisher_options_t` with default values.
  *
  * Parameters:
- *   Pointer to an uninitialized :c:type:`z_delete_options_t`.
+ *   options: Pointer to an uninitialized :c:type:`z_delete_options_t`.
  */
 void z_publisher_options_default(z_publisher_options_t *options);
 
@@ -1762,25 +1571,26 @@ void z_publisher_options_default(z_publisher_options_t *options);
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the publisher through.
+ *   pub: Pointer to an uninitialized :c:type:`z_owned_publisher_t`.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the publisher with.
  *   options: Pointer to a :c:type:`z_publisher_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if declare successful, ``negative value`` otherwise.
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-int8_t z_declare_publisher(z_owned_publisher_t *pub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
-                           const z_publisher_options_t *options);
+z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
+                               const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options);
 
 /**
- * Undeclares and clears the publisher.
+ * Undeclares the publisher.
  *
  * Parameters:
  *   pub: Moved :c:type:`z_owned_publisher_t` to undeclare.
  *
  * Return:
- *   ``0`` if undeclare successful, ``negative value`` otherwise.
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_publisher(z_moved_publisher_t *pub);
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub);
 
 /**
  * Builds a :c:type:`z_publisher_put_options_t` with default values.
@@ -1807,10 +1617,10 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
  *   options: Pointer to a :c:type:`z_publisher_put_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if put operation successful, ``negative value`` otherwise.
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
-                       const z_publisher_put_options_t *options);
+z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                           const z_publisher_put_options_t *options);
 
 /**
  * Deletes data from the keyexpr bound to the given publisher.
@@ -1820,9 +1630,9 @@ int8_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload
  *   options: Pointer to a :c:type:`z_publisher_delete_options_t` to configure the delete operation.
  *
  * Return:
- *   ``0`` if delete operation successful, ``negative value`` otherwise.
+ *   ``0`` if delete operation is successful, ``negative value`` otherwise.
  */
-int8_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
+z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
 
 /**
  * Gets the keyexpr from a publisher.
@@ -1856,10 +1666,10 @@ void z_get_options_default(z_get_options_t *options);
  *   options: Pointer to a :c:type:`z_get_options_t` to configure the operation.
  *
  * Return:
- *   ``0`` if put operation successful, ``negative value`` otherwise.
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
  */
-int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
-             z_moved_closure_reply_t *callback, z_get_options_t *options);
+z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
+                 z_moved_closure_reply_t *callback, z_get_options_t *options);
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *
@@ -1869,7 +1679,7 @@ int8_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, co
  * Return:
  *   ``true`` if queryable answered with an OK, ``false`` otherwise.
  */
-_Bool z_reply_is_ok(const z_loaned_reply_t *reply);
+bool z_reply_is_ok(const z_loaned_reply_t *reply);
 
 /**
  * Gets the content of an OK reply.
@@ -1897,6 +1707,7 @@ const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply);
  */
 const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
 
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  * Gets the id of the zenoh instance that answered this Reply.
  *
@@ -1904,10 +1715,12 @@ const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
  *   reply: Pointer to a :c:type:`z_loaned_reply_t` to get content from.
  *
  * Return:
- * 	`true` if id is present
+ * 	 `true` if id is present
  */
-_Bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
-#endif
+bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
+#endif  // Z_FEATURE_UNSTABLE_API
+
+#endif  // Z_FEATURE_QUERY == 1
 
 #if Z_FEATURE_QUERYABLE == 1
 /**
@@ -1920,34 +1733,48 @@ void z_queryable_options_default(z_queryable_options_t *options);
 
 /**
  * Declares a queryable for a given keyexpr.
- * Note that dropping queryable does not drop its callback, meaning that after queryable drop the messages will still
- * be receieved and processed, until the corresponding session is dropped. To disable the callback with cleanup use
- * :c:func:`z_undeclare_queryable`.
+ * Note that dropping queryable drops its callback.
  *
  * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
  *   queryable: Pointer to an uninitialized :c:type:`z_owned_queryable_t` to contain the queryable.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
+ *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
+ *
+ * Return:
+ *   ``0`` if declare operation is successful, ``negative value`` otherwise.
+ */
+z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
+                               const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
+                               const z_queryable_options_t *options);
+
+/**
+ * Undeclares the queryable.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_queryable_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_queryable(z_moved_queryable_t *pub);
+
+/**
+ * Declares a background queryable for a given keyexpr. The queryable callback will be called
+ * to proccess incoming queries until the corresponding session is closed or dropped.
+ *
+ * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a :c:type:`z_owned_closure_query_t` callback.
  *   options: Pointer to a :c:type:`z_queryable_options_t` to configure the declare.
  *
  * Return:
- *   ``0`` if declare operation successful, ``negative value`` otherwise.
+ *   ``0`` if declare operation is successful, ``negative value`` otherwise.
  */
-int8_t z_declare_queryable(z_owned_queryable_t *queryable, const z_loaned_session_t *zs,
-                           const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
-                           const z_queryable_options_t *options);
-
-/**
- * Undeclares and clears the queryable.
- *
- * Parameters:
- *   queryable: Moved :c:type:`z_owned_queryable_t` to undeclare.
- *
- * Return:
- *   ``0`` if undeclare operation successful, ``negative value`` otherwise.
- */
-int8_t z_undeclare_queryable(z_moved_queryable_t *queryable);
+z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                          z_moved_closure_query_t *callback, const z_queryable_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_options_t` with default values.
@@ -1972,10 +1799,10 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  *   options: Pointer to a :c:type:`z_query_reply_options_t` to configure the reply.
  *
  * Return:
- *   ``0`` if reply operation successful, ``negative value`` otherwise.
+ *   ``0`` if reply operation is successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
-                     const z_query_reply_options_t *options);
+z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
+                         const z_query_reply_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_del_options_t` with default values.
@@ -1999,10 +1826,10 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options);
  *   options: Pointer to a :c:type:`z_query_reply_del_options_t` to configure the reply.
  *
  * Return:
- *   ``0`` if reply operation successful, ``negative value`` otherwise.
+ *   ``0`` if reply operation is successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
-                         const z_query_reply_del_options_t *options);
+z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
+                             const z_query_reply_del_options_t *options);
 
 /**
  * Builds a :c:type:`z_query_reply_err_options_t` with default values.
@@ -2026,10 +1853,10 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  *   options: Pointer to a :c:type:`z_query_reply_err_options_t` to configure the reply error.
  *
  * Return:
- *   ``0`` if reply operation successful, ``negative value`` otherwise.
+ *   ``0`` if reply operation is successful, ``negative value`` otherwise.
  */
-int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
-                         const z_query_reply_err_options_t *options);
+z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
+                             const z_query_reply_err_options_t *options);
 
 #endif
 
@@ -2041,9 +1868,9 @@ int8_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload
  *   name: Pointer to the null-terminated string of the keyexpr.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
+z_result_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a new keyexpr from a substring.
@@ -2054,9 +1881,9 @@ int8_t z_keyexpr_from_str(z_owned_keyexpr_t *keyexpr, const char *name);
  *   len: Length of the substring to consider.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
+z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_t len);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a null-terminated string with auto canonization.
@@ -2066,23 +1893,23 @@ int8_t z_keyexpr_from_substr(z_owned_keyexpr_t *keyexpr, const char *name, size_
  *   name: Pointer to string representation of the keyexpr as a null terminated string.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
+z_result_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name);
 
 /**
  * Builds a :c:type:`z_owned_keyexpr_t` from a substring with auto canonization.
  *
  * Parameters:
  *   keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to store the keyexpr.
- *   name: Pointer to the start of the substring for keyxpr.
+ *   name: Pointer to the start of the substring for keyexpr.
  *   len: Length of the substring to consider. After the function return it will be equal to the canonized key
- * expression string length.
+ *     expression string length.
  *
  * Return:
- *   ``0`` if creation successful, ``negative value`` otherwise.
+ *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
+z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char *name, size_t *len);
 
 /**
  * Declares a keyexpr, so that it is mapped on a numerical id.
@@ -2091,27 +1918,81 @@ int8_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *keyexpr, const char
  * in the routing tables.
  *
  * Parameters:
- *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the keyexpr through.
+ *   declared_keyexpr: Pointer to an uninitialized :c:type:`z_owned_keyexpr_t` to contain the declared keyexpr.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the keyexpr with.
  *
  * Return:
- *   ``0`` if declare successful, ``negative value`` otherwise.
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-int8_t z_declare_keyexpr(z_owned_keyexpr_t *declared_keyexpr, const z_loaned_session_t *zs,
-                         const z_loaned_keyexpr_t *keyexpr);
+z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *declared_keyexpr,
+                             const z_loaned_keyexpr_t *keyexpr);
 
 /**
  * Undeclares a keyexpr.
  *
  * Parameters:
- *   keyexpr: Moved :c:type:`z_owned_keyexpr_t` to undeclare.
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to undeclare the data through.
+ *   keyexpr: Moved :c:type:`z_owned_keyexpr_t` to undeclare.
  *
  * Return:
- *   ``0`` if undeclare successful, ``negative value`` otherwise.
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
  */
-int8_t z_undeclare_keyexpr(z_moved_keyexpr_t *keyexpr, const z_loaned_session_t *zs);
+z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr);
+
+/**
+ * Constructs a new empty string array.
+ *
+ * Parameters:
+ *   a: Pointer to an uninitialized :c:type:`z_owned_string_array_t` to store the array of strings.
+ */
+void z_string_array_new(z_owned_string_array_t *a);
+
+/**
+ * Appends specified value to the end of the string array by alias.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   value: Pointer to the string to be added.
+ *
+ * Return:
+ *   The new length of the array.
+ */
+size_t z_string_array_push_by_alias(z_loaned_string_array_t *a, const z_loaned_string_t *value);
+
+/**
+ * Appends specified value to the end of the string array by copying.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   value: Pointer to the string to be added.
+ *
+ * Return:
+ *   The new length of the array.
+ */
+size_t z_string_array_push_by_copy(z_loaned_string_array_t *a, const z_loaned_string_t *value);
+
+/**
+ * Returns the value at the position of index in the string array.
+ *
+ * Parameters:
+ *   a: Pointer to :c:type:`z_loaned_string_array_t`.
+ *   k: index value.
+ *
+ * Return:
+ *   `NULL` if the index is out of bounds.
+ */
+const z_loaned_string_t *z_string_array_get(const z_loaned_string_array_t *a, size_t k);
+
+/**
+ * Returns the number of elements in the array.
+ */
+size_t z_string_array_len(const z_loaned_string_array_t *a);
+
+/**
+ * Returns ``true`` if the array is empty, ``false`` otherwise.
+ */
+bool z_string_array_is_empty(const z_loaned_string_array_t *a);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /**
@@ -2124,33 +2005,48 @@ void z_subscriber_options_default(z_subscriber_options_t *options);
 
 /**
  * Declares a subscriber for a given keyexpr.
- * Note that dropping subscriber does not drop its callback, meaning that after subscriber drop the messages will still
- * be receieved and processed, until the corresponding session is dropped. To disable the callback with cleanup use
- * :c:func:`z_subscriber_undeclare`.
+ * Note that dropping subscriber drops its callback.
  *
  * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
  *   sub: Pointer to a :c:type:`z_owned_subscriber_t` to contain the subscriber.
+ *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
+ *   callback: Pointer to a`z_owned_closure_sample_t` callback.
+ *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
+ *
+ * Return:
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
+                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
+                                const z_subscriber_options_t *options);
+
+/**
+ * Undeclares the subscriber.
+ *
+ * Parameters:
+ *   pub: Moved :c:type:`z_owned_subscriber_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_subscriber(z_moved_subscriber_t *pub);
+
+/**
+ * Declares a background subscriber for a given keyexpr. Subscriber callback will be called to process the messages,
+ * until the corresponding session is closed or dropped.
+ *
+ * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` to declare the subscriber through.
  *   keyexpr: Pointer to a :c:type:`z_loaned_keyexpr_t` to bind the subscriber with.
  *   callback: Pointer to a`z_owned_closure_sample_t` callback.
  *   options: Pointer to a :c:type:`z_subscriber_options_t` to configure the operation
  *
  * Return:
- *   ``0`` if declare successful, ``negative value`` otherwise.
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
  */
-int8_t z_declare_subscriber(z_owned_subscriber_t *sub, const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
-                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
-
-/**
- * Undeclares and clears the subscriber.
- *
- * Parameters:
- *   sub: Moved :c:type:`z_owned_subscriber_t` to undeclare.
- *
- * Return:
- *   ``0`` if undeclare successful, ``negative value`` otherwise.
- */
-int8_t z_undeclare_subscriber(z_moved_subscriber_t *sub);
+z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                           z_moved_closure_sample_t *callback, const z_subscriber_options_t *options);
 
 /**
  * Gets the keyexpr from a subscriber.
@@ -2186,7 +2082,7 @@ void zp_task_read_options_default(zp_task_read_options_t *options);
  * Return:
  *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
-int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
+z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *options);
 
 /**
  * Stops the read task.
@@ -2199,7 +2095,7 @@ int8_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options_t *
  * Return:
  *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
-int8_t zp_stop_read_task(z_loaned_session_t *zs);
+z_result_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
  * Builds a :c:type:`zp_task_lease_options_t` with default value.
@@ -2224,7 +2120,7 @@ void zp_task_lease_options_default(zp_task_lease_options_t *options);
  * Return:
  *   ``0`` if task started successfully, ``negative value`` otherwise.
  */
-int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
+z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t *options);
 
 /**
  * Stops the lease task.
@@ -2237,7 +2133,7 @@ int8_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_options_t
  * Return:
  *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
-int8_t zp_stop_lease_task(z_loaned_session_t *zs);
+z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
 
 /************* Single Thread helpers **************/
 /**
@@ -2258,7 +2154,7 @@ void zp_read_options_default(zp_read_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
+z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options);
 
 /**
  * Builds a :c:type:`zp_send_keep_alive_options_t` with default value.
@@ -2278,7 +2174,7 @@ void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
+z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_alive_options_t *options);
 
 /**
  * Builds a :c:type:`zp_send_join_options_t` with default value.
@@ -2306,7 +2202,19 @@ void z_scout_options_default(z_scout_options_t *options);
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
  */
-int8_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
+z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
+
+#ifdef Z_FEATURE_UNSTABLE_API
+/**
+ * Gets the default reliability value (unstable).
+ *
+ * Return:
+ *   The reliability wrapped as a :c:type:`z_reliability_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_reliability_t z_reliability_default(void);
+#endif
 
 #ifdef __cplusplus
 }

@@ -56,7 +56,7 @@ void fprinthello(FILE *stream, const z_loaned_hello_t *hello) {
     fprintf(stream, ", whatami: ");
     fprintwhatami(stream, z_hello_whatami(hello));
     fprintf(stream, ", locators: ");
-    fprintlocators(stream, z_hello_locators(hello));
+    fprintlocators(stream, zp_hello_locators(hello));
     fprintf(stream, " }");
 }
 

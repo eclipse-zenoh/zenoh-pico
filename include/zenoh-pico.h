@@ -24,7 +24,9 @@
 #define ZENOH_PICO_TWEAK 0
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/api/encoding.h"
 #include "zenoh-pico/api/handlers.h"
+#include "zenoh-pico/api/liveliness.h"
 #include "zenoh-pico/api/macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"

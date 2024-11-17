@@ -27,7 +27,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_QUERYABLE == 1
-_Bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two) {
+bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two) {
     return one->_id == two->_id;
 }
 
@@ -132,9 +132,9 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
     return ret;
 }
 
-int8_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
-                             const _z_bytes_t attachment) {
-    int8_t ret = _Z_RES_OK;
+z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, const _z_keyexpr_t q_key, uint32_t qid,
+                                 const _z_bytes_t attachment) {
+    z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     _zp_session_lock_mutex(zn);

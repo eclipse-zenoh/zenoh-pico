@@ -42,7 +42,7 @@ void z_stats_stop(z_stats_t *stats) {
 void on_sample(z_loaned_sample_t *sample, void *context) {
     z_stats_t *stats = (z_stats_t *)context;
     z_owned_slice_t value;
-    z_bytes_deserialize_into_slice(z_sample_payload(sample), &value);
+    z_bytes_to_slice(z_sample_payload(sample), &value);
     unsigned long data_len = (unsigned long)z_slice_len(z_loan(value));
 
     if (stats->curr_len != data_len) {
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         exit(-1);
     }
     // Declare Subscriber/resource
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_subscriber(&sub, z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
+    if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to create subscriber.\n");
         exit(-1);
     }
@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
     printf("End of test\n");
     z_sleep_s(1);
     // Clean up
-    z_undeclare_subscriber(z_move(sub));
-    z_close(z_move(s), NULL);
+    z_drop(z_move(sub));
+    z_drop(z_move(s));
     exit(0);
 }
 #else

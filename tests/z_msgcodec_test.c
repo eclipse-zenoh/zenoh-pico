@@ -135,7 +135,7 @@ void print_scouting_message_type(uint8_t header) {
 /*=============================*/
 /*    Generating functions     */
 /*=============================*/
-_Bool gen_bool(void) { return z_random_u8() % 2; }
+bool gen_bool(void) { return z_random_u8() % 2; }
 
 uint8_t gen_uint8(void) { return z_random_u8(); }
 
@@ -160,7 +160,7 @@ _z_zint_t gen_zint(void) {
 }
 
 _z_wbuf_t gen_wbuf(size_t len) {
-    _Bool is_expandable = false;
+    bool is_expandable = false;
 
     if (gen_bool()) {
         is_expandable = true;
@@ -363,7 +363,7 @@ void zint(void) {
     _z_zint_t e_z = gen_zint();
 
     // Encode
-    int8_t res = _z_zsize_encode(&wbf, e_z);
+    z_result_t res = _z_zsize_encode(&wbf, e_z);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -401,7 +401,7 @@ void unit_extension(void) {
     _z_msg_ext_unit_t e_u = ext._body._unit;
 
     // Encode
-    int8_t res = _z_msg_ext_encode_unit(&wbf, &e_u);
+    z_result_t res = _z_msg_ext_encode_unit(&wbf, &e_u);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -442,7 +442,7 @@ void zint_extension(void) {
     _z_msg_ext_zint_t e_u = ext._body._zint;
 
     // Encode
-    int8_t res = _z_msg_ext_encode_zint(&wbf, &e_u);
+    z_result_t res = _z_msg_ext_encode_zint(&wbf, &e_u);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -484,7 +484,7 @@ void zbuf_extension(void) {
     _z_msg_ext_zbuf_t e_u = ext._body._zbuf;
 
     // Encode
-    int8_t res = _z_msg_ext_encode_zbuf(&wbf, &e_u);
+    z_result_t res = _z_msg_ext_encode_zbuf(&wbf, &e_u);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -547,7 +547,7 @@ void payload_field(void) {
     _z_bytes_t e_pld = gen_payload(64);
 
     // Encode
-    int8_t res = _z_bytes_encode(&wbf, &e_pld);
+    z_result_t res = _z_bytes_encode(&wbf, &e_pld);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -618,7 +618,7 @@ void timestamp_field(void) {
     _z_timestamp_t e_ts = gen_timestamp();
 
     // Encode
-    int8_t res = _z_timestamp_encode(&wbf, &e_ts);
+    z_result_t res = _z_timestamp_encode(&wbf, &e_ts);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -647,7 +647,7 @@ _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
     key._id = gen_uint16();
     key._mapping._val = gen_uint8();
-    _Bool is_numerical = gen_bool();
+    bool is_numerical = gen_bool();
     if (is_numerical == true) {
         key._suffix = _z_string_null();
     } else {
@@ -686,7 +686,7 @@ void keyexpr_field(void) {
 
     // Encode
     uint8_t header = (_z_keyexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
-    int8_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
+    z_result_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -729,7 +729,7 @@ void resource_declaration(void) {
     _z_decl_kexpr_t e_rd = gen_resource_declaration();
 
     // Encode
-    int8_t res = _z_decl_kexpr_encode(&wbf, &e_rd);
+    z_result_t res = _z_decl_kexpr_encode(&wbf, &e_rd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -770,7 +770,7 @@ void subscriber_declaration(void) {
     // Initialize
     _z_decl_subscriber_t e_sd = gen_subscriber_declaration();
     // Encode
-    int8_t res = _z_decl_subscriber_encode(&wbf, &e_sd);
+    z_result_t res = _z_decl_subscriber_encode(&wbf, &e_sd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -819,7 +819,7 @@ void queryable_declaration(void) {
     _z_decl_queryable_t e_qd = gen_queryable_declaration();
 
     // Encode
-    int8_t res = _z_decl_queryable_encode(&wbf, &e_qd);
+    z_result_t res = _z_decl_queryable_encode(&wbf, &e_qd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -833,6 +833,49 @@ void queryable_declaration(void) {
 
     printf("   ");
     assert_eq_queryable_declaration(&e_qd, &d_qd);
+    printf("\n");
+
+    // Free
+    _z_keyexpr_clear(&e_qd._keyexpr);
+    _z_keyexpr_clear(&d_qd._keyexpr);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+/*------------------ Token declaration ------------------*/
+_z_decl_token_t gen_token_declaration(void) {
+    _z_decl_token_t e_qd = {._keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
+
+    return e_qd;
+}
+
+void assert_eq_token_declaration(const _z_decl_token_t *left, const _z_decl_token_t *right) {
+    assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);
+    assert(left->_id == right->_id);
+}
+
+void token_declaration(void) {
+    printf("\n>> Queryable declaration\n");
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    // Initialize
+    _z_decl_token_t e_qd = gen_token_declaration();
+
+    // Encode
+    int8_t res = _z_decl_token_encode(&wbf, &e_qd);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    _z_decl_token_t d_qd;
+    uint8_t e_hdr = 0;
+    _z_uint8_decode(&e_hdr, &zbf);
+    res = _z_decl_token_decode(&d_qd, &zbf, e_hdr);
+    assert(res == _Z_RES_OK);
+
+    printf("   ");
+    assert_eq_token_declaration(&e_qd, &d_qd);
     printf("\n");
 
     // Free
@@ -864,7 +907,7 @@ void forget_resource_declaration(void) {
     _z_undecl_kexpr_t e_frd = gen_forget_resource_declaration();
 
     // Encode
-    int8_t res = _z_undecl_kexpr_encode(&wbf, &e_frd);
+    z_result_t res = _z_undecl_kexpr_encode(&wbf, &e_frd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -905,7 +948,7 @@ void forget_subscriber_declaration(void) {
     _z_undecl_subscriber_t e_fsd = gen_forget_subscriber_declaration();
 
     // Encode
-    int8_t res = _z_undecl_subscriber_encode(&wbf, &e_fsd);
+    z_result_t res = _z_undecl_subscriber_encode(&wbf, &e_fsd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -946,7 +989,7 @@ void forget_queryable_declaration(void) {
     _z_undecl_queryable_t e_fqd = gen_forget_queryable_declaration();
 
     // Encode
-    int8_t res = _z_undecl_queryable_encode(&wbf, &e_fqd);
+    z_result_t res = _z_undecl_queryable_encode(&wbf, &e_fqd);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -969,12 +1012,52 @@ void forget_queryable_declaration(void) {
     _z_wbuf_clear(&wbf);
 }
 
+/*------------------ Forget Token declaration ------------------*/
+_z_undecl_token_t gen_forget_token_declaration(void) {
+    _z_undecl_token_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_zint()};
+    return e_fqd;
+}
+
+void assert_eq_forget_token_declaration(const _z_undecl_token_t *left, const _z_undecl_token_t *right) {
+    assert_eq_keyexpr(&left->_ext_keyexpr, &right->_ext_keyexpr);
+    assert(left->_id == right->_id);
+}
+
+void forget_token_declaration(void) {
+    printf("\n>> Forget token declaration\n");
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    // Initialize
+    _z_undecl_token_t e_fqd = gen_forget_token_declaration();
+
+    // Encode
+    int8_t res = _z_undecl_token_encode(&wbf, &e_fqd);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    uint8_t e_hdr = 0;
+    _z_uint8_decode(&e_hdr, &zbf);
+    _z_undecl_token_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
+    res = _z_undecl_token_decode(&d_fqd, &zbf, e_hdr);
+    assert(res == _Z_RES_OK);
+
+    printf("   ");
+    assert_eq_forget_token_declaration(&e_fqd, &d_fqd);
+    printf("\n");
+
+    // Free
+    _z_keyexpr_clear(&e_fqd._ext_keyexpr);
+    _z_keyexpr_clear(&d_fqd._ext_keyexpr);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*------------------ Declaration ------------------*/
 _z_declaration_t gen_declaration(void) {
-    uint8_t decl[] = {
-        _Z_DECL_KEXPR,        _Z_UNDECL_KEXPR,   _Z_DECL_SUBSCRIBER,
-        _Z_UNDECL_SUBSCRIBER, _Z_DECL_QUERYABLE, _Z_UNDECL_QUERYABLE,
-    };
+    uint8_t decl[] = {_Z_DECL_KEXPR,     _Z_UNDECL_KEXPR,     _Z_DECL_SUBSCRIBER, _Z_UNDECL_SUBSCRIBER,
+                      _Z_DECL_QUERYABLE, _Z_UNDECL_QUERYABLE, _Z_DECL_TOKEN,      _Z_UNDECL_TOKEN};
 
     _z_declaration_t d;
     d._tag = decl[gen_uint8() % (sizeof(decl) / sizeof(uint8_t))];
@@ -998,6 +1081,12 @@ _z_declaration_t gen_declaration(void) {
         case _Z_UNDECL_QUERYABLE: {
             d._body._undecl_queryable = gen_forget_queryable_declaration();
         } break;
+        case _Z_DECL_TOKEN: {
+            d._body._decl_token = gen_token_declaration();
+        } break;
+        case _Z_UNDECL_TOKEN: {
+            d._body._undecl_token = gen_forget_token_declaration();
+        } break;
         default:
             assert(false);
     }
@@ -1020,6 +1109,9 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
         case _Z_DECL_QUERYABLE:
             assert_eq_queryable_declaration(&left->_body._decl_queryable, &right->_body._decl_queryable);
             break;
+        case _Z_DECL_TOKEN:
+            assert_eq_token_declaration(&left->_body._decl_token, &right->_body._decl_token);
+            break;
         case _Z_UNDECL_KEXPR:
             assert_eq_forget_resource_declaration(&left->_body._undecl_kexpr, &right->_body._undecl_kexpr);
             break;
@@ -1029,6 +1121,9 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
         case _Z_UNDECL_QUERYABLE:
             assert_eq_forget_queryable_declaration(&left->_body._undecl_queryable, &right->_body._undecl_queryable);
             break;
+        case _Z_UNDECL_TOKEN:
+            assert_eq_forget_token_declaration(&left->_body._undecl_token, &right->_body._undecl_token);
+            break;
         default:
             assert(false);
     }
@@ -1037,7 +1132,7 @@ void assert_eq_declaration(const _z_declaration_t *left, const _z_declaration_t 
 /*------------------ Declare message ------------------*/
 _z_network_message_t gen_declare_message(void) {
     _z_declaration_t declaration = gen_declaration();
-    _Bool has_id = gen_bool();
+    bool has_id = gen_bool();
     uint32_t id = gen_uint32();
     return _z_n_msg_make_declare(declaration, has_id, id);
 }
@@ -1060,7 +1155,7 @@ void declare_message(void) {
     _z_network_message_t n_msg = gen_declare_message();
 
     // Encode
-    int8_t res = _z_network_message_encode(&wbf, &n_msg);
+    z_result_t res = _z_network_message_encode(&wbf, &n_msg);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -1084,7 +1179,7 @@ void declare_message(void) {
 
 _z_interest_t gen_interest(void) {
     _z_interest_t i = {0};
-    _Bool is_final = gen_bool();  // To determine if interest is final or not
+    bool is_final = gen_bool();  // To determine if interest is final or not
     // Generate interest id
     i._id = gen_uint32();
     printf("Gen interest %d\n", is_final);
@@ -1093,7 +1188,7 @@ _z_interest_t gen_interest(void) {
         // Generate base flags
         i.flags = gen_uint8() & _Z_MSGCODEC_INTEREST_BASE_FLAGS_MASK;
         // Generate test cases
-        _Bool is_restricted = gen_bool();
+        bool is_restricted = gen_bool();
         uint8_t cf_type = gen_uint8() % 3;  // Flags must be c, f or cf
         switch (cf_type) {
             default:
@@ -1157,7 +1252,7 @@ void interest_message(void) {
 /*=============================*/
 /*------------------ Push message ------------------*/
 _z_push_body_t gen_push_body(void) {
-    _Bool isput = gen_bool();
+    bool isput = gen_bool();
     _z_timestamp_t ts = gen_bool() ? gen_timestamp() : _z_timestamp_null();
     _z_source_info_t sinfo = gen_bool() ? gen_source_info() : _z_source_info_null();
     _z_m_push_commons_t commons = {._source_info = sinfo, ._timestamp = ts};
@@ -1194,7 +1289,7 @@ void push_body_message(void) {
     _z_push_body_t e_da = gen_push_body();
 
     // Encode
-    int8_t res = _z_push_body_encode(&wbf, &e_da);
+    z_result_t res = _z_push_body_encode(&wbf, &e_da);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -1238,7 +1333,7 @@ void query_message(void) {
     _z_msg_query_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    int8_t res = _z_query_decode(&decoded, &zbf, header);
+    z_result_t res = _z_query_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == res);
     assert_eq_query(&expected, &decoded);
     _z_msg_query_clear(&decoded);
@@ -1400,7 +1495,7 @@ void request_message(void) {
     _z_n_msg_request_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    int8_t ret = _z_request_decode(&decoded, &zbf, header);
+    z_result_t ret = _z_request_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_request(&expected, &decoded);
     _z_n_msg_request_clear(&decoded);
@@ -1458,7 +1553,7 @@ void response_message(void) {
     _z_n_msg_response_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    int8_t ret = _z_response_decode(&decoded, &zbf, header);
+    z_result_t ret = _z_response_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_response(&expected, &decoded);
     _z_n_msg_response_clear(&decoded);
@@ -1479,7 +1574,7 @@ void response_final_message(void) {
     _z_n_msg_response_final_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    int8_t ret = _z_response_final_decode(&decoded, &zbf, header);
+    z_result_t ret = _z_response_final_decode(&decoded, &zbf, header);
     assert(_Z_RES_OK == ret);
     assert_eq_response_final(&expected, &decoded);
     _z_n_msg_response_final_clear(&decoded);
@@ -1527,7 +1622,7 @@ void join_message(void) {
     assert(_z_join_encode(&wbf, expected._header, &expected._body._join) == _Z_RES_OK);
     _z_t_msg_join_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_join_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_join_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_join(&expected._body._join, &decoded);
     _z_t_msg_join_clear(&decoded);
@@ -1559,7 +1654,7 @@ void init_message(void) {
     assert(_z_init_encode(&wbf, expected._header, &expected._body._init) == _Z_RES_OK);
     _z_t_msg_init_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_init_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_init_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_init(&expected._body._init, &decoded);
     _z_t_msg_init_clear(&decoded);
@@ -1587,7 +1682,7 @@ void open_message(void) {
     assert(_z_open_encode(&wbf, expected._header, &expected._body._open) == _Z_RES_OK);
     _z_t_msg_open_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_open_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_open_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_open(&expected._body._open, &decoded);
     _z_t_msg_open_clear(&decoded);
@@ -1607,7 +1702,7 @@ void close_message(void) {
     assert(_z_close_encode(&wbf, expected._header, &expected._body._close) == _Z_RES_OK);
     _z_t_msg_close_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_close_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_close_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_close(&expected._body._close, &decoded);
     _z_t_msg_close_clear(&decoded);
@@ -1628,7 +1723,7 @@ void keep_alive_message(void) {
     assert(_z_keep_alive_encode(&wbf, expected._header, &expected._body._keep_alive) == _Z_RES_OK);
     _z_t_msg_keep_alive_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_keep_alive_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_keep_alive_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_keep_alive(&expected._body._keep_alive, &decoded);
     _z_t_msg_keep_alive_clear(&decoded);
@@ -1715,7 +1810,7 @@ void frame_message(void) {
     assert(_z_frame_encode(&wbf, expected._header, &expected._body._frame) == _Z_RES_OK);
     _z_t_msg_frame_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_frame_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_frame_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_frame(&expected._body._frame, &decoded);
     _z_t_msg_frame_clear(&decoded);
@@ -1738,7 +1833,7 @@ void fragment_message(void) {
     assert(_z_fragment_encode(&wbf, expected._header, &expected._body._fragment) == _Z_RES_OK);
     _z_t_msg_fragment_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_fragment_decode(&decoded, &zbf, expected._header);
+    z_result_t ret = _z_fragment_decode(&decoded, &zbf, expected._header);
     assert(_Z_RES_OK == ret);
     assert_eq_fragment(&expected._body._fragment, &decoded);
     _z_t_msg_fragment_clear(&decoded);
@@ -1808,7 +1903,7 @@ void transport_message(void) {
     assert(_z_transport_message_encode(&wbf, &expected) == _Z_RES_OK);
     _z_transport_message_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_transport_message_decode(&decoded, &zbf);
+    z_result_t ret = _z_transport_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);
     assert_eq_transport(&expected, &decoded);
     _z_t_msg_clear(&decoded);
@@ -1850,7 +1945,7 @@ void scouting_message(void) {
     assert(_z_scouting_message_encode(&wbf, &expected) == _Z_RES_OK);
     _z_scouting_message_t decoded;
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    int8_t ret = _z_scouting_message_decode(&decoded, &zbf);
+    z_result_t ret = _z_scouting_message_decode(&decoded, &zbf);
     assert(_Z_RES_OK == ret);
     assert_eq_scouting(&expected, &decoded);
     _z_s_msg_clear(&decoded);

@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_session_loan_mut(&s), NULL) < 0 || zp_start_lease_task(z_session_loan_mut(&s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
-        z_close(z_session_move(&s), NULL);
+        z_session_drop(z_session_move(&s));
         return -1;
     }
 
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
     z_view_keyexpr_from_str(&ke, keyexpr);
-    if (z_declare_publisher(&pub, z_session_loan(&s), z_view_keyexpr_loan(&ke), NULL) < 0) {
+    if (z_declare_publisher(z_session_loan(&s), &pub, z_view_keyexpr_loan(&ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
@@ -104,13 +104,13 @@ int main(int argc, char **argv) {
 
         // Create payload
         z_owned_bytes_t payload;
-        z_bytes_serialize_from_str(&payload, buf);
+        z_bytes_copy_from_str(&payload, buf);
 
         z_publisher_put(z_publisher_loan(&pub), z_bytes_move(&payload), NULL);
     }
     // Clean up
-    z_undeclare_publisher(z_publisher_move(&pub));
-    z_close(z_session_move(&s), NULL);
+    z_publisher_drop(z_publisher_move(&pub));
+    z_session_drop(z_session_move(&s));
     return 0;
 }
 #else
