@@ -1289,7 +1289,7 @@ See details at :ref:`owned_types_concept`
 
 Functions
 ---------
-.. autocfunction:: liveliness.h::z_liveliness_token_options_t_default
+.. autocfunction:: liveliness.h::z_liveliness_token_options_default
 .. autocfunction:: liveliness.h::z_liveliness_declare_token
 .. autocfunction:: liveliness.h::z_liveliness_undeclare_token
 .. autocfunction:: liveliness.h::z_liveliness_subscriber_options_default
