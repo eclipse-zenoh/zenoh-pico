@@ -20,6 +20,7 @@
 #include <zephyr/random/random.h>
 #endif
 
+#include <errno.h>
 #include <stddef.h>
 #include <sys/time.h>
 #include <unistd.h>

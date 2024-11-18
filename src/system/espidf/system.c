@@ -14,6 +14,7 @@
 
 #include <esp_heap_caps.h>
 #include <esp_random.h>
+#include <errno.h>
 #include <stddef.h>
 #include <sys/time.h>
 
