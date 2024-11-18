@@ -1271,6 +1271,32 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_substr
 
 
+Liveliness
+========================
+Types
+-----
+.. autoctype:: liveliness.h::z_liveliness_token_options_t
+.. autoctype:: liveliness.h::z_liveliness_subscriber_options_t
+.. autoctype:: liveliness.h::z_liveliness_get_options_t
+
+Represents a Liveliness token entity.
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_liveliness_token_t
+.. c:type:: z_loaned_liveliness_token_t
+.. c:type:: z_moved_liveliness_token_t
+
+
+Functions
+---------
+.. autocfunction:: liveliness.h::z_liveliness_token_options_t_default
+.. autocfunction:: liveliness.h::z_liveliness_declare_token
+.. autocfunction:: liveliness.h::z_liveliness_undeclare_token
+.. autocfunction:: liveliness.h::z_liveliness_subscriber_options_default
+.. autocfunction:: liveliness.h::z_liveliness_declare_subscriber
+.. autocfunction:: liveliness.h::z_liveliness_get
+
+
 Others
 ======
 

@@ -35,8 +35,10 @@ extern "C" {
  */
 typedef void (*_z_drop_handler_t)(void *arg);
 
-#define _Z_RESOURCE_IS_REMOTE 0
-#define _Z_RESOURCE_IS_LOCAL 1
+typedef enum {
+    _Z_SUBSCRIBER_KIND_SUBSCRIBER = 0,
+    _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER = 1,
+} _z_subscriber_kind_t;
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -48,9 +50,13 @@ bool _z_resource_eq(const _z_resource_t *one, const _z_resource_t *two);
 void _z_resource_clear(_z_resource_t *res);
 void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
+size_t _z_resource_size(_z_resource_t *p);
 
 _Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
+
+_Z_ELEM_DEFINE(_z_keyexpr, _z_keyexpr_t, _z_keyexpr_size, _z_keyexpr_clear, _z_keyexpr_copy, _z_keyexpr_move)
+_Z_INT_MAP_DEFINE(_z_keyexpr, _z_keyexpr_t)
 
 // Forward declaration to avoid cyclical include
 typedef struct _z_sample_t _z_sample_t;
