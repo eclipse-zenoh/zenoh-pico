@@ -132,7 +132,9 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unloc
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
+#ifndef ZENOH_MACOS
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+#endif
     _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
 }
 
