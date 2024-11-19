@@ -48,8 +48,4 @@ void _z_publisher_clear(_z_publisher_t *pub);
 void _z_publisher_free(_z_publisher_t **pub);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* INCLUDE_ZENOH_PICO_NET_PUBLISH_H */

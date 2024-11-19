@@ -41,8 +41,4 @@ void _z_subscriber_free(_z_subscriber_t **sub);
 
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* ZENOH_PICO_SUBSCRIBE_NETAPI_H */

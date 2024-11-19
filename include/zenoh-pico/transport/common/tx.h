@@ -37,8 +37,4 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_
                          z_congestion_control_t cong_ctrl);
 z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl);
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* ZENOH_PICO_TRANSPORT_TX_H */
