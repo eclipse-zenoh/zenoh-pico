@@ -217,6 +217,8 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     return _Z_RES_OK;
 }
 
+// TODO: Activate if we add peer unicast support
+#if 0
 static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                                 const _z_id_t *local_zid, enum z_whatami_t whatami) {
     // Read t message from link
@@ -293,6 +295,16 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     // Handshake finished
     return _Z_RES_OK;
 }
+#else
+static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                                const _z_id_t *local_zid, enum z_whatami_t whatami) {
+    _ZP_UNUSED(param);
+    _ZP_UNUSED(zl);
+    _ZP_UNUSED(local_zid);
+    _ZP_UNUSED(whatami);
+    return _Z_ERR_TRANSPORT_OPEN_FAILED;
+}
+#endif
 
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                   const _z_id_t *local_zid) {

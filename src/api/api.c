@@ -1432,6 +1432,15 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs) {
     return _z_transport_start_batching(&session->_tp) ? _Z_RES_OK : _Z_ERR_GENERIC;
 }
 
+z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    if (_Z_RC_IS_NULL(zs)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    // Send current batch
+    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
+}
+
 z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
     if (_Z_RC_IS_NULL(zs)) {
