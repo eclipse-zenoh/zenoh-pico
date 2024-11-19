@@ -48,7 +48,7 @@ typedef struct z_liveliness_token_options_t {
 /**
  * Constructs default value for :c:type:`z_liveliness_token_options_t`.
  */
-z_result_t z_liveliness_token_options_t_default(z_liveliness_token_options_t *options);
+z_result_t z_liveliness_token_options_default(z_liveliness_token_options_t *options);
 
 /**
  * Constructs and declares a liveliness token on the network.
