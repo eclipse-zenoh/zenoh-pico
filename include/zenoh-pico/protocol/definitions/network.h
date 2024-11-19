@@ -309,4 +309,8 @@ _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_pu
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
 z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* INCLUDE_ZENOH_PICO_PROTOCOL_DEFINITIONS_NETWORK_H */

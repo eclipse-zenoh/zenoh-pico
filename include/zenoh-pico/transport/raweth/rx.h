@@ -25,4 +25,8 @@ z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_mess
 z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg, _z_slice_t *addr);
 z_result_t _z_raweth_update_rx_buff(_z_transport_multicast_t *ztm);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZENOH_PICO_RAWETH_RX_H */

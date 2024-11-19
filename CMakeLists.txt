@@ -239,6 +239,12 @@ set(Z_FEATURE_PUBLISHER_SESSION_CHECK 1 CACHE STRING "Toggle publisher session c
 set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
 set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 
+# Add a warning message if someone tries to enable Z_FEATURE_LIVELINESS directly
+if(Z_FEATURE_LIVELINESS AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_LIVELINESS can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_LIVELINESS.")
+  set(Z_FEATURE_LIVELINESS 0 CACHE STRING "Toggle liveliness feature" FORCE)
+endif()
+
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
