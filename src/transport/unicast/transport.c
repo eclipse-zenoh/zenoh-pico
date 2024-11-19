@@ -218,6 +218,84 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
 }
 
 // TODO: Activate if we add peer unicast support
+#if 0
+static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                                const _z_id_t *local_zid, enum z_whatami_t whatami) {
+    // Read t message from link
+    _z_transport_message_t tmsg;
+    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+    // Receive InitSyn
+    if (_Z_MID(tmsg._header) != _Z_MID_T_INIT || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
+        _z_t_msg_clear(&tmsg);
+        return _Z_ERR_MESSAGE_UNEXPECTED;
+    }
+    _Z_DEBUG("Received Z_INIT(Syn)");
+    // Encode InitAck
+    _z_slice_t cookie = _z_slice_null();
+    _z_transport_message_t iam = _z_t_msg_make_init_ack(whatami, *local_zid, cookie);
+    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
+    if (iam._body._init._seq_num_res > tmsg._body._init._seq_num_res) {
+        iam._body._init._seq_num_res = tmsg._body._init._seq_num_res;
+    }
+    if (iam._body._init._req_id_res > tmsg._body._init._req_id_res) {
+        iam._body._init._req_id_res = tmsg._body._init._req_id_res;
+    }
+    if (iam._body._init._batch_size > tmsg._body._init._batch_size) {
+        iam._body._init._batch_size = tmsg._body._init._batch_size;
+    }
+    param->_remote_zid = tmsg._body._init._zid;
+    param->_seq_num_res = iam._body._init._seq_num_res;
+    param->_req_id_res = iam._body._init._req_id_res;
+    param->_batch_size = iam._body._init._batch_size;
+    param->_key_id_res = 0x08 << param->_key_id_res;
+    param->_req_id_res = 0x08 << param->_req_id_res;
+    _z_t_msg_clear(&tmsg);
+    // Send InitAck
+    _Z_DEBUG("Sending Z_INIT(Ack)");
+    ret = _z_link_send_t_msg(zl, &iam);
+    _z_t_msg_clear(&iam);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+    // Read t message from link
+    ret = _z_link_recv_t_msg(&tmsg, zl);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+    // Receive OpenSyn
+    if (_Z_MID(tmsg._header) != _Z_MID_T_OPEN || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
+        _z_t_msg_clear(&tmsg);
+        return _Z_ERR_MESSAGE_UNEXPECTED;
+    }
+    _Z_DEBUG("Received Z_OPEN(Syn)");
+    // Process message
+    param->_lease = tmsg._body._open._lease;
+    param->_initial_sn_rx = tmsg._body._open._initial_sn;
+    _z_t_msg_clear(&tmsg);
+
+    // Init sn, tx side
+    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+    param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
+
+    // Encode OpenAck
+    _z_zint_t lease = Z_TRANSPORT_LEASE;
+    _z_zint_t initial_sn = param->_initial_sn_tx;
+    _z_transport_message_t oam = _z_t_msg_make_open_ack(lease, initial_sn);
+
+    // Encode and send the message
+    _Z_DEBUG("Sending Z_OPEN(Ack)");
+    ret = _z_link_send_t_msg(zl, &oam);
+    _z_t_msg_clear(&oam);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+    // Handshake finished
+    return _Z_RES_OK;
+}
+#else
 static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                                 const _z_id_t *local_zid, enum z_whatami_t whatami) {
     _ZP_UNUSED(param);
@@ -226,82 +304,7 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     _ZP_UNUSED(whatami);
     return _Z_ERR_TRANSPORT_OPEN_FAILED;
 }
-// static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-//                                                 const _z_id_t *local_zid, enum z_whatami_t whatami) {
-//     // Read t message from link
-//     _z_transport_message_t tmsg;
-//     z_result_t ret = _z_link_recv_t_msg(&tmsg, zl);
-//     if (ret != _Z_RES_OK) {
-//         return ret;
-//     }
-//     // Receive InitSyn
-//     if (_Z_MID(tmsg._header) != _Z_MID_T_INIT || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
-//         _z_t_msg_clear(&tmsg);
-//         return _Z_ERR_MESSAGE_UNEXPECTED;
-//     }
-//     _Z_DEBUG("Received Z_INIT(Syn)");
-//     // Encode InitAck
-//     _z_slice_t cookie = _z_slice_null();
-//     _z_transport_message_t iam = _z_t_msg_make_init_ack(whatami, *local_zid, cookie);
-//     // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
-//     if (iam._body._init._seq_num_res > tmsg._body._init._seq_num_res) {
-//         iam._body._init._seq_num_res = tmsg._body._init._seq_num_res;
-//     }
-//     if (iam._body._init._req_id_res > tmsg._body._init._req_id_res) {
-//         iam._body._init._req_id_res = tmsg._body._init._req_id_res;
-//     }
-//     if (iam._body._init._batch_size > tmsg._body._init._batch_size) {
-//         iam._body._init._batch_size = tmsg._body._init._batch_size;
-//     }
-//     param->_remote_zid = tmsg._body._init._zid;
-//     param->_seq_num_res = iam._body._init._seq_num_res;
-//     param->_req_id_res = iam._body._init._req_id_res;
-//     param->_batch_size = iam._body._init._batch_size;
-//     param->_key_id_res = 0x08 << param->_key_id_res;
-//     param->_req_id_res = 0x08 << param->_req_id_res;
-//     _z_t_msg_clear(&tmsg);
-//     // Send InitAck
-//     _Z_DEBUG("Sending Z_INIT(Ack)");
-//     ret = _z_link_send_t_msg(zl, &iam);
-//     _z_t_msg_clear(&iam);
-//     if (ret != _Z_RES_OK) {
-//         return ret;
-//     }
-//     // Read t message from link
-//     ret = _z_link_recv_t_msg(&tmsg, zl);
-//     if (ret != _Z_RES_OK) {
-//         return ret;
-//     }
-//     // Receive OpenSyn
-//     if (_Z_MID(tmsg._header) != _Z_MID_T_OPEN || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
-//         _z_t_msg_clear(&tmsg);
-//         return _Z_ERR_MESSAGE_UNEXPECTED;
-//     }
-//     _Z_DEBUG("Received Z_OPEN(Syn)");
-//     // Process message
-//     param->_lease = tmsg._body._open._lease;
-//     param->_initial_sn_rx = tmsg._body._open._initial_sn;
-//     _z_t_msg_clear(&tmsg);
-
-//     // Init sn, tx side
-//     z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
-//     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
-
-//     // Encode OpenAck
-//     _z_zint_t lease = Z_TRANSPORT_LEASE;
-//     _z_zint_t initial_sn = param->_initial_sn_tx;
-//     _z_transport_message_t oam = _z_t_msg_make_open_ack(lease, initial_sn);
-
-//     // Encode and send the message
-//     _Z_DEBUG("Sending Z_OPEN(Ack)");
-//     ret = _z_link_send_t_msg(zl, &oam);
-//     _z_t_msg_clear(&oam);
-//     if (ret != _Z_RES_OK) {
-//         return ret;
-//     }
-//     // Handshake finished
-//     return _Z_RES_OK;
-// }
+#endif
 
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                   const _z_id_t *local_zid) {
