@@ -29,7 +29,7 @@ z_result_t _z_multicast_open_client(_z_transport_multicast_establish_param_t *pa
                                     const _z_id_t *local_zid);
 z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason, bool link_only);
 z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
-void _z_multicast_transport_clear(_z_transport_t *zt);
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks);
 
 #if (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1) && Z_FEATURE_MULTI_THREAD == 1
 static inline void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock(&ztm->_mutex_peer); }

@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/transport/multicast/transport.h"
+#include "zenoh-pico/transport/common/transport.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,13 +20,9 @@
 #include <string.h>
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/transport/common/lease.h"
-#include "zenoh-pico/transport/common/read.h"
 #include "zenoh-pico/transport/common/tx.h"
-#include "zenoh-pico/transport/multicast.h"
-#include "zenoh-pico/transport/multicast/rx.h"
+#include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/raweth/tx.h"
-#include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -193,33 +189,13 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     return _z_multicast_send_close(ztm, reason, false);
 }
 
-void _z_multicast_transport_clear(_z_transport_t *zt) {
-    _z_transport_multicast_t *ztm = &zt->_transport._multicast;
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
+    _z_common_transport_clear(&ztm->_common, detach_tasks);
 #if Z_FEATURE_MULTI_THREAD == 1
-    // Clean up tasks
-    if (ztm->_common._read_task != NULL) {
-        _z_task_join(ztm->_common._read_task);
-        z_free(ztm->_common._read_task);
-    }
-    if (ztm->_common._lease_task != NULL) {
-        _z_task_join(ztm->_common._lease_task);
-        z_free(ztm->_common._lease_task);
-    }
-    // Clean up the mutexes
-    _z_mutex_drop(&ztm->_common._mutex_tx);
-    _z_mutex_drop(&ztm->_common._mutex_rx);
     _z_mutex_drop(&ztm->_mutex_peer);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-    // Clean up the buffers
-    _z_wbuf_clear(&ztm->_common._wbuf);
-    _z_zbuf_clear(&ztm->_common._zbuf);
-    _z_arc_slice_svec_release(&ztm->_common._arc_pool);
-    _z_network_message_svec_release(&ztm->_common._msg_pool);
-
-    // Clean up peer list
     _z_transport_peer_entry_list_free(&ztm->_peers);
-    _z_link_clear(&ztm->_common._link);
 }
 
 #else
