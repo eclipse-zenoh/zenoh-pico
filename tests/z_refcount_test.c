@@ -36,6 +36,11 @@ void _dummy_clear(_dummy_t *val) {
 
 _Z_REFCOUNT_DEFINE(_dummy, _dummy)
 
+typedef struct {
+    unsigned int _strong_cnt;
+    unsigned int _weak_cnt;
+} _dummy_inner_rc_t;
+
 void test_rc_null(void) {
     _dummy_rc_t drc = _dummy_rc_null();
     assert(drc._cnt == NULL);
@@ -231,9 +236,9 @@ void test_overflow(void) {
     _dummy_t val = {.foo = 42};
     _dummy_rc_t drc1 = _dummy_rc_new_from_val(&val);
     // Artificially set weak count to max value
-    for (size_t i = 0; i < INT32_MAX; i++) {
-        _z_rc_increase_strong(drc1._cnt);
-    }
+    _dummy_inner_rc_t *dcnt = (_dummy_inner_rc_t *)drc1._cnt;
+    dcnt->_strong_cnt = INT32_MAX;
+    dcnt->_weak_cnt = INT32_MAX;
 
     _dummy_rc_t drc2 = _dummy_rc_clone(&drc1);
     assert(_Z_RC_IS_NULL(&drc2));
@@ -248,6 +253,105 @@ void test_decr(void) {
     _dummy_rc_t drc2 = _dummy_rc_clone(&drc1);
     assert(!_dummy_rc_decr(&drc2));
     assert(_dummy_rc_decr(&drc1));
+}
+
+_Z_SIMPLE_REFCOUNT_DEFINE(_dummy, _dummy)
+
+void test_simple_rc_null(void) {
+    _dummy_simple_rc_t drc = _dummy_simple_rc_null();
+    assert(drc._cnt == NULL);
+    assert(drc._val == NULL);
+}
+
+void test_simple_rc_size(void) { assert(_dummy_simple_rc_size(NULL) == sizeof(_dummy_simple_rc_t)); }
+
+void test_simple_rc_drop(void) {
+    _dummy_simple_rc_t drc = _dummy_simple_rc_null();
+    assert(!_dummy_simple_rc_drop(NULL));
+    assert(!_dummy_simple_rc_drop(&drc));
+}
+
+void test_simple_rc_new(void) {
+    _dummy_t *val = z_malloc(sizeof(_dummy_t));
+    val->foo = 42;
+    _dummy_simple_rc_t drc = _dummy_simple_rc_new(val);
+    assert(!_Z_RC_IS_NULL(&drc));
+    assert(_z_simple_rc_strong_count(drc._cnt) == 1);
+    assert(drc._val->foo == 42);
+    drc._val->foo = 0;
+    assert(val->foo == 0);
+    assert(_dummy_simple_rc_drop(&drc));
+}
+
+void test_simple_rc_new_from_val(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc = _dummy_simple_rc_new_from_val(&val);
+    assert(!_Z_RC_IS_NULL(&drc));
+    assert(_z_simple_rc_strong_count(drc._cnt) == 1);
+    assert(drc._val->foo == 42);
+    drc._val->foo = 0;
+    assert(val.foo == 42);
+    assert(_dummy_simple_rc_drop(&drc));
+}
+
+void test_simple_rc_clone(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
+    assert(_z_simple_rc_strong_count(drc1._cnt) == 1);
+
+    _dummy_simple_rc_t drc2 = _dummy_simple_rc_clone(&drc1);
+    assert(!_Z_RC_IS_NULL(&drc2));
+    assert(_z_simple_rc_strong_count(drc2._cnt) == 2);
+    assert(_z_simple_rc_strong_count(drc2._cnt) == _z_simple_rc_strong_count(drc1._cnt));
+    assert(drc2._val->foo == drc1._val->foo);
+
+    assert(!_dummy_simple_rc_drop(&drc1));
+    assert(_z_simple_rc_strong_count(drc2._cnt) == 1);
+    assert(drc2._val->foo == 42);
+    assert(_dummy_simple_rc_drop(&drc2));
+}
+
+void test_simple_rc_eq(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
+    _dummy_simple_rc_t drc2 = _dummy_simple_rc_clone(&drc1);
+    assert(_dummy_simple_rc_eq(&drc1, &drc2));
+    assert(!_dummy_simple_rc_drop(&drc1));
+    assert(_dummy_simple_rc_drop(&drc2));
+}
+
+void test_simple_rc_clone_as_ptr(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
+    _dummy_simple_rc_t *drc2 = _dummy_simple_rc_clone_as_ptr(&drc1);
+    assert(drc2->_val != NULL);
+    assert(!_Z_RC_IS_NULL(drc2));
+    assert(_dummy_simple_rc_count(drc2) == 2);
+    assert(_dummy_simple_rc_eq(&drc1, drc2));
+    assert(!_dummy_simple_rc_drop(&drc1));
+    assert(_dummy_simple_rc_count(drc2) == 1);
+    assert(_dummy_simple_rc_drop(drc2));
+    z_free(drc2);
+}
+
+void test_simple_rc_copy(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
+    _dummy_simple_rc_t drc2 = _dummy_simple_rc_null();
+    assert(!_dummy_simple_rc_eq(&drc1, &drc2));
+    _dummy_simple_rc_copy(&drc2, &drc1);
+    assert(_dummy_simple_rc_count(&drc2) == 2);
+    assert(_dummy_simple_rc_eq(&drc1, &drc2));
+    assert(!_dummy_simple_rc_drop(&drc2));
+    assert(_dummy_simple_rc_drop(&drc1));
+}
+
+void test_simple_rc_decr(void) {
+    _dummy_t val = {.foo = 42};
+    _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
+    _dummy_simple_rc_t drc2 = _dummy_simple_rc_clone(&drc1);
+    assert(!_dummy_simple_rc_decr(&drc2));
+    assert(_dummy_simple_rc_decr(&drc1));
 }
 
 int main(void) {
@@ -268,5 +372,17 @@ int main(void) {
     test_weak_upgrade();
     test_overflow();
     test_decr();
+
+    test_simple_rc_null();
+    test_simple_rc_size();
+    test_simple_rc_drop();
+    test_simple_rc_new();
+    test_simple_rc_new_from_val();
+    test_simple_rc_clone();
+    test_simple_rc_eq();
+    test_simple_rc_clone_as_ptr();
+    test_simple_rc_copy();
+    test_simple_rc_decr();
+
     return 0;
 }

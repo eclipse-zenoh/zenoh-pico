@@ -19,6 +19,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ uint8 -------------------*/
@@ -67,7 +68,7 @@ z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     if (_z_zbuf_can_read(zbf) == true) {
         *u8 = _z_zbuf_read(zbf);
     } else {
-        _Z_DEBUG("WARNING: Not enough bytes to read");
+        _Z_INFO("Not enough bytes to read");
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 
@@ -182,6 +183,7 @@ z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t
     uint64_t i = 0;
     z_result_t res = _z_zint64_decode_with_reader(&i, reader, context);
     if (res != _Z_RES_OK || i > SIZE_MAX) {
+        _Z_INFO("Reader decode failed");
         res = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     } else {
         *zint = (_z_zint_t)i;
@@ -192,35 +194,51 @@ z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t
 z_result_t _z_uint8_decode_reader(uint8_t *zint, void *context) { return _z_uint8_decode(zint, (_z_zbuf_t *)context); }
 
 z_result_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *zbf) {
-    return _z_zint64_decode_with_reader(zint, _z_uint8_decode_reader, (void *)zbf);
+    *zint = 0;
+    uint8_t b = 0;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+
+    uint8_t i = 0;
+    while (((b & 0x80) != 0) && (i != 7 * (VLE_LEN - 1))) {
+        *zint = *zint | ((uint64_t)(b & 0x7f)) << i;
+        _Z_RETURN_IF_ERR(_z_uint8_decode(&b, zbf));
+        i = i + (uint8_t)7;
+    }
+    *zint = *zint | ((uint64_t)b << i);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *zbf) {
-    z_result_t ret = _Z_RES_OK;
     uint64_t buf;
     _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
-    if (buf <= UINT16_MAX) {
-        *zint = (uint16_t)buf;
-    } else {
-        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    if (buf > UINT16_MAX) {
+        _Z_INFO("Invalid zint16 value decoded");
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    return ret;
+    *zint = (uint16_t)buf;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *zbf) {
-    z_result_t ret = _Z_RES_OK;
     uint64_t buf;
     _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
-    if (buf <= UINT32_MAX) {
-        *zint = (uint32_t)buf;
-    } else {
-        ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    if (buf > UINT32_MAX) {
+        _Z_INFO("Invalid zint32 value decoded");
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    return ret;
+    *zint = (uint32_t)buf;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
-    return _z_zsize_decode_with_reader(zint, _z_uint8_decode_reader, (void *)zbf);
+    uint64_t buf;
+    _Z_RETURN_IF_ERR(_z_zint64_decode(&buf, zbf));
+    if (buf > SIZE_MAX) {
+        _Z_INFO("Invalide zsize value decoded");
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    *zint = (_z_zint_t)buf;
+    return _Z_RES_OK;
 }
 
 /*------------------ uint8_array ------------------*/
@@ -255,7 +273,7 @@ z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
             *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
             _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read");
+            _Z_INFO("Not enough bytes to read");
             bs->len = 0;
             bs->start = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -277,14 +295,16 @@ z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice
 
 z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 
-z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf) {
+z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
+    // Decode slice
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
-    if (_z_slice_is_alloced(&s)) {
-        return _z_bytes_from_slice(bs, s);
-    } else {
-        return _z_bytes_from_buf(bs, s.start, s.len);
-    }
+    // Calc offset
+    size_t offset = _z_ptr_u8_diff(s.start, _Z_RC_IN_VAL(&zbf->_slice)->start);
+    // Get ownership of subslice
+    *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
+    _z_bytes_alias_arc_slice(bs, arcs);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_bytes_encode_val(_z_wbuf_t *wbf, const _z_bytes_t *bs) {
@@ -326,11 +346,12 @@ z_result_t _z_str_decode(char **str, _z_zbuf_t *zbf) {
             }
             *str = tmp;
         } else {
-            _Z_DEBUG("WARNING: Not enough bytes to read");
+            _Z_INFO("Not enough bytes to read");
             *str = NULL;
             ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     } else {
+        _Z_INFO("Size decode failed");
         *str = NULL;
         ret |= _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
@@ -344,22 +365,17 @@ z_result_t _z_string_encode(_z_wbuf_t *wbf, const _z_string_t *s) {
 }
 
 z_result_t _z_string_decode(_z_string_t *str, _z_zbuf_t *zbf) {
-    *str = _z_string_null();
     _z_zint_t len = 0;
     // Decode string length
     _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
     // Check if we have enough bytes to read
     if (_z_zbuf_len(zbf) < len) {
-        _Z_DEBUG("WARNING: Not enough bytes to read");
+        _Z_INFO("Not enough bytes to read");
         return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
-    // Allocate space for the string terminator
-    *str = _z_string_preallocate(len);
-    if (str->_slice.start == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    // Read bytes
-    _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(str), 0, len);
+    // Alias string
+    *str = _z_string_alias_substr((const char *)_z_zbuf_get_rptr(zbf), len);
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + len);
     return _Z_RES_OK;
 }
 

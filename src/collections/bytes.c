@@ -27,19 +27,8 @@
 /*-------- Bytes --------*/
 bool _z_bytes_check(const _z_bytes_t *bytes) { return !_z_bytes_is_empty(bytes); }
 
-_z_bytes_t _z_bytes_null(void) {
-    _z_bytes_t b;
-    b._slices = _z_arc_slice_svec_make(0);
-    return b;
-}
-
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
-    _z_arc_slice_svec_copy(&dst->_slices, &src->_slices);
-    if (_z_arc_slice_svec_len(&dst->_slices) == _z_arc_slice_svec_len(&src->_slices)) {
-        return _Z_RES_OK;
-    } else {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    return _z_arc_slice_svec_copy(&dst->_slices, &src->_slices, true);
 }
 
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
@@ -74,6 +63,8 @@ _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
 
 void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
 
+void _z_bytes_aliased_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_reset(&bytes->_slices); }
+
 void _z_bytes_free(_z_bytes_t **bs) {
     _z_bytes_t *ptr = *bs;
 
@@ -104,7 +95,7 @@ z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
     *b = _z_bytes_null();
     _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, s.len);
     if (_z_arc_slice_len(&arc_s) != s.len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    return _z_arc_slice_svec_append(&b->_slices, &arc_s) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    return _z_arc_slice_svec_append(&b->_slices, &arc_s, true);
 }
 
 z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
@@ -136,9 +127,12 @@ z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
 }
 
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    _Z_CLEAN_RETURN_IF_ERR(_z_arc_slice_svec_append(&dst->_slices, s) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY,
-                           _z_arc_slice_drop(s));
-    return _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
+    ret = _z_arc_slice_svec_append(&dst->_slices, s, true);
+    if (ret != _Z_RES_OK) {
+        _z_arc_slice_drop(s);
+    }
+    return ret;
 }
 
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src) {
@@ -161,11 +155,11 @@ _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
         _z_arc_slice_t *arc_s = _z_bytes_get_slice(bs, 0);
         return _z_slice_alias_buf(_z_arc_slice_data(arc_s), _z_arc_slice_len(arc_s));
     }
-    return _z_slice_empty();
+    return _z_slice_null();
 }
 
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
-    dst->_slices = src->_slices;
+    *dst = *src;
     *src = _z_bytes_null();
 }
 

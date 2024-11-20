@@ -52,10 +52,10 @@ void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
 size_t _z_resource_size(_z_resource_t *p);
 
-_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_resource_size, _z_resource_clear, _z_resource_copy)
+_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
-_Z_ELEM_DEFINE(_z_keyexpr, _z_keyexpr_t, _z_keyexpr_size, _z_keyexpr_clear, _z_keyexpr_copy)
+_Z_ELEM_DEFINE(_z_keyexpr, _z_keyexpr_t, _z_keyexpr_size, _z_keyexpr_clear, _z_keyexpr_copy, _z_keyexpr_move)
 _Z_INT_MAP_DEFINE(_z_keyexpr, _z_keyexpr_t)
 
 // Forward declaration to avoid cyclical include
@@ -79,9 +79,9 @@ bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *t
 void _z_subscription_clear(_z_subscription_t *sub);
 
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
-_Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy, _z_noop_move)
 _Z_ELEM_DEFINE(_z_subscription_rc, _z_subscription_rc_t, _z_subscription_rc_size, _z_subscription_rc_drop,
-               _z_subscription_rc_copy)
+               _z_subscription_rc_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
@@ -90,12 +90,12 @@ typedef struct {
 } _z_publication_t;
 
 // Forward type declaration to avoid cyclical include
-typedef struct _z_query_rc_t _z_query_rc_t;
+typedef struct _z_query_t _z_query_t;
 
 /**
  * The callback signature of the functions handling query messages.
  */
-typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
+typedef void (*_z_closure_query_callback_t)(_z_query_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -110,9 +110,10 @@ bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session
 void _z_session_queryable_clear(_z_session_queryable_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
-_Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy,
+               _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size, _z_session_queryable_rc_drop,
-               _z_noop_copy)
+               _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes
@@ -131,6 +132,8 @@ typedef struct {
     _z_zint_t _id;
     _z_closure_reply_callback_t _callback;
     _z_drop_handler_t _dropper;
+    z_clock_t _start_time;
+    uint64_t _timeout;
     void *_arg;
     _z_pending_reply_list_t *_pending_replies;
     z_query_target_t _target;
@@ -141,7 +144,7 @@ typedef struct {
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two);
 void _z_pending_query_clear(_z_pending_query_t *res);
 
-_Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
 
 typedef struct {
@@ -192,9 +195,10 @@ bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_i
 void _z_session_interest_clear(_z_session_interest_t *res);
 
 _Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
-_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy,
+               _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
-               _z_noop_copy)
+               _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
 
 typedef enum {
@@ -210,7 +214,7 @@ typedef struct {
 } _z_declare_data_t;
 
 void _z_declare_data_clear(_z_declare_data_t *data);
-_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy)
+_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
 #ifdef __cplusplus

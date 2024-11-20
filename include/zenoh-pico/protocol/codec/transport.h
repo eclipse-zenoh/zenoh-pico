@@ -22,13 +22,12 @@
 extern "C" {
 #endif
 
-#define _ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE 32
-
 z_result_t _z_scouting_message_encode(_z_wbuf_t *buf, const _z_scouting_message_t *msg);
 z_result_t _z_scouting_message_decode(_z_scouting_message_t *msg, _z_zbuf_t *buf);
 
 z_result_t _z_transport_message_encode(_z_wbuf_t *buf, const _z_transport_message_t *msg);
-z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf);
+z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *buf, _z_arc_slice_svec_t *arc_pool,
+                                       _z_network_message_svec_t *msg_pool);
 
 z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t *msg);
 z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header);
@@ -46,13 +45,11 @@ z_result_t _z_keep_alive_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_k
 z_result_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint8_t header);
 
 z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg);
-z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_svec_t *arc_pool,
+                           _z_network_message_svec_t *msg_pool);
 
 z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fragment_t *msg);
 z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t header);
-
-z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg);
-z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf);
 
 #ifdef __cplusplus
 }
