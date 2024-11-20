@@ -180,10 +180,12 @@ z_result_t _z_reopen(_z_session_rc_t *zn) {
             continue;
         }
 
+#if Z_FEATURE_MULTI_THREAD == 1
         // TODO: currnetly we can come to reopen only from task, so we can restart them
         // but we have no original attributes (which currently in all known cases is default
         _zp_start_lease_task(_Z_RC_IN_VAL(zn), NULL);
         _zp_start_read_task(_Z_RC_IN_VAL(zn), NULL);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
         if (ret == _Z_RES_OK && !_z_network_message_list_is_empty(zs->_decalaration_cache)) {
             _z_network_message_list_t *iter = zs->_decalaration_cache;
