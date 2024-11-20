@@ -48,7 +48,7 @@ void _z_liveliness_token_clear(_z_liveliness_token_t *token) {
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_liveliness_token_t, liveliness_token, _z_liveliness_token_check,
                                       _z_liveliness_token_null, _z_liveliness_token_clear)
 
-z_result_t z_liveliness_token_options_t_default(z_liveliness_token_options_t *options) {
+z_result_t z_liveliness_token_options_default(z_liveliness_token_options_t *options) {
     options->__dummy = 0;
     return _Z_RES_OK;
 }
