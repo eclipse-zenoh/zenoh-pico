@@ -15,8 +15,9 @@
 #include "zenoh-pico/transport/unicast/lease.h"
 
 #include "zenoh-pico/session/query.h"
-#include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/system/platform_common.h"
 #include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -40,6 +41,13 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
+static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
+    _z_session_rc_ref_t *zs = ztu->_common._session;
+    _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
+    _z_unicast_transport_clear(ztu, true);
+    _z_reopen(zs);
+}
+
 void *_zp_unicast_lease_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
 
@@ -57,9 +65,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 ztu->_received = false;
             } else {
                 _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);
-                ztu->_common._lease_task_running = false;
-                _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
-                break;
+                _zp_unicast_failed(ztu);
+                return 0;
             }
             next_lease = (int)ztu->_common._lease;
         }
@@ -69,6 +76,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             if (ztu->_common._transmitted == false) {
                 if (_zp_unicast_send_keep_alive(ztu) < 0) {
                     _Z_INFO("Send keep alive failed.");
+                    _zp_unicast_failed(ztu);
+                    return 0;
                 }
             }
             // Reset the keep alive parameters
