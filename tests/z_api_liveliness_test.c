@@ -139,6 +139,9 @@ void test_liveliness_sub(bool multicast, bool history) {
     z_sleep_s(1);
     assert(context.token2_drop);
 
+    z_closure_sample_drop(z_closure_sample_move(&closure));
+    z_subscriber_drop(z_subscriber_move(&sub));
+
     assert_ok(zp_stop_read_task(z_loan_mut(s1)));
     assert_ok(zp_stop_read_task(z_loan_mut(s2)));
     assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
