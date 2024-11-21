@@ -19,14 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zenoh-pico/link/link.h"
-#include "zenoh-pico/transport/common/lease.h"
-#include "zenoh-pico/transport/common/read.h"
-#include "zenoh-pico/transport/common/tx.h"
-#include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/unicast/rx.h"
-#include "zenoh-pico/transport/utils.h"
-#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/uuid.h"
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1

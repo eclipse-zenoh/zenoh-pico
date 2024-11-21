@@ -234,10 +234,6 @@ set(Z_FEATURE_MULTICAST_TRANSPORT 1 CACHE STRING "Toggle multicast transport")
 set(Z_FEATURE_UNICAST_TRANSPORT 1 CACHE STRING "Toggle unicast transport")
 set(Z_FEATURE_RAWETH_TRANSPORT 0 CACHE STRING "Toggle raw ethernet transport")
 set(Z_FEATURE_TCP_NODELAY 1 CACHE STRING "Toggle TCP_NODELAY")
-set(Z_FEATURE_LOCAL_SUBSCRIBER 0 CACHE STRING "Toggle local subscriptions")
-set(Z_FEATURE_PUBLISHER_SESSION_CHECK 1 CACHE STRING "Toggle publisher session check")
-set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
-set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 
 # Add a warning message if someone tries to enable Z_FEATURE_LIVELINESS directly
 if(Z_FEATURE_LIVELINESS AND NOT Z_FEATURE_UNSTABLE_API)

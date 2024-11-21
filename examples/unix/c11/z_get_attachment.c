@@ -68,11 +68,12 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
 
         // Check attachment
         const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
-        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
-        size_t attachment_len;
-        if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) < 0) {
+        if (attachment == NULL) {
             return;
         }
+        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
+        size_t attachment_len;
+        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
@@ -177,7 +178,7 @@ int main(int argc, char **argv) {
 
     ze_owned_serializer_t serializer;
     ze_serializer_empty(&serializer);
-    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 1);
+    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
     for (size_t i = 0; i < 1; ++i) {
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].key));
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].value));

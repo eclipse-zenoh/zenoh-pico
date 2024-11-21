@@ -104,8 +104,8 @@ size_t _z_f_link_write_all_bt(const _z_link_t *self, const uint8_t *ptr, size_t 
 size_t _z_f_link_read_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     size_t rb = _z_read_bt(self->_socket._bt._sock, ptr, len);
     if ((rb > (size_t)0) && (addr != NULL)) {
-        addr->len = strlen(self->_socket._bt._gname);
-        (void)memcpy((uint8_t *)addr->start, self->_socket._bt._gname, strlen(self->_socket._bt._gname));
+        *addr = _z_slice_make(strlen(self->_socket._bt._gname));
+        (void)memcpy((uint8_t *)addr->start, self->_socket._bt._gname, addr->len);
     }
 
     return rb;
@@ -114,8 +114,8 @@ size_t _z_f_link_read_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_sli
 size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
     size_t rb = _z_read_exact_bt(self->_socket._bt._sock, ptr, len);
     if ((rb == len) && (addr != NULL)) {
-        addr->len = strlen(self->_socket._bt._gname);
-        (void)memcpy((uint8_t *)addr->start, self->_socket._bt._gname, strlen(self->_socket._bt._gname));
+        *addr = _z_slice_make(strlen(self->_socket._bt._gname));
+        (void)memcpy((uint8_t *)addr->start, self->_socket._bt._gname, addr->len);
     }
 
     return rb;

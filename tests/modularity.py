@@ -47,8 +47,8 @@ Putting Data ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')..."""
 
     # Expected z_sub output & status
     if args.sub == 1:
+        z_sub_expected_status = -2
         if args.pub == 1:
-            z_sub_expected_status = [0, -2]
             z_sub_expected_output = """Opening session...
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit...
@@ -63,17 +63,16 @@ Press CTRL-C to quit...
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   8] Pub from Pico!')
 >> [Subscriber] Received ('demo/example/zenoh-pico-pub': '[   9] Pub from Pico!')"""
         else:
-            z_sub_expected_status = [-2]
             z_sub_expected_output = """Opening session...
 Declaring Subscriber on 'demo/example/**'...
 Press CTRL-C to quit..."""
     else:
-        z_sub_expected_status = [254]
+        z_sub_expected_status = 254
         z_sub_expected_output = "ERROR: Zenoh pico was compiled without " "Z_FEATURE_SUBSCRIPTION but this example requires it."
 
     print("Start subscriber")
     # Start z_sub in the background
-    z_sub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub -n 10"
+    z_sub_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_sub"
     z_sub_process = subprocess.Popen(
         z_sub_command,
         shell=True,
@@ -133,7 +132,7 @@ Press CTRL-C to quit..."""
     print("Check subscriber status & output")
     # Check the exit status of z_sub
     z_sub_status = z_sub_process.returncode
-    if z_sub_status in z_sub_expected_status:
+    if z_sub_status == z_sub_expected_status:
         print("z_sub status valid")
     else:
         print(f"z_sub status invalid, expected: {z_sub_expected_status}, received: {z_sub_status}")
@@ -176,25 +175,24 @@ Sending Query 'demo/example/**'...
 
     # Expected z_queryable output & status
     if args.queryable == 1:
+        z_queryable_expected_status = -2
         if args.query == 1:
-            z_queryable_expected_status = [0, -2]
             z_queryable_expected_output = """Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit...
  >> [Queryable handler] Received Query 'demo/example/**'
 """
         else:
-            z_queryable_expected_status = [-2]
             z_queryable_expected_output = """Opening session...
 Creating Queryable on 'demo/example/zenoh-pico-queryable'...
 Press CTRL-C to quit..."""
     else:
-        z_queryable_expected_status = [254]
+        z_queryable_expected_status = 254
         z_queryable_expected_output = "ERROR: Zenoh pico was compiled without " "Z_FEATURE_QUERYABLE but this example requires it."
 
     print("Start queryable")
     # Start z_queryable in the background
-    z_queryable_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_queryable -n 1"
+    z_queryable_command = f"stdbuf -oL -eL ./{DIR_EXAMPLES}/z_queryable"
     z_queryable_process = subprocess.Popen(
         z_queryable_command,
         shell=True,
@@ -254,7 +252,7 @@ Press CTRL-C to quit..."""
     print("Check queryable status & output")
     # Check the exit status of z_queryable
     z_queryable_status = z_queryable_process.returncode
-    if z_queryable_status in z_queryable_expected_status:
+    if z_queryable_status == z_queryable_expected_status:
         print("z_queryable status valid")
     else:
         print(f"z_queryable status invalid, expected: {z_queryable_expected_status}," f" received: {z_queryable_status}")

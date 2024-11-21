@@ -63,7 +63,7 @@ Z_FEATURE_RAWETH_TRANSPORT?=0
 # Buffer sizes
 FRAG_MAX_SIZE?=300000
 BATCH_UNICAST_SIZE?=65535
-BATCH_MULTICAST_SIZE?=8192
+BATCH_MULTICAST_SIZE?=8096
 
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))

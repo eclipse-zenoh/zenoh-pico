@@ -33,3 +33,5 @@ _z_interest_t _z_make_interest_final(uint32_t id) {
         .flags = 0,
     };
 }
+
+_z_interest_t _z_interest_null(void) { return (_z_interest_t){0}; }

@@ -34,7 +34,7 @@ typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
 typedef bool (*z_element_eq_f)(const void *left, const void *right);
 
-#define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f, elem_move_f)                        \
+#define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f)                                     \
     typedef bool (*name##_eq_f)(const type *left, const type *right);                                          \
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
@@ -45,7 +45,6 @@ typedef bool (*z_element_eq_f)(const void *left, const void *right);
             *e = NULL;                                                                                         \
         }                                                                                                      \
     }                                                                                                          \
-    static inline void name##_elem_move(void *dst, void *src) { elem_move_f((type *)dst, (type *)src); }       \
     static inline void name##_elem_copy(void *dst, const void *src) { elem_copy_f((type *)dst, (type *)src); } \
     static inline void *name##_elem_clone(const void *src) {                                                   \
         type *dst = (type *)z_malloc(elem_size_f((type *)src));                                                \
@@ -77,7 +76,7 @@ static inline void _z_noop_move(void *dst, void *src) {
     _ZP_UNUSED(src);
 }
 
-_Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_noop, _z_noop_t, _z_noop_size, _z_noop_clear, _z_noop_copy)
 
 #ifdef __cplusplus
 }
