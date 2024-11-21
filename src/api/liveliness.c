@@ -37,10 +37,17 @@ _z_liveliness_token_t _z_liveliness_token_null(void) {
 }
 
 void _z_liveliness_token_clear(_z_liveliness_token_t *token) {
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
-    if (!_Z_RC_IS_NULL(&sess_rc)) {
-        _z_undeclare_liveliness_token(token);
-        _z_session_rc_drop(&sess_rc);
+    if (!_z_liveliness_token_check(token)) {
+        return;
+    }
+    // TODO(sashacmc): implement proper check
+    if (token->_zn._val != NULL) {
+        _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
+        if (!_Z_RC_IS_NULL(&sess_rc)) {
+            _z_undeclare_liveliness_token(token);
+            _z_session_rc_drop(&sess_rc);
+        }
+        _z_session_weak_drop(&token->_zn);
     }
     _z_keyexpr_clear(&token->_key);
 }
@@ -132,7 +139,8 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
         opt = *options;
     }
 
-    ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), *keyexpr, callback->_this._val.call, callback->_this._val.drop, ctx,
+    _z_keyexpr_t ke = _z_keyexpr_duplicate(*keyexpr);
+    ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), ke, callback->_this._val.call, callback->_this._val.drop, ctx,
                               opt.timeout_ms);
 
     z_internal_closure_reply_null(

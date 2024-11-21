@@ -199,6 +199,7 @@ void test_liveliness_get(void) {
     assert(z_fifo_handler_reply_recv(z_fifo_handler_reply_loan(&handler), &reply) == Z_CHANNEL_DISCONNECTED);
 
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&handler));
+    z_closure_reply_drop(z_closure_reply_move(&cb));
 
     assert_ok(zp_stop_read_task(z_loan_mut(s1)));
     assert_ok(zp_stop_read_task(z_loan_mut(s2)));
