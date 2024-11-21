@@ -107,7 +107,7 @@ z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, c
 
     if (key != NULL) {
         ret = _z_trigger_liveliness_subscriptions_undeclare(zn, *key, timestamp);
-        _z_keyexpr_clear(key);
+        _z_keyexpr_free(&key);
     }
 
     return ret;

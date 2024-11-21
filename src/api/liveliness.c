@@ -36,20 +36,21 @@ _z_liveliness_token_t _z_liveliness_token_null(void) {
     return s;
 }
 
-void _z_liveliness_token_clear(_z_liveliness_token_t *token) {
-    if (!_z_liveliness_token_check(token)) {
-        return;
+z_result_t _z_liveliness_token_clear(_z_liveliness_token_t *token) {
+    z_result_t ret = _Z_RES_OK;
+    if (_Z_RC_IS_NULL(&token->_zn)) {
+        return ret;
     }
-    // TODO(sashacmc): implement proper check
-    if (token->_zn._val != NULL) {
-        _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
-        if (!_Z_RC_IS_NULL(&sess_rc)) {
-            _z_undeclare_liveliness_token(token);
-            _z_session_rc_drop(&sess_rc);
-        }
-        _z_session_weak_drop(&token->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        ret = _z_undeclare_liveliness_token(token);
+        _z_session_rc_drop(&sess_rc);
     }
+    _z_session_weak_drop(&token->_zn);
     _z_keyexpr_clear(&token->_key);
+    *token = _z_liveliness_token_null();
+
+    return ret;
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_liveliness_token_t, liveliness_token, _z_liveliness_token_check,
@@ -70,7 +71,7 @@ z_result_t z_liveliness_declare_token(const z_loaned_session_t *zs, z_owned_live
 }
 
 z_result_t z_liveliness_undeclare_token(z_moved_liveliness_token_t *token) {
-    return _z_undeclare_liveliness_token(&token->_this._val);
+    return _z_liveliness_token_clear(&token->_this._val);
 }
 
 /**************** Liveliness Subscriber ****************/

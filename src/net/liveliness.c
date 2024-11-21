@@ -60,7 +60,6 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
     ret = _z_send_n_msg(_Z_RC_IN_VAL(&token->_zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
     _z_n_msg_clear(&n_msg);
 
-    *token = _z_liveliness_token_null();
     return ret;
 }
 
