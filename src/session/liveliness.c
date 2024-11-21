@@ -182,8 +182,7 @@ z_result_t _z_liveliness_register_pending_query(_z_session_t *zn, uint32_t id, _
         _Z_ERROR("Duplicate liveliness query id %i", (int)id);
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     } else {
-        _z_liveliness_pending_query_intmap_insert(&zn->_liveliness_pending_queries, id,
-                                                  _z_liveliness_pending_query_clone(pen_qry));
+        _z_liveliness_pending_query_intmap_insert(&zn->_liveliness_pending_queries, id, pen_qry);
     }
 
     _zp_session_unlock_mutex(zn);
