@@ -31,6 +31,7 @@ typedef struct {
     _z_session_weak_t _zn;
 } _z_liveliness_token_t;
 
+_z_liveliness_token_t _z_liveliness_token_null(void);
 _Z_OWNED_TYPE_VALUE(_z_liveliness_token_t, liveliness_token)
 _Z_OWNED_FUNCTIONS_DEF(liveliness_token)
 
