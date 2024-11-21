@@ -448,7 +448,7 @@ void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg);
 // - if R==1 then the FRAME is sent on the reliable channel, best-effort otherwise.
 //
 typedef struct {
-    _z_network_message_svec_t _messages;
+    _z_network_message_vec_t _messages;
     _z_zint_t _sn;
 } _z_t_msg_frame_t;
 void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
@@ -511,7 +511,7 @@ _z_transport_message_t _z_t_msg_make_open_syn(_z_zint_t lease, _z_zint_t initial
 _z_transport_message_t _z_t_msg_make_open_ack(_z_zint_t lease, _z_zint_t initial_sn);
 _z_transport_message_t _z_t_msg_make_close(uint8_t reason, bool link_only);
 _z_transport_message_t _z_t_msg_make_keep_alive(void);
-_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_svec_t messages,
+_z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_t messages,
                                            z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last);

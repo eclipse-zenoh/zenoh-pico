@@ -31,15 +31,8 @@ z_result_t _z_multicast_send_close(_z_transport_multicast_t *ztm, uint8_t reason
 z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t reason);
 void _z_multicast_transport_clear(_z_transport_t *zt);
 
-#if (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1) && Z_FEATURE_MULTI_THREAD == 1
-static inline void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _z_mutex_lock(&ztm->_mutex_peer); }
-static inline void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm) { _z_mutex_unlock(&ztm->_mutex_peer); }
-#else
-static inline void _z_multicast_peer_mutex_lock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-static inline void _z_multicast_peer_mutex_unlock(_z_transport_multicast_t *ztm) { _ZP_UNUSED(ztm); }
-#endif  // (Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1) && Z_FEATURE_MULTI_THREAD == 1
-
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* ZENOH_PICO_MULTICAST_TRANSPORT_H */

@@ -31,7 +31,10 @@ inline size_t _z_arc_slice_size(const _z_arc_slice_t *s) {
     (void)s;
     return sizeof(_z_arc_slice_t);
 }
-_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move)
+static inline void _z_arc_slice_elem_move(void *dst, void *src) {
+    _z_arc_slice_move((_z_arc_slice_t *)dst, (_z_arc_slice_t *)src);
+}
+_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy)
 _Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
 
 /*-------- Bytes --------*/
@@ -46,19 +49,14 @@ typedef struct {
     _z_arc_slice_svec_t _slices;
 } _z_bytes_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
-static inline void _z_bytes_alias_arc_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
-    dst->_slices = _z_arc_slice_svec_alias_element(s);
-}
 bool _z_bytes_check(const _z_bytes_t *bytes);
+_z_bytes_t _z_bytes_null(void);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_drop(_z_bytes_t *bytes);
-void _z_bytes_aliased_drop(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
 size_t _z_bytes_num_slices(const _z_bytes_t *bs);
 _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i);

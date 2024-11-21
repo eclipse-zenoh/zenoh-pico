@@ -12,22 +12,22 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
-#define INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H
+#ifndef ZENOH_PICO_UNICAST_TX_H
+#define ZENOH_PICO_UNICAST_TX_H
 
-#include "zenoh-pico/collections/slice.h"
-#include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-z_result_t _z_new_transport(_z_transport_t *zt, _z_id_t *bs, _z_string_t *locator, z_whatami_t mode);
-void _z_free_transport(_z_transport_t **zt);
+z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
+                                 z_congestion_control_t cong_ctrl);
+z_result_t _z_unicast_send_t_msg(_z_transport_unicast_t *ztu, const _z_transport_message_t *t_msg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* INCLUDE_ZENOH_PICO_TRANSPORT_MANAGER_H */
+#endif /* ZENOH_PICO_TRANSPORT_LINK_TX_H */

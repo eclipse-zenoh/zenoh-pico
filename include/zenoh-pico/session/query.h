@@ -22,8 +22,6 @@
 extern "C" {
 #endif
 
-void _z_pending_query_process_timeout(_z_session_t *zn);
-
 #if Z_FEATURE_QUERY == 1
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn);
@@ -31,7 +29,7 @@ _z_zint_t _z_get_query_id(_z_session_t *zn);
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id);
 
 z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
-z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, _z_zint_t reply_context, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, _z_zint_t reply_context, const _z_keyexpr_t keyexpr,
                                           _z_msg_put_t *msg, z_sample_kind_t kind);
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg);
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id);

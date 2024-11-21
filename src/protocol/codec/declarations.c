@@ -32,7 +32,6 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/utils/logging.h"
 
 z_result_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
@@ -163,6 +162,7 @@ z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         case _Z_DECL_FINAL: {
             ret = _z_decl_final_encode(wbf);
         } break;
+            ;
     }
     return ret;
 }
@@ -234,7 +234,6 @@ z_result_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, bool *has_exte
         _z_zint_t len;
         _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
         if (_z_zbuf_len(zbf) < len) {
-            _Z_INFO("Not enough bytes to read");
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
         ke->_suffix = _z_string_preallocate(len);
@@ -365,7 +364,6 @@ z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
             ret = _z_decl_final_decode(&decl->_body._decl_final, zbf, header);
         } break;
         default: {
-            _Z_INFO("Unknown token type");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }

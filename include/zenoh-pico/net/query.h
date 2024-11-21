@@ -29,25 +29,21 @@ extern "C" {
  * The query to be answered by a queryable.
  */
 typedef struct _z_query_t {
-    _z_keyexpr_t _key;
     _z_value_t _value;
+    _z_keyexpr_t _key;
     uint32_t _request_id;
-    _z_session_rc_t _zn;
-    _z_bytes_t _attachment;
-    _z_string_t _parameters;
+    _z_session_weak_t _zn;  // Can't be an rc because of cross referencing
+    _z_bytes_t attachment;
+    char *_parameters;
     bool _anyke;
 } _z_query_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_query_t _z_query_null(void) { return (_z_query_t){0}; }
-static inline bool _z_query_check(const _z_query_t *query) {
-    return _z_keyexpr_check(&query->_key) || _z_value_check(&query->_value) || _z_bytes_check(&query->_attachment) ||
-           _z_string_check(&query->_parameters);
-}
-z_result_t _z_query_send_reply_final(_z_query_t *q);
+_z_query_t _z_query_null(void);
 void _z_query_clear(_z_query_t *q);
 z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
+
+_Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
  * Return type when declaring a queryable.
@@ -58,25 +54,12 @@ typedef struct {
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0}; }
-static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
-static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters,
-                                        _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
-                                        bool anyke) {
-    return (_z_query_t){
-        ._key = *key,
-        ._value = *value,
-        ._request_id = request_id,
-        ._zn = *zn,
-        ._attachment = *attachment,
-        ._parameters = _z_string_alias_slice(parameters),
-        ._anyke = anyke,
-    };
-}
+_z_query_t _z_query_create(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters, _z_session_rc_t *zn,
+                           uint32_t request_id, const _z_bytes_t attachment);
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);
-
+_z_queryable_t _z_queryable_null(void);
+bool _z_queryable_check(const _z_queryable_t *queryable);
 #endif
 
 #ifdef __cplusplus

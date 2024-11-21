@@ -26,7 +26,7 @@ extern "C" {
 #if Z_FEATURE_LIVELINESS == 1
 
 z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_token_t *ret_token,
-                                       _z_keyexpr_t *keyexpr);
+                                       _z_keyexpr_t keyexpr);
 z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -43,7 +43,7 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
  * Returns:
  *     The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
-_z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t *keyexpr,
+_z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                                  _z_closure_sample_callback_t callback, _z_drop_handler_t dropper,
                                                  bool history, void *arg);
 
@@ -71,7 +71,7 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub);
  *     arg: A pointer that will be passed to the **callback** on each call.
  *     timeout_ms: The timeout value of this query.
  */
-z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_closure_reply_callback_t callback,
+z_result_t _z_liveliness_query(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_closure_reply_callback_t callback,
                                _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms);
 #endif  // Z_FEATURE_QUERY == 1
 

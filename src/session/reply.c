@@ -19,7 +19,7 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t *key, _z_msg_reply_t *reply) {
+z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t key, _z_msg_reply_t *reply) {
     z_result_t ret = _Z_RES_OK;
 
     // TODO check id to know where to dispatch

@@ -61,12 +61,10 @@ typedef struct _z_reply_data_t {
     _z_reply_tag_t _tag;
 } _z_reply_data_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_reply_data_t _z_reply_data_null(void) { return (_z_reply_data_t){0}; }
 void _z_reply_data_clear(_z_reply_data_t *rd);
 z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src);
 
-_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_reply_data, _z_reply_data_t, _z_noop_size, _z_reply_data_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_reply_data, _z_reply_data_t)
 
 /**
@@ -82,29 +80,15 @@ typedef struct _z_reply_t {
     _z_reply_data_t data;
 } _z_reply_t;
 
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
-static inline _z_reply_t _z_reply_alias(_z_keyexpr_t *keyexpr, _z_id_t id, const _z_bytes_t *payload,
-                                        const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
-                                        const _z_bytes_t *attachment) {
-    _z_reply_t r;
-    r.data.replier_id = id;
-    r.data._tag = _Z_REPLY_TAG_DATA;
-    r.data._result.sample = _z_sample_alias(keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT, attachment,
-                                            Z_RELIABILITY_DEFAULT);
-    return r;
-}
-static inline _z_reply_t _z_reply_err_alias(const _z_bytes_t *payload, _z_encoding_t *encoding) {
-    _z_reply_t r;
-    r.data._tag = _Z_REPLY_TAG_ERROR;
-    r.data._result.error.payload = *payload;
-    r.data._result.error.encoding = *encoding;
-    return r;
-}
 _z_reply_t _z_reply_move(_z_reply_t *src_reply);
+
+_z_reply_t _z_reply_null(void);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
+_z_reply_t _z_reply_create(_z_keyexpr_t keyexpr, _z_id_t id, const _z_bytes_t payload, const _z_timestamp_t *timestamp,
+                           _z_encoding_t *encoding, z_sample_kind_t kind, const _z_bytes_t attachment);
+_z_reply_t _z_reply_err_create(const _z_bytes_t payload, _z_encoding_t *encoding);
 
 typedef struct _z_pending_reply_t {
     _z_reply_t _reply;
@@ -114,7 +98,7 @@ typedef struct _z_pending_reply_t {
 bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
 void _z_pending_reply_clear(_z_pending_reply_t *res);
 
-_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy)
 _Z_LIST_DEFINE(_z_pending_reply, _z_pending_reply_t)
 
 #ifdef __cplusplus
