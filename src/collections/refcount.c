@@ -198,7 +198,8 @@ bool _z_rc_decrease_strong(void** cnt) {
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return _z_rc_decrease_weak(cnt);
     }
-    return _z_rc_decrease_weak(cnt);
+    _z_rc_decrease_weak(cnt);
+    return true;
 }
 
 bool _z_rc_decrease_weak(void** cnt) {
