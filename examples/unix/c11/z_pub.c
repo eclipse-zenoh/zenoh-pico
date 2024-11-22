@@ -107,6 +107,7 @@ int main(int argc, char **argv) {
     // Publish data
     printf("Press CTRL-C to quit...\n");
     char buf[256];
+    zp_batch_start(z_loan(s));
     for (int idx = 0; idx < n; ++idx) {
         z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value);
@@ -117,7 +118,14 @@ int main(int argc, char **argv) {
         z_bytes_copy_from_str(&payload, buf);
 
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
+
+        if (idx % 3 == 0) {
+            printf("FLush data\n");
+            zp_batch_stop(z_loan(s));
+            zp_batch_start(z_loan(s));
+        }
     }
+    zp_batch_stop(z_loan(s));
     // Clean up
     z_drop(z_move(pub));
     z_drop(z_move(s));
