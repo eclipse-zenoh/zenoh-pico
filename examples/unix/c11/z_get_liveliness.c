@@ -99,9 +99,10 @@ int main(int argc, char **argv) {
         } else {
             printf("Received an error\n");
         }
+        z_drop(z_move(reply));
     }
 
-    z_drop(z_move(reply));
+    z_drop(z_move(closure));
     z_drop(z_move(handler));
     z_drop(z_move(s));
     return 0;
