@@ -85,6 +85,7 @@ void test_with_schema(void) {
     z_encoding_to_string(z_encoding_loan_mut(&e), &s);
     assert(strncmp("zenoh/bytes;my_schema", z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s))) == 0);
     z_encoding_drop(z_encoding_move(&e));
+    z_string_drop(z_string_move(&s));
 
     z_encoding_from_str(&e, "zenoh/string;");
     z_encoding_set_schema_from_substr(z_encoding_loan_mut(&e), "my_schema", 3);
