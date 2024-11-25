@@ -28,29 +28,30 @@
 extern "C" {
 #endif
 
-_Z_REFCOUNT_DEFINE(_z_slice, _z_slice)
+_Z_SIMPLE_REFCOUNT_DEFINE(_z_slice, _z_slice)
 
 /*-------- ArcSlice --------*/
 /**
  * An atomically reference counted subslice.
  *
  * Members:
- *   _z_slice_rc_t len: Rc counted slice.
+ *   _z_slice_simple_rc_t len: Rc counted slice.
  *   size_t start: Offset to the subslice start.
  *   size_t len: Length of the subslice.
  */
 
 typedef struct {
-    _z_slice_rc_t slice;
+    _z_slice_simple_rc_t slice;
     size_t start;
     size_t len;
 } _z_arc_slice_t;
 
-_z_arc_slice_t _z_arc_slice_empty(void);
+static inline _z_arc_slice_t _z_arc_slice_empty(void) { return (_z_arc_slice_t){0}; }
+static inline size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
+static inline bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len);
+_z_arc_slice_t _z_arc_slice_wrap_slice_rc(_z_slice_simple_rc_t* slice_rc, size_t offset, size_t len);
 _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset, size_t len);
-size_t _z_arc_slice_len(const _z_arc_slice_t* s);
-bool _z_arc_slice_is_empty(const _z_arc_slice_t* s);
 const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s);
 z_result_t _z_arc_slice_copy(_z_arc_slice_t* dst, const _z_arc_slice_t* src);
 z_result_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src);

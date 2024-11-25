@@ -37,7 +37,7 @@ bool _z_str_eq(const char *left, const char *right);
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
 void _z_str_n_copy(char *dst, const char *src, size_t size);
-_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy)
+_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy, _z_noop_move)
 
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
@@ -70,11 +70,17 @@ typedef struct {
     _z_slice_t _slice;
 } _z_string_t;
 
-_z_string_t _z_string_null(void);
-bool _z_string_check(const _z_string_t *value);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_string_t _z_string_null(void) { return (_z_string_t){0}; }
+static inline bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
+static inline _z_string_t _z_string_alias(const _z_string_t str) {
+    return (_z_string_t){._slice = _z_slice_alias(str._slice)};
+}
+
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice);
 _z_string_t _z_string_alias_str(const char *value);
 _z_string_t _z_string_alias_substr(const char *value, size_t len);
 _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
@@ -88,7 +94,6 @@ z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
 void _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
-_z_string_t _z_string_alias(const _z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
@@ -99,9 +104,7 @@ _z_string_t _z_string_preallocate(const size_t len);
 
 char *_z_str_from_string_clone(const _z_string_t *str);
 
-_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy)
-
-static inline void _z_string_elem_move(void *dst, void *src) { _z_string_move((_z_string_t *)dst, (_z_string_t *)src); }
+_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move)
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)

@@ -25,11 +25,11 @@ extern "C" {
 #endif
 
 z_result_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg);
-z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs);
 z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg);
-z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs);
 z_result_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg);
-z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header);
+z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs);
 z_result_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_final_t *msg);
 z_result_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header);
 z_result_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl);
@@ -38,7 +38,7 @@ z_result_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *inter
 z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header);
 
 z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg);
-z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf);
+z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs);
 
 #ifdef __cplusplus
 }
