@@ -21,6 +21,8 @@
 
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_LIVELINESS == 1
 
+static volatile int msg_nb = 0;
+
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_view_string_t key_string;
@@ -35,6 +37,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
                    z_string_data(z_loan(key_string)));
             break;
     }
+    msg_nb++;
 }
 
 int main(int argc, char **argv) {
@@ -43,6 +46,7 @@ int main(int argc, char **argv) {
     char *clocator = NULL;
     char *llocator = NULL;
     bool history = false;
+    int n = 0;
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:m:l:n:h")) != -1) {
@@ -62,8 +66,11 @@ int main(int argc, char **argv) {
             case 'h':
                 history = true;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -116,6 +123,9 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     while (1) {
+        if (n != 0 && msg_nb >= n) {
+            break;
+        }
         z_sleep_s(1);
     }
 
