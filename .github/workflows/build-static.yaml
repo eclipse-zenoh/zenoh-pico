@@ -38,6 +38,7 @@ jobs:
         BUILD_MULTICAST: ON
         BUILD_INTEGRATION: ON
         BUILD_TOOLS: ON
+        ASAN: ON
         ZENOH_DEBUG: 3
 
   crossbuilds:
