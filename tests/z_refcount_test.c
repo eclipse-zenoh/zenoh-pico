@@ -141,7 +141,7 @@ void test_rc_clone_as_weak(void) {
     assert(_z_rc_weak_count(dwk1._cnt) == 2);
 
     assert(dwk1._val->foo == 42);
-    assert(!_dummy_rc_drop(&drc1));
+    assert(_dummy_rc_drop(&drc1));
     assert(_z_rc_strong_count(dwk1._cnt) == 0);
     assert(_z_rc_weak_count(dwk1._cnt) == 1);
     assert(_dummy_weak_drop(&dwk1));
@@ -156,7 +156,7 @@ void test_rc_clone_as_weak_ptr(void) {
     assert(_z_rc_strong_count(dwk1->_cnt) == 1);
     assert(_z_rc_weak_count(dwk1->_cnt) == 2);
 
-    assert(!_dummy_rc_drop(&drc1));
+    assert(_dummy_rc_drop(&drc1));
     assert(_z_rc_strong_count(dwk1->_cnt) == 0);
     assert(_z_rc_weak_count(dwk1->_cnt) == 1);
     assert(_dummy_weak_drop(dwk1));
@@ -180,7 +180,7 @@ void test_weak_clone(void) {
     assert(_z_rc_strong_count(dwk2._cnt) == 1);
     assert(_z_rc_weak_count(dwk2._cnt) == 3);
 
-    assert(!_dummy_rc_drop(&drc1));
+    assert(_dummy_rc_drop(&drc1));
     assert(_z_rc_strong_count(dwk2._cnt) == 0);
     assert(_z_rc_weak_count(dwk2._cnt) == 2);
 
@@ -208,7 +208,7 @@ void test_weak_copy(void) {
 
 void test_weak_upgrade(void) {
     _dummy_t val = {.foo = 42};
-    _dummy_rc_t drc1 = _dummy_rc_new(&val);
+    _dummy_rc_t drc1 = _dummy_rc_new_from_val(&val);
     _dummy_weak_t dwk1 = _dummy_rc_clone_as_weak(&drc1);
 
     // Valid upgrade
@@ -217,7 +217,7 @@ void test_weak_upgrade(void) {
     assert(_z_rc_strong_count(drc2._cnt) == 2);
     assert(_z_rc_weak_count(drc2._cnt) == 3);
     assert(!_dummy_rc_drop(&drc1));
-    assert(!_dummy_rc_drop(&drc2));
+    assert(_dummy_rc_drop(&drc2));
 
     // Failed upgrade
     _dummy_rc_t drc3 = _dummy_weak_upgrade(&dwk1);
@@ -240,6 +240,10 @@ void test_overflow(void) {
 
     _dummy_weak_t dwk1 = _dummy_rc_clone_as_weak(&drc1);
     assert(_Z_RC_IS_NULL(&dwk1));
+
+    // Manual free to make asan happy, without long decresing
+    free(drc1._val);
+    free(drc1._cnt);
 }
 
 void test_decr(void) {
@@ -248,6 +252,7 @@ void test_decr(void) {
     _dummy_rc_t drc2 = _dummy_rc_clone(&drc1);
     assert(!_dummy_rc_decr(&drc2));
     assert(_dummy_rc_decr(&drc1));
+    free(drc1._val);
 }
 
 int main(void) {

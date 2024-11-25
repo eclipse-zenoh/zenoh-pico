@@ -42,25 +42,32 @@ int main(void) {
 
     str = _z_string_alias_str("");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_locator_clear(&lc);
 
     str = _z_string_alias_str("/");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_locator_clear(&lc);
 
     str = _z_string_alias_str("tcp");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_locator_clear(&lc);
 
     str = _z_string_alias_str("tcp/");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_locator_clear(&lc);
 
     str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_locator_from_string(&lc, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_locator_clear(&lc);
 
     str = _z_string_alias_str("tcp/127.0.0.1:7447?");
     assert(_z_locator_from_string(&lc, &str) == _Z_RES_OK);
+    _z_locator_clear(&lc);
 
     // No metadata defined so far... but this is a valid syntax in principle
     str = _z_string_alias_str("tcp/127.0.0.1:7447?invalid=ctrl");
     assert(_z_locator_from_string(&lc, &str) == _Z_RES_OK);
+    _z_locator_clear(&lc);
 
     // Endpoint
     printf(">>> Testing endpoints...\n");
@@ -80,25 +87,32 @@ int main(void) {
 
     str = _z_string_alias_str("");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("/");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("tcp");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("tcp/");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("127.0.0.1:7447");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_ERR_CONFIG_LOCATOR_INVALID);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("tcp/127.0.0.1:7447?");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
 
     // No metadata defined so far... but this is a valid syntax in principle
     str = _z_string_alias_str("tcp/127.0.0.1:7447?invalid=ctrl");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("udp/127.0.0.1:7447#iface=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
@@ -116,12 +130,15 @@ int main(void) {
 
     str = _z_string_alias_str("udp/127.0.0.1:7447#invalid=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("udp/127.0.0.1:7447?invalid=ctrl#iface=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
 
     str = _z_string_alias_str("udp/127.0.0.1:7447?invalid=ctrl#invalid=eth0");
     assert(_z_endpoint_from_string(&ep, &str) == _Z_RES_OK);
+    _z_endpoint_clear(&ep);
 
     return 0;
 }

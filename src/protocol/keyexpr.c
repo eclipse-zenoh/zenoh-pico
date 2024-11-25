@@ -146,7 +146,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     char const *next_slash;
 
     do {
-        next_slash = strchr(chunk_start, '/');
+        next_slash = memchr(chunk_start, '/', _z_ptr_char_diff(end, chunk_start));
         const char *chunk_end = next_slash ? next_slash : end;
         size_t chunk_len = _z_ptr_char_diff(chunk_end, chunk_start);
         switch (chunk_len) {
@@ -291,7 +291,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
         writer[0] = _z_ptr_char_offset(writer[0], 1);
     }
 
-    (void)memcpy(writer[0], chunk, len);
+    (void)memmove(writer[0], chunk, len);
     writer[0] = _z_ptr_char_offset(writer[0], (ptrdiff_t)len);
 }
 
@@ -766,10 +766,9 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         } else {
             assert(false);  // anything before "$*" or "**" must be part of the canon prefix
         }
-
         while (next_slash != NULL) {
             reader = _z_ptr_char_offset(next_slash, 1);
-            next_slash = strchr(reader, '/');
+            next_slash = memchr(reader, '/', _z_ptr_char_diff(end, reader));
             chunk_end = next_slash ? next_slash : end;
             switch (_z_ptr_char_diff(chunk_end, reader)) {
                 case 0: {
