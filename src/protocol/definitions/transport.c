@@ -102,6 +102,9 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
     msg._body._join._batch_size = Z_BATCH_MULTICAST_SIZE;
     msg._body._join._next_sn = next_sn;
     msg._body._join._zid = zid;
+#if Z_FEATURE_FRAGMENTATION == 1
+    msg._body._join._patch = _Z_CURRENT_PATCH;
+#endif
 
     if ((lease % 1000) == 0) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_T);
@@ -112,7 +115,12 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_JOIN_S);
     }
 
-    if (next_sn._is_qos) {
+#if Z_FEATURE_FRAGMENTATION == 1
+    bool has_patch = msg._body._join._patch != _Z_NO_PATCH;
+#else
+    bool has_patch = false;
+#endif
+    if (next_sn._is_qos == true || has_patch == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
@@ -131,11 +139,23 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
     msg._body._init._batch_size = Z_BATCH_UNICAST_SIZE;
     _z_slice_reset(&msg._body._init._cookie);
+#if Z_FEATURE_FRAGMENTATION == 1
+    msg._body._init._patch = _Z_CURRENT_PATCH;
+#endif
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_UNICAST_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
+    }
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    bool has_patch = msg._body._join._patch != _Z_NO_PATCH;
+#else
+    bool has_patch = false;
+#endif
+    if (has_patch == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
     return msg;
@@ -153,11 +173,23 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, 
     msg._body._init._req_id_res = Z_REQ_RESOLUTION;
     msg._body._init._batch_size = Z_BATCH_UNICAST_SIZE;
     msg._body._init._cookie = cookie;
+#if Z_FEATURE_FRAGMENTATION == 1
+    msg._body._init._patch = _Z_CURRENT_PATCH;
+#endif
 
     if ((msg._body._init._batch_size != _Z_DEFAULT_UNICAST_BATCH_SIZE) ||
         (msg._body._init._seq_num_res != _Z_DEFAULT_RESOLUTION_SIZE) ||
         (msg._body._init._req_id_res != _Z_DEFAULT_RESOLUTION_SIZE)) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_INIT_S);
+    }
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    bool has_patch = msg._body._join._patch != _Z_NO_PATCH;
+#else
+    bool has_patch = false;
+#endif
+    if (has_patch == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
     return msg;
@@ -247,11 +279,11 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t 
 }
 
 /*------------------ Fragment Message ------------------*/
-_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last) {
-    return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last);
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last, bool start, bool stop) {
+    return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last, start, stop);
 }
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, z_reliability_t reliability,
-                                              bool is_last) {
+                                              bool is_last, bool start, bool stop) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == false) {
@@ -263,12 +295,20 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
 
     msg._body._fragment._sn = sn;
     msg._body._fragment._payload = payload;
+    if (start == true || stop == true) {
+        _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
+    }
+    msg._body._fragment.start = start;
+    msg._body._fragment.stop = stop;
 
     return msg;
 }
 
 void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
+    clone->_payload = msg->_payload;
     _z_slice_copy(&clone->_payload, &msg->_payload);
+    clone->start = msg->start;
+    clone->stop = msg->stop;
 }
 
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
@@ -279,6 +319,7 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     clone->_next_sn = msg->_next_sn;
+    clone->_patch = msg->_patch;
     memcpy(clone->_zid.id, msg->_zid.id, 16);
 }
 

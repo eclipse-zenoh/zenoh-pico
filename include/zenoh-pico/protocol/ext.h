@@ -43,7 +43,11 @@ extern "C" {
 /*=============================*/
 /*        Extension IDs        */
 /*=============================*/
-// #define _Z_MSG_EXT_ID_FOO 0x00 // Hex(ENC|M|ID)
+#define _Z_MSG_EXT_ID_JOIN_QOS (0x01 | _Z_MSG_EXT_FLAG_M | _Z_MSG_EXT_ENC_ZBUF)
+#define _Z_MSG_EXT_ID_JOIN_PATCH (0x07 | _Z_MSG_EXT_ENC_ZINT)
+#define _Z_MSG_EXT_ID_INIT_PATCH (0x07 | _Z_MSG_EXT_ENC_ZINT)
+#define _Z_MSG_EXT_ID_FRAGMENT_START (0x02 | _Z_MSG_EXT_ENC_UNIT)
+#define _Z_MSG_EXT_ID_FRAGMENT_STOP (0x03 | _Z_MSG_EXT_ENC_UNIT)
 
 /*=============================*/
 /*     Extension Encodings     */
@@ -58,6 +62,7 @@ extern "C" {
 #define _Z_MSG_EXT_FLAG_M 0x10
 #define _Z_MSG_EXT_IS_MANDATORY(h) ((h & _Z_MSG_EXT_FLAG_M) != 0)
 #define _Z_MSG_EXT_FLAG_Z 0x80
+#define _Z_MSG_EXT_MORE(more) (more ? _Z_MSG_EXT_FLAG_Z : 0)
 
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior

@@ -135,13 +135,12 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
                         if (is_first == false) {  // Get the fragment sequence number
                             sn = __unsafe_z_unicast_get_sn(ztu, reliability);
                         }
-                        is_first = false;
 
                         // Clear the buffer for serialization
                         __unsafe_z_prepare_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
 
                         // Serialize one fragment
-                        ret = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, &fbf, reliability, sn);
+                        ret = __unsafe_z_serialize_zenoh_fragment(&ztu->_wbuf, &fbf, reliability, sn, is_first);
                         if (ret == _Z_RES_OK) {
                             // Write the message length in the reserved space if needed
                             __unsafe_z_finalize_wbuf(&ztu->_wbuf, ztu->_link._cap._flow);
@@ -153,6 +152,7 @@ z_result_t _z_unicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *n
                         } else {
                             _Z_ERROR("Fragment serialization failed with err %d", ret);
                         }
+                        is_first = false;
                     }
                 }
 
