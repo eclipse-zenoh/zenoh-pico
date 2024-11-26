@@ -569,7 +569,7 @@ void payload_field(void) {
 
     // Free
     _z_bytes_drop(&e_pld);
-    _z_bytes_aliased_drop(&d_pld);
+    _z_bytes_drop(&d_pld);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1799,9 +1799,8 @@ void assert_eq_net_msg(const _z_network_message_t *left, const _z_network_messag
 _z_network_message_svec_t gen_net_msgs(size_t n) {
     _z_network_message_svec_t ret = _z_network_message_svec_make(n);
     for (size_t i = 0; i < n; i++) {
-        _z_network_message_t *msg = _z_network_message_svec_get_mut(&ret, i);
-        memset(msg, 0, sizeof(_z_network_message_t));
-        *msg = gen_net_msg();
+        _z_network_message_t msg = gen_net_msg();
+        _z_network_message_svec_append(&ret, &msg, false);
     }
     return ret;
 }
@@ -1829,6 +1828,8 @@ void frame_message(void) {
     z_result_t ret = _z_frame_decode(&decoded, &zbf, expected._header, &arcs, &msg);
     assert(_Z_RES_OK == ret);
     assert_eq_frame(&expected._body._frame, &decoded);
+    _z_network_message_svec_clear(&msg);
+    _z_arc_slice_svec_release(&arcs);
     _z_t_msg_frame_clear(&decoded);
     _z_t_msg_clear(&expected);
     _z_zbuf_clear(&zbf);
@@ -1924,6 +1925,8 @@ void transport_message(void) {
     z_result_t ret = _z_transport_message_decode(&decoded, &zbf, &arcs, &msg);
     assert(_Z_RES_OK == ret);
     assert_eq_transport(&expected, &decoded);
+    _z_network_message_svec_clear(&msg);
+    _z_arc_slice_svec_release(&arcs);
     _z_t_msg_clear(&decoded);
     _z_t_msg_clear(&expected);
     _z_zbuf_clear(&zbf);

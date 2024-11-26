@@ -260,6 +260,7 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
              _z_string_data(&key._suffix));
     if (sub_nb == 0) {
         _z_keyexpr_clear(&key);
+        _z_subscription_infos_svec_release(&subs);
         return _Z_RES_OK;
     }
     // Create sample
@@ -271,9 +272,13 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
     }
     // Clean up
     _z_keyexpr_clear(&key);
+    if (sub_kind == _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER) {
+        _z_subscription_infos_svec_release(&subs);
+    } else {
 #if Z_FEATURE_RX_CACHE != 1
-    _z_subscription_infos_svec_release(&subs);  // Otherwise it's released with cache
+        _z_subscription_infos_svec_release(&subs);  // Otherwise it's released with cache
 #endif
+    }
     return _Z_RES_OK;
 }
 
@@ -286,7 +291,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
     // Clean up
     _z_keyexpr_clear(keyexpr);
     _z_encoding_clear(encoding);
-    _z_bytes_aliased_drop(payload);
+    _z_bytes_drop(payload);
     _z_bytes_drop(attachment);
     return ret;
 }

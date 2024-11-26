@@ -73,7 +73,7 @@ _z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
 }
 
 void _z_slice_clear(_z_slice_t *bs) {
-    if ((bs->start != NULL)) {
+    if (bs->start != NULL) {
         _z_delete_context_delete(&bs->_delete_context, (void *)bs->start);
     }
     _z_slice_reset(bs);

@@ -357,6 +357,8 @@ void test_simple_rc_decr(void) {
     _dummy_simple_rc_t drc2 = _dummy_simple_rc_clone(&drc1);
     assert(!_dummy_simple_rc_decr(&drc2));
     assert(_dummy_simple_rc_decr(&drc1));
+    // free manualy, to make asan happy, because counter already zero
+    z_free(drc1._val);
 }
 
 int main(void) {

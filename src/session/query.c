@@ -186,7 +186,7 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
     z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind);
     // Clean up
     _z_keyexpr_clear(keyexpr);
-    _z_bytes_aliased_drop(&msg->_payload);
+    _z_bytes_drop(&msg->_payload);
     _z_bytes_drop(&msg->_attachment);
     _z_encoding_clear(&msg->_encoding);
     return ret;
@@ -209,7 +209,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
         pen_qry->_callback(&reply, pen_qry->_arg);
     }
     // Clean up
-    _z_bytes_aliased_drop(&msg->_payload);
+    _z_bytes_drop(&msg->_payload);
     _z_encoding_clear(&msg->_encoding);
     return ret;
 }

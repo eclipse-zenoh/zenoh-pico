@@ -164,5 +164,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
             }
         }
     }
+    // TODO (sashacmc): why it was removed???
+    _z_msg_clear(msg);
     return ret;
 }

@@ -140,7 +140,7 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
         opt = *options;
     }
 
-    _z_keyexpr_t ke = _z_keyexpr_duplicate(keyexpr);
+    _z_keyexpr_t ke = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), &ke, callback->_this._val.call, callback->_this._val.drop, ctx,
                               opt.timeout_ms);
 

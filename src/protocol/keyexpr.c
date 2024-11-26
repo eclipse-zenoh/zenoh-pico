@@ -88,9 +88,7 @@ void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) { *dst = _z_keyexpr_s
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (_z_keyexpr_has_suffix(rk)) {
-        _z_string_clear(&rk->_suffix);
-    }
+    _z_string_clear(&rk->_suffix);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {

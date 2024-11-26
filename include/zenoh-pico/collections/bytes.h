@@ -58,7 +58,6 @@ z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
 void _z_bytes_drop(_z_bytes_t *bytes);
-void _z_bytes_aliased_drop(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
 size_t _z_bytes_num_slices(const _z_bytes_t *bs);
 _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i);

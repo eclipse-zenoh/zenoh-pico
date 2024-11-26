@@ -40,7 +40,12 @@ void _z_t_msg_close_clear(_z_t_msg_close_t *msg) { (void)(msg); }
 
 void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg) { (void)(msg); }
 
-void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) { (void)(msg); }
+void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) {
+    // TODO (sashacmc): make in more correct way
+    if (!msg->_messages._aliased) {
+        _z_network_message_svec_clear(&msg->_messages);
+    }
+}
 
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg) { _z_slice_clear(&msg->_payload); }
 

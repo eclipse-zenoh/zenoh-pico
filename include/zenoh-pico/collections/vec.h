@@ -81,12 +81,15 @@ typedef struct {
     size_t _capacity;
     size_t _len;
     void *_val;
+    bool _aliased;
 } _z_svec_t;
 
 static inline _z_svec_t _z_svec_null(void) { return (_z_svec_t){0}; }
-static inline _z_svec_t _z_svec_alias(const _z_svec_t *src) { return *src; }
+static inline _z_svec_t _z_svec_alias(const _z_svec_t *src) {
+    return (_z_svec_t){._capacity = src->_capacity, ._len = src->_len, ._val = src->_val, ._aliased = true};
+}
 static inline _z_svec_t _z_svec_alias_element(void *element) {
-    return (_z_svec_t){._capacity = 1, ._len = 1, ._val = element};
+    return (_z_svec_t){._capacity = 1, ._len = 1, ._val = element, ._aliased = true};
 }
 void _z_svec_init(_z_svec_t *v, size_t offset, size_t element_size);
 _z_svec_t _z_svec_make(size_t capacity, size_t element_size);

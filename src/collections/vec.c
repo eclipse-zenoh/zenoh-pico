@@ -160,7 +160,7 @@ static inline void __z_svec_move_inner(void *dst, void *src, z_element_move_f mo
             offset += element_size;
         }
     } else {
-        memcpy(dst, src, num_elements * element_size);
+        memmove(dst, src, num_elements * element_size);
     }
 }
 
@@ -205,7 +205,9 @@ void _z_svec_reset(_z_svec_t *v, z_element_clear_f clear, size_t element_size) {
 
 void _z_svec_clear(_z_svec_t *v, z_element_clear_f clear_f, size_t element_size) {
     _z_svec_reset(v, clear_f, element_size);
-    _z_svec_release(v);
+    if (!v->_aliased) {
+        _z_svec_release(v);
+    }
 }
 
 void _z_svec_release(_z_svec_t *v) {
