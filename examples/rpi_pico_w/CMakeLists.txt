@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.13)
+
+set(PICO_BOARD "pico_w")
+if(NOT DEFINED ENV{PICO_SDK_PATH})
+    message(FATAL_ERROR "PICO_SDK_PATH environment variable is not set. Please set it to the location of the Pico SDK.")
+endif()
+include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
+
+include(FreeRTOS_Kernel_import.cmake)
+
+include(../../cmake/helpers.cmake)
+set_default_build_type(Release)
+
+project(zenohpico_rpi_pico_w_examples C CXX ASM)
+
+set(CMAKE_SYSTEM_NAME "Generic")
+set(CMAKE_C_STANDARD 11)
+
+pico_sdk_init()
+
+add_executable(zenohpico_rpi_pico_w_examples main.c)
+
+pico_enable_stdio_usb(zenohpico_rpi_pico_w_examples 1)
+pico_enable_stdio_uart(zenohpico_rpi_pico_w_examples 1)
+
+set(BUILD_SHARED_LIBS OFF)
+set(WITH_FREERTOS_PLUS_TCP ON)
+set(ZENOH_DEBUG 3)
+configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
+
+target_link_libraries(zenohpico_static
+	FreeRTOS-Kernel-Heap4
+)
+
+target_include_directories(zenohpico_static PRIVATE 
+	${CMAKE_CURRENT_LIST_DIR}
+	${CMAKE_CURRENT_LIST_DIR}/..
+)
+
+target_compile_definitions(zenohpico_rpi_pico_w_examples PRIVATE
+	WIFI_SSID=\"${WIFI_SSID}\"
+	WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+	ALTCP_MBEDTLS_AUTHMODE=MBEDTLS_SSL_VERIFY_REQUIRED
+	CYW43_TASK_STACK_SIZE=2048
+)
+target_include_directories(zenohpico_rpi_pico_w_examples PRIVATE 
+	${CMAKE_CURRENT_LIST_DIR}
+	${CMAKE_CURRENT_LIST_DIR}/..
+)
+target_link_libraries(zenohpico_rpi_pico_w_examples
+	pico_cyw43_arch_lwip_sys_freertos
+	pico_stdlib
+	hardware_uart
+	FreeRTOS-Kernel-Heap4
+)
+
+pico_add_extra_outputs(zenohpico_rpi_pico_w_examples)
+
