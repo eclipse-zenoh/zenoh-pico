@@ -5,7 +5,7 @@
 // (see https://www.nongnu.org/lwip/2_1_x/group__lwip__opts.html for details)
 
 #define NO_SYS 0
-#define LWIP_SOCKET 0
+#define LWIP_SOCKET 1
 #if PICO_CYW43_ARCH_POLL
 #define MEM_LIBC_MALLOC 1
 #else
@@ -44,6 +44,7 @@
 #define LWIP_NETIF_TX_SINGLE_PBUF 1
 #define DHCP_DOES_ARP_CHECK 0
 #define LWIP_DHCP_DOES_ACD_CHECK 0
+#define LWIP_SOCKET_POLL 0
 
 #ifndef NDEBUG
 #define LWIP_DEBUG 1

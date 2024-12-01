@@ -16,6 +16,7 @@ project(zenohpico_rpi_pico_w_examples C CXX ASM)
 set(CMAKE_SYSTEM_NAME "Generic")
 set(CMAKE_C_STANDARD 11)
 
+add_compile_definitions(LWIP_TIMEVAL_PRIVATE=0)
 pico_sdk_init()
 
 add_executable(zenohpico_rpi_pico_w_examples main.c)
@@ -29,6 +30,9 @@ set(ZENOH_DEBUG 3)
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 
 target_link_libraries(zenohpico_static
+	pico_cyw43_arch_lwip_sys_freertos
+	pico_stdlib
+	hardware_uart
 	FreeRTOS-Kernel-Heap4
 )
 
@@ -48,6 +52,7 @@ target_include_directories(zenohpico_rpi_pico_w_examples PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/..
 )
 target_link_libraries(zenohpico_rpi_pico_w_examples
+	zenohpico_static
 	pico_cyw43_arch_lwip_sys_freertos
 	pico_stdlib
 	hardware_uart
@@ -55,4 +60,3 @@ target_link_libraries(zenohpico_rpi_pico_w_examples
 )
 
 pico_add_extra_outputs(zenohpico_rpi_pico_w_examples)
-

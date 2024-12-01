@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "FreeRTOS_IP.h"
+// #include "FreeRTOS_IP.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
@@ -27,11 +27,7 @@ uint8_t z_random_u8(void) { return z_random_u32(); }
 
 uint16_t z_random_u16(void) { return z_random_u32(); }
 
-uint32_t z_random_u32(void) {
-    uint32_t ret = 0;
-    xApplicationGetRandomNumber(&ret);
-    return ret;
-}
+uint32_t z_random_u32(void) { return rand(); }
 
 uint64_t z_random_u64(void) {
     uint64_t ret = 0;
@@ -182,31 +178,81 @@ z_result_t z_sleep_s(size_t time) {
 }
 
 /*------------------ Clock ------------------*/
-z_clock_t z_clock_now(void) { return z_time_now(); }
-
-unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms(instant) * 1000; }
-
-unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
-
-unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_clock_elapsed_ms(instant) / 1000; }
-
-/*------------------ Time ------------------*/
-z_time_t z_time_now(void) { return xTaskGetTickCount(); }
-
-const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
-    snprintf(buf, buflen, "%u", z_time_now());
-    return buf;
+z_clock_t z_clock_now(void) {
+    z_clock_t now;
+    // clock_gettime(CLOCK_MONOTONIC, &now);
+    return now;
 }
 
-unsigned long z_time_elapsed_us(z_time_t *time) { return z_time_elapsed_ms(time) * 1000; }
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
+    z_clock_t now;
+    // clock_gettime(CLOCK_MONOTONIC, &now);
 
-unsigned long z_time_elapsed_ms(z_time_t *time) {
-    z_time_t now = z_time_now();
-
-    unsigned long elapsed = (now - *time) * portTICK_PERIOD_MS;
+    unsigned long elapsed =
+        (unsigned long)(1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
     return elapsed;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) { return z_time_elapsed_ms(time) / 1000; }
+unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
+    z_clock_t now;
+    // clock_gettime(CLOCK_MONOTONIC, &now);
 
-z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) { return -1; }
+    unsigned long elapsed =
+        (unsigned long)(1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    return elapsed;
+}
+
+unsigned long z_clock_elapsed_s(z_clock_t *instant) {
+    z_clock_t now;
+    // clock_gettime(CLOCK_MONOTONIC, &now);
+
+    unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
+    return elapsed;
+}
+
+/*------------------ Time ------------------*/
+z_time_t z_time_now(void) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+    return now;
+}
+
+const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
+    z_time_t tv = z_time_now();
+    struct tm ts;
+    ts = *localtime(&tv.tv_sec);
+    strftime(buf, buflen, "%Y-%m-%dT%H:%M:%SZ", &ts);
+    return buf;
+}
+
+unsigned long z_time_elapsed_us(z_time_t *time) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+
+    unsigned long elapsed = (unsigned long)(1000000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec));
+    return elapsed;
+}
+
+unsigned long z_time_elapsed_ms(z_time_t *time) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+
+    unsigned long elapsed = (unsigned long)(1000 * (now.tv_sec - time->tv_sec) + (now.tv_usec - time->tv_usec) / 1000);
+    return elapsed;
+}
+
+unsigned long z_time_elapsed_s(z_time_t *time) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+
+    unsigned long elapsed = (unsigned long)(now.tv_sec - time->tv_sec);
+    return elapsed;
+}
+
+z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
+    z_time_t now;
+    gettimeofday(&now, NULL);
+    t->secs = (uint32_t)now.tv_sec;
+    t->nanos = (uint32_t)now.tv_usec * 1000;
+    return 0;
+}
