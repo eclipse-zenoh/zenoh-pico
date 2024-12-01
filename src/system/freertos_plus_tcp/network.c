@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -34,51 +35,57 @@
 z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     z_result_t ret = _Z_RES_OK;
 
-    if (lwip_getaddrinfo(s_address, s_port, NULL, &ep->_iptcp) != 0) {
+    struct addrinfo hints;
+    (void)memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;  // Allow IPv4 or IPv6
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(s_address, s_port, &hints, &ep->_iptcp) < 0) {
         ret = _Z_ERR_GENERIC;
-        return ret;
     }
 
+    _Z_DEBUG("_z_create_endpoint_tcp: %s:%s -> %li", s_address, s_port, ep->_iptcp->ai_addrlen);
     return ret;
 }
 
-void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep) { lwip_freeaddrinfo(ep->_iptcp); }
+void _z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep) { freeaddrinfo(ep->_iptcp); }
 
 z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout) {
     z_result_t ret = _Z_RES_OK;
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
-        z_time_t tv;
-        tv.tv_sec = tout / (uint32_t)1000;
-        tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            ret = _Z_ERR_GENERIC;
-        }
+        // TODO: check what options not supported
+        /*
+z_time_t tv;
+tv.tv_sec = tout / (uint32_t)1000;
+tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+    ret = _Z_ERR_GENERIC;
+}
 
-        int flags = 1;
-        if ((ret == _Z_RES_OK) &&
-            (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
-            ret = _Z_ERR_GENERIC;
-        }
+int flags = 1;
+if ((ret == _Z_RES_OK) &&
+    (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
+    ret = _Z_ERR_GENERIC;
+}
 #if Z_FEATURE_TCP_NODELAY == 1
-        if ((ret == _Z_RES_OK) &&
-            (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
-            ret = _Z_ERR_GENERIC;
-        }
+if ((ret == _Z_RES_OK) &&
+    (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
+    ret = _Z_ERR_GENERIC;
+}
 #endif
-        struct linger ling;
-        ling.l_onoff = 1;
-        ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-        if ((ret == _Z_RES_OK) &&
-            (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
-            ret = _Z_ERR_GENERIC;
-        }
+struct linger ling;
+ling.l_onoff = 1;
+ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+if ((ret == _Z_RES_OK) &&
+    (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+    ret = _Z_ERR_GENERIC;
+}
 
-#if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
-        setsockopt(sock->_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
-#endif
-
+*/
         struct addrinfo *it = NULL;
         for (it = rep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
