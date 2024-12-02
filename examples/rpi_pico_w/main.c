@@ -28,11 +28,9 @@ void main_task(__unused void *params) {
         printf("Connected.\n");
     }
 
-
     app_main();
 
     printf("Terminate.\n");
-
 
     cyw43_arch_deinit();
 
