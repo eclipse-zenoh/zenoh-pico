@@ -26,7 +26,7 @@ pico_enable_stdio_usb(zenohpico_rpi_pico_w_examples 1)
 pico_enable_stdio_uart(zenohpico_rpi_pico_w_examples 1)
 
 set(BUILD_SHARED_LIBS OFF)
-set(WITH_FREERTOS_PLUS_TCP ON)
+set(WITH_RPI_PICO_W ON)
 set(ZENOH_DEBUG 5)
 #add_compile_options(-Wno-strict-prototypes)
 #add_compile_options(-Wno-pragmas)
