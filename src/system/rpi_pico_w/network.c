@@ -203,6 +203,7 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     (void)sock;
     (void)lep;
     (void)tout;
+    z_result_t ret = _Z_RES_OK;
 
     // @TODO: To be implemented
     ret = _Z_ERR_GENERIC;
