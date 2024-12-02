@@ -11,8 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#ifndef ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
-#define ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
+#ifndef ZENOH_PICO_SYSTEM_RPI_PICO_W_TYPES_H
+#define ZENOH_PICO_SYSTEM_RPI_PICO_W_TYPES_H
 
 #include "FreeRTOS.h"
 #include "event_groups.h"
@@ -71,4 +71,4 @@ typedef struct {
 }
 #endif
 
-#endif
+#endif  // ZENOH_PICO_SYSTEM_RPI_PICO_W_TYPES_H

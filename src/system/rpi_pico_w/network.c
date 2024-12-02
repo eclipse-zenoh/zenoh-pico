@@ -146,11 +146,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 }
 
 size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
-#if defined(ZENOH_LINUX)
-    return (size_t)send(sock._fd, ptr, len, MSG_NOSIGNAL);
-#else
     return send(sock._fd, ptr, len, 0);
-#endif
 }
 #endif
 

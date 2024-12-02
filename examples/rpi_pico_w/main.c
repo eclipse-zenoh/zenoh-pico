@@ -28,13 +28,11 @@ void main_task(__unused void *params) {
         printf("Connected.\n");
     }
 
-    // cyw43_arch_lwip_begin();
 
     app_main();
 
     printf("Terminate.\n");
 
-    // cyw43_arch_lwip_end();
 
     cyw43_arch_deinit();
 

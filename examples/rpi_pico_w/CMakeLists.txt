@@ -1,5 +1,24 @@
 cmake_minimum_required(VERSION 3.13)
 
+# Set options
+set(WIFI_SSID "" CACHE STRING "WiFi SSID")
+set(WIFI_PASSWORD "" CACHE STRING "WiFi Password")
+
+set(ZENOH_CONFIG_MODE "client" CACHE STRING "ZENOH_CONFIG_MODE")
+set(ZENOH_CONFIG_CONNECT CACHE STRING "ZENOH_CONFIG_CONNECT")
+set(ZENOH_CONFIG_LISTEN CACHE STRING "ZENOH_CONFIG_LISTEN")
+
+message(STATUS "WIFI_SSID: ${WIFI_SSID}")
+if(WIFI_PASSWORD STREQUAL "")
+    message(STATUS "WIFI_PASSWORD is empty")
+else()
+    message(STATUS "WIFI_PASSWORD is set")
+endif()
+
+message(STATUS "ZENOH_CONFIG_MODE: ${ZENOH_CONFIG_MODE}")
+message(STATUS "ZENOH_CONFIG_CONNECT: ${ZENOH_CONFIG_CONNECT}")
+message(STATUS "ZENOH_CONFIG_LISTEN: ${ZENOH_CONFIG_LISTEN}")
+
 set(CMAKE_C_STANDARD 11)
 
 # Include Raspberry Pico SDK
@@ -11,13 +30,6 @@ include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 # Include FreeRTOS SDK
 include(FreeRTOS_Kernel_import.cmake)
-
-# Ignore warnings from FreeRTOS code
-set_source_files_properties(
-    ${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/include/portmacro.h
-    PROPERTIES
-    COMPILE_OPTIONS "-Wno-strict-prototypes"
-)
 
 # Configure project
 project(zenohpico_rpi_pico_w_examples C CXX ASM)
@@ -55,7 +67,9 @@ target_include_directories(zenohpico_static PRIVATE
 target_compile_definitions(zenohpico_rpi_pico_w_examples PRIVATE
 	WIFI_SSID=\"${WIFI_SSID}\"
 	WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
-	CYW43_TASK_STACK_SIZE=4096
+	ZENOH_CONFIG_MODE=\"${ZENOH_CONFIG_MODE}\"
+	ZENOH_CONFIG_CONNECT=\"${ZENOH_CONFIG_CONNECT}\"
+	ZENOH_CONFIG_LISTEN=\"${ZENOH_CONFIG_LISTEN}\"
 )
 target_include_directories(zenohpico_rpi_pico_w_examples PRIVATE 
 	${CMAKE_CURRENT_LIST_DIR}
