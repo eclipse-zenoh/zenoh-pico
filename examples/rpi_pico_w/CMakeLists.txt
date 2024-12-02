@@ -43,7 +43,6 @@ set_default_build_type(Release)
 
 set(BUILD_SHARED_LIBS OFF)
 set(WITH_RPI_PICO_W ON)
-set(ZENOH_DEBUG 5)
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 
 target_link_libraries(zenohpico_static
