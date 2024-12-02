@@ -15,9 +15,7 @@
 #define ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 
 #include "FreeRTOS.h"
-// #include "FreeRTOS_IP.h"
-#include "event_groups.h"
-#include "lwip/ip4_addr.h"
+#include "FreeRTOS_IP.h"
 #include "semphr.h"
 
 #ifdef __cplusplus
@@ -45,13 +43,13 @@ typedef SemaphoreHandle_t _z_mutex_t;
 typedef void *_z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
-typedef struct timespec z_clock_t;
-typedef struct timeval z_time_t;
+typedef TickType_t z_clock_t;
+typedef TickType_t z_time_t;
 
 typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
-        int _fd;
+        Socket_t _socket;
 #endif
     };
 } _z_sys_net_socket_t;
@@ -59,7 +57,7 @@ typedef struct {
 typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
-        struct addrinfo *_iptcp;
+        struct freertos_addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
