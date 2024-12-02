@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2023 Fictionlab sp. z o.o.
+// Copyright (c) 2024 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -9,13 +9,12 @@
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 //
 // Contributors:
-//   Błażej Sowa, <blazej@fictionlab.pl>
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #ifndef ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 #define ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 
 #include "FreeRTOS.h"
-// #include "FreeRTOS_IP.h"
 #include "event_groups.h"
 #include "lwip/ip4_addr.h"
 #include "semphr.h"
@@ -42,7 +41,11 @@ typedef struct {
 } _z_task_t;
 
 typedef SemaphoreHandle_t _z_mutex_t;
-typedef void *_z_condvar_t;
+typedef struct {
+    SemaphoreHandle_t mutex;
+    SemaphoreHandle_t sem;
+    int waiters;
+} _z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;

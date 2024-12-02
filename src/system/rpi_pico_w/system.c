@@ -1,6 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
-// Copyright (c) 2023 Fictionlab sp. z o.o.
+// Copyright (c) 2024 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -11,31 +10,26 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-//   Błażej Sowa, <blazej@fictionlab.pl>
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "FreeRTOS.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/
-uint8_t z_random_u8(void) { return z_random_u32(); }
+uint8_t z_random_u8(void) { return (uint8_t)get_rand_32(); }
 
-uint16_t z_random_u16(void) { return z_random_u32(); }
+uint16_t z_random_u16(void) { return (uint16_t)get_rand_32(); }
 
-uint32_t z_random_u32(void) { return rand(); }
+uint32_t z_random_u32(void) { return get_rand_32(); }
 
-uint64_t z_random_u64(void) {
-    uint64_t ret = 0;
-    ret |= z_random_u32();
-    ret = ret << 32;
-    ret |= z_random_u32();
-    return ret;
-}
+uint64_t z_random_u64(void) { return get_rand_64(); }
 
 void z_random_fill(void *buf, size_t len) {
     for (size_t i = 0; i < len; i++) {
@@ -46,7 +40,13 @@ void z_random_fill(void *buf, size_t len) {
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size) { return pvPortMalloc(size); }
 
-void *z_realloc(void *ptr, size_t size) { return pvPortRealloc(ptr, size); }
+void *z_realloc(void *ptr, size_t size) {
+    _ZP_UNUSED(ptr);
+    _ZP_UNUSED(size);
+    // realloc not implemented in FreeRTOS
+    assert(false);
+    return NULL;
+}
 
 void z_free(void *ptr) { vPortFree(ptr); }
 
@@ -118,7 +118,8 @@ z_result_t _z_task_join(_z_task_t *task) {
 }
 
 z_result_t _z_task_detach(_z_task_t *task) {
-    // Not implemented
+    _ZP_UNUSED(task);
+    assert(false);
     return _Z_ERR_GENERIC;
 }
 
@@ -150,12 +151,78 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
-// Condition variables not supported in FreeRTOS
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+static UBaseType_t CONDVAR_MAX_WAITERS_COUNT = 255;
+
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+    cv->mutex = xSemaphoreCreateMutex();
+    cv->sem = xSemaphoreCreateCounting(CONDVAR_MAX_WAITERS_COUNT, 0);
+    cv->waiters = 0;
+
+    if (!cv->mutex || !cv->sem) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_drop(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+    vSemaphoreDelete(cv->sem);
+    vSemaphoreDelete(cv->mutex);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_signal(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    if (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    while (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    cv->waiters++;
+    xSemaphoreGive(cv->mutex);
+
+    xSemaphoreGive(*m);
+
+    xSemaphoreTake(cv->sem, portMAX_DELAY);
+
+    xSemaphoreTake(*m, portMAX_DELAY);
+
+    return _Z_RES_OK;
+}
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
@@ -175,15 +242,21 @@ z_result_t z_sleep_s(size_t time) {
 }
 
 /*------------------ Clock ------------------*/
+void __z_clock_gettime(z_clock_t *ts) {
+    uint64_t m = xTaskGetTickCount() / portTICK_PERIOD_MS;
+    ts->tv_sec = m / (uint64_t)1000000;
+    ts->tv_nsec = (m % (uint64_t)1000000) * (uint64_t)1000;
+}
+
 z_clock_t z_clock_now(void) {
     z_clock_t now;
-    // clock_gettime(CLOCK_MONOTONIC, &now);
+    __z_clock_gettime(&now);
     return now;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
-    // clock_gettime(CLOCK_MONOTONIC, &now);
+    __z_clock_gettime(&now);
 
     unsigned long elapsed =
         (unsigned long)(1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
@@ -192,7 +265,7 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
-    // clock_gettime(CLOCK_MONOTONIC, &now);
+    __z_clock_gettime(&now);
 
     unsigned long elapsed =
         (unsigned long)(1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
@@ -201,7 +274,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
-    // clock_gettime(CLOCK_MONOTONIC, &now);
+    __z_clock_gettime(&now);
 
     unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
     return elapsed;
