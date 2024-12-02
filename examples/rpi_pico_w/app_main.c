@@ -1,17 +1,14 @@
 #include <stdio.h>
 #include <zenoh-pico.h>
 
-#include "FreeRTOS.h"
-#include "lwip/sockets.h"
-#include "pico/cyw43_arch.h"
-#include "pico/stdlib.h"
 #include "zenoh-pico/utils/result.h"
 
 int app_main() {
     z_owned_config_t config;
     z_config_default(&config);
     zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "client");
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, "tcp/192.168.0.108:7447");
+    // zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, "tcp/192.168.0.108:7447");
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, "tcp/192.168.21.28:7447");
 
     printf("Opening session...\n");
     z_owned_session_t s;
