@@ -10,6 +10,7 @@
 //
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
 
 #ifndef ZENOH_PICO_SYSTEM_RPI_PICO_W_TYPES_H
 #define ZENOH_PICO_SYSTEM_RPI_PICO_W_TYPES_H
@@ -28,11 +29,6 @@ typedef struct {
     const char *name;
     UBaseType_t priority;
     size_t stack_depth;
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-    bool static_allocation;
-    StackType_t *stack_buffer;
-    StaticTask_t *task_buffer;
-#endif /* SUPPORT_STATIC_ALLOCATION */
 } z_task_attr_t;
 
 typedef struct {

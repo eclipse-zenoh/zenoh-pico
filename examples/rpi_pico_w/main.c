@@ -1,9 +1,24 @@
+//
+// Copyright (c) 2024 ZettaScale Technology
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+// which is available at https://www.apache.org/licenses/LICENSE-2.0.
+//
+// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+//
+// Contributors:
+//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+//
+
 #include "FreeRTOS.h"
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "task.h"
 
-#define TEST_TASK_PRIORITY (tskIDLE_PRIORITY + 2UL)
+#define TASK_PRIORITY (tskIDLE_PRIORITY + 2UL)
+#define WIFI_TIMEOUT 30000
 
 int app_main();
 
@@ -18,7 +33,8 @@ void print_ip_address() {
     }
 }
 
-void main_task(__unused void *params) {
+void main_task(void *params) {
+    (void)params;
     if (cyw43_arch_init()) {
         printf("Failed to initialise\n");
         return;
@@ -26,7 +42,7 @@ void main_task(__unused void *params) {
 
     cyw43_arch_enable_sta_mode();
     printf("Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000) == 0) {
+    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, WIFI_TIMEOUT) == 0) {
         printf("Wi-Fi connected.\n");
         print_ip_address();
         app_main();
@@ -44,7 +60,7 @@ void main_task(__unused void *params) {
 int main(void) {
     stdio_init_all();
 
-    xTaskCreate(main_task, "TestMainThread", configMINIMAL_STACK_SIZE * 16, NULL, TEST_TASK_PRIORITY, NULL);
+    xTaskCreate(main_task, "MainThread", configMINIMAL_STACK_SIZE * 16, NULL, TASK_PRIORITY, NULL);
 
     vTaskStartScheduler();
 

@@ -70,11 +70,6 @@ static z_task_attr_t z_default_task_attr = {
     .name = "",
     .priority = configMAX_PRIORITIES / 2,
     .stack_depth = 5120,
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-    .static_allocation = false,
-    .stack_buffer = NULL,
-    .task_buffer = NULL,
-#endif /* SUPPORT_STATIC_ALLOCATION */
 };
 
 /*------------------ Thread ------------------*/
@@ -92,22 +87,9 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
         attr = &z_default_task_attr;
     }
 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-    if (attr->static_allocation) {
-        task->handle = xTaskCreateStatic(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority,
-                                         attr->stack_buffer, attr->task_buffer);
-        if (task->handle == NULL) {
-            return -1;
-        }
-    } else {
-#endif /* SUPPORT_STATIC_ALLOCATION */
-        if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) !=
-            pdPASS) {
-            return -1;
-        }
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) != pdPASS) {
+        return -1;
     }
-#endif /* SUPPORT_STATIC_ALLOCATION */
 
     return 0;
 }
