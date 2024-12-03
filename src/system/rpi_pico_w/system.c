@@ -244,8 +244,8 @@ z_result_t z_sleep_s(size_t time) {
 /*------------------ Clock ------------------*/
 void __z_clock_gettime(z_clock_t *ts) {
     uint64_t m = xTaskGetTickCount() / portTICK_PERIOD_MS;
-    ts->tv_sec = m / (uint64_t)1000000;
-    ts->tv_nsec = (m % (uint64_t)1000000) * (uint64_t)1000;
+    ts->tv_sec = m / (uint64_t)1000;
+    ts->tv_nsec = (m % (uint64_t)1000) * (uint64_t)1000000;
 }
 
 z_clock_t z_clock_now(void) {

@@ -53,35 +53,32 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
-        // TODO: check what options not supported
-        /*
-z_time_t tv;
-tv.tv_sec = tout / (uint32_t)1000;
-tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-    ret = _Z_ERR_GENERIC;
-}
+        z_time_t tv;
+        tv.tv_sec = tout / (uint32_t)1000;
+        tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
 
-int flags = 1;
-if ((ret == _Z_RES_OK) &&
-    (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
-    ret = _Z_ERR_GENERIC;
-}
+        int flags = 1;
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
 #if Z_FEATURE_TCP_NODELAY == 1
-if ((ret == _Z_RES_OK) &&
-    (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
-    ret = _Z_ERR_GENERIC;
-}
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
 #endif
-struct linger ling;
-ling.l_onoff = 1;
-ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-if ((ret == _Z_RES_OK) &&
-    (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
-    ret = _Z_ERR_GENERIC;
-}
+        struct linger ling;
+        ling.l_onoff = 1;
+        ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
 
-*/
         struct addrinfo *it = NULL;
         for (it = rep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {
@@ -180,14 +177,13 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
 
     sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
     if (sock->_fd != -1) {
-        /*
-                        z_time_t tv;
-                tv.tv_sec = tout / (uint32_t)1000;
-                tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-                if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0))
-           { ret = _Z_ERR_GENERIC;
-                }
-        */
+        z_time_t tv;
+        tv.tv_sec = tout / (uint32_t)1000;
+        tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            ret = _Z_ERR_GENERIC;
+        }
+
         if (ret != _Z_RES_OK) {
             close(sock->_fd);
         }
@@ -278,14 +274,13 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     if (addrlen != 0U) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
-            /*
-                                    z_time_t tv;
-                        tv.tv_sec = tout / (uint32_t)1000;
-                        tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-                        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,
-               sizeof(tv)) < 0)) { ret = _Z_ERR_GENERIC;
-                        }
-            */
+            z_time_t tv;
+            tv.tv_sec = tout / (uint32_t)1000;
+            tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+            if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+                ret = _Z_ERR_GENERIC;
+            }
+
             if ((ret == _Z_RES_OK) && (bind(sock->_fd, lsockaddr, addrlen) < 0)) {
                 ret = _Z_ERR_GENERIC;
             }
@@ -339,24 +334,13 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
     if (addrlen != 0U) {
         sock->_fd = socket(rep._iptcp->ai_family, rep._iptcp->ai_socktype, rep._iptcp->ai_protocol);
         if (sock->_fd != -1) {
-            /*
-                                    z_time_t tv;
-                        tv.tv_sec = tout / (uint32_t)1000;
-                        tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-                        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,
-            sizeof(tv)) < 0)) { ret = _Z_ERR_GENERIC;
-                        }
+            z_time_t tv;
+            tv.tv_sec = tout / (uint32_t)1000;
+            tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+            if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+                ret = _Z_ERR_GENERIC;
+            }
 
-                        int value = true;
-                        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEADDR, &value,
-            sizeof(value)) < 0)) { ret = _Z_ERR_GENERIC;
-                        }
-            #ifdef SO_REUSEPORT
-                        if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_REUSEPORT, &value,
-            sizeof(value)) < 0)) { ret = _Z_ERR_GENERIC;
-                        }
-            #endif
-            */
             if (rep._iptcp->ai_family == AF_INET) {
                 struct sockaddr_in address;
                 (void)memset(&address, 0, sizeof(address));
