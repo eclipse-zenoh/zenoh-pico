@@ -13,6 +13,7 @@
 
 #include "zenoh-pico/net/query.h"
 
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
@@ -22,16 +23,19 @@ static void _z_query_clear_inner(_z_query_t *q) {
     _z_value_clear(&q->_value);
     _z_bytes_drop(&q->_attachment);
     _z_string_clear(&q->_parameters);
-    _z_session_rc_drop(&q->_zn);
+    _z_session_weak_drop(&q->_zn);
 }
 
 z_result_t _z_query_send_reply_final(_z_query_t *q) {
-    if (_Z_RC_IS_NULL(&q->_zn)) {
+    // Try to upgrade session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&q->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
-    z_result_t ret = _z_send_n_msg(_Z_RC_IN_VAL(&q->_zn), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    z_result_t ret = _z_send_n_msg(_Z_RC_IN_VAL(&sess_rc), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
     _z_msg_clear(&z_msg);
+    _z_session_rc_drop(&sess_rc);
     return ret;
 }
 
@@ -42,23 +46,6 @@ void _z_query_clear(_z_query_t *q) {
     }
     // Clean up memory
     _z_query_clear_inner(q);
-}
-
-z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src) {
-    *dst = _z_query_null();
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_key, &src->_key));
-    _Z_CLEAN_RETURN_IF_ERR(_z_value_copy(&dst->_value, &src->_value), _z_query_clear_inner(dst));
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->_attachment, &src->_attachment), _z_query_clear_inner(dst));
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_copy(&dst->_parameters, &src->_parameters), _z_query_clear_inner(dst));
-    _z_session_rc_copy(&dst->_zn, &src->_zn);
-    if (_Z_RC_IS_NULL(&dst->_zn)) {
-        _z_query_clear_inner(dst);
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    dst->_anyke = src->_anyke;
-    dst->_request_id = src->_request_id;
-    dst->_zn = src->_zn;
-    return _Z_RES_OK;
 }
 
 void _z_query_free(_z_query_t **query) {

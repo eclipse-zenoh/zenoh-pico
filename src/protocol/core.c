@@ -19,7 +19,9 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/endianness.h"
@@ -59,6 +61,12 @@ z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     _Z_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_encoding_clear(&dst->encoding));
     return _Z_RES_OK;
+}
+_z_value_t _z_value_alias(_z_value_t src) {
+    _z_value_t dst;
+    dst.payload = _z_bytes_alias(src.payload);
+    dst.encoding = _z_encoding_alias(src.encoding);
+    return dst;
 }
 
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {

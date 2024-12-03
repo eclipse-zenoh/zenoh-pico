@@ -20,6 +20,7 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/keyexpr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +33,7 @@ typedef struct _z_query_t {
     _z_keyexpr_t _key;
     _z_value_t _value;
     uint32_t _request_id;
-    _z_session_rc_t _zn;
+    _z_session_weak_t _zn;
     _z_bytes_t _attachment;
     _z_string_t _parameters;
     bool _anyke;
@@ -46,8 +47,9 @@ static inline bool _z_query_check(const _z_query_t *query) {
 }
 z_result_t _z_query_send_reply_final(_z_query_t *q);
 void _z_query_clear(_z_query_t *q);
-z_result_t _z_query_copy(_z_query_t *dst, const _z_query_t *src);
 void _z_query_free(_z_query_t **query);
+
+_Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
  * Return type when declaring a queryable.
@@ -65,11 +67,11 @@ static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, co
                                         _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
                                         bool anyke) {
     return (_z_query_t){
-        ._key = *key,
-        ._value = *value,
+        ._key = _z_keyexpr_alias(*key),
+        ._value = _z_value_alias(*value),
         ._request_id = request_id,
-        ._zn = *zn,
-        ._attachment = *attachment,
+        ._zn = _z_session_rc_clone_as_weak(zn),
+        ._attachment = _z_bytes_alias(*attachment),
         ._parameters = _z_string_alias_slice(parameters),
         ._anyke = anyke,
     };

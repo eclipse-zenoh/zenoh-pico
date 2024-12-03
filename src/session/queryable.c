@@ -224,15 +224,15 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         }
     }
     // Build the z_query
-    _z_query_t query =
+    _z_query_t q =
         _z_query_alias(&msgq->_ext_value, &key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
+    _z_query_rc_t query = _z_query_rc_new_from_val(&q);
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_nb; i++) {
         _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qles, i);
         qle_info->callback(&query, qle_info->arg);
     }
-    // Send reply final message
-    _z_query_send_reply_final(&query);
+    _z_query_rc_drop(&query);
     // Clean up
     _z_keyexpr_clear(&key);
 #if Z_FEATURE_RX_CACHE != 1

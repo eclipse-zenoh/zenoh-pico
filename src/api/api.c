@@ -417,16 +417,18 @@ z_query_consolidation_t z_query_consolidation_none(void) {
 z_query_consolidation_t z_query_consolidation_default(void) { return z_query_consolidation_auto(); }
 
 void z_query_parameters(const z_loaned_query_t *query, z_view_string_t *parameters) {
-    parameters->_val = _z_string_alias(query->_parameters);
+    parameters->_val = _z_string_alias(_Z_RC_IN_VAL(query)->_parameters);
 }
 
-const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &query->_attachment; }
+const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_attachment; }
 
-const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &query->_key; }
+const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_key; }
 
-const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &query->_value.payload; }
+const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.payload; }
 
-const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) { return &query->_value.encoding; }
+const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) {
+    return &_Z_RC_IN_VAL(query)->_value.encoding;
+}
 
 void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sample_t *sample) {
     if (closure->call != NULL) {
@@ -1121,7 +1123,7 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
 #endif  // Z_FEATURE_QUERY == 1
 
 #if Z_FEATURE_QUERYABLE == 1
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_query_t, query, _z_query_check, _z_query_null, _z_query_copy, _z_query_clear)
+_Z_OWNED_FUNCTIONS_RC_IMPL(query)
 
 void _z_queryable_drop(_z_queryable_t *queryable) {
     _z_undeclare_queryable(queryable);
@@ -1191,7 +1193,9 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 
 z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
                          const z_query_reply_options_t *options) {
-    if (_Z_RC_IS_NULL(&query->_zn)) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
     // Set options
@@ -1206,11 +1210,12 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&payload->_this),
                         .encoding = _z_encoding_from_owned(&opts.encoding->_this)};
 
-    z_result_t ret = _z_send_reply(query, &query->_zn, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_owned_bytes(&opts.attachment->_this));
     z_bytes_drop(payload);
     // Clean-up
+    _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
     z_bytes_drop(opts.attachment);
     return ret;
@@ -1226,7 +1231,9 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
 
 z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
                              const z_query_reply_del_options_t *options) {
-    if (_Z_RC_IS_NULL(&query->_zn)) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
@@ -1239,10 +1246,11 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
 
     _z_value_t value = {.payload = _z_bytes_null(), .encoding = _z_encoding_null()};
 
-    z_result_t ret = _z_send_reply(query, &query->_zn, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE,
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_owned_bytes(&opts.attachment->_this));
     // Clean-up
+    _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);
     return ret;
 }
@@ -1251,7 +1259,9 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options) { o
 
 z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
                              const z_query_reply_err_options_t *options) {
-    if (_Z_RC_IS_NULL(&query->_zn)) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
     z_query_reply_err_options_t opts;
@@ -1263,7 +1273,8 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
     // Set value
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&payload->_this),
                         .encoding = _z_encoding_from_owned(&opts.encoding->_this)};
-    z_result_t ret = _z_send_reply_err(query, &query->_zn, value);
+    z_result_t ret = _z_send_reply_err(_Z_RC_IN_VAL(query), &sess_rc, value);
+    _z_session_rc_drop(&sess_rc);
     z_bytes_drop(payload);
     // Clean-up
     z_encoding_drop(opts.encoding);
