@@ -54,7 +54,7 @@ target_link_libraries(zenohpico_static
 # Configure build  
 target_include_directories(zenohpico_static PRIVATE 
   ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/..
+  ${CMAKE_CURRENT_LIST_DIR}/include
 )
 
 add_library(main STATIC main.c)
@@ -65,7 +65,7 @@ target_compile_definitions(main PRIVATE
 )
 target_include_directories(main PRIVATE 
   ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/..
+  ${CMAKE_CURRENT_LIST_DIR}/include
 )
 target_link_libraries(main
   pico_stdlib
@@ -89,7 +89,7 @@ function(add_example name)
   )
   target_include_directories(${name} PRIVATE 
     ${CMAKE_CURRENT_LIST_DIR}
-    ${CMAKE_CURRENT_LIST_DIR}/..
+    ${CMAKE_CURRENT_LIST_DIR}/include
   )
   pico_enable_stdio_usb(${name} 1)
   pico_enable_stdio_uart(${name} 1)
