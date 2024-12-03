@@ -92,7 +92,6 @@ function(add_example name)
     ${CMAKE_CURRENT_LIST_DIR}/include
   )
   pico_enable_stdio_usb(${name} 1)
-  pico_enable_stdio_uart(${name} 1)
   pico_add_extra_outputs(${name})
 endfunction()
 
