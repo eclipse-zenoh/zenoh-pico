@@ -685,7 +685,7 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) 
 
             uint32_t c_crc = _z_crc32(ptr, payload_len);
             if (c_crc != crc) {
-                _Z_ERROR("CRC mismatch: %d != %d ", c_crc, crc);
+                _Z_ERROR("CRC mismatch: %ld != %ld ", c_crc, crc);
                 ret = _Z_ERR_GENERIC;
             }
         } else {

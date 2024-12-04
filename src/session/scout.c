@@ -18,6 +18,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/utils/logging.h"
 

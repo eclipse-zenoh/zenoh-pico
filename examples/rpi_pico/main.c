@@ -12,9 +12,15 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <stdio.h>
+
 #include "FreeRTOS.h"
 #include "config.h"
+
+#if WIFI_SUPPORT_ENABLED
 #include "pico/cyw43_arch.h"
+#endif
+
 #include "pico/stdlib.h"
 #include "task.h"
 
@@ -23,6 +29,7 @@
 
 int app_main();
 
+#if WIFI_SUPPORT_ENABLED
 void print_ip_address() {
     struct netif *netif = &cyw43_state.netif[CYW43_ITF_STA];
     if (netif_is_up(netif)) {
@@ -33,12 +40,12 @@ void print_ip_address() {
         printf("Network interface is down.\n");
     }
 }
+#endif
 
 void main_task(void *params) {
     (void)params;
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
+#if WIFI_SUPPORT_ENABLED
     if (cyw43_arch_init()) {
         printf("Failed to initialise\n");
         return;
@@ -58,10 +65,15 @@ void main_task(void *params) {
         printf("Offline mode\n");
         app_main();
     }
+#else
+    app_main();
+#endif
 
     printf("Terminate.\n");
 
+#if WIFI_SUPPORT_ENABLED
     cyw43_arch_deinit();
+#endif
 
     vTaskDelete(NULL);
 }

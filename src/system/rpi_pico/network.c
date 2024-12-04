@@ -14,13 +14,6 @@
 
 #include <stdlib.h>
 
-#include "lwip/dns.h"
-#include "lwip/ip4_addr.h"
-#include "lwip/netdb.h"
-#include "lwip/pbuf.h"
-#include "lwip/sockets.h"
-#include "lwip/udp.h"
-#include "pico/cyw43_arch.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
@@ -31,6 +24,14 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LINK_TCP == 1
+#include "lwip/dns.h"
+#include "lwip/ip4_addr.h"
+#include "lwip/netdb.h"
+#include "lwip/pbuf.h"
+#include "lwip/sockets.h"
+#include "lwip/udp.h"
+#include "pico/cyw43_arch.h"
+
 /*------------------ TCP sockets ------------------*/
 z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     z_result_t ret = _Z_RES_OK;
