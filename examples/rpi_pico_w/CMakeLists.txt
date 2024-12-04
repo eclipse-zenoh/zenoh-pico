@@ -21,7 +21,7 @@ message(STATUS "ZENOH_CONFIG_LISTEN: ${ZENOH_CONFIG_LISTEN}")
 
 set(CMAKE_C_STANDARD 11)
 
-# Include Raspberry Pico SDK
+# Include Raspberry Pi Pico SDK
 set(PICO_BOARD "pico_w")
 if(NOT DEFINED ENV{PICO_SDK_PATH})
   message(FATAL_ERROR "PICO_SDK_PATH environment variable is not set. Please set it to the location of the Pico SDK.")

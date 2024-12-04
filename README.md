@@ -34,6 +34,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |      **OpenCR**       | UDP (unicast and multicast), TCP |         IPv4        |                        WiFi                        |
 |    **Emscripten**     |             Websocket            |      IPv4, IPv6     |                   WiFi, Ethernet                   |
 | **FreeRTOS-Plus-TCP** |         UDP (unicast), TCP       |         IPv4        |                      Ethernet                      |
+|**Raspberry Pi Pico W**| UDP (unicast and multicast), TCP |         IPv4        |                        WiFi                        |
 
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
@@ -328,6 +329,50 @@ To build and upload the code into the board, run the following command:
   platformio run
   platformio run -t upload
   ```
+
+#### 2.2.6. Raspberry Pi Pico W 
+
+Ensure your system has the necessary tools and libraries installed. Run the following commands:
+
+```bash
+sudo apt update
+sudo apt install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential g++ libstdc++-arm-none-eabi-newlib
+```
+
+Set up the Raspberry Pi Pico SDK by cloning the repository:
+
+```bash
+export PICO_SDK_PATH=$HOME/src/pico-sdk
+mkdir -p $PICO_SDK_PATH
+cd $PICO_SDK_PATH
+git clone https://github.com/raspberrypi/pico-sdk.git --branch 2.1.0 .
+git submodule update --init
+```
+
+Clone the FreeRTOS Kernel repository for the project:
+
+```bash
+export FREERTOS_KERNEL_PATH=$HOME/src/FreeRTOS-Kernel/
+mkdir -p $FREERTOS_KERNEL_PATH
+cd $FREERTOS_KERNEL_PATH
+git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git --branch V11.1.0 .
+git submodule update --init
+```
+
+Setup and build the examples:
+  `WIFI_SSID` - Wi-Fi network SSID
+  `WIFI_PASSWORD` - Wi-Fi password
+  `ZENOH_CONFIG_MODE` - client or peer mode (default: client)
+  `ZENOH_CONFIG_CONNECT` - connect endpoint (only for client mode, optional)
+  `ZENOH_CONFIG_LISTEN` - listen endpoint (only for peer mode, optional)
+
+```bash
+cd examples/rpi_pico_w
+cmake -Bbuild -DWIFI_SSID=wifi_network_ssid -DWIFI_PASSWORD=wifi_network_password -DZENOH_CONFIG_MODE=[client|peer] -DZENOH_CONFIG_CONNECT=connect -DZENOH_CONFIG_LISTEN=listen
+cmake --build ./build
+```
+
+To flash the Raspberry Pi Pico W board, connect it in bootloader mode (it will appear as a removable drive) and copy the generated .uf2 file onto it.
 
 ## 3. Running the Examples
 The simplest way to run some of the example is to get a Docker image of the **zenoh** router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
