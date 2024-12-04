@@ -120,7 +120,7 @@ _z_transport_message_t _z_t_msg_make_join(z_whatami_t whatami, _z_zint_t lease, 
 #else
     bool has_patch = false;
 #endif
-    if (next_sn._is_qos == true || has_patch == true) {
+    if (next_sn._is_qos || has_patch) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
