@@ -313,7 +313,9 @@ void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     clone->_next_sn = msg->_next_sn;
+#if Z_FEATURE_FRAGMENTATION == 1
     clone->_patch = msg->_patch;
+#endif
     memcpy(clone->_zid.id, msg->_zid.id, 16);
 }
 
@@ -325,6 +327,9 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
     clone->_batch_size = msg->_batch_size;
     memcpy(clone->_zid.id, msg->_zid.id, 16);
     _z_slice_copy(&clone->_cookie, &msg->_cookie);
+#if Z_FEATURE_FRAGMENTATION == 1
+    clone->_patch = msg->_patch;
+#endif
 }
 
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
