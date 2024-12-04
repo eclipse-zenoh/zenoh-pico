@@ -193,8 +193,8 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R)) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
-                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._fragment._sn) ==
-                    true) {
+                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
+                                   t_msg->_body._fragment._sn) == true) {
                     bool consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
                                                          t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._fragment._sn;
