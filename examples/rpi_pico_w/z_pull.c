@@ -15,9 +15,10 @@
 #include <stdio.h>
 #include <zenoh-pico.h>
 
+#include "config.h"
+
 #if Z_FEATURE_SUBSCRIPTION == 1
 
-#define IFACE "#iface=lo"  // Not used by this platform, but should be present
 #define KEYEXPR "demo/example/**"
 
 const size_t INTERVAL = 5000;
@@ -32,8 +33,8 @@ void app_main(void) {
         zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, ZENOH_CONFIG_CONNECT);
     }
     if (strcmp(ZENOH_CONFIG_LISTEN, "") != 0) {
-        printf("Listen endpoint: %s\n", ZENOH_CONFIG_LISTEN IFACE);
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, ZENOH_CONFIG_LISTEN IFACE);
+        printf("Listen endpoint: %s\n", ZENOH_CONFIG_LISTEN);
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, ZENOH_CONFIG_LISTEN);
     }
 
     printf("Opening %s session ...\n", ZENOH_CONFIG_MODE);

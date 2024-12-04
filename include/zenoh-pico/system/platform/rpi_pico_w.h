@@ -17,7 +17,13 @@
 
 #include "FreeRTOS.h"
 #include "event_groups.h"
+#if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
 #include "lwip/ip4_addr.h"
+#endif
+#if Z_FEATURE_LINK_SERIAL == 1
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
+#endif
 #include "semphr.h"
 
 #ifdef __cplusplus
@@ -51,6 +57,9 @@ typedef struct {
     union {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         int _fd;
+#endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        uart_inst_t *_serial;
 #endif
     };
 } _z_sys_net_socket_t;

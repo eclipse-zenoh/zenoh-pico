@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#include "config.h"
+
 void fprintzid(FILE *stream, z_id_t zid) {
     unsigned int zidlen = _z_id_len(zid);
     if (zidlen == 0) {

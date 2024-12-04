@@ -13,6 +13,7 @@
 //
 
 #include "FreeRTOS.h"
+#include "config.h"
 #include "pico/cyw43_arch.h"
 #include "pico/stdlib.h"
 #include "task.h"
@@ -35,19 +36,27 @@ void print_ip_address() {
 
 void main_task(void *params) {
     (void)params;
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
     if (cyw43_arch_init()) {
         printf("Failed to initialise\n");
         return;
     }
 
-    cyw43_arch_enable_sta_mode();
-    printf("Connecting to Wi-Fi...\n");
-    if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, WIFI_TIMEOUT) == 0) {
-        printf("Wi-Fi connected.\n");
-        print_ip_address();
-        app_main();
+    if (strlen(WIFI_SSID) != 0) {
+        cyw43_arch_enable_sta_mode();
+        printf("Connecting to Wi-Fi...\n");
+        if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, WIFI_TIMEOUT) == 0) {
+            printf("Wi-Fi connected.\n");
+            print_ip_address();
+            app_main();
+        } else {
+            printf("Failed to connect Wi-Fi\n");
+        }
     } else {
-        printf("Failed to connect Wi-Fi\n");
+        printf("Offline mode\n");
+        app_main();
     }
 
     printf("Terminate.\n");

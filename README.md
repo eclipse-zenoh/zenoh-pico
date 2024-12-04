@@ -34,7 +34,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |      **OpenCR**       | UDP (unicast and multicast), TCP |         IPv4        |                        WiFi                        |
 |    **Emscripten**     |             Websocket            |      IPv4, IPv6     |                   WiFi, Ethernet                   |
 | **FreeRTOS-Plus-TCP** |         UDP (unicast), TCP       |         IPv4        |                      Ethernet                      |
-|**Raspberry Pi Pico W**| UDP (unicast and multicast), TCP |         IPv4        |                        WiFi                        |
+|**Raspberry Pi Pico W**| UDP (unicast and multicast), TCP |         IPv4        |                    WiFi, Serial                    |
 
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
