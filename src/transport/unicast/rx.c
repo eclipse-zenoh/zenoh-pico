@@ -141,21 +141,17 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         case _Z_MID_T_FRAGMENT: {
             _Z_INFO("Received Z_FRAGMENT message");
 #if Z_FEATURE_FRAGMENTATION == 1
+            bool consecutive;
             _z_wbuf_t *dbuf;
             // Check if the SN is correct and select the right defragmentation buffer
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R)) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn)) {
-                    bool consecutive =
+                    consecutive =
                         _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn);
                     ztu->_sn_rx_reliable = t_msg->_body._fragment._sn;
                     dbuf = &ztu->_dbuf_reliable;
-                    if (!consecutive) {
-                        _Z_DEBUG("Non-consecutive fragments received");
-                        _z_wbuf_reset(dbuf);
-                        break;
-                    }
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
                     _Z_INFO("Reliable message dropped because it is out of order");
@@ -163,31 +159,31 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 }
             } else {
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn)) {
-                    bool consecutive =
+                    consecutive =
                         _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn);
                     ztu->_sn_rx_best_effort = t_msg->_body._fragment._sn;
                     dbuf = &ztu->_dbuf_best_effort;
-                    if (!consecutive) {
-                        _Z_DEBUG("Non-consecutive fragments received");
-                        _z_wbuf_reset(dbuf);
-                        break;
-                    }
                 } else {
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
             }
+            if (!consecutive && _z_wbuf_len(dbuf) > 0) {
+                _Z_DEBUG("Non-consecutive fragments received");
+                _z_wbuf_reset(dbuf);
+                break;
+            }
             // Handle fragment markers
             if (_Z_PATCH_HAS_FRAGMENT_MARKERS(ztu->_patch)) {
                 if (t_msg->_body._fragment.first) {
-                    _z_wbuf_clear(dbuf);
+                    _z_wbuf_reset(dbuf);
                 } else if (_z_wbuf_len(dbuf) == 0) {
                     _Z_DEBUG("First fragment received without the start marker");
                     break;
                 }
                 if (t_msg->_body._fragment.drop) {
-                    _z_wbuf_clear(dbuf);
+                    _z_wbuf_reset(dbuf);
                     break;
                 }
             }
