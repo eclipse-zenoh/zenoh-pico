@@ -434,17 +434,17 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_sn))
-    if (msg->start == true) {
+    if (msg->first == true) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_START | _Z_MSG_EXT_MORE(msg->stop)));
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_FIRST | _Z_MSG_EXT_MORE(msg->drop)));
         } else {
             _Z_DEBUG("Attempted to serialize Start extension, but the header extension flag was unset");
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
-    if (msg->stop == true) {
+    if (msg->drop == true) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_STOP));
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_DROP));
         } else {
             _Z_DEBUG("Attempted to serialize Stop extension, but the header extension flag was unset");
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
@@ -460,10 +460,10 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
 z_result_t _z_fragment_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     z_result_t ret = _Z_RES_OK;
     _z_t_msg_fragment_t *msg = (_z_t_msg_fragment_t *)ctx;
-    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_START) {
-        msg->start = true;
-    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_STOP) {
-        msg->stop = true;
+    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_FIRST) {
+        msg->first = true;
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_DROP) {
+        msg->drop = true;
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
@@ -477,8 +477,8 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT");
     ret |= _z_zsize_decode(&msg->_sn, zbf);
 
-    msg->start = false;
-    msg->stop = false;
+    msg->first = false;
+    msg->drop = false;
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_fragment_decode_ext, msg);
     }

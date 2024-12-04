@@ -280,11 +280,11 @@ _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t 
 
 /*------------------ Fragment Message ------------------*/
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last,
-                                                     bool start, bool stop) {
-    return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last, start, stop);
+                                                     bool first, bool drop) {
+    return _z_t_msg_make_fragment(sn, _z_slice_empty(), reliability, is_last, first, drop);
 }
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, z_reliability_t reliability,
-                                              bool is_last, bool start, bool stop) {
+                                              bool is_last, bool first, bool drop) {
     _z_transport_message_t msg;
     msg._header = _Z_MID_T_FRAGMENT;
     if (is_last == false) {
@@ -296,11 +296,11 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
 
     msg._body._fragment._sn = sn;
     msg._body._fragment._payload = payload;
-    if (start == true || stop == true) {
+    if (first == true || drop == true) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
-    msg._body._fragment.start = start;
-    msg._body._fragment.stop = stop;
+    msg._body._fragment.first = first;
+    msg._body._fragment.drop = drop;
 
     return msg;
 }
@@ -308,8 +308,8 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
 void _z_t_msg_copy_fragment(_z_t_msg_fragment_t *clone, _z_t_msg_fragment_t *msg) {
     clone->_payload = msg->_payload;
     _z_slice_copy(&clone->_payload, &msg->_payload);
-    clone->start = msg->start;
-    clone->stop = msg->stop;
+    clone->first = msg->first;
+    clone->drop = msg->drop;
 }
 
 void _z_t_msg_copy_join(_z_t_msg_join_t *clone, _z_t_msg_join_t *msg) {

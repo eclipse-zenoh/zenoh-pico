@@ -99,7 +99,7 @@ extern "C" {
 /// if >= 1, then fragmentation start/stop marker
 #define _Z_NO_PATCH 0x00
 #define _Z_CURRENT_PATCH 0x01
-#define _Z_PATCH_HAS_FRAGMENT_START_STOP(patch) (patch >= 1)
+#define _Z_PATCH_HAS_FRAGMENT_MARKERS(patch) (patch >= 1)
 
 /*=============================*/
 /*     Transport Messages      */
@@ -494,8 +494,8 @@ void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 typedef struct {
     _z_slice_t _payload;
     _z_zint_t _sn;
-    bool start;
-    bool stop;
+    bool first;
+    bool drop;
 } _z_t_msg_fragment_t;
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg);
 
@@ -531,9 +531,9 @@ _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_vec_
                                            z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last,
-                                                     bool start, bool stop);
+                                                     bool first, bool drop);
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t messages, z_reliability_t reliability,
-                                              bool is_last, bool start, bool stop);
+                                              bool is_last, bool first, bool drop);
 
 /*------------------ Copy ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
