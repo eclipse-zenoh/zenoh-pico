@@ -180,13 +180,13 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
             }
             // Handle fragment markers
             if (_Z_PATCH_HAS_FRAGMENT_MARKERS(ztu->_patch)) {
-                if (t_msg->_body._fragment.first == true) {
+                if (t_msg->_body._fragment.first) {
                     _z_wbuf_clear(dbuf);
                 } else if (_z_wbuf_len(dbuf) == 0) {
                     _Z_DEBUG("First fragment received without the start marker");
                     break;
                 }
-                if (t_msg->_body._fragment.drop == true) {
+                if (t_msg->_body._fragment.drop) {
                     _z_wbuf_clear(dbuf);
                     break;
                 }

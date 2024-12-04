@@ -434,7 +434,7 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_sn))
-    if (msg->first == true) {
+    if (msg->first) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
             _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_FIRST | _Z_MSG_EXT_MORE(msg->drop)));
         } else {
@@ -442,7 +442,7 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
-    if (msg->drop == true) {
+    if (msg->drop) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
             _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_DROP));
         } else {

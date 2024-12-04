@@ -292,7 +292,7 @@ _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t payload, 
 
     msg._body._fragment._sn = sn;
     msg._body._fragment._payload = payload;
-    if (first == true || drop == true) {
+    if (first || drop) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
     msg._body._fragment.first = first;
