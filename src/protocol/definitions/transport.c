@@ -154,7 +154,7 @@ _z_transport_message_t _z_t_msg_make_init_syn(z_whatami_t whatami, _z_id_t zid) 
 #else
     bool has_patch = false;
 #endif
-    if (has_patch == true) {
+    if (has_patch) {
         _Z_SET_FLAG(msg._header, _Z_FLAG_T_Z);
     }
 
