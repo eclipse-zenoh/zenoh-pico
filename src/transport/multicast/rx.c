@@ -199,7 +199,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                                                          t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                     dbuf = &entry->_dbuf_reliable;
-                    if (consecutive == false) {
+                    if (!consecutive) {
                         _Z_DEBUG("Non-consecutive fragments received");
                         _z_wbuf_reset(dbuf);
                         break;
