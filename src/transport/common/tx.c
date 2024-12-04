@@ -135,7 +135,8 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
     return ret;
 }
 
-z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn, bool start) {
+z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z_reliability_t reliability, size_t sn,
+                                               bool start) {
     z_result_t ret = _Z_RES_OK;
 
     // Assume first that this is not the final fragment

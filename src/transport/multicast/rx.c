@@ -193,8 +193,10 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R) == true) {
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
-                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) == true) {
-                    bool consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._fragment._sn);
+                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, t_msg->_body._frame._sn) ==
+                    true) {
+                    bool consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
+                                                         t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._frame._sn;
                     dbuf = &entry->_dbuf_reliable;
                     if (consecutive == false) {
@@ -208,8 +210,10 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     break;
                 }
             } else {
-                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, t_msg->_body._frame._sn) == true) {
-                    bool consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, t_msg->_body._fragment._sn);
+                if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
+                                   t_msg->_body._frame._sn) == true) {
+                    bool consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
+                                                         t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._frame._sn;
                     dbuf = &entry->_dbuf_best_effort;
                     if (consecutive == false) {
@@ -325,7 +329,8 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
 
 #if Z_FEATURE_FRAGMENTATION == 1
-                        entry->_patch = t_msg->_body._join._patch < _Z_CURRENT_PATCH ? t_msg->_body._join._patch : _Z_CURRENT_PATCH;
+                        entry->_patch =
+                            t_msg->_body._join._patch < _Z_CURRENT_PATCH ? t_msg->_body._join._patch : _Z_CURRENT_PATCH;
 #if Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION == 1
                         entry->_dbuf_reliable = _z_wbuf_make(0, true);
                         entry->_dbuf_best_effort = _z_wbuf_make(0, true);

@@ -200,17 +200,17 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
         _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
     }
 
-    #if Z_FEATURE_FRAGMENTATION == 1
-        if (msg->_patch != _Z_CURRENT_PATCH) {
-            if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
-                _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
-                _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
-            } else {
-                _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
-                ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
-            }
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (msg->_patch != _Z_CURRENT_PATCH) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
+        } else {
+            _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
-    #endif
+    }
+#endif
 
     return ret;
 }
