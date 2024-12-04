@@ -89,7 +89,7 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     if (has_patch) {
-        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
             _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
             _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
         } else {
