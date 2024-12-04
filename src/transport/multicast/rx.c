@@ -197,7 +197,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
                                    t_msg->_body._fragment._sn) == true) {
                     consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
-                                                         t_msg->_body._fragment._sn);
+                                                    t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._fragment._sn;
                     dbuf = &entry->_dbuf_reliable;
                 } else {
@@ -209,7 +209,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
                                    t_msg->_body._fragment._sn)) {
                     consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
-                                                         t_msg->_body._fragment._sn);
+                                                    t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._fragment._sn;
                     dbuf = &entry->_dbuf_best_effort;
                 } else {

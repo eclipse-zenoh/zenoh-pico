@@ -148,8 +148,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn)) {
-                    consecutive =
-                        _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn);
+                    consecutive = _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn);
                     ztu->_sn_rx_reliable = t_msg->_body._fragment._sn;
                     dbuf = &ztu->_dbuf_reliable;
                 } else {
@@ -159,8 +158,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 }
             } else {
                 if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn)) {
-                    consecutive =
-                        _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn);
+                    consecutive = _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn);
                     ztu->_sn_rx_best_effort = t_msg->_body._fragment._sn;
                     dbuf = &ztu->_dbuf_best_effort;
                 } else {
