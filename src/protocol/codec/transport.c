@@ -167,7 +167,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         ret |= _z_zsize_decode(&msg->_next_sn._val._plain._best_effort, zbf);
     }
     msg->_patch = _Z_NO_PATCH;
-    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_join_decode_ext, msg);
     }
 
