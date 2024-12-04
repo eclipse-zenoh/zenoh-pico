@@ -167,7 +167,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                         _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn);
                     ztu->_sn_rx_best_effort = t_msg->_body._frame._sn;
                     dbuf = &ztu->_dbuf_best_effort;
-                    if (consecutive == false) {
+                    if (!consecutive) {
                         _Z_DEBUG("Non-consecutive fragments received");
                         _z_wbuf_reset(dbuf);
                         break;
