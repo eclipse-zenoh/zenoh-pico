@@ -70,7 +70,7 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
     bool has_patch = false;
 #endif
     if (msg->_next_sn._is_qos) {
-        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
             _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_QOS | _Z_MSG_EXT_MORE(has_patch)));
             size_t len = 0;
             for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
