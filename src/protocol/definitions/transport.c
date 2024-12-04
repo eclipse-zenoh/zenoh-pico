@@ -184,7 +184,7 @@ _z_transport_message_t _z_t_msg_make_init_ack(z_whatami_t whatami, _z_id_t zid, 
     }
 
 #if Z_FEATURE_FRAGMENTATION == 1
-    bool has_patch = msg._body._join._patch != _Z_NO_PATCH;
+    bool has_patch = msg._body._init._patch != _Z_NO_PATCH;
 #else
     bool has_patch = false;
 #endif
