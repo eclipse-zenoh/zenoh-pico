@@ -29,7 +29,7 @@ static void _z_query_clear_inner(_z_query_t *q) {
 z_result_t _z_query_send_reply_final(_z_query_t *q) {
     // Try to upgrade session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&q->_zn);
-    if (!_Z_RC_IS_NULL(&sess_rc)) {
+    if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);

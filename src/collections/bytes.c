@@ -33,7 +33,7 @@ z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
 
 _z_bytes_t _z_bytes_alias(const _z_bytes_t src) {
     _z_bytes_t dst;
-    dst._slices = _z_arc_slice_svec_alias(&src._slices);
+    dst._slices = src._slices;
     return dst;
 }
 

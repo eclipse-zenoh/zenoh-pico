@@ -59,7 +59,7 @@ _z_encoding_t _z_encoding_alias(_z_encoding_t src) {
     _z_encoding_t dst;
     dst.id = src.id;
     if (_z_string_check(&src.schema)) {
-        _z_string_alias(src.schema);
+        dst.schema = _z_string_alias(src.schema);
     } else {
         dst.schema = _z_string_null();
     }
