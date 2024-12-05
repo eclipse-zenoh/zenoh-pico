@@ -44,7 +44,7 @@ void print_ip_address() {
 
 void main_task(void *params) {
     (void)params;
-
+    vTaskDelay(pdMS_TO_TICKS(1000));
 #if WIFI_SUPPORT_ENABLED
     if (cyw43_arch_init()) {
         printf("Failed to initialise\n");

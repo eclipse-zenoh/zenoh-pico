@@ -60,8 +60,12 @@ if(ZENOH_USB_UART)
     tinyusb_device
     tinyusb_board
   )
+  set(USB_INCLUDE 
+    ${CMAKE_CURRENT_LIST_DIR}/include/tusb
+  )
 else()
   set(USB_LIBS "")
+  set(USB_INCLUDE "")
 endif()
 
 add_compile_definitions(LWIP_TIMEVAL_PRIVATE=0)
@@ -103,6 +107,7 @@ target_link_libraries(zenohpico_static
 target_include_directories(zenohpico_static PRIVATE 
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/include
+  ${USB_INCLUDE} 
 )
 
 add_library(main STATIC main.c)
@@ -116,7 +121,6 @@ target_link_libraries(main
   pico_rand
   FreeRTOS-Kernel-Heap4
   ${WIFI_LIB} 
-  ${USB_LIBS} 
 )
 
 function(add_example name)
@@ -134,6 +138,7 @@ function(add_example name)
   target_include_directories(${name} PRIVATE 
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/include
+    ${USB_INCLUDE} 
   )
   if(ZENOH_USB_UART)
     pico_enable_stdio_uart(${name} 1)
