@@ -74,7 +74,9 @@ typedef struct {
 static inline _z_string_t _z_string_null(void) { return (_z_string_t){0}; }
 static inline bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
 static inline _z_string_t _z_string_alias(const _z_string_t str) {
-    return (_z_string_t){._slice = _z_slice_alias(str._slice)};
+    _z_string_t ret;
+    ret._slice = _z_slice_alias(str._slice);
+    return ret;
 }
 
 _z_string_t _z_string_copy_from_str(const char *value);
