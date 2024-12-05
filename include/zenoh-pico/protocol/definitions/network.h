@@ -95,11 +95,15 @@ static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t 
         (n_qos._val & 0x08) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;  // 0b1000
     return ret;
 }
-static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (bool)(n_qos._val & 0x10 /* 0b10000 */); }
+static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) {
+    bool ret = (n_qos._val & 0x10) != 0;  // 0b10000
+    return ret;
+}
 #define _z_n_qos_make(express, nodrop, priority)                                                    \
     _z_n_qos_create((bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
                     (z_priority_t)priority)
-static const _z_qos_t _Z_N_QOS_DEFAULT = {._val = 5};
+
+extern const _z_qos_t _Z_N_QOS_DEFAULT;
 
 // RESPONSE FINAL message flags:
 //      Z Extensions       if Z==1 then Zenoh extensions are present

@@ -19,6 +19,8 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/utils/logging.h"
 
+const _z_qos_t _Z_N_QOS_DEFAULT = {._val = 5};
+
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg) {
     _z_n_msg_request_exts_t ret = {.n = 0,
                                    .ext_budget = msg->_ext_budget != 0,
