@@ -96,7 +96,7 @@ static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (bool)(n_qos.
 #define _z_n_qos_make(express, nodrop, priority)                                                    \
     _z_n_qos_create((bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
                     (z_priority_t)priority)
-#define _Z_N_QOS_DEFAULT ((_z_qos_t){._val = 5})
+static const _z_qos_t _Z_N_QOS_DEFAULT = {._val = 5};
 
 // RESPONSE FINAL message flags:
 //      Z Extensions       if Z==1 then Zenoh extensions are present

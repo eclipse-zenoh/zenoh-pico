@@ -93,7 +93,10 @@ size_t _z_simple_rc_strong_count(void *cnt);
     }                                                                                                                \
     static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                                      \
         if (_z_rc_increase_weak(p->_cnt) == _Z_RES_OK) {                                                             \
-            return (name##_weak_t){._val = p->_val, ._cnt = p->_cnt};                                                \
+            name##_weak_t ret;                                                                                       \
+            ret._val = p->_val;                                                                                      \
+            ret._cnt = p->_cnt;                                                                                      \
+            return ret;                                                                                              \
         }                                                                                                            \
         return name##_weak_null();                                                                                   \
     }                                                                                                                \
@@ -142,7 +145,10 @@ size_t _z_simple_rc_strong_count(void *cnt);
     static inline void name##_weak_copy(name##_weak_t *dst, const name##_weak_t *p) { *dst = name##_weak_clone(p); } \
     static inline name##_rc_t name##_weak_upgrade(const name##_weak_t *p) {                                          \
         if (_z_rc_weak_upgrade(p->_cnt) == _Z_RES_OK) {                                                              \
-            return (name##_rc_t){._val = p->_val, ._cnt = p->_cnt};                                                  \
+            name##_rc_t ret;                                                                                         \
+            ret._val = p->_val;                                                                                      \
+            ret._cnt = p->_cnt;                                                                                      \
+            return ret;                                                                                              \
         }                                                                                                            \
         return name##_rc_null();                                                                                     \
     }                                                                                                                \
