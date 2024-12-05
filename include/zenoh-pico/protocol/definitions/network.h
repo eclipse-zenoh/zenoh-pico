@@ -87,7 +87,7 @@ static inline _z_qos_t _z_n_qos_create(bool express, z_congestion_control_t cong
     return ret;
 }
 static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
-    z_priority_t ret = n_qos._val & 0x07;  // 0b0111
+    z_priority_t ret = (z_priority_t)(n_qos._val & 0x07);  // 0b0111
     return ret;
 }
 static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t n_qos) {
