@@ -65,8 +65,8 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
-            // ret = _Z_ERR_GENERIC;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it
+            // until further inspection. ret = _Z_ERR_GENERIC;
         }
 
 #if Z_FEATURE_TCP_NODELAY == 1
@@ -188,8 +188,8 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
-            // ret = _Z_ERR_GENERIC;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it
+            // until further inspection. ret = _Z_ERR_GENERIC;
         }
 
         if (ret != _Z_RES_OK) {
@@ -297,8 +297,8 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             tv.tv_sec = tout / (uint32_t)1000;
             tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
             if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-                // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
-                // ret = _Z_ERR_GENERIC;
+                // FIXME: setting the setsockopt is consistently failing. Commenting it
+                // until further inspection. ret = _Z_ERR_GENERIC;
             }
 
             if ((ret == _Z_RES_OK) && (bind(sock->_fd, lsockaddr, addrlen) < 0)) {
@@ -395,8 +395,8 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
         tv.tv_sec = tout / (uint32_t)1000;
         tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-            // FIXME: setting the setsockopt is consistently failing. Commenting it until further inspection.
-            // ret = _Z_ERR_GENERIC;
+            // FIXME: setting the setsockopt is consistently failing. Commenting it
+            // until further inspection. ret = _Z_ERR_GENERIC;
         }
 
         if ((ret == _Z_RES_OK) && (bind(sock->_fd, lsockaddr, addrlen) < 0)) {
@@ -416,7 +416,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
-#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
                     net_if_ipv4_maddr_join(ifa, mcast);
 #else
                     net_if_ipv4_maddr_join(mcast);
@@ -427,7 +427,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                     if (!mcast) {
                         ret = _Z_ERR_GENERIC;
                     }
-#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
                     net_if_ipv6_maddr_join(ifa, mcast);
 #else
                     net_if_ipv6_maddr_join(mcast);
@@ -460,7 +460,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         if (rep._iptcp->ai_family == AF_INET) {
             mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
             if (mcast != NULL) {
-#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
                 net_if_ipv4_maddr_leave(ifa, mcast);
 #else
                 net_if_ipv4_maddr_leave(mcast);
@@ -472,7 +472,7 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
         } else if (rep._iptcp->ai_family == AF_INET6) {
             mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
             if (mcast != NULL) {
-#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3
+#if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
                 net_if_ipv6_maddr_leave(ifa, mcast);
 #else
                 net_if_ipv6_maddr_leave(mcast);
@@ -508,7 +508,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             struct sockaddr_in *a = ((struct sockaddr_in *)lep._iptcp->ai_addr);
             struct sockaddr_in *b = ((struct sockaddr_in *)&raddr);
             if (!((a->sin_port == b->sin_port) && (a->sin_addr.s_addr == b->sin_addr.s_addr))) {
-                // If addr is not NULL, it means that the raddr was requested by the upper-layers
+                // If addr is not NULL, it means that the raddr was requested by the
+                // upper-layers
                 if (addr != NULL) {
                     addr->len = sizeof(uint32_t) + sizeof(uint16_t);
                     (void)memcpy((uint8_t *)addr->start, &b->sin_addr.s_addr, sizeof(uint32_t));
@@ -521,7 +522,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
             struct sockaddr_in6 *b = ((struct sockaddr_in6 *)&raddr);
             if (!((a->sin6_port == b->sin6_port) &&
                   (memcmp(a->sin6_addr.s6_addr, b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL) == 0))) {
-                // If addr is not NULL, it means that the raddr was requested by the upper-layers
+                // If addr is not NULL, it means that the raddr was requested by the
+                // upper-layers
                 if (addr != NULL) {
                     addr->len = (sizeof(uint32_t) * 4UL) + sizeof(uint16_t);
                     (void)memcpy((uint8_t *)addr->start, &b->sin6_addr.s6_addr, sizeof(uint32_t) * 4UL);
@@ -530,7 +532,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                 break;
             }
         } else {
-            continue;  // FIXME: support error report on invalid packet to the upper layer
+            continue;  // FIXME: support error report on invalid packet to the upper
+                       // layer
         }
     } while (1);
 

@@ -274,7 +274,6 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
                 // Get the fragment sequence number
                 sn = __unsafe_z_raweth_get_sn(ztm, reliability);
             }
-            is_first = false;
             // Reset wbuf
             _z_wbuf_reset(&ztm->_common._wbuf);
             // Prepare buff
@@ -282,6 +281,7 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
             // Serialize one fragment
             _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_common._wbuf, &fbf, reliability, sn),
                                    _z_transport_tx_mutex_unlock(&ztm->_common));
+            _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn, is_first),
             // Write the eth header
             _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_common._link, &ztm->_common._wbuf),
                                    _z_transport_tx_mutex_unlock(&ztm->_common));
@@ -290,6 +290,7 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
                                    _z_transport_tx_mutex_unlock(&ztm->_common));
             // Mark the session that we have transmitted data
             ztm->_common._transmitted = true;
+            is_first = false;
         }
         // Clear the expandable buffer
         _z_wbuf_clear(&fbf);

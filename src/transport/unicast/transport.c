@@ -36,6 +36,10 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
     _z_transport_unicast_t *ztu = &zt->_transport._unicast;
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Patch
+    zt->_transport._unicast._patch = param->_patch;
+#endif
 
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
@@ -216,6 +220,13 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     _z_t_msg_clear(&oam);
     return _Z_RES_OK;
 }
+#if Z_FEATURE_FRAGMENTATION == 1
+                if (iam._body._init._patch > ism._body._init._patch) {
+                    // TODO: Use a better error code?
+                    ret = _Z_ERR_GENERIC;
+                }
+                param->_patch = iam._body._init._patch;
+#endif
 
 // TODO: Activate if we add peer unicast support
 #if 0
