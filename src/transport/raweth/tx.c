@@ -279,9 +279,9 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
             // Prepare buff
             __unsafe_z_raweth_prepare_header(&ztm->_common._link, &ztm->_common._wbuf);
             // Serialize one fragment
-            _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_common._wbuf, &fbf, reliability, sn),
-                                   _z_transport_tx_mutex_unlock(&ztm->_common));
-            _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_serialize_zenoh_fragment(&ztm->_wbuf, &fbf, reliability, sn, is_first),
+            _Z_CLEAN_RETURN_IF_ERR(
+                __unsafe_z_serialize_zenoh_fragment(&ztm->_common._wbuf, &fbf, reliability, sn, is_first),
+                _z_transport_tx_mutex_unlock(&ztm->_common));
             // Write the eth header
             _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_common._link, &ztm->_common._wbuf),
                                    _z_transport_tx_mutex_unlock(&ztm->_common));

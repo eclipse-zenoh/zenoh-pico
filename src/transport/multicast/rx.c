@@ -186,10 +186,14 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             // Note that we receive data from the peer
             entry->_received = true;
 
-            bool consecutive;
             _z_wbuf_t *dbuf;
-            // Check if the SN is correct and select the right defragmentation buffer
+            uint8_t *dbuf_state;
+            z_reliability_t tmsg_reliability;
+            bool consecutive;
+            // Select the right defragmentation buffer
             if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R)) {
+                tmsg_reliability = Z_RELIABILITY_RELIABLE;
+                // Check SN
                 // @TODO: amend once reliability is in place. For the time being only
                 //        monotonic SNs are ensured
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable,
@@ -198,27 +202,34 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                                                     t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._reliable = t_msg->_body._fragment._sn;
                     dbuf = &entry->_dbuf_reliable;
+                    dbuf_state = &entry->_state_reliable;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_reliable);
+                    entry->_state_reliable = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Reliable message dropped because it is out of order");
                     break;
                 }
             } else {
+                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
+                // Check SN
                 if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
                                    t_msg->_body._fragment._sn)) {
                     consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort,
                                                     t_msg->_body._fragment._sn);
                     entry->_sn_rx_sns._val._plain._best_effort = t_msg->_body._fragment._sn;
                     dbuf = &entry->_dbuf_best_effort;
+                    dbuf_state = &entry->_state_best_effort;
                 } else {
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
+                    entry->_state_best_effort = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Best effort message dropped because it is out of order");
                     break;
                 }
             }
             if (!consecutive && _z_wbuf_len(dbuf) > 0) {
-                _Z_DEBUG("Non-consecutive fragments received");
-                _z_wbuf_reset(dbuf);
+                _z_wbuf_clear(dbuf);
+                *dbuf_state = _Z_DBUF_STATE_NULL;
+                _Z_INFO("Defragmentation buffer dropped because non-consecutive fragments received");
                 break;
             }
             // Handle fragment markers
@@ -226,33 +237,13 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 if (t_msg->_body._fragment.first) {
                     _z_wbuf_reset(dbuf);
                 } else if (_z_wbuf_len(dbuf) == 0) {
-                    _Z_DEBUG("First fragment received without the first marker");
+                    _Z_INFO("First fragment received without the first marker");
                     break;
                 }
                 if (t_msg->_body._fragment.drop) {
                     _z_wbuf_reset(dbuf);
                     break;
                 }
-            }
-
-            bool drop = false;
-            if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
-                // Filling the wbuf capacity as a way to signaling the last fragment to reset the dbuf
-                // Otherwise, last (smaller) fragments can be understood as a complete message
-                _z_wbuf_write_bytes(dbuf, t_msg->_body._fragment._payload.start, 0, _z_wbuf_space_left(dbuf));
-                drop = true;
-            _z_wbuf_t *dbuf;
-            uint8_t *dbuf_state;
-            z_reliability_t tmsg_reliability;
-            // Select the right defragmentation buffer
-            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)) {
-                tmsg_reliability = Z_RELIABILITY_RELIABLE;
-                dbuf = &entry->_dbuf_reliable;
-                dbuf_state = &entry->_state_reliable;
-            } else {
-                tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
-                dbuf = &entry->_dbuf_best_effort;
-                dbuf_state = &entry->_state_best_effort;
             }
             // Allocate buffer if needed
             if (*dbuf_state == _Z_DBUF_STATE_NULL) {

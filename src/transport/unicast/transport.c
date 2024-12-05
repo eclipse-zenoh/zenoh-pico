@@ -177,6 +177,14 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     } else {
         ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
     }
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (iam._body._init._patch <= ism._body._init._patch) {
+        param->_patch = iam._body._init._patch;
+    } else {
+        // TODO: Use a better error code?
+        ret = _Z_ERR_GENERIC;
+    }
+#endif
     if (ret != _Z_RES_OK) {
         _z_t_msg_clear(&iam);
         return ret;
@@ -220,13 +228,6 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     _z_t_msg_clear(&oam);
     return _Z_RES_OK;
 }
-#if Z_FEATURE_FRAGMENTATION == 1
-                if (iam._body._init._patch > ism._body._init._patch) {
-                    // TODO: Use a better error code?
-                    ret = _Z_ERR_GENERIC;
-                }
-                param->_patch = iam._body._init._patch;
-#endif
 
 // TODO: Activate if we add peer unicast support
 #if 0
@@ -257,6 +258,11 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     if (iam._body._init._batch_size > tmsg._body._init._batch_size) {
         iam._body._init._batch_size = tmsg._body._init._batch_size;
     }
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (iam._body._init._patch > tmsg._body._init._patch) {
+        iam._body._init._patch = tmsg._body._init._patch;
+    }
+#endif
     param->_remote_zid = tmsg._body._init._zid;
     param->_seq_num_res = iam._body._init._seq_num_res;
     param->_req_id_res = iam._body._init._req_id_res;

@@ -52,10 +52,9 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
         if (!is_first) {
             sn = _z_transport_tx_get_sn(ztc, reliability);
         }
-        is_first = false;
         // Serialize fragment
         __unsafe_z_prepare_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
-        z_result_t ret = __unsafe_z_serialize_zenoh_fragment(&ztc->_wbuf, frag_buff, reliability, sn);
+        z_result_t ret = __unsafe_z_serialize_zenoh_fragment(&ztc->_wbuf, frag_buff, reliability, sn, is_first);
         if (ret != _Z_RES_OK) {
             _Z_ERROR("Fragment serialization failed with err %d", ret);
             return ret;
@@ -64,6 +63,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
         __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
         _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf));
         ztc->_transmitted = true;  // Tell session we transmitted data
+        is_first = false;
     }
     return _Z_RES_OK;
 }
