@@ -66,15 +66,15 @@ static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return 
 static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, const _z_slice_t *parameters,
                                         _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
                                         bool anyke) {
-    return (_z_query_t){
-        ._key = _z_keyexpr_alias(*key),
-        ._value = _z_value_alias(*value),
-        ._request_id = request_id,
-        ._zn = _z_session_rc_clone_as_weak(zn),
-        ._attachment = _z_bytes_alias(*attachment),
-        ._parameters = _z_string_alias_slice(parameters),
-        ._anyke = anyke,
-    };
+    _z_query_t ret;
+    ret._key = _z_keyexpr_alias(*key);
+    ret._value = _z_value_alias(*value);
+    ret._request_id = request_id;
+    ret._zn = _z_session_rc_clone_as_weak(zn);
+    ret._attachment = _z_bytes_alias(*attachment);
+    ret._parameters = _z_string_alias_slice(parameters);
+    ret._anyke = anyke;
+    return ret;
 }
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);

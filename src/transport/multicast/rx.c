@@ -226,7 +226,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     break;
                 }
             }
-            if (!consecutive && _z_wbuf_len(dbuf) > 0) {
+            if (!consecutive && (_z_wbuf_len(dbuf) > 0)) {
                 _z_wbuf_clear(dbuf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;
                 _Z_INFO("Defragmentation buffer dropped because non-consecutive fragments received");

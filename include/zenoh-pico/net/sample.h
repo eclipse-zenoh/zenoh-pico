@@ -54,16 +54,16 @@ static inline _z_sample_t _z_sample_alias(const _z_keyexpr_t *key, const _z_byte
                                           const _z_timestamp_t *timestamp, const _z_encoding_t *encoding,
                                           const z_sample_kind_t kind, const _z_qos_t qos, const _z_bytes_t *attachment,
                                           z_reliability_t reliability) {
-    return (_z_sample_t){
-        .keyexpr = *key,
-        .payload = *payload,
-        .timestamp = *timestamp,
-        .encoding = *encoding,
-        .kind = kind,
-        .qos = qos,
-        .attachment = *attachment,
-        .reliability = reliability,
-    };
+    _z_sample_t ret;
+    ret.keyexpr = *key;
+    ret.payload = *payload;
+    ret.timestamp = *timestamp;
+    ret.encoding = *encoding;
+    ret.kind = kind;
+    ret.qos = qos;
+    ret.attachment = *attachment;
+    ret.reliability = reliability;
+    return ret;
 }
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 

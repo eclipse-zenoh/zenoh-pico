@@ -311,7 +311,7 @@ size_t _z_wbuf_capacity(const _z_wbuf_t *wbf) {
 
 size_t _z_wbuf_len(const _z_wbuf_t *wbf) {
     size_t len = 0;
-    for (size_t i = wbf->_r_idx; i <= wbf->_w_idx; i++) {
+    for (size_t i = wbf->_r_idx; (i < _z_wbuf_len_iosli(wbf)) && (i <= wbf->_w_idx); i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         len = len + _z_iosli_readable(ios);
     }
