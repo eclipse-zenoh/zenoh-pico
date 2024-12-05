@@ -64,9 +64,14 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
     }
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_next_sn._val._plain._reliable));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_next_sn._val._plain._best_effort));
+#if Z_FEATURE_FRAGMENTATION == 1
+    bool has_patch = msg->_patch != _Z_NO_PATCH;
+#else
+    bool has_patch = false;
+#endif
     if (msg->_next_sn._is_qos) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1));
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_QOS | _Z_MSG_EXT_MORE(has_patch)));
             size_t len = 0;
             for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
                 len += _z_zint_len(msg->_next_sn._val._qos[i]._reliable) +
@@ -82,6 +87,17 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (has_patch) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
+        } else {
+            _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+#endif
 
     return ret;
 }
@@ -89,14 +105,17 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
 z_result_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     z_result_t ret = _Z_RES_OK;
     _z_t_msg_join_t *msg = (_z_t_msg_join_t *)ctx;
-    if (_Z_EXT_FULL_ID(extension->_header) ==
-        (_Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1)) {  // QOS: (enc=zbuf)(mandatory=true)(id=1)
+    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_QOS) {
         msg->_next_sn._is_qos = true;
         _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
         }
+#if Z_FEATURE_FRAGMENTATION == 1
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_PATCH) {
+        msg->_patch = (uint8_t)extension->_body._zint._val;
+#endif
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
@@ -148,6 +167,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         ret |= _z_zsize_decode(&msg->_next_sn._val._plain._reliable, zbf);
         ret |= _z_zsize_decode(&msg->_next_sn._val._plain._best_effort, zbf);
     }
+    msg->_patch = _Z_NO_PATCH;
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_join_decode_ext, msg);
     }
@@ -181,6 +201,32 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
         _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
     }
 
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (msg->_patch != _Z_NO_PATCH) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
+        } else {
+            _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+#endif
+
+    return ret;
+}
+
+z_result_t _z_init_decode_ext(_z_msg_ext_t *extension, void *ctx) {
+    z_result_t ret = _Z_RES_OK;
+    _z_t_msg_init_t *msg = (_z_t_msg_init_t *)ctx;
+    if (false) {
+#if Z_FEATURE_FRAGMENTATION == 1
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_INIT_PATCH) {
+        msg->_patch = (uint8_t)extension->_body._zint._val;
+#endif
+    } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    }
     return ret;
 }
 
@@ -224,8 +270,9 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         msg->_cookie = _z_slice_null();
     }
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x01);
+    msg->_patch = _Z_NO_PATCH;
+    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        ret |= _z_msg_ext_decode_iter(zbf, _z_init_decode_ext, msg);
     }
 
     return ret;
@@ -450,13 +497,39 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_sn))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-        ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+    if (msg->first) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_FIRST | _Z_MSG_EXT_MORE(msg->drop)));
+        } else {
+            _Z_DEBUG("Attempted to serialize Start extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
     }
-    if (ret == _Z_RES_OK && _z_slice_check(&msg->_payload)) {
+    if (msg->drop) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_DROP));
+        } else {
+            _Z_DEBUG("Attempted to serialize Stop extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+    if (_z_slice_check(&msg->_payload)) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_payload.start, 0, msg->_payload.len));
     }
 
+    return ret;
+}
+
+z_result_t _z_fragment_decode_ext(_z_msg_ext_t *extension, void *ctx) {
+    z_result_t ret = _Z_RES_OK;
+    _z_t_msg_fragment_t *msg = (_z_t_msg_fragment_t *)ctx;
+    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_FIRST) {
+        msg->first = true;
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_DROP) {
+        msg->drop = true;
+    } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    }
     return ret;
 }
 
@@ -467,8 +540,10 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT");
     ret |= _z_zsize_decode(&msg->_sn, zbf);
 
+    msg->first = false;
+    msg->drop = false;
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
+        ret |= _z_msg_ext_decode_iter(zbf, _z_fragment_decode_ext, msg);
     }
     msg->_payload = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
     zbf->_ios._r_pos = zbf->_ios._w_pos;

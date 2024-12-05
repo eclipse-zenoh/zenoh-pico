@@ -57,6 +57,8 @@ typedef struct {
     uint8_t _state_best_effort;
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
+    // Patch
+    uint8_t _patch;
 #endif
 } _z_transport_peer_entry_t;
 
@@ -122,6 +124,8 @@ typedef struct {
     uint8_t _state_best_effort;
     _z_wbuf_t _dbuf_reliable;
     _z_wbuf_t _dbuf_best_effort;
+    // Patch
+    uint8_t _patch;
 #endif
 } _z_transport_unicast_t;
 
@@ -161,6 +165,9 @@ typedef struct {
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     bool _is_qos;
+#if Z_FEATURE_FRAGMENTATION == 1
+    uint8_t _patch;
+#endif
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {

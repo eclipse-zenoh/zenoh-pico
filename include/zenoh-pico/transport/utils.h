@@ -29,6 +29,7 @@ _z_zint_t _z_sn_max(uint8_t bits);
 _z_zint_t _z_sn_half(_z_zint_t sn);
 _z_zint_t _z_sn_modulo_mask(uint8_t bits);
 bool _z_sn_precedes(const _z_zint_t sn_resolution, const _z_zint_t sn_left, const _z_zint_t sn_right);
+bool _z_sn_consecutive(const _z_zint_t sn_resolution, const _z_zint_t sn_left, const _z_zint_t sn_right);
 _z_zint_t _z_sn_increment(const _z_zint_t sn_resolution, const _z_zint_t sn);
 _z_zint_t _z_sn_decrement(const _z_zint_t sn_resolution, const _z_zint_t sn);
 

@@ -92,6 +92,16 @@ extern "C" {
 #define _Z_FLAG_T_CLOSE_S 0x20  // 1 << 5
 
 /*=============================*/
+/*            Patch            */
+/*=============================*/
+/// Used to negotiate the patch version of the protocol
+/// if not present (or 0), then protocol as released with 1.0.0
+/// if >= 1, then fragmentation start/stop marker
+#define _Z_NO_PATCH 0x00
+#define _Z_CURRENT_PATCH 0x01
+#define _Z_PATCH_HAS_FRAGMENT_MARKERS(patch) (patch >= 1)
+
+/*=============================*/
 /*     Transport Messages      */
 /*=============================*/
 /*------------------ Scout Message ------------------*/
@@ -235,6 +245,9 @@ typedef struct {
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     uint8_t _version;
+#if Z_FEATURE_FRAGMENTATION == 1
+    uint8_t _patch;
+#endif
 } _z_t_msg_join_t;
 void _z_t_msg_join_clear(_z_t_msg_join_t *msg);
 
@@ -315,6 +328,9 @@ typedef struct {
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     uint8_t _version;
+#if Z_FEATURE_FRAGMENTATION == 1
+    uint8_t _patch;
+#endif
 } _z_t_msg_init_t;
 void _z_t_msg_init_clear(_z_t_msg_init_t *msg);
 
@@ -478,10 +494,10 @@ void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg);
 typedef struct {
     _z_slice_t _payload;
     _z_zint_t _sn;
+    bool first;
+    bool drop;
 } _z_t_msg_fragment_t;
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg);
-
-#define _Z_FRAGMENT_HEADER_SIZE 12
 
 /*------------------ Transport Message ------------------*/
 typedef union {
@@ -514,9 +530,10 @@ _z_transport_message_t _z_t_msg_make_keep_alive(void);
 _z_transport_message_t _z_t_msg_make_frame(_z_zint_t sn, _z_network_message_svec_t messages,
                                            z_reliability_t reliability);
 _z_transport_message_t _z_t_msg_make_frame_header(_z_zint_t sn, z_reliability_t reliability);
-_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last);
+_z_transport_message_t _z_t_msg_make_fragment_header(_z_zint_t sn, z_reliability_t reliability, bool is_last,
+                                                     bool first, bool drop);
 _z_transport_message_t _z_t_msg_make_fragment(_z_zint_t sn, _z_slice_t messages, z_reliability_t reliability,
-                                              bool is_last);
+                                              bool is_last, bool first, bool drop);
 
 /*------------------ Copy ------------------*/
 void _z_t_msg_copy(_z_transport_message_t *clone, _z_transport_message_t *msg);
