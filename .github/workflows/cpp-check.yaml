@@ -44,7 +44,7 @@ jobs:
     - name: build zenoh-pico
       run: |
         mkdir build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/local -DZ_FEATURE_UNSTABLE_API=${{ matrix.unstable }} -DZ_FEATURE_LIVELINESS=1 -DASAN=ON
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=~/local -DZ_FEATURE_UNSTABLE_API=${{ matrix.unstable }} -DZ_FEATURE_LIVELINESS=1 -DASAN=ON
         cmake --build . --target install --config Release
 
     - name: clone zenoh-cpp
