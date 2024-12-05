@@ -30,6 +30,8 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
+
+    dst->_patch = src->_patch;
 #endif
 
     dst->_sn_res = src->_sn_res;

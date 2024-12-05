@@ -36,6 +36,10 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     z_result_t ret = _Z_RES_OK;
 
     zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Patch
+    zt->_transport._unicast._patch = param->_patch;
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
@@ -199,6 +203,13 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
                 } else {
                     ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
                 }
+#if Z_FEATURE_FRAGMENTATION == 1
+                if (iam._body._init._patch > ism._body._init._patch) {
+                    // TODO: Use a better error code?
+                    ret = _Z_ERR_GENERIC;
+                }
+                param->_patch = iam._body._init._patch;
+#endif
 
                 if (ret == _Z_RES_OK) {
                     param->_key_id_res = 0x08 << param->_key_id_res;
