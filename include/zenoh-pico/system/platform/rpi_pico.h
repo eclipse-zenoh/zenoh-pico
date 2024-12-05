@@ -78,4 +78,11 @@ typedef struct {
 }
 #endif
 
+#if Z_FEATURE_LINK_SERIAL_USB == 1
+void _z_usb_uart_init();
+void _z_usb_uart_deinit();
+void _z_usb_uart_write(const uint8_t *buf, int length);
+uint8_t _z_usb_uart_getc();
+#endif
+
 #endif  // ZENOH_PICO_SYSTEM_RPI_PICO_TYPES_H

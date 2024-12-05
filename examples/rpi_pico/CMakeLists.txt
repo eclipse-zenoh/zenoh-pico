@@ -14,6 +14,7 @@ set(WIFI_PASSWORD "" CACHE STRING "WiFi Password")
 set(ZENOH_CONFIG_MODE "client" CACHE STRING "ZENOH_CONFIG_MODE")
 set(ZENOH_CONFIG_CONNECT CACHE STRING "ZENOH_CONFIG_CONNECT")
 set(ZENOH_CONFIG_LISTEN CACHE STRING "ZENOH_CONFIG_LISTEN")
+option(ZENOH_USB_UART "Enable USB UART" OFF)
 
 message(STATUS "PICO_BOARD: ${PICO_BOARD}")
 message(STATUS "WIFI_SSID: ${WIFI_SSID}")
@@ -26,6 +27,7 @@ endif()
 message(STATUS "ZENOH_CONFIG_MODE: ${ZENOH_CONFIG_MODE}")
 message(STATUS "ZENOH_CONFIG_CONNECT: ${ZENOH_CONFIG_CONNECT}")
 message(STATUS "ZENOH_CONFIG_LISTEN: ${ZENOH_CONFIG_LISTEN}")
+message(STATUS "ZENOH_USB_UART: ${ZENOH_USB_UART}")
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in"
@@ -52,6 +54,16 @@ else()
   set(WIFI_LIB "")
 endif()
 
+if(ZENOH_USB_UART)
+  set(USB_LIBS 
+    tinyusb_host
+    tinyusb_device
+    tinyusb_board
+  )
+else()
+  set(USB_LIBS "")
+endif()
+
 add_compile_definitions(LWIP_TIMEVAL_PRIVATE=0)
 pico_sdk_init()
 
@@ -67,6 +79,11 @@ if (NOT WIFI_SUPPORT_ENABLED)
 endif()
 
 declare_cache_var(Z_FEATURE_LINK_SERIAL 1 STRING "Serial support")
+if(ZENOH_USB_UART)
+  declare_cache_var(Z_FEATURE_LINK_SERIAL_USB 1 STRING "Serial USB support")
+else()
+  declare_cache_var(Z_FEATURE_LINK_SERIAL_USB 0 STRING "Serial USB support")
+endif()
 
 set(BUILD_SHARED_LIBS OFF)
 set(WITH_RPI_PICO ON)
@@ -79,6 +96,7 @@ target_link_libraries(zenohpico_static
   pico_rand
   FreeRTOS-Kernel-Heap4
   ${WIFI_LIB} 
+  ${USB_LIBS} 
 )
 
 # Configure build  
@@ -98,6 +116,7 @@ target_link_libraries(main
   pico_rand
   FreeRTOS-Kernel-Heap4
   ${WIFI_LIB} 
+  ${USB_LIBS} 
 )
 
 function(add_example name)
@@ -110,12 +129,17 @@ function(add_example name)
     FreeRTOS-Kernel-Heap4
     zenohpico::lib
     ${WIFI_LIB} 
+    ${USB_LIBS} 
   )
   target_include_directories(${name} PRIVATE 
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/include
   )
-  pico_enable_stdio_usb(${name} 1)
+  if(ZENOH_USB_UART)
+    pico_enable_stdio_uart(${name} 1)
+  else()
+    pico_enable_stdio_usb(${name} 1)
+  endif()
   pico_add_extra_outputs(${name})
 endfunction()
 

@@ -533,11 +533,15 @@ z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, u
 z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
     z_result_t ret = _Z_RES_OK;
 
-    if (!sock || baudrate == 0) {
-        return _Z_ERR_INVALID;
-    }
-
     sock->_serial = NULL;
+
+#if Z_FEATURE_LINK_SERIAL_USB == 1
+    if (strcmp("usb", dev) == 0) {
+        _z_usb_uart_init();
+        return ret;
+    }
+#endif
+
     uint32_t txpin = 0;
     uint32_t rxpin = 0;
 
@@ -584,7 +588,15 @@ z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint3
     return ret;
 }
 
-void _z_close_serial(_z_sys_net_socket_t *sock) { uart_deinit(sock->_serial); }
+void _z_close_serial(_z_sys_net_socket_t *sock) {
+    if (sock->_serial != NULL) {
+        uart_deinit(sock->_serial);
+    } else {
+#if Z_FEATURE_LINK_SERIAL_USB == 1
+        _z_usb_uart_deinit();
+#endif
+    }
+}
 
 size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     z_result_t ret = _Z_RES_OK;
@@ -592,7 +604,11 @@ size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) 
     uint8_t *before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
+#if Z_FEATURE_LINK_SERIAL_USB == 1
+        before_cobs[i] = (sock._serial == NULL) ? _z_usb_uart_getc() : uart_getc(sock._serial);
+#else
         before_cobs[i] = uart_getc(sock._serial);
+#endif
 
         rb = rb + (size_t)1;
         if (before_cobs[i] == (uint8_t)0x00) {
@@ -677,7 +693,13 @@ size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t
     uint8_t *after_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     ssize_t twb = _z_cobs_encode(before_cobs, i, after_cobs);
     after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
-    uart_write_blocking(sock._serial, after_cobs, twb + (ssize_t)1);
+    if (sock._serial == NULL) {
+#if Z_FEATURE_LINK_SERIAL_USB == 1
+        _z_usb_uart_write(after_cobs, twb + (ssize_t)1);
+#endif
+    } else {
+        uart_write_blocking(sock._serial, after_cobs, twb + (ssize_t)1);
+    }
 
     z_free(before_cobs);
     z_free(after_cobs);
