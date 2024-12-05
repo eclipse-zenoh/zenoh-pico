@@ -1446,10 +1446,11 @@ void push_message(void) {
 }
 
 _z_n_msg_request_t gen_request(void) {
+    _z_qos_t qos_default = {._val = 5};
     _z_n_msg_request_t request = {
         ._rid = gen_uint64(),
         ._key = gen_keyexpr(),
-        ._ext_qos = gen_bool() ? _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8) : _Z_N_QOS_DEFAULT,
+        ._ext_qos = gen_bool() ? _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8) : qos_default,
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_target = gen_uint8() % 3,
         ._ext_budget = gen_bool() ? (uint32_t)gen_uint64() : 0,
