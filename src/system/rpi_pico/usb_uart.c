@@ -13,6 +13,7 @@
 //
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_LINK_SERIAL == 1 && Z_FEATURE_LINK_SERIAL_USB == 1
 
@@ -20,6 +21,9 @@
 #include "tusb.h"
 
 // ===== USB descriptors =====
+// Copied from
+// https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/pico_stdio_usb/stdio_usb_descriptors.c
+//
 #ifndef USBD_VID
 #define USBD_VID (0x2E8A)  // Raspberry Pi
 #endif
@@ -180,6 +184,7 @@ static void *_z_usb_uart_task_proc(void *) {
         _z_mutex_unlock(&_z_usb_uart_mutex);
         z_sleep_ms(1);
     }
+    return NULL;
 }
 
 void _z_usb_uart_init() {
@@ -187,7 +192,10 @@ void _z_usb_uart_init() {
     _z_mutex_init(&_z_usb_uart_mutex);
     _z_usb_uart_task_run = true;
     _z_task_init(&_z_usb_uart_task, NULL, &_z_usb_uart_task_proc, NULL);
-    z_sleep_s(10);
+    _Z_DEBUG("whating for host...");
+    while (!tud_cdc_connected()) {
+        z_sleep_ms(100);
+    }
 }
 
 void _z_usb_uart_deinit() {
