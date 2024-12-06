@@ -157,12 +157,112 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
-// Condition variables not supported in FreeRTOS
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+typedef struct waiter_t {
+    SemaphoreHandle_t sem;
+    struct waiter_t *prev;
+    struct waiter_t *next;
+    bool in_list;
+} waiter_t;
+
+typedef struct condvar_t {
+    waiter_t *wait_list;
+} condvar_t;
+
+static void add_wait_list(waiter_t **wait_list, waiter_t *waiter) {
+    if (*wait_list == NULL) {
+        *wait_list = waiter;
+        waiter->next = waiter;
+        waiter->prev = waiter;
+    } else {
+        waiter_t *first = *wait_list;
+        waiter_t *last = (*wait_list)->prev;
+
+        waiter->next = first;
+        waiter->prev = last;
+
+        first->prev = waiter;
+        last->next = waiter;
+    }
+    waiter->in_list = true;
+}
+
+static void remove_wait_list(waiter_t **wait_list, waiter_t *waiter) {
+    waiter_t *prev = waiter->prev;
+    waiter_t *next = waiter->next;
+
+    prev->next = waiter->next;
+    next->prev = waiter->prev;
+    *wait_list = waiter->next;
+
+    if (*wait_list == waiter) {
+        *wait_list = NULL;
+    }
+
+    waiter->next = NULL;
+    waiter->prev = NULL;
+    waiter->in_list = false;
+}
+
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    *cv = (condvar_t *)z_malloc(sizeof(condvar_t));
+    if (*cv == NULL) {
+        return -1;
+    }
+    ((condvar_t *)*cv)->wait_list = NULL;
+    return 0;
+}
+
+z_result_t _z_condvar_drop(_z_condvar_t *cv) {
+    z_free(*cv);
+    return 0;
+}
+
+z_result_t _z_condvar_signal(_z_condvar_t *cv) {
+    condvar_t *cond_var = (condvar_t *)*cv;
+
+    if (cond_var->wait_list != NULL) {
+        xSemaphoreGive(cond_var->wait_list->sem);
+        remove_wait_list(&cond_var->wait_list, cond_var->wait_list);
+    }
+
+    return 0;
+}
+
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    condvar_t *cond_var = (condvar_t *)*cv;
+
+    while (cond_var->wait_list != NULL) {
+        xSemaphoreGive(cond_var->wait_list->sem);
+        remove_wait_list(&cond_var->wait_list, cond_var->wait_list);
+    }
+
+    return 0;
+}
+
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
+    condvar_t *cond_var = (condvar_t *)*cv;
+    SemaphoreHandle_t mutex = *m;
+
+    waiter_t current_thread;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticSemaphore_t current_thread_sem_buffer;
+    current_thread.sem = xSemaphoreCreateCountingStatic(1, 0, &current_thread_sem_buffer);
+#else
+    current_thread.sem = xSemaphoreCreateCounting(1, 0);
+#endif
+    add_wait_list(&cond_var->wait_list, &current_thread);
+
+    xSemaphoreGiveRecursive(mutex);
+    xSemaphoreTake(current_thread.sem, portMAX_DELAY);
+    xSemaphoreTakeRecursive(mutex, portMAX_DELAY);
+
+    if (current_thread.in_list) {
+        remove_wait_list(&cond_var->wait_list, &current_thread);
+    }
+
+    vSemaphoreDelete(current_thread.sem);
+    return 0;
+}
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
