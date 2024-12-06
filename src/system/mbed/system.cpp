@@ -94,26 +94,100 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) {
 }
 
 /*------------------ Condvar ------------------*/
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return 0; }
+struct condvar {
+    struct waiter {
+        Semaphore sem;
+        waiter *prev = nullptr;
+        waiter *next = nullptr;
+        bool in_list = false;
+    };
+    waiter *wait_list = nullptr;
+};
+
+static void add_wait_list(condvar::waiter **wait_list, condvar::waiter *waiter) {
+    if (nullptr == *wait_list) {
+        *wait_list = waiter;
+        waiter->next = waiter;
+        waiter->prev = waiter;
+    } else {
+        condvar::waiter *first = *wait_list;
+        condvar::waiter *last = (*wait_list)->prev;
+
+        waiter->next = first;
+        waiter->prev = last;
+
+        first->prev = waiter;
+        last->next = waiter;
+    }
+    waiter->in_list = true;
+}
+
+static void remove_wait_list(condvar::waiter **wait_list, condvar::waiter *waiter) {
+    condvar::waiter *prev = waiter->prev;
+    condvar::waiter *next = waiter->next;
+
+    prev->next = waiter->next;
+    next->prev = waiter->prev;
+    *wait_list = waiter->next;
+
+    if (*wait_list == waiter) {
+        *wait_list = nullptr;
+    }
+
+    waiter->next = nullptr;
+    waiter->prev = nullptr;
+    waiter->in_list = false;
+}
+
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    *cv = new condvar();
+    return 0;
+}
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
-    delete ((ConditionVariable *)*cv);
+    delete ((condvar *)*cv);
     return 0;
 }
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_one();
+    auto &cond_var = *(condvar *)*cv;
+
+    if (cond_var.wait_list != nullptr) {
+        cond_var.wait_list->sem.release();
+        remove_wait_list(&cond_var.wait_list, cond_var.wait_list);
+    }
+
     return 0;
 }
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_all();
+    auto &cond_var = *(condvar *)*cv;
+
+    while (cond_var.wait_list != nullptr) {
+        cond_var.wait_list->sem.release();
+        remove_wait_list(&cond_var.wait_list, cond_var.wait_list);
+    }
+
     return 0;
 }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
-    *cv = new ConditionVariable(*((Mutex *)*m));
-    ((ConditionVariable *)*cv)->wait();
+    auto &cond_var = *(condvar *)*cv;
+    auto &mutex = *(Mutex *)*m;
+
+    condvar::waiter current_thread;
+    add_wait_list(&cond_var.wait_list, &current_thread);
+
+    mutex.unlock();
+
+    current_thread.sem.acquire();
+
+    mutex.lock();
+
+    if (current_thread.in_list) {
+        remove_wait_list(&cond_var.wait_list, &current_thread);
+    }
+
     return 0;
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
