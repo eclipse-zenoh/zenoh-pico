@@ -33,7 +33,7 @@ typedef void *_z_mutex_t;     // Workaround as MBED is a C++ library
 typedef void *_z_condvar_t;   // Workaround as MBED is a C++ library
 #endif                        // Z_FEATURE_MULTI_THREAD == 1
 
-typedef void *z_clock_t;  // Not defined
+typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
 typedef struct BufferedSerial BufferedSerial;  // Forward declaration to be used in _z_sys_net_socket_t
