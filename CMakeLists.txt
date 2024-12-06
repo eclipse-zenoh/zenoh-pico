@@ -247,6 +247,12 @@ if(Z_FEATURE_LIVELINESS AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_LIVELINESS 0 CACHE STRING "Toggle liveliness feature" FORCE)
 endif()
 
+# Add a warning message if someone tries to enable Z_FEATURE_LINK_SERIAL_USB directly
+if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_LINK_SERIAL_USB can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_LINK_SERIAL_USB.")
+  set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links" FORCE)
+endif()
+
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\

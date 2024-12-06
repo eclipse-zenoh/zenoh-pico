@@ -399,6 +399,9 @@ Valid PIN combinations and associated device names:
 
 **USB Serial connection (experemental)**:
 
+
+To enable this feature, zenoh-pico should be compiled with `Z_FEATURE_LINK_SERIAL_USB` and `Z_FEATURE_UNSTABLE_API` enabled.
+
 To connect via USB CDC, specify `usb` device:
 
 e.g.
