@@ -522,6 +522,7 @@ z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, u
     }
 
     if (sock->_serial == NULL) {
+        _Z_ERROR("invalid pin combination");
         return _Z_ERR_INVALID;
     }
 
@@ -555,6 +556,7 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
     }
 
     if (sock->_serial == NULL) {
+        _Z_ERROR("invalid device name");
         return _Z_ERR_INVALID;
     }
 

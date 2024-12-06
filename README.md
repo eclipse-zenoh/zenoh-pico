@@ -34,7 +34,7 @@ Currently, zenoh-pico provides support for the following (RT)OSs and protocols:
 |      **OpenCR**       | UDP (unicast and multicast), TCP |         IPv4        |                        WiFi                        |
 |    **Emscripten**     |             Websocket            |      IPv4, IPv6     |                   WiFi, Ethernet                   |
 | **FreeRTOS-Plus-TCP** |         UDP (unicast), TCP       |         IPv4        |                      Ethernet                      |
-| **Raspberry Pi Pico** | UDP (unicast and multicast), TCP |         IPv4        |           WiFi (for "W" version), Serial           |
+| **Raspberry Pi Pico** | UDP (unicast and multicast), TCP |         IPv4        |      WiFi (for "W" version), Serial, USB (CDC)     |
 
 Check the website [zenoh.io](http://zenoh.io) and the [roadmap](https://github.com/eclipse-zenoh/roadmap) for more detailed information.
 
@@ -361,12 +361,12 @@ git submodule update --init
 ```
 
 Setup and build the examples:
-  `PICO_BOARD` - Pico board type: pico, pico_w, pico2, pico2_w (default: pico_w) 
-  `WIFI_SSID` - Wi-Fi network SSID
-  `WIFI_PASSWORD` - Wi-Fi password
-  `ZENOH_CONFIG_MODE` - client or peer mode (default: client)
-  `ZENOH_CONFIG_CONNECT` - connect endpoint (only for client mode, optional)
-  `ZENOH_CONFIG_LISTEN` - listen endpoint (only for peer mode, optional)
+- `PICO_BOARD` - Pico board type: pico, pico_w, pico2, pico2_w (default: pico_w) 
+- `WIFI_SSID` - Wi-Fi network SSID
+- `WIFI_PASSWORD` - Wi-Fi password
+- `ZENOH_CONFIG_MODE` - client or peer mode (default: client)
+- `ZENOH_CONFIG_CONNECT` - connect endpoint (only for client mode, optional)
+- `ZENOH_CONFIG_LISTEN` - listen endpoint (only for peer mode, optional)
 
 ```bash
 cd examples/rpi_pico
@@ -375,6 +375,43 @@ cmake --build ./build
 ```
 
 To flash the Raspberry Pi Pico board, connect it in bootloader mode (it will appear as a removable drive) and copy the generated .uf2 file onto it.
+
+**Serial connection**:
+
+To connect via UART specify pins or predefined device name and baud rate:
+
+e.g.
+```
+-DZENOH_CONFIG_CONNECT="serial/0.1#baudrate=38400"
+-DZENOH_CONFIG_CONNECT="serial/uart1_0#baudrate=38400"
+```
+
+Valid PIN combinations and associated device names:
+
+| **PINS** | **Device name** |
+|---------:|:---------------:|
+|  0.1     |     uart0_0     |
+|  4.5     |     uart1_0     |
+|  8.9     |     uart1_1     |
+|  12.13   |     uart0_1     |
+|  16.17   |     uart0_2     |
+
+
+**USB Serial connection (experemental)**:
+
+To connect via USB CDC, specify `usb` device:
+
+e.g.
+```
+-DZENOH_CONFIG_CONNECT="serial/usb#baudrate=112500"
+```
+
+On the host Zenoh, specify the USB CDC device:
+
+e.g.
+```
+zenohd -l serial//dev/ttyACM1#baudrate=112500
+```
 
 ## 3. Running the Examples
 The simplest way to run some of the example is to get a Docker image of the **zenoh** router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
