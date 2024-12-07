@@ -158,6 +158,37 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     SleepConditionVariableSRW(cv, m, INFINITE, 0);
     return ret;
 }
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    z_clock_t now = z_clock_now();
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return _Z_ERR_GENERIC;
+    }
+
+    double remaining = (double)(abstime->QuadPart - now.QuadPart) / frequency.QuadPart * 1000.0;
+    DWORD block_duration = remaining > 0.0 ? (DWORD)remaining : 0;
+
+    z_result_t ret = _Z_RES_OK;
+    if (SleepConditionVariableSRW(cv, m, block_duration, 0) == 0) {
+        if (GetLastError() == ERROR_TIMEOUT) {
+            if (timeout != NULL) {
+                *timeout = true;
+            }
+            return _Z_RES_OK;
+        } else {
+            ret = _Z_ERR_GENERIC;
+        }
+    }
+
+    if (timeout != NULL) {
+        *timeout = false;
+    }
+    return ret;
+}
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
