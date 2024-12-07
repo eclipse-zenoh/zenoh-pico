@@ -94,27 +94,82 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) {
 }
 
 /*------------------ Condvar ------------------*/
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return 0; }
+struct condvar {
+    Mutex mutex;
+    Semaphore sem{0};
+    int waiters{0};
+};
+
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    *cv = new condvar();
+    return 0;
+}
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
-    delete ((ConditionVariable *)*cv);
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    delete ((condvar *)*cv);
     return 0;
 }
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_one();
-    return 0;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    if (cond_var.waiters > 0) {
+        cond_var.sem.release();
+        cond_var.waiters--;
+    }
+    cond_var.mutex.unlock();
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_all();
-    return 0;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    while (cond_var.waiters > 0) {
+        cond_var.sem.release();
+        cond_var.waiters--;
+    }
+    cond_var.mutex.unlock();
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
-    *cv = new ConditionVariable(*((Mutex *)*m));
-    ((ConditionVariable *)*cv)->wait();
-    return 0;
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    cond_var.waiters++;
+    cond_var.mutex.unlock();
+
+    _z_mutex_unlock(m);
+
+    cond_var.sem.acquire();
+
+    _z_mutex_lock(m);
+
+    return _Z_RES_OK;
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

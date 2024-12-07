@@ -157,12 +157,82 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
-// Condition variables not supported in FreeRTOS
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_drop(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { return -1; }
-z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { return -1; }
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    cv->mutex = xSemaphoreCreateMutexStatic(&cv->mutex_buffer);
+    cv->sem = xSemaphoreCreateCountingStatic((UBaseType_t)(~0), 0, &cv->sem_buffer);
+#else
+    cv->mutex = xSemaphoreCreateMutex();
+    cv->sem = xSemaphoreCreateCounting((UBaseType_t)(~0), 0);
+#endif /* SUPPORT_STATIC_ALLOCATION */
+    cv->waiters = 0;
+
+    if (!cv->mutex || !cv->sem) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_drop(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+    vSemaphoreDelete(cv->sem);
+    vSemaphoreDelete(cv->mutex);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_signal(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    if (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    while (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    cv->waiters++;
+    xSemaphoreGive(cv->mutex);
+
+    _z_mutex_unlock(m);
+
+    xSemaphoreTake(cv->sem, portMAX_DELAY);
+
+    _z_mutex_lock(m);
+
+    return _Z_RES_OK;
+}
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
