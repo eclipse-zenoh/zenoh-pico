@@ -167,6 +167,28 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     return elapsed;
 }
 
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000000;
+    clock->tv_nsec += (duration % 1000000) * 1000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000;
+    clock->tv_nsec += (duration % 1000) * 1000000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
+
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
     z_time_t now;

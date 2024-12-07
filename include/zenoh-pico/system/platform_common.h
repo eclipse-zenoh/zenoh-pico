@@ -272,6 +272,7 @@ z_result_t _z_condvar_drop(_z_condvar_t *cv);
 z_result_t _z_condvar_signal(_z_condvar_t *cv);
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv);
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m);
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout);
 
 /**
  * Initializes a condition variable.
@@ -320,6 +321,25 @@ z_result_t z_condvar_signal(z_loaned_condvar_t *cv);
  *   ``0`` if the wait is successful, a negative value otherwise.
  */
 z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m);
+
+/**
+ * Waits for a signal on the condition variable while holding a mutex until a specified time.
+ *
+ * The calling thread is blocked until the condition variable is signaled or the timeout occurs.
+ * The associated mutex must be locked by the calling thread, and it will be automatically unlocked while waiting.
+ * The `timeout` bool pointer should either be NULL or point to a valid memory, in which case the function will store a
+ * value indicating whether a timeout occurred. If NULL is passed in for `timeout`, it will not be set.
+ *
+ * Parameters:
+ *   cv: Pointer to a :c:type:`z_loaned_condvar_t` on which to wait.
+ *   m: Pointer to a :c:type:`z_loaned_mutex_t` that will be unlocked during the wait.
+ *   abstime: Absolute end time.
+ *   timeout: Whether a timeout occurred.
+ *
+ * Returns:
+ *   ``0`` if the wait is successful, a negative value otherwise.
+ */
+z_result_t z_condvar_wait_until(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, const z_clock_t *abstime, bool *timeout);
 
 /*------------------ Sleep ------------------*/
 /**
@@ -393,6 +413,33 @@ unsigned long z_clock_elapsed_ms(z_clock_t *time);
  *   The elapsed time in seconds.
  */
 unsigned long z_clock_elapsed_s(z_clock_t *time);
+
+/**
+ * Offsets the clock by a specified duration in microseconds.
+ *
+ * Parameters:
+ *   clock: Pointer to a `z_clock_t` to offset.
+ *   duration: The duration in microseconds.
+ */
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration);
+
+/**
+ * Offsets the clock by a specified duration in milliseconds.
+ *
+ * Parameters:
+ *   clock: Pointer to a `z_clock_t` to offset.
+ *   duration: The duration in milliseconds.
+ */
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration);
+
+/**
+ * Offsets the clock by a specified duration in seconds.
+ *
+ * Parameters:
+ *   clock: Pointer to a `z_clock_t` to offset.
+ *   duration: The duration in seconds.
+ */
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration);
 
 /*------------------ Time ------------------*/
 

@@ -190,6 +190,15 @@ unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_clock_elapsed_ms(instant) / 1000; }
 
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) { z_clock_advance_ms(clock, duration / 1000); }
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    unsigned long ticks = pdMS_TO_TICKS(duration);
+    *clock += ticks;
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { z_clock_advance_ms(clock, duration * 1000); }
+
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return xTaskGetTickCount(); }
 
