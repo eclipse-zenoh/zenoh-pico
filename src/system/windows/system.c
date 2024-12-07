@@ -237,6 +237,42 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     return (unsigned long)elapsed;
 }
 
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return;
+    }
+    double ticks = (double)duration * frequency.QuadPart / 1000000.0;
+    clock->QuadPart += (LONGLONG)ticks;
+}
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return;
+    }
+    double ticks = (double)duration * frequency.QuadPart / 1000.0;
+    clock->QuadPart += (LONGLONG)ticks;
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) {
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);  // ticks per second
+
+    // Hardware not supporting QueryPerformanceFrequency
+    if (frequency.QuadPart == 0) {
+        return;
+    }
+    double ticks = (double)duration * frequency.QuadPart;
+    clock->QuadPart += (LONGLONG)ticks;
+}
+
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
     z_time_t now;
