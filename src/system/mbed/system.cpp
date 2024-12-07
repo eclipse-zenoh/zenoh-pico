@@ -149,7 +149,7 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
     }
     cond_var.mutex.unlock();
 
-    return _z_RES_OK;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
