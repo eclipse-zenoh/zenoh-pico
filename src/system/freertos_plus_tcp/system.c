@@ -163,7 +163,7 @@ z_result_t _z_condvar_init(_z_condvar_t *cv) {
     }
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    cv->mutex = xSemaphoreCreateRecursiveMutexStatic(&cv->mutex_buffer);
+    cv->mutex = xSemaphoreCreateMutexStatic(&cv->mutex_buffer);
     cv->sem = xSemaphoreCreateCountingStatic((UBaseType_t)(~0), 0, &cv->sem_buffer);
 #else
     cv->mutex = xSemaphoreCreateMutex();
