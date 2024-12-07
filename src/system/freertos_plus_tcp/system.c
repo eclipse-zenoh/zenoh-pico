@@ -157,111 +157,81 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
-typedef struct waiter_t {
-    SemaphoreHandle_t sem;
-    struct waiter_t *prev;
-    struct waiter_t *next;
-    bool in_list;
-} waiter_t;
-
-typedef struct condvar_t {
-    waiter_t *wait_list;
-} condvar_t;
-
-static void add_wait_list(waiter_t **wait_list, waiter_t *waiter) {
-    if (*wait_list == NULL) {
-        *wait_list = waiter;
-        waiter->next = waiter;
-        waiter->prev = waiter;
-    } else {
-        waiter_t *first = *wait_list;
-        waiter_t *last = (*wait_list)->prev;
-
-        waiter->next = first;
-        waiter->prev = last;
-
-        first->prev = waiter;
-        last->next = waiter;
-    }
-    waiter->in_list = true;
-}
-
-static void remove_wait_list(waiter_t **wait_list, waiter_t *waiter) {
-    waiter_t *prev = waiter->prev;
-    waiter_t *next = waiter->next;
-
-    prev->next = waiter->next;
-    next->prev = waiter->prev;
-    *wait_list = waiter->next;
-
-    if (*wait_list == waiter) {
-        *wait_list = NULL;
-    }
-
-    waiter->next = NULL;
-    waiter->prev = NULL;
-    waiter->in_list = false;
-}
-
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
-    *cv = (condvar_t *)z_malloc(sizeof(condvar_t));
-    if (*cv == NULL) {
-        return -1;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
     }
-    ((condvar_t *)*cv)->wait_list = NULL;
-    return 0;
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    cv->mutex = xSemaphoreCreateRecursiveMutexStatic(&cv->mutex_buffer);
+    cv->sem = xSemaphoreCreateCountingStatic((UBaseType_t)(~0), 0, &cv->sem_buffer);
+#else
+    cv->mutex = xSemaphoreCreateMutex();
+    cv->sem = xSemaphoreCreateCounting((UBaseType_t)(~0), 0);
+#endif /* SUPPORT_STATIC_ALLOCATION */
+    cv->waiters = 0;
+
+    if (!cv->mutex || !cv->sem) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
-    z_free(*cv);
-    return 0;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+    vSemaphoreDelete(cv->sem);
+    vSemaphoreDelete(cv->mutex);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
-    condvar_t *cond_var = (condvar_t *)*cv;
-
-    if (cond_var->wait_list != NULL) {
-        xSemaphoreGive(cond_var->wait_list->sem);
-        remove_wait_list(&cond_var->wait_list, cond_var->wait_list);
+    if (!cv) {
+        return _Z_ERR_GENERIC;
     }
 
-    return 0;
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    if (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
-    condvar_t *cond_var = (condvar_t *)*cv;
-
-    while (cond_var->wait_list != NULL) {
-        xSemaphoreGive(cond_var->wait_list->sem);
-        remove_wait_list(&cond_var->wait_list, cond_var->wait_list);
+    if (!cv) {
+        return _Z_ERR_GENERIC;
     }
 
-    return 0;
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    while (cv->waiters > 0) {
+        xSemaphoreGive(cv->sem);
+        cv->waiters--;
+    }
+    xSemaphoreGive(cv->mutex);
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
-    condvar_t *cond_var = (condvar_t *)*cv;
-    SemaphoreHandle_t mutex = *m;
-
-    waiter_t current_thread;
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-    StaticSemaphore_t current_thread_sem_buffer;
-    current_thread.sem = xSemaphoreCreateCountingStatic(1, 0, &current_thread_sem_buffer);
-#else
-    current_thread.sem = xSemaphoreCreateCounting(1, 0);
-#endif
-    add_wait_list(&cond_var->wait_list, &current_thread);
-
-    xSemaphoreGiveRecursive(mutex);
-    xSemaphoreTake(current_thread.sem, portMAX_DELAY);
-    xSemaphoreTakeRecursive(mutex, portMAX_DELAY);
-
-    if (current_thread.in_list) {
-        remove_wait_list(&cond_var->wait_list, &current_thread);
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
     }
 
-    vSemaphoreDelete(current_thread.sem);
-    return 0;
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    cv->waiters++;
+    xSemaphoreGive(cv->mutex);
+
+    _z_mutex_unlock(m);
+
+    xSemaphoreTake(cv->sem, portMAX_DELAY);
+
+    _z_mutex_lock(m);
+
+    return _Z_RES_OK;
 }
 #endif  // Z_MULTI_THREAD == 1
 
