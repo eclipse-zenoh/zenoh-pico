@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -33,6 +34,12 @@ _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t
     ios._is_alloc = false;
     ios._buf = (uint8_t *)buf;
     return ios;
+}
+
+_z_iosli_t _z_iosli_steal(_z_iosli_t *ios) {
+    _z_iosli_t new_ios = *ios;
+    *ios = _z_iosli_null();
+    return new_ios;
 }
 
 void __z_iosli_init(_z_iosli_t *ios, size_t capacity) {
@@ -73,6 +80,13 @@ void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t le
     uint8_t *w_pos = _z_ptr_u8_offset(dst, (ptrdiff_t)offset);
     (void)memcpy(w_pos, ios->_buf + ios->_r_pos, length);
     ios->_r_pos = ios->_r_pos + length;
+}
+
+void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
+    size_t length = _z_iosli_readable(src);
+    assert(dst->_capacity >= length);
+    (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
+    dst->_w_pos += length;
 }
 
 uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos) {
@@ -160,8 +174,18 @@ _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src) {
 
 /*------------------ ZBuf ------------------*/
 _z_zbuf_t _z_zbuf_make(size_t capacity) {
-    _z_zbuf_t zbf;
+    _z_zbuf_t zbf = _z_zbuf_null();
     zbf._ios = _z_iosli_make(capacity);
+    if (_z_zbuf_capacity(&zbf) == 0) {
+        return zbf;
+    }
+    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
+    zbf._slice = _z_slice_simple_rc_new_from_val(&s);
+    if (_Z_RC_IS_NULL(&zbf._slice)) {
+        _Z_ERROR("slice rc creation failed");
+        _z_iosli_clear(&zbf._ios);
+    }
+    zbf._ios._is_alloc = false;
     return zbf;
 }
 
@@ -169,6 +193,7 @@ _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length) {
     assert(_z_iosli_readable(&zbf->_ios) >= length);
     _z_zbuf_t v;
     v._ios = _z_iosli_wrap(_z_zbuf_get_rptr(zbf), length, 0, length);
+    v._slice = zbf->_slice;
     return v;
 }
 _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
@@ -187,6 +212,8 @@ uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
     return _z_ptr_u8_offset(zbf->_ios._buf, (ptrdiff_t)zbf->_ios._r_pos);
 }
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
+
+void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src) { _z_iosli_copy_bytes(&dst->_ios, &src->_ios); }
 
 bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 
@@ -218,7 +245,10 @@ uint8_t *_z_zbuf_get_wptr(const _z_zbuf_t *zbf) { return zbf->_ios._buf + zbf->_
 
 void _z_zbuf_reset(_z_zbuf_t *zbf) { _z_iosli_reset(&zbf->_ios); }
 
-void _z_zbuf_clear(_z_zbuf_t *zbf) { _z_iosli_clear(&zbf->_ios); }
+void _z_zbuf_clear(_z_zbuf_t *zbf) {
+    _z_iosli_clear(&zbf->_ios);
+    _z_slice_simple_rc_drop(&zbf->_slice);
+}
 
 void _z_zbuf_compact(_z_zbuf_t *zbf) {
     if ((zbf->_ios._r_pos != 0) || (zbf->_ios._w_pos != 0)) {
@@ -260,15 +290,8 @@ size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     _z_wbuf_t wbf;
-    if (is_expandable == true) {
-        // Preallocate 4 slots, this is usually what we expect
-        // when fragmenting a zenoh data message with attachment
-        wbf._ioss = _z_iosli_vec_make(4);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
-    } else {
-        wbf._ioss = _z_iosli_vec_make(1);
-        _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
-    }
+    wbf._ioss = _z_iosli_vec_make(1);
+    _z_wbuf_add_iosli(&wbf, __z_wbuf_new_iosli(capacity));
     wbf._w_idx = 0;  // This __must__ come after adding ioslices to reset w_idx
     wbf._r_idx = 0;
     wbf._expansion_step = is_expandable ? capacity : 0;
@@ -288,7 +311,7 @@ size_t _z_wbuf_capacity(const _z_wbuf_t *wbf) {
 
 size_t _z_wbuf_len(const _z_wbuf_t *wbf) {
     size_t len = 0;
-    for (size_t i = wbf->_r_idx; i <= wbf->_w_idx; i++) {
+    for (size_t i = wbf->_r_idx; (i < _z_wbuf_len_iosli(wbf)) && (i <= wbf->_w_idx); i++) {
         _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, i);
         len = len + _z_iosli_readable(ios);
     }
@@ -517,6 +540,23 @@ _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf) {
     return zbf;
 }
 
+_z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf) {
+    // Can only move single buffer wbuf
+    assert(_z_iosli_vec_len(&wbf->_ioss) == 1);
+
+    _z_zbuf_t zbf = _z_zbuf_null();
+    _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, 0);
+    zbf._ios = _z_iosli_steal(ios);
+    _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
+    zbf._slice = _z_slice_simple_rc_new_from_val(&s);
+    if (_Z_RC_IS_NULL(&zbf._slice)) {
+        _Z_ERROR("slice rc creation failed");
+    }
+    zbf._ios._is_alloc = false;
+    _z_wbuf_clear(wbf);
+    return zbf;
+}
+
 z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
     z_result_t ret = _Z_RES_OK;
     size_t llength = length;
@@ -569,7 +609,10 @@ void _z_wbuf_reset(_z_wbuf_t *wbf) {
     }
 }
 
-void _z_wbuf_clear(_z_wbuf_t *wbf) { _z_iosli_vec_clear(&wbf->_ioss); }
+void _z_wbuf_clear(_z_wbuf_t *wbf) {
+    _z_iosli_vec_clear(&wbf->_ioss);
+    *wbf = _z_wbuf_null();
+}
 
 void _z_wbuf_free(_z_wbuf_t **wbf) {
     _z_wbuf_t *ptr = *wbf;

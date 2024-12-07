@@ -36,19 +36,19 @@ void _z_liveliness_pending_query_copy(_z_liveliness_pending_query_t *dst, const 
 _z_liveliness_pending_query_t *_z_liveliness_pending_query_clone(const _z_liveliness_pending_query_t *src);
 
 _Z_ELEM_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t, _z_noop_size,
-               _z_liveliness_pending_query_clear, _z_liveliness_pending_query_copy)
+               _z_liveliness_pending_query_clear, _z_liveliness_pending_query_copy, _z_noop_move)
 _Z_INT_MAP_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t)
 
 uint32_t _z_liveliness_get_query_id(_z_session_t *zn);
 
-z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_keyexpr_t keyexpr);
+z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr);
 void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, const _z_keyexpr_t keyexpr,
+z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr,
                                               const _z_timestamp_t *timestamp);
 z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, const _z_timestamp_t *timestamp);
-z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, _z_keyexpr_t keyexpr);
+z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 #endif
 
 #if Z_FEATURE_QUERY == 1

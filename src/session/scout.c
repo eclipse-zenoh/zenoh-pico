@@ -76,7 +76,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
 
                     switch (_Z_MID(s_msg._header)) {
                         case _Z_MID_HELLO: {
-                            _Z_INFO("Received _Z_HELLO message");
+                            _Z_DEBUG("Received _Z_HELLO message");
                             _z_hello_t *hello = (_z_hello_t *)z_malloc(sizeof(_z_hello_t));
                             if (hello != NULL) {
                                 hello->_version = s_msg._body._hello._version;
@@ -89,7 +89,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
 
                                     for (size_t i = 0; i < n_loc; i++) {
                                         _z_string_t s = _z_locator_to_string(&s_msg._body._hello._locators._val[i]);
-                                        _z_string_svec_append(&hello->_locators, &s);
+                                        _z_string_svec_append(&hello->_locators, &s, true);
                                     }
                                 } else {
                                     // @TODO: construct the locator departing from the sock address

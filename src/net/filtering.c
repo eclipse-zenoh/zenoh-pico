@@ -96,9 +96,10 @@ z_result_t _z_write_filter_create(_z_publisher_t *pub) {
 
 z_result_t _z_write_filter_destroy(_z_publisher_t *pub) {
     if (pub->_filter.ctx != NULL) {
-        _Z_RETURN_IF_ERR(_z_remove_interest(_Z_RC_IN_VAL(&pub->_zn), pub->_filter._interest_id));
+        z_result_t res = _z_remove_interest(_Z_RC_IN_VAL(&pub->_zn), pub->_filter._interest_id);
         z_free(pub->_filter.ctx);
         pub->_filter.ctx = NULL;
+        return res;
     }
     return _Z_RES_OK;
 }

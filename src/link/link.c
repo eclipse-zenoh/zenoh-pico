@@ -27,13 +27,10 @@ z_result_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
-        // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
-#if Z_FEATURE_LINK_TCP == 1
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
-#endif
 #if Z_FEATURE_LINK_UDP_UNICAST == 1
             if (_z_endpoint_udp_unicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_unicast(zl, ep);
@@ -80,10 +77,12 @@ z_result_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
     _z_endpoint_t ep;
     ret = _z_endpoint_from_string(&ep, locator);
     if (ret == _Z_RES_OK) {
-        // TODO[peer]: when peer unicast mode is supported, this must be revisited
         // Create transport link
+        if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tcp(zl, &ep);
+        } else
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
-        if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
+            if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
         } else
 #endif
@@ -153,17 +152,8 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
 
 z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     z_result_t ret = _Z_RES_OK;
-    bool link_is_streamed = false;
+    bool link_is_streamed = link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
 
-    switch (link->_cap._flow) {
-        case Z_LINK_CAP_FLOW_STREAM:
-            link_is_streamed = true;
-            break;
-        case Z_LINK_CAP_FLOW_DATAGRAM:
-        default:
-            link_is_streamed = false;
-            break;
-    }
     for (size_t i = 0; (i < _z_wbuf_len_iosli(wbf)) && (ret == _Z_RES_OK); i++) {
         _z_slice_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;

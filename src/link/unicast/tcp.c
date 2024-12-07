@@ -188,4 +188,15 @@ z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
 
     return ret;
 }
+#else
+z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
+    _ZP_UNUSED(endpoint);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+
+z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
+    _ZP_UNUSED(zl);
+    _ZP_UNUSED(endpoint);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
 #endif

@@ -73,6 +73,7 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {  // QOS ext
             if (extension->_body._zint._val > UINT32_MAX) {
+                _Z_INFO("Invalid value decoded");
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
             msg->_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
@@ -91,9 +92,8 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
     z_result_t ret = _Z_RES_OK;
-    *msg = (_z_n_msg_push_t){0};
     msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
@@ -104,7 +104,7 @@ z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if (ret == _Z_RES_OK) {
         uint8_t msgheader;
         _Z_RETURN_IF_ERR(_z_uint8_decode(&msgheader, zbf));
-        _Z_RETURN_IF_ERR(_z_push_body_decode(&msg->_body, zbf, msgheader));
+        _Z_RETURN_IF_ERR(_z_push_body_decode(&msg->_body, zbf, msgheader, arcs));
     }
 
     return ret;
@@ -172,6 +172,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     switch (_Z_EXT_FULL_ID(extension->_header)) {
         case 0x01 | _Z_MSG_EXT_ENC_ZINT: {  // QOS ext
             if (extension->_body._zint._val > UINT8_MAX) {
+                _Z_INFO("Invalid value decoded");
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
             msg->_ext_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
@@ -185,6 +186,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         case 0x04 | _Z_MSG_EXT_ENC_ZINT | _Z_MSG_EXT_FLAG_M: {
             msg->_ext_target = (uint8_t)extension->_body._zint._val;
             if (msg->_ext_target > 2) {
+                _Z_INFO("Invalid value decoded");
                 return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
             }
         } break;
@@ -204,8 +206,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header) {
-    *msg = (_z_n_msg_request_t){0};
+z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header, _z_arc_slice_t *arcs) {
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
@@ -223,13 +224,14 @@ z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint
         } break;
         case _Z_MID_Z_PUT: {
             msg->_tag = _Z_REQUEST_PUT;
-            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, zheader));
+            _Z_RETURN_IF_ERR(_z_put_decode(&msg->_body._put, zbf, zheader, arcs));
         } break;
         case _Z_MID_Z_DEL: {
             msg->_tag = _Z_REQUEST_DEL;
             _Z_RETURN_IF_ERR(_z_del_decode(&msg->_body._del, zbf, zheader));
         } break;
         default:
+            _Z_INFO("Unknown request type received: %d", _Z_MID(zheader));
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
     return _Z_RES_OK;
@@ -332,9 +334,8 @@ z_result_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
-    *msg = (_z_n_msg_response_t){0};
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     z_result_t ret = _Z_RES_OK;
     _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
@@ -351,12 +352,12 @@ z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t 
     switch (_Z_MID(inner_header)) {
         case _Z_MID_Z_REPLY: {
             msg->_tag = _Z_RESPONSE_BODY_REPLY;
-            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header);
+            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header, arcs);
             break;
         }
         case _Z_MID_Z_ERR: {
             msg->_tag = _Z_RESPONSE_BODY_ERR;
-            ret = _z_err_decode(&msg->_body._err, zbf, inner_header);
+            ret = _z_err_decode(&msg->_body._err, zbf, inner_header, arcs);
             break;
         }
         default: {
@@ -380,8 +381,6 @@ z_result_t _z_response_final_encode(_z_wbuf_t *wbf, const _z_n_msg_response_fina
 
 z_result_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *zbf, uint8_t header) {
     (void)(header);
-
-    *msg = (_z_n_msg_response_final_t){0};
     z_result_t ret = _Z_RES_OK;
     ret |= _z_zsize_decode(&msg->_request_id, zbf);
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
@@ -440,7 +439,6 @@ z_result_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     return _Z_RES_OK;
 }
 z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    *decl = (_z_n_msg_declare_t){0};
     decl->_ext_qos = _Z_N_QOS_DEFAULT;
     // Retrieve interest id
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
@@ -515,7 +513,7 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
             return _Z_ERR_GENERIC;
     }
 }
-z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) {
+z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
     switch (_Z_MID(header)) {
@@ -525,15 +523,15 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) 
         } break;
         case _Z_MID_N_PUSH: {
             msg->_tag = _Z_N_PUSH;
-            return _z_push_decode(&msg->_body._push, zbf, header);
+            return _z_push_decode(&msg->_body._push, zbf, header, arcs);
         } break;
         case _Z_MID_N_REQUEST: {
             msg->_tag = _Z_N_REQUEST;
-            return _z_request_decode(&msg->_body._request, zbf, header);
+            return _z_request_decode(&msg->_body._request, zbf, header, arcs);
         } break;
         case _Z_MID_N_RESPONSE: {
             msg->_tag = _Z_N_RESPONSE;
-            return _z_response_decode(&msg->_body._response, zbf, header);
+            return _z_response_decode(&msg->_body._response, zbf, header, arcs);
         } break;
         case _Z_MID_N_RESPONSE_FINAL: {
             msg->_tag = _Z_N_RESPONSE_FINAL;
@@ -544,6 +542,7 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf) 
             return _z_n_interest_decode(&msg->_body._interest, zbf, header);
         } break;
         default:
+            _Z_INFO("Unknown message type received: %d", _Z_MID(header));
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 }

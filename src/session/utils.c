@@ -26,19 +26,19 @@
 #include "zenoh-pico/session/subscription.h"
 
 /*------------------ clone helpers ------------------*/
-_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) {
-    _z_timestamp_t ts;
-    ts.id = tstamp->id;
-    ts.time = tstamp->time;
-    return ts;
+void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src) { *dst = *src; }
+
+_z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp) { return *tstamp; }
+
+void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
+    *dst = *src;
+    _z_timestamp_clear(src);
 }
 
 void _z_timestamp_clear(_z_timestamp_t *tstamp) {
-    memset(&tstamp->id, 0, sizeof(_z_id_t));
+    tstamp->valid = false;
     tstamp->time = 0;
 }
-
-bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
 
 z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     z_result_t ret = _Z_RES_OK;
@@ -62,9 +62,15 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_subscriptions = NULL;
     zn->_liveliness_subscriptions = NULL;
+#if Z_FEATURE_RX_CACHE == 1
+    memset(&zn->_subscription_cache, 0, sizeof(zn->_subscription_cache));
+#endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     zn->_local_queryable = NULL;
+#if Z_FEATURE_RX_CACHE == 1
+    memset(&zn->_queryable_cache, 0, sizeof(zn->_queryable_cache));
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     zn->_pending_queries = NULL;
@@ -86,13 +92,13 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     // Note session in transport
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._session = zsrc;
+            zn->_tp._transport._unicast._common._session = zsrc;
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._session = zsrc;
+            zn->_tp._transport._multicast._common._session = zsrc;
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._session = zsrc;
+            zn->_tp._transport._raweth._common._session = zsrc;
             break;
         default:
             break;
@@ -117,9 +123,15 @@ void _z_session_clear(_z_session_t *zn) {
     _z_flush_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
+#if Z_FEATURE_RX_CACHE == 1
+    _z_subscription_cache_clear(&zn->_subscription_cache);
+#endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
     _z_flush_session_queryable(zn);
+#if Z_FEATURE_RX_CACHE == 1
+    _z_queryable_cache_clear(&zn->_queryable_cache);
+#endif
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_flush_pending_queries(zn);
@@ -143,11 +155,3 @@ z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {
 
     return ret;
 }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-void _zp_session_lock_mutex(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
-void _zp_session_unlock_mutex(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
-#else
-void _zp_session_lock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
-void _zp_session_unlock_mutex(_z_session_t *zn) { _ZP_UNUSED(zn); }
-#endif

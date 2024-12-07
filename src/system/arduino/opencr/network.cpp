@@ -295,8 +295,8 @@ size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_
                 IPAddress rip = sock._udp->remoteIP();
                 uint16_t rport = sock._udp->remotePort();
 
-                *addr = _z_slice_make(strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
-                                      strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t));
+                addr->len = strlen((const char *)&rip[0]) + strlen((const char *)&rip[1]) +
+                            strlen((const char *)&rip[2]) + strlen((const char *)&rip[3]) + sizeof(uint16_t);
                 uint8_t offset = 0;
                 for (uint8_t i = 0; i < (uint8_t)4; i++) {
                     (void)memcpy(const_cast<uint8_t *>(addr->start + offset), &rip[i], strlen((const char *)&rip[i]));

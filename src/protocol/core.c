@@ -19,13 +19,17 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 
 #define _Z_ID_LEN (16)
+
+const _z_id_t empty_id = {0};
 
 uint8_t _z_id_len(_z_id_t id) {
     uint8_t len = _Z_ID_LEN;
@@ -38,38 +42,6 @@ uint8_t _z_id_len(_z_id_t id) {
     }
     return len;
 }
-bool _z_id_check(_z_id_t id) {
-    bool ret = false;
-    for (int i = 0; !ret && i < _Z_ID_LEN; i++) {
-        ret |= id.id[i] != 0;
-    }
-    return ret;
-}
-_z_id_t _z_id_empty(void) {
-    return (_z_id_t){.id = {
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                     }};
-}
-
-_z_source_info_t _z_source_info_null(void) {
-    return (_z_source_info_t){._source_sn = 0, ._entity_id = 0, ._id = _z_id_empty()};
-}
-_z_timestamp_t _z_timestamp_null(void) { return (_z_timestamp_t){.id = _z_id_empty(), .time = 0}; }
 
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
     const uint64_t FRAC_PER_SEC = (uint64_t)1 << 32;
@@ -79,7 +51,6 @@ uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
     return ((uint64_t)seconds << 32) | fractions;
 }
 
-_z_value_t _z_value_null(void) { return (_z_value_t){.payload = _z_bytes_null(), .encoding = _z_encoding_null()}; }
 _z_value_t _z_value_steal(_z_value_t *value) {
     _z_value_t ret = *value;
     *value = _z_value_null();
@@ -91,18 +62,20 @@ z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_encoding_clear(&dst->encoding));
     return _Z_RES_OK;
 }
+_z_value_t _z_value_alias(_z_value_t src) {
+    _z_value_t dst;
+    dst.payload = _z_bytes_alias(src.payload);
+    dst.encoding = _z_encoding_alias(src.encoding);
+    return dst;
+}
 
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     *dst = _z_hello_null();
-    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->_locators, &src->_locators) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    _Z_RETURN_IF_ERR(_z_string_svec_copy(&dst->_locators, &src->_locators, true));
     dst->_version = src->_version;
     dst->_whatami = src->_whatami;
     memcpy(&dst->_zid.id, &src->_zid.id, _Z_ID_LEN);
     return _Z_RES_OK;
-}
-
-_z_hello_t _z_hello_null(void) {
-    return (_z_hello_t){._zid = _z_id_empty(), ._version = 0, ._whatami = 0x0, ._locators = _z_string_svec_make(0)};
 }
 
 void _z_value_move(_z_value_t *dst, _z_value_t *src) {
