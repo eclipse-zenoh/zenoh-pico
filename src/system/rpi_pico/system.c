@@ -11,6 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <limits.h>
 #include <pico/rand.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -135,7 +136,7 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
 /*------------------ CondVar ------------------*/
-static UBaseType_t CONDVAR_MAX_WAITERS_COUNT = 255;
+static UBaseType_t CONDVAR_MAX_WAITERS_COUNT = UINT_MAX;
 
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
     if (!cv) {
@@ -199,13 +200,11 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     cv->waiters++;
     xSemaphoreGive(cv->mutex);
 
-    xSemaphoreGive(*m);
+    _z_mutex_unlock(m);
 
     xSemaphoreTake(cv->sem, portMAX_DELAY);
 
-    xSemaphoreTake(*m, portMAX_DELAY);
-
-    return _Z_RES_OK;
+    return _z_mutex_lock(m);
 }
 #endif  // Z_MULTI_THREAD == 1
 
