@@ -221,17 +221,22 @@ char *gen_str(size_t size) {
     return str;
 }
 
+_z_string_t gen_string(size_t len) {
+    char *str = gen_str(len);
+    _z_string_t ret = _z_string_copy_from_str(str);
+    z_free(str);
+    return ret;
+}
+
 _z_string_svec_t gen_str_array(size_t size) {
     _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
-        _z_string_t s = _z_string_copy_from_str(gen_str(16));
+        _z_string_t s = gen_string(16);
         _z_string_svec_append(&sa, &s);
     }
 
     return sa;
 }
-
-_z_string_t gen_string(size_t len) { return _z_string_alias_str(gen_str(len)); }
 
 _z_locator_array_t gen_locator_array(size_t size) {
     _z_locator_array_t la = _z_locator_array_make(size);
@@ -341,7 +346,7 @@ void assert_eq_locator_array(const _z_locator_array_t *left, const _z_locator_ar
         _z_string_t ls = _z_locator_to_string(l);
         _z_string_t rs = _z_locator_to_string(r);
 
-        printf("%s:%s", _z_string_data(&ls), _z_string_data(&rs));
+        printf("%.*s:%.*s", (int)_z_string_len(&ls), _z_string_data(&ls), (int)_z_string_len(&rs), _z_string_data(&rs));
         if (i < left->_len - 1) printf(" ");
 
         _z_string_clear(&ls);
@@ -1820,7 +1825,7 @@ void frame_message(void) {
 }
 
 _z_transport_message_t gen_fragment(void) {
-    return _z_t_msg_make_fragment(gen_uint32(), gen_slice(gen_uint8()), gen_bool(), gen_bool());
+    return _z_t_msg_make_fragment(gen_uint32(), gen_slice(gen_uint8()), gen_bool(), gen_bool(), gen_bool(), gen_bool());
 }
 void assert_eq_fragment(const _z_t_msg_fragment_t *left, const _z_t_msg_fragment_t *right) {
     assert(left->_sn == right->_sn);

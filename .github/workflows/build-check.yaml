@@ -30,7 +30,7 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make test
+          CMAKE_GENERATOR=Ninja ASAN=ON make test
 
   check_format:
     name: Check codebase format with clang-format
@@ -272,7 +272,7 @@ jobs:
       - name: Build project and run test
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make
+          Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
           python3 ./build/tests/memory_leak.py
         timeout-minutes: 5
 
@@ -290,6 +290,6 @@ jobs:
       - name: Build & test pico
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make
+          CMAKE_GENERATOR=Ninja ASAN=ON make
           python3 ./build/tests/no_router.py
         timeout-minutes: 5

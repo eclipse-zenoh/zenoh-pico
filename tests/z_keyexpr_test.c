@@ -314,6 +314,7 @@ void test_canonize(void) {
             printf("  Match: %.*s : %s\n", (int)canon_len, canon, canonized[i]);
             assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
+        free(canon);
     }
 
     for (int i = 0; i < N; i++) {
@@ -331,6 +332,7 @@ void test_canonize(void) {
             assert(strncmp(canonized[i], canon, canon_len) == 0);
         }
         printf("\n");
+        free(canon);
     }
 }
 

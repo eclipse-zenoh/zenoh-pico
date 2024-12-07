@@ -136,23 +136,35 @@ z_result_t z_sleep_s(size_t time) {
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
-    // Not supported by default
-    return NULL;
+    auto now = Kernel::Clock::now();
+    auto duration = now.time_since_epoch();
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - secs);
+
+    z_clock_t ts;
+    ts.tv_sec = secs.count();
+    ts.tv_nsec = nanos.count();
+    return ts;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed =
+        (unsigned long)(1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    return elapsed;
 }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed =
+        (unsigned long)(1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    return elapsed;
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
+    return elapsed;
 }
 
 /*------------------ Time ------------------*/

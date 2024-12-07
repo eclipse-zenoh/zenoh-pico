@@ -163,6 +163,7 @@ z_result_t _z_liveliness_query(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_closur
 
         } else {
             _z_liveliness_pending_query_clear(pq);
+            z_free(pq);
         }
     }
 

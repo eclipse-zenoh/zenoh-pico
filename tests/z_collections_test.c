@@ -18,7 +18,6 @@
 
 #include "zenoh-pico/collections/fifo.h"
 #include "zenoh-pico/collections/lifo.h"
-#include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/collections/string.h"
 
@@ -313,10 +312,10 @@ void int_map_iterator_test(void) {
     _z_str_intmap_t map;
 
     map = _z_str_intmap_make();
-    _z_str_intmap_insert(&map, 10, "A");
-    _z_str_intmap_insert(&map, 20, "B");
-    _z_str_intmap_insert(&map, 30, "C");
-    _z_str_intmap_insert(&map, 40, "D");
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
 
 #define TEST_MAP(map)                                                      \
     {                                                                      \
@@ -345,6 +344,9 @@ void int_map_iterator_test(void) {
     _z_str_intmap_t map2 = _z_str_intmap_clone(&map);
 
     TEST_MAP(map2);
+
+    _z_str_intmap_clear(&map);
+    _z_str_intmap_clear(&map2);
 
 #undef TEST_MAP
 }

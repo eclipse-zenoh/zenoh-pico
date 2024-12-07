@@ -141,10 +141,50 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         case _Z_MID_T_FRAGMENT: {
             _Z_INFO("Received Z_FRAGMENT message");
 #if Z_FEATURE_FRAGMENTATION == 1
-            _z_wbuf_t *dbuf = _Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAGMENT_R)
-                                  ? &ztu->_dbuf_reliable
-                                  : &ztu->_dbuf_best_effort;  // Select the right defragmentation buffer
-
+            bool consecutive;
+            _z_wbuf_t *dbuf;
+            // Check if the SN is correct and select the right defragmentation buffer
+            if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_FRAME_R)) {
+                // @TODO: amend once reliability is in place. For the time being only
+                //        monotonic SNs are ensured
+                if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn)) {
+                    consecutive = _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_reliable, t_msg->_body._fragment._sn);
+                    ztu->_sn_rx_reliable = t_msg->_body._fragment._sn;
+                    dbuf = &ztu->_dbuf_reliable;
+                } else {
+                    _z_wbuf_clear(&ztu->_dbuf_reliable);
+                    _Z_INFO("Reliable message dropped because it is out of order");
+                    break;
+                }
+            } else {
+                if (_z_sn_precedes(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn)) {
+                    consecutive = _z_sn_consecutive(ztu->_sn_res, ztu->_sn_rx_best_effort, t_msg->_body._fragment._sn);
+                    ztu->_sn_rx_best_effort = t_msg->_body._fragment._sn;
+                    dbuf = &ztu->_dbuf_best_effort;
+                } else {
+                    _z_wbuf_clear(&ztu->_dbuf_best_effort);
+                    _Z_INFO("Best effort message dropped because it is out of order");
+                    break;
+                }
+            }
+            if (!consecutive && _z_wbuf_len(dbuf) > 0) {
+                _Z_DEBUG("Non-consecutive fragments received");
+                _z_wbuf_reset(dbuf);
+                break;
+            }
+            // Handle fragment markers
+            if (_Z_PATCH_HAS_FRAGMENT_MARKERS(ztu->_patch)) {
+                if (t_msg->_body._fragment.first) {
+                    _z_wbuf_reset(dbuf);
+                } else if (_z_wbuf_len(dbuf) == 0) {
+                    _Z_DEBUG("First fragment received without the start marker");
+                    break;
+                }
+                if (t_msg->_body._fragment.drop) {
+                    _z_wbuf_reset(dbuf);
+                    break;
+                }
+            }
             bool drop = false;
             if ((_z_wbuf_len(dbuf) + t_msg->_body._fragment._payload.len) > Z_FRAG_MAX_SIZE) {
                 // Filling the wbuf capacity as a way to signal the last fragment to reset the dbuf

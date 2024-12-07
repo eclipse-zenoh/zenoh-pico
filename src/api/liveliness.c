@@ -36,19 +36,27 @@ _z_liveliness_token_t _z_liveliness_token_null(void) {
     return s;
 }
 
-void _z_liveliness_token_clear(_z_liveliness_token_t *token) {
+z_result_t _z_liveliness_token_clear(_z_liveliness_token_t *token) {
+    z_result_t ret = _Z_RES_OK;
+    if (_Z_RC_IS_NULL(&token->_zn)) {
+        return ret;
+    }
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
-        _z_undeclare_liveliness_token(token);
+        ret = _z_undeclare_liveliness_token(token);
         _z_session_rc_drop(&sess_rc);
     }
+    _z_session_weak_drop(&token->_zn);
     _z_keyexpr_clear(&token->_key);
+    *token = _z_liveliness_token_null();
+
+    return ret;
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_liveliness_token_t, liveliness_token, _z_liveliness_token_check,
                                       _z_liveliness_token_null, _z_liveliness_token_clear)
 
-z_result_t z_liveliness_token_options_t_default(z_liveliness_token_options_t *options) {
+z_result_t z_liveliness_token_options_default(z_liveliness_token_options_t *options) {
     options->__dummy = 0;
     return _Z_RES_OK;
 }
@@ -63,7 +71,7 @@ z_result_t z_liveliness_declare_token(const z_loaned_session_t *zs, z_owned_live
 }
 
 z_result_t z_liveliness_undeclare_token(z_moved_liveliness_token_t *token) {
-    return _z_undeclare_liveliness_token(&token->_this._val);
+    return _z_liveliness_token_clear(&token->_this._val);
 }
 
 /**************** Liveliness Subscriber ****************/
@@ -132,7 +140,8 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
         opt = *options;
     }
 
-    ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), *keyexpr, callback->_this._val.call, callback->_this._val.drop, ctx,
+    _z_keyexpr_t ke = _z_keyexpr_duplicate(*keyexpr);
+    ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), ke, callback->_this._val.call, callback->_this._val.drop, ctx,
                               opt.timeout_ms);
 
     z_internal_closure_reply_null(

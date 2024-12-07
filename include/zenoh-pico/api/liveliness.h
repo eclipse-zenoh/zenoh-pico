@@ -31,6 +31,7 @@ typedef struct {
     _z_session_weak_t _zn;
 } _z_liveliness_token_t;
 
+_z_liveliness_token_t _z_liveliness_token_null(void);
 _Z_OWNED_TYPE_VALUE(_z_liveliness_token_t, liveliness_token)
 _Z_OWNED_FUNCTIONS_DEF(liveliness_token)
 
@@ -48,7 +49,7 @@ typedef struct z_liveliness_token_options_t {
 /**
  * Constructs default value for :c:type:`z_liveliness_token_options_t`.
  */
-z_result_t z_liveliness_token_options_t_default(z_liveliness_token_options_t *options);
+z_result_t z_liveliness_token_options_default(z_liveliness_token_options_t *options);
 
 /**
  * Constructs and declares a liveliness token on the network.

@@ -47,6 +47,11 @@ typedef struct {
 
     uint16_t _peer_id;
     volatile bool _received;
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Patch
+    uint8_t _patch;
+#endif
 } _z_transport_peer_entry_t;
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
@@ -108,6 +113,11 @@ typedef struct {
 
     volatile bool _received;
     volatile bool _transmitted;
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Patch
+    uint8_t _patch;
+#endif
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
@@ -175,6 +185,9 @@ typedef struct {
     uint8_t _req_id_res;
     uint8_t _seq_num_res;
     bool _is_qos;
+#if Z_FEATURE_FRAGMENTATION == 1
+    uint8_t _patch;
+#endif
 } _z_transport_unicast_establish_param_t;
 
 typedef struct {
