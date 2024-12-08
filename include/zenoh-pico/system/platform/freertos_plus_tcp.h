@@ -39,7 +39,12 @@ typedef struct {
     EventGroupHandle_t join_event;
 } _z_task_t;
 
-typedef SemaphoreHandle_t _z_mutex_t;
+typedef struct {
+    SemaphoreHandle_t handle;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticSemaphore_t buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} _z_mutex_t;
 typedef void *_z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
