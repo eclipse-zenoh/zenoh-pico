@@ -37,6 +37,11 @@ typedef struct {
 typedef struct {
     TaskHandle_t handle;
     EventGroupHandle_t join_event;
+    void *(*fun)(void *);
+    void *arg;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticEventGroup_t join_event_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
 } _z_task_t;
 
 typedef struct {

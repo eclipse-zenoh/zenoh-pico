@@ -62,16 +62,11 @@ void z_free(void *ptr) { vPortFree(ptr); }
 #if Z_FEATURE_MULTI_THREAD == 1
 // In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
 // A task function should __not__ simply return.
-typedef struct {
-    void *(*fun)(void *);
-    void *arg;
-    EventGroupHandle_t join_event;
-} z_task_arg;
-
 static void z_task_wrapper(void *arg) {
-    z_task_arg *targ = (z_task_arg *)arg;
-    targ->fun(targ->arg);
-    xEventGroupSetBits(targ->join_event, 1);
+    _z_task_t *task = (_z_task_t *)arg;
+    task->fun(task->arg);
+    xEventGroupSetBits(task->join_event, 1);
+    task->handle = NULL;
     vTaskDelete(NULL);
 }
 
@@ -88,14 +83,14 @@ static z_task_attr_t z_default_task_attr = {
 
 /*------------------ Thread ------------------*/
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
-    if (z_arg == NULL) {
-        return -1;
-    }
+    task->fun = fun;
+    task->arg = arg;
 
-    z_arg->fun = fun;
-    z_arg->arg = arg;
-    z_arg->join_event = task->join_event = xEventGroupCreate();
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    task->join_event = xEventGroupCreateStatic(&task->join_event_buffer);
+#else
+    task->join_event = xEventGroupCreate();
+#endif /* SUPPORT_STATIC_ALLOCATION */
 
     if (attr == NULL) {
         attr = &z_default_task_attr;
@@ -103,22 +98,21 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     if (attr->static_allocation) {
-        task->handle = xTaskCreateStatic(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority,
+        task->handle = xTaskCreateStatic(z_task_wrapper, attr->name, attr->stack_depth, task, attr->priority,
                                          attr->stack_buffer, attr->task_buffer);
         if (task->handle == NULL) {
-            return -1;
+            return _Z_ERR_GENERIC;
         }
     } else {
 #endif /* SUPPORT_STATIC_ALLOCATION */
-        if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) !=
-            pdPASS) {
+        if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, task, attr->priority, &task->handle) != pdPASS) {
             return -1;
         }
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     }
 #endif /* SUPPORT_STATIC_ALLOCATION */
 
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_task_join(_z_task_t *task) {
