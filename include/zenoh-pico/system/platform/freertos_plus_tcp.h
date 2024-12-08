@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 #define ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 
+#include <time.h>
+
 #include "FreeRTOS.h"
 #include "FreeRTOS_IP.h"
 #include "semphr.h"
@@ -62,7 +64,7 @@ typedef struct {
 #endif  // Z_MULTI_THREAD == 1
 
 typedef TickType_t z_clock_t;
-typedef TickType_t z_time_t;
+typedef struct timeval z_time_t;
 
 typedef struct {
     union {
