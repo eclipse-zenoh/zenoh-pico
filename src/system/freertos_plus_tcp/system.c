@@ -117,7 +117,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 z_result_t _z_task_join(_z_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_task_detach(_z_task_t *task) {
@@ -131,7 +131,7 @@ z_result_t _z_task_cancel(_z_task_t *task) {
         vTaskDelete(task->handle);
         task->handle = NULL;
     }
-    return 0;
+    return _Z_RES_OK;
 }
 
 void _z_task_free(_z_task_t **task) {
@@ -249,17 +249,17 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 /*------------------ Sleep ------------------*/
 z_result_t z_sleep_us(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time / 1000));
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t z_sleep_ms(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time));
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t z_sleep_s(size_t time) {
     vTaskDelay(pdMS_TO_TICKS(time * 1000));
-    return 0;
+    return _Z_RES_OK;
 }
 
 /*------------------ Clock ------------------*/
