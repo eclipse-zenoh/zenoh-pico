@@ -107,7 +107,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     } else {
 #endif /* SUPPORT_STATIC_ALLOCATION */
         if (xTaskCreate(z_task_wrapper, attr->name, attr->stack_depth, task, attr->priority, &task->handle) != pdPASS) {
-            return -1;
+            return _Z_ERR_GENERIC;
         }
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     }
@@ -321,5 +321,5 @@ z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
     gettimeofday(&now, NULL);
     t->secs = (uint32_t)now.tv_sec;
     t->nanos = (uint32_t)now.tv_usec * 1000;
-    return 0;
+    return _Z_RES_OK;
 }
