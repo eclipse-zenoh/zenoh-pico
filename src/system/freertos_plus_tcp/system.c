@@ -141,20 +141,30 @@ void _z_task_free(_z_task_t **task) {
 
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) {
-    *m = xSemaphoreCreateRecursiveMutex();
-    return *m == NULL ? -1 : 0;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    m->handle = xSemaphoreCreateRecursiveMutexStatic(&m->buffer);
+#else
+    m->handle = xSemaphoreCreateRecursiveMutex();
+#endif /* SUPPORT_STATIC_ALLOCATION */
+    return m->handle == NULL ? _Z_ERR_GENERIC : _Z_RES_OK;
 }
 
 z_result_t _z_mutex_drop(_z_mutex_t *m) {
-    z_free(*m);
-    return 0;
+    vSemaphoreDelete(m->handle);
+    return _Z_RES_OK;
 }
 
-z_result_t _z_mutex_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, portMAX_DELAY) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_lock(_z_mutex_t *m) {
+    return xSemaphoreTakeRecursive(m->handle, portMAX_DELAY) == pdTRUE ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
 
-z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m, 0) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_try_lock(_z_mutex_t *m) {
+    return xSemaphoreTakeRecursive(m->handle, 0) == pdTRUE ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
 
-z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
+z_result_t _z_mutex_unlock(_z_mutex_t *m) {
+    return xSemaphoreGiveRecursive(m->handle) == pdTRUE ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
 
 /*------------------ CondVar ------------------*/
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
