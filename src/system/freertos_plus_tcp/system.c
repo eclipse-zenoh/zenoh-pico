@@ -51,6 +51,8 @@ void z_random_fill(void *buf, size_t len) {
 void *z_malloc(size_t size) { return pvPortMalloc(size); }
 
 void *z_realloc(void *ptr, size_t size) {
+    _ZP_UNUSED(ptr);
+    _ZP_UNUSED(size);
     // realloc not implemented in FreeRTOS
     return NULL;
 }
