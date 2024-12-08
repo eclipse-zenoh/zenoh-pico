@@ -121,12 +121,16 @@ z_result_t _z_task_join(_z_task_t *task) {
 }
 
 z_result_t _z_task_detach(_z_task_t *task) {
-    // Not implemented
-    return _Z_ERR_GENERIC;
+    // Note: task/thread detach not supported on FreeRTOS API, so we force its deletion instead.
+    return _z_task_cancel(task);
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    vTaskDelete(task->handle);
+    xEventGroupSetBits(task->join_event, 1);
+    if (task->handle != NULL) {
+        vTaskDelete(task->handle);
+        task->handle = NULL;
+    }
     return 0;
 }
 
