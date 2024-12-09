@@ -128,10 +128,14 @@ z_result_t _z_task_detach(_z_task_t *task) {
 
 z_result_t _z_task_cancel(_z_task_t *task) {
     xEventGroupSetBits(task->join_event, 1);
+
+    taskENTER_CRITICAL();
     if (task->handle != NULL) {
         vTaskDelete(task->handle);
         task->handle = NULL;
     }
+    taskEXIT_CRITICAL();
+
     return _Z_RES_OK;
 }
 
