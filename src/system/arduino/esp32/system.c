@@ -20,7 +20,6 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico/system/platform_common.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/

@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/system/common/platform.h"
 
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/utils/logging.h"

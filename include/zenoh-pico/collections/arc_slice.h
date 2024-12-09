@@ -22,7 +22,7 @@
 
 #include "refcount.h"
 #include "slice.h"
-#include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/system/common/platform.h"
 
 #ifdef __cplusplus
 extern "C" {
