@@ -32,7 +32,8 @@ z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
         uint8_t header = _Z_FLAG_SERIAL_INIT;
 
         _z_send_serial_internal(sock, header, NULL, 0);
-        size_t ret = _z_read_serial_internal(sock, &header, NULL, 0);
+        uint8_t tmp;
+        size_t ret = _z_read_serial_internal(sock, &header, &tmp, sizeof(tmp));
         if (ret == SIZE_MAX) {
             return _Z_ERR_TRANSPORT_RX_FAILED;
         }
