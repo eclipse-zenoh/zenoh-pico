@@ -87,16 +87,23 @@ static inline _z_qos_t _z_n_qos_create(bool express, z_congestion_control_t cong
     return ret;
 }
 static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
-    return (z_priority_t)(n_qos._val & 0x07 /* 0b111 */);
+    z_priority_t ret = (z_priority_t)(n_qos._val & 0x07);  // 0b0111
+    return ret;
 }
 static inline z_congestion_control_t _z_n_qos_get_congestion_control(_z_n_qos_t n_qos) {
-    return (n_qos._val & 0x08 /* 0b1000 */) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;
+    z_congestion_control_t ret =
+        (n_qos._val & 0x08) ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP;  // 0b1000
+    return ret;
 }
-static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) { return (bool)(n_qos._val & 0x10 /* 0b10000 */); }
+static inline bool _z_n_qos_get_express(_z_n_qos_t n_qos) {
+    bool ret = (n_qos._val & 0x10) != 0;  // 0b10000
+    return ret;
+}
 #define _z_n_qos_make(express, nodrop, priority)                                                    \
     _z_n_qos_create((bool)express, nodrop ? Z_CONGESTION_CONTROL_BLOCK : Z_CONGESTION_CONTROL_DROP, \
                     (z_priority_t)priority)
-#define _Z_N_QOS_DEFAULT _z_n_qos_make(0, 0, 5)
+
+extern const _z_qos_t _Z_N_QOS_DEFAULT;
 
 // RESPONSE FINAL message flags:
 //      Z Extensions       if Z==1 then Zenoh extensions are present
@@ -154,7 +161,9 @@ _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *m
 void _z_n_msg_request_clear(_z_n_msg_request_t *msg);
 
 typedef _z_reply_body_t _z_push_body_t;
-_z_push_body_t _z_push_body_null(void);
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_push_body_t _z_push_body_null(void) { return (_z_push_body_t){0}; }
+
 _z_push_body_t _z_push_body_steal(_z_push_body_t *msg);
 void _z_push_body_clear(_z_push_body_t *msg);
 
@@ -292,8 +301,8 @@ void _z_n_msg_clear(_z_network_message_t *m);
 void _z_n_msg_free(_z_network_message_t **m);
 inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
 inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
-_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy)
-_Z_VEC_DEFINE(_z_network_message, _z_network_message_t)
+_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy, _z_noop_move)
+_Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
@@ -305,6 +314,7 @@ _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
 _z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
+z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
 
 #ifdef __cplusplus
 }

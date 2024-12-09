@@ -34,6 +34,7 @@
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -130,7 +131,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
-    ret._key = _z_keyexpr_duplicate(keyexpr);
+    ret._key = _z_keyexpr_duplicate(&keyexpr);
     ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     ret._congestion_control = congestion_control;
     ret._priority = priority;
@@ -492,6 +493,8 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
         pq->_arg = arg;
+        pq->_timeout = timeout_ms;
+        pq->_start_time = z_clock_now();
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
