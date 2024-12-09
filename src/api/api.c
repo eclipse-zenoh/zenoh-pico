@@ -646,6 +646,7 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     // Open session
     z_result_t ret = _z_open(&zs->_rc, &config->_this._val);
     if (ret != _Z_RES_OK) {
+        _Z_ERROR("_z_open failed: %i", ret);
         _z_session_rc_decr(&zs->_rc);
         z_internal_session_null(zs);
         z_config_drop(config);
