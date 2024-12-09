@@ -1977,7 +1977,7 @@ void scouting_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-void test_serialize_deserialize() {
+void test_serialize_deserialize(void) {
     uint8_t src_data[] = "Test\0Payload\0Data";
     size_t src_len = sizeof(src_data) - 1;
     uint8_t header = 0xAB;
@@ -1985,13 +1985,13 @@ void test_serialize_deserialize() {
     uint8_t deserialized[256] = {0};
     uint8_t tmp_buf[256] = {0};
 
-    int serialized_len =
+    size_t serialized_len =
         _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
     assert(serialized_len > 0);
 
     uint8_t decoded_header = 0;
-    int deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
-                                                     &decoded_header, tmp_buf, sizeof(tmp_buf));
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
     assert(deserialized_len != SIZE_MAX);
 
     assert(decoded_header == header);
@@ -2000,14 +2000,14 @@ void test_serialize_deserialize() {
     assert(memcmp(src_data, deserialized, src_len) == 0);
 }
 
-void test_crc_mismatch() {
+void test_crc_mismatch(void) {
     uint8_t src_data[] = "Test\0Payload\0Data";
     size_t src_len = sizeof(src_data) - 1;
     uint8_t header = 0xCD;
     uint8_t serialized[256] = {0};
     uint8_t tmp_buf[256] = {0};
 
-    int serialized_len =
+    size_t serialized_len =
         _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
     assert(serialized_len != SIZE_MAX);
 
@@ -2015,27 +2015,27 @@ void test_crc_mismatch() {
 
     uint8_t decoded_header = 0;
     uint8_t deserialized[256] = {0};
-    int deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
-                                                     &decoded_header, tmp_buf, sizeof(tmp_buf));
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
 
     assert(deserialized_len == SIZE_MAX);
 }
 
-void test_buffer_too_small() {
+void test_buffer_too_small(void) {
     uint8_t src_data[] = "Test\0Payload\0Data";
     size_t src_len = sizeof(src_data) - 1;
     uint8_t header = 0xEF;
     uint8_t serialized[256] = {0};
     uint8_t tmp_buf[256] = {0};
 
-    int serialized_len =
+    size_t serialized_len =
         _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
     assert(serialized_len != SIZE_MAX);
 
     uint8_t decoded_header = 0;
     uint8_t deserialized[4] = {0};  // Too small
-    int deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
-                                                     &decoded_header, tmp_buf, sizeof(tmp_buf));
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
 
     assert(deserialized_len == SIZE_MAX);
 }

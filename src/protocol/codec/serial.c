@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -108,7 +109,7 @@ size_t _z_serial_msg_deserialize(const uint8_t *src, size_t src_len, uint8_t *ds
 
     uint32_t computed_crc = _z_crc32(dst, wire_size);
     if (received_crc != computed_crc) {
-        _Z_DEBUG("CRC mismatch. Received: 0x%08lX, Computed: 0x%08lX", received_crc, computed_crc);
+        _Z_DEBUG("CRC mismatch. Received: 0x%08" PRIu32 ", Computed: 0x%08" PRIu32, received_crc, computed_crc);
         return SIZE_MAX;
     }
 
