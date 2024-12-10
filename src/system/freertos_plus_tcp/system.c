@@ -61,14 +61,21 @@ void *z_realloc(void *ptr, size_t size) {
 void z_free(void *ptr) { vPortFree(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-// In FreeRTOS, tasks created using xTaskCreate must end with vTaskDelete.
-// A task function should __not__ simply return.
+/*------------------ Thread ------------------*/
 static void z_task_wrapper(void *arg) {
     _z_task_t *task = (_z_task_t *)arg;
+
+    // Run the task function
     task->fun(task->arg);
+
+    // Notify the joiner that the task has finished
     xEventGroupSetBits(task->join_event, 1);
-    task->handle = NULL;
-    vTaskDelete(NULL);
+
+    // In FreeRTOS, when a task deletes itself, it adds itself to a list of tasks awaiting to be terminated by the idle
+    // task. There is no guarantee when exactly that will happen, which could lead to race conditions on freeing the
+    // task resources. To avoid this, we suspend the task indefinitely and delete this task from another task running
+    // z_task_join or z_task_detach.
+    vTaskSuspend(NULL);
 }
 
 static z_task_attr_t z_default_task_attr = {
@@ -118,6 +125,14 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 
 z_result_t _z_task_join(_z_task_t *task) {
     xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
+
+    taskENTER_CRITICAL();
+    if (task->handle != NULL) {
+        vTaskDelete(task->handle);
+        task->handle = NULL;
+    }
+    taskEXIT_CRITICAL();
+
     return _Z_RES_OK;
 }
 
@@ -127,14 +142,14 @@ z_result_t _z_task_detach(_z_task_t *task) {
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    xEventGroupSetBits(task->join_event, 1);
-
     taskENTER_CRITICAL();
     if (task->handle != NULL) {
         vTaskDelete(task->handle);
         task->handle = NULL;
     }
     taskEXIT_CRITICAL();
+
+    xEventGroupSetBits(task->join_event, 1);
 
     return _Z_RES_OK;
 }
