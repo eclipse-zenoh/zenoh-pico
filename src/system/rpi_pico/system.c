@@ -206,6 +206,38 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
     return _z_mutex_lock(m);
 }
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    TickType_t now = xTaskGetTickCount();
+    TickType_t target_time = pdMS_TO_TICKS(abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000);
+    TickType_t block_duration = (target_time > now) ? (target_time - now) : 0;
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    cv->waiters++;
+    xSemaphoreGive(cv->mutex);
+
+    _z_mutex_unlock(m);
+
+    bool timed_out = xSemaphoreTake(cv->sem, block_duration) == pdFALSE;
+
+    _z_mutex_lock(m);
+
+    if (timed_out) {
+        xSemaphoreTake(cv->mutex, portMAX_DELAY);
+        cv->waiters--;
+        xSemaphoreGive(cv->mutex);
+    }
+
+    if (timeout != NULL) {
+        *timeout = timed_out;
+    }
+
+    return _Z_RES_OK;
+}
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
@@ -262,6 +294,28 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
     return elapsed;
 }
+
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000000;
+    clock->tv_nsec += (duration % 1000000) * 1000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000;
+    clock->tv_nsec += (duration % 1000) * 1000000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
