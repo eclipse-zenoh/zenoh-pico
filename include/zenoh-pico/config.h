@@ -35,6 +35,7 @@
 #define Z_FEATURE_LINK_BLUETOOTH 0
 #define Z_FEATURE_LINK_WS 0
 #define Z_FEATURE_LINK_SERIAL 0
+#define Z_FEATURE_LINK_SERIAL_USB 0
 #define Z_FEATURE_SCOUTING_UDP 1
 #define Z_FEATURE_LINK_UDP_MULTICAST 1
 #define Z_FEATURE_LINK_UDP_UNICAST 1
@@ -43,6 +44,10 @@
 #define Z_FEATURE_FRAGMENTATION 1
 #define Z_FEATURE_ENCODING_VALUES 1
 #define Z_FEATURE_TCP_NODELAY 1
+#define Z_FEATURE_LOCAL_SUBSCRIBER 0
+#define Z_FEATURE_PUBLISHER_SESSION_CHECK 1
+#define Z_FEATURE_BATCHING 1
+#define Z_FEATURE_RX_CACHE 0
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/

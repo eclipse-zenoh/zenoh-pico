@@ -72,10 +72,14 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
     }
     if (ret == _Z_RES_OK) {
         _z_transport_message_t l_t_msg;
-        ret = _z_transport_message_decode(&l_t_msg, &zbf);
+        _z_arc_slice_svec_t arc_pool = _z_arc_slice_svec_make(1);
+        _z_network_message_svec_t msg_pool = _z_network_message_svec_make(1);
+        ret = _z_transport_message_decode(&l_t_msg, &zbf, &arc_pool, &msg_pool);
         if (ret == _Z_RES_OK) {
             _z_t_msg_copy(t_msg, &l_t_msg);
         }
+        _z_arc_slice_svec_clear(&arc_pool);
+        _z_network_message_svec_clear(&msg_pool);
     }
     _z_zbuf_clear(&zbf);
 

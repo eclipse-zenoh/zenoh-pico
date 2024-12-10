@@ -118,7 +118,7 @@ size_t _z_receive_raweth(const _z_sys_net_socket_t *sock, void *buff, size_t buf
     // Copy sender mac if needed
     if (addr != NULL) {
         uint8_t *header_addr = (uint8_t *)buff;
-        *addr = _z_slice_make(sizeof(ETH_ALEN));
+        addr->len = sizeof(ETH_ALEN);
         (void)memcpy((uint8_t *)addr->start, (header_addr + ETH_ALEN), sizeof(ETH_ALEN));
     }
     return (size_t)bytesRead;

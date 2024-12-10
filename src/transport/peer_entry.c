@@ -28,9 +28,10 @@ void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src) {
 
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src) {
 #if Z_FEATURE_FRAGMENTATION == 1
+    dst->_state_reliable = src->_state_reliable;
+    dst->_state_best_effort = src->_state_best_effort;
     _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
     _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
-
     dst->_patch = src->_patch;
 #endif
 
