@@ -233,6 +233,38 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
     return _Z_RES_OK;
 }
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    TickType_t now = xTaskGetTickCount();
+    TickType_t target_time = *abstime;
+    TickType_t block_duration = (target_time > now) ? (target_time - now) : 0;
+
+    xSemaphoreTake(cv->mutex, portMAX_DELAY);
+    cv->waiters++;
+    xSemaphoreGive(cv->mutex);
+
+    _z_mutex_unlock(m);
+
+    bool timed_out = xSemaphoreTake(cv->sem, block_duration) == pdFALSE;
+
+    _z_mutex_lock(m);
+
+    if (timed_out) {
+        xSemaphoreTake(cv->mutex, portMAX_DELAY);
+        cv->waiters--;
+        xSemaphoreGive(cv->mutex);
+    }
+
+    if (timeout != NULL) {
+        *timeout = timed_out;
+    }
+
+    return _Z_RES_OK;
+}
 #endif  // Z_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/

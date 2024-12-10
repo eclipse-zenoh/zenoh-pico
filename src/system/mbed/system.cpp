@@ -171,6 +171,39 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
     return _Z_RES_OK;
 }
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    auto target_time =
+        Kernel::Clock::time_point(Kernel::Clock::duration(abstime->tv_sec * 1000LL + abstime->tv_nsec / 1000000));
+
+    cond_var.mutex.lock();
+    cond_var.waiters++;
+    cond_var.mutex.unlock();
+
+    _z_mutex_unlock(m);
+
+    bool timed_out = cond_var.sem.try_acquire_until(target_time) == false;
+
+    _z_mutex_lock(m);
+
+    if (timed_out) {
+        cond_var.mutex.lock();
+        cond_var.waiters--;
+        cond_var.mutex.unlock();
+    }
+
+    if (timeout != NULL) {
+        *timeout = timed_out;
+    }
+
+    return _Z_RES_OK;
+}
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
