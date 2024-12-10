@@ -221,7 +221,7 @@ set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
-set(Z_FEATURE_LIVELINESS 0 CACHE STRING "Toggle liveliness feature")
+set(Z_FEATURE_LIVELINESS 1 CACHE STRING "Toggle liveliness feature")
 set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interests")
 set(Z_FEATURE_FRAGMENTATION 1 CACHE STRING "Toggle fragmentation")
 set(Z_FEATURE_ENCODING_VALUES 1 CACHE STRING "Toggle encoding values")
@@ -244,12 +244,6 @@ set(Z_FEATURE_LOCAL_SUBSCRIBER 0 CACHE STRING "Toggle local subscriptions")
 set(Z_FEATURE_PUBLISHER_SESSION_CHECK 1 CACHE STRING "Toggle publisher session check")
 set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
 set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
-
-# Add a warning message if someone tries to enable Z_FEATURE_LIVELINESS directly
-if(Z_FEATURE_LIVELINESS AND NOT Z_FEATURE_UNSTABLE_API)
-  message(WARNING "Z_FEATURE_LIVELINESS can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_LIVELINESS.")
-  set(Z_FEATURE_LIVELINESS 0 CACHE STRING "Toggle liveliness feature" FORCE)
-endif()
 
 # Add a warning message if someone tries to enable Z_FEATURE_LINK_SERIAL_USB directly
 if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
