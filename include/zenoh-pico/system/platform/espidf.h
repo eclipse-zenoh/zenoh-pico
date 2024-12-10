@@ -58,8 +58,8 @@ typedef struct {
 #if Z_FEATURE_LINK_SERIAL == 1
         struct {
             uart_port_t _serial;
-            uint8_t *before_cobs;
-            uint8_t *after_cobs;
+            uint8_t *tmp_buf;
+            uint8_t *raw_buf;
         };
 #endif
     };

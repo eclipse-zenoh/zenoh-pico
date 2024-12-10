@@ -15,6 +15,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/protocol/codec/message.h"
 #include "zenoh-pico/protocol/codec/network.h"
+#include "zenoh-pico/protocol/codec/serial.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 #define ZENOH_PICO_TEST_H
@@ -1976,6 +1977,69 @@ void scouting_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
+void test_serialize_deserialize(void) {
+    uint8_t src_data[] = "Test\0Payload\0Data";
+    size_t src_len = sizeof(src_data) - 1;
+    uint8_t header = 0xAB;
+    uint8_t serialized[256] = {0};
+    uint8_t deserialized[256] = {0};
+    uint8_t tmp_buf[256] = {0};
+
+    size_t serialized_len =
+        _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
+    assert(serialized_len > 0);
+
+    uint8_t decoded_header = 0;
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
+    assert(deserialized_len != SIZE_MAX);
+
+    assert(decoded_header == header);
+
+    assert(deserialized_len == src_len);
+    assert(memcmp(src_data, deserialized, src_len) == 0);
+}
+
+void test_crc_mismatch(void) {
+    uint8_t src_data[] = "Test\0Payload\0Data";
+    size_t src_len = sizeof(src_data) - 1;
+    uint8_t header = 0xCD;
+    uint8_t serialized[256] = {0};
+    uint8_t tmp_buf[256] = {0};
+
+    size_t serialized_len =
+        _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
+    assert(serialized_len != SIZE_MAX);
+
+    serialized[serialized_len - 2] ^= 0xFF;
+
+    uint8_t decoded_header = 0;
+    uint8_t deserialized[256] = {0};
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
+
+    assert(deserialized_len == SIZE_MAX);
+}
+
+void test_buffer_too_small(void) {
+    uint8_t src_data[] = "Test\0Payload\0Data";
+    size_t src_len = sizeof(src_data) - 1;
+    uint8_t header = 0xEF;
+    uint8_t serialized[256] = {0};
+    uint8_t tmp_buf[256] = {0};
+
+    size_t serialized_len =
+        _z_serial_msg_serialize(serialized, sizeof(serialized), src_data, src_len, header, tmp_buf, sizeof(tmp_buf));
+    assert(serialized_len != SIZE_MAX);
+
+    uint8_t decoded_header = 0;
+    uint8_t deserialized[4] = {0};  // Too small
+    size_t deserialized_len = _z_serial_msg_deserialize(serialized, serialized_len, deserialized, sizeof(deserialized),
+                                                        &decoded_header, tmp_buf, sizeof(tmp_buf));
+
+    assert(deserialized_len == SIZE_MAX);
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -2028,6 +2092,11 @@ int main(void) {
         // Scouting messages
         scouting_message();
     }
+
+    // Serial serialization
+    test_serialize_deserialize();
+    test_crc_mismatch();
+    test_buffer_too_small();
 
     return 0;
 }
