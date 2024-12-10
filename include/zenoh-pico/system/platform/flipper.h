@@ -44,6 +44,8 @@ typedef struct {
 #if Z_FEATURE_LINK_SERIAL == 1
     FuriStreamBuffer* _rx_stream;
     FuriHalSerialHandle* _serial;
+    uint8_t* tmp_buf;
+    uint8_t* raw_buf;
 #endif
 } _z_sys_net_socket_t;
 
