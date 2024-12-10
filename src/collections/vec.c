@@ -171,8 +171,7 @@ void _z_svec_move(_z_svec_t *dst, _z_svec_t *src) {
 
 z_result_t _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size,
                         bool use_elem_f) {
-    dst->_capacity = 0;
-    dst->_len = 0;
+    *dst = _z_svec_null();
     dst->_val = z_malloc(element_size * src->_capacity);
     if (dst->_val == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
