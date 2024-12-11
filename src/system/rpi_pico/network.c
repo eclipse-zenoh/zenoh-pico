@@ -530,9 +530,6 @@ z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, u
 
     _z_open_serial_impl(sock->_serial, txpin, rxpin, baudrate);
 
-    sock->tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
-
     return _z_connect_serial(*sock);
 }
 
@@ -540,8 +537,6 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
     z_result_t ret = _Z_RES_OK;
 
     sock->_serial = NULL;
-    sock->tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
 
 #if Z_FEATURE_LINK_SERIAL_USB == 1
     if (strcmp("usb", dev) == 0) {
@@ -564,8 +559,6 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
 
     if (sock->_serial == NULL) {
         _Z_ERROR("invalid device name");
-        z_free(sock->tmp_buf);
-        z_free(sock->raw_buf);
         return _Z_ERR_INVALID;
     }
 
@@ -607,41 +600,51 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
         _z_usb_uart_deinit();
 #endif
     }
-    z_free(sock->tmp_buf);
-    z_free(sock->raw_buf);
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
 #if Z_FEATURE_LINK_SERIAL_USB == 1
-        sock.raw_buf[i] = (sock._serial == NULL) ? _z_usb_uart_getc() : uart_getc(sock._serial);
+        raw_buf[i] = (sock._serial == NULL) ? _z_usb_uart_getc() : uart_getc(sock._serial);
 #else
-        sock.raw_buf[i] = uart_getc(sock._serial);
+        raw_buf[i] = uart_getc(sock._serial);
 #endif
         rb++;
-        if (sock.raw_buf[i] == 0x00) {
+        if (raw_buf[i] == 0x00) {
             break;
         }
     }
 
-    return _z_serial_msg_deserialize(sock.raw_buf, rb, ptr, len, header, sock.tmp_buf, _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
+
+    return ret;
 }
 
 size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    size_t ret = _z_serial_msg_serialize(sock.raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, sock.tmp_buf,
-                                         _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t ret =
+        _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     if (ret == SIZE_MAX) {
         return ret;
     }
     if (sock._serial == NULL) {
 #if Z_FEATURE_LINK_SERIAL_USB == 1
-        _z_usb_uart_write(sock.raw_buf, ret);
+        _z_usb_uart_write(raw_buf, ret);
 #endif
     } else {
-        uart_write_blocking(sock._serial, sock.raw_buf, ret);
+        uart_write_blocking(sock._serial, raw_buf, ret);
     }
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
 
     return len;
 }

@@ -78,9 +78,6 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_
 
     _Z_DEBUG("Serial port opened: %s (%li)", dev, baudrate);
 
-    sock->tmp_buf = (uint8_t*)z_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->raw_buf = (uint8_t*)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
-
     return _z_connect_serial(*sock);
 }
 
@@ -116,41 +113,50 @@ void _z_close_serial(_z_sys_net_socket_t* sock) {
 
         sock->_serial = 0;
         sock->_rx_stream = 0;
-
-        z_free(sock->tmp_buf);
-        z_free(sock->raw_buf);
     }
     _Z_DEBUG("Serial port closed");
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t* header, uint8_t* ptr, size_t len) {
+    uint8_t* raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         size_t len = 0;
-        len = furi_stream_buffer_receive(sock._rx_stream, &sock.raw_buf[i], 1, FLIPPER_SERIAL_TIMEOUT_MS);
+        len = furi_stream_buffer_receive(sock._rx_stream, &raw_buf[i], 1, FLIPPER_SERIAL_TIMEOUT_MS);
         if (!len) {
             return SIZE_MAX;
         }
         rb++;
 
-        if (sock.raw_buf[i] == (uint8_t)0x00) {
+        if (raw_buf[i] == (uint8_t)0x00) {
             break;
         }
     }
 
-    return _z_serial_msg_deserialize(sock.raw_buf, rb, ptr, len, header, sock.tmp_buf, _Z_SERIAL_MFS_SIZE);
+    uint8_t* tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
+
+    return ret;
 }
 
 size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t* ptr, size_t len) {
-    size_t ret = _z_serial_msg_serialize(sock.raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, sock.tmp_buf,
-                                         _Z_SERIAL_MFS_SIZE);
+    uint8_t* tmp_buf = (uint8_t*)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t* raw_buf = (uint8_t*)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t ret =
+        _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     if (ret == SIZE_MAX) {
         return ret;
     }
 
-    furi_hal_serial_tx(sock._serial, sock.raw_buf, ret);
+    furi_hal_serial_tx(sock._serial, raw_buf, ret);
     furi_hal_serial_tx_wait_complete(sock._serial);
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
 
     return len;
 }

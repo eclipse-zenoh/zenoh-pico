@@ -601,8 +601,6 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
     QueueHandle_t uart_queue;
     uart_driver_install(sock->_serial, uart_buffer_size, 0, 100, &uart_queue, 0);
     uart_flush_input(sock->_serial);
-    sock->tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
 
     return _z_connect_serial(*sock);
 }
@@ -636,14 +634,13 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
     uart_wait_tx_done(sock->_serial, 1000);
     uart_flush(sock->_serial);
     uart_driver_delete(sock->_serial);
-    z_free(sock->tmp_buf);
-    z_free(sock->raw_buf);
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
-        int r = uart_read_bytes(sock._serial, &sock.raw_buf[rb], 1, 1000);
+        int r = uart_read_bytes(sock._serial, &raw_buf[rb], 1, 1000);
         if (r == 0) {
             _Z_DEBUG("Timeout reading from serial");
             if (rb == 0) {
@@ -651,7 +648,7 @@ size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, 
             }
         } else if (r == 1) {
             rb = rb + (size_t)1;
-            if (sock.raw_buf[rb - 1] == (uint8_t)0x00) {
+            if (raw_buf[rb - 1] == (uint8_t)0x00) {
                 break;
             }
         } else {
@@ -660,21 +657,32 @@ size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, 
         }
     }
 
-    return _z_serial_msg_deserialize(sock.raw_buf, rb, ptr, len, header, sock.tmp_buf, _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
+
+    return ret;
 }
 
 size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    size_t ret = _z_serial_msg_serialize(sock.raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, sock.tmp_buf,
-                                         _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t ret =
+        _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     if (ret == SIZE_MAX) {
         return ret;
     }
 
-    ssize_t wb = uart_write_bytes(sock._serial, sock.raw_buf, ret);
+    ssize_t wb = uart_write_bytes(sock._serial, raw_buf, ret);
     if (wb != (ssize_t)ret) {
         ret = SIZE_MAX;
     }
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
 
     return len;
 }

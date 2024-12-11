@@ -598,9 +598,6 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
         ret = _Z_ERR_GENERIC;
     }
 
-    sock->tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
-    sock->raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
-
     return _z_connect_serial(*sock);
 }
 
@@ -629,39 +626,48 @@ z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint3
     return ret;
 }
 
-void _z_close_serial(_z_sys_net_socket_t *sock) {
-    z_free(sock->tmp_buf);
-    z_free(sock->raw_buf);
-}
+void _z_close_serial(_z_sys_net_socket_t *sock) {}
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         int res = -1;
         while (res != 0) {
-            res = uart_poll_in(sock._serial, &sock.raw_buf[i]);
+            res = uart_poll_in(sock._serial, &raw_buf[i]);
         }
 
         rb++;
-        if (sock.raw_buf[i] == (uint8_t)0x00) {
+        if (raw_buf[i] == (uint8_t)0x00) {
             break;
         }
     }
 
-    return _z_serial_msg_deserialize(sock.raw_buf, rb, ptr, len, header, sock.tmp_buf, _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
+
+    return ret;
 }
 
 size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
-    size_t ret = _z_serial_msg_serialize(sock.raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, sock.tmp_buf,
-                                         _Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    size_t ret =
+        _z_serial_msg_serialize(raw_buf, _Z_SERIAL_MAX_COBS_BUF_SIZE, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     if (ret == SIZE_MAX) {
         return ret;
     }
 
     for (size_t i = 0; i < ret; i++) {
-        uart_poll_out(sock._serial, sock.raw_buf[i]);
+        uart_poll_out(sock._serial, raw_buf[i]);
     }
+
+    z_free(raw_buf);
+    z_free(tmp_buf);
 
     return len;
 }

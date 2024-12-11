@@ -51,11 +51,7 @@ typedef struct {
         UDPSocket *_udp;  // As pointer to cross the boundary between C and C++
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        struct {
-            BufferedSerial *_serial;  // As pointer to cross the boundary between C and C++
-            uint8_t *tmp_buf;
-            uint8_t *raw_buf;
-        };
+        BufferedSerial *_serial;  // As pointer to cross the boundary between C and C++
 #endif
     };
 } _z_sys_net_socket_t;
