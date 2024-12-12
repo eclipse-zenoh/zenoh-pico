@@ -56,11 +56,7 @@ typedef struct {
         int _fd;
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        struct {
-            uart_port_t _serial;
-            uint8_t *before_cobs;
-            uint8_t *after_cobs;
-        };
+        uart_port_t _serial;
 #endif
     };
 } _z_sys_net_socket_t;

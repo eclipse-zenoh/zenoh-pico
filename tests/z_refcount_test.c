@@ -18,7 +18,7 @@
 #include <string.h>
 
 #include "zenoh-pico/collections/refcount.h"
-#include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/system/common/platform.h"
 
 #undef NDEBUG
 #include <assert.h>

@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/manager.h"
+#include "zenoh-pico/system/common/serial.h"
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/utils/pointers.h"
 
