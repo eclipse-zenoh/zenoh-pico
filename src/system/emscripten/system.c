@@ -13,6 +13,7 @@
 //
 
 #include <emscripten/html5.h>
+#include <errno.h>
 #include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -69,7 +70,12 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_try
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
 
 /*------------------ Condvar ------------------*/
-z_result_t _z_condvar_init(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_init(cv, 0)); }
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    pthread_condattr_t attr;
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
+}
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_destroy(cv)); }
 
@@ -78,6 +84,26 @@ z_result_t _z_condvar_signal(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_s
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_cond_broadcast(cv)); }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+    struct timespec ts;
+    ts.tv_sec = (time_t)(*abstime / 1000);
+    ts.tv_nsec = (long)((*abstime - (ts.tv_sec * 1000)) * 1000000);
+
+    int error = pthread_cond_timedwait(cv, m, &ts);
+
+    if (error == ETIMEDOUT) {
+        if (timeout != NULL) {
+            *timeout = true;
+        }
+        return 0;
+    }
+
+    if (timeout != NULL) {
+        *timeout = false;
+    }
+    _Z_CHECK_SYS_ERR(error);
+}
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
@@ -111,7 +137,13 @@ unsigned long z_clock_elapsed_us(z_clock_t *instant) { return z_clock_elapsed_ms
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) { return z_time_elapsed_ms(instant); }
 
-unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(instant) * 1000; }
+unsigned long z_clock_elapsed_s(z_clock_t *instant) { return z_time_elapsed_ms(instant) / 1000; }
+
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) { *clock += (double)(duration / 1000); }
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) { *clock += (double)duration; }
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { *clock += (double)(duration * 1000); }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) { return emscripten_get_now(); }
