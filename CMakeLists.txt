@@ -469,7 +469,7 @@ if(BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
-if(ASAN AND !MSVC)
+if(ASAN AND NOT MSVC)
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
 endif()
