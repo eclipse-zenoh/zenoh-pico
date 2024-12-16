@@ -121,7 +121,7 @@ def query_and_queryable(query_cmd, queryable_cmd):
     z_query_process.wait()
 
     print(f"Stop {queryable_cmd}")
-    time.sleep(2)
+    time.sleep(5)
     if z_queryable_process.poll() is None:
         # send SIGINT to group
         z_quaryable_process_gid = os.getpgid(z_queryable_process.pid)
@@ -176,11 +176,11 @@ if __name__ == "__main__":
         EXIT_STATUS = 1
     # Test liveliness query
     print("*** Get liveliness test ***")
-    if query_and_queryable('z_get_liveliness', 'z_liveliness') == 1:
+    if query_and_queryable('z_get_liveliness', 'z_liveliness -t 3') == 1:
         EXIT_STATUS = 1
     # Test liveliness subscriber
     print("*** Liveliness subscriber test ***")
-    if query_and_queryable('z_sub_liveliness -h -n 1', 'z_liveliness') == 1:
+    if query_and_queryable('z_liveliness -t 1', 'z_sub_liveliness -h -n 1') == 1:
         EXIT_STATUS = 1
     # Exit
     sys.exit(EXIT_STATUS)

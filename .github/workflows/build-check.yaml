@@ -269,12 +269,14 @@ jobs:
       - name: Install valgrind
         run: sudo apt install -y valgrind
 
-      - name: Build project and run test
+      - name: Build project
         run: |
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
-          python3 ./build/tests/memory_leak.py
-        timeout-minutes: 5
+
+      - name: Run test
+        run: python3 -u ./build/tests/memory_leak.py
+        timeout-minutes: 5 
 
       - name: Kill Zenoh router
         if: always()

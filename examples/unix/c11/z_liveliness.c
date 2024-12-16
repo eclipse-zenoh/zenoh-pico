@@ -11,7 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,21 +19,15 @@
 
 #if Z_FEATURE_LIVELINESS == 1
 
-static volatile int keepRunning = 1;
-
-void intHandler(int dummy) {
-    (void)dummy;
-    keepRunning = 0;
-}
-
 int main(int argc, char **argv) {
     const char *keyexpr = "group1/zenoh-pico";
     const char *mode = "client";
     const char *clocator = NULL;
     const char *llocator = NULL;
+    unsigned int timeout = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:e:m:l:t:")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -48,8 +41,12 @@ int main(int argc, char **argv) {
             case 'l':
                 llocator = optarg;
                 break;
+            case 't':
+                timeout = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
+                    optopt == 't') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -98,9 +95,9 @@ int main(int argc, char **argv) {
     }
 
     printf("Press CTRL-C to undeclare liveliness token and quit...\n");
-    signal(SIGINT, intHandler);
-    while (keepRunning) {
-        z_sleep_s(1);
+    z_clock_t clock = z_clock_now();
+    while (timeout == 0 || z_clock_elapsed_s(&clock) < timeout) {
+        z_sleep_ms(100);
     }
 
     // LivelinessTokens are automatically closed when dropped
