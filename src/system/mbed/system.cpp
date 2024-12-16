@@ -172,7 +172,7 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
     if (!cv || !m) {
         return _Z_ERR_GENERIC;
     }
@@ -196,10 +196,7 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
         cond_var.mutex.lock();
         cond_var.waiters--;
         cond_var.mutex.unlock();
-    }
-
-    if (timeout != NULL) {
-        *timeout = timed_out;
+        return Z_ETIMEDOUT;
     }
 
     return _Z_RES_OK;

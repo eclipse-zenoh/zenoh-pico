@@ -85,7 +85,7 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_co
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 
-z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime, bool *timeout) {
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
     struct timespec ts;
     ts.tv_sec = (time_t)(*abstime / 1000);
     ts.tv_nsec = (long)((*abstime - (ts.tv_sec * 1000)) * 1000000);
@@ -93,15 +93,9 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
     int error = pthread_cond_timedwait(cv, m, &ts);
 
     if (error == ETIMEDOUT) {
-        if (timeout != NULL) {
-            *timeout = true;
-        }
-        return 0;
+        return Z_ETIMEDOUT;
     }
 
-    if (timeout != NULL) {
-        *timeout = false;
-    }
     _Z_CHECK_SYS_ERR(error);
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1

@@ -153,9 +153,7 @@ z_result_t _z_condvar_signal_all(_z_condvar_t* cv) { return -1; }
 
 z_result_t _z_condvar_wait(_z_condvar_t* cv, _z_mutex_t* m) { return -1; }
 
-z_result_t _z_condvar_wait_until(_z_condvar_t* cv, _z_mutex_t* m, const z_clock_t* abstime, bool* timeout) {
-    return -1;
-}
+z_result_t _z_condvar_wait_until(_z_condvar_t* cv, _z_mutex_t* m, const z_clock_t* abstime) { return -1; }
 
 /*------------------ Sleep ------------------*/
 z_result_t z_sleep_us(size_t time) {
