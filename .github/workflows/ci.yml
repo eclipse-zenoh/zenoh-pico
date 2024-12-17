@@ -282,7 +282,7 @@ jobs:
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
-  no_routeur:
+  no_router:
     name: Test examples without router
     runs-on: ubuntu-latest
     steps:
