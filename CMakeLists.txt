@@ -465,13 +465,13 @@ if(UNIX)
   install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
 endif()
 
-if(BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
-
-if(ASAN AND !MSVC)
+if(ASAN AND NOT MSVC)
   add_compile_options(-fsanitize=address)
   add_link_options(-fsanitize=address)
+endif()
+
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 if(UNIX OR MSVC)
