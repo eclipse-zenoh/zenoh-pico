@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     const char *mode = "client";
     const char *clocator = NULL;
     const char *llocator = NULL;
-    unsigned int timeout = 0;
+    unsigned long timeout = 0;
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:m:l:t:")) != -1) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
                 llocator = optarg;
                 break;
             case 't':
-                timeout = atoi(optarg);
+                timeout = (unsigned long)atoi(optarg);
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
