@@ -305,6 +305,10 @@ jobs:
           config: '.markdownlint.yaml'
           globs: '**/README.md'
 
+  build_shared:
+    name: Build shared libs
+    uses: ./.github/workflows/build-shared.yaml
+
   # NOTE: In GitHub repository settings, the "Require status checks to pass
   # before merging" branch protection rule ensures that commits are only merged
   # from branches where specific status checks have passed. These checks are

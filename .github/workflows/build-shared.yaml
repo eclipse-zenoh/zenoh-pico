@@ -14,10 +14,7 @@
 name: build-shared
 
 on:
-  push:
-    branches: [ '**' ]
-  pull_request:
-    branches: [ '**' ]
+  workflow_call:
 
 jobs:
   build:
