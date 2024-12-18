@@ -295,3 +295,12 @@ jobs:
           CMAKE_GENERATOR=Ninja ASAN=ON make
           python3 ./build/tests/no_router.py
         timeout-minutes: 5
+
+  markdown_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v18
+        with:
+          config: '.markdownlint.yaml'
+          globs: '**/README.md'
