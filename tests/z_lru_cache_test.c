@@ -43,25 +43,6 @@ int _dummy_compare(const void *first, const void *second) {
 
 _Z_LRU_CACHE_DEFINE(_dummy, _dummy_t, _dummy_compare)
 
-void print_tree_inorder(uint8_t *node) {
-    if (node == NULL) {
-        return;
-    }
-    // Traverse left
-    print_tree_inorder(*(uint8_t **)(node + 16));
-    // Print node
-    printf("%d, %p\n", *(int *)(node + 32), node);
-    // Traverse right
-    print_tree_inorder(*(uint8_t **)(node + 24));
-}
-
-void print_list(uint8_t *node) {
-    while (node != NULL) {
-        printf("%d, %p\n", *(int *)(node + 32), node);
-        node = *(uint8_t **)(node + 8);
-    }
-}
-
 void test_lru_init(void) {
     _dummy_lru_cache_t dcache = _dummy_lru_cache_init(CACHE_CAPACITY);
     assert(dcache.capacity == CACHE_CAPACITY);
