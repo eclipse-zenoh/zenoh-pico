@@ -394,6 +394,13 @@ void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr) {
     _z_session_mutex_unlock(zn);
 }
 
+void _z_interest_init(_z_session_t *zn) {
+    _z_session_mutex_lock(zn);
+    zn->_local_interests = NULL;
+    zn->_remote_declares = NULL;
+    _z_session_mutex_unlock(zn);
+}
+
 void _z_flush_interest(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
     _z_session_interest_rc_list_free(&zn->_local_interests);
@@ -457,6 +464,8 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint
 }
 
 #else
+void _z_interest_init(_z_session_t *zn) { _ZP_UNUSED(zn); }
+
 void _z_flush_interest(_z_session_t *zn) { _ZP_UNUSED(zn); }
 
 z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {

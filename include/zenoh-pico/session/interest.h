@@ -29,6 +29,7 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
 void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 #endif  // Z_FEATURE_INTEREST == 1
 
+void _z_interest_init(_z_session_t *zn);
 void _z_flush_interest(_z_session_t *zn);
 z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
 z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
