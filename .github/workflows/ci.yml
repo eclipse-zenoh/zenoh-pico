@@ -312,7 +312,7 @@ jobs:
     uses: ./.github/workflows/build-shared.yaml
 
   build_static:
-    name: Build shared libs
+    name: Build static libs
     uses: ./.github/workflows/build-static.yaml
 
   integration:
