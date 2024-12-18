@@ -38,7 +38,7 @@ static inline bool _z_queryable_get_from_cache(_z_session_t *zn, const _z_keyexp
     if (!_z_keyexpr_equals(ke, &zn->_queryable_cache.ke_in)) {
         return false;
     }
-    *ke_val = _z_keyexpr_alias(zn->_queryable_cache.ke_out);
+    *ke_val = _z_keyexpr_alias(&zn->_queryable_cache.ke_out);
     *infos_val = _z_queryable_infos_svec_alias(&zn->_queryable_cache.infos);
     *qle_nb = zn->_queryable_cache.qle_nb;
     return true;

@@ -149,7 +149,7 @@ z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z
         ret = _z_liveliness_register_pending_query(zn, id, pq);
         if (ret == _Z_RES_OK) {
             _ZP_UNUSED(timeout_ms);  // Current interest in pico don't support timeout
-            _z_keyexpr_t key = _z_keyexpr_alias(*keyexpr);
+            _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
             _z_interest_t interest = _z_make_interest(&key, id,
                                                       _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS |
                                                           _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT);

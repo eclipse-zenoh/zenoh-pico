@@ -103,7 +103,7 @@ static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const 
         }
         // Keyexpr can be aliased from a rx buffer
         if (force_alias) {
-            return _z_keyexpr_alias(*keyexpr);
+            return _z_keyexpr_alias(keyexpr);
         } else {
             return _z_keyexpr_duplicate(keyexpr);
         }
@@ -218,29 +218,30 @@ _z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *
 }
 
 /// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
-uint16_t _z_register_resource(_z_session_t *zn, _z_keyexpr_t key, uint16_t id, uint16_t register_to_mapping) {
+uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_t id, uint16_t register_to_mapping) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
     uint16_t mapping = register_to_mapping;
-    uint16_t parent_mapping = _z_keyexpr_mapping_id(&key);
+    uint16_t parent_mapping = _z_keyexpr_mapping_id(key);
+    _z_keyexpr_t full_ke = _z_keyexpr_alias(key);
 
     _z_session_mutex_lock(zn);
 
-    if (key._id != Z_RESOURCE_ID_NONE) {
+    if (key->_id != Z_RESOURCE_ID_NONE) {
         if (parent_mapping == mapping) {
-            _z_resource_t *parent = __unsafe_z_get_resource_by_id(zn, parent_mapping, key._id);
+            _z_resource_t *parent = __unsafe_z_get_resource_by_id(zn, parent_mapping, key->_id);
             parent->_refcount++;
         } else {
-            key = __unsafe_z_get_expanded_key_from_key(zn, &key, false);
+            full_ke = __unsafe_z_get_expanded_key_from_key(zn, key, false);
         }
     }
-    ret = key._id;
-    if (_z_keyexpr_has_suffix(&key)) {
+    ret = full_ke._id;
+    if (_z_keyexpr_has_suffix(&full_ke)) {
         _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;
         } else {
             res->_refcount = 1;
-            res->_key = _z_keyexpr_duplicate(&key);
+            res->_key = _z_keyexpr_duplicate(&full_ke);
             ret = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
             res->_id = ret;
             // Register the resource

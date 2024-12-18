@@ -32,11 +32,11 @@ bool _z_keyexpr_suffix_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *righ
 /*------------------ clone/Copy/Free helpers ------------------*/
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
-static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t src) {
+static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
     _z_keyexpr_t ret;
-    ret._id = src._id;
-    ret._mapping = src._mapping;
-    ret._suffix = _z_string_alias(src._suffix);
+    ret._id = src->_id;
+    ret._mapping = src->_mapping;
+    ret._suffix = _z_string_alias(src->_suffix);
     return ret;
 }
 int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second);
@@ -46,7 +46,6 @@ size_t _z_keyexpr_size(_z_keyexpr_t *p);
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
 _z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src);
 /// Returns either keyexpr defined by id + mapping with null suffix if try_declared is true and id is non-zero,
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.

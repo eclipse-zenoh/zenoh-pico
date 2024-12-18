@@ -19,9 +19,9 @@
 #include <string.h>
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
-#include "zenoh-pico/utils/logging.h"
 
 _z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); }
 

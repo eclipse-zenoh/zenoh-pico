@@ -39,7 +39,7 @@ static inline bool _z_subscription_get_from_cache(_z_session_t *zn, const _z_key
     if (!_z_keyexpr_equals(ke, &zn->_subscription_cache.ke_in)) {
         return false;
     }
-    *ke_val = _z_keyexpr_alias(zn->_subscription_cache.ke_out);
+    *ke_val = _z_keyexpr_alias(&zn->_subscription_cache.ke_out);
     *infos_val = _z_subscription_infos_svec_alias(&zn->_subscription_cache.infos);
     *sub_nb = zn->_subscription_cache.sub_nb;
     return true;
@@ -202,7 +202,7 @@ z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keye
     _z_encoding_t encoding = _z_encoding_null();
     _z_bytes_t payload = _z_bytes_null();
     _z_bytes_t attachment = _z_bytes_null();
-    _z_keyexpr_t key = _z_keyexpr_alias(*keyexpr);
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &key, &payload, &encoding,
                                          Z_SAMPLE_KIND_PUT, timestamp, _Z_N_QOS_DEFAULT, &attachment,
                                          Z_RELIABILITY_RELIABLE);
@@ -213,7 +213,7 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_ke
     _z_encoding_t encoding = _z_encoding_null();
     _z_bytes_t payload = _z_bytes_null();
     _z_bytes_t attachment = _z_bytes_null();
-    _z_keyexpr_t key = _z_keyexpr_alias(*keyexpr);
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &key, &payload, &encoding,
                                          Z_SAMPLE_KIND_DELETE, timestamp, _Z_N_QOS_DEFAULT, &attachment,
                                          Z_RELIABILITY_RELIABLE);
