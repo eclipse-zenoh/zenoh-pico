@@ -223,6 +223,7 @@ see details at :ref:`owned_types_concept`
 .. c:type:: z_moved_bytes_writter_t
 
 .. autoctype:: types.h::z_bytes_reader_t
+.. autoctype:: types.h::z_bytes_slice_iterator_t
 
 Functions
 ^^^^^^^^^
@@ -240,6 +241,10 @@ Functions
 .. autocfunction:: primitives.h::z_bytes_copy_from_string
 .. autocfunction:: primitives.h::z_bytes_to_slice
 .. autocfunction:: primitives.h::z_bytes_to_string
+
+.. autocfunction:: primitives.h::z_bytes_get_contiguous_view
+.. autocfunction:: primitives.h::z_bytes_get_slice_iterator
+.. autocfunction:: primitives.h::z_bytes_slice_iterator_next
 
 .. autocfunction:: primitives.h::z_bytes_get_reader
 .. autocfunction:: primitives.h::z_bytes_reader_read
