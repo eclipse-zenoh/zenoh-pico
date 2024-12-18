@@ -88,6 +88,8 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     _z_liveliness_init(zn);
 #endif
 
+    _z_interest_init(zn);
+
     zn->_local_zid = *zid;
     // Note session in transport
     switch (zn->_tp._type) {
