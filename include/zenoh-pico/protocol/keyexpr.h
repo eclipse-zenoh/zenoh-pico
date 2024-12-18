@@ -39,7 +39,7 @@ static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t src) {
     ret._suffix = _z_string_alias(src._suffix);
     return ret;
 }
-
+int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second);
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str);
 _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len);
 size_t _z_keyexpr_size(_z_keyexpr_t *p);
