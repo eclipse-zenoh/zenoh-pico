@@ -100,6 +100,7 @@ void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
 void _z_string_reset(_z_string_t *s);
+int _z_string_compare(const _z_string_t *left, const _z_string_t *right);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);

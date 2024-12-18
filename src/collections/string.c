@@ -101,6 +101,13 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
+int _z_string_compare(const _z_string_t *left, const _z_string_t *right) {
+    if (_z_string_len(left) <= _z_string_len(right)) {
+        return strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(left));
+    }
+    return strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(right));
+}
+
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
     if (_z_string_len(left) != _z_string_len(right)) {
         return false;

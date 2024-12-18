@@ -21,6 +21,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
+#include "zenoh-pico/utils/logging.h"
 
 _z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); }
 
@@ -30,6 +31,22 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
         ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
         ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_alias_str(suffix),
     };
+}
+
+int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
+    if ((first->_id != 0) && (second->_id != 0)) {
+        if (first->_id == second->_id) {
+            return 0;
+        } else if (first->_id > second->_id) {
+            return 1;
+        }
+        return -1;
+    }
+    if (_z_keyexpr_has_suffix(first) && _z_keyexpr_has_suffix(second)) {
+        return _z_string_compare(&first->_suffix, &second->_suffix);
+    }
+    _Z_ERROR("Couldn't compare the two keyexpr");
+    return -1;
 }
 
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
