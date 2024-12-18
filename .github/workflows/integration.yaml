@@ -14,12 +14,7 @@
 name: integration
 
 on:
-  push:
-    branches: ["**"]
-  pull_request:
-    branches: ["**"]
-  schedule:
-    - cron: "0 6 * * 1-5"
+  workflow_call:
 
 jobs:
   build:

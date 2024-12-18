@@ -11,13 +11,15 @@
 # Contributors:
 #   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-name: build-check
+name: CI
 
 on:
   push:
     branches: ["**"]
   pull_request:
     branches: ["**"]
+  schedule:
+    - cron: "0 6 * * 1-5"
 
 jobs:
   run_tests:
@@ -282,7 +284,7 @@ jobs:
         if: always()
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
-  no_routeur:
+  no_router:
     name: Test examples without router
     runs-on: ubuntu-latest
     steps:
@@ -304,3 +306,33 @@ jobs:
         with:
           config: '.markdownlint.yaml'
           globs: '**/README.md'
+
+  build_shared:
+    name: Build shared libs
+    uses: ./.github/workflows/build-shared.yaml
+
+  build_static:
+    name: Build static libs
+    uses: ./.github/workflows/build-static.yaml
+
+  integration:
+    name: Run integration tests
+    uses: ./.github/workflows/integration.yaml
+
+  multicast:
+    name: Run multicast tests
+    uses: ./.github/workflows/multicast.yaml
+
+  # NOTE: In GitHub repository settings, the "Require status checks to pass
+  # before merging" branch protection rule ensures that commits are only merged
+  # from branches where specific status checks have passed. These checks are
+  # specified manually as a list of workflow job names. Thus we use this extra
+  # job to signal whether all CI checks have passed.
+  ci:
+    name: CI status checks
+    runs-on: ubuntu-latest
+    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, markdown_lint, build_shared, build_static, integration, multicast]
+    if: always()
+    steps:
+      - name: Check whether all jobs pass
+        run: echo '${{ toJson(needs) }}' | jq -e 'all(.result == "success")'
