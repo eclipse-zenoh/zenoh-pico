@@ -51,14 +51,14 @@ void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f comp
 z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare);
 void _z_lru_cache_delete(_z_lru_cache_t *cache);
 
-#define _Z_LRU_CACHE_DEFINE(name, type, compare_f)                                                                             \
+#define _Z_LRU_CACHE_DEFINE(name, type, compare_f)                                                                  \
     typedef _z_lru_cache_t name##_lru_cache_t;                                                                      \
     static inline name##_lru_cache_t name##_lru_cache_init(size_t capacity) { return _z_lru_cache_init(capacity); } \
     static inline type *name##_lru_cache_get(name##_lru_cache_t *cache, type *val) {                                \
-        return (type *)_z_lru_cache_get(cache, (void *)val, compare_f);                                        \
+        return (type *)_z_lru_cache_get(cache, (void *)val, compare_f);                                             \
     }                                                                                                               \
     static inline z_result_t name##_lru_cache_insert(name##_lru_cache_t *cache, type *val) {                        \
-        return _z_lru_cache_insert(cache, (void *)val, sizeof(type), compare_f);                               \
+        return _z_lru_cache_insert(cache, (void *)val, sizeof(type), compare_f);                                    \
     }                                                                                                               \
     static inline void name##_lru_cache_delete(name##_lru_cache_t *cache) { _z_lru_cache_delete(cache); }
 
