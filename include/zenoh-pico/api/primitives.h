@@ -457,7 +457,7 @@ z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
  * Return:
  *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len);
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
  * Builds an empty :c:type:`z_owned_slice_t`.
@@ -684,6 +684,23 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
  *   ``true`` if conainer is empty,  ``false`` otherwise.
  */
 bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Attempts to get a contiguous view to the underlying bytes (unstable).
+ *
+ * This is only possible if data is not fragmented, otherwise the function will fail.
+ * In case of fragmented data, consider using `z_bytes_get_slice_iterator()`.
+ *
+ * Parameters:
+ *   bytes: An instance of Zenoh data.
+ *   view: An uninitialized memory location where a contiguous view on data will be constructed.
+ *
+ * Return:
+ *   ``0`` in case of success, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_get_contiguous_view(const z_loaned_bytes_t *bytes, z_view_slice_t *view);
+#endif
 
 /**
  * Returns an iterator on raw bytes slices contained in the `z_loaned_bytes_t`.

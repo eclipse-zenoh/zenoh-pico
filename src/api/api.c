@@ -235,7 +235,7 @@ z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
     return _Z_RES_OK;
 }
 
-z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len) {
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, const uint8_t *data, size_t len) {
     slice->_val = _z_slice_alias_buf(data, len);
     return _Z_RES_OK;
 }
@@ -354,6 +354,22 @@ size_t z_bytes_reader_remaining(const z_bytes_reader_t *reader) { return _z_byte
 z_bytes_slice_iterator_t z_bytes_get_slice_iterator(const z_loaned_bytes_t *bytes) {
     return (z_bytes_slice_iterator_t){._bytes = bytes, ._slice_idx = 0};
 }
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+z_result_t z_bytes_get_contiguous_view(const z_loaned_bytes_t *bytes, z_view_slice_t *view) {
+    size_t num_slices = _z_bytes_num_slices(bytes);
+    if (num_slices > 1) {
+        return _Z_ERR_INVALID;
+    } else if (num_slices == 1) {
+        _z_arc_slice_t *slice = _z_bytes_get_slice(bytes, 0);
+        z_view_slice_from_buf(view, _z_arc_slice_data(slice), _z_arc_slice_len(slice));
+        return _Z_RES_OK;
+    } else {
+        z_view_slice_empty(view);
+        return _Z_RES_OK;
+    }
+}
+#endif
 
 bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t *out) {
     if (iter->_slice_idx >= _z_bytes_num_slices(iter->_bytes)) {
