@@ -15,6 +15,7 @@
 #ifndef INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 #define INCLUDE_ZENOH_PICO_SESSION_SUBSCRIPTION_H
 
+#include "zenoh-pico/collections/lru_cache.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -40,7 +41,9 @@ typedef struct {
     _z_keyexpr_t ke_out;
     _z_subscription_infos_svec_t infos;
     size_t sub_nb;
-} _z_subscription_cache_t;
+} _z_subscription_cache_data_t;
+
+int _z_subscription_cache_data_compare(const void *first, const void *second);
 
 /*------------------ Subscription ------------------*/
 z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
@@ -59,7 +62,7 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_ke
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 #if Z_FEATURE_RX_CACHE == 1
-void _z_subscription_cache_clear(_z_subscription_cache_t *cache);
+_Z_LRU_CACHE_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_subscription_cache_data_compare)
 #endif
 
 _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id);
