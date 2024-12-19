@@ -86,7 +86,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 }
 
 /*------------------ Resource Declaration ------------------*/
-uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
+uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
     // FIXME: remove this check when resource declaration is implemented for multicast transport
@@ -145,7 +145,7 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
         } else {
-            uint16_t id = _z_declare_resource(zs, keyexpr_aliased);
+            uint16_t id = _z_declare_resource(zs, &keyexpr_aliased);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -365,7 +365,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                          z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                          const _z_bytes_t att) {
@@ -376,7 +376,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _
     _z_keyexpr_t r_ke;
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
-        r_ke = _z_get_expanded_key_from_key(zn, &keyexpr);
+        r_ke = _z_get_expanded_key_from_key(zn, keyexpr);
         if (_z_keyexpr_suffix_intersects(&q_ke, &r_ke) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }

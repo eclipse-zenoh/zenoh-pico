@@ -85,7 +85,7 @@ z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, con
     _z_session_mutex_unlock(zn);
 
     if (ret == _Z_RES_OK) {
-        _z_keyexpr_t key = _z_keyexpr_alias(*keyexpr);
+        _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
         ret = _z_trigger_liveliness_subscriptions_declare(zn, &key, timestamp);
     }
 

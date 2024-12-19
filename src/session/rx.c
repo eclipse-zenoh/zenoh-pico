@@ -46,7 +46,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
             _Z_DEBUG("Handling _Z_N_DECLARE: %i", decl->_decl._tag);
             switch (decl->_decl._tag) {
                 case _Z_DECL_KEXPR: {
-                    if (_z_register_resource(zn, decl->_decl._body._decl_kexpr._keyexpr,
+                    if (_z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr,
                                              decl->_decl._body._decl_kexpr._id, local_peer_id) == 0) {
                         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
                     }
