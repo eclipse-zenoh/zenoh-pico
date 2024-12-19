@@ -297,6 +297,7 @@ void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f comp
 }
 
 z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare) {
+    assert(cache->capacity > 0);
     // Create node
     _z_lru_cache_node_t *node = _z_lru_cache_node_create(value, value_size);
     if (node == NULL) {
