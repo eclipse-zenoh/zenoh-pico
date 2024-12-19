@@ -181,6 +181,15 @@
 #define Z_RX_CACHE_SIZE 10
 
 /**
+ * Use binary tree to speed up rx cache search
+ */
+#if Z_RX_CACHE_SIZE > 20
+#define Z_FEATURE_CACHE_TREE 1
+#else
+#define Z_FEATURE_CACHE_TREE 0
+#endif
+
+/**
  * Default get timeout in milliseconds.
  */
 #define Z_GET_TIMEOUT_DEFAULT 10000

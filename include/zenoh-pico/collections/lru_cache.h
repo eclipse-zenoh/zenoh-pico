@@ -23,9 +23,6 @@
 extern "C" {
 #endif
 
-// TODO: move to config
-#define Z_FEATURE_CACHE_TREE 0
-
 // Three way comparison function pointer
 typedef int (*_z_lru_val_cmp_f)(const void *first, const void *second);
 
