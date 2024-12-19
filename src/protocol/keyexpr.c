@@ -35,12 +35,19 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
 
 int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
     if ((first->_id != 0) && (second->_id != 0)) {
-        if (first->_id == second->_id) {
-            return 0;
-        } else if (first->_id > second->_id) {
-            return 1;
+        if (_z_keyexpr_mapping_id(first) == _z_keyexpr_mapping_id(second)) {
+            if (first->_id == second->_id) {
+                return 0;
+            } else if (first->_id > second->_id) {
+                return 1;
+            }
+            return -1;
+        } else {
+            if (_z_keyexpr_mapping_id(first) > _z_keyexpr_mapping_id(second)) {
+                return 1;
+            }
+            return -1;
         }
-        return -1;
     }
     if (_z_keyexpr_has_suffix(first) && _z_keyexpr_has_suffix(second)) {
         return _z_string_compare(&first->_suffix, &second->_suffix);
