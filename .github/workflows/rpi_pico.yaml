@@ -50,6 +50,8 @@ jobs:
           mkdir -p $FREERTOS_KERNEL_PATH
           cd $FREERTOS_KERNEL_PATH
           git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git .
+          # Some version witch aleready supports the Pico SDK but not the latest, because sometimes latest is broken
+          git checkout e169442c29ba8e26faf033cc0886029dd5812979 
           git submodule update --init
           
       - name: Build examples
