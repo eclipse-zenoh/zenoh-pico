@@ -45,49 +45,6 @@ int _z_queryable_cache_data_compare(const void *first, const void *second) {
 }
 #endif  // Z_FEATURE_RX_CACHE == 1
 
-// #if Z_FEATURE_RX_CACHE == 1
-// static inline bool _z_queryable_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke, _z_keyexpr_t *ke_val,
-//                                                _z_queryable_infos_svec_t *infos_val, size_t *qle_nb) {
-//     if (!_z_keyexpr_equals(ke, &zn->_queryable_cache.ke_in)) {
-//         return false;
-//     }
-//     *ke_val = _z_keyexpr_alias(&zn->_queryable_cache.ke_out);
-//     *infos_val = _z_queryable_infos_svec_alias(&zn->_queryable_cache.infos);
-//     *qle_nb = zn->_queryable_cache.qle_nb;
-//     return true;
-// }
-
-// static inline void _z_queryable_update_cache(_z_session_t *zn, const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
-//                                              _z_queryable_infos_svec_t *infos) {
-//     // Clear previous data
-//     _z_queryable_cache_clear(&zn->_queryable_cache);
-//     // Register new info
-//     zn->_queryable_cache.ke_in = _z_keyexpr_duplicate(ke_in);
-//     zn->_queryable_cache.ke_out = _z_keyexpr_duplicate(ke_out);
-//     zn->_queryable_cache.infos = _z_queryable_infos_svec_alias(infos);
-//     zn->_queryable_cache.qle_nb = _z_queryable_infos_svec_len(infos);
-// }
-// #else
-// static inline bool _z_queryable_get_from_cache(_z_session_t *zn, const _z_keyexpr_t *ke, _z_keyexpr_t *ke_val,
-//                                                _z_queryable_infos_svec_t *infos_val, size_t *sub_nb) {
-//     _ZP_UNUSED(zn);
-//     _ZP_UNUSED(ke);
-//     _ZP_UNUSED(ke_val);
-//     _ZP_UNUSED(infos_val);
-//     _ZP_UNUSED(sub_nb);
-//     return false;
-// }
-
-// static inline void _z_queryable_update_cache(_z_session_t *zn, const _z_keyexpr_t *ke_in, const _z_keyexpr_t *ke_out,
-//                                              _z_queryable_infos_svec_t *infos) {
-//     _ZP_UNUSED(zn);
-//     _ZP_UNUSED(ke_in);
-//     _ZP_UNUSED(ke_out);
-//     _ZP_UNUSED(infos);
-//     return;
-// }
-// #endif  // Z_FEATURE_RX_CACHE == 1
-
 bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two) {
     return one->_id == two->_id;
 }
