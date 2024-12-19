@@ -42,6 +42,7 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/unicast.h"
+#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
@@ -642,35 +643,74 @@ z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, 
 
 void z_open_options_default(z_open_options_t *options) { options->__dummy = 0; }
 
-z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
-    _ZP_UNUSED(options);
+static _z_id_t _z_session_get_zid(const _z_config_t *config) {
+    _z_id_t zid = _z_id_empty();
+    char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
+    if (opt_as_str != NULL) {
+        _z_uuid_to_bytes(zid.id, opt_as_str);
+    } else {
+        _z_session_generate_zid(&zid, Z_ZID_LENGTH);
+    }
+    return zid;
+}
+
+static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
     z_internal_session_null(zs);
     _z_session_t *s = z_malloc(sizeof(_z_session_t));
     if (s == NULL) {
-        z_config_drop(config);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    memset(s, 0, sizeof(_z_session_t));
-    // Create rc
-    _z_session_rc_t zsrc = _z_session_rc_new(s);
-    if (zsrc._cnt == NULL) {
-        z_free(s);
-        z_config_drop(config);
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    zs->_rc = zsrc;
-    // Open session
-    z_result_t ret = _z_open(&zs->_rc, &config->_this._val);
+
+    z_result_t ret = _z_session_init(s, zid);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("_z_open failed: %i", ret);
-        _z_session_rc_decr(&zs->_rc);
-        z_internal_session_null(zs);
-        z_config_drop(config);
         z_free(s);
         return ret;
     }
+
+    _z_session_rc_t zsrc = _z_session_rc_new(s);
+    if (zsrc._cnt == NULL) {
+        _z_session_clear(s);
+        z_free(s);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    zs->_rc = zsrc;
+
+    return _Z_RES_OK;
+}
+
+z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
+    _ZP_UNUSED(options);
+
+    _z_config_t *cfg = &config->_this._val;
+    if (config == NULL) {
+        _Z_ERROR("A valid config is missing.");
+        return _Z_ERR_GENERIC;
+    }
+
+    _z_id_t zid = _z_session_get_zid(cfg);
+
+    z_result_t ret = _z_session_rc_init(zs, &zid);
+    if (ret != _Z_RES_OK) {
+        z_config_drop(config);
+        return ret;
+    }
+
+    ret = _z_open(&zs->_rc, cfg, &zid);
+    if (ret != _Z_RES_OK) {
+        z_session_drop(z_session_move(zs));
+        z_config_drop(config);
+        return ret;
+    }
+
     // Clean up
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _Z_OWNED_RC_IN_VAL(zs)->_config = config->_this._val;
+    z_internal_config_null(&config->_this);
+#else
     z_config_drop(config);
+#endif
+
     return _Z_RES_OK;
 }
 

@@ -175,6 +175,7 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
+_z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);

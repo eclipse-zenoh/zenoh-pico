@@ -29,7 +29,7 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
                                 const _z_id_t *local_zid, int peer_op);
 z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only);
 z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reason);
-void _z_unicast_transport_clear(_z_transport_t *zt);
+void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks);
 
 #ifdef __cplusplus
 }

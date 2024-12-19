@@ -18,12 +18,16 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/utils/config.h"
+#include "zenoh-pico/utils/result.h"
 
 /*------------------ clone helpers ------------------*/
 void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src) { *dst = *src; }
@@ -47,14 +51,25 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 }
 
 /*------------------ Init/Free/Close session ------------------*/
-z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
+z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
-    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    ret = _z_mutex_init(&zn->_mutex_inner);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+#endif
 
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;
     zn->_query_id = 1;
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_config_init(&zn->_config);
+    zn->_decalaration_cache = NULL;
+#endif
 
     // Initialize the data structs
     zn->_local_resources = NULL;
@@ -76,14 +91,6 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     zn->_pending_queries = NULL;
 #endif
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    ret = _z_mutex_init(&zn->_mutex_inner);
-    if (ret != _Z_RES_OK) {
-        _z_transport_clear(&zn->_tp);
-        return ret;
-    }
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
 #if Z_FEATURE_LIVELINESS == 1
     _z_liveliness_init(zn);
 #endif
@@ -91,20 +98,7 @@ z_result_t _z_session_init(_z_session_rc_t *zsrc, _z_id_t *zid) {
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
-    // Note session in transport
-    switch (zn->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            zn->_tp._transport._unicast._common._session = zsrc;
-            break;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            zn->_tp._transport._multicast._common._session = zsrc;
-            break;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            zn->_tp._transport._raweth._common._session = zsrc;
-            break;
-        default:
-            break;
-    }
+
     return ret;
 }
 
@@ -116,6 +110,12 @@ void _z_session_clear(_z_session_t *zn) {
     _zp_stop_read_task(zn);
     _zp_stop_lease_task(zn);
 #endif
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_config_clear(&zn->_config);
+    _z_network_message_list_free(&zn->_decalaration_cache);
+#endif
+
     _z_close(zn);
     // Clear Zenoh PID
     // Clean up transports

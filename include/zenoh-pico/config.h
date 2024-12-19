@@ -27,7 +27,7 @@
 #define Z_FEATURE_SUBSCRIPTION 1
 #define Z_FEATURE_QUERY 1
 #define Z_FEATURE_QUERYABLE 1
-#define Z_FEATURE_LIVELINESS 0
+#define Z_FEATURE_LIVELINESS 1
 #define Z_FEATURE_RAWETH_TRANSPORT 0
 #define Z_FEATURE_INTEREST 1
 #define Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION 0
@@ -48,6 +48,7 @@
 #define Z_FEATURE_PUBLISHER_SESSION_CHECK 1
 #define Z_FEATURE_BATCHING 1
 #define Z_FEATURE_RX_CACHE 0
+#define Z_FEATURE_AUTO_RECONNECT 1
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/

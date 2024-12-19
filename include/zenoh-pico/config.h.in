@@ -48,6 +48,7 @@
 #define Z_FEATURE_PUBLISHER_SESSION_CHECK @Z_FEATURE_PUBLISHER_SESSION_CHECK@
 #define Z_FEATURE_BATCHING @Z_FEATURE_BATCHING@
 #define Z_FEATURE_RX_CACHE @Z_FEATURE_RX_CACHE@
+#define Z_FEATURE_AUTO_RECONNECT @Z_FEATURE_AUTO_RECONNECT@
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
