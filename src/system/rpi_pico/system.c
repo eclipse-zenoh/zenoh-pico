@@ -72,7 +72,7 @@ static void z_task_wrapper(void *arg) {
 static z_task_attr_t z_default_task_attr = {
     .name = "",
     .priority = configMAX_PRIORITIES / 2,
-    .stack_depth = 5120,
+    .stack_depth = 1024,
 };
 
 /*------------------ Thread ------------------*/
