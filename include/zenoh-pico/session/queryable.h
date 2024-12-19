@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <zenoh-pico/session/session.h>
 
+#include "zenoh-pico/collections/lru_cache.h"
+
 // Forward declaration to avoid cyclical include
 typedef struct _z_session_t _z_session_t;
 typedef struct _z_session_rc_t _z_session_rc_t;
@@ -36,14 +38,19 @@ typedef struct {
     _z_keyexpr_t ke_out;
     _z_queryable_infos_svec_t infos;
     size_t qle_nb;
-} _z_queryable_cache_t;
+} _z_queryable_cache_data_t;
+
+int _z_queryable_cache_data_compare(const void *first, const void *second);
 
 #if Z_FEATURE_QUERYABLE == 1
 #define _Z_QUERYABLE_COMPLETE_DEFAULT false
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
+#if Z_FEATURE_RX_CACHE == 1
+_Z_LRU_CACHE_DEFINE(_z_queryable, _z_queryable_cache_data_t, _z_queryable_cache_data_compare)
+#endif
+
 /*------------------ Queryable ------------------*/
-void _z_queryable_cache_clear(_z_queryable_cache_t *cache);
 _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q);
 z_result_t _z_trigger_queryables(_z_session_rc_t *zn, _z_msg_query_t *query, _z_keyexpr_t *q_key, uint32_t qid);
