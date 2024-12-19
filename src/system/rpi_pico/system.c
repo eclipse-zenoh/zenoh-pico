@@ -104,7 +104,6 @@ z_result_t _z_task_join(_z_task_t *task) {
 
 z_result_t _z_task_detach(_z_task_t *task) {
     _ZP_UNUSED(task);
-    assert(false);
     return _Z_ERR_GENERIC;
 }
 

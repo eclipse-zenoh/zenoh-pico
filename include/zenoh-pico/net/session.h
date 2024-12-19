@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/session.h"
@@ -54,6 +55,14 @@ typedef struct _z_session_t {
     // Session declarations
     _z_resource_list_t *_local_resources;
     _z_resource_list_t *_remote_resources;
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    // Information for session restoring
+    _z_config_t _config;
+    _z_network_message_list_t *_decalaration_cache;
+    z_task_attr_t *_lease_task_attr;
+    z_task_attr_t *_read_task_attr;
+#endif
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -99,14 +108,43 @@ _Z_REFCOUNT_DEFINE(_z_session, _z_session)
  * Open a zenoh-net session
  *
  * Parameters:
+ *     zn: A pointer of A :c:type:`_z_session_rc_t` used as a return value.
  *     config: A set of properties. The caller keeps its ownership.
- *     zn: A pointer of A :c:type:`_z_session_t` used as a return value.
+ *     zid: A pointer to Zenoh ID.
  *
  * Returns:
  *     ``0`` in case of success, or a ``negative value`` in case of failure.
- *
  */
-z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config);
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid);
+
+/**
+ * Reopen a disconnected zenoh-net session
+ *
+ * Parameters:
+ *     zn: Existing zenoh-net session.
+ *
+ * Returns:
+ *     ``0`` in case of success, or a ``negative value`` in case of failure.
+ */
+z_result_t _z_reopen(_z_session_rc_t *zn);
+
+/**
+ * Store declaration network message to cache for resend it after session restore
+ *
+ * Parameters:
+ *     zs: A zenoh-net session.
+ *     z_msg: Network message with declaration
+ */
+void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
+
+/**
+ * Remove corresponding declaration from the cache
+ *
+ * Parameters:
+ *     zs: A zenoh-net session.
+ *     z_msg: Network message with undeclaration
+ */
+void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 
 /**
  * Close a zenoh-net session.

@@ -11,6 +11,8 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include "zenoh-pico/transport/unicast/transport.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -18,13 +20,10 @@
 #include <string.h>
 
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/rx.h"
+#include "zenoh-pico/transport/common/transport.h"
 #include "zenoh-pico/transport/common/tx.h"
-#include "zenoh-pico/transport/multicast/rx.h"
-#include "zenoh-pico/transport/unicast.h"
-#include "zenoh-pico/transport/unicast/lease.h"
-#include "zenoh-pico/transport/unicast/read.h"
-#include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -220,6 +219,7 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
         _z_t_msg_clear(&oam);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
     }
+    // THIS LOG STRING USED IN TEST, change with caution
     _Z_DEBUG("Received Z_OPEN(Ack)");
     param->_lease = oam._body._open._lease;  // The session lease
     // The initial SN at RX side. Initialize the session as we had already received
@@ -352,29 +352,9 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
     return _z_unicast_send_close(ztu, reason, false);
 }
 
-void _z_unicast_transport_clear(_z_transport_t *zt) {
-    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
-#if Z_FEATURE_MULTI_THREAD == 1
-    // Clean up tasks
-    if (ztu->_common._read_task != NULL) {
-        _z_task_join(ztu->_common._read_task);
-        z_free(ztu->_common._read_task);
-    }
-    if (ztu->_common._lease_task != NULL) {
-        _z_task_join(ztu->_common._lease_task);
-        z_free(ztu->_common._lease_task);
-    }
+void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
+    _z_common_transport_clear(&ztu->_common, detach_tasks);
 
-    // Clean up the mutexes
-    _z_mutex_drop(&ztu->_common._mutex_tx);
-    _z_mutex_drop(&ztu->_common._mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-    // Clean up the buffers
-    _z_wbuf_clear(&ztu->_common._wbuf);
-    _z_zbuf_clear(&ztu->_common._zbuf);
-    _z_arc_slice_svec_release(&ztu->_common._arc_pool);
-    _z_network_message_svec_release(&ztu->_common._msg_pool);
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&ztu->_dbuf_reliable);
     _z_wbuf_clear(&ztu->_dbuf_best_effort);
@@ -382,7 +362,6 @@ void _z_unicast_transport_clear(_z_transport_t *zt) {
 
     // Clean up PIDs
     ztu->_remote_zid = _z_id_empty();
-    _z_link_clear(&ztu->_common._link);
 }
 
 #else

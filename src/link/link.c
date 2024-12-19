@@ -21,7 +21,7 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
+z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
     z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
@@ -71,7 +71,7 @@ z_result_t _z_open_link(_z_link_t *zl, _z_string_t *locator) {
     return ret;
 }
 
-z_result_t _z_listen_link(_z_link_t *zl, _z_string_t *locator) {
+z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator) {
     z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;

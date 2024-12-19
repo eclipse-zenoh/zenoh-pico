@@ -54,7 +54,7 @@ bool _z_locator_eq(const _z_locator_t *left, const _z_locator_t *right);
 
 void _z_locator_init(_z_locator_t *locator);
 _z_string_t _z_locator_to_string(const _z_locator_t *loc);
-z_result_t _z_locator_from_string(_z_locator_t *lc, _z_string_t *s);
+z_result_t _z_locator_from_string(_z_locator_t *lc, const _z_string_t *s);
 
 size_t _z_locator_size(_z_locator_t *lc);
 void _z_locator_clear(_z_locator_t *lc);
@@ -72,7 +72,7 @@ typedef struct {
 } _z_endpoint_t;
 
 _z_string_t _z_endpoint_to_string(const _z_endpoint_t *e);
-z_result_t _z_endpoint_from_string(_z_endpoint_t *ep, _z_string_t *s);
+z_result_t _z_endpoint_from_string(_z_endpoint_t *ep, const _z_string_t *s);
 void _z_endpoint_clear(_z_endpoint_t *ep);
 void _z_endpoint_free(_z_endpoint_t **ep);
 
