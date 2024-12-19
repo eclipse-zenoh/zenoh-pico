@@ -184,11 +184,51 @@ void test_lru_cache_random_val(void) {
     _dummy_lru_cache_delete(&dcache);
 }
 
+#if 0
+void *stop_task(void *ctx) {
+    z_sleep_s(10);
+    bool *stop_flag = (bool *)ctx;
+    *stop_flag = true;
+    return NULL;
+}
+// Results
+// size 10: 287720681 list, 294626805 tree (1.024)
+// size 20: 207124561 list, 282312820 tree (1.363)
+// size 50: 104164238 list, 212367113 tree (2.039)
+// size 100: 51666425 list, 198541036 tree (3.843)
+// size 1000: 5838653 list, 122717170 tree (21.018)
+void test_search_benchmark(void) {
+    _dummy_lru_cache_t dcache = _dummy_lru_cache_init(10);
+    _dummy_t data[10] = {0};
+
+    srand(0x55);
+    // Insert data
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(data); i++) {
+        data[i].foo = rand();
+        assert(_dummy_lru_cache_insert(&dcache, &data[i]) == 0);
+    }
+    bool stop_flag = false;
+    pthread_t task;
+    pthread_create(&task, NULL, stop_task, &stop_flag);
+    size_t get_cnt = 0;
+
+    while (!stop_flag) {
+        int i = rand() % _ZP_ARRAY_SIZE(data);
+        _dummy_t *src = &data[i];
+        _dummy_t *res = _dummy_lru_cache_get(&dcache, src);
+        get_cnt++;
+        assert(res != NULL);
+    }
+    printf("Mode: %d, Get count: %ld\n", Z_FEATURE_CACHE_TREE, get_cnt);
+}
+#endif
+
 int main(void) {
     test_lru_init();
     test_lru_cache_insert();
     test_lru_cache_deletion();
     test_lru_cache_update();
     test_lru_cache_random_val();
+    // test_search_benchmark();
     return 0;
 }
