@@ -105,10 +105,10 @@ static void _z_lru_cache_update_list(_z_lru_cache_t *cache, _z_lru_cache_node_t 
 // Sorted list function
 static _z_lru_cache_node_t *_z_lru_cache_search_slist(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare,
                                                       size_t *idx) {
-    ssize_t l_idx = 0;
-    ssize_t h_idx = (ssize_t)cache->len - 1;
+    int l_idx = 0;
+    int h_idx = (int)cache->len - 1;
     while (l_idx <= h_idx) {
-        ssize_t curr_idx = (l_idx + h_idx) / 2;
+        int curr_idx = (l_idx + h_idx) / 2;
         int res = compare(_z_lru_cache_node_value(cache->slist[curr_idx]), value);
         if (res == 0) {
             *idx = (size_t)curr_idx;
@@ -126,7 +126,7 @@ static void _z_lru_cache_sort_slist(_z_lru_cache_node_t **slist, size_t slist_si
     for (size_t i = 1; i < slist_size; i++) {
         _z_lru_cache_node_t *node = slist[i];
         void *node_val = _z_lru_cache_node_value(node);
-        ssize_t j = (ssize_t)i - 1;
+        int j = (int)i - 1;
         while ((j >= 0) && (compare(_z_lru_cache_node_value(slist[j]), node_val) > 0)) {
             slist[j + 1] = slist[j];
             j--;
