@@ -942,7 +942,7 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), keyexpr_aliased);
+            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
             key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
         }
     }
@@ -1215,7 +1215,7 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
-            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), keyexpr_aliased);
+            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -1267,7 +1267,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&payload->_this),
                         .encoding = _z_encoding_from_owned(&opts.encoding->_this)};
 
-    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_owned_bytes(&opts.attachment->_this));
     z_bytes_drop(payload);
@@ -1303,7 +1303,7 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
 
     _z_value_t value = {.payload = _z_bytes_null(), .encoding = _z_encoding_null()};
 
-    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE,
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_owned_bytes(&opts.attachment->_this));
     // Clean-up
@@ -1377,7 +1377,7 @@ z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_
 
 z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
-    uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), k);
+    uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &k);
     key->_val = _z_rid_with_suffix(id, NULL);
     // we still need to store the original suffix, for user needs
     // (for example to compare keys or perform other operations on their string representation).
@@ -1426,7 +1426,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr_aliased);
+    _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
 
     // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
     //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
@@ -1435,7 +1435,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             bool do_keydecl = true;
-            _z_keyexpr_t resource_key = _z_keyexpr_alias(keyexpr_aliased);
+            _z_keyexpr_t resource_key = _z_keyexpr_alias(&keyexpr_aliased);
             // Remove wild
             char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
             if ((wild != NULL) && _z_keyexpr_has_suffix(&keyexpr_aliased)) {
@@ -1450,7 +1450,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
             }
             // Declare resource
             if (do_keydecl) {
-                uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), resource_key);
+                uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &resource_key);
                 key = _z_rid_with_suffix(id, wild);
             }
             _z_keyexpr_clear(&resource_key);

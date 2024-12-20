@@ -86,7 +86,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 }
 
 /*------------------ Resource Declaration ------------------*/
-uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
+uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
     // FIXME: remove this check when resource declaration is implemented for multicast transport
@@ -99,13 +99,15 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
             if (_z_send_decalre(zn, &n_msg) == _Z_RES_OK) {
                 ret = id;
+                // Invalidate cache
+                _z_subscription_cache_invalidate(zn);
+                _z_queryable_cache_invalidate(zn);
             } else {
                 _z_unregister_resource(zn, id, _Z_KEYEXPR_MAPPING_LOCAL);
             }
             _z_n_msg_clear(&n_msg);
         }
     }
-
     return ret;
 }
 
@@ -118,8 +120,11 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
         if (_z_send_undecalre(zn, &n_msg) == _Z_RES_OK) {
-            _z_unregister_resource(zn, rid,
-                                   _Z_KEYEXPR_MAPPING_LOCAL);  // Only if message is send, local resource is removed
+            // Remove local resource
+            _z_unregister_resource(zn, rid, _Z_KEYEXPR_MAPPING_LOCAL);
+            // Invalidate cache
+            _z_subscription_cache_invalidate(zn);
+            _z_queryable_cache_invalidate(zn);
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
@@ -145,7 +150,7 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
         } else {
-            uint16_t id = _z_declare_resource(zs, keyexpr_aliased);
+            uint16_t id = _z_declare_resource(zs, &keyexpr_aliased);
             key = _z_rid_with_suffix(id, NULL);
         }
     }
@@ -273,6 +278,8 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     // Fill subscriber
     ret._entity_id = s._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -301,6 +308,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(&sub->_zn));
     return _Z_RES_OK;
 }
 #endif
@@ -336,6 +345,8 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Fill queryable
     ret._entity_id = q._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -362,10 +373,12 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(&qle->_zn));
     return _Z_RES_OK;
 }
 
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                          z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                          const _z_bytes_t att) {
@@ -376,7 +389,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _
     _z_keyexpr_t r_ke;
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
-        r_ke = _z_get_expanded_key_from_key(zn, &keyexpr);
+        r_ke = _z_get_expanded_key_from_key(zn, keyexpr);
         if (_z_keyexpr_suffix_intersects(&q_ke, &r_ke) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }

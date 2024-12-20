@@ -176,6 +176,11 @@
 #define Z_IOSLICE_SIZE 128
 
 /**
+ * Default size for the rx cache size (if activated).
+ */
+#define Z_RX_CACHE_SIZE 10
+
+/**
  * Default get timeout in milliseconds.
  */
 #define Z_GET_TIMEOUT_DEFAULT 10000

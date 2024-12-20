@@ -59,7 +59,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
  * Returns:
  *     A numerical id of the declared resource.
  */
-uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
+uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -218,7 +218,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
  */
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                          z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                          const _z_bytes_t attachment);

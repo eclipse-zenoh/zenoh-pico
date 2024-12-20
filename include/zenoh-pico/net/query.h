@@ -67,8 +67,8 @@ static inline _z_query_t _z_query_alias(_z_value_t *value, _z_keyexpr_t *key, co
                                         _z_session_rc_t *zn, uint32_t request_id, const _z_bytes_t *attachment,
                                         bool anyke) {
     _z_query_t ret;
-    ret._key = _z_keyexpr_alias(*key);
-    ret._value = _z_value_alias(*value);
+    ret._key = _z_keyexpr_alias(key);
+    ret._value = _z_value_alias(value);
     ret._request_id = request_id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
     ret._attachment = _z_bytes_alias(*attachment);
