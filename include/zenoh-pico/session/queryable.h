@@ -40,6 +40,7 @@ typedef struct {
     size_t qle_nb;
 } _z_queryable_cache_data_t;
 
+void _z_queryable_cache_invalidate(_z_session_t *zn);
 int _z_queryable_cache_data_compare(const void *first, const void *second);
 
 #if Z_FEATURE_QUERYABLE == 1

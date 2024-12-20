@@ -99,13 +99,15 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
             if (_z_send_decalre(zn, &n_msg) == _Z_RES_OK) {
                 ret = id;
+                // Invalidate cache
+                _z_subscription_cache_invalidate(zn);
+                _z_queryable_cache_invalidate(zn);
             } else {
                 _z_unregister_resource(zn, id, _Z_KEYEXPR_MAPPING_LOCAL);
             }
             _z_n_msg_clear(&n_msg);
         }
     }
-
     return ret;
 }
 
@@ -118,8 +120,11 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
         if (_z_send_undecalre(zn, &n_msg) == _Z_RES_OK) {
-            _z_unregister_resource(zn, rid,
-                                   _Z_KEYEXPR_MAPPING_LOCAL);  // Only if message is send, local resource is removed
+            // Remove local resource
+            _z_unregister_resource(zn, rid, _Z_KEYEXPR_MAPPING_LOCAL);
+            // Invalidate cache
+            _z_subscription_cache_invalidate(zn);
+            _z_queryable_cache_invalidate(zn);
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
@@ -273,6 +278,8 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     // Fill subscriber
     ret._entity_id = s._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -301,6 +308,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(&sub->_zn));
     return _Z_RES_OK;
 }
 #endif
@@ -336,6 +345,8 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Fill queryable
     ret._entity_id = q._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -362,6 +373,8 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(&qle->_zn));
     return _Z_RES_OK;
 }
 

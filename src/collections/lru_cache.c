@@ -223,6 +223,24 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
     return _Z_RES_OK;
 }
 
+void _z_lru_cache_clear(_z_lru_cache_t *cache) {
+    // Reset slist
+    if (cache->slist != NULL) {
+        memset(cache->slist, 0, cache->capacity * sizeof(void *));
+    }
+    // Remove nodes
+    _z_lru_cache_node_data_t *node = cache->head;
+    while (node != NULL) {
+        _z_lru_cache_node_t *tmp = node;
+        _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
+        node = node_data->next;
+        z_free(tmp);
+    }
+    cache->len = 0;
+    cache->head = NULL;
+    cache->tail = NULL;
+}
+
 void _z_lru_cache_delete(_z_lru_cache_t *cache) {
     _z_lru_cache_node_data_t *node = cache->head;
     z_free(cache->slist);

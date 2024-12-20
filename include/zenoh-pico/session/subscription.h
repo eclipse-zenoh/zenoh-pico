@@ -43,6 +43,7 @@ typedef struct {
     size_t sub_nb;
 } _z_subscription_cache_data_t;
 
+void _z_subscription_cache_invalidate(_z_session_t *zn);
 int _z_subscription_cache_data_compare(const void *first, const void *second);
 
 /*------------------ Subscription ------------------*/

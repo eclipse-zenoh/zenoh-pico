@@ -49,17 +49,17 @@ void test_lru_init(void) {
     assert(dcache.len == 0);
     assert(dcache.head == NULL);
     assert(dcache.tail == NULL);
-#if Z_FEATURE_CACHE_TREE == 1
-    assert(dcache.root == NULL);
-#endif
+    assert(dcache.slist == NULL);
 }
 
 void test_lru_cache_insert(void) {
     _dummy_lru_cache_t dcache = _dummy_lru_cache_init(CACHE_CAPACITY);
 
     _dummy_t v0 = {0};
+    assert(dcache.slist == NULL);
     assert(_dummy_lru_cache_get(&dcache, &v0) == NULL);
     assert(_dummy_lru_cache_insert(&dcache, &v0) == 0);
+    assert(dcache.slist != NULL);
     _dummy_t *res = _dummy_lru_cache_get(&dcache, &v0);
     assert(res != NULL);
     assert(res->foo == v0.foo);
@@ -73,6 +73,26 @@ void test_lru_cache_insert(void) {
         res = _dummy_lru_cache_get(&dcache, &data[i]);
         assert(res != NULL);
         assert(res->foo == data[i].foo);
+    }
+    _dummy_lru_cache_delete(&dcache);
+}
+
+void test_lru_cache_clear(void) {
+    _dummy_lru_cache_t dcache = _dummy_lru_cache_init(CACHE_CAPACITY);
+
+    _dummy_t data[CACHE_CAPACITY] = {0};
+    for (size_t i = 0; i < CACHE_CAPACITY; i++) {
+        data[i].foo = (int)i;
+        assert(_dummy_lru_cache_insert(&dcache, &data[i]) == 0);
+    }
+    _dummy_lru_cache_clear(&dcache);
+    assert(dcache.capacity == CACHE_CAPACITY);
+    assert(dcache.len == 0);
+    assert(dcache.slist != NULL);
+    assert(dcache.head == NULL);
+    assert(dcache.tail == NULL);
+    for (size_t i = 0; i < CACHE_CAPACITY; i++) {
+        assert(_dummy_lru_cache_get(&dcache, &data[i]) == NULL);
     }
     _dummy_lru_cache_delete(&dcache);
 }
@@ -221,6 +241,7 @@ void test_search_benchmark(void) {
 int main(void) {
     test_lru_init();
     test_lru_cache_insert();
+    test_lru_cache_clear();
     test_lru_cache_deletion();
     test_lru_cache_update();
     test_lru_cache_random_val();

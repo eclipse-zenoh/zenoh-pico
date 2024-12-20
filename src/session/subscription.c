@@ -38,6 +38,14 @@ static inline _z_subscription_cache_data_t _z_subscription_cache_data_null(void)
     return ret;
 }
 
+void _z_subscription_cache_invalidate(_z_session_t *zn) {
+#if Z_FEATURE_RX_CACHE == 1
+    _z_subscription_lru_cache_clear(&zn->_subscription_cache);
+#else
+    _ZP_UNUSED(zn);
+#endif
+}
+
 #if Z_FEATURE_RX_CACHE == 1
 int _z_subscription_cache_data_compare(const void *first, const void *second) {
     _z_subscription_cache_data_t *first_data = (_z_subscription_cache_data_t *)first;
