@@ -15,9 +15,10 @@
 #ifndef ZENOH_PICO_COLLECTIONS_LRUCACHE_H
 #define ZENOH_PICO_COLLECTIONS_LRUCACHE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,13 +35,11 @@ typedef void _z_lru_cache_node_t;
  * A least recently used cache implementation
  */
 typedef struct _z_lru_cache_t {
-    size_t capacity;            // Max number of node
-    size_t len;                 // Number of node
-    _z_lru_cache_node_t *head;  // List head
-    _z_lru_cache_node_t *tail;  // List tail
-#if Z_FEATURE_CACHE_TREE == 1
-    _z_lru_cache_node_t *root;  // Tree root
-#endif
+    size_t capacity;              // Max number of node
+    size_t len;                   // Number of node
+    _z_lru_cache_node_t *head;    // List head
+    _z_lru_cache_node_t *tail;    // List tail
+    _z_lru_cache_node_t **slist;  // Sorted node list
 } _z_lru_cache_t;
 
 _z_lru_cache_t _z_lru_cache_init(size_t capacity);

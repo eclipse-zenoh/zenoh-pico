@@ -23,14 +23,10 @@
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
-// Nodes are chained both as a binary tree for lookup and as double linked list for lru insertion/deletion.
+// Nodes are chained as double linked list for lru insertion/deletion.
 typedef struct _z_lru_cache_node_data_t {
     _z_lru_cache_node_t *prev;  // List previous node
     _z_lru_cache_node_t *next;  // List next node
-#if Z_FEATURE_CACHE_TREE == 1
-    _z_lru_cache_node_t *left;   // Tree left child
-    _z_lru_cache_node_t *right;  // Tree right child
-#endif
 } _z_lru_cache_node_data_t;
 
 #define NODE_DATA_SIZE sizeof(_z_lru_cache_node_data_t)
@@ -106,176 +102,79 @@ static void _z_lru_cache_update_list(_z_lru_cache_t *cache, _z_lru_cache_node_t 
     _z_lru_cache_insert_list_node(cache, node);
 }
 
-// Tree functions
-#if Z_FEATURE_CACHE_TREE == 1
-static _z_lru_cache_node_t *_z_lru_cache_insert_tree_node_rec(_z_lru_cache_node_t *previous, _z_lru_cache_node_t *node,
-                                                              _z_lru_val_cmp_f compare) {
-    if (previous == NULL) {
-        return node;
-    }
-    _z_lru_cache_node_data_t *prev_data = _z_lru_cache_node_data(previous);
-    int res = compare(_z_lru_cache_node_value(previous), _z_lru_cache_node_value(node));
-    if (res < 0) {
-        prev_data->left = _z_lru_cache_insert_tree_node_rec(prev_data->left, node, compare);
-    } else if (res > 0) {
-        prev_data->right = _z_lru_cache_insert_tree_node_rec(prev_data->right, node, compare);
-    }
-    // == 0 shouldn't happen
-    else {
-        _Z_ERROR("Comparison equality shouldn't happen during tree insertion");
-    }
-    return previous;
-}
-
-static void _z_lru_cache_insert_tree_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
-    cache->root = _z_lru_cache_insert_tree_node_rec(cache->root, node, compare);
-}
-
-static _z_lru_cache_node_t *_z_lru_cache_search_tree_rec(_z_lru_cache_node_t *node, void *value,
-                                                         _z_lru_val_cmp_f compare) {
-    // Check value
-    if (node == NULL) {
-        return NULL;
-    }
-    // Compare keys
-    int res = compare(_z_lru_cache_node_value(node), value);
-    // Node has key
-    if (res == 0) {
-        return node;
-    }
-    _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-    // Key is greater than node's key
-    if (res > 0) {
-        return _z_lru_cache_search_tree_rec(node_data->right, value, compare);
-    }
-    // Key is smaller than node's key
-    return _z_lru_cache_search_tree_rec(node_data->left, value, compare);
-}
-
-static _z_lru_cache_node_t *_z_lru_cache_search_tree(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare) {
-    return _z_lru_cache_search_tree_rec(cache->root, value, compare);
-}
-
-static _z_lru_cache_node_t *_z_lru_cache_get_tree_node_successor(_z_lru_cache_node_t *node) {
-    _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-    node = node_data->right;
-    node_data = _z_lru_cache_node_data(node);
-    while ((node != NULL) && (node_data->left != NULL)) {
-        node = node_data->left;
-        node_data = _z_lru_cache_node_data(node);
-    }
-    return node;
-}
-
-static void _z_lru_cache_transfer_tree_node(_z_lru_cache_node_t *dst, _z_lru_cache_node_t *src, size_t value_size) {
-    void *src_val = _z_lru_cache_node_value(src);
-    void *dst_val = _z_lru_cache_node_value(dst);
-    _z_lru_cache_node_data_t *src_data = _z_lru_cache_node_data(src);
-    _z_lru_cache_node_data_t *dst_data = _z_lru_cache_node_data(dst);
-    // Copy content
-    memcpy(dst_val, src_val, value_size);
-    dst_data->prev = src_data->prev;
-    dst_data->next = src_data->next;
-    // Update list
-    if (src_data->prev != NULL) {
-        _z_lru_cache_node_data_t *prev_data = _z_lru_cache_node_data(src_data->prev);
-        prev_data->next = dst;
-    }
-    if (src_data->next != NULL) {
-        _z_lru_cache_node_data_t *next_data = _z_lru_cache_node_data(src_data->next);
-        next_data->prev = dst;
-    }
-}
-
-static _z_lru_cache_node_t *_z_lru_cache_delete_tree_node_rec(_z_lru_cache_node_t *node, void *value, size_t value_size,
-                                                              _z_lru_val_cmp_f compare) {
-    // No node
-    if (node == NULL) {
-        return NULL;
-    }
-    // Compare value
-    _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-    void *node_val = _z_lru_cache_node_value(node);
-    int res = compare(node_val, value);
-    if (res < 0) {
-        node_data->left = _z_lru_cache_delete_tree_node_rec(node_data->left, value, value_size, compare);
-    } else if (res > 0) {
-        node_data->right = _z_lru_cache_delete_tree_node_rec(node_data->right, value, value_size, compare);
-    } else {  // Node found
-        // No child / one child
-        if (node_data->left == NULL) {
-            _z_lru_cache_node_t *temp = node_data->right;
-            z_free(node);
-            return temp;
-        } else if (node_data->right == NULL) {
-            _z_lru_cache_node_t *temp = node_data->left;
-            z_free(node);
-            return temp;
+// Sorted list function
+static _z_lru_cache_node_t *_z_lru_cache_search_slist(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare,
+                                                      size_t *idx) {
+    ssize_t l_idx = 0;
+    ssize_t h_idx = (ssize_t)cache->len - 1;
+    while (l_idx <= h_idx) {
+        ssize_t curr_idx = (l_idx + h_idx) / 2;
+        int res = compare(_z_lru_cache_node_value(cache->slist[curr_idx]), value);
+        if (res == 0) {
+            *idx = (size_t)curr_idx;
+            return cache->slist[curr_idx];
+        } else if (res < 0) {
+            l_idx = curr_idx + 1;
+        } else {
+            h_idx = curr_idx - 1;
         }
-        // Two children
-        _z_lru_cache_node_t *succ = _z_lru_cache_get_tree_node_successor(node);
-        // Transfer successor data to node
-        _z_lru_cache_transfer_tree_node(node, succ, value_size);
-        node_data->right =
-            _z_lru_cache_delete_tree_node_rec(node_data->right, _z_lru_cache_node_value(succ), value_size, compare);
-    }
-    return node;
-}
-
-static void _z_lru_cache_delete_tree_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, size_t value_size,
-                                          _z_lru_val_cmp_f compare) {
-    cache->root = _z_lru_cache_delete_tree_node_rec(cache->root, _z_lru_cache_node_value(node), value_size, compare);
-}
-#else
-_z_lru_cache_node_t *_z_lru_cache_search_list(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare) {
-    if (cache->head == NULL) {
-        return NULL;
-    }
-    _z_lru_cache_node_data_t *node = cache->head;
-    //  Parse list
-    while (node != NULL) {
-        _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-        void *node_val = _z_lru_cache_node_value(node);
-        if (compare(node_val, value) == 0) {
-            return node;
-        }
-        node = node_data->next;
     }
     return NULL;
 }
-#endif
+
+static void _z_lru_cache_sort_slist(_z_lru_cache_node_t **slist, size_t slist_size, _z_lru_val_cmp_f compare) {
+    for (size_t i = 1; i < slist_size; i++) {
+        _z_lru_cache_node_t *node = slist[i];
+        void *node_val = _z_lru_cache_node_value(node);
+        ssize_t j = (ssize_t)i - 1;
+        while ((j >= 0) && (compare(_z_lru_cache_node_value(slist[j]), node_val) > 0)) {
+            slist[j + 1] = slist[j];
+            j--;
+        }
+        slist[j + 1] = node;
+    }
+}
+
+static void _z_lru_cache_insert_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare,
+                                      size_t *idx) {
+    if (idx != NULL) {
+        assert(*idx < cache->capacity);
+        cache->slist[*idx] = node;
+    } else {
+        assert(cache->len < cache->capacity);
+        assert(cache->slist[cache->len] == NULL);
+        cache->slist[cache->len] = node;
+    }
+    _z_lru_cache_sort_slist(cache->slist, cache->len + 1, compare);
+}
+
+static size_t _z_lru_cache_delete_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
+    size_t idx = 0;
+    (void)_z_lru_cache_search_slist(cache, _z_lru_cache_node_value(node), compare, &idx);
+    return idx;
+}
 
 // Main static functions
-static void _z_lru_cache_delete_last(_z_lru_cache_t *cache, size_t value_size, _z_lru_val_cmp_f compare) {
+static size_t _z_lru_cache_delete_last(_z_lru_cache_t *cache, _z_lru_val_cmp_f compare) {
     _z_lru_cache_node_t *last = cache->tail;
     assert(last != NULL);
     _z_lru_cache_remove_list_node(cache, last);
-#if Z_FEATURE_CACHE_TREE == 1
-    _z_lru_cache_delete_tree_node(cache, last, value_size, compare);
-#else
-    _ZP_UNUSED(compare);
-    _ZP_UNUSED(value_size);
+    size_t idx = _z_lru_cache_delete_slist(cache, last, compare);
     z_free(last);
-#endif
     cache->len--;
+    return idx;
 }
 
-static void _z_lru_cache_insert_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
+static void _z_lru_cache_insert_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare,
+                                     size_t *idx) {
     _z_lru_cache_insert_list_node(cache, node);
-#if Z_FEATURE_CACHE_TREE == 1
-    _z_lru_cache_insert_tree_node(cache, node, compare);
-#else
-    _ZP_UNUSED(compare);
-#endif
+    _z_lru_cache_insert_slist(cache, node, compare, idx);
     cache->len++;
 }
 
 static _z_lru_cache_node_t *_z_lru_cache_search_node(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare) {
-#if Z_FEATURE_CACHE_TREE == 1
-    return _z_lru_cache_search_tree(cache, value, compare);
-#else
-    return _z_lru_cache_search_list(cache, value, compare);
-#endif
+    size_t idx = 0;
+    return _z_lru_cache_search_slist(cache, value, compare, &idx);
 }
 
 // Public functions
@@ -286,7 +185,7 @@ _z_lru_cache_t _z_lru_cache_init(size_t capacity) {
 }
 
 void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare) {
-    // Lookup tree if node exists.
+    // Lookup if node exists.
     _z_lru_cache_node_t *node = _z_lru_cache_search_node(cache, value, compare);
     if (node == NULL) {
         return NULL;
@@ -298,23 +197,35 @@ void *_z_lru_cache_get(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f comp
 
 z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_size, _z_lru_val_cmp_f compare) {
     assert(cache->capacity > 0);
+    // Init slist
+    if (cache->slist == NULL) {
+        cache->slist = (_z_lru_cache_node_t **)z_malloc(cache->capacity * sizeof(void *));
+        if (cache->slist == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        memset(cache->slist, 0, cache->capacity * sizeof(void *));
+    }
     // Create node
     _z_lru_cache_node_t *node = _z_lru_cache_node_create(value, value_size);
     if (node == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Check capacity
+    size_t *idx = NULL;
+    size_t del_idx = 0;
     if (cache->len == cache->capacity) {
         // Delete lru entry
-        _z_lru_cache_delete_last(cache, value_size, compare);
+        del_idx = _z_lru_cache_delete_last(cache, compare);
+        idx = &del_idx;
     }
     // Update the cache
-    _z_lru_cache_insert_node(cache, node, compare);
+    _z_lru_cache_insert_node(cache, node, compare, idx);
     return _Z_RES_OK;
 }
 
 void _z_lru_cache_delete(_z_lru_cache_t *cache) {
     _z_lru_cache_node_data_t *node = cache->head;
+    z_free(cache->slist);
     //  Parse list
     while (node != NULL) {
         _z_lru_cache_node_t *tmp = node;

@@ -191,12 +191,7 @@ void *stop_task(void *ctx) {
     *stop_flag = true;
     return NULL;
 }
-// Results
-// size 10: 287720681 list, 294626805 tree (1.024)
-// size 20: 207124561 list, 282312820 tree (1.363)
-// size 50: 104164238 list, 212367113 tree (2.039)
-// size 100: 51666425 list, 198541036 tree (3.843)
-// size 1000: 5838653 list, 122717170 tree (21.018)
+
 void test_search_benchmark(void) {
     _dummy_lru_cache_t dcache = _dummy_lru_cache_init(10);
     _dummy_t data[10] = {0};
@@ -219,7 +214,7 @@ void test_search_benchmark(void) {
         get_cnt++;
         assert(res != NULL);
     }
-    printf("Mode: %d, Get count: %ld\n", Z_FEATURE_CACHE_TREE, get_cnt);
+    printf("Get count: %ld\n", get_cnt);
 }
 #endif
 
