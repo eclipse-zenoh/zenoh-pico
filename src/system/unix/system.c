@@ -211,8 +211,8 @@ unsigned long z_clock_elapsed_s(z_clock_t *instant) {
 }
 
 void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
-    clock->tv_sec += duration / 1000000;
-    clock->tv_nsec += (duration % 1000000) * 1000;
+    clock->tv_sec += (time_t)(duration / 1000000);
+    clock->tv_nsec += (long int)((duration % 1000000) * 1000);
 
     if (clock->tv_nsec >= 1000000000) {
         clock->tv_sec += 1;
@@ -221,8 +221,8 @@ void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
 }
 
 void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
-    clock->tv_sec += duration / 1000;
-    clock->tv_nsec += (duration % 1000) * 1000000;
+    clock->tv_sec += (time_t)(duration / 1000);
+    clock->tv_nsec += (long int)((duration % 1000) * 1000000);
 
     if (clock->tv_nsec >= 1000000000) {
         clock->tv_sec += 1;
@@ -230,7 +230,7 @@ void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
     }
 }
 
-void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += (time_t)duration; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {
