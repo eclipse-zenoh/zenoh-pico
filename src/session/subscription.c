@@ -350,4 +350,6 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_ke
     return _Z_RES_OK;
 }
 
+void _z_subscription_cache_invalidate(_z_session_t *zn) { _ZP_UNUSED(zn); }
+
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

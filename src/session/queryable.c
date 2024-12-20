@@ -269,5 +269,8 @@ void _z_flush_session_queryable(_z_session_t *zn) {
 
     _z_session_mutex_unlock(zn);
 }
+#else  //  Z_FEATURE_QUERYABLE == 0
 
-#endif
+void _z_queryable_cache_invalidate(_z_session_t *zn) { _ZP_UNUSED(zn); }
+
+#endif  // Z_FEATURE_QUERYABLE == 1
