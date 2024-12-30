@@ -120,7 +120,7 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
  * The options for :c:func:`z_liveliness_get()`
  */
 typedef struct z_liveliness_get_options_t {
-    uint32_t timeout_ms;
+    uint64_t timeout_ms;
 } z_liveliness_get_options_t;
 
 /**
