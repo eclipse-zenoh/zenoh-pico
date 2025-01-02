@@ -170,22 +170,20 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 /*------------------ Sleep ------------------*/
-z_result_t z_sleep_us(size_t time) { _Z_CHECK_SYS_ERR(usleep(time)); }
-
-z_result_t z_sleep_ms(size_t time) {
-    z_time_t start = z_time_now();
-
-    // Most sleep APIs promise to sleep at least whatever you asked them to.
-    // This may compound, so this approach may make sleeps longer than expected.
-    // This extra check tries to minimize the amount of extra time it might sleep.
-    while (z_time_elapsed_ms(&start) < time) {
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-
-    return 0;
+z_result_t z_sleep_us(size_t time) {
+    vTaskDelay(pdMS_TO_TICKS(time / 1000));
+    return _Z_RES_OK;
 }
 
-z_result_t z_sleep_s(size_t time) { _Z_CHECK_SYS_ERR(sleep(time)); }
+z_result_t z_sleep_ms(size_t time) {
+    vTaskDelay(pdMS_TO_TICKS(time));
+    return _Z_RES_OK;
+}
+
+z_result_t z_sleep_s(size_t time) {
+    vTaskDelay(pdMS_TO_TICKS(time * 1000));
+    return _Z_RES_OK;
+}
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
