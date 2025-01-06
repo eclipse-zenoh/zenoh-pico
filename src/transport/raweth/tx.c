@@ -266,8 +266,8 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
         // Encode the message on the expandable wbuf
-        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _z_transport_tx_mutex_unlock(&ztm->_common),
-                               NULL);
+        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg, NULL),
+                               _z_transport_tx_mutex_unlock(&ztm->_common));
         // Fragment and send the message
         bool is_first = true;
         while (_z_wbuf_len(&fbf) > 0) {
