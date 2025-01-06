@@ -388,7 +388,7 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
     if (ret == _Z_RES_OK) {
         size_t len = _z_network_message_svec_len(&msg->_messages);
         for (size_t i = 0; i < len; i++) {
-            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_svec_get(&msg->_messages, i)))
+            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_svec_get(&msg->_messages, i), NULL))
         }
     }
 

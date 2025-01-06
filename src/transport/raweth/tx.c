@@ -252,7 +252,7 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
     _Z_CLEAN_RETURN_IF_ERR(_z_transport_message_encode(&ztm->_common._wbuf, &t_msg),
                            _z_transport_tx_mutex_unlock(&ztm->_common));
     // Encode the network message
-    if (_z_network_message_encode(&ztm->_common._wbuf, n_msg) == _Z_RES_OK) {
+    if (_z_network_message_encode(&ztm->_common._wbuf, n_msg, NULL) == _Z_RES_OK) {
         // Write the eth header
         _Z_CLEAN_RETURN_IF_ERR(__unsafe_z_raweth_write_header(&ztm->_common._link, &ztm->_common._wbuf),
                                _z_transport_tx_mutex_unlock(&ztm->_common));
@@ -266,7 +266,8 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
         // Create an expandable wbuf for fragmentation
         _z_wbuf_t fbf = _z_wbuf_make(_Z_FRAG_BUFF_BASE_SIZE, true);
         // Encode the message on the expandable wbuf
-        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _z_transport_tx_mutex_unlock(&ztm->_common));
+        _Z_CLEAN_RETURN_IF_ERR(_z_network_message_encode(&fbf, n_msg), _z_transport_tx_mutex_unlock(&ztm->_common),
+                               NULL);
         // Fragment and send the message
         bool is_first = true;
         while (_z_wbuf_len(&fbf) > 0) {
