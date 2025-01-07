@@ -26,6 +26,25 @@
 
 /*------------------ Transmission helper ------------------*/
 
+static bool _z_transport_tx_get_express_status(const _z_network_message_t *msg) {
+    switch (msg->_tag) {
+        case _Z_N_DECLARE: {
+            return _Z_HAS_FLAG(msg->_body._declare._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        } break;
+        case _Z_N_PUSH: {
+            return _Z_HAS_FLAG(msg->_body._push._qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        } break;
+        case _Z_N_REQUEST: {
+            return _Z_HAS_FLAG(msg->_body._request._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        } break;
+        case _Z_N_RESPONSE: {
+            return _Z_HAS_FLAG(msg->_body._response._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
+        } break;
+        default:
+            return false;
+    }
+}
+
 static _z_zint_t _z_transport_tx_get_sn(_z_transport_common_t *ztc, z_reliability_t reliability) {
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
@@ -45,7 +64,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
     bool is_first = true;
     _z_zint_t sn = first_sn;
     // Encode message on temp buffer
-    _Z_RETURN_IF_ERR(_z_network_message_encode(frag_buff, n_msg, NULL));
+    _Z_RETURN_IF_ERR(_z_network_message_encode(frag_buff, n_msg));
     // Fragment message
     while (_z_wbuf_len(frag_buff) > 0) {
         // Get fragment sequence number
@@ -139,8 +158,8 @@ static z_result_t _z_transport_tx_batch_overflow(_z_transport_common_t *ztc, con
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
     _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztc->_wbuf, &t_msg));
     // Retry encode
-    bool is_express = false;
-    z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg, &is_express);
+    bool is_express = _z_transport_tx_get_express_status(n_msg);
+    z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret != _Z_RES_OK) {
         // Message still doesn't fit in buffer, send as fragments
         return _z_transport_tx_send_fragment(ztc, n_msg, reliability, sn);
@@ -186,8 +205,8 @@ static z_result_t _z_transport_tx_send_n_msg_inner(_z_transport_common_t *ztc, c
     }
     // Try encoding the network message
     size_t prev_wpos = _z_transport_tx_save_wpos(&ztc->_wbuf);
-    bool is_express = false;
-    z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg, &is_express);
+    bool is_express = _z_transport_tx_get_express_status(n_msg);
+    z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret == _Z_RES_OK) {
         if (is_express) {
             // Send immediately
