@@ -28,23 +28,18 @@
 
 static bool _z_transport_tx_get_express_status(const _z_network_message_t *msg) {
     switch (msg->_tag) {
-        case _Z_N_DECLARE: {
+        case _Z_N_DECLARE:
             return _Z_HAS_FLAG(msg->_body._declare._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-        } break;
-        case _Z_N_PUSH: {
+        case _Z_N_PUSH:
             return _Z_HAS_FLAG(msg->_body._push._qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-        } break;
-        case _Z_N_REQUEST: {
+        case _Z_N_REQUEST:
             return _Z_HAS_FLAG(msg->_body._request._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-        } break;
-        case _Z_N_RESPONSE: {
+        case _Z_N_RESPONSE:
             return _Z_HAS_FLAG(msg->_body._response._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-        } break;
         default:
             return false;
     }
 }
-
 static _z_zint_t _z_transport_tx_get_sn(_z_transport_common_t *ztc, z_reliability_t reliability) {
     _z_zint_t sn;
     if (reliability == Z_RELIABILITY_RELIABLE) {
