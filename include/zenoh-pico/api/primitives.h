@@ -2080,8 +2080,8 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subs
 #if Z_FEATURE_BATCHING == 1
 /**
  * Activate the batching mechanism, any message that would have been sent on the network by a subsequent api call (e.g
- * z_put, z_get) will be instead stored until the batch is full, flushed with :c:func:`zp_batch_flush` or batching is
- * stopped with :c:func:`zp_batch_stop`.
+ * z_put, z_get) will be instead stored until either: the batch is full, flushed with :c:func:`zp_batch_flush`, batching
+ * is stopped with :c:func:`zp_batch_stop`, a message needs to be sent immediately.
  *
  * Parameters:
  *   zs: Pointer to a :c:type:`z_loaned_session_t` that will start batching messages.
