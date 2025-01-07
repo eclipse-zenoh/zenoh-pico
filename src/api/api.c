@@ -1490,7 +1490,6 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
 }
 #endif
 
-#ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_BATCHING == 1
 z_result_t zp_batch_start(const z_loaned_session_t *zs) {
     if (_Z_RC_IS_NULL(zs)) {
@@ -1518,7 +1517,6 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     // Send remaining batch
     return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
 }
-#endif
 #endif
 
 /**************** Tasks ****************/
