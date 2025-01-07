@@ -1163,7 +1163,7 @@ void declare_message(void) {
     _z_network_message_t n_msg = gen_declare_message();
 
     // Encode
-    z_result_t res = _z_network_message_encode(&wbf, &n_msg, NULL);
+    z_result_t res = _z_network_message_encode(&wbf, &n_msg);
     assert(res == _Z_RES_OK);
     (void)(res);
 
@@ -1433,7 +1433,7 @@ void push_message(void) {
     printf("\n>> Push message\n");
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_push_t expected = gen_push();
-    assert(_z_push_encode(&wbf, &expected, NULL) == _Z_RES_OK);
+    assert(_z_push_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_push_t decoded = {0};
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1505,7 +1505,7 @@ void request_message(void) {
     printf("\n>> Request message\n");
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_request_t expected = gen_request();
-    assert(_z_request_encode(&wbf, &expected, NULL) == _Z_RES_OK);
+    assert(_z_request_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_request_t decoded = {0};
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
@@ -1564,7 +1564,7 @@ void response_message(void) {
     printf("\n>> Response message\n");
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
     _z_n_msg_response_t expected = gen_response();
-    assert(_z_response_encode(&wbf, &expected, NULL) == _Z_RES_OK);
+    assert(_z_response_encode(&wbf, &expected) == _Z_RES_OK);
     _z_n_msg_response_t decoded = {0};
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);

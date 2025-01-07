@@ -38,14 +38,11 @@
 
 /*------------------ Push Message ------------------*/
 
-z_result_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg, bool *is_express) {
+z_result_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg) {
     uint8_t header = _Z_MID_N_PUSH | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
     bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
     bool has_qos_ext = msg->_qos._val != _Z_N_QOS_DEFAULT._val;
     bool has_timestamp_ext = _z_timestamp_check(&msg->_timestamp);
-    if (is_express != NULL) {
-        *is_express = _Z_HAS_FLAG(msg->_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-    }
     if (has_suffix) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
@@ -114,7 +111,7 @@ z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, 
 }
 
 /*------------------ Request Message ------------------*/
-z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg, bool *is_express) {
+z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
     z_result_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_N_REQUEST | (_z_keyexpr_is_local(&msg->_key) ? _Z_FLAG_N_REQUEST_M : 0);
     bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
@@ -131,9 +128,6 @@ z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg, bool
         uint8_t extheader = 0x01 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
         _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_qos._val));
-        if (is_express != NULL) {
-            *is_express = _Z_HAS_FLAG(msg->_ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-        }
     }
     if (exts.ext_tstamp) {
         exts.n -= 1;
@@ -244,7 +238,7 @@ z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint
 }
 
 /*------------------ Response Message ------------------*/
-z_result_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg, bool *is_express) {
+z_result_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg) {
     z_result_t ret = _Z_RES_OK;
     uint8_t header = _Z_MID_N_RESPONSE;
     _Z_DEBUG("Encoding _Z_MID_N_RESPONSE");
@@ -253,9 +247,6 @@ z_result_t _z_response_encode(_z_wbuf_t *wbf, const _z_n_msg_response_t *msg, bo
     bool has_responder_ext = _z_id_check(msg->_ext_responder._zid) || msg->_ext_responder._eid != 0;
     int n_ext = (has_qos_ext ? 1 : 0) + (has_ts_ext ? 1 : 0) + (has_responder_ext ? 1 : 0);
     bool has_suffix = _z_keyexpr_has_suffix(&msg->_key);
-    if (is_express != NULL) {
-        *is_express = _Z_HAS_FLAG(msg->_ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-    }
     if (_z_keyexpr_is_local(&msg->_key)) {
         _Z_SET_FLAG(header, _Z_FLAG_N_RESPONSE_M);
     }
@@ -398,13 +389,10 @@ z_result_t _z_response_final_decode(_z_n_msg_response_final_t *msg, _z_zbuf_t *z
     return ret;
 }
 
-z_result_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl, bool *is_express) {
+z_result_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
     uint8_t header = _Z_MID_N_DECLARE;
     bool has_qos_ext = decl->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
     bool has_timestamp_ext = _z_timestamp_check(&decl->_ext_timestamp);
-    if (is_express != NULL) {
-        *is_express = _Z_HAS_FLAG(decl->_ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
-    }
     int n_ext = (has_qos_ext ? 1 : 0) + (has_timestamp_ext ? 1 : 0);
     if (n_ext != 0) {
         header |= _Z_FLAG_N_Z;
@@ -501,19 +489,19 @@ z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, u
     return _z_interest_decode(&interest->_interest, zbf, is_final, has_ext);
 }
 
-z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg, bool *is_express) {
+z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg) {
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
-            return _z_declare_encode(wbf, &msg->_body._declare, is_express);
+            return _z_declare_encode(wbf, &msg->_body._declare);
         } break;
         case _Z_N_PUSH: {
-            return _z_push_encode(wbf, &msg->_body._push, is_express);
+            return _z_push_encode(wbf, &msg->_body._push);
         } break;
         case _Z_N_REQUEST: {
-            return _z_request_encode(wbf, &msg->_body._request, is_express);
+            return _z_request_encode(wbf, &msg->_body._request);
         } break;
         case _Z_N_RESPONSE: {
-            return _z_response_encode(wbf, &msg->_body._response, is_express);
+            return _z_response_encode(wbf, &msg->_body._response);
         } break;
         case _Z_N_RESPONSE_FINAL: {
             return _z_response_final_encode(wbf, &msg->_body._response_final);
