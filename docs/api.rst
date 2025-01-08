@@ -603,13 +603,13 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_zid_t
 .. c:type:: z_moved_closure_zid_t
  
-.. c:type:: void (* z_closure_zid_callback_t)(z_loaned_zid_t * zid, void * arg);
+.. c:type:: void (* z_closure_zid_callback_t)(const z_id_t * id, void * arg);
 
     Function pointer type for handling Zenoh ID routers response.
     Represents a callback function that is invoked when a zid is available for processing.
 
     Parameters:
-      - **zid** - Pointer to a :c:type:`z_loaned_zid_t` representing the zid to be processed.
+      - **zid** - Pointer to a :c:type:`z_id_t` representing the zid to be processed.
       - **arg** - A user-defined pointer to additional data that can be used during the processing of the zid.
    
 Functions

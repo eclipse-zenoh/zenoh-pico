@@ -1107,7 +1107,7 @@ z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_
  *
  * Parameters:
  *   closure: Pointer to the :c:type:`z_loaned_closure_zid_t` to call.
- *   zid: Pointer to the :c:type:`z_loaned_zid_t` to pass to the closure.
+ *   zid: Pointer to the :c:type:`z_id_t` to pass to the closure.
  */
 void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
