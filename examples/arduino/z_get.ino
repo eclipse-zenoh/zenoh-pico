@@ -23,10 +23,10 @@
 
 // Client mode values (comment/uncomment as needed)
 #define MODE "client"
-#define CONNECT ""  // If empty, it will scout
+#define LOCATOR ""  // If empty, it will scout
 // Peer mode values (comment/uncomment as needed)
 // #define MODE "peer"
-// #define CONNECT "udp/224.0.0.225:7447#iface=en0"
+// #define LOCATOR "udp/224.0.0.225:7447#iface=en0"
 
 #define KEYEXPR "demo/example/**"
 #define VALUE ""
@@ -79,8 +79,12 @@ void setup() {
     z_owned_config_t config;
     z_config_default(&config);
     zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_MODE_KEY, MODE);
-    if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, CONNECT);
+    if (strcmp(LOCATOR, "") != 0) {
+        if (strcmp(MODE, "client") == 0) {
+            zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        } else {
+            zp_config_insert(z_config_loan_mut(&config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+        }
     }
 
     // Open Zenoh session

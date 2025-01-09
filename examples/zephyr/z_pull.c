@@ -19,10 +19,10 @@
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
-#define CONNECT ""  // If empty, it will scout
+#define LOCATOR ""  // If empty, it will scout
 #elif CLIENT_OR_PEER == 1
 #define MODE "peer"
-#define CONNECT "udp/224.0.0.225:7447#iface=en0"
+#define LOCATOR "udp/224.0.0.225:7447#iface=en0"
 #else
 #error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
 #endif
@@ -39,8 +39,12 @@ int main(int argc, char **argv) {
     z_owned_config_t config;
     z_config_default(&config);
     zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
-    if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
+    if (strcmp(LOCATOR, "") != 0) {
+        if (strcmp(MODE, "client") == 0) {
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        } else {
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+        }
     }
 
     // Open Zenoh session
