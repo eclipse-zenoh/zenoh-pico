@@ -62,6 +62,19 @@ typedef struct {
 #endif
 } _z_transport_peer_entry_t;
 
+typedef struct {
+    _z_slice_t *_addr;
+    _z_id_t *_remote_zid;
+    uint16_t _batch_size;
+    _z_conduit_sn_list_t _next_sn;
+    _z_zint_t _lease;
+    uint8_t _req_id_res;
+    uint8_t _seq_num_res;
+#if Z_FEATURE_FRAGMENTATION == 1
+    uint8_t _patch;
+#endif
+} _z_transport_peer_param_t;
+
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
 void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
