@@ -151,9 +151,6 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         ret = _Z_RES_OK;
 
         _z_string_t *locator = _z_string_svec_get(&locators, i);
-        // @TODO: check invalid configurations
-        // For example, client mode in multicast links
-
         ret = _z_open_inner(zn, locator, zid, mode, peer_op);
         if (ret == _Z_RES_OK) {
             break;
