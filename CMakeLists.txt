@@ -243,6 +243,7 @@ set(Z_FEATURE_TCP_NODELAY 1 CACHE STRING "Toggle TCP_NODELAY")
 set(Z_FEATURE_LOCAL_SUBSCRIBER 0 CACHE STRING "Toggle local subscriptions")
 set(Z_FEATURE_PUBLISHER_SESSION_CHECK 1 CACHE STRING "Toggle publisher session check")
 set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
+set(Z_FEATURE_MATCHING 1 CACHE STRING "Toggle matching feature")
 set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 
@@ -250,6 +251,11 @@ set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
   message(WARNING "Z_FEATURE_LINK_SERIAL_USB can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_LINK_SERIAL_USB.")
   set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links" FORCE)
+endif()
+
+if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_MATCHING can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_MATCHING.")
+  set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature" FORCE)
 endif()
 
 add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
@@ -263,6 +269,7 @@ message(STATUS "Building with feature confing:\n\
 * LIVELINESS: ${Z_FEATURE_LIVELINESS}\n\
 * INTEREST: ${Z_FEATURE_INTEREST}\n\
 * AUTO_RECONNECT: ${Z_FEATURE_AUTO_RECONNECT}\n\
+* MATCHING: ${Z_FEATURE_MATCHING}\n\
 * RAWETH: ${Z_FEATURE_RAWETH_TRANSPORT}")
 
 configure_file(
@@ -572,11 +579,13 @@ if(UNIX OR MSVC)
       add_executable(z_api_alignment_test ${PROJECT_SOURCE_DIR}/tests/z_api_alignment_test.c)
       add_executable(z_session_test ${PROJECT_SOURCE_DIR}/tests/z_session_test.c)
       add_executable(z_api_liveliness_test ${PROJECT_SOURCE_DIR}/tests/z_api_liveliness_test.c)
+      add_executable(z_api_matching_test ${PROJECT_SOURCE_DIR}/tests/z_api_matching_test.c)
 
       target_link_libraries(z_client_test zenohpico::lib)
       target_link_libraries(z_api_alignment_test zenohpico::lib)
       target_link_libraries(z_session_test zenohpico::lib)
       target_link_libraries(z_api_liveliness_test zenohpico::lib)
+      target_link_libraries(z_api_matching_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
@@ -586,6 +595,7 @@ if(UNIX OR MSVC)
       add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
       add_test(z_session_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_session_test)
       add_test(z_api_liveliness_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_liveliness_test)
+      add_test(z_api_matching_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_matching_test)
     endif()
   endif()
 endif()

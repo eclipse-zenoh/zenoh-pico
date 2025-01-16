@@ -23,6 +23,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/liveliness.h"
+#include "zenoh-pico/session/matching.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
@@ -91,6 +92,10 @@ typedef struct _z_session_t {
 #endif
 #if Z_FEATURE_QUERY == 1
     _z_pending_query_list_t *_pending_queries;
+#endif
+
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_intmap_t _matching_listeners;
 #endif
 
     // Session interests

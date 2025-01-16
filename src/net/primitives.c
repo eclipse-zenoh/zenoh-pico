@@ -22,6 +22,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
+#include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
@@ -180,6 +181,9 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     if (pub == NULL || _Z_RC_IS_NULL(&pub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&pub->_zn), pub->_id);
+#endif
     // Clear publisher
     _z_write_filter_destroy(pub);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);

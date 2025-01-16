@@ -1111,6 +1111,33 @@ z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_
  */
 void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
+/**
+ * Builds a new matching status closure.
+ * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_matching_status_t`.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise
+ */
+z_result_t z_closure_matching_status(z_owned_closure_matching_status_t *closure,
+                                     z_closure_matching_status_callback_t call, z_closure_drop_callback_t drop,
+                                     void *context);
+
+/**
+ * Calls a matching status closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_matching_status_t` to call.
+ *   status: Pointer to the :c:type:`z_matching_status_t` to pass to the closure.
+ */
+void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *closure,
+                                    const z_matching_status_t *status);
+
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
 _Z_OWNED_FUNCTIONS_DEF(keyexpr)
@@ -1118,6 +1145,7 @@ _Z_OWNED_FUNCTIONS_DEF(config)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(session)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(subscriber)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF(matching_listener)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(queryable)
 _Z_OWNED_FUNCTIONS_DEF(hello)
 _Z_OWNED_FUNCTIONS_DEF(reply)
@@ -1135,6 +1163,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_query)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_reply)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_hello)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_zid)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_matching_status)
 
 _Z_VIEW_FUNCTIONS_DEF(keyexpr)
 _Z_VIEW_FUNCTIONS_DEF(string)
@@ -1661,7 +1690,54 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher);
-#endif
+
+#if Z_FEATURE_MATCHING == 1
+/**
+ * Declares a matching listener, registering a callback for notifying subscribers matching with a given publisher.
+ * The callback will be run in the background until the corresponding publisher is dropped.
+ *
+ * Parameters:
+ *   publisher: A publisher to associate with matching listener.
+ *   callback: A closure that will be called every time the matching status of the publisher changes (If last subscriber
+ * disconnects or when the first subscriber connects).
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publisher_t *publisher,
+                                                            z_moved_closure_matching_status_t *callback);
+/**
+ * Constructs matching listener, registering a callback for notifying subscribers matching with a given publisher.
+ *
+ * Parameters:
+ *   publisher: A publisher to associate with matching listener.
+ *   matching_listener: An uninitialized memory location where matching listener will be constructed. The matching
+ * listener's callback will be automatically dropped when the publisher is dropped. callback: A closure that will be
+ * called every time the matching status of the publisher changes (If last subscriber disconnects or when the first
+ * subscriber connects).
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
+                                                 z_owned_matching_listener_t *matching_listener,
+                                                 z_moved_closure_matching_status_t *callback);
+/**
+ * Gets publisher matching status - i.e. if there are any subscribers matching its key expression.
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher, z_matching_status_t *matching_status);
+#endif  // Z_FEATURE_MATCHING == 1
+
+#endif  // Z_FEATURE_PUBLICATION == 1
 
 #if Z_FEATURE_QUERY == 1
 /**

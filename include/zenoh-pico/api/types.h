@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/encoding.h"
+#include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/reply.h"
@@ -29,6 +30,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +113,11 @@ _Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 _Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 
 /**
+ * Represents a Zenoh Matching listener entity.
+ */
+_Z_OWNED_TYPE_VALUE(_z_matching_listener_t, matching_listener)
+
+/**
  * Represents a Zenoh Queryable entity.
  */
 _Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
@@ -129,6 +136,14 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
  * Represents a Zenoh reply error.
  */
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
+
+#if defined(Z_FEATURE_MATCHING)
+/**
+ * A struct that indicates if there exist Subscribers matching the Publisher's key expression or Queryables matching
+ * Querier's key expression and target.
+ */
+typedef _z_matching_status_t z_matching_status_t;
+#endif
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
@@ -410,7 +425,7 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 
-typedef void (*z_closure_drop_callback_t)(void *arg);
+typedef _z_drop_handler_t z_closure_drop_callback_t;
 typedef _z_closure_sample_callback_t z_closure_sample_callback_t;
 
 typedef struct {
@@ -475,6 +490,15 @@ typedef struct {
  * Represents the Zenoh ID callback closure.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
+
+#if defined(Z_FEATURE_MATCHING)
+typedef _z_closure_matching_status_callback_t z_closure_matching_status_callback_t;
+typedef _z_closure_matching_status_t z_closure_matching_status_t;
+/**
+ * Represents the matching status callback closure.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_matching_status_t, closure_matching_status)
+#endif
 
 #ifdef __cplusplus
 }

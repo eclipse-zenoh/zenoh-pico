@@ -167,6 +167,9 @@ if __name__ == "__main__":
     print("*** Pub & sub attachment test ***")
     if pub_and_sub('z_pub_attachment -n 1', 'z_sub_attachment -n 1') == 1:
         EXIT_STATUS = 1
+    print("*** Pub & sub listener test ***")
+    if pub_and_sub('z_pub -n 1 -a', 'z_sub -n 1') == 1:
+        EXIT_STATUS = 1
     # Test query and queryable examples
     print("*** Query & queryable test ***")
     if query_and_queryable('z_get', 'z_queryable -n 1') == 1:
