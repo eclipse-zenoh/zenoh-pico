@@ -1572,6 +1572,11 @@ void _z_matching_listener_drop(_z_matching_listener_t *listener) {
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_matching_listener_t, matching_listener, _z_matching_listener_check,
                                       _z_matching_listener_null, _z_matching_listener_drop)
 
+z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener) {
+    z_result_t ret = _z_matching_listener_undeclare(&listener->_this._val);
+    _z_matching_listener_clear(&listener->_this._val);
+    return ret;
+}
 #endif
 
 /**************** Tasks ****************/

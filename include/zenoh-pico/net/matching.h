@@ -39,7 +39,7 @@ static inline bool _z_matching_listener_check(const _z_matching_listener_t *matc
 }
 void _z_matching_listener_clear(_z_matching_listener_t *pub);
 void _z_matching_listener_free(_z_matching_listener_t **pub);
-#endif
+#endif  // Z_FEATURE_MATCHING == 1
 
 #ifdef __cplusplus
 }

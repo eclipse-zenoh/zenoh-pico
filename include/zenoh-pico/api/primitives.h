@@ -1735,6 +1735,18 @@ z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *pub
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher, z_matching_status_t *matching_status);
+
+/**
+ * Undeclares the matching listener.
+ *
+ * Parameters:
+ *   listener: Moved :c:type:`z_owned_matching_listener_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener);
+
 #endif  // Z_FEATURE_MATCHING == 1
 
 #endif  // Z_FEATURE_PUBLICATION == 1
