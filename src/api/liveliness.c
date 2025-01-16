@@ -116,6 +116,15 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
 
     return _Z_RES_OK;
 }
+
+z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                                      z_moved_closure_sample_t *callback,
+                                                      z_liveliness_subscriber_options_t *options) {
+    z_owned_subscriber_t sub;
+    _Z_RETURN_IF_ERR(z_liveliness_declare_subscriber(zs, &sub, keyexpr, callback, options));
+    _z_subscriber_clear(&sub._val);
+    return _Z_RES_OK;
+}
 #endif  // Z_FEATURE_SUBSCRIPTION == 1
 
 /**************** Liveliness Query ****************/

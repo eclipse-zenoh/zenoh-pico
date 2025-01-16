@@ -1299,6 +1299,7 @@ Functions
 .. autocfunction:: liveliness.h::z_liveliness_undeclare_token
 .. autocfunction:: liveliness.h::z_liveliness_subscriber_options_default
 .. autocfunction:: liveliness.h::z_liveliness_declare_subscriber
+.. autocfunction:: liveliness.h::z_liveliness_declare_background_subscriber
 .. autocfunction:: liveliness.h::z_liveliness_get
 
 
