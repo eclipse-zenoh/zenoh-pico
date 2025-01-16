@@ -626,6 +626,41 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_closure_zid_drop(z_moved_closure_zid_t * closure) 
 
 
+Matching closure
+----------
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_closure_matching_status_t
+.. c:type:: z_loaned_closure_matching_status_t
+.. c:type:: z_moved_closure_matching_status_t
+ 
+.. c:type:: void (* z_closure_matching_status_callback_t)(z_matching_status_t * status, void * arg);
+
+    Function pointer type for handling matching status response.
+    Represents a callback function that is invoked when a matching status was changed.
+
+    Parameters:
+      - **status** - Pointer to a :c:type:`z_matching_status_t`.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the matching status.
+   
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_closure_matching_status
+.. autocfunction:: primitives.h::z_closure_matching_status_call
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_closure_matching_status_t * z_closure_matching_status_loan(const z_owned_closure_matching_status_t * closure)
+.. c:function:: void z_closure_matching_status_drop(z_moved_closure_matching_status_t * closure) 
+
+
 .. _channels_concept:
 
 Channels
@@ -955,6 +990,26 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_session_drop(z_moved_session_t * closure) 
 
 
+Matching
+========
+
+Types
+-----
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_matching_listener_t
+.. c:type:: z_loaned_matching_listener_t
+.. c:type:: z_moved_matching_listener_t
+
+
+.. autoctype:: types.h::z_matching_status_t
+
+Functions
+---------
+
+.. autocfunction:: primitives.h::z_undeclare_matching_listener
+
+
 Publication
 ===========
 
@@ -1002,6 +1057,9 @@ Functions
 .. autocfunction:: primitives.h::z_publisher_put_options_default
 .. autocfunction:: primitives.h::z_publisher_delete_options_default
 .. autocfunction:: primitives.h::z_reliability_default
+.. autocfunction:: primitives.h::z_publisher_get_matching_status
+.. autocfunction:: primitives.h::z_publisher_declare_matching_listener
+.. autocfunction:: primitives.h::z_publisher_declare_background_matching_listener
 
 Ownership Functions
 -------------------

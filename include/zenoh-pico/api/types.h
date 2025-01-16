@@ -137,13 +137,13 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
  */
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
-#if defined(Z_FEATURE_MATCHING)
 /**
  * A struct that indicates if there exist Subscribers matching the Publisher's key expression or Queryables matching
  * Querier's key expression and target.
+ * Members:
+ *   bool matching: true if there exist matching Zenoh entities, false otherwise.
  */
 typedef _z_matching_status_t z_matching_status_t;
-#endif
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
@@ -491,14 +491,12 @@ typedef struct {
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
 
-#if defined(Z_FEATURE_MATCHING)
 typedef _z_closure_matching_status_callback_t z_closure_matching_status_callback_t;
 typedef _z_closure_matching_status_t z_closure_matching_status_t;
 /**
  * Represents the matching status callback closure.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_matching_status_t, closure_matching_status)
-#endif
 
 #ifdef __cplusplus
 }
