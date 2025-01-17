@@ -111,6 +111,23 @@ z_result_t z_liveliness_subscriber_options_default(z_liveliness_subscriber_optio
 z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
                                            const z_loaned_keyexpr_t *keyexpr, z_moved_closure_sample_t *callback,
                                            z_liveliness_subscriber_options_t *options);
+/**
+ * Declares a background subscriber on liveliness tokens that intersect `keyexpr`.
+ * Subscriber callback will be called to process the messages, until the corresponding session is closed or dropped.
+ *
+ * Parameters:
+ *   zs: The Zenoh session.
+ *   keyexpr: The key expression to subscribe to.
+ *   callback: The callback function that will be called each time a liveliness token status is changed.
+ *   options: The options to be passed to the liveliness subscriber declaration.
+ *
+ * Return:
+ *   ``0`` if declare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                                      z_moved_closure_sample_t *callback,
+                                                      z_liveliness_subscriber_options_t *options);
+
 #endif  // Z_FEATURE_SUBSCRIPTION == 1
 
 /**************** Liveliness Query ****************/

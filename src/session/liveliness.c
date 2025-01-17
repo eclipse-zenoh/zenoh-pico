@@ -244,9 +244,8 @@ z_result_t _z_liveliness_pending_query_drop(_z_session_t *zn, uint32_t interest_
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
-    _Z_DEBUG("Liveliness pending query drop %i resolve result %i", (int)interest_id, ret);
-
     if (ret == _Z_RES_OK) {
+        _Z_DEBUG("Liveliness pending query drop %i", (int)interest_id);
         _z_liveliness_pending_query_intmap_remove(&zn->_liveliness_pending_queries, interest_id);
     }
 
