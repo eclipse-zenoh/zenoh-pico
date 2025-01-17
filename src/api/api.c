@@ -28,6 +28,7 @@
 #include "zenoh-pico/net/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
+#include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
@@ -477,6 +478,13 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
     }
 }
 
+void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *closure,
+                                    const z_matching_status_t *status) {
+    if (closure->call != NULL) {
+        (closure->call)(status, closure->context);
+    }
+}
+
 bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
 _z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
 z_result_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
@@ -570,6 +578,8 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_query, _z_closure_query_callback_t, z_cl
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_reply, _z_closure_reply_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_closure_hello_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_status_callback_t,
+                                z_closure_drop_callback_t)
 
 /************* Primitives **************/
 typedef struct __z_hello_handler_wrapper_t {
@@ -1096,7 +1106,41 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher) {
     return (const z_loaned_keyexpr_t *)&publisher->_key;
 }
-#endif
+
+#if Z_FEATURE_MATCHING == 1
+z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publisher_t *publisher,
+                                                            z_moved_closure_matching_status_t *callback) {
+    z_owned_matching_listener_t listener;
+    _Z_RETURN_IF_ERR(z_publisher_declare_matching_listener(publisher, &listener, callback));
+    _z_matching_listener_clear(&listener._val);
+    return _Z_RES_OK;
+}
+
+z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
+                                                 z_owned_matching_listener_t *matching_listener,
+                                                 z_moved_closure_matching_status_t *callback) {
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
+    _z_matching_listener_t listener =
+        _z_matching_listener_declare(&sess_rc, &publisher->_key, publisher->_id, callback->_this._val);
+    _z_session_rc_drop(&sess_rc);
+
+    z_internal_closure_matching_status_null(&callback->_this);
+
+    matching_listener->_val = listener;
+
+    return _z_matching_listener_check(&listener) ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
+
+z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher,
+                                           z_matching_status_t *matching_status) {
+    // Ideally this should be implemented as a real request to the router, but this works much faster.
+    // And it works as long as filtering is enabled along with interest
+    matching_status->matching = publisher->_filter.ctx->state != WRITE_FILTER_ACTIVE;
+    return _Z_RES_OK;
+}
+#endif  // Z_FEATURE_MATCHING == 1
+
+#endif  // Z_FEATURE_PUBLICATION == 1
 
 #if Z_FEATURE_QUERY == 1
 bool _z_reply_check(const _z_reply_t *reply) {
@@ -1516,6 +1560,22 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     _z_transport_stop_batching(&session->_tp);
     // Send remaining batch
     return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
+}
+#endif
+
+#if Z_FEATURE_MATCHING == 1
+void _z_matching_listener_drop(_z_matching_listener_t *listener) {
+    _z_matching_listener_undeclare(listener);
+    _z_matching_listener_clear(listener);
+}
+
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_matching_listener_t, matching_listener, _z_matching_listener_check,
+                                      _z_matching_listener_null, _z_matching_listener_drop)
+
+z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener) {
+    z_result_t ret = _z_matching_listener_undeclare(&listener->_this._val);
+    _z_matching_listener_clear(&listener->_this._val);
+    return ret;
 }
 #endif
 

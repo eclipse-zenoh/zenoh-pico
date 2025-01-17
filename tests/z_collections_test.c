@@ -351,6 +351,27 @@ void int_map_iterator_test(void) {
 #undef TEST_MAP
 }
 
+void int_map_iterator_deletion_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
+
+    _z_str_intmap_iterator_t iter = _z_str_intmap_iterator_make(&map);
+    _z_str_intmap_iterator_next(&iter);
+    for (size_t s = 4; s != 0; s--) {
+        assert(s == _z_str_intmap_len(&map));
+        size_t key = _z_str_intmap_iterator_key(&iter);
+        assert(strlen(_z_str_intmap_iterator_value(&iter)) == 1);
+        _z_str_intmap_remove(&map, key);
+        _z_str_intmap_iterator_next(&iter);
+    }
+    _z_str_intmap_clear(&map);
+}
+
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -360,4 +381,5 @@ int main(void) {
     fifo_test_init_free();
 
     int_map_iterator_test();
+    int_map_iterator_deletion_test();
 }

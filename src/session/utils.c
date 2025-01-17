@@ -21,6 +21,7 @@
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
+#include "zenoh-pico/session/matching.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -95,6 +96,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _z_liveliness_init(zn);
 #endif
 
+#if Z_FEATURE_MATCHING == 1
+    zn->_matching_listeners = _z_matching_listener_intmap_make();
+#endif
+
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
@@ -141,6 +146,11 @@ void _z_session_clear(_z_session_t *zn) {
 #if Z_FEATURE_LIVELINESS == 1
     _z_liveliness_clear(zn);
 #endif
+
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_intmap_clear(&zn->_matching_listeners);
+#endif
+
     _z_flush_interest(zn);
 
 #if Z_FEATURE_MULTI_THREAD == 1
