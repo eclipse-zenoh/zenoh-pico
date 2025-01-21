@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/transport/unicast/lease.h"
 
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/tx.h"
@@ -44,6 +45,10 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
     _z_unicast_transport_clear(ztu, true);
+
+#if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
+    _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztu->_common._session));
+#endif
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_session_rc_ref_t *zs = ztu->_common._session;

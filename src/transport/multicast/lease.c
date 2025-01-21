@@ -58,6 +58,11 @@ z_result_t _zp_multicast_send_keep_alive(_z_transport_multicast_t *ztm) {
 
 static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
     _ZP_UNUSED(ztm);
+
+#if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
+    _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztm->_common._session));
+#endif
+
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_reopen(ztm->_common._session);
 #endif

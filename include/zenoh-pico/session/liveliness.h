@@ -48,6 +48,7 @@ void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id);
 z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr,
                                               const _z_timestamp_t *timestamp);
 z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, const _z_timestamp_t *timestamp);
+z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn);
 z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 #endif
 

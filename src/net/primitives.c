@@ -43,7 +43,7 @@
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Declaration Helpers ------------------*/
-static z_result_t _z_send_decalre(_z_session_t *zn, const _z_network_message_t *n_msg) {
+z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
     ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 
@@ -56,7 +56,7 @@ static z_result_t _z_send_decalre(_z_session_t *zn, const _z_network_message_t *
     return ret;
 }
 
-static z_result_t _z_send_undecalre(_z_session_t *zn, const _z_network_message_t *n_msg) {
+z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
     ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
 
@@ -98,7 +98,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
             _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
             _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-            if (_z_send_decalre(zn, &n_msg) == _Z_RES_OK) {
+            if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
                 ret = id;
                 // Invalidate cache
                 _z_subscription_cache_invalidate(zn);
@@ -120,7 +120,7 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
         // Build the declare message to send on the wire
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-        if (_z_send_undecalre(zn, &n_msg) == _Z_RES_OK) {
+        if (_z_send_undeclare(zn, &n_msg) == _Z_RES_OK) {
             // Remove local resource
             _z_unregister_resource(zn, rid, _Z_KEYEXPR_MAPPING_LOCAL);
             // Invalidate cache
@@ -273,7 +273,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_decalre(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sp_s);
         _z_subscriber_clear(&ret);
         return ret;
@@ -305,7 +305,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_undecalre(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
@@ -340,7 +340,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_decalre(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
         _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), sp_q);
         _z_queryable_clear(&ret);
         return ret;
@@ -371,7 +371,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_undecalre(_Z_RC_IN_VAL(&qle->_zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_undeclare(_Z_RC_IN_VAL(&qle->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
