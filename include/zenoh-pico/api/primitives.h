@@ -1145,6 +1145,7 @@ _Z_OWNED_FUNCTIONS_DEF(config)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(session)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(subscriber)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_DEF(querier)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(matching_listener)
 _Z_OWNED_FUNCTIONS_NO_COPY_DEF(queryable)
 _Z_OWNED_FUNCTIONS_DEF(hello)
@@ -1775,6 +1776,63 @@ void z_get_options_default(z_get_options_t *options);
  */
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
                  z_moved_closure_reply_t *callback, z_get_options_t *options);
+
+/**
+ *  Constructs the default value for :c:type:`z_querier_get_options_t`.
+ */
+void z_querier_get_options_default(z_querier_get_options_t *options);
+
+/**
+ *  Constructs the default value for :c:type:`z_querier_options_t`.
+ */
+void z_querier_options_default(z_querier_options_t *options);
+
+/**
+ * Constructs and declares a querier on the given key expression.
+ *
+ * The queries can be send with the help of the `z_querier_get()` function.
+ *
+ * Parameters:
+ *   zs: The Zenoh session.
+ *   querier: An uninitialized location in memory where querier will be constructed.
+ *   keyexpr: The key expression to send queries on.
+ *   options: Additional options for the querier.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ */
+
+z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
+                             const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options);
+
+/**
+ * Frees memory and resets querier to its gravestone state.
+ */
+z_result_t z_undeclare_querier(z_moved_querier_t *querier);
+
+/**
+ * Query data from the matching queryables in the system.
+ *
+ * Replies are provided through a callback function.
+ *
+ * Parameters:
+ *   querier: The querier to make query from.
+ *   parameters: The query's parameters, similar to a url's query segment.
+ *   callback: The callback function that will be called on reception of replies for this query. It will be
+ * 				automatically dropped once all replies are processed.
+ *   options: Additional options for the get. All owned fields will be consumed.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ */
+z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
+                         z_querier_get_options_t *options);
+
+/**
+ *  Returns the key expression of the querier.
+ */
+const struct z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *

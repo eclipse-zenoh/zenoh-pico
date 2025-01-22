@@ -1205,6 +1205,62 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     return ret;
 }
 
+void _z_querier_drop(_z_querier_t *querier) {
+    (void)querier;
+    // TODO(sashacmc): Implement
+    // _z_undeclare_querier(pub);
+    // _z_querier_clear(pub);
+}
+
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
+
+void z_querier_get_options_default(z_querier_get_options_t *options) {
+    options->encoding = NULL;
+    // TODO(sashacmc): Implement
+}
+
+void z_querier_options_default(z_querier_options_t *options) {
+    options->is_express = false;
+    // TODO(sashacmc): Implement
+}
+
+z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
+                             const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options) {
+    (void)zs;
+    (void)querier;
+    (void)keyexpr;
+    (void)options;
+    // TODO(sashacmc): Implement
+
+    return _Z_RES_OK;
+}
+
+z_result_t z_undeclare_querier(z_moved_querier_t *querier) {
+    (void)querier;
+    // TODO(sashacmc): Implement
+
+    return _Z_RES_OK;
+}
+
+z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
+                         z_querier_get_options_t *options) {
+    (void)querier;
+    (void)parameters;
+    (void)callback;
+    (void)options;
+
+    // TODO(sashacmc): Implement
+
+    return _Z_RES_OK;
+}
+
+const struct z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
+    (void)querier;
+    // TODO(sashacmc): Implement
+
+    return NULL;
+}
+
 bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
 
 const z_loaned_sample_t *z_reply_ok(const z_loaned_reply_t *reply) { return &reply->data._result.sample; }
