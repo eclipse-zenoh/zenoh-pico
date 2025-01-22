@@ -1254,7 +1254,7 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     return _Z_RES_OK;
 }
 
-const struct z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
+const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
     (void)querier;
     // TODO(sashacmc): Implement
 

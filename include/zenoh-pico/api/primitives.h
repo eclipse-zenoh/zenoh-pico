@@ -1831,7 +1831,7 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
 /**
  *  Returns the key expression of the querier.
  */
-const struct z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
 
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
