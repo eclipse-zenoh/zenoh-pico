@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+/*------------- Declaration Helpers --------------*/
+z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg);
+z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg);
+
 /*------------------ Discovery ------------------*/
 
 /**

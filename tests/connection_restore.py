@@ -8,6 +8,8 @@ ROUTER_INIT_TIMEOUT_S = 3
 WAIT_MESSAGE_TIMEOUT_S = 15
 DISCONNECT_MESSAGES = ["Closing session because it has expired", "Send keep alive failed"]
 CONNECT_MESSAGES = ["Z_OPEN(Ack)"]
+LIVELINESS_TOKEN_ALIVE_MESSAGES = ["[LivelinessSubscriber] New alive token"]
+LIVELINESS_TOKEN_DROP_MESSAGES = ["[LivelinessSubscriber] Dropped token"]
 ROUTER_ERROR_MESSAGE = "ERROR"
 ZENOH_PORT = "7447"
 
@@ -18,11 +20,15 @@ DIR_EXAMPLES = "build/examples"
 ACTIVE_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_pub', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
 PASSIVE_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_sub', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
 
+LIVELINESS_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_liveliness', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
+LIVELINESS_SUB_CLIENT_COMMAND = STDBUF_CMD + [f'{DIR_EXAMPLES}/z_sub_liveliness', '-h', '-e', f'tcp/127.0.0.1:{ZENOH_PORT}']
+
 LIBASAN_PATH = subprocess.run(["gcc", "-print-file-name=libasan.so"], stdout=subprocess.PIPE, text=True, check=True).stdout.strip()
 
 
 def run_process(command, output_collector, process_list):
     env = os.environ.copy()
+    env["RUST_LOG"] = "trace"
     if LIBASAN_PATH:
         env["LD_PRELOAD"] = LIBASAN_PATH
 
@@ -30,7 +36,7 @@ def run_process(command, output_collector, process_list):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     process_list.append(process)
     for line in iter(process.stdout.readline, ''):
-        print("--", line.strip())
+        print(f"-- [{process.pid}]:", line.strip())
         output_collector.append(line.strip())
     process.stdout.close()
     process.wait()
@@ -175,6 +181,57 @@ def test_router_restart(router_command, client_command, timeout):
         terminate_processes(client_process_list + router_process_list)
 
 
+def test_liveliness_drop(router_command, liveliness_command, liveliness_sub_command):
+    print(f"Liveliness drop test")
+    router_output = []
+    dummy_output = []
+    client_output = []
+    process_list = []
+    blocked = False
+    try:
+        run_background(router_command, router_output, process_list)
+        time.sleep(ROUTER_INIT_TIMEOUT_S)
+
+        run_background(liveliness_sub_command, client_output, process_list)
+        run_background(liveliness_command, dummy_output, process_list)
+
+        if wait_messages(client_output, LIVELINESS_TOKEN_ALIVE_MESSAGES):
+            print("Liveliness token alive")
+        else:
+            raise Exception("Failed to get liveliness token alive.")
+        client_output.clear()
+
+        print("Blocking connection...")
+        block_connection()
+        blocked = True
+
+        time.sleep(15)
+
+        if wait_messages(client_output, LIVELINESS_TOKEN_DROP_MESSAGES):
+            print("Liveliness token dropped")
+        else:
+            raise Exception("Failed to get liveliness token drop.")
+        client_output.clear()
+
+        print("Unblocking connection...")
+        unblock_connection()
+        blocked = False
+
+        if wait_messages(client_output, LIVELINESS_TOKEN_ALIVE_MESSAGES):
+            print("Liveliness token alive")
+        else:
+            raise Exception("Failed to get liveliness token alive.")
+        client_output.clear()
+
+        check_router_errors(router_output)
+
+        print(f"Liveliness drop test passed")
+    finally:
+        if blocked:
+            unblock_connection()
+        terminate_processes(process_list)
+
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd")
@@ -197,6 +254,8 @@ def main():
     # timeout more than sesson timeout
     test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 15)
     test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 15)
+
+    test_liveliness_drop(router_command, LIVELINESS_CLIENT_COMMAND, LIVELINESS_SUB_CLIENT_COMMAND)
 
 
 if __name__ == "__main__":

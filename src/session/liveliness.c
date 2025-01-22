@@ -114,6 +114,28 @@ z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, c
     return ret;
 }
 
+z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn) {
+    z_result_t ret = _Z_RES_OK;
+
+    _z_session_mutex_lock(zn);
+    _z_keyexpr_intmap_t token_list = _z_keyexpr_intmap_clone(&zn->_remote_tokens);
+    _z_keyexpr_intmap_clear(&zn->_remote_tokens);
+    _z_session_mutex_unlock(zn);
+
+    _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
+    _z_timestamp_t tm = _z_timestamp_null();
+    while (_z_keyexpr_intmap_iterator_next(&iter)) {
+        _z_keyexpr_t key = *_z_keyexpr_intmap_iterator_value(&iter);
+        ret = _z_trigger_liveliness_subscriptions_undeclare(zn, &key, &tm);
+        if (ret != _Z_RES_OK) {
+            break;
+        }
+    }
+    _z_keyexpr_intmap_clear(&token_list);
+
+    return ret;
+}
+
 z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     z_result_t ret = _Z_RES_OK;
 
