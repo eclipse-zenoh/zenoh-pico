@@ -518,6 +518,33 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 #endif
 
 #if Z_FEATURE_QUERY == 1
+/*------------------  Querier Declaration ------------------*/
+_z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms) {
+    // Allocate querier
+    _z_querier_t ret;
+    // Fill querier
+    ret._key = _z_keyexpr_duplicate(&keyexpr);
+    ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
+    ret._consolidation_mode = consolidation_mode;
+    ret._congestion_control = congestion_control;
+    ret._target = target;
+    ret._priority = priority;
+    ret._is_express = is_express;
+    ret._timeout_ms = timeout_ms;
+    ret._zn = _z_session_rc_clone_as_weak(zn);
+    return ret;
+}
+
+z_result_t _z_undeclare_querier(_z_querier_t *querier) {
+    if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+    _z_undeclare_resource(_Z_RC_IN_VAL(&querier->_zn), querier->_key._id);
+    return _Z_RES_OK;
+}
+
 /*------------------ Query ------------------*/
 z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                     const z_consolidation_mode_t consolidation, _z_value_t value, _z_closure_reply_callback_t callback,
@@ -532,7 +559,7 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
         pq->_target = target;
         pq->_consolidation = consolidation;
-        pq->_anykey = (strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+        pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
@@ -542,7 +569,8 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
-            _z_slice_t params = _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
+            _z_slice_t params =
+                (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
             _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
                                                          timeout_ms, attachment, cong_ctrl, priority, is_express);
 

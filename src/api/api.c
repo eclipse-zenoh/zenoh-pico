@@ -1206,10 +1206,8 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
 }
 
 void _z_querier_drop(_z_querier_t *querier) {
-    (void)querier;
-    // TODO(sashacmc): Implement
-    // _z_undeclare_querier(pub);
-    // _z_querier_clear(pub);
+    _z_undeclare_querier(querier);
+    _z_querier_clear(querier);
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
@@ -1217,49 +1215,122 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _
 #ifdef Z_FEATURE_UNSTABLE_API
 void z_querier_get_options_default(z_querier_get_options_t *options) {
     options->encoding = NULL;
-    // TODO(sashacmc): Implement
+    options->attachment = NULL;
+    options->payload = NULL;
 }
 
 void z_querier_options_default(z_querier_options_t *options) {
+    options->target = z_query_target_default();
+    options->consolidation = z_query_consolidation_default();
+    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->priority = Z_PRIORITY_DEFAULT;
     options->is_express = false;
-    // TODO(sashacmc): Implement
+    options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
 }
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
                              const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options) {
-    (void)zs;
-    (void)querier;
-    (void)keyexpr;
-    (void)options;
-    // TODO(sashacmc): Implement
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
 
+    querier->_val = _z_querier_null();
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
+        if (r == NULL) {
+            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
+            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+        }
+    }
+    // Set options
+    z_querier_options_t opt;
+    z_querier_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+
+    // Set querier
+    _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
+                                                  opt.priority, opt.is_express, opt.timeout_ms);
+
+    querier->_val = int_querier;
     return _Z_RES_OK;
 }
 
 z_result_t z_undeclare_querier(z_moved_querier_t *querier) {
-    (void)querier;
-    // TODO(sashacmc): Implement
-
-    return _Z_RES_OK;
+    z_result_t ret = _z_undeclare_querier(&querier->_this._val);
+    _z_querier_clear(&querier->_this._val);
+    return ret;
 }
 
 z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
                          z_querier_get_options_t *options) {
-    (void)querier;
-    (void)parameters;
-    (void)callback;
-    (void)options;
+    z_result_t ret = _Z_RES_OK;
 
-    // TODO(sashacmc): Implement
+    void *ctx = callback->_this._val.context;
+    callback->_this._val.context = NULL;
 
-    return _Z_RES_OK;
+    z_querier_get_options_t opt;
+    z_querier_get_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+
+    _z_encoding_t encoding;
+    if (opt.encoding == NULL) {
+        _Z_RETURN_IF_ERR(_z_encoding_copy(&encoding, &querier->_encoding));
+    } else {
+        encoding = _z_encoding_steal(&opt.encoding->_this._val);
+    }
+    // Remove potentially redundant ke suffix
+    _z_keyexpr_t querier_keyexpr = _z_keyexpr_alias_from_user_defined(querier->_key, true);
+
+    _z_session_t *session = NULL;
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        ret = _Z_ERR_SESSION_CLOSED;
+    }
+
+    z_consolidation_mode_t consolidation_mode = querier->_consolidation_mode;
+    if (consolidation_mode == Z_CONSOLIDATION_MODE_AUTO) {
+        const char *lp = (parameters == NULL) ? "" : parameters;
+        if (strstr(lp, Z_SELECTOR_TIME) != NULL) {
+            consolidation_mode = Z_CONSOLIDATION_MODE_NONE;
+        } else {
+            consolidation_mode = Z_CONSOLIDATION_MODE_LATEST;
+        }
+    }
+
+    if (session != NULL) {
+        _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&opt.payload->_this),
+                            .encoding = _z_encoding_from_owned(&opt.encoding->_this)};
+
+        ret = _z_query(session, querier_keyexpr, parameters, querier->_target, consolidation_mode, value,
+                       callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
+                       _z_bytes_from_owned_bytes(&opt.attachment->_this), querier->_congestion_control,
+                       querier->_priority, querier->_is_express);
+    } else {
+        ret = _Z_ERR_SESSION_CLOSED;
+    }
+
+    _z_session_rc_drop(&sess_rc);
+
+    // Clean-up
+    z_bytes_drop(opt.payload);
+    z_encoding_drop(opt.encoding);
+    z_bytes_drop(opt.attachment);
+    z_internal_closure_reply_null(
+        &callback->_this);  // call and drop passed to _z_query, so we nullify the closure here
+    return ret;
 }
 
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
-    (void)querier;
-    // TODO(sashacmc): Implement
-
-    return NULL;
+    return (const z_loaned_keyexpr_t *)&querier->_key;
 }
 #endif  // Z_FEATURE_UNSTABLE_API
 

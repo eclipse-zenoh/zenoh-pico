@@ -244,6 +244,37 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 
 #if Z_FEATURE_QUERY == 1
 /**
+ * Declare a :c:type:`_z_querier_t` for the given resource key.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to query. The callee gets the ownership of any
+ *              allocated value.
+ *     consolidation_mode: The kind of consolidation that should be applied on replies.
+ *     congestion_control: The congestion control to apply when routing the querier queries.
+ *     target: The kind of queryables that should be target of this query.
+ *     priority: The priority of the query.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *     timeout_ms: The timeout value of this query.
+ * Returns:
+ *    The created :c:type:`_z_querier_t` (in null state if the declaration failed)..
+ */
+_z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms);
+
+/**
+ * Undeclare a :c:type:`_z_querier_t`.
+ *
+ * Parameters:
+ *     querier: The :c:type:`_z_querier_t` to undeclare. The callee releases the
+ *          querier upon successful return.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
+ */
+z_result_t _z_undeclare_querier(_z_querier_t *querier);
+
+/**
  * Query data from the matching queryables in the system.
  *
  * Parameters:
