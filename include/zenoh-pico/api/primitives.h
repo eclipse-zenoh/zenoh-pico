@@ -1777,13 +1777,18 @@ void z_get_options_default(z_get_options_t *options);
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
                  z_moved_closure_reply_t *callback, z_get_options_t *options);
 
+#ifdef Z_FEATURE_UNSTABLE_API
 /**
  *  Constructs the default value for :c:type:`z_querier_get_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void z_querier_get_options_default(z_querier_get_options_t *options);
 
 /**
  *  Constructs the default value for :c:type:`z_querier_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void z_querier_options_default(z_querier_options_t *options);
 
@@ -1800,6 +1805,8 @@ void z_querier_options_default(z_querier_options_t *options);
  *
  * Return:
  *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
@@ -1824,14 +1831,19 @@ z_result_t z_undeclare_querier(z_moved_querier_t *querier);
  *
  * Return:
  *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
                          z_querier_get_options_t *options);
 
 /**
  *  Returns the key expression of the querier.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+#endif  // Z_FEATURE_UNSTABLE_API
 
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.

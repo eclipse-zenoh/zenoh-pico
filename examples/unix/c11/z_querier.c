@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
+#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined Z_FEATURE_UNSTABLE_API
 
 int main(int argc, char **argv) {
     const char *selector = "demo/example/**";

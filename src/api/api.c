@@ -1214,6 +1214,7 @@ void _z_querier_drop(_z_querier_t *querier) {
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
 
+#ifdef Z_FEATURE_UNSTABLE_API
 void z_querier_get_options_default(z_querier_get_options_t *options) {
     options->encoding = NULL;
     // TODO(sashacmc): Implement
@@ -1260,6 +1261,7 @@ const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
 
     return NULL;
 }
+#endif  // Z_FEATURE_UNSTABLE_API
 
 bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
 
