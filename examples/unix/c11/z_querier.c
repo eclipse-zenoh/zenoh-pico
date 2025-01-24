@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2024 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -11,9 +11,9 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <zenoh-pico.h>
 
@@ -25,9 +25,11 @@ int main(int argc, char **argv) {
     const char *clocator = NULL;
     const char *llocator = NULL;
     const char *value = NULL;
+    int n = INT_MAX;
+    int timeout_ms = 0;
 
     int opt;
-    while ((opt = getopt(argc, argv, "s:e:m:v:l:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:e:m:v:l:n:t:")) != -1) {
         switch (opt) {
             case 's':
                 selector = optarg;
@@ -44,8 +46,15 @@ int main(int argc, char **argv) {
             case 'v':
                 value = optarg;
                 break;
+            case 'n':
+                n = atoi(optarg);
+                break;
+            case 't':
+                timeout_ms = atoi(optarg);
+                break;
             case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
+                    optopt == 'n' || optopt == 't') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 } else {
                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -99,7 +108,7 @@ int main(int argc, char **argv) {
 
     z_querier_options_t opts;
     z_querier_options_default(&opts);
-    // TODO(sashacmc): opts.timeout_ms = timeout_ms;
+    opts.timeout_ms = timeout_ms;
 
     if (z_declare_querier(z_loan(s), &querier, z_loan(keyexpr), &opts) < 0) {
         printf("Unable to declare Querier for key expression!\n");
@@ -108,7 +117,7 @@ int main(int argc, char **argv) {
 
     printf("Press CTRL-C to quit...\n");
     char buf[256];
-    for (int idx = 0; 1; ++idx) {
+    for (int idx = 0; idx != n; ++idx) {
         z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value ? value : "");
         printf("Querying '%s' with payload '%s'...\n", selector, buf);
