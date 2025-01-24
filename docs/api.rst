@@ -1213,6 +1213,46 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_reply_clone(z_owned_reply_t * dst, const z_loaned_reply_t * reply) 
 .. c:function:: const z_loaned_reply_t * z_reply_loan(const z_owned_reply_t * reply)
 
+Querier
+=======
+
+Represents a Zenoh Querier entity.
+
+Types
+-----
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_querier_t
+.. c:type:: z_loaned_querier_t
+.. c:type:: z_moved_querier_t
+
+Option Types
+------------
+
+.. autoctype:: types.h::z_querier_options_t
+.. autoctype:: types.h::z_querier_get_options_t
+
+Constants
+---------
+
+Functions
+---------
+.. autocfunction:: primitives.h::z_declare_querier
+.. autocfunction:: primitives.h::z_undeclare_querier
+.. autocfunction:: primitives.h::z_querier_get
+.. autocfunction:: primitives.h::z_querier_keyexpr
+
+.. autocfunction:: primitives.h::z_querier_options_default
+.. autocfunction:: primitives.h::z_querier_get_options_default
+
+Ownership Functions
+-------------------
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_querier_t * z_querier_loan(const z_owned_querier_t * closure)
+.. c:function:: void z_querier_drop(z_moved_querier_t * closure) 
 
 Scouting
 ========

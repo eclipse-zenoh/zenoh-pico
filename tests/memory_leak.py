@@ -177,6 +177,10 @@ if __name__ == "__main__":
     print("*** Query & queryable attachment test ***")
     if query_and_queryable('z_get_attachment -v Something', 'z_queryable_attachment -n 1') == 1:
         EXIT_STATUS = 1
+    # Test querier and queryable examples
+    print("*** Querier & queryable test ***")
+    if query_and_queryable('z_querier -n 1', 'z_queryable -n 1') == 1:
+        EXIT_STATUS = 1
     # Test liveliness query
     print("*** Get liveliness test ***")
     if query_and_queryable('z_get_liveliness', 'z_liveliness -t 3') == 1:

@@ -113,6 +113,11 @@ _Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 _Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 
 /**
+ * Represents a Zenoh Querier entity.
+ */
+_Z_OWNED_TYPE_VALUE(_z_querier_t, querier)
+
+/**
  * Represents a Zenoh Matching listener entity.
  */
 _Z_OWNED_TYPE_VALUE(_z_matching_listener_t, matching_listener)
@@ -196,6 +201,43 @@ typedef struct {
     z_reliability_t reliability;
 #endif
 } z_publisher_options_t;
+
+/**
+ * Options passed to the :c:func:`z_declare_querier()` function.
+ *
+ * Members:
+ *   z_query_target_t target: The Queryables that should be target of the querier queries.
+ *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies to the querier
+ *    queries.
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing the querier queries.
+ *   bool is_express: If set to ``true``, the querier queries will not be batched. This usually has a positive impact on
+ * 	   latency but negative impact on throughput.
+ *   z_priority_t priority: The priority of the querier queries.
+ *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 means default query timeout from zenoh
+ *     configuration.
+ */
+typedef struct z_querier_options_t {
+    z_query_target_t target;
+    z_query_consolidation_t consolidation;
+    z_congestion_control_t congestion_control;
+    bool is_express;
+    z_priority_t priority;
+    uint64_t timeout_ms;
+} z_querier_options_t;
+
+/**
+ * Options passed to the :c:func:`z_querier_get()` function.
+ *
+ * Members:
+ *   z_moved_bytes_t *payload: An optional payload to attach to the query.
+ *   z_moved_encoding_t *encoding: An optional encoding of the query payload and or attachment.
+ *   z_moved_bytes_t *attachment: An optional attachment to attach to the query.
+ */
+typedef struct z_querier_get_options_t {
+    z_moved_bytes_t *payload;
+    z_moved_encoding_t *encoding;
+    z_moved_bytes_t *attachment;
+} z_querier_get_options_t;
 
 /**
  * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.

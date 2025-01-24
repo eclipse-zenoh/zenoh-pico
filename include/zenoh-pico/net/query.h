@@ -52,6 +52,31 @@ void _z_query_free(_z_query_t **query);
 _Z_REFCOUNT_DEFINE(_z_query, _z_query)
 
 /**
+ * Return type when declaring a querier.
+ */
+typedef struct _z_querier_t {
+    _z_keyexpr_t _key;
+    _z_zint_t _id;
+    _z_session_weak_t _zn;
+    _z_encoding_t _encoding;
+    z_consolidation_mode_t _consolidation_mode;
+    z_query_target_t _target;
+    z_congestion_control_t _congestion_control;
+    z_priority_t _priority;
+    z_reliability_t reliability;
+    bool _is_express;
+    uint64_t _timeout_ms;
+} _z_querier_t;
+
+#if Z_FEATURE_QUERY == 1
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_querier_t _z_querier_null(void) { return (_z_querier_t){0}; }
+static inline bool _z_querier_check(const _z_querier_t *querier) { return !_Z_RC_IS_NULL(&querier->_zn); }
+void _z_querier_clear(_z_querier_t *querier);
+void _z_querier_free(_z_querier_t **querier);
+#endif
+
+/**
  * Return type when declaring a queryable.
  */
 typedef struct {
