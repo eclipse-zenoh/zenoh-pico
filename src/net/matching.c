@@ -30,14 +30,16 @@ static void _z_matching_listener_callback(const _z_interest_msg_t *msg, void *ar
     _z_matching_listener_ctx_t *ctx = (_z_matching_listener_ctx_t *)arg;
 
     switch (msg->type) {
-        case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER: {
+        case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:
+        case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE: {
             ctx->decl_id = msg->id;
             z_matching_status_t status = {.matching = true};
             z_closure_matching_status_call(&ctx->callback, &status);
             break;
         }
 
-        case _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER: {
+        case _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER:
+        case _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE: {
             if (ctx->decl_id == msg->id) {
                 ctx->decl_id = 0;
                 z_matching_status_t status = {.matching = false};
@@ -52,9 +54,9 @@ static void _z_matching_listener_callback(const _z_interest_msg_t *msg, void *ar
 }
 
 _z_matching_listener_t _z_matching_listener_declare(_z_session_rc_t *zn, const _z_keyexpr_t *key, _z_zint_t entity_id,
-                                                    _z_closure_matching_status_t callback) {
-    uint8_t flags = _Z_INTEREST_FLAG_SUBSCRIBERS | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_FUTURE |
-                    _Z_INTEREST_FLAG_AGGREGATE;
+                                                    uint8_t interest_type_flag, _z_closure_matching_status_t callback) {
+    uint8_t flags =
+        interest_type_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_FUTURE | _Z_INTEREST_FLAG_AGGREGATE;
     _z_matching_listener_t ret = _z_matching_listener_null();
 
     _z_matching_listener_ctx_t *ctx = _z_matching_listener_ctx_new(callback);

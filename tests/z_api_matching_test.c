@@ -104,8 +104,8 @@ void on_drop(void* context) {
     _context_notify(c, DROP);
 }
 
-void test_matching_sub(bool background) {
-    printf("test_matching_sub: background=%d\n", background);
+void test_matching_publisher_sub(bool background) {
+    printf("test_publisher_matching_sub: background=%d\n", background);
 
     context_t context = {0};
     _context_init(&context);
@@ -172,6 +172,74 @@ void test_matching_sub(bool background) {
     _context_drop(&context);
 }
 
+void test_matching_querier_sub(bool background) {
+    printf("test_matching_querier_sub: background=%d\n", background);
+
+    context_t context = {0};
+    _context_init(&context);
+
+    z_owned_session_t s1, s2;
+    z_owned_config_t c1, c2;
+    z_config_default(&c1);
+    z_config_default(&c2);
+    z_view_keyexpr_t k_queryable, k_querier;
+    z_view_keyexpr_from_str(&k_queryable, pub_expr);
+    z_view_keyexpr_from_str(&k_querier, sub_expr);
+
+    assert_ok(z_open(&s1, z_config_move(&c1), NULL));
+    assert_ok(z_open(&s2, z_config_move(&c2), NULL));
+
+    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
+
+    z_owned_querier_t querier;
+    assert_ok(z_declare_querier(z_session_loan(&s1), &querier, z_view_keyexpr_loan(&k_querier), NULL));
+
+    z_owned_closure_matching_status_t closure;
+    z_closure_matching_status(&closure, on_receive, on_drop, (void*)(&context));
+
+    z_owned_matching_listener_t matching_listener;
+    if (background) {
+        assert_ok(z_querier_declare_background_matching_listener(z_querier_loan(&querier),
+                                                                 z_closure_matching_status_move(&closure)));
+    } else {
+        assert_ok(z_querier_declare_matching_listener(z_querier_loan(&querier), &matching_listener,
+                                                      z_closure_matching_status_move(&closure)));
+    }
+
+    z_owned_queryable_t queryable;
+    z_owned_closure_query_t callback;
+    z_closure_query(&callback, NULL, NULL, NULL);
+    assert_ok(z_declare_queryable(z_session_loan(&s2), &queryable, z_view_keyexpr_loan(&k_queryable),
+                                  z_closure_query_move(&callback), NULL));
+
+    _context_wait(&context, MATCH, 10);
+
+    z_queryable_drop(z_queryable_move(&queryable));
+
+    _context_wait(&context, UNMATCH, 10);
+
+    z_querier_drop(z_querier_move(&querier));
+
+    _context_wait(&context, DROP, 10);
+
+    if (!background) {
+        z_matching_listener_drop(z_matching_listener_move(&matching_listener));
+    }
+
+    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_read_task(z_loan_mut(s2)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
+
+    z_session_drop(z_session_move(&s1));
+    z_session_drop(z_session_move(&s2));
+
+    _context_drop(&context);
+}
+
 static void _check_status(z_owned_publisher_t* pub, bool expected) {
     z_matching_status_t status;
     status.matching = !expected;
@@ -186,7 +254,7 @@ static void _check_status(z_owned_publisher_t* pub, bool expected) {
     }
 }
 
-void test_matching_get(void) {
+void test_matching_publisher_get(void) {
     z_owned_session_t s1, s2;
     z_owned_config_t c1, c2;
     z_config_default(&c1);
@@ -246,9 +314,12 @@ void test_matching_get(void) {
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
-    test_matching_sub(true);
-    test_matching_sub(false);
-    test_matching_get();
+    test_matching_publisher_sub(true);
+    test_matching_publisher_sub(false);
+    test_matching_publisher_get();
+
+    test_matching_querier_sub(true);
+    test_matching_querier_sub(false);
 }
 
 #else
