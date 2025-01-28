@@ -80,6 +80,7 @@ z_result_t _z_f_link_open_serial(_z_link_t *self) {
     } else {
         ret = _z_open_serial_from_dev(&self->_socket._serial._sock, address, baudrate);
     }
+    z_free(address);
 
     return ret;
 }
@@ -100,6 +101,7 @@ z_result_t _z_f_link_listen_serial(_z_link_t *self) {
     } else {
         ret = _z_listen_serial_from_dev(&self->_socket._serial._sock, address, baudrate);
     }
+    z_free(address);
 
     return ret;
 }
