@@ -90,9 +90,12 @@ static void _context_notify(context_t* c, context_state_t state) {
         }                                                \
     }
 
-const char* pub_expr = "zenoh-pico/matching/test/val";
-const char* sub_expr = "zenoh-pico/matching/test/*";
-const char* sub_expr_wrong = "zenoh-pico/matching/test_wrong/*";
+static const char* pub_expr = "zenoh-pico/matching/test/val";
+static const char* sub_expr = "zenoh-pico/matching/test/*";
+static const char* sub_expr_wrong = "zenoh-pico/matching/test_wrong/*";
+
+static const char* queriable_expr = "zenoh-pico/matching/query_test/val";
+static const char* query_expr = "zenoh-pico/matching/query_test/*";
 
 void on_receive(const z_matching_status_t* s, void* context) {
     context_t* c = (context_t*)context;
@@ -183,8 +186,8 @@ void test_matching_querier_sub(bool background) {
     z_config_default(&c1);
     z_config_default(&c2);
     z_view_keyexpr_t k_queryable, k_querier;
-    z_view_keyexpr_from_str(&k_queryable, pub_expr);
-    z_view_keyexpr_from_str(&k_querier, sub_expr);
+    z_view_keyexpr_from_str(&k_queryable, queriable_expr);
+    z_view_keyexpr_from_str(&k_querier, query_expr);
 
     assert_ok(z_open(&s1, z_config_move(&c1), NULL));
     assert_ok(z_open(&s2, z_config_move(&c2), NULL));
