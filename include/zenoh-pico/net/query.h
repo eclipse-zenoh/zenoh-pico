@@ -18,6 +18,7 @@
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/bytes.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/keyexpr.h"
@@ -66,6 +67,9 @@ typedef struct _z_querier_t {
     z_reliability_t reliability;
     bool _is_express;
     uint64_t _timeout_ms;
+#if Z_FEATURE_INTEREST == 1
+    _z_write_filter_t _filter;
+#endif
 } _z_querier_t;
 
 #if Z_FEATURE_QUERY == 1
