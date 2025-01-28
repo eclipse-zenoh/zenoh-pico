@@ -129,6 +129,7 @@ z_result_t z_task_cancel(_z_task_t *task) {
 void _z_task_free(_z_task_t **task) {
     z_free((*task)->join_event);
     z_free(*task);
+    *task = NULL;
 }
 
 /*------------------ Mutex ------------------*/

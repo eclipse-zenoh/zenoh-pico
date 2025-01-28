@@ -29,6 +29,7 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
         } else {
             _z_task_join(ztc->_read_task);
         }
+        _z_task_free(&ztc->_read_task);
         z_free(ztc->_read_task);
         ztc->_read_task = NULL;
     }
@@ -39,6 +40,7 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
         } else {
             _z_task_join(ztc->_lease_task);
         }
+        _z_task_free(&ztc->_lease_task);
         z_free(ztc->_lease_task);
         ztc->_lease_task = NULL;
     }
