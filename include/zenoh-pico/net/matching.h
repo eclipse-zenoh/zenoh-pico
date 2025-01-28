@@ -29,7 +29,7 @@ typedef struct _z_matching_listener_t {
 
 #if Z_FEATURE_MATCHING == 1
 _z_matching_listener_t _z_matching_listener_declare(_z_session_rc_t *zn, const _z_keyexpr_t *key, _z_zint_t entity_id,
-                                                    _z_closure_matching_status_t callback);
+                                                    uint8_t interest_type_flag, _z_closure_matching_status_t callback);
 z_result_t _z_matching_listener_entity_undeclare(_z_session_t *zn, _z_zint_t entity_id);
 z_result_t _z_matching_listener_undeclare(_z_matching_listener_t *listener);
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
@@ -37,8 +37,8 @@ static inline _z_matching_listener_t _z_matching_listener_null(void) { return (_
 static inline bool _z_matching_listener_check(const _z_matching_listener_t *matching_listener) {
     return !_Z_RC_IS_NULL(&matching_listener->_zn);
 }
-void _z_matching_listener_clear(_z_matching_listener_t *pub);
-void _z_matching_listener_free(_z_matching_listener_t **pub);
+void _z_matching_listener_clear(_z_matching_listener_t *listener);
+void _z_matching_listener_free(_z_matching_listener_t **listener);
 #endif  // Z_FEATURE_MATCHING == 1
 
 #ifdef __cplusplus

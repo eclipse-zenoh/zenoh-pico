@@ -1843,6 +1843,55 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+
+#if Z_FEATURE_MATCHING == 1
+/**
+ * Declares a matching listener, registering a callback for notifying queryables matching the given querier key
+ * expression and target. The callback will be run in the background until the corresponding querier is dropped.
+ *
+ * Parameters:
+ *   querier: A querier to associate with matching listener.
+ *   callback: A closure that will be called every time the matching status of the querier changes (If last
+ *             queryable disconnects or when the first queryable connects).
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier_t *querier,
+                                                          z_moved_closure_matching_status_t *callback);
+/**
+ * Constructs matching listener, registering a callback for notifying queryables matching with a given querier's
+ * key expression and target.
+ *
+ * Parameters:
+ *   querier: A querier to associate with matching listener.
+ *   matching_listener: An uninitialized memory location where matching listener will be constructed. The matching
+ *                      listener's callback will be automatically dropped when the querier is dropped.
+ *   callback: A closure that will be called every time the matching status of the querier changes (If last
+ *             queryable disconnects or when the first queryable connects).
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
+                                               z_owned_matching_listener_t *matching_listener,
+                                               z_moved_closure_matching_status_t *callback);
+/**
+ * Gets querier matching status - i.e. if there are any queryables matching its key expression and target.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_matching_status_t *matching_status);
+
+#endif  // Z_FEATURE_MATCHING == 1
+
 #endif  // Z_FEATURE_UNSTABLE_API
 
 /**
