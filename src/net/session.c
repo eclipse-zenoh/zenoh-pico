@@ -119,14 +119,12 @@ static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const
                                 int peer_op) {
     z_result_t ret = _Z_RES_OK;
 
-    _z_transport_t zt;
-    ret = _z_new_transport(&zt, zid, locator, mode, peer_op);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, mode, peer_op);
     if (ret != _Z_RES_OK) {
         return ret;
     }
 
-    _z_transport_get_common(&zt)->_session = zn;
-    _Z_RC_IN_VAL(zn)->_tp = zt;
+    _z_transport_get_common(&_Z_RC_IN_VAL(zn)->_tp)->_session = zn;
     return ret;
 }
 
