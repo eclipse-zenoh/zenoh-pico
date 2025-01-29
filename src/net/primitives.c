@@ -541,6 +541,9 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
     if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&querier->_zn), querier->_id);
+#endif
     _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
     _z_undeclare_resource(_Z_RC_IN_VAL(&querier->_zn), querier->_key._id);
     return _Z_RES_OK;

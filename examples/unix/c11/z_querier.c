@@ -19,6 +19,17 @@
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined Z_FEATURE_UNSTABLE_API
 
+#if Z_FEATURE_MATCHING == 1
+void matching_status_handler(const z_matching_status_t *matching_status, void *arg) {
+    (void)arg;
+    if (matching_status->matching) {
+        printf("Querier has matching queryable.\n");
+    } else {
+        printf("Querier has NO MORE matching queryables.\n");
+    }
+}
+#endif
+
 int main(int argc, char **argv) {
     const char *selector = "demo/example/**";
     const char *mode = "client";
@@ -27,9 +38,10 @@ int main(int argc, char **argv) {
     const char *value = NULL;
     int n = INT_MAX;
     int timeout_ms = 0;
+    bool add_matching_listener = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "s:e:m:v:l:n:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:e:m:v:l:n:t:a")) != -1) {
         switch (opt) {
             case 's':
                 selector = optarg;
@@ -51,6 +63,9 @@ int main(int argc, char **argv) {
                 break;
             case 't':
                 timeout_ms = atoi(optarg);
+                break;
+            case 'a':
+                add_matching_listener = true;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
@@ -113,6 +128,17 @@ int main(int argc, char **argv) {
     if (z_declare_querier(z_loan(s), &querier, z_loan(keyexpr), &opts) < 0) {
         printf("Unable to declare Querier for key expression!\n");
         exit(-1);
+    }
+
+    if (add_matching_listener) {
+#if Z_FEATURE_MATCHING == 1
+        z_owned_closure_matching_status_t callback;
+        z_closure(&callback, matching_status_handler, NULL, NULL);
+        z_querier_declare_background_matching_listener(z_loan(querier), z_move(callback));
+#else
+        printf("ERROR: Zenoh pico was compiled without Z_FEATURE_MATCHING but this example requires it.\n");
+        return -2;
+#endif
     }
 
     printf("Press CTRL-C to quit...\n");

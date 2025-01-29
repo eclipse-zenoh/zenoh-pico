@@ -36,6 +36,9 @@ typedef struct {
 } _z_closure_matching_status_t;
 
 #if Z_FEATURE_MATCHING == 1
+
+#define _Z_MATCHING_LISTENER_CTX_NULL_ID 0xFFFFFFFF
+
 typedef struct _z_matching_listener_ctx_t {
     uint32_t decl_id;
     _z_closure_matching_status_t callback;
