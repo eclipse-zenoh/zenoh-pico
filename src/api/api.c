@@ -33,6 +33,7 @@
 #include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -971,7 +972,8 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                                                   opt.congestion_control, opt.priority, opt.is_express, reliability);
     // Create write filter
-    z_result_t res = _z_write_filter_create(&int_pub);
+    z_result_t res =
+        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
     if (res != _Z_RES_OK) {
         if (key._id != Z_RESOURCE_ID_NONE) {
             _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
@@ -1037,7 +1039,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         _z_bytes_t attachment_bytes = _z_bytes_from_owned_bytes(&opt.attachment->_this);
 
         // Check if write filter is active before writing
-        if (!_z_write_filter_active(pub)) {
+        if (!_z_write_filter_active(&pub->_filter)) {
             // Write value
             ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability);
@@ -1255,6 +1257,15 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
                                                   opt.priority, opt.is_express, opt.timeout_ms);
 
+    // Create write filter
+    z_result_t res =
+        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
+    if (res != _Z_RES_OK) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+        }
+        return res;
+    }
     querier->_val = int_querier;
     return _Z_RES_OK;
 }
@@ -1311,13 +1322,17 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&opt.payload->_this),
-                            .encoding = _z_encoding_from_owned(&opt.encoding->_this)};
+        if (_z_write_filter_active(&querier->_filter)) {
+            callback->_this._val.drop(ctx);
+        } else {
+            _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&opt.payload->_this),
+                                .encoding = _z_encoding_from_owned(&opt.encoding->_this)};
 
-        ret = _z_query(session, querier_keyexpr, parameters, querier->_target, consolidation_mode, value,
-                       callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
-                       _z_bytes_from_owned_bytes(&opt.attachment->_this), querier->_congestion_control,
-                       querier->_priority, querier->_is_express);
+            ret = _z_query(session, querier_keyexpr, parameters, querier->_target, consolidation_mode, value,
+                           callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
+                           _z_bytes_from_owned_bytes(&opt.attachment->_this), querier->_congestion_control,
+                           querier->_priority, querier->_is_express);
+        }
     } else {
         ret = _Z_ERR_SESSION_CLOSED;
     }

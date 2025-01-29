@@ -43,11 +43,10 @@ typedef struct _z_write_filter_t {
     _z_writer_filter_ctx_t *ctx;
 } _z_write_filter_t;
 
-typedef struct _z_publisher_t _z_publisher_t;
-
-z_result_t _z_write_filter_create(_z_publisher_t *pub);
-z_result_t _z_write_filter_destroy(_z_publisher_t *pub);
-bool _z_write_filter_active(const _z_publisher_t *pub);
+z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+                                  uint8_t interest_flag);
+z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter);
+bool _z_write_filter_active(const _z_write_filter_t *filter);
 
 #ifdef __cplusplus
 }
