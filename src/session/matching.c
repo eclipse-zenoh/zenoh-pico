@@ -18,7 +18,7 @@
 _z_matching_listener_ctx_t *_z_matching_listener_ctx_new(_z_closure_matching_status_t callback) {
     _z_matching_listener_ctx_t *ctx = z_malloc(sizeof(_z_matching_listener_ctx_t));
 
-    ctx->decl_id = 0;
+    ctx->decl_id = _Z_MATCHING_LISTENER_CTX_NULL_ID;
     ctx->callback = callback;
 
     return ctx;

@@ -1122,8 +1122,8 @@ z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *pub
                                                  z_owned_matching_listener_t *matching_listener,
                                                  z_moved_closure_matching_status_t *callback) {
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
-    _z_matching_listener_t listener =
-        _z_matching_listener_declare(&sess_rc, &publisher->_key, publisher->_id, callback->_this._val);
+    _z_matching_listener_t listener = _z_matching_listener_declare(&sess_rc, &publisher->_key, publisher->_id,
+                                                                   _Z_INTEREST_FLAG_SUBSCRIBERS, callback->_this._val);
     _z_session_rc_drop(&sess_rc);
 
     z_internal_closure_matching_status_null(&callback->_this);
@@ -1135,8 +1135,6 @@ z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *pub
 
 z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher,
                                            z_matching_status_t *matching_status) {
-    // Ideally this should be implemented as a real request to the router, but this works much faster.
-    // And it works as long as filtering is enabled along with interest
     matching_status->matching = publisher->_filter.ctx->state != WRITE_FILTER_ACTIVE;
     return _Z_RES_OK;
 }
@@ -1353,6 +1351,37 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
     return (const z_loaned_keyexpr_t *)&querier->_key;
 }
+
+#if Z_FEATURE_MATCHING == 1
+z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier_t *querier,
+                                                          z_moved_closure_matching_status_t *callback) {
+    z_owned_matching_listener_t listener;
+    _Z_RETURN_IF_ERR(z_querier_declare_matching_listener(querier, &listener, callback));
+    _z_matching_listener_clear(&listener._val);
+    return _Z_RES_OK;
+}
+z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
+                                               z_owned_matching_listener_t *matching_listener,
+                                               z_moved_closure_matching_status_t *callback) {
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
+    _z_matching_listener_t listener = _z_matching_listener_declare(&sess_rc, &querier->_key, querier->_id,
+                                                                   _Z_INTEREST_FLAG_QUERYABLES, callback->_this._val);
+    _z_session_rc_drop(&sess_rc);
+
+    z_internal_closure_matching_status_null(&callback->_this);
+
+    matching_listener->_val = listener;
+
+    return _z_matching_listener_check(&listener) ? _Z_RES_OK : _Z_ERR_GENERIC;
+}
+
+z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_matching_status_t *matching_status) {
+    matching_status->matching = querier->_filter.ctx->state != WRITE_FILTER_ACTIVE;
+    return _Z_RES_OK;
+}
+
+#endif  // Z_FEATURE_MATCHING == 1
+
 #endif  // Z_FEATURE_UNSTABLE_API
 
 bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
