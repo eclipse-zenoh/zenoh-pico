@@ -107,9 +107,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
             if (ret == _Z_RES_OK) {
                 ret = _z_unicast_handle_transport_message(ztu, &t_msg);
-                if (ret == _Z_RES_OK) {
-                    _z_t_msg_clear(&t_msg);
-                } else {
+                if (ret != _Z_RES_OK) {
                     if (ret != _Z_ERR_CONNECTION_CLOSED) {
                         _Z_ERROR("Connection closed due to message processing error: %d", ret);
                     }

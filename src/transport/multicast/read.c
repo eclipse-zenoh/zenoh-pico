@@ -112,9 +112,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
             if (ret == _Z_RES_OK) {
                 ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
 
-                if (ret == _Z_RES_OK) {
-                    _z_t_msg_clear(&t_msg);
-                } else {
+                if (ret != _Z_RES_OK) {
                     _Z_ERROR("Dropping message due to processing error: %d", ret);
                     continue;
                 }
