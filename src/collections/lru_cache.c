@@ -102,6 +102,18 @@ static void _z_lru_cache_update_list(_z_lru_cache_t *cache, _z_lru_cache_node_t 
     _z_lru_cache_insert_list_node(cache, node);
 }
 
+static void _z_lru_cache_clear_list(_z_lru_cache_t *cache, z_element_clear_f clear) {
+    _z_lru_cache_node_data_t *node = cache->head;
+    while (node != NULL) {
+        _z_lru_cache_node_t *tmp = node;
+        _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
+        void *node_value = _z_lru_cache_node_value(node);
+        node = node_data->next;
+        clear(node_value);
+        z_free(tmp);
+    }
+}
+
 // Sorted list function
 static _z_lru_cache_node_t *_z_lru_cache_search_slist(_z_lru_cache_t *cache, void *value, _z_lru_val_cmp_f compare,
                                                       size_t *idx) {
@@ -228,31 +240,16 @@ void _z_lru_cache_clear(_z_lru_cache_t *cache, z_element_clear_f clear) {
     if (cache->slist != NULL) {
         memset(cache->slist, 0, cache->capacity * sizeof(void *));
     }
-    // Remove nodes
-    _z_lru_cache_node_data_t *node = cache->head;
-    while (node != NULL) {
-        _z_lru_cache_node_t *tmp = node;
-        _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-        void *node_value = _z_lru_cache_node_value(node);
-        node = node_data->next;
-        clear(node_value);
-        z_free(tmp);
-    }
+    // Clear list
+    _z_lru_cache_clear_list(cache, clear);
+    // Reset cacge
     cache->len = 0;
     cache->head = NULL;
     cache->tail = NULL;
 }
 
 void _z_lru_cache_delete(_z_lru_cache_t *cache, z_element_clear_f clear) {
-    _z_lru_cache_node_data_t *node = cache->head;
+    _z_lru_cache_clear(cache, clear);
     z_free(cache->slist);
-    //  Parse list
-    while (node != NULL) {
-        _z_lru_cache_node_t *tmp = node;
-        _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
-        void *node_value = _z_lru_cache_node_value(node);
-        node = node_data->next;
-        clear(node_value);
-        z_free(tmp);
-    }
+    cache->slist = NULL;
 }
