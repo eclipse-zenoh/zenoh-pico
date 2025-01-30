@@ -110,6 +110,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     ztu->_state_reliable = _Z_DBUF_STATE_NULL;
 #endif
                     _Z_INFO("Reliable message dropped because it is out of order");
+                    _z_t_msg_frame_clear(&t_msg->_body._frame);
                     break;
                 }
             } else {
@@ -122,6 +123,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
 #endif
                     _Z_INFO("Best effort message dropped because it is out of order");
+                    _z_t_msg_frame_clear(&t_msg->_body._frame);
                     break;
                 }
             }
@@ -161,6 +163,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     _z_wbuf_clear(&ztu->_dbuf_reliable);
                     ztu->_state_reliable = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Reliable message dropped because it is out of order");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             } else {
@@ -176,6 +179,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     _z_wbuf_clear(&ztu->_dbuf_best_effort);
                     ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Best effort message dropped because it is out of order");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             }
@@ -184,6 +188,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 _z_wbuf_clear(dbuf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;
                 _Z_INFO("Defragmentation buffer dropped because non-consecutive fragments received");
+                _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                 break;
             }
             // Handle fragment markers
@@ -192,10 +197,12 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     _z_wbuf_reset(dbuf);
                 } else if (_z_wbuf_len(dbuf) == 0) {
                     _Z_INFO("First fragment received without the start marker");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 if (t_msg->_body._fragment.drop) {
                     _z_wbuf_reset(dbuf);
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             }
@@ -205,6 +212,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                 if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
                     _Z_ERROR("Not enough memory to allocate transport defragmentation buffer");
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 *dbuf_state = _Z_DBUF_STATE_INIT;
@@ -227,6 +235,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     _Z_INFO("Fragment dropped because defragmentation buffer has overflown");
                     _z_wbuf_clear(dbuf);
                     *dbuf_state = _Z_DBUF_STATE_NULL;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 // Convert the defragmentation buffer into a decoding buffer
@@ -236,6 +245,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
                     _z_wbuf_clear(dbuf);
                     *dbuf_state = _Z_DBUF_STATE_NULL;
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 // Decode message
@@ -257,32 +267,38 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 #else
             _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
 #endif
+            _z_t_msg_fragment_clear(&t_msg->_body._fragment);
             break;
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
             _Z_DEBUG("Received Z_KEEP_ALIVE message");
+            _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
             break;
         }
 
         case _Z_MID_T_INIT: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
+            _z_t_msg_init_clear(&t_msg->_body._init);
             break;
         }
 
         case _Z_MID_T_OPEN: {
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
+            _z_t_msg_open_clear(&t_msg->_body._open);
             break;
         }
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer");
             ret = _Z_ERR_CONNECTION_CLOSED;
+            _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
 
         default: {
-            _Z_ERROR("Unknown session message ID");
+            _Z_ERROR("Unknown transport message ID");
+            _z_t_msg_clear(t_msg);
             break;
         }
     }

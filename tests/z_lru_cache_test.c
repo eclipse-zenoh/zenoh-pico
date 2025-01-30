@@ -41,6 +41,8 @@ int _dummy_compare(const void *first, const void *second) {
     return -1;
 }
 
+static inline void _dummy_elem_clear(void *e) { _z_noop_clear((_dummy_t *)e); }
+
 _Z_LRU_CACHE_DEFINE(_dummy, _dummy_t, _dummy_compare)
 
 void test_lru_init(void) {

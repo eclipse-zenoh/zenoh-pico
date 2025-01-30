@@ -126,6 +126,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             _Z_DEBUG("Received _Z_FRAME message");
             if (entry == NULL) {
                 _Z_INFO("Dropping _Z_FRAME from unknown peer");
+                _z_t_msg_frame_clear(&t_msg->_body._frame);
                 break;
             }
             // Note that we receive data from peer
@@ -145,6 +146,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_clear(&entry->_dbuf_reliable);
 #endif
                     _Z_INFO("Reliable message dropped because it is out of order");
+                    _z_t_msg_frame_clear(&t_msg->_body._frame);
                     break;
                 }
             } else {
@@ -158,6 +160,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
 #endif
                     _Z_INFO("Best effort message dropped because it is out of order");
+                    _z_t_msg_frame_clear(&t_msg->_body._frame);
                     break;
                 }
             }
@@ -181,6 +184,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 #if Z_FEATURE_FRAGMENTATION == 1
             if (entry == NULL) {
                 _Z_INFO("Dropping Z_FRAGMENT from unknown peer");
+                _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                 break;
             }
             // Note that we receive data from the peer
@@ -207,6 +211,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_clear(&entry->_dbuf_reliable);
                     entry->_state_reliable = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Reliable message dropped because it is out of order");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             } else {
@@ -223,6 +228,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_clear(&entry->_dbuf_best_effort);
                     entry->_state_best_effort = _Z_DBUF_STATE_NULL;
                     _Z_INFO("Best effort message dropped because it is out of order");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             }
@@ -230,6 +236,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 _z_wbuf_clear(dbuf);
                 *dbuf_state = _Z_DBUF_STATE_NULL;
                 _Z_INFO("Defragmentation buffer dropped because non-consecutive fragments received");
+                _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                 break;
             }
             // Handle fragment markers
@@ -238,10 +245,12 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_reset(dbuf);
                 } else if (_z_wbuf_len(dbuf) == 0) {
                     _Z_INFO("First fragment received without the first marker");
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 if (t_msg->_body._fragment.drop) {
                     _z_wbuf_reset(dbuf);
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
             }
@@ -251,6 +260,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
                     _Z_ERROR("Not enough memory to allocate peer defragmentation buffer");
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 *dbuf_state = _Z_DBUF_STATE_INIT;
@@ -273,6 +283,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _Z_INFO("Fragment dropped because defragmentation buffer has overflown");
                     _z_wbuf_clear(dbuf);
                     *dbuf_state = _Z_DBUF_STATE_NULL;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 // Convert the defragmentation buffer into a decoding buffer
@@ -282,6 +293,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     _z_wbuf_clear(dbuf);
                     *dbuf_state = _Z_DBUF_STATE_NULL;
                     ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    _z_t_msg_fragment_clear(&t_msg->_body._fragment);
                     break;
                 }
                 // Decode message
@@ -305,32 +317,37 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
 #else
             _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
 #endif
+            _z_t_msg_fragment_clear(&t_msg->_body._fragment);
             break;
         }
 
         case _Z_MID_T_KEEP_ALIVE: {
             _Z_DEBUG("Received _Z_KEEP_ALIVE message");
             if (entry == NULL) {
+                _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
                 break;
             }
             entry->_received = true;
-
+            _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
             break;
         }
 
         case _Z_MID_T_INIT: {
             // Do nothing, multicast transports are not expected to handle INIT messages
+            _z_t_msg_init_clear(&t_msg->_body._init);
             break;
         }
 
         case _Z_MID_T_OPEN: {
             // Do nothing, multicast transports are not expected to handle OPEN messages
+            _z_t_msg_open_clear(&t_msg->_body._open);
             break;
         }
 
         case _Z_MID_T_JOIN: {
             _Z_DEBUG("Received _Z_JOIN message");
             if (t_msg->_body._join._version != Z_PROTO_VERSION) {
+                _z_t_msg_join_clear(&t_msg->_body._join);
                 break;
             }
 
@@ -383,6 +400,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                     (t_msg->_body._join._batch_size != Z_BATCH_MULTICAST_SIZE)) {
                     _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
                     // TODO: cleanup here should also be done on mappings/subs/etc...
+                    _z_t_msg_join_clear(&t_msg->_body._join);
                     break;
                 }
 
@@ -393,6 +411,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
                 // Update lease time (set as ms during)
                 entry->_lease = t_msg->_body._join._lease;
             }
+            _z_t_msg_join_clear(&t_msg->_body._join);
             break;
         }
 
@@ -400,15 +419,17 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             _Z_INFO("Closing session as requested by the remote peer");
 
             if (entry == NULL) {
+                _z_t_msg_close_clear(&t_msg->_body._close);
                 break;
             }
             ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
-
+            _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
 
         default: {
             _Z_ERROR("Unknown session message ID");
+            _z_t_msg_clear(t_msg);
             break;
         }
     }

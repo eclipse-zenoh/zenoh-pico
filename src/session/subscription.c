@@ -52,6 +52,12 @@ int _z_subscription_cache_data_compare(const void *first, const void *second) {
     _z_subscription_cache_data_t *second_data = (_z_subscription_cache_data_t *)second;
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
+
+void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val) {
+    _z_subscription_infos_svec_clear(&val->infos);
+    _z_keyexpr_clear(&val->ke_in);
+    _z_keyexpr_clear(&val->ke_out);
+}
 #endif  // Z_FEATURE_RX_CACHE == 1
 
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
@@ -221,7 +227,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
 #if Z_FEATURE_RX_CACHE == 1
         // Update cache, takes ownership of the data
         _z_subscription_cache_data_t cache_storage = {
-            .infos = _z_subscription_infos_svec_alias(&infos->infos),
+            .infos = _z_subscription_infos_svec_transfer(&infos->infos),
             .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
             .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
             .sub_nb = infos->sub_nb,
