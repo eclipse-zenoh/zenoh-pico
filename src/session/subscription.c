@@ -205,7 +205,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
     // Note cache entry
     if (cache_entry != NULL) {
         infos->ke_out = _z_keyexpr_alias(&cache_entry->ke_out);
-        infos->infos = _z_subscription_infos_svec_alias(&cache_entry->infos, false);
+        infos->infos = _z_subscription_infos_svec_alias(&cache_entry->infos);
         infos->sub_nb = cache_entry->sub_nb;
     } else {  // Construct data and add to cache
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
@@ -227,7 +227,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
 #if Z_FEATURE_RX_CACHE == 1
         // Update cache, takes ownership of the data
         _z_subscription_cache_data_t cache_storage = {
-            .infos = _z_subscription_infos_svec_alias(&infos->infos, true),
+            .infos = _z_subscription_infos_svec_transfer(&infos->infos),
             .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
             .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
             .sub_nb = infos->sub_nb,

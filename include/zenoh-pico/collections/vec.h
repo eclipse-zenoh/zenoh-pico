@@ -151,8 +151,11 @@ void _z_svec_release(_z_svec_t *v);
     static inline z_result_t name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src, bool use_elem_f) {      \
         return _z_svec_copy(dst, src, name##_elem_copy, sizeof(type), use_elem_f);                                  \
     }                                                                                                               \
-    static inline name##_svec_t name##_svec_alias(const name##_svec_t *v, bool ownership) {                         \
-        return _z_svec_alias(v, ownership);                                                                         \
+    static inline name##_svec_t name##_svec_alias(const name##_svec_t *v) { return _z_svec_alias(v, false); }       \
+    static inline name##_svec_t name##_svec_transfer(name##_svec_t *v) {                                            \
+        name##_svec_t ret = _z_svec_alias(v, true);                                                                 \
+        v->_aliased = true;                                                                                         \
+        return ret;                                                                                                 \
     }                                                                                                               \
     static inline name##_svec_t name##_svec_alias_element(type *e) { return _z_svec_alias_element((void *)e); }     \
     static inline void name##_svec_move(name##_svec_t *dst, name##_svec_t *src) { _z_svec_move(dst, src); }         \

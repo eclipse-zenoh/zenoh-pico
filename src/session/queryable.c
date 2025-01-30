@@ -160,7 +160,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     if (cache_entry != NULL) {
         // Note cache entry
         infos->ke_out = _z_keyexpr_alias(&cache_entry->ke_out);
-        infos->infos = _z_queryable_infos_svec_alias(&cache_entry->infos, false);
+        infos->infos = _z_queryable_infos_svec_alias(&cache_entry->infos);
         infos->qle_nb = cache_entry->qle_nb;
     } else {
         // Build queryable data
@@ -183,7 +183,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 #if Z_FEATURE_RX_CACHE == 1
         // Update cache
         _z_queryable_cache_data_t cache_storage = {
-            .infos = _z_queryable_infos_svec_alias(&infos->infos, true),
+            .infos = _z_queryable_infos_svec_transfer(&infos->infos),
             .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
             .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
             .qle_nb = infos->qle_nb,
