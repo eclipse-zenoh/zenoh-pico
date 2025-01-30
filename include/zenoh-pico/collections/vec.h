@@ -85,12 +85,12 @@ typedef struct {
 } _z_svec_t;
 
 static inline _z_svec_t _z_svec_null(void) { return (_z_svec_t){0}; }
-static inline _z_svec_t _z_svec_alias(const _z_svec_t *src) {
+static inline _z_svec_t _z_svec_alias(const _z_svec_t *src, bool ownership) {
     _z_svec_t ret;
     ret._capacity = src->_capacity;
     ret._len = src->_len;
     ret._val = src->_val;
-    ret._aliased = true;
+    ret._aliased = !ownership;
     return ret;
 }
 static inline _z_svec_t _z_svec_alias_element(void *element) {
@@ -151,7 +151,9 @@ void _z_svec_release(_z_svec_t *v);
     static inline z_result_t name##_svec_copy(name##_svec_t *dst, const name##_svec_t *src, bool use_elem_f) {      \
         return _z_svec_copy(dst, src, name##_elem_copy, sizeof(type), use_elem_f);                                  \
     }                                                                                                               \
-    static inline name##_svec_t name##_svec_alias(const name##_svec_t *v) { return _z_svec_alias(v); }              \
+    static inline name##_svec_t name##_svec_alias(const name##_svec_t *v, bool ownership) {                         \
+        return _z_svec_alias(v, ownership);                                                                         \
+    }                                                                                                               \
     static inline name##_svec_t name##_svec_alias_element(type *e) { return _z_svec_alias_element((void *)e); }     \
     static inline void name##_svec_move(name##_svec_t *dst, name##_svec_t *src) { _z_svec_move(dst, src); }         \
     static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }   \

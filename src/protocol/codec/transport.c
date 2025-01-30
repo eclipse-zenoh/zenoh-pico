@@ -488,7 +488,7 @@ z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header
         msg_idx++;
     }
     // Alias network message svec in frame struct
-    msg->_messages = _z_network_message_svec_alias(msg_pool);
+    msg->_messages = _z_network_message_svec_alias(msg_pool, false);
     return _Z_RES_OK;
 }
 
