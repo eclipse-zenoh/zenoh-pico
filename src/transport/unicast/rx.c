@@ -297,7 +297,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         }
 
         default: {
-            _Z_ERROR("Unknown session message ID");
+            _Z_ERROR("Unknown transport message ID");
             _z_t_msg_clear(t_msg);
             break;
         }

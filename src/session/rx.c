@@ -89,12 +89,15 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                     _z_interest_process_declare_final(zn, decl->_interest_id);
                 } break;
             }
+            _z_n_msg_declare_clear(&msg->_body._declare);
         } break;
+
         case _Z_N_PUSH: {
             _Z_DEBUG("Handling _Z_N_PUSH");
             _z_n_msg_push_t *push = &msg->_body._push;
             ret = _z_trigger_push(zn, push, msg->_reliability);
         } break;
+
         case _Z_N_REQUEST: {
             _Z_DEBUG("Handling _Z_N_REQUEST");
             _z_n_msg_request_t *req = &msg->_body._request;
@@ -132,6 +135,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 } break;
             }
         } break;
+
         case _Z_N_RESPONSE: {
             _Z_DEBUG("Handling _Z_N_RESPONSE");
             _z_n_msg_response_t *response = &msg->_body._response;
@@ -146,9 +150,11 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
                 } break;
             }
         } break;
+
         case _Z_N_RESPONSE_FINAL: {
             _Z_DEBUG("Handling _Z_N_RESPONSE_FINAL");
             ret = _z_trigger_reply_final(zn, &msg->_body._response_final);
+            _z_n_msg_response_final_clear(&msg->_body._response_final);
         } break;
 
         case _Z_N_INTEREST: {
@@ -162,8 +168,13 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
             } else {
                 _z_interest_process_interest_final(zn, interest->_interest._id);
             }
-        }
+            _z_n_msg_interest_clear(&msg->_body._interest);
+        } break;
+
+        default:
+            _Z_ERROR("Unknown network message ID");
+            _z_n_msg_clear(msg);
+            break;
     }
-    _z_msg_clear(msg);
     return ret;
 }
