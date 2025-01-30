@@ -41,6 +41,7 @@ int _dummy_compare(const void *first, const void *second) {
     return -1;
 }
 
+_Z_ELEM_DEFINE(_dummy, _dummy_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
 _Z_LRU_CACHE_DEFINE(_dummy, _dummy_t, _dummy_compare)
 
 void test_lru_init(void) {

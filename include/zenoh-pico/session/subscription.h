@@ -45,6 +45,7 @@ typedef struct {
 
 void _z_subscription_cache_invalidate(_z_session_t *zn);
 int _z_subscription_cache_data_compare(const void *first, const void *second);
+void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val);
 
 /*------------------ Subscription ------------------*/
 z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
@@ -63,6 +64,8 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_ke
 #if Z_FEATURE_SUBSCRIPTION == 1
 
 #if Z_FEATURE_RX_CACHE == 1
+_Z_ELEM_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_noop_size, _z_subscription_cache_data_clear,
+               _z_noop_copy, _z_noop_move)
 _Z_LRU_CACHE_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_subscription_cache_data_compare)
 #endif
 

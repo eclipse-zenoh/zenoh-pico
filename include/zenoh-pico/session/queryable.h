@@ -42,12 +42,15 @@ typedef struct {
 
 void _z_queryable_cache_invalidate(_z_session_t *zn);
 int _z_queryable_cache_data_compare(const void *first, const void *second);
+void _z_queryable_cache_data_clear(_z_queryable_cache_data_t *val);
 
 #if Z_FEATURE_QUERYABLE == 1
 #define _Z_QUERYABLE_COMPLETE_DEFAULT false
 #define _Z_QUERYABLE_DISTANCE_DEFAULT 0
 
 #if Z_FEATURE_RX_CACHE == 1
+_Z_ELEM_DEFINE(_z_queryable, _z_queryable_cache_data_t, _z_noop_size, _z_queryable_cache_data_clear, _z_noop_copy,
+               _z_noop_move)
 _Z_LRU_CACHE_DEFINE(_z_queryable, _z_queryable_cache_data_t, _z_queryable_cache_data_compare)
 #endif
 

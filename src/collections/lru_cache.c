@@ -223,7 +223,7 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
     return _Z_RES_OK;
 }
 
-void _z_lru_cache_clear(_z_lru_cache_t *cache) {
+void _z_lru_cache_clear(_z_lru_cache_t *cache, z_element_clear_f clear) {
     // Reset slist
     if (cache->slist != NULL) {
         memset(cache->slist, 0, cache->capacity * sizeof(void *));
@@ -233,7 +233,9 @@ void _z_lru_cache_clear(_z_lru_cache_t *cache) {
     while (node != NULL) {
         _z_lru_cache_node_t *tmp = node;
         _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
+        void *node_value = _z_lru_cache_node_value(node);
         node = node_data->next;
+        clear(node_value);
         z_free(tmp);
     }
     cache->len = 0;
@@ -241,14 +243,16 @@ void _z_lru_cache_clear(_z_lru_cache_t *cache) {
     cache->tail = NULL;
 }
 
-void _z_lru_cache_delete(_z_lru_cache_t *cache) {
+void _z_lru_cache_delete(_z_lru_cache_t *cache, z_element_clear_f clear) {
     _z_lru_cache_node_data_t *node = cache->head;
     z_free(cache->slist);
     //  Parse list
     while (node != NULL) {
         _z_lru_cache_node_t *tmp = node;
         _z_lru_cache_node_data_t *node_data = _z_lru_cache_node_data(node);
+        void *node_value = _z_lru_cache_node_value(node);
         node = node_data->next;
+        clear(node_value);
         z_free(tmp);
     }
 }
