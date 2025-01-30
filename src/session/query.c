@@ -157,6 +157,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
             // Cache most recent reply
             pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
             if (pen_rep == NULL) {
+                _z_session_mutex_unlock(zn);
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
             if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
@@ -166,7 +167,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 pen_rep->_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(&reply.data._result.sample.keyexpr);
             } else {
                 // Copy the reply to store it out of context
-                _Z_RETURN_IF_ERR(_z_reply_copy(&pen_rep->_reply, &reply));
+                _Z_CLEAN_RETURN_IF_ERR(_z_reply_copy(&pen_rep->_reply, &reply), _z_session_mutex_unlock(zn));
             }
             pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
             pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
