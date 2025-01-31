@@ -356,4 +356,24 @@ void _z_liveliness_clear(_z_session_t *zn) {
     _z_session_mutex_unlock(zn);
 }
 
+#else  // Z_FEATURE_LIVELINESS == 0
+
+z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(decl);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(decl);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_liveliness_process_declare_final(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(decl);
+    return _Z_RES_OK;
+}
+
 #endif  // Z_FEATURE_LIVELINESS == 1
