@@ -243,7 +243,7 @@ set(Z_FEATURE_TCP_NODELAY 1 CACHE STRING "Toggle TCP_NODELAY")
 set(Z_FEATURE_LOCAL_SUBSCRIBER 0 CACHE STRING "Toggle local subscriptions")
 set(Z_FEATURE_SESSION_CHECK 1 CACHE STRING "Toggle publisher/querier session check")
 set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
-set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature")
+set(Z_FEATURE_MATCHING 1 CACHE STRING "Toggle matching feature")
 set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 
