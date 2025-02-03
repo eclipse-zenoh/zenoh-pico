@@ -215,6 +215,9 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
              (int)_z_string_len(&qle_infos.ke_out._suffix), _z_string_data(&qle_infos.ke_out._suffix));
     if (qle_infos.qle_nb == 0) {
         _z_keyexpr_clear(&qle_infos.ke_out);
+#if Z_FEATURE_RX_CACHE == 0
+        _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
+#endif
         return _Z_RES_OK;
     }
     // Check anyke
@@ -243,7 +246,7 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
     _z_query_rc_drop(&query);
     // Clean up
     _z_keyexpr_clear(&qle_infos.ke_out);
-#if Z_FEATURE_RX_CACHE != 1
+#if Z_FEATURE_RX_CACHE == 0
     _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
 #endif
     return _Z_RES_OK;
