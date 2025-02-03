@@ -274,7 +274,7 @@ jobs:
       - name: Build project
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
+          Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_MATCHING=1 Z_FEATURE_LIVELINESS=1 CMAKE_GENERATOR=Ninja make
 
       - name: Run test
         run: python3 -u ./build/tests/memory_leak.py
