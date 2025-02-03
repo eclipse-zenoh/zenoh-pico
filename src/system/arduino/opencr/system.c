@@ -71,6 +71,8 @@ z_result_t _z_task_detach(_z_task_t *task) { return -1; }
 
 z_result_t _z_task_cancel(_z_task_t *task) { return -1; }
 
+void _z_task_exit(void) {}
+
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);

@@ -159,6 +159,8 @@ z_result_t _z_task_cancel(_z_task_t *task) {
     return _Z_RES_OK;
 }
 
+void _z_task_exit(void) { vTaskDelete(NULL); }
+
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     vEventGroupDelete(ptr->join_event);
