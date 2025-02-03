@@ -22,8 +22,6 @@
 z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t *key, _z_msg_reply_t *reply) {
     z_result_t ret = _Z_RES_OK;
 
-    // TODO check id to know where to dispatch
-
 #if Z_FEATURE_QUERY == 1
     ret = _z_trigger_query_reply_partial(zn, id, key, &reply->_body._body._put,
                                          (reply->_body._is_put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE));
@@ -38,8 +36,6 @@ z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t
 
 z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error) {
     z_result_t ret = _Z_RES_OK;
-
-    // TODO check id to know where to dispatch
 
 #if Z_FEATURE_QUERY == 1
     ret = _z_trigger_query_reply_err(zn, id, error);
