@@ -98,6 +98,7 @@ void _z_task_free(_z_task_t** task) {
         return;
     }
     furi_thread_free(**task);
+    z_free(*task);
     *task = NULL;
 }
 

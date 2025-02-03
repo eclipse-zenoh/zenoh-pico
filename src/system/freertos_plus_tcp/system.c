@@ -164,6 +164,7 @@ void _z_task_exit(void) { vTaskDelete(NULL); }
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     vEventGroupDelete(ptr->join_event);
+    z_free(ptr);
     *task = NULL;
 }
 
