@@ -151,7 +151,7 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
         return ret;
     }
     // Try to receive response
-    _z_transport_message_t iam;
+    _z_transport_message_t iam = {0};
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
@@ -213,7 +213,7 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
         return ret;
     }
     // Try to receive response
-    _z_transport_message_t oam;
+    _z_transport_message_t oam = {0};
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
@@ -234,7 +234,7 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
 static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                                 const _z_id_t *local_zid, enum z_whatami_t whatami) {
     // Read t message from link
-    _z_transport_message_t tmsg;
+    _z_transport_message_t tmsg = {0};
     z_result_t ret = _z_link_recv_t_msg(&tmsg, zl);
     if (ret != _Z_RES_OK) {
         return ret;
