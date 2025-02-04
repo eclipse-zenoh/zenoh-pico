@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     size_t ke_len = strlen(ke);
     const char *params = strchr(selector, '?');
     if (params != NULL) {
-        ke_len = params - ke;
+        ke_len = (size_t)(params - ke);
         params += 1;
     }
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
     z_querier_options_t opts;
     z_querier_options_default(&opts);
-    opts.timeout_ms = timeout_ms;
+    opts.timeout_ms = (uint64_t)timeout_ms;
 
     if (z_declare_querier(z_loan(s), &querier, z_loan(keyexpr), &opts) < 0) {
         printf("Unable to declare Querier for key expression!\n");
