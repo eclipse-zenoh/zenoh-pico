@@ -57,6 +57,8 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
         _Z_ERROR("Reopen failed: %i", ret);
     }
 #endif
+
+    _z_task_exit();
 }
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
