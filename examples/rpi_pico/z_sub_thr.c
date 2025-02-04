@@ -101,7 +101,7 @@ void app_main(void) {
     z_owned_closure_sample_t callback;
     z_closure(&callback, on_sample, drop_stats, (void *)context);
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_background_subscriber(z_loan(s), z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return;

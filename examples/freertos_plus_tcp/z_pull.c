@@ -63,7 +63,7 @@ void app_main(void) {
     z_ring_channel_sample_new(&closure, &handler, SIZE);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return;
