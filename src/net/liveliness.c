@@ -14,14 +14,13 @@
 #include "zenoh-pico/api/liveliness.h"
 
 #include "zenoh-pico/net/primitives.h"
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LIVELINESS == 1
@@ -34,7 +33,8 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
 
     uint32_t id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
 
-    _z_declaration_t declaration = _z_make_decl_token(keyexpr, id);
+    _z_keyexpr_t ke = _z_keyexpr_duplicate(keyexpr);
+    _z_declaration_t declaration = _z_make_decl_token(&ke, id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
     ret = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
     _z_n_msg_clear(&n_msg);
