@@ -21,7 +21,6 @@
 extern "C" {
 #endif
 
-z_result_t _z_common_transport_new_peer(_z_transport_peer_entry_t **peer, const _z_transport_peer_param_t *peer_params);
 void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks);
 
 #ifdef __cplusplus
