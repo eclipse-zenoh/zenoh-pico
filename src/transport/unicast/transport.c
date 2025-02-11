@@ -28,18 +28,8 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
-
-z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
-                                       _z_transport_unicast_establish_param_t *param) {
-    z_result_t ret = _Z_RES_OK;
-
-    zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
-    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
-#if Z_FEATURE_FRAGMENTATION == 1
-    // Patch
-    zt->_transport._unicast._patch = param->_patch;
-#endif
-
+static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu, _z_link_t *zl,
+                                                    _z_transport_unicast_establish_param_t *param) {
 // Initialize batching data
 #if Z_FEATURE_BATCHING == 1
     ztu->_common._batch_state = _Z_BATCHING_IDLE;
@@ -48,91 +38,63 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 #if Z_FEATURE_MULTI_THREAD == 1
     // Initialize the mutexes
-    ret = _z_mutex_init(&ztu->_common._mutex_tx);
-    if (ret == _Z_RES_OK) {
-        ret = _z_mutex_init(&ztu->_common._mutex_rx);
-        if (ret != _Z_RES_OK) {
-            _z_mutex_drop(&ztu->_common._mutex_tx);
-        }
-    }
+    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
+    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_rx));
+
+    // Tasks
+    ztu->_common._read_task_running = false;
+    ztu->_common._read_task = NULL;
+    ztu->_common._lease_task_running = false;
+    ztu->_common._lease_task = NULL;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
-    if (ret == _Z_RES_OK) {
-        uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
-        size_t wbuf_size = mtu;
-        size_t zbuf_size = param->_batch_size;
+    uint16_t mtu = (zl->_mtu < param->_batch_size) ? zl->_mtu : param->_batch_size;
+    size_t wbuf_size = mtu;
+    size_t zbuf_size = param->_batch_size;
+    // Initialize tx rx buffers
+    ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
+    ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
+    // Initialize resources pool
+    ztu->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
+    ztu->_common._msg_pool = _z_network_message_svec_make(_Z_RES_POOL_INIT_SIZE);
 
-        // Initialize tx rx buffers
-        ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
-        ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
-
-        // Initialize resources pool
-        ztu->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
-        ztu->_common._msg_pool = _z_network_message_svec_make(_Z_RES_POOL_INIT_SIZE);
-
-        // Clean up the buffers if one of them failed to be allocated
-        if ((ztu->_common._msg_pool._capacity == 0) || (ztu->_common._arc_pool._capacity == 0) ||
-            (_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) ||
-            (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            _Z_ERROR("Not enough memory to allocate transport tx rx buffers!");
-
-#if Z_FEATURE_MULTI_THREAD == 1
-            _z_mutex_drop(&ztu->_common._mutex_tx);
-            _z_mutex_drop(&ztu->_common._mutex_rx);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-            _z_wbuf_clear(&ztu->_common._wbuf);
-            _z_zbuf_clear(&ztu->_common._zbuf);
-        }
-
-#if Z_FEATURE_FRAGMENTATION == 1
-        // Initialize the defragmentation buffers
-        ztu->_state_reliable = _Z_DBUF_STATE_NULL;
-        ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
-        ztu->_dbuf_reliable = _z_wbuf_null();
-        ztu->_dbuf_best_effort = _z_wbuf_null();
-#endif  // Z_FEATURE_FRAGMENTATION == 1
+    // Check if a buffer failed to allocate
+    if ((ztu->_common._msg_pool._capacity == 0) || (ztu->_common._arc_pool._capacity == 0) ||
+        (_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
+        _Z_ERROR("Not enough memory to allocate transport buffers!");
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    // Set default SN resolution
+    ztu->_common._sn_res = _z_sn_max(param->_seq_num_res);
+    // The initial SN at TX side
+    ztu->_common._sn_tx_reliable = param->_initial_sn_tx;
+    ztu->_common._sn_tx_best_effort = param->_initial_sn_tx;
+    // Notifiers
+    ztu->_common._transmitted = 0;
+    // Transport lease
+    ztu->_common._lease = param->_lease;
+    // Transport link for unicast
+    ztu->_common._link = *zl;
+    return _Z_RES_OK;
+}
 
-    if (ret == _Z_RES_OK) {
-        // Set default SN resolution
-        ztu->_common._sn_res = _z_sn_max(param->_seq_num_res);
+z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
+                                       _z_transport_unicast_establish_param_t *param) {
+    zt->_type = _Z_TRANSPORT_UNICAST_TYPE;
+    _z_transport_unicast_t *ztu = &zt->_transport._unicast;
+    memset(ztu, 0, sizeof(_z_transport_unicast_t));
 
-        // The initial SN at TX side
-        ztu->_common._sn_tx_reliable = param->_initial_sn_tx;
-        ztu->_common._sn_tx_best_effort = param->_initial_sn_tx;
-
-        // The initial SN at RX side
-        _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_common._sn_res, param->_initial_sn_rx);
-        ztu->_sn_rx_reliable = initial_sn_rx;
-        ztu->_sn_rx_best_effort = initial_sn_rx;
-
-#if Z_FEATURE_MULTI_THREAD == 1
-        // Tasks
-        ztu->_common._read_task_running = false;
-        ztu->_common._read_task = NULL;
-        ztu->_common._lease_task_running = false;
-        ztu->_common._lease_task = NULL;
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
-        // Notifiers
-        ztu->_received = 0;
-        ztu->_common._transmitted = 0;
-
-        // Transport lease
-        ztu->_common._lease = param->_lease;
-
-        // Transport link for unicast
-        ztu->_common._link = *zl;
-
-        // Remote peer PID
-        ztu->_remote_zid = param->_remote_zid;
-    } else {
-        param->_remote_zid = _z_id_empty();
+    z_result_t ret = _z_unicast_transport_create_inner(ztu, zl, param);
+    if (ret != _Z_RES_OK) {
+        // Clear alloc data
+        _z_mutex_drop(&ztu->_common._mutex_rx);
+        _z_mutex_drop(&ztu->_common._mutex_tx);
+        _z_wbuf_clear(&ztu->_common._wbuf);
+        _z_zbuf_clear(&ztu->_common._zbuf);
+        _z_arc_slice_svec_release(&ztu->_common._arc_pool);
+        _z_network_message_svec_release(&ztu->_common._msg_pool);
     }
-
     return ret;
 }
 
