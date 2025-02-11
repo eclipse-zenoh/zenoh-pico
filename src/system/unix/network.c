@@ -15,11 +15,13 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -33,8 +35,38 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-#if Z_FEATURE_LINK_TCP == 1
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    int flags = fcntl(sock->_fd, F_GETFL, 0);
+    if (flags == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
 
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    fd_set read_fds;
+    struct timeval timeout;
+
+    FD_ZERO(&read_fds);  // Clear the set
+    for (size_t i = 0; i < sock_nb; i++) {
+        FD_SET(sock[i]._fd, &read_fds);  // Add the socket to the set
+    }
+
+    timeout.tv_sec = 0;   // No timeout (blocking indefinitely)
+    timeout.tv_usec = 0;  // No timeout
+
+    int result = select(0, &read_fds, NULL, NULL, &timeout);  // Wait for readability
+
+    if (result <= 0) {
+        return _Z_ERR_GENERIC;  // Error or no data ready
+    }
+    return _Z_RES_OK;
+}
+
+#if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
 z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {
     z_result_t ret = _Z_RES_OK;
@@ -90,7 +122,6 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 #if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
         setsockopt(sock->_fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
 #endif
-
         struct addrinfo *it = NULL;
         for (it = rep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_fd, it->ai_addr, it->ai_addrlen) < 0)) {

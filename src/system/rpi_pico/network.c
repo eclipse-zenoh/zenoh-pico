@@ -26,6 +26,8 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LINK_TCP == 1
+#include <unistd.h>
+
 #include "lwip/dns.h"
 #include "lwip/ip4_addr.h"
 #include "lwip/netdb.h"
@@ -33,6 +35,33 @@
 #include "lwip/sockets.h"
 #include "lwip/udp.h"
 #include "pico/cyw43_arch.h"
+
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    int flags = lwip_fcntl(sock->_fd, F_GETFL, 0);
+    if (flags == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (lwip_fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    for (size_t i = 0; i < sock_nb; i++) {
+        FD_SET(sock[i]._fd, &read_fds);
+    }
+    struct timeval timeout;
+    timeout.tv_sec = 0;  // No timeout, blocking indefinitely
+    timeout.tv_usec = 0;
+
+    if (lwip_select(sock_nb, &read_fds, NULL, NULL, &timeout) <= 0) {
+        return _Z_ERR_GENERIC;  // Error or no data ready
+    }
+    return _Z_RES_OK;
+}
 
 /*------------------ TCP sockets ------------------*/
 z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port) {

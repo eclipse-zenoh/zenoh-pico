@@ -16,10 +16,12 @@
 #include <HardwareSerial.h>
 
 extern "C" {
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
@@ -33,6 +35,37 @@ extern "C" {
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    int flags = fcntl(sock->_fd, F_GETFL, 0);
+    if (flags == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    fd_set read_fds;         // Stored in session?
+    struct timeval timeout;  // Stored in session?
+
+    FD_ZERO(&read_fds);  // Clear the set
+    for (size_t i = 0; i < sock_nb; i++) {
+        FD_SET(sock[i]._fd, &read_fds);  // Add the socket to the set
+    }
+
+    timeout.tv_sec = 0;   // No timeout (blocking indefinitely)
+    timeout.tv_usec = 0;  // No timeout
+
+    int result = select(0, &read_fds, NULL, NULL, &timeout);  // Wait for readability
+
+    if (result <= 0) {
+        return _Z_ERR_GENERIC;  // Error or no data ready
+    }
+    return _Z_RES_OK;
+}
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
