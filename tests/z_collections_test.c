@@ -137,7 +137,7 @@ void ring_test_init_free(void) {
 }
 
 void ring_iterator_test(void) {
-    #define TEST_RING(ring, values, n)                                         \
+#define TEST_RING(ring, values, n)                                             \
     {                                                                          \
         _z_str_ring_iterator_t iter = _z_str_ring_iterator_make(&ring);        \
                                                                                \
@@ -148,13 +148,13 @@ void ring_iterator_test(void) {
                                                                                \
         assert(!_z_str_ring_iterator_next(&iter));                             \
     }
-    
+
     _z_str_ring_t ring = _z_str_ring_make(4);
 
-    const char *values[] = { "A", "B", "C", "D", "E", "F" };
-    
+    const char *values[] = {"A", "B", "C", "D", "E", "F"};
+
     assert(_z_str_ring_push(&ring, _z_str_clone(values[0])) == NULL);
-     // { "A" }
+    // { "A" }
     TEST_RING(ring, values, 1);
 
     assert(_z_str_ring_push(&ring, _z_str_clone(values[1])) == NULL);
@@ -170,7 +170,7 @@ void ring_iterator_test(void) {
     TEST_RING(ring, values, 4);
 
     assert(_z_str_ring_pull(&ring) != NULL);
-     // { "B", "C", "D" }
+    // { "B", "C", "D" }
     TEST_RING(ring, (values + 1), 3);
     assert(_z_str_ring_push(&ring, _z_str_clone(values[4])) == NULL);
     // { "B", "C", "D", "E" }
