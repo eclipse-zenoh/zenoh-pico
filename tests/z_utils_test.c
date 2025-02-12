@@ -47,7 +47,7 @@ void test_query_params(void) {
     }
 
     const char *params1 = "";
-    const _z_query_param_t params1_expected[0];
+    const _z_query_param_t *params1_expected = NULL;
     TEST_PARAMS(params1, params1_expected, 0);
 
     const char *params2 = "a=1";
