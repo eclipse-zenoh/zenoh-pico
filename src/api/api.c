@@ -856,7 +856,7 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_publisher_t, publisher, _z_publisher_ch
                                       _z_publisher_drop)
 
 void z_put_options_default(z_put_options_t *options) {
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_push();
     options->priority = Z_PRIORITY_DEFAULT;
     options->encoding = NULL;
     options->is_express = false;
@@ -868,7 +868,7 @@ void z_put_options_default(z_put_options_t *options) {
 }
 
 void z_delete_options_default(z_delete_options_t *options) {
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_push();
     options->is_express = false;
     options->timestamp = NULL;
     options->priority = Z_PRIORITY_DEFAULT;
@@ -936,7 +936,7 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
 
 void z_publisher_options_default(z_publisher_options_t *options) {
     options->encoding = NULL;
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_push();
     options->priority = Z_PRIORITY_DEFAULT;
     options->is_express = false;
 #ifdef Z_FEATURE_UNSTABLE_API
@@ -1159,7 +1159,7 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_request();
     options->priority = Z_PRIORITY_DEFAULT;
     options->is_express = false;
     options->encoding = NULL;
@@ -1225,7 +1225,7 @@ void z_querier_get_options_default(z_querier_get_options_t *options) {
 void z_querier_options_default(z_querier_options_t *options) {
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_request();
     options->priority = Z_PRIORITY_DEFAULT;
     options->is_express = false;
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
@@ -1467,7 +1467,7 @@ z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
 
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_response();
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1505,7 +1505,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 }
 
 void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
-    options->congestion_control = Z_CONGESTION_CONTROL_DEFAULT;
+    options->congestion_control = z_internal_congestion_control_default_response();
     options->priority = Z_PRIORITY_DEFAULT;
     options->timestamp = NULL;
     options->is_express = false;
@@ -1730,8 +1730,8 @@ z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
     if (_Z_RC_IS_NULL(zs)) {
         return _Z_ERR_SESSION_CLOSED;
     }
-    // Send current batch
-    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
+    // Send current batch without dropping
+    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
 }
 
 z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
@@ -1740,8 +1740,8 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
         return _Z_ERR_SESSION_CLOSED;
     }
     _z_transport_stop_batching(&session->_tp);
-    // Send remaining batch
-    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_DEFAULT);
+    // Send remaining batch without dropping
+    return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
 }
 #endif
 

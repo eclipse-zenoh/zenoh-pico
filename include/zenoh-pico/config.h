@@ -16,8 +16,8 @@
 #define INCLUDE_ZENOH_PICO_CONFIG_H
 
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
-#define Z_FRAG_MAX_SIZE 4096
-#define Z_BATCH_UNICAST_SIZE 2048
+#define Z_FRAG_MAX_SIZE 0
+#define Z_BATCH_UNICAST_SIZE 0
 #define Z_BATCH_MULTICAST_SIZE 2048
 #define Z_CONFIG_SOCKET_TIMEOUT 100
 
@@ -44,9 +44,9 @@
 #define Z_FEATURE_ENCODING_VALUES 1
 #define Z_FEATURE_TCP_NODELAY 1
 #define Z_FEATURE_LOCAL_SUBSCRIBER 0
-#define Z_FEATURE_PUBLISHER_SESSION_CHECK 1
+#define Z_FEATURE_PUBLISHER_SESSION_CHECK 
 #define Z_FEATURE_BATCHING 1
-#define Z_FEATURE_MATCHING 1
+#define Z_FEATURE_MATCHING 0
 #define Z_FEATURE_RX_CACHE 0
 #define Z_FEATURE_AUTO_RECONNECT 1
 // End of CMake generation
