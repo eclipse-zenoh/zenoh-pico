@@ -84,7 +84,7 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
         return false;
     }
 
-    char buf[len + 1];
+    char *buf = z_malloc(len + 1);
     memcpy(buf, bound->start, len);
     buf[len] = '\0';
     char *err;
@@ -93,6 +93,7 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
     {
         return false;
     }
+    z_free(buf);
     value *= multiplier;
 
     // Check for overflow
