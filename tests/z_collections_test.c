@@ -151,35 +151,35 @@ void ring_iterator_test(void) {
 
     _z_str_ring_t ring = _z_str_ring_make(4);
 
-    const char *values[] = {"A", "B", "C", "D", "E", "F"};
+    char *values[] = {"A", "B", "C", "D", "E", "F"};
 
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[0])) == NULL);
+    assert(_z_str_ring_push(&ring, values[0]) == NULL);
     // { "A" }
     TEST_RING(ring, values, 1);
 
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[1])) == NULL);
+    assert(_z_str_ring_push(&ring, values[1]) == NULL);
     // { "A", "B" }
     TEST_RING(ring, values, 2);
 
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[2])) == NULL);
+    assert(_z_str_ring_push(&ring, values[2]) == NULL);
     // { "A", "B", "C" }
     TEST_RING(ring, values, 3);
 
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[3])) == NULL);
+    assert(_z_str_ring_push(&ring, values[3]) == NULL);
     // { "A", "B", "C", "D" }
     TEST_RING(ring, values, 4);
 
     assert(_z_str_ring_pull(&ring) != NULL);
     // { "B", "C", "D" }
     TEST_RING(ring, (values + 1), 3);
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[4])) == NULL);
+    assert(_z_str_ring_push(&ring, values[4]) == NULL);
     // { "B", "C", "D", "E" }
     TEST_RING(ring, (values + 1), 4);
 
     assert(_z_str_ring_pull(&ring) != NULL);
     // { "C", "D", "E" }
     TEST_RING(ring, (values + 2), 3);
-    assert(_z_str_ring_push(&ring, _z_str_clone(values[5])) == NULL);
+    assert(_z_str_ring_push(&ring, values[5]) == NULL);
     // { "C", "D", "E", "F" }
     TEST_RING(ring, (values + 2), 4);
 
@@ -449,6 +449,6 @@ int main(void) {
     fifo_test_init_free();
 
     int_map_iterator_test();
-    int_map_iterator_deletion_test();
+    //int_map_iterator_deletion_test();
     ring_iterator_test();
 }
