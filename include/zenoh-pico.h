@@ -17,11 +17,11 @@
 #ifndef ZENOH_PICO_H
 #define ZENOH_PICO_H
 
-#define ZENOH_PICO "1.2.1"
+#define ZENOH_PICO "1.2.1.0"
 #define ZENOH_PICO_MAJOR 1
 #define ZENOH_PICO_MINOR 2
 #define ZENOH_PICO_PATCH 1
-#define ZENOH_PICO_TWEAK 
+#define ZENOH_PICO_TWEAK 0
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/encoding.h"
