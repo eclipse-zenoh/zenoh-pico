@@ -449,6 +449,6 @@ int main(void) {
     fifo_test_init_free();
 
     int_map_iterator_test();
-    //int_map_iterator_deletion_test();
+    int_map_iterator_deletion_test();
     ring_iterator_test();
 }
