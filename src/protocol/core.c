@@ -43,7 +43,7 @@ uint8_t _z_id_len(_z_id_t id) {
     return len;
 }
 
-uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
+_z_ntp64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos) {
     const uint64_t FRAC_PER_SEC = (uint64_t)1 << 32;
     const uint64_t NANOS_PER_SEC = 1000000000;
 

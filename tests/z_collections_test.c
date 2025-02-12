@@ -136,6 +136,81 @@ void ring_test_init_free(void) {
     assert(r == NULL);
 }
 
+void ring_iterator_test(void) {
+#define TEST_RING(ring, values, n)                                                              \
+    {                                                                                           \
+        _z_str_ring_iterator_t iter = _z_str_ring_iterator_make(&ring);                         \
+        _z_str_ring_reverse_iterator_t reverse_iter = _z_str_ring_reverse_iterator_make(&ring); \
+                                                                                                \
+        for (int i = 0; i < n; i++) {                                                           \
+            assert(_z_str_ring_iterator_next(&iter));                                           \
+            assert(strcmp(_z_str_ring_iterator_value(&iter), values[i]) == 0);                  \
+        }                                                                                       \
+                                                                                                \
+        for (int i = n - 1; i >= 0; i--) {                                                      \
+            assert(_z_str_ring_reverse_iterator_next(&reverse_iter));                           \
+            assert(strcmp(_z_str_ring_reverse_iterator_value(&reverse_iter), values[i]) == 0);  \
+        }                                                                                       \
+                                                                                                \
+        assert(!_z_str_ring_iterator_next(&iter));                                              \
+        assert(!_z_str_ring_reverse_iterator_next(&reverse_iter));                              \
+    }
+
+    _z_str_ring_t ring = _z_str_ring_make(4);
+
+    char *values[] = {"A", "B", "C", "D", "E", "F"};
+
+    assert(_z_str_ring_push(&ring, values[0]) == NULL);
+    // { "A" }
+    TEST_RING(ring, values, 1);
+
+    assert(_z_str_ring_push(&ring, values[1]) == NULL);
+    // { "A", "B" }
+    TEST_RING(ring, values, 2);
+
+    assert(_z_str_ring_push(&ring, values[2]) == NULL);
+    // { "A", "B", "C" }
+    TEST_RING(ring, values, 3);
+
+    assert(_z_str_ring_push(&ring, values[3]) == NULL);
+    // { "A", "B", "C", "D" }
+    TEST_RING(ring, values, 4);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // { "B", "C", "D" }
+    TEST_RING(ring, (values + 1), 3);
+    assert(_z_str_ring_push(&ring, values[4]) == NULL);
+    // { "B", "C", "D", "E" }
+    TEST_RING(ring, (values + 1), 4);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // { "C", "D", "E" }
+    TEST_RING(ring, (values + 2), 3);
+    assert(_z_str_ring_push(&ring, values[5]) == NULL);
+    // { "C", "D", "E", "F" }
+    TEST_RING(ring, (values + 2), 4);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // { "D", "E", "F" }
+    TEST_RING(ring, (values + 3), 3);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // { "E", "F" }
+    TEST_RING(ring, (values + 4), 2);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // { "F" }
+    TEST_RING(ring, (values + 5), 1);
+
+    assert(_z_str_ring_pull(&ring) != NULL);
+    // {}
+    TEST_RING(ring, values, 0);
+
+    _z_str_ring_clear(&ring);
+
+#undef TEST_RING
+}
+
 // LIFO
 _Z_LIFO_DEFINE(_z_str, char)
 
@@ -477,5 +552,7 @@ int main(void) {
 
     int_map_iterator_test();
     int_map_iterator_deletion_test();
+    ring_iterator_test();
+
     slist_test();
 }
