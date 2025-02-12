@@ -89,11 +89,11 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
     buf[len] = '\0';
     char *err;
     double value = strtod(bound->start, &err);
+    z_free(buf);
     if (value == 0 && *err != '\0')  //_z_cptr_char_offset(buf, len))
     {
         return false;
     }
-    z_free(buf);
     value *= multiplier;
 
     // Check for overflow
