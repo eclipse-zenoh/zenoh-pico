@@ -90,8 +90,7 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
     char *err;
     double value = strtod(bound->start, &err);
     z_free(buf);
-    if (value == 0 && *err != '\0')
-    {
+    if (value == 0 && *err != '\0') {
         return false;
     }
     value *= multiplier;
