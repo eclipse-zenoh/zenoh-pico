@@ -30,6 +30,23 @@ void _z_sample_steal_data(_z_sample_t *dst, _z_keyexpr_t *key, _z_bytes_t *paylo
     dst->source_info = *source_info;
 }
 
+z_result_t _z_sample_copy_data(_z_sample_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                               const _z_timestamp_t *timestamp, const _z_encoding_t *encoding, z_sample_kind_t kind,
+                               _z_qos_t qos, const _z_bytes_t *attachment, z_reliability_t reliability,
+                               const _z_source_info_t *source_info) {
+    *dst = _z_sample_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->keyexpr, key));
+    _Z_CLEAN_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, encoding), _z_sample_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, payload), _z_sample_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, attachment), _z_sample_clear(dst));
+    dst->timestamp = _z_timestamp_duplicate(timestamp);
+    _Z_CLEAN_RETURN_IF_ERR(_z_source_info_copy(&dst->source_info, source_info), _z_sample_clear(dst));
+    dst->qos = qos;
+    dst->reliability = reliability;
+    dst->kind = kind;
+    return _Z_RES_OK;
+}
+
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     *dst = _z_sample_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->keyexpr, &src->keyexpr));
@@ -37,9 +54,7 @@ z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->payload, &src->payload), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->attachment, &src->attachment), _z_sample_clear(dst));
     _z_timestamp_move(&dst->timestamp, &src->timestamp);
-#ifdef Z_FEATURE_UNSTABLE_API
     _z_source_info_move(&dst->source_info, &src->source_info);
-#endif
     dst->qos = src->qos;
     dst->reliability = src->reliability;
     dst->kind = src->kind;
@@ -51,6 +66,11 @@ void _z_sample_clear(_z_sample_t *sample) {
     _z_encoding_clear(&sample->encoding);
     _z_bytes_drop(&sample->payload);
     _z_bytes_drop(&sample->attachment);
+}
+
+size_t _z_sample_size(const _z_sample_t *s) {
+    (void)(s);
+    return sizeof(_z_sample_t);
 }
 
 void _z_sample_free(_z_sample_t **sample) {
@@ -68,9 +88,7 @@ z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, &src->attachment), _z_sample_clear(dst));
-#ifdef Z_FEATURE_UNSTABLE_API
     _Z_CLEAN_RETURN_IF_ERR(_z_source_info_copy(&dst->source_info, &src->source_info), _z_sample_clear(dst));
-#endif
     dst->kind = src->kind;
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
     dst->qos = src->qos;
