@@ -77,7 +77,6 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
             multiplier = _Z_TIME_RANGE_W_TO_SECS;
             len--;
             break;
-        default:
     }
 
     // String contains unit only
