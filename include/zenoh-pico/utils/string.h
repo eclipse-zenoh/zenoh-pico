@@ -35,6 +35,11 @@ typedef struct {
 } _z_splitstr_t;
 
 /**
+ * Creates a `_z_str_se_t` from a null-terminated C string.
+ */
+_z_str_se_t _z_bstrnew(const char *start);
+
+/**
  * The reverse equivalent of libc's `strstr`.
  *
  * Returns NULL if the needle is not found.
