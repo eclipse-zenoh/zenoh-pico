@@ -23,6 +23,7 @@
 
 #include "olv_macros.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/advanced_cache.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
@@ -1767,6 +1768,14 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options);
 z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
                            const z_publisher_put_options_t *options);
 
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                                 const z_publisher_put_options_t *options, _ze_advanced_cache_t *cache);
+#else
+z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                                 const z_publisher_put_options_t *options);
+#endif
+
 /**
  * Deletes data from the keyexpr bound to the given publisher.
  *
@@ -1778,6 +1787,13 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
  *   ``0`` if delete operation is successful, ``negative value`` otherwise.
  */
 z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
+
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options,
+                                    _ze_advanced_cache_t *cache);
+#else
+z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options);
+#endif
 
 /**
  * Gets the keyexpr from a publisher.
@@ -2164,6 +2180,9 @@ void z_query_reply_options_default(z_query_reply_options_t *options);
  */
 z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
                          const z_query_reply_options_t *options);
+
+z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_sample_t *sample,
+                                 const z_query_reply_options_t *options);
 
 z_result_t z_query_take_from_loaned(z_owned_query_t *dst, z_loaned_query_t *src);
 

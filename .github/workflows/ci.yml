@@ -222,7 +222,19 @@ jobs:
       - name: Build without interests
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_LIVELINESS=0 CMAKE_GENERATOR=Ninja make          
+          Z_FEATURE_LIVELINESS=0 CMAKE_GENERATOR=Ninja make
+
+  advanced_publisher_build:
+    name: Check compilation with advanced publisher
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with advanced publisher
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 CMAKE_GENERATOR=Ninja make
 
   st_build:
     needs: zenoh_build

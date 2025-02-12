@@ -241,6 +241,7 @@ set(Z_TRANSPORT_LEASE 10000 CACHE STRING "Link lease duration in milliseconds to
 
 set(Z_FEATURE_UNSTABLE_API 0 CACHE STRING "Toggle unstable Zenoh-C API")
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
+set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
 set(Z_FEATURE_QUERY 1 CACHE STRING "Toggle query feature")
 set(Z_FEATURE_QUERYABLE 1 CACHE STRING "Toggle queryable feature")
@@ -294,10 +295,16 @@ if(Z_FEATURE_SCOUTING AND NOT Z_FEATURE_LINK_UDP_UNICAST)
   set(Z_FEATURE_SCOUTING 0 CACHE STRING "Toggle scouting feature" FORCE)
 endif()
 
+if(Z_FEATURE_ADVANCED_PUBLICATION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEATURE_PUBLICATION OR NOT Z_FEATURE_LIVELINESS))
+  message(WARNING "Z_FEATURE_ADVANCED_PUBLICATION can only be enabled when Z_FEATURE_UNSTABLE_API, Z_FEATURE_PUBLICATION and Z_FEATURE_LIVELINESS is also enabled. Disabling Z_FEATURE_ADVANCED_PUBLICATION.")
+  set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature" FORCE)
+endif()
+
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
+* ADVANCED PUBLICATION: ${Z_FEATURE_ADVANCED_PUBLICATION}\n\
 * SUBSCRIPTION: ${Z_FEATURE_SUBSCRIPTION}\n\
 * QUERY: ${Z_FEATURE_QUERY}\n\
 * QUERYABLE: ${Z_FEATURE_QUERYABLE}\n\
@@ -554,6 +561,7 @@ if(UNIX OR MSVC)
     add_executable(z_lru_cache_test ${PROJECT_SOURCE_DIR}/tests/z_lru_cache_test.c)
     add_executable(z_test_peer_unicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_unicast.c)
     add_executable(z_test_peer_multicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_multicast.c)
+    add_executable(z_utils_test ${PROJECT_SOURCE_DIR}/tests/z_utils_test.c)
 
     target_link_libraries(z_data_struct_test zenohpico::lib)
     target_link_libraries(z_channels_test zenohpico::lib)
@@ -575,6 +583,7 @@ if(UNIX OR MSVC)
     target_link_libraries(z_lru_cache_test zenohpico::lib)
     target_link_libraries(z_test_peer_unicast zenohpico::lib)
     target_link_libraries(z_test_peer_multicast zenohpico::lib)
+    target_link_libraries(z_utils_test zenohpico::lib)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
@@ -600,6 +609,7 @@ if(UNIX OR MSVC)
     add_test(z_api_encoding_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_encoding_test)
     add_test(z_refcount_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_refcount_test)
     add_test(z_lru_cache_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_lru_cache_test)
+    add_test(z_utils_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_utils_test)
   endif()
 
   if(BUILD_INTEGRATION)
