@@ -49,13 +49,13 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
     }
 
     double multiplier = 1.0;
-    switch (*(_z_cptr_char_offset(bound->end, -1))) {
+    switch (*_z_cptr_char_offset(bound->end, -1)) {
         case 'u':
             multiplier = _Z_TIME_RANGE_U_TO_SECS;
             len--;
             break;
         case 's':
-            if (len > 1 && *(_z_cptr_char_offset(bound->end, -2)) == 'm') {
+            if (len > 1 && *_z_cptr_char_offset(bound->end, -2) == 'm') {
                 multiplier = _Z_TIME_RANGE_MS_TO_SECS;
                 len--;
             }
@@ -112,16 +112,16 @@ static bool _z_time_range_parse_time_bound(_z_str_se_t *str, bool inclusive, _z_
     } else if (len >= 5) {
         bound->bound = inclusive ? _Z_TIME_BOUND_INCLUSIVE : _Z_TIME_BOUND_EXCLUSIVE;
 
-        if (*(str->start) == 'n' && *(_z_cptr_char_offset(str->start, 1)) == 'o' &&
-            *(_z_cptr_char_offset(str->start, 2)) == 'w' && *(_z_cptr_char_offset(str->start, 3)) == '(' &&
-            *(_z_cptr_char_offset(str->end, -1)) == ')') {
+        if (*str->start == 'n' && *_z_cptr_char_offset(str->start, 1) == 'o' &&
+            *_z_cptr_char_offset(str->start, 2) == 'w' && *_z_cptr_char_offset(str->start, 3) == '(' &&
+            *_z_cptr_char_offset(str->end, -1) == ')') {
             if (len == 5) {
                 bound->now_offset = 0;
             } else {
                 _z_str_se_t duration = {.start = _z_cptr_char_offset(str->start, 4),
                                         .end = _z_cptr_char_offset(str->end, -1)};
 
-                if (!_z_time_range_parse_duration(&duration, &(bound->now_offset))) {
+                if (!_z_time_range_parse_duration(&duration, &bound->now_offset)) {
                     return false;
                 }
             }
@@ -167,8 +167,8 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
         _z_str_se_t start_str = {.start = _z_cptr_char_offset(str, 1), .end = separator};
         _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 2), .end = _z_cptr_char_offset(str, len - 1)};
 
-        if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &(range->start)) ||
-            !_z_time_range_parse_time_bound(&end_str, inclusive_end, &(range->end))) {
+        if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &range->start) ||
+            !_z_time_range_parse_time_bound(&end_str, inclusive_end, &range->end)) {
             return false;
         }
     } else {
@@ -181,7 +181,7 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
         _z_str_se_t start_str = {.start = _z_cptr_char_offset(str, 1), .end = separator};
         _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 1), .end = _z_cptr_char_offset(str, len - 1)};
 
-        if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &(range->start)) ||
+        if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &range->start) ||
             range->start.bound == _Z_TIME_BOUND_UNBOUNDED) {
             return false;
         }
