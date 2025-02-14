@@ -41,6 +41,7 @@ typedef struct _z_sample_t {
     _z_qos_t qos;
     _z_bytes_t attachment;
     z_reliability_t reliability;
+    _z_source_info_t source_info;
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
 
@@ -53,7 +54,7 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
 static inline _z_sample_t _z_sample_alias(const _z_keyexpr_t *key, const _z_bytes_t *payload,
                                           const _z_timestamp_t *timestamp, const _z_encoding_t *encoding,
                                           const z_sample_kind_t kind, const _z_qos_t qos, const _z_bytes_t *attachment,
-                                          z_reliability_t reliability) {
+                                          z_reliability_t reliability, const _z_source_info_t *source_info) {
     _z_sample_t ret;
     ret.keyexpr = *key;
     ret.payload = *payload;
@@ -63,6 +64,7 @@ static inline _z_sample_t _z_sample_alias(const _z_keyexpr_t *key, const _z_byte
     ret.qos = qos;
     ret.attachment = *attachment;
     ret.reliability = reliability;
+    ret.source_info = *source_info;
     return ret;
 }
 void _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
