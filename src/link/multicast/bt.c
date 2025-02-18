@@ -143,6 +143,7 @@ z_result_t _z_new_link_bt(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_write_all_f = _z_f_link_write_all_bt;
     zl->_read_f = _z_f_link_read_bt;
     zl->_read_exact_f = _z_f_link_read_exact_bt;
+    zl->_read_socket_f = _z_noop_link_read_socket;
 
     return ret;
 }

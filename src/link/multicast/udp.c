@@ -204,6 +204,7 @@ z_result_t _z_new_link_udp_multicast(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_write_all_f = _z_f_link_write_all_udp_multicast;
     zl->_read_f = _z_f_link_read_udp_multicast;
     zl->_read_exact_f = _z_f_link_read_exact_udp_multicast;
+    zl->_read_socket_f = _z_noop_link_read_socket;
 
     return ret;
 }

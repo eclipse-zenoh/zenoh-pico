@@ -128,6 +128,10 @@ size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t l
     return _z_read_exact_serial(self->_socket._serial._sock, ptr, len);
 }
 
+size_t _z_f_link_read_socket(const _z_sys_net_socket_t *socket, uint8_t *ptr, size_t len) {
+    return _z_read_serial(socket, ptr, len);
+}
+
 uint16_t _z_get_link_mtu_serial(void) { return _Z_SERIAL_MTU_SIZE; }
 
 z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
@@ -150,6 +154,7 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_write_all_f = _z_f_link_write_all_serial;
     zl->_read_f = _z_f_link_read_serial;
     zl->_read_exact_f = _z_f_link_read_exact_serial;
+    zl->_read_socket_f = _z_f_link_read_socket;
 
     return ret;
 }

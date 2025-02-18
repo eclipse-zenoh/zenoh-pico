@@ -19,6 +19,7 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_LINK_TCP == 1
 #include "zenoh-pico/system/link/tcp.h"
@@ -100,7 +101,16 @@ typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *p
 typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
 typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
 typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
+typedef size_t (*_z_f_link_read_socket)(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
+
+static inline size_t _z_noop_link_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
+    _ZP_UNUSED(socket);
+    _ZP_UNUSED(ptr);
+    _ZP_UNUSED(len);
+    _Z_ERROR("Function not implemented");
+    return 0;
+}
 
 typedef struct _z_link_t {
     _z_endpoint_t _endpoint;
@@ -133,6 +143,7 @@ typedef struct _z_link_t {
     _z_f_link_write_all _write_all_f;
     _z_f_link_read _read_f;
     _z_f_link_read_exact _read_exact_f;
+    _z_f_link_read_socket _read_socket_f;
     _z_f_link_free _free_f;
 
     uint16_t _mtu;
@@ -147,6 +158,7 @@ z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator);
 z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
 size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr);
+size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket);
 
 #ifdef __cplusplus
 }
