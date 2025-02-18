@@ -47,15 +47,42 @@ void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_trans
 }
 
 size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src) {
-    (void)(src);
+    _ZP_UNUSED(src);
     return sizeof(_z_transport_peer_entry_t);
 }
 
 bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right) {
-    bool ret = true;
-    if (memcmp(left->_remote_zid.id, right->_remote_zid.id, 16) != 0) {
-        ret = false;
-    }
+    return _z_id_eq(&left->_remote_zid, &right->_remote_zid);
+}
 
-    return ret;
+void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src) {
+#if Z_FEATURE_FRAGMENTATION == 1
+    _z_wbuf_clear(&src->_dbuf_reliable);
+    _z_wbuf_clear(&src->_dbuf_best_effort);
+#endif
+    src->_remote_zid = _z_id_empty();
+}
+
+void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src) {
+#if Z_FEATURE_FRAGMENTATION == 1
+    dst->_state_reliable = src->_state_reliable;
+    dst->_state_best_effort = src->_state_best_effort;
+    _z_wbuf_copy(&dst->_dbuf_reliable, &src->_dbuf_reliable);
+    _z_wbuf_copy(&dst->_dbuf_best_effort, &src->_dbuf_best_effort);
+    dst->_patch = src->_patch;
+#endif
+    dst->_sn_rx_reliable = src->_sn_rx_reliable;
+    dst->_sn_rx_best_effort = src->_sn_rx_best_effort;
+    dst->_received = src->_received;
+    dst->_remote_zid = src->_remote_zid;
+    dst->_socket = src->_socket;
+}
+
+size_t _z_transport_unicast_peer_size(const _z_transport_unicast_peer_t *src) {
+    _ZP_UNUSED(src);
+    return sizeof(_z_transport_unicast_peer_t);
+}
+
+bool _z_transport_unicast_peer_eq(const _z_transport_unicast_peer_t *left, const _z_transport_unicast_peer_t *right) {
+    return _z_id_eq(&left->_remote_zid, &right->_remote_zid);
 }

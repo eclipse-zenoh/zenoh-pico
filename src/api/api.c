@@ -747,6 +747,9 @@ z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t 
     }
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            // TODO
+            break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
             _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)->_tp), &callback->_this._val);

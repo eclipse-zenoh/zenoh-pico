@@ -72,6 +72,33 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
                                                                     _z_transport_peer_entry_t *entry);
 
+typedef struct {
+    _z_sys_net_socket_t _socket;
+    _z_id_t _remote_zid;
+    // SN numbers
+    _z_zint_t _sn_rx_reliable;
+    _z_zint_t _sn_rx_best_effort;
+    volatile bool _received;
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Defragmentation buffers
+    uint8_t _state_reliable;
+    uint8_t _state_best_effort;
+    _z_wbuf_t _dbuf_reliable;
+    _z_wbuf_t _dbuf_best_effort;
+    // Patch
+    uint8_t _patch;
+#endif
+} _z_transport_unicast_peer_t;
+
+void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src);
+void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src);
+size_t _z_transport_unicast_peer_size(const _z_transport_unicast_peer_t *src);
+bool _z_transport_unicast_peer_eq(const _z_transport_unicast_peer_t *left, const _z_transport_unicast_peer_t *right);
+_Z_ELEM_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t, _z_transport_unicast_peer_size,
+               _z_transport_unicast_peer_clear, _z_transport_unicast_peer_copy, _z_noop_move)
+_Z_LIST_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t)
+
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
@@ -113,19 +140,10 @@ typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_tran
 
 typedef struct {
     _z_transport_common_t _common;
-    _z_id_t _remote_zid;
-    _z_zint_t _sn_rx_reliable;
-    _z_zint_t _sn_rx_best_effort;
-    volatile bool _received;
-
-#if Z_FEATURE_FRAGMENTATION == 1
-    // Defragmentation buffer
-    uint8_t _state_reliable;
-    uint8_t _state_best_effort;
-    _z_wbuf_t _dbuf_reliable;
-    _z_wbuf_t _dbuf_best_effort;
-    // Patch
-    uint8_t _patch;
+    // Known valid peers
+    _z_transport_unicast_peer_list_t *_peers;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_t _mutex_peer;
 #endif
 } _z_transport_unicast_t;
 
