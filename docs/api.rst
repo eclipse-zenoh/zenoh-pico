@@ -442,6 +442,18 @@ Functions
 .. autocfunction:: primitives.h::z_timestamp_id
 .. autocfunction:: primitives.h::z_timestamp_ntp64_time
 
+
+Entity Global ID
+----------------
+Types
+^^^^^
+.. c:type:: z_entity_global_id_t
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_entity_global_id_eid
+.. autocfunction:: primitives.h::z_entity_global_id_zid
+
 Closures
 ========
 

@@ -418,6 +418,17 @@ uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts) { return ts->time; }
 
 z_id_t z_timestamp_id(const z_timestamp_t *ts) { return ts->id; }
 
+z_result_t z_entity_global_id_new(z_entity_global_id_t *gid, const z_id_t *zid, uint32_t eid) {
+    *gid = _z_entity_global_id_null();
+    gid->zid = *zid;
+    gid->eid = eid;
+    return _Z_RES_OK;
+}
+
+uint32_t z_entity_global_id_eid(const z_entity_global_id_t *gid) { return gid->eid; }
+
+z_id_t z_entity_global_id_zid(const z_entity_global_id_t *gid) { return gid->zid; }
+
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
 z_query_consolidation_t z_query_consolidation_auto(void) {

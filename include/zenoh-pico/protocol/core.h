@@ -63,6 +63,14 @@ uint8_t _z_id_len(_z_id_t id);
 static inline bool _z_id_check(_z_id_t id) { return memcmp(&id, &empty_id, sizeof(id)) != 0; }
 static inline _z_id_t _z_id_empty(void) { return (_z_id_t){0}; }
 
+typedef struct {
+    _z_id_t zid;
+    uint32_t eid;
+} _z_entity_global_id_t;
+
+// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
+static inline _z_entity_global_id_t _z_entity_global_id_null(void) { return (_z_entity_global_id_t){0}; }
+
 /**
  * A zenoh timestamp.
  */
