@@ -28,9 +28,10 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     z_result_t ret = _Z_RES_OK;
 
     _z_transport_message_t t_msg;
+    _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(ztu->_peers);
     ret = _z_unicast_recv_t_msg(ztu, &t_msg);
     if (ret == _Z_RES_OK) {
-        ret = _z_unicast_handle_transport_message(ztu, &t_msg);
+        ret = _z_unicast_handle_transport_message(ztu, &t_msg, peer);
         _z_t_msg_clear(&t_msg);
     }
     ret = _z_unicast_update_rx_buffer(ztu);
@@ -101,7 +102,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
 
         // Mark the session that we have received data
-        ztu->_received = true;
+        peer->_received = true;
 
         while (_z_zbuf_len(&zbuf) > 0) {
             // Decode one session message
@@ -110,7 +111,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 _z_transport_message_decode(&t_msg, &zbuf, &ztu->_common._arc_pool, &ztu->_common._msg_pool);
 
             if (ret == _Z_RES_OK) {
-                ret = _z_unicast_handle_transport_message(ztu, &t_msg);
+                ret = _z_unicast_handle_transport_message(ztu, &t_msg, peer);
                 if (ret != _Z_RES_OK) {
                     if (ret != _Z_ERR_CONNECTION_CLOSED) {
                         _Z_ERROR("Connection closed due to message processing error: %d", ret);

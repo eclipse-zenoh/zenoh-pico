@@ -63,19 +63,18 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
-
-    ztu->_received = false;
     ztu->_common._transmitted = false;
 
     int next_lease = (int)ztu->_common._lease;
     int next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
-    while (ztu->_common._lease_task_running == true) {
+    _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(ztu->_peers);
+    while (ztu->_common._lease_task_running) {
         // Next lease process
         if (next_lease <= 0) {
             // Check if received data
-            if (ztu->_received == true) {
+            if (peer->_received == true) {
                 // Reset the lease parameters
-                ztu->_received = false;
+                peer->_received = false;
             } else {
                 // THIS LOG STRING USED IN TEST, change with caution
                 _Z_INFO("Closing session because it has expired after %zums", ztu->_common._lease);

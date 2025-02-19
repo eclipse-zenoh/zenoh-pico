@@ -115,11 +115,10 @@ static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mod
     return ret;
 }
 
-static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, z_whatami_t mode,
-                                int peer_op) {
+static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
 
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, mode, peer_op);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, _Z_RC_IN_VAL(zn)->_mode, peer_op);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -144,6 +143,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
     if (ret != _Z_RES_OK) {
         return ret;
     }
+    _Z_RC_IN_VAL(zn)->_mode = mode;
 
     ret = _Z_ERR_SCOUT_NO_RESULTS;
     size_t len = _z_string_svec_len(&locators);
@@ -151,7 +151,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         ret = _Z_RES_OK;
 
         _z_string_t *locator = _z_string_svec_get(&locators, i);
-        ret = _z_open_inner(zn, locator, zid, mode, peer_op);
+        ret = _z_open_inner(zn, locator, zid, peer_op);
         if (ret == _Z_RES_OK) {
             break;
         }
@@ -286,7 +286,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
 
         switch (zn->_tp._type) {
             case _Z_TRANSPORT_UNICAST_TYPE:
-                _zp_unicast_info_session(&zn->_tp, ps);
+                _zp_unicast_info_session(&zn->_tp, ps, zn->_mode);
                 break;
             case _Z_TRANSPORT_MULTICAST_TYPE:
             case _Z_TRANSPORT_RAWETH_TYPE:
