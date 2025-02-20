@@ -112,9 +112,18 @@ static inline size_t _z_noop_link_read_socket(const _z_sys_net_socket_t socket, 
     return 0;
 }
 
+enum _z_link_type_e {
+    _Z_LINK_TYPE_TCP,
+    _Z_LINK_TYPE_UDP,
+    _Z_LINK_TYPE_BT,
+    _Z_LINK_TYPE_SERIAL,
+    _Z_LINK_TYPE_WS,
+    _Z_LINK_TYPE_RAWETH,
+};
+
 typedef struct _z_link_t {
     _z_endpoint_t _endpoint;
-
+    int _type;
     union {
 #if Z_FEATURE_LINK_TCP == 1
         _z_tcp_socket_t _tcp;
@@ -159,6 +168,7 @@ z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
 size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr);
 size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket);
+_z_sys_net_socket_t _z_link_get_socket(const _z_link_t *link);
 
 #ifdef __cplusplus
 }

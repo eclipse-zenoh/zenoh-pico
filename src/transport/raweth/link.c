@@ -468,7 +468,7 @@ z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
 
 z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
     z_result_t ret = _Z_RES_OK;
-
+    zl->_type = _Z_LINK_TYPE_RAWETH;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_RAWETH;
     zl->_cap._is_reliable = false;
     zl->_mtu = _z_get_link_mtu_raweth();

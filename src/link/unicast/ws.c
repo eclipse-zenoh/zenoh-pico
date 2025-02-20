@@ -161,7 +161,7 @@ uint16_t _z_get_link_mtu_ws(void) {
 
 z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *endpoint) {
     z_result_t ret = _Z_RES_OK;
-
+    zl->_type = _Z_LINK_TYPE_WS;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_DATAGRAM;
     zl->_cap._is_reliable = true;
