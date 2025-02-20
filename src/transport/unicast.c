@@ -41,7 +41,7 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback)
 }
 
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps, int mode) {
-    int config_entry = (mode == Z_WHATAMI_CLIENT) ? Z_INFO_ROUTER_PID_KEY : Z_INFO_PEER_PID_KEY;
+    uint_fast8_t config_entry = (mode == Z_WHATAMI_CLIENT) ? Z_INFO_ROUTER_PID_KEY : Z_INFO_PEER_PID_KEY;
     _z_transport_peer_entry_list_t *xs = zt->_transport._unicast._peers;
     while (xs != NULL) {
         _z_transport_peer_entry_t *peer = _z_transport_peer_entry_list_head(xs);

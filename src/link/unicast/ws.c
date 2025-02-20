@@ -150,7 +150,7 @@ size_t _z_f_link_read_exact_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z
     return _z_read_exact_ws(zl->_socket._ws._sock, ptr, len);
 }
 
-size_t _z_f_link_ws_read_socket(const _z_sys_net_socket_t *socket, uint8_t *ptr, size_t len) {
+size_t _z_f_link_ws_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
     return _z_read_ws(socket, ptr, len);
 }
 
