@@ -129,7 +129,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     }
     // Build the reply
     _z_reply_t reply = _z_reply_alias(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                                      &msg->_encoding, kind, &msg->_attachment);
+                                      &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {

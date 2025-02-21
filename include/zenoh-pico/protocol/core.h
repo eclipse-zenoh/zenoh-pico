@@ -70,6 +70,10 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_entity_global_id_t _z_entity_global_id_null(void) { return (_z_entity_global_id_t){0}; }
+static inline bool _z_entity_global_id_check(const _z_entity_global_id_t *info) {
+    return _z_id_check(info->zid) || info->eid != 0;
+}
+z_result_t _z_entity_global_id_copy(_z_entity_global_id_t *dst, const _z_entity_global_id_t *src);
 
 /**
  * A zenoh timestamp.
@@ -225,13 +229,17 @@ typedef struct {
 } _z_target_complete_body_t;
 
 typedef struct {
-    _z_id_t _id;
-    uint32_t _entity_id;
+    _z_entity_global_id_t _source_id;
     uint32_t _source_sn;
 } _z_source_info_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_source_info_t _z_source_info_null(void) { return (_z_source_info_t){0}; }
+static inline void _z_source_info_clear(_z_source_info_t *info) { (void)(info); }
+z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src);
+static inline bool _z_source_info_check(const _z_source_info_t *info) {
+    return _z_entity_global_id_check(&info->_source_id) || info->_source_sn != 0;
+}
 
 typedef struct {
     uint32_t _request_id;

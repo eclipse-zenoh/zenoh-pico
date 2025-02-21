@@ -194,7 +194,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
 z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
                     const _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                    const _z_bytes_t attachment, z_reliability_t reliability) {
+                    const _z_bytes_t attachment, z_reliability_t reliability, const _z_source_info_t *source_info) {
     z_result_t ret = _Z_RES_OK;
     _z_network_message_t msg;
     switch (kind) {
@@ -212,7 +212,8 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes
                         ._body._body._put =
                             {
                                 ._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
-                                             ._source_info = _z_source_info_null()},
+                                             ._source_info =
+                                                 ((source_info != NULL) ? *source_info : _z_source_info_null())},
                                 ._payload = payload,
                                 ._encoding = encoding == NULL ? _z_encoding_null() : *encoding,
                                 ._attachment = attachment,
