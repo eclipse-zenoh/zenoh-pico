@@ -577,13 +577,13 @@ void payload_field(void) {
 
 _z_source_info_t gen_source_info(void) {
     return (_z_source_info_t){
-        ._id = gen_zid(), ._source_sn = (uint32_t)gen_uint64(), ._entity_id = (uint32_t)gen_uint64()};
+        ._source_id.zid = gen_zid(), ._source_sn = (uint32_t)gen_uint64(), ._source_id.eid = (uint32_t)gen_uint64()};
 }
 
 void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t *right) {
     assert(left->_source_sn == right->_source_sn);
-    assert(left->_entity_id == right->_entity_id);
-    assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
+    assert(left->_source_id.eid == right->_source_id.eid);
+    assert(memcmp(left->_source_id.zid.id, right->_source_id.zid.id, 16) == 0);
 }
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->id == right->id);
