@@ -22,6 +22,10 @@ void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     _z_encoding_move(&dst->encoding, &src->encoding);
     _z_timestamp_move(&dst->timestamp, &src->timestamp);
     _z_bytes_move(&dst->attachment, &src->attachment);
+    _z_timestamp_move(&dst->timestamp, &src->timestamp);
+    dst->qos = src->qos;
+    dst->reliability = src->reliability;
+    dst->kind = src->kind;
 }
 
 void _z_sample_clear(_z_sample_t *sample) {

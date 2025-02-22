@@ -62,7 +62,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: z_loaned_slice_t * z_view_slice_loan_mut(z_view_slice_t * slice)
 .. c:function:: const z_loaned_slice_t * z_slice_loan(const z_owned_slice_t * slice)
 .. c:function:: z_loaned_slice_t * z_slice_loan_mut(z_owned_slice_t * slice)
-
+.. c:function:: z_result_t z_slice_take_from_loaned(z_owned_slice_t *dst, z_loaned_slice_t *src)
 
 String
 ------
@@ -108,7 +108,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: z_loaned_string_t * z_view_string_loan_mut(z_view_string_t * string)
 .. c:function:: const z_loaned_string_t * z_string_loan(const z_owned_string_t * string)
 .. c:function:: z_loaned_string_t * z_string_loan_mut(z_owned_string_t * string)
-
+.. c:function:: z_result_t z_string_take_from_loaned(z_owned_string_t *dst, z_loaned_string_t *src)
 
 String Array
 ------------
@@ -142,6 +142,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_string_array_clone(z_owned_string_array_t * dst, const z_loaned_string_array_t * string_array) 
 .. c:function:: const z_loaned_string_array_t * z_string_array_loan(const z_owned_string_array_t * string_array)
 .. c:function:: z_loaned_string_array_t * z_string_array_loan_mut(z_owned_string_array_t * string_array)
+.. c:function:: z_result_t z_string_array_take_from_loaned(z_owned_string_array_t *dst, z_loaned_string_array_t *src)
 
 
 Common
@@ -205,6 +206,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: z_loaned_keyexpr_t * z_view_keyexpr_loan_mut(z_view_keyexpr_t * keyexpr)
 .. c:function:: const z_loaned_keyexpr_t * z_keyexpr_loan(const z_owned_keyexpr_t * keyexpr)
 .. c:function:: z_loaned_keyexpr_t * z_keyexpr_loan_mut(z_owned_keyexpr_t * keyexpr)
+.. c:function:: z_result_t z_keyexpr_take_from_loaned(z_owned_keyexpr_t *dst, z_loaned_keyexpr_t *src)
 
 Payload
 -------
@@ -266,11 +268,13 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_bytes_clone(z_owned_bytes_t * dst, const z_loaned_bytes_t * bytes) 
 .. c:function:: const z_loaned_bytes_t * z_bytes_loan(const z_owned_bytes_t * bytes)
 .. c:function:: z_loaned_bytes_t * z_bytes_loan_mut(z_owned_bytes_t * bytes)
+.. c:function:: z_result_t z_bytes_take_from_loaned(z_owned_bytes_t *dst, z_loaned_bytes_t *src)
 
 .. c:function:: void z_bytes_writer_drop(z_moved_bytes_writer_t * bytes_writer) 
 .. c:function:: void z_bytes_writer_clone(z_owned_bytes_writer_t * dst, const z_loaned_bytes_writer_t * bytes_writer) 
 .. c:function:: const z_loaned_bytes_writer_t * z_bytes_writer_loan(const z_owned_bytes_writer_t * bytes_writer)
 .. c:function:: z_loaned_bytes_writer_t * z_bytes_writer_loan_mut(z_owned_bytes_writer_t * bytes_writer)
+.. c:function:: z_result_t z_bytes_writer_take_from_loaned(z_owned_bytes_writer_t *dst, z_loaned_bytes_writer_t *src)
 
 Encoding
 --------
@@ -305,6 +309,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_encoding_clone(z_owned_encoding_t * dst, const z_loaned_encoding_t * encoding) 
 .. c:function:: const z_loaned_encoding_t * z_encoding_loan(const z_owned_encoding_t * encoding)
 .. c:function:: z_loaned_encoding_t * z_encoding_loan_mut(z_owned_encoding_t * encoding)
+.. c:function:: z_result_t z_encoding_take_from_loaned(z_owned_encoding_t *dst, z_loaned_encoding_t *src)
 
 
 Predefined Encodings
@@ -390,7 +395,8 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_reply_err_drop(z_moved_reply_err_t * reply_err) 
 .. c:function:: void z_reply_err_clone(z_owned_reply_err_t * dst, const z_loaned_reply_err_t * reply_err) 
 .. c:function:: const z_loaned_reply_err_t * z_reply_err_loan(const z_owned_reply_err_t * reply_err)
-
+.. c:function:: z_loaned_reply_err_t * z_reply_err_loan_mut(z_owned_reply_err_t * reply_err)
+.. c:function:: z_result_t z_reply_err_take_from_loaned(z_owned_reply_err_t *dst, z_loaned_reply_err_t *src)
 
 Sample
 ------
@@ -429,6 +435,8 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_sample_drop(z_moved_sample_t * sample) 
 .. c:function:: void z_sample_clone(z_owned_sample_t * dst, const z_loaned_sample_t * sample) 
 .. c:function:: const z_loaned_sample_t * z_sample_loan(const z_owned_sample_t * sample)
+.. c:function:: z_loaned_sample_t * z_sample_loan_mut(z_owned_sample_t * sample)
+.. c:function:: z_result_t z_sample_take_from_loaned(z_owned_sample_t *dst, z_loaned_sample_t *src)
 
 
 Timestamp
@@ -1166,6 +1174,8 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_query_drop(z_moved_query_t * query) 
 .. c:function:: void z_query_clone(z_owned_query_t * dst, const z_loaned_query_t * query) 
 .. c:function:: const z_loaned_query_t * z_query_loan(const z_owned_query_t * query)
+.. c:function:: z_loaned_query_t * z_query_loan_mut(z_owned_query_t * query)
+.. c:function:: z_result_t z_query_take_from_loaned(z_owned_query_t *dst, z_loaned_query_t *src)
 
 Query
 =====
@@ -1212,6 +1222,8 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_reply_drop(z_moved_reply_t * reply) 
 .. c:function:: void z_reply_clone(z_owned_reply_t * dst, const z_loaned_reply_t * reply) 
 .. c:function:: const z_loaned_reply_t * z_reply_loan(const z_owned_reply_t * reply)
+.. c:function:: z_loaned_reply_t * z_reply_loan_mut(z_owned_reply_t * reply)
+.. c:function:: z_result_t z_reply_take_from_loaned(z_owned_reply_t *dst, z_loaned_reply_t *src)
 
 Querier
 =======
@@ -1293,6 +1305,8 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_hello_drop(z_moved_hello_t * hello) 
 .. c:function:: void z_hello_clone(z_owned_hello_t * dst, const z_loaned_hello_t * hello) 
 .. c:function:: const z_loaned_hello_t * z_hello_loan(const z_owned_hello_t * hello)
+.. c:function:: z_loaned_hello_t * z_hello_loan(z_owned_hello_t * hello)
+.. c:function:: z_result_t z_hello_take_from_loaned(z_owned_hello_t *dst, z_loaned_hello_t *src)
 
 
 Serialization
@@ -1376,6 +1390,16 @@ Functions
 .. autocfunction:: serialization.h::ze_serialize_str
 .. autocfunction:: serialization.h::ze_serialize_substr
 
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: void ze_serializer_drop(ze_moved_serializer_t * serializer) 
+.. c:function:: void ze_serializer_clone(ze_owned_serializer_t * dst, const ze_loaned_serializer_t * serializer) 
+.. c:function:: const ze_loaned_serializer_t * ze_serializer_loan(const ze_owned_serializer_t * serializer)
+.. c:function:: ze_loaned_serializer_t * ze_serializer_loan_mut(ze_owned_serializer_t * serializer)
+.. c:function:: z_result_t ze_serializer_take_from_loaned(ze_owned_serializer_t *dst, ze_loaned_serializer_t *src)
 
 Liveliness
 ========================
