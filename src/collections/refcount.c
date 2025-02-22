@@ -49,9 +49,9 @@
 
 // c11 atomic variant
 #define _ZP_RC_CNT_TYPE _z_atomic(unsigned int)
-#define _ZP_RC_OP_INIT_CNT(p)                                                              \
-    _z_atomic_store_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed); \
-    _z_atomic_store_explicit(&(p)->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INIT_STRONG_CNT(p) \
+    _z_atomic_store_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
+#define _ZP_RC_OP_INIT_WEAK_CNT(p) _z_atomic_store_explicit(&(p)->_weak_cnt, (unsigned int)1, _z_memory_order_relaxed);
 #define _ZP_RC_OP_INCR_STRONG_CNT(p) \
     _z_atomic_fetch_add_explicit(&(p)->_strong_cnt, (unsigned int)1, _z_memory_order_relaxed);
 #define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) \
@@ -83,10 +83,11 @@
 
 // c99 gcc sync builtin variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT(p)                                 \
+#define _ZP_RC_OP_INIT_STRONG_CNT(p)                          \
     __sync_fetch_and_and(&(p)->_strong_cnt, (unsigned int)0); \
-    __sync_fetch_and_add(&(p)->_strong_cnt, (unsigned int)1); \
-    __sync_fetch_and_and(&(p)->_weak_cnt, (unsigned int)0);   \
+    __sync_fetch_and_add(&(p)->_strong_cnt, (unsigned int)1);
+#define _ZP_RC_OP_INIT_WEAK_CNT(p)                          \
+    __sync_fetch_and_and(&(p)->_weak_cnt, (unsigned int)0); \
     __sync_fetch_and_add(&(p)->_weak_cnt, (unsigned int)1);
 #define _ZP_RC_OP_INCR_STRONG_CNT(p) __sync_fetch_and_add(&(p)->_strong_cnt, (unsigned int)1);
 #define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) __sync_fetch_and_add(&(p)->_weak_cnt, (unsigned int)1) >= x
@@ -117,7 +118,8 @@
 // None variant
 #error "Multi-thread refcount in C99 only exists for GCC, use GCC or C11 or deactivate multi-thread"
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT(p)
+#define _ZP_RC_OP_INIT_STRONG_CNT(p)
+#define _ZP_RC_OP_INIT_WEAK_CNT(p)
 #define _ZP_RC_OP_INCR_STRONG_CNT(p)
 #define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) (x == 0)
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) (x == 0)
@@ -136,9 +138,8 @@
 
 // Single thread variant
 #define _ZP_RC_CNT_TYPE unsigned int
-#define _ZP_RC_OP_INIT_CNT(p)           \
-    (p)->_strong_cnt = (unsigned int)1; \
-    (p)->_weak_cnt = (unsigned int)1;
+#define _ZP_RC_OP_INIT_STRONG_CNT(p) (p)->_strong_cnt = (unsigned int)1;
+#define _ZP_RC_OP_INIT_WEAK_CNT(p) (p)->_weak_cnt = (unsigned int)1;
 #define _ZP_RC_OP_INCR_STRONG_CNT(p) p->_strong_cnt++;
 #define _ZP_RC_OP_INCR_AND_CMP_WEAK(p, x) p->_weak_cnt++ >= x
 #define _ZP_RC_OP_DECR_AND_CMP_STRONG(p, x) p->_strong_cnt-- > (unsigned int)x
@@ -170,7 +171,8 @@ z_result_t _z_rc_init(void** cnt) {
     if ((*cnt) == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _ZP_RC_OP_INIT_CNT((_z_inner_rc_t*)*cnt)
+    _ZP_RC_OP_INIT_STRONG_CNT((_z_inner_rc_t*)*cnt)
+    _ZP_RC_OP_INIT_WEAK_CNT((_z_inner_rc_t*)*cnt)
     return _Z_RES_OK;
 }
 
@@ -198,7 +200,8 @@ bool _z_rc_decrease_strong(void** cnt) {
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return _z_rc_decrease_weak(cnt);
     }
-    return _z_rc_decrease_weak(cnt);
+    _z_rc_decrease_weak(cnt);
+    return true;
 }
 
 bool _z_rc_decrease_weak(void** cnt) {
@@ -219,3 +222,33 @@ z_result_t _z_rc_weak_upgrade(void* cnt) { return _upgrade((_z_inner_rc_t*)cnt);
 size_t _z_rc_weak_count(void* cnt) { return ((_z_inner_rc_t*)cnt)->_weak_cnt; }
 
 size_t _z_rc_strong_count(void* cnt) { return ((_z_inner_rc_t*)cnt)->_strong_cnt; }
+
+typedef struct {
+    _ZP_RC_CNT_TYPE _strong_cnt;
+} _z_inner_simple_rc_t;
+
+z_result_t _z_simple_rc_init(void** cnt) {
+    *cnt = z_malloc(sizeof(_z_inner_simple_rc_t));
+    if ((*cnt) == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _ZP_RC_OP_INIT_STRONG_CNT((_z_inner_simple_rc_t*)*cnt)
+    return _Z_RES_OK;
+}
+
+z_result_t _z_simple_rc_increase(void* cnt) {
+    _z_inner_simple_rc_t* c = (_z_inner_simple_rc_t*)cnt;
+    _ZP_RC_OP_INCR_STRONG_CNT(c);
+    return _Z_RES_OK;
+}
+
+bool _z_simple_rc_decrease(void** cnt) {
+    _z_inner_simple_rc_t* c = (_z_inner_simple_rc_t*)*cnt;
+    if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
+        return false;
+    }
+    z_free(*cnt);
+    return true;
+}
+
+size_t _z_simple_rc_strong_count(void* cnt) { return ((_z_inner_simple_rc_t*)cnt)->_strong_cnt; }

@@ -28,14 +28,6 @@ void _z_default_deleter(void *data, void *context) {
     z_free(data);
 }
 
-_z_delete_context_t _z_delete_context_null(void) { return _z_delete_context_create(NULL, NULL); }
-
-bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
-
-_z_delete_context_t _z_delete_context_create(void (*deleter)(void *data, void *context), void *context) {
-    return (_z_delete_context_t){.deleter = deleter, .context = context};
-}
-
 _z_delete_context_t _z_delete_context_default(void) { return _z_delete_context_create(_z_default_deleter, NULL); }
 
 void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
@@ -45,27 +37,17 @@ void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
 }
 
 /*-------- Slice --------*/
-_z_slice_t _z_slice_empty(void) {
-    return (_z_slice_t){.start = NULL, .len = 0, ._delete_context = _z_delete_context_null()};
-}
-
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
-    z_result_t ret = _Z_RES_OK;
-
-    bs->start = capacity == 0 ? NULL : (uint8_t *)z_malloc(capacity);
-    if (bs->start != NULL) {
-        bs->len = capacity;
-        bs->_delete_context = _z_delete_context_default();
-    } else {
+    assert(capacity != 0);
+    bs->start = (uint8_t *)z_malloc(capacity);
+    if (bs->start == NULL) {
         bs->len = 0;
         bs->_delete_context = _z_delete_context_null();
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-
-    if (bs->len != capacity) {
-        ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-
-    return ret;
+    bs->len = capacity;
+    bs->_delete_context = _z_delete_context_default();
+    return _Z_RES_OK;
 }
 
 _z_slice_t _z_slice_make(size_t capacity) {
@@ -82,11 +64,6 @@ _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_del
     return bs;
 }
 
-_z_slice_t _z_slice_alias(const _z_slice_t *bs) {
-    _z_slice_t alias = {.len = bs->len, .start = bs->start, ._delete_context = _z_delete_context_null()};
-    return alias;
-}
-
 _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
     return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_null());
 }
@@ -96,14 +73,8 @@ _z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
     return _z_slice_duplicate(&bs);
 }
 
-void _z_slice_reset(_z_slice_t *bs) {
-    bs->start = NULL;
-    bs->len = 0;
-    bs->_delete_context = _z_delete_context_null();
-}
-
 void _z_slice_clear(_z_slice_t *bs) {
-    if ((bs->start != NULL)) {
+    if (bs->start != NULL) {
         _z_delete_context_delete(&bs->_delete_context, (void *)bs->start);
     }
     _z_slice_reset(bs);
@@ -141,24 +112,19 @@ z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset
 }
 
 void _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
-    dst->start = src->start;
-    dst->len = src->len;
-    dst->_delete_context = src->_delete_context;
-
+    *dst = *src;
     _z_slice_reset(src);
 }
 
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {
-    _z_slice_t dst = _z_slice_empty();
+    _z_slice_t dst = _z_slice_null();
     _z_slice_copy(&dst, src);
     return dst;
 }
 
-bool _z_slice_is_empty(const _z_slice_t *bs) { return bs->len == 0; }
-
 _z_slice_t _z_slice_steal(_z_slice_t *b) {
     _z_slice_t ret = *b;
-    *b = _z_slice_empty();
+    *b = _z_slice_null();
     return ret;
 }
 bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right) {

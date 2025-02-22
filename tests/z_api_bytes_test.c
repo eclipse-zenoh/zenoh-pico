@@ -234,15 +234,18 @@ bool check_slice(const z_loaned_bytes_t *b, const uint8_t *data, size_t len) {
 void test_slices(void) {
     uint8_t data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     z_owned_bytes_t payload;
-
-    z_owned_bytes_writer_t writer;
-    z_bytes_writer_empty(&writer);
-    z_bytes_writer_write_all(z_bytes_writer_loan_mut(&writer), data, 10);
-    z_bytes_writer_finish(z_bytes_writer_move(&writer), &payload);
-
+    z_bytes_copy_from_buf(&payload, data, 10);
     assert(check_slice(z_bytes_loan(&payload), data, 10));
 
+#if defined(Z_FEATURE_UNSTABLE_API)
+    z_view_slice_t view;
+    assert(z_bytes_get_contiguous_view(z_bytes_loan(&payload), &view) == Z_OK);
+    assert(z_slice_len(z_view_slice_loan(&view)) == 10);
+    assert(memcmp(data, z_slice_data(z_view_slice_loan(&view)), 10) == 0);
+#endif
     z_bytes_drop(z_bytes_move(&payload));
+
+    z_owned_bytes_writer_t writer;
     z_bytes_writer_empty(&writer);
 
     // possible multiple slices
@@ -255,6 +258,9 @@ void test_slices(void) {
 
     z_bytes_writer_finish(z_bytes_writer_move(&writer), &payload);
     assert(check_slice(z_bytes_loan(&payload), data, 10));
+#if defined(Z_FEATURE_UNSTABLE_API)
+    assert(z_bytes_get_contiguous_view(z_bytes_loan(&payload), &view) != Z_OK);
+#endif
     z_bytes_drop(z_bytes_move(&payload));
 }
 

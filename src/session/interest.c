@@ -21,11 +21,14 @@
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_INTEREST == 1
@@ -94,14 +97,14 @@ static _z_session_interest_rc_list_t *__unsafe_z_get_interest_by_key_and_flags(_
 }
 
 static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t interest_id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_resource_list_t *res_list = _z_resource_list_clone(zn->_local_resources);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     _z_resource_list_t *xs = res_list;
     while (xs != NULL) {
         _z_resource_t *res = _z_resource_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(res->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(&res->_key);
         _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &key);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
@@ -116,14 +119,14 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t interest_id) {
-    _zp_session_lock_mutex(zn);
-    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_local_subscriptions);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_lock(zn);
+    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_subscriptions);
+    _z_session_mutex_unlock(zn);
     _z_subscription_rc_list_t *xs = sub_list;
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(sub)->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(sub)->_key);
         _z_declaration_t declaration = _z_make_decl_subscriber(&key, _Z_RC_IN_VAL(sub)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
@@ -145,14 +148,14 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
 
 #if Z_FEATURE_QUERYABLE == 1
 static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t interest_id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_session_queryable_rc_list_t *qle_list = _z_session_queryable_rc_list_clone(zn->_local_queryable);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     _z_session_queryable_rc_list_t *xs = qle_list;
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
         // Build the declare message to send on the wire
-        _z_keyexpr_t key = _z_keyexpr_alias(_Z_RC_IN_VAL(qle)->_key);
+        _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(qle)->_key);
         _z_declaration_t declaration = _z_make_decl_queryable(
             &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
@@ -173,6 +176,35 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
 }
 #endif
 
+#if Z_FEATURE_LIVELINESS == 1
+static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
+    _z_session_mutex_lock(zn);
+    _z_keyexpr_intmap_t token_list = _z_keyexpr_intmap_clone(&zn->_local_tokens);
+    _z_session_mutex_unlock(zn);
+    _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
+    while (_z_keyexpr_intmap_iterator_next(&iter)) {
+        // Build the declare message to send on the wire
+        uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
+        _z_keyexpr_t key = *_z_keyexpr_intmap_iterator_value(&iter);
+        _z_declaration_t declaration = _z_make_decl_token(&key, id);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
+    }
+    _z_keyexpr_intmap_clear(&token_list);
+
+    return _Z_RES_OK;
+}
+#else
+static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(interest_id);
+    return _Z_RES_OK;
+}
+#endif
+
 static z_result_t _z_interest_send_declare_final(_z_session_t *zn, uint32_t interest_id) {
     _z_declaration_t decl = _z_make_decl_final();
     _z_network_message_t n_msg = _z_n_msg_make_declare(decl, true, interest_id);
@@ -184,9 +216,9 @@ static z_result_t _z_interest_send_declare_final(_z_session_t *zn, uint32_t inte
 }
 
 _z_session_interest_rc_t *_z_get_interest_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     return intr;
 }
 
@@ -195,13 +227,13 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
              (int)_z_string_len(&intr->_key._suffix), _z_string_data(&intr->_key._suffix));
     _z_session_interest_rc_t *ret = NULL;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     ret = (_z_session_interest_rc_t *)z_malloc(sizeof(_z_session_interest_rc_t));
     if (ret != NULL) {
         *ret = _z_session_interest_rc_new_from_val(intr);
         zn->_local_interests = _z_session_interest_rc_list_push(zn->_local_interests, ret);
     }
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     return ret;
 }
 
@@ -228,7 +260,7 @@ static _z_keyexpr_t _unsafe_z_get_key_from_declare(_z_session_t *zn, uint32_t id
     while (xs != NULL) {
         _z_declare_data_t *decl = _z_declare_data_list_head(xs);
         if (_z_declare_data_eq(&comp, decl)) {
-            return _z_keyexpr_duplicate(decl->_key);
+            return _z_keyexpr_duplicate(&decl->_key);
         }
         xs = _z_declare_data_list_tail(xs);
     }
@@ -265,21 +297,28 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
+        case _Z_DECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_DECL_TOKEN;
+            msg.id = decl->_body._decl_token._id;
+            decl_key = &decl->_body._decl_token._keyexpr;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
+            break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
     }
     // Retrieve key
-    _zp_session_lock_mutex(zn);
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key);
+    _z_session_mutex_lock(zn);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key, true);
     if (!_z_keyexpr_has_suffix(&key)) {
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
     // Register declare
     _unsafe_z_register_declare(zn, &key, msg.id, decl_type);
     // Retrieve interests
     _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key_and_flags(zn, flags, &key);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     // Parse session_interest list
     _z_session_interest_rc_list_t *xs = intrs;
     while (xs != NULL) {
@@ -312,20 +351,26 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
             decl_type = _Z_DECLARE_TYPE_QUERYABLE;
             flags = _Z_INTEREST_FLAG_QUERYABLES;
             break;
+        case _Z_UNDECL_TOKEN:
+            msg.type = _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN;
+            msg.id = decl->_body._undecl_token._id;
+            decl_type = _Z_DECLARE_TYPE_TOKEN;
+            flags = _Z_INTEREST_FLAG_TOKENS;
+            break;
         default:
             return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
     }
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     // Retrieve declare data
     _z_keyexpr_t key = _unsafe_z_get_key_from_declare(zn, msg.id, decl_type);
     if (!_z_keyexpr_has_suffix(&key)) {
-        _zp_session_unlock_mutex(zn);
+        _z_session_mutex_unlock(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
     }
     _z_session_interest_rc_list_t *intrs = __unsafe_z_get_interest_by_key_and_flags(zn, flags, &key);
     // Remove declare
     _unsafe_z_unregister_declare(zn, msg.id, decl_type);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     // Parse session_interest list
     _z_session_interest_rc_list_t *xs = intrs;
@@ -343,25 +388,32 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
 }
 
 void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     zn->_local_interests =
         _z_session_interest_rc_list_drop_filter(zn->_local_interests, _z_session_interest_rc_eq, intr);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
+}
+
+void _z_interest_init(_z_session_t *zn) {
+    _z_session_mutex_lock(zn);
+    zn->_local_interests = NULL;
+    zn->_remote_declares = NULL;
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_interest(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_session_interest_rc_list_free(&zn->_local_interests);
     _z_declare_data_list_free(&zn->_remote_declares);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id) {
     _z_interest_msg_t msg = {.type = _Z_INTEREST_MSG_TYPE_FINAL, .id = id};
     // Retrieve interest
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
     _z_session_interest_rc_t *intr = __unsafe_z_get_interest_by_id(zn, id);
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
     if (intr == NULL) {
         return _Z_RES_OK;
     }
@@ -402,7 +454,8 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint
             _Z_RETURN_IF_ERR(_z_interest_send_decl_queryable(zn, id));
         }
         if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
-            // Zenoh pico doesn't support liveliness token for now
+            _Z_DEBUG("Sending declare tokens");
+            _Z_RETURN_IF_ERR(_z_interest_send_decl_token(zn, id));
         }
         // Send final declare
         _Z_RETURN_IF_ERR(_z_interest_send_declare_final(zn, id));
@@ -411,6 +464,8 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint
 }
 
 #else
+void _z_interest_init(_z_session_t *zn) { _ZP_UNUSED(zn); }
+
 void _z_flush_interest(_z_session_t *zn) { _ZP_UNUSED(zn); }
 
 z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {

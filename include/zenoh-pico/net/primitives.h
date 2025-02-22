@@ -24,11 +24,14 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/utils/config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*------------- Declaration Helpers --------------*/
+z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg);
+z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg);
 
 /*------------------ Discovery ------------------*/
 
@@ -60,7 +63,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
  * Returns:
  *     A numerical id of the declared resource.
  */
-uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
+uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 
 /**
  * Associate a numerical id with the given resource key.
@@ -75,6 +78,18 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr);
  *    0 if success, or a negative value identifying the error.
  */
 z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid);
+
+/**
+ * Declare keyexpr if it is necessary and allowed.
+ * Returns updated keyexpr.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to declare.
+ * Returns:
+ *     Updated keyexpr.
+ */
+_z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr);
 
 #if Z_FEATURE_PUBLICATION == 1
 /**
@@ -207,7 +222,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
  */
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                          z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                          const _z_bytes_t attachment);
@@ -228,6 +243,37 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 #endif
 
 #if Z_FEATURE_QUERY == 1
+/**
+ * Declare a :c:type:`_z_querier_t` for the given resource key.
+ *
+ * Parameters:
+ *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     keyexpr: The resource key to query. The callee gets the ownership of any
+ *              allocated value.
+ *     consolidation_mode: The kind of consolidation that should be applied on replies.
+ *     congestion_control: The congestion control to apply when routing the querier queries.
+ *     target: The kind of queryables that should be target of this query.
+ *     priority: The priority of the query.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *     timeout_ms: The timeout value of this query.
+ * Returns:
+ *    The created :c:type:`_z_querier_t` (in null state if the declaration failed)..
+ */
+_z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms);
+
+/**
+ * Undeclare a :c:type:`_z_querier_t`.
+ *
+ * Parameters:
+ *     querier: The :c:type:`_z_querier_t` to undeclare. The callee releases the
+ *          querier upon successful return.
+ * Returns:
+ *    0 if success, or a negative value identifying the error.
+ */
+z_result_t _z_undeclare_querier(_z_querier_t *querier);
+
 /**
  * Query data from the matching queryables in the system.
  *

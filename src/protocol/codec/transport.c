@@ -64,9 +64,14 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
     }
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_next_sn._val._plain._reliable));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_next_sn._val._plain._best_effort));
+#if Z_FEATURE_FRAGMENTATION == 1
+    bool has_patch = msg->_patch != _Z_NO_PATCH;
+#else
+    bool has_patch = false;
+#endif
     if (msg->_next_sn._is_qos) {
         if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1));
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_QOS | _Z_MSG_EXT_MORE(has_patch)));
             size_t len = 0;
             for (uint8_t i = 0; (i < Z_PRIORITIES_NUM) && (ret == _Z_RES_OK); i++) {
                 len += _z_zint_len(msg->_next_sn._val._qos[i]._reliable) +
@@ -82,6 +87,17 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
             ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
         }
     }
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (has_patch) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
+        } else {
+            _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+#endif
 
     return ret;
 }
@@ -89,14 +105,17 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
 z_result_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     z_result_t ret = _Z_RES_OK;
     _z_t_msg_join_t *msg = (_z_t_msg_join_t *)ctx;
-    if (_Z_EXT_FULL_ID(extension->_header) ==
-        (_Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 1)) {  // QOS: (enc=zbuf)(mandatory=true)(id=1)
+    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_QOS) {
         msg->_next_sn._is_qos = true;
         _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
         for (int i = 0; (ret == _Z_RES_OK) && (i < Z_PRIORITIES_NUM); ++i) {
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._reliable, &zbf);
             ret |= _z_zsize_decode(&msg->_next_sn._val._qos[i]._best_effort, &zbf);
         }
+#if Z_FEATURE_FRAGMENTATION == 1
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_JOIN_PATCH) {
+        msg->_patch = (uint8_t)extension->_body._zint._val;
+#endif
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
@@ -120,6 +139,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
+            _Z_INFO("Invalid zid length received");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -147,6 +167,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         ret |= _z_zsize_decode(&msg->_next_sn._val._plain._reliable, zbf);
         ret |= _z_zsize_decode(&msg->_next_sn._val._plain._best_effort, zbf);
     }
+    msg->_patch = _Z_NO_PATCH;
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
         ret |= _z_msg_ext_decode_iter(zbf, _z_join_decode_ext, msg);
     }
@@ -180,6 +201,32 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
         _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &msg->_cookie))
     }
 
+#if Z_FEATURE_FRAGMENTATION == 1
+    if (msg->_patch != _Z_NO_PATCH) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_JOIN_PATCH));
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_patch));
+        } else {
+            _Z_DEBUG("Attempted to serialize Patch extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+#endif
+
+    return ret;
+}
+
+z_result_t _z_init_decode_ext(_z_msg_ext_t *extension, void *ctx) {
+    z_result_t ret = _Z_RES_OK;
+    _z_t_msg_init_t *msg = (_z_t_msg_init_t *)ctx;
+    if (false) {
+#if Z_FEATURE_FRAGMENTATION == 1
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_INIT_PATCH) {
+        msg->_patch = (uint8_t)extension->_body._zint._val;
+#endif
+    } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    }
     return ret;
 }
 
@@ -200,6 +247,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
+            _Z_INFO("Invalid zid length received");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -219,11 +267,12 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_A) == true)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
     } else {
-        msg->_cookie = _z_slice_empty();
+        msg->_cookie = _z_slice_null();
     }
 
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x01);
+    msg->_patch = _Z_NO_PATCH;
+    if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        ret |= _z_msg_ext_decode_iter(zbf, _z_init_decode_ext, msg);
     }
 
     return ret;
@@ -264,10 +313,10 @@ z_result_t _z_open_decode(_z_t_msg_open_t *msg, _z_zbuf_t *zbf, uint8_t header) 
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_OPEN_A) == false)) {
         ret |= _z_slice_decode(&msg->_cookie, zbf);
         if (ret != _Z_RES_OK) {
-            msg->_cookie = _z_slice_empty();
+            msg->_cookie = _z_slice_null();
         }
     } else {
-        msg->_cookie = _z_slice_empty();
+        msg->_cookie = _z_slice_null();
     }
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
         ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x02);
@@ -337,50 +386,110 @@ z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_
         ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
     }
     if (ret == _Z_RES_OK) {
-        size_t len = _z_network_message_vec_len(&msg->_messages);
+        size_t len = _z_network_message_svec_len(&msg->_messages);
         for (size_t i = 0; i < len; i++) {
-            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_vec_get(&msg->_messages, i)))
+            _Z_RETURN_IF_ERR(_z_network_message_encode(wbf, _z_network_message_svec_get(&msg->_messages, i)))
         }
     }
 
     return ret;
 }
 
-z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header) {
+static void _z_frame_update_arcs_msg_pool(_z_network_message_svec_t *msg_pool, _z_arc_slice_svec_t *arc_pool) {
+    for (size_t i = 0; i < arc_pool->_len; i++) {
+        _z_network_message_t *nm = _z_network_message_svec_get(msg_pool, i);
+        switch (nm->_tag) {
+            case _Z_N_PUSH: {
+                if (!nm->_body._push._body._is_put) {
+                    continue;
+                }
+                _z_bytes_alias_arc_slice(&nm->_body._push._body._body._put._payload,
+                                         _z_arc_slice_svec_get(arc_pool, i));
+            } break;
+            case _Z_N_REQUEST: {
+                if (nm->_body._request._tag != _Z_REQUEST_PUT) {
+                    continue;
+                }
+                _z_bytes_alias_arc_slice(&nm->_body._request._body._put._payload, _z_arc_slice_svec_get(arc_pool, i));
+            } break;
+            case _Z_N_RESPONSE: {
+                switch (nm->_body._response._tag) {
+                    case _Z_RESPONSE_BODY_REPLY:
+                        if (!nm->_body._response._body._reply._body._is_put) {
+                            continue;
+                        }
+                        _z_bytes_alias_arc_slice(&nm->_body._response._body._reply._body._body._put._payload,
+                                                 _z_arc_slice_svec_get(arc_pool, i));
+                        break;
+
+                    case _Z_RESPONSE_BODY_ERR:
+                        _z_bytes_alias_arc_slice(&nm->_body._response._body._err._payload,
+                                                 _z_arc_slice_svec_get(arc_pool, i));
+                        break;
+
+                    default:
+                        continue;
+                }
+            }
+            default:
+                continue;
+        }
+    }
+}
+
+z_result_t _z_frame_decode(_z_t_msg_frame_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_svec_t *arc_pool,
+                           _z_network_message_svec_t *msg_pool) {
     z_result_t ret = _Z_RES_OK;
     *msg = (_z_t_msg_frame_t){0};
 
-    ret |= _z_zsize_decode(&msg->_sn, zbf);
-    if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x04);
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_sn, zbf));
+    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
+        _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x04));
     }
-    if (ret == _Z_RES_OK) {
-        msg->_messages = _z_network_message_vec_make(_ZENOH_PICO_FRAME_MESSAGES_VEC_SIZE);
-        while (_z_zbuf_len(zbf) > 0) {
-            // Mark the reading position of the iobfer
-            size_t r_pos = _z_zbuf_get_rpos(zbf);
-            _z_network_message_t *nm = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
-            memset(nm, 0, sizeof(_z_network_message_t));
-            ret |= _z_network_message_decode(nm, zbf);
-            if (ret == _Z_RES_OK) {
-                _z_network_message_vec_append(&msg->_messages, nm);
-            } else {
-                _z_n_msg_free(&nm);
-
-                _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
-
-                // FIXME: Check for the return error, since not all of them means a decoding error
-                //        in this particular case. As of now, we roll-back the reading position
-                //        and return to the Zenoh transport-level decoder.
-                //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
-                if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
-                    ret = _Z_RES_OK;
-                }
-                break;
-            }
+    // Init message vector
+    msg_pool->_len = 0;
+    arc_pool->_len = 0;
+    _z_network_message_svec_init(msg_pool, 0);
+    size_t msg_idx = 0;
+    while (_z_zbuf_len(zbf) > 0) {
+        // Expand message vector if needed
+        if (msg_idx >= msg_pool->_capacity) {
+            _Z_RETURN_IF_ERR(_z_network_message_svec_expand(msg_pool, false));
+            _z_network_message_svec_init(msg_pool, msg_pool->_len);
         }
+        // Expand arc pool if needed
+        if (msg_idx >= arc_pool->_capacity) {
+            _Z_RETURN_IF_ERR(_z_arc_slice_svec_expand(arc_pool, false));
+            // Update arcs references in msg pool
+            _z_frame_update_arcs_msg_pool(msg_pool, arc_pool);
+        }
+        // Mark the reading position of the iobfer
+        size_t r_pos = _z_zbuf_get_rpos(zbf);
+        // Retrieve storage in resource pool
+        _z_network_message_t *nm = _z_network_message_svec_get_mut(msg_pool, msg_idx);
+        _z_arc_slice_t *arcs = _z_arc_slice_svec_get_mut(arc_pool, msg_idx);
+        // Decode message
+        ret = _z_network_message_decode(nm, zbf, arcs);
+        if (ret != _Z_RES_OK) {
+            _z_network_message_svec_reset(msg_pool);
+            _z_zbuf_set_rpos(zbf, r_pos);  // Restore the reading position of the iobfer
+
+            // FIXME: Check for the return error, since not all of them means a decoding error
+            //        in this particular case. As of now, we roll-back the reading position
+            //        and return to the Zenoh transport-level decoder.
+            //        https://github.com/eclipse-zenoh/zenoh-pico/pull/132#discussion_r1045593602
+            if ((ret & _Z_ERR_MESSAGE_ZENOH_UNKNOWN) == _Z_ERR_MESSAGE_ZENOH_UNKNOWN) {
+                ret = _Z_RES_OK;
+            }
+            return ret;
+        }
+        arc_pool->_len++;
+        msg_pool->_len++;
+        msg_idx++;
     }
-    return ret;
+    // Alias network message svec in frame struct
+    msg->_messages = _z_network_message_svec_alias(msg_pool);
+    return _Z_RES_OK;
 }
 
 /*------------------ Fragment Message ------------------*/
@@ -388,13 +497,39 @@ z_result_t _z_fragment_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_fra
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Encoding _Z_TRANSPORT_FRAGMENT");
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_sn))
-    if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-        ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+    if (msg->first) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_FIRST | _Z_MSG_EXT_MORE(msg->drop)));
+        } else {
+            _Z_DEBUG("Attempted to serialize Start extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
     }
-    if (ret == _Z_RES_OK && _z_slice_check(&msg->_payload)) {
+    if (msg->drop) {
+        if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true) {
+            _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ID_FRAGMENT_DROP));
+        } else {
+            _Z_DEBUG("Attempted to serialize Stop extension, but the header extension flag was unset");
+            ret |= _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        }
+    }
+    if (_z_slice_check(&msg->_payload)) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_payload.start, 0, msg->_payload.len));
     }
 
+    return ret;
+}
+
+z_result_t _z_fragment_decode_ext(_z_msg_ext_t *extension, void *ctx) {
+    z_result_t ret = _Z_RES_OK;
+    _z_t_msg_fragment_t *msg = (_z_t_msg_fragment_t *)ctx;
+    if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_FIRST) {
+        msg->first = true;
+    } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_DROP) {
+        msg->drop = true;
+    } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    }
     return ret;
 }
 
@@ -405,12 +540,12 @@ z_result_t _z_fragment_decode(_z_t_msg_fragment_t *msg, _z_zbuf_t *zbf, uint8_t 
     _Z_DEBUG("Decoding _Z_TRANSPORT_FRAGMENT");
     ret |= _z_zsize_decode(&msg->_sn, zbf);
 
+    msg->first = false;
+    msg->drop = false;
     if ((ret == _Z_RES_OK) && (_Z_HAS_FLAG(header, _Z_FLAG_T_Z) == true)) {
-        ret |= _z_msg_ext_skip_non_mandatories(zbf, 0x05);
+        ret |= _z_msg_ext_decode_iter(zbf, _z_fragment_decode_ext, msg);
     }
-
-    _z_slice_t slice = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
-    _z_slice_copy(&msg->_payload, &slice);
+    msg->_payload = _z_slice_alias_buf((uint8_t *)_z_zbuf_start(zbf), _z_zbuf_len(zbf));
     zbf->_ios._r_pos = zbf->_ios._w_pos;
 
     return ret;
@@ -481,7 +616,8 @@ z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_messag
     return ret;
 }
 
-z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf) {
+z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_svec_t *arc_pool,
+                                       _z_network_message_svec_t *msg_pool) {
     z_result_t ret = _Z_RES_OK;
 
     ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header
@@ -489,7 +625,7 @@ z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *z
         uint8_t mid = _Z_MID(msg->_header);
         switch (mid) {
             case _Z_MID_T_FRAME: {
-                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
+                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header, arc_pool, msg_pool);
             } break;
             case _Z_MID_T_FRAGMENT: {
                 ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);

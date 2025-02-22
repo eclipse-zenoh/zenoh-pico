@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/system/platform_common.h"
+#include "zenoh-pico/system/common/platform.h"
 
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/utils/logging.h"
@@ -61,5 +61,8 @@ z_result_t z_condvar_drop(z_moved_condvar_t *cv) { return _z_condvar_drop(&cv->_
 
 z_result_t z_condvar_signal(z_loaned_condvar_t *cv) { return _z_condvar_signal(cv); }
 z_result_t z_condvar_wait(z_loaned_condvar_t *cv, z_loaned_mutex_t *m) { return _z_condvar_wait(cv, m); }
+z_result_t z_condvar_wait_until(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, const z_clock_t *abstime) {
+    return _z_condvar_wait_until(cv, m, abstime);
+}
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1

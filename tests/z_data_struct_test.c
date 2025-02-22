@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
@@ -29,6 +30,7 @@ void entry_list_test(void) {
     _z_transport_peer_entry_list_t *root = _z_transport_peer_entry_list_new();
     for (int i = 0; i < 10; i++) {
         _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
+        memset(entry, 0, sizeof(_z_transport_peer_entry_t));
         root = _z_transport_peer_entry_list_insert(root, entry);
     }
     _z_transport_peer_entry_list_t *list = root;
@@ -39,6 +41,7 @@ void entry_list_test(void) {
 
     for (int i = 0; i < 11; i++) {
         _z_transport_peer_entry_t *entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
+        memset(entry, 0, sizeof(_z_transport_peer_entry_t));
         root = _z_transport_peer_entry_list_insert(root, entry);
     }
     assert(_z_transport_peer_entry_list_head(root)->_peer_id == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1);
@@ -140,6 +143,8 @@ void str_vec_list_intmap_test(void) {
 
     _z_str_intmap_clear(&map);
     assert(_z_str_intmap_is_empty(&map) == true);
+
+    z_free(s);
 }
 
 void _z_slice_custom_deleter(void *data, void *context) {
@@ -233,11 +238,25 @@ void z_string_array_test(void) {
     z_string_array_drop(z_string_array_move(&a));
 }
 
+void z_id_to_string_test(void) {
+    z_id_t id;
+    for (uint8_t i = 0; i < sizeof(id.id); i++) {
+        id.id[i] = i;
+    }
+    z_owned_string_t id_str;
+    z_id_to_string(&id, &id_str);
+    assert(z_string_len(z_string_loan(&id_str)) == 32);
+    assert(strncmp("0f0e0d0c0b0a09080706050403020100", z_string_data(z_string_loan(&id_str)),
+                   z_string_len(z_string_loan(&id_str))) == 0);
+    z_string_drop(z_string_move(&id_str));
+}
+
 int main(void) {
     entry_list_test();
     str_vec_list_intmap_test();
     z_slice_custom_delete_test();
     z_string_array_test();
+    z_id_to_string_test();
 
     return 0;
 }

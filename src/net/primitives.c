@@ -22,20 +22,52 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/logger.h"
+#include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/sample.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
+/*------------------ Declaration Helpers ------------------*/
+z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) {
+    z_result_t ret = _Z_RES_OK;
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    if (ret == _Z_RES_OK) {
+        _z_cache_declaration(zn, n_msg);
+    }
+#endif
+
+    return ret;
+}
+
+z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg) {
+    z_result_t ret = _Z_RES_OK;
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    if (ret == _Z_RES_OK) {
+        _z_prune_declaration(zn, n_msg);
+    }
+#endif
+
+    return ret;
+}
 /*------------------ Scouting ------------------*/
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
@@ -55,7 +87,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 }
 
 /*------------------ Resource Declaration ------------------*/
-uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
+uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
     // FIXME: remove this check when resource declaration is implemented for multicast transport
@@ -66,15 +98,17 @@ uint16_t _z_declare_resource(_z_session_t *zn, _z_keyexpr_t keyexpr) {
             _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
             _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
             _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-            if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
+            if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
                 ret = id;
+                // Invalidate cache
+                _z_subscription_cache_invalidate(zn);
+                _z_queryable_cache_invalidate(zn);
             } else {
                 _z_unregister_resource(zn, id, _Z_KEYEXPR_MAPPING_LOCAL);
             }
             _z_n_msg_clear(&n_msg);
         }
     }
-
     return ret;
 }
 
@@ -86,9 +120,12 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
         // Build the declare message to send on the wire
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) == _Z_RES_OK) {
-            _z_unregister_resource(zn, rid,
-                                   _Z_KEYEXPR_MAPPING_LOCAL);  // Only if message is send, local resource is removed
+        if (_z_send_undeclare(zn, &n_msg) == _Z_RES_OK) {
+            // Remove local resource
+            _z_unregister_resource(zn, rid, _Z_KEYEXPR_MAPPING_LOCAL);
+            // Invalidate cache
+            _z_subscription_cache_invalidate(zn);
+            _z_queryable_cache_invalidate(zn);
         } else {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
@@ -100,6 +137,27 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     return ret;
 }
 
+// TODO(sashacmc): currently used only for liveliness, because it have little bit different behavior from others
+// It seems also correct for z_declare_queryable and z_declare_publisher, but it need to be verified
+_z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr) {
+    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
+    _z_keyexpr_t key = keyexpr_aliased;
+
+    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
+    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
+    //       resource declarations are only performed on unicast transports.
+    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased);
+        if (r != NULL) {
+            key = _z_rid_with_suffix(r->_id, NULL);
+        } else {
+            uint16_t id = _z_declare_resource(zs, &keyexpr_aliased);
+            key = _z_rid_with_suffix(id, NULL);
+        }
+    }
+    return key;
+}
+
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
@@ -108,7 +166,7 @@ _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Allocate publisher
     _z_publisher_t ret;
     // Fill publisher
-    ret._key = _z_keyexpr_duplicate(keyexpr);
+    ret._key = _z_keyexpr_duplicate(&keyexpr);
     ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     ret._congestion_control = congestion_control;
     ret._priority = priority;
@@ -123,8 +181,11 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     if (pub == NULL || _Z_RC_IS_NULL(&pub->_zn)) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&pub->_zn), pub->_id);
+#endif
     // Clear publisher
-    _z_write_filter_destroy(pub);
+    _z_write_filter_destroy(_Z_RC_IN_VAL(&pub->_zn), &pub->_filter);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
     return _Z_RES_OK;
 }
@@ -204,7 +265,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
 
     _z_subscriber_t ret = _z_subscriber_null();
     // Register subscription, stored at session-level, do not drop it by the end of this function.
-    _z_subscription_rc_t *sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, &s);
+    _z_subscription_rc_t *sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (sp_s == NULL) {
         _z_subscriber_clear(&ret);
         return ret;
@@ -212,8 +273,8 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_n_msg(_Z_RC_IN_VAL(zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_RESOURCE_IS_LOCAL, sp_s);
+    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
+        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sp_s);
         _z_subscriber_clear(&ret);
         return ret;
     }
@@ -221,6 +282,8 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     // Fill subscriber
     ret._entity_id = s._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -229,7 +292,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Find subscription entry
-    _z_subscription_rc_t *s = _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, sub->_entity_id);
+    _z_subscription_rc_t *s =
+        _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sub->_entity_id);
     if (s == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -241,14 +305,15 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_n_msg(_Z_RC_IN_VAL(&sub->_zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
-        _Z_RES_OK) {
+    if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local subscription state can be removed
     _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
-    _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_RESOURCE_IS_LOCAL, s);
+    _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
+    // Invalidate cache
+    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(&sub->_zn));
     return _Z_RES_OK;
 }
 #endif
@@ -275,7 +340,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_n_msg(_Z_RC_IN_VAL(zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
         _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), sp_q);
         _z_queryable_clear(&ret);
         return ret;
@@ -284,6 +349,8 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     // Fill queryable
     ret._entity_id = q._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(zn));
     return ret;
 }
 
@@ -304,17 +371,18 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
     }
     _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-    if (_z_send_n_msg(_Z_RC_IN_VAL(&qle->_zn), &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) !=
-        _Z_RES_OK) {
+    if (_z_send_undeclare(_Z_RC_IN_VAL(&qle->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
+    // Invalidate cache
+    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(&qle->_zn));
     return _Z_RES_OK;
 }
 
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_keyexpr_t keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                          z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                          const _z_bytes_t att) {
@@ -325,7 +393,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, _
     _z_keyexpr_t r_ke;
     if (query->_anyke == false) {
         q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
-        r_ke = _z_get_expanded_key_from_key(zn, &keyexpr);
+        r_ke = _z_get_expanded_key_from_key(zn, keyexpr);
         if (_z_keyexpr_suffix_intersects(&q_ke, &r_ke) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }
@@ -450,6 +518,37 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 #endif
 
 #if Z_FEATURE_QUERY == 1
+/*------------------  Querier Declaration ------------------*/
+_z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
+                                z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms) {
+    // Allocate querier
+    _z_querier_t ret;
+    // Fill querier
+    ret._key = _z_keyexpr_duplicate(&keyexpr);
+    ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
+    ret._consolidation_mode = consolidation_mode;
+    ret._congestion_control = congestion_control;
+    ret._target = target;
+    ret._priority = priority;
+    ret._is_express = is_express;
+    ret._timeout_ms = timeout_ms;
+    ret._zn = _z_session_rc_clone_as_weak(zn);
+    return ret;
+}
+
+z_result_t _z_undeclare_querier(_z_querier_t *querier) {
+    if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+#if Z_FEATURE_MATCHING == 1
+    _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&querier->_zn), querier->_id);
+#endif
+    _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
+    _z_undeclare_resource(_Z_RC_IN_VAL(&querier->_zn), querier->_key._id);
+    return _Z_RES_OK;
+}
+
 /*------------------ Query ------------------*/
 z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
                     const z_consolidation_mode_t consolidation, _z_value_t value, _z_closure_reply_callback_t callback,
@@ -464,15 +563,18 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
         pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
         pq->_target = target;
         pq->_consolidation = consolidation;
-        pq->_anykey = (strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+        pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_pending_replies = NULL;
         pq->_arg = arg;
+        pq->_timeout = timeout_ms;
+        pq->_start_time = z_clock_now();
 
         ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
         if (ret == _Z_RES_OK) {
-            _z_slice_t params = _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
+            _z_slice_t params =
+                (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
             _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
                                                          timeout_ms, attachment, cong_ctrl, priority, is_express);
 

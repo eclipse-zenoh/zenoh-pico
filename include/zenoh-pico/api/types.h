@@ -22,6 +22,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/net/encoding.h"
+#include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/publish.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/net/reply.h"
@@ -29,6 +30,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +113,16 @@ _Z_OWNED_TYPE_VALUE(_z_subscriber_t, subscriber)
 _Z_OWNED_TYPE_VALUE(_z_publisher_t, publisher)
 
 /**
+ * Represents a Zenoh Querier entity.
+ */
+_Z_OWNED_TYPE_VALUE(_z_querier_t, querier)
+
+/**
+ * Represents a Zenoh Matching listener entity.
+ */
+_Z_OWNED_TYPE_VALUE(_z_matching_listener_t, matching_listener)
+
+/**
  * Represents a Zenoh Queryable entity.
  */
 _Z_OWNED_TYPE_VALUE(_z_queryable_t, queryable)
@@ -129,6 +141,14 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
  * Represents a Zenoh reply error.
  */
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
+
+/**
+ * A struct that indicates if there exist Subscribers matching the Publisher's key expression or Queryables matching
+ * Querier's key expression and target.
+ * Members:
+ *   bool matching: true if there exist matching Zenoh entities, false otherwise.
+ */
+typedef _z_matching_status_t z_matching_status_t;
 
 /**
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
@@ -181,6 +201,43 @@ typedef struct {
     z_reliability_t reliability;
 #endif
 } z_publisher_options_t;
+
+/**
+ * Options passed to the :c:func:`z_declare_querier()` function.
+ *
+ * Members:
+ *   z_query_target_t target: The Queryables that should be target of the querier queries.
+ *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies to the querier
+ *    queries.
+ *   z_congestion_control_t congestion_control: The congestion control to apply when routing the querier queries.
+ *   bool is_express: If set to ``true``, the querier queries will not be batched. This usually has a positive impact on
+ * 	   latency but negative impact on throughput.
+ *   z_priority_t priority: The priority of the querier queries.
+ *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 means default query timeout from zenoh
+ *     configuration.
+ */
+typedef struct z_querier_options_t {
+    z_query_target_t target;
+    z_query_consolidation_t consolidation;
+    z_congestion_control_t congestion_control;
+    bool is_express;
+    z_priority_t priority;
+    uint64_t timeout_ms;
+} z_querier_options_t;
+
+/**
+ * Options passed to the :c:func:`z_querier_get()` function.
+ *
+ * Members:
+ *   z_moved_bytes_t *payload: An optional payload to attach to the query.
+ *   z_moved_encoding_t *encoding: An optional encoding of the query payload and or attachment.
+ *   z_moved_bytes_t *attachment: An optional attachment to attach to the query.
+ */
+typedef struct z_querier_get_options_t {
+    z_moved_bytes_t *payload;
+    z_moved_encoding_t *encoding;
+    z_moved_bytes_t *attachment;
+} z_querier_get_options_t;
 
 /**
  * Represents the configuration used to configure a queryable upon declaration :c:func:`z_declare_queryable`.
@@ -410,7 +467,7 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 
-typedef void (*z_closure_drop_callback_t)(void *arg);
+typedef _z_drop_handler_t z_closure_drop_callback_t;
 typedef _z_closure_sample_callback_t z_closure_sample_callback_t;
 
 typedef struct {
@@ -475,6 +532,13 @@ typedef struct {
  * Represents the Zenoh ID callback closure.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
+
+typedef _z_closure_matching_status_callback_t z_closure_matching_status_callback_t;
+typedef _z_closure_matching_status_t z_closure_matching_status_t;
+/**
+ * Represents the matching status callback closure.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_matching_status_t, closure_matching_status)
 
 #ifdef __cplusplus
 }

@@ -20,9 +20,19 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#include "zenoh-pico/system/platform.h"
-
 #if Z_FEATURE_PUBLICATION == 1
+
+#if Z_FEATURE_MATCHING == 1
+void matching_status_handler(const z_matching_status_t *matching_status, void *arg) {
+    (void)arg;
+    if (matching_status->matching) {
+        printf("Publisher has matching subscribers.\n");
+    } else {
+        printf("Publisher has NO MORE matching subscribers.\n");
+    }
+}
+#endif
+
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
     char *const default_value = "Pub from Pico!";
@@ -31,9 +41,10 @@ int main(int argc, char **argv) {
     char *clocator = NULL;
     char *llocator = NULL;
     int n = 2147483647;  // max int value by default
+    bool add_matching_listener = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:a")) != -1) {
         switch (opt) {
             case 'k':
                 keyexpr = optarg;
@@ -52,6 +63,9 @@ int main(int argc, char **argv) {
                 break;
             case 'n':
                 n = atoi(optarg);
+                break;
+            case 'a':
+                add_matching_listener = true;
                 break;
             case '?':
                 if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
@@ -98,10 +112,24 @@ int main(int argc, char **argv) {
     printf("Declaring publisher for '%s'...\n", keyexpr);
     z_owned_publisher_t pub;
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
+        printf("%s is not a valid key expression\n", keyexpr);
+        return -1;
+    }
     if (z_declare_publisher(z_loan(s), &pub, z_loan(ke), NULL) < 0) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
+    }
+
+    if (add_matching_listener) {
+#if Z_FEATURE_MATCHING == 1
+        z_owned_closure_matching_status_t callback;
+        z_closure(&callback, matching_status_handler, NULL, NULL);
+        z_publisher_declare_background_matching_listener(z_loan(pub), z_move(callback));
+#else
+        printf("ERROR: Zenoh pico was compiled without Z_FEATURE_MATCHING but this example requires it.\n");
+        return -2;
+#endif
     }
 
     // Publish data

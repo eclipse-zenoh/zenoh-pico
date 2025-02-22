@@ -13,12 +13,10 @@
 //
 #include <assert.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "zenoh-pico/api/handlers.h"
 #include "zenoh-pico/api/macros.h"
-#include "zenoh-pico/net/sample.h"
+#include "zenoh-pico/collections/bytes.h"
 
 #undef NDEBUG
 #include <assert.h>
@@ -37,6 +35,7 @@
             .attachment = _z_bytes_null(),                                                          \
         };                                                                                          \
         z_call(*z_loan(closure), &sample);                                                          \
+        _z_bytes_drop(&payload);                                                                    \
     } while (0);
 
 #define _RECV(handler, method, buf)                                             \
@@ -191,11 +190,13 @@ void zero_size_test(void) {
     z_owned_fifo_handler_sample_t fifo_handler;
     assert(z_fifo_channel_sample_new(&closure, &fifo_handler, 0) != Z_OK);
     assert(z_fifo_channel_sample_new(&closure, &fifo_handler, 1) == Z_OK);
+    z_drop(z_move(closure));
     z_drop(z_move(fifo_handler));
 
     z_owned_ring_handler_sample_t ring_handler;
     assert(z_ring_channel_sample_new(&closure, &ring_handler, 0) != Z_OK);
     assert(z_ring_channel_sample_new(&closure, &ring_handler, 1) == Z_OK);
+    z_drop(z_move(closure));
     z_drop(z_move(ring_handler));
 }
 

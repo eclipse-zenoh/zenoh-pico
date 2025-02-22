@@ -19,10 +19,10 @@
 #define CLIENT_OR_PEER 0  // 0: Client mode; 1: Peer mode
 #if CLIENT_OR_PEER == 0
 #define MODE "client"
-#define CONNECT ""  // If empty, it will scout
+#define LOCATOR ""  // If empty, it will scout
 #elif CLIENT_OR_PEER == 1
 #define MODE "peer"
-#define CONNECT "udp/224.0.0.225:7447#iface=en0"
+#define LOCATOR "udp/224.0.0.225:7447#iface=en0"
 #else
 #error "Unknown Zenoh operation mode. Check CLIENT_OR_PEER value."
 #endif
@@ -39,8 +39,12 @@ int main(int argc, char **argv) {
     z_owned_config_t config;
     z_config_default(&config);
     zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
-    if (strcmp(CONNECT, "") != 0) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, CONNECT);
+    if (strcmp(LOCATOR, "") != 0) {
+        if (strcmp(MODE, "client") == 0) {
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        } else {
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+        }
     }
 
     // Open Zenoh session
@@ -48,7 +52,7 @@ int main(int argc, char **argv) {
     z_owned_session_t s;
     if (z_open(&s, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
-        exit(-1);
+        return -1;
     }
     printf("OK\n");
 
@@ -56,7 +60,7 @@ int main(int argc, char **argv) {
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
         printf("Unable to start read and lease tasks\n");
         z_session_drop(z_session_move(&s));
-        exit(-1);
+        return -1;
     }
 
     printf("Declaring Subscriber on '%s'...\n", KEYEXPR);
@@ -65,10 +69,10 @@ int main(int argc, char **argv) {
     z_ring_channel_sample_new(&closure, &handler, SIZE);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(closure), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
-        exit(-1);
+        return -1;
     }
 
     printf("Pulling data every %zu ms... Ring size: %zd\n", INTERVAL, SIZE);

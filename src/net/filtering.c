@@ -18,18 +18,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/primitives.h"
-#include "zenoh-pico/net/query.h"
-#include "zenoh-pico/protocol/codec/core.h"
-#include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/definitions/network.h"
-#include "zenoh-pico/protocol/keyexpr.h"
-#include "zenoh-pico/session/queryable.h"
-#include "zenoh-pico/session/resource.h"
-#include "zenoh-pico/session/utils.h"
-#include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/session/session.h"
 
 #if Z_FEATURE_INTEREST == 1
 static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
@@ -44,6 +35,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
                     break;
 
                 case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:
+                case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE:
                     ctx->state = WRITE_FILTER_OFF;
                     ctx->decl_id = msg->id;
                     break;
@@ -54,14 +46,16 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
             break;
         // Remove filter if we receive a subscribe
         case WRITE_FILTER_ACTIVE:
-            if (msg->type == _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER) {
+            if (msg->type == _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER || msg->type == _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE) {
                 ctx->state = WRITE_FILTER_OFF;
                 ctx->decl_id = msg->id;
             }
             break;
         // Activate filter if subscribe is removed
         case WRITE_FILTER_OFF:
-            if ((msg->type == _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER) && (ctx->decl_id == msg->id)) {
+            if ((msg->type == _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER ||
+                 msg->type == _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE) &&
+                (ctx->decl_id == msg->id)) {
                 ctx->state = WRITE_FILTER_ACTIVE;
                 ctx->decl_id = 0;
             }
@@ -72,9 +66,10 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, void *arg) {
     }
 }
 
-z_result_t _z_write_filter_create(_z_publisher_t *pub) {
-    uint8_t flags = _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_SUBSCRIBERS | _Z_INTEREST_FLAG_RESTRICTED |
-                    _Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE | _Z_INTEREST_FLAG_AGGREGATE;
+z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+                                  uint8_t interest_flag) {
+    uint8_t flags = interest_flag | _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT |
+                    _Z_INTEREST_FLAG_FUTURE | _Z_INTEREST_FLAG_AGGREGATE;
     _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
 
     if (ctx == NULL) {
@@ -83,43 +78,47 @@ z_result_t _z_write_filter_create(_z_publisher_t *pub) {
     ctx->state = WRITE_FILTER_INIT;
     ctx->decl_id = 0;
 
-    pub->_filter.ctx = ctx;
-    pub->_filter._interest_id =
-        _z_add_interest(_Z_RC_IN_VAL(&pub->_zn), _z_keyexpr_alias_from_user_defined(pub->_key, true),
-                        _z_write_filter_callback, flags, (void *)ctx);
-    if (pub->_filter._interest_id == 0) {
+    filter->ctx = ctx;
+    filter->_interest_id = _z_add_interest(zn, keyexpr, _z_write_filter_callback, flags, (void *)ctx);
+    if (filter->_interest_id == 0) {
         z_free(ctx);
         return _Z_ERR_GENERIC;
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_write_filter_destroy(_z_publisher_t *pub) {
-    if (pub->_filter.ctx != NULL) {
-        _Z_RETURN_IF_ERR(_z_remove_interest(_Z_RC_IN_VAL(&pub->_zn), pub->_filter._interest_id));
-        z_free(pub->_filter.ctx);
-        pub->_filter.ctx = NULL;
+z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) {
+    if (filter->ctx != NULL) {
+        z_result_t res = _z_remove_interest(zn, filter->_interest_id);
+        z_free(filter->ctx);
+        filter->ctx = NULL;
+        return res;
     }
     return _Z_RES_OK;
 }
 
-bool _z_write_filter_active(const _z_publisher_t *pub) {
-    return pub->_filter.ctx != NULL && pub->_filter.ctx->state == WRITE_FILTER_ACTIVE;
+bool _z_write_filter_active(const _z_write_filter_t *filter) {
+    return filter->ctx != NULL && filter->ctx->state == WRITE_FILTER_ACTIVE;
 }
 
 #else
-z_result_t _z_write_filter_create(_z_publisher_t *pub) {
-    _ZP_UNUSED(pub);
+z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+                                  uint8_t interest_flag) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(keyexpr);
+    _ZP_UNUSED(filter);
+    _ZP_UNUSED(interest_flag);
     return _Z_RES_OK;
 }
 
-z_result_t _z_write_filter_destroy(_z_publisher_t *pub) {
-    _ZP_UNUSED(pub);
+z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(filter);
     return _Z_RES_OK;
 }
 
-bool _z_write_filter_active(const _z_publisher_t *pub) {
-    _ZP_UNUSED(pub);
+bool _z_write_filter_active(const _z_write_filter_t *filter) {
+    _ZP_UNUSED(filter);
     return false;
 }
 

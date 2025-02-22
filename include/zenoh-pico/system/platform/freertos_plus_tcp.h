@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 #define ZENOH_PICO_SYSTEM_FREERTOS_PLUS_TCP_TYPES_H
 
+#include <time.h>
+
 #include "FreeRTOS.h"
 #include "FreeRTOS_IP.h"
 #include "semphr.h"
@@ -37,14 +39,32 @@ typedef struct {
 typedef struct {
     TaskHandle_t handle;
     EventGroupHandle_t join_event;
+    void *(*fun)(void *);
+    void *arg;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticEventGroup_t join_event_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
 } _z_task_t;
 
-typedef SemaphoreHandle_t _z_mutex_t;
-typedef void *_z_condvar_t;
+typedef struct {
+    SemaphoreHandle_t handle;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticSemaphore_t buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} _z_mutex_t;
+typedef struct {
+    SemaphoreHandle_t mutex;
+    SemaphoreHandle_t sem;
+    int waiters;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    StaticSemaphore_t mutex_buffer;
+    StaticSemaphore_t sem_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} _z_condvar_t;
 #endif  // Z_MULTI_THREAD == 1
 
 typedef TickType_t z_clock_t;
-typedef TickType_t z_time_t;
+typedef struct timeval z_time_t;
 
 typedef struct {
     union {

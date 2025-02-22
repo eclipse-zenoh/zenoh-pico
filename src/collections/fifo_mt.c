@@ -17,6 +17,7 @@
 #include "zenoh-pico/protocol/codec/core.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 
 /*-------- Fifo Buffer Multithreaded --------*/
 z_result_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity) {

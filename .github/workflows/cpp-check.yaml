@@ -1,0 +1,78 @@
+#
+# Copyright (c) 2024 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale zenoh Team, <zenoh@zettascale.tech>
+#
+name: cpp-check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      zenoh_cpp_branch:
+        description: 'Branch of zenoh-cpp to use'
+        required: false
+        default: 'main'
+
+jobs:
+  build-and-test:
+    name: Build and test zenoh-cpp on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        unstable: [0, 1]
+
+    steps:
+    - name: checkout zenoh-pico
+      uses: actions/checkout@v3
+
+    - name: build zenoh-pico
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/local -DZ_FEATURE_UNSTABLE_API=${{ matrix.unstable }} -DZ_FEATURE_LIVELINESS=1 -DASAN=ON
+        cmake --build . --target install --config Release
+
+    - name: clone zenoh-cpp
+      run: |
+        git clone https://github.com/eclipse-zenoh/zenoh-cpp.git
+        cd zenoh-cpp
+        git fetch --all
+        git checkout ${{ github.event.inputs.zenoh_cpp_branch || 'main' }}
+        git submodule update --init --recursive
+
+    - name: build zenoh-cpp
+      run: |
+        cd zenoh-cpp
+        mkdir build && cd build
+        cmake .. -DCMAKE_INSTALL_PREFIX=~/local -DCMAKE_BUILD_TYPE=Release -DZENOHCXX_ZENOHPICO=ON -DZENOHCXX_ZENOHC=OFF
+        cmake --build . --config Release
+
+    - name: build examples
+      run: |
+        cd zenoh-cpp/build
+        cmake --build . --target examples --config Release
+
+    - name: build tests
+      run: |
+        cd zenoh-cpp/build
+        cmake --build . --target tests --config Release
+
+    - name: run tests
+      run: |
+        cd zenoh-cpp/build
+        ctest -C Release --output-on-failure

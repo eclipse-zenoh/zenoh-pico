@@ -17,15 +17,16 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/protocol/definitions/declarations.h"
+#include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
+#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/transport/multicast/lease.h"
 #include "zenoh-pico/transport/multicast/read.h"
@@ -34,121 +35,237 @@
 #include "zenoh-pico/transport/unicast.h"
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/read.h"
+#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
-z_result_t __z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, z_whatami_t mode) {
+static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t *zid, _z_string_svec_t *locators) {
     z_result_t ret = _Z_RES_OK;
 
-    _z_id_t local_zid = _z_id_empty();
-    ret = _z_session_generate_zid(&local_zid, Z_ZID_LENGTH);
-    if (ret != _Z_RES_OK) {
-        local_zid = _z_id_empty();
-        return ret;
+    char *opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
+    if (opt_as_str == NULL) {
+        opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
     }
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, &local_zid, locator, mode);
-    if (ret != _Z_RES_OK) {
-        local_zid = _z_id_empty();
-        return ret;
+    z_what_t what = strtol(opt_as_str, NULL, 10);
+
+    opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
+    if (opt_as_str == NULL) {
+        opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
     }
-    ret = _z_session_init(zn, &local_zid);
+    _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
+
+    opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
+    if (opt_as_str == NULL) {
+        opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
+    }
+    uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
+
+    // Scout and return upon the first result
+    _z_hello_list_t *hellos = _z_scout_inner(what, *zid, &mcast_locator, timeout, true);
+    if (hellos != NULL) {
+        _z_hello_t *hello = _z_hello_list_head(hellos);
+        _z_string_svec_copy(locators, &hello->_locators, true);
+    }
+    _z_hello_list_free(&hellos);
     return ret;
 }
 
-z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config) {
+static z_result_t _z_locators_by_config(_z_config_t *config, const _z_id_t *zid, _z_string_svec_t *locators,
+                                        int *peer_op) {
+    z_result_t ret = _Z_RES_OK;
+    char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
+    char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
+    if (connect == NULL && listen == NULL) {
+        // Scout if peer is not configured
+        ret = _z_locators_by_scout(config, zid, locators);
+    } else {
+        uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
+        if (listen != NULL) {
+            if (connect == NULL) {
+                key = Z_CONFIG_LISTEN_KEY;
+                _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+            } else {
+                return _Z_ERR_GENERIC;
+            }
+        } else {
+            *peer_op = _Z_PEER_OP_OPEN;
+        }
+        *locators = _z_string_svec_make(1);
+        _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
+        _z_string_svec_append(locators, &s, true);
+    }
+    return ret;
+}
+
+static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mode) {
+    z_result_t ret = _Z_RES_OK;
+    char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
+    *mode = Z_WHATAMI_CLIENT;  // By default, zenoh-pico will operate as a client
+    if (s_mode != NULL) {
+        if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT) == true) {
+            *mode = Z_WHATAMI_CLIENT;
+        } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) == true) {
+            *mode = Z_WHATAMI_PEER;
+        } else {
+            _Z_ERROR("Trying to configure an invalid mode: %s", s_mode);
+            ret = _Z_ERR_CONFIG_INVALID_MODE;
+        }
+    }
+    return ret;
+}
+
+static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, z_whatami_t mode,
+                                int peer_op) {
+    z_result_t ret = _Z_RES_OK;
+
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, mode, peer_op);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    _z_transport_get_common(&_Z_RC_IN_VAL(zn)->_tp)->_session = zn;
+    return ret;
+}
+
+z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
     _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
 
-    _z_id_t zid = _z_id_empty();
-    char *opt_as_str = _z_config_get(config, Z_CONFIG_SESSION_ZID_KEY);
-    if (opt_as_str != NULL) {
-        _z_uuid_to_bytes(zid.id, opt_as_str);
+    int peer_op = _Z_PEER_OP_LISTEN;
+    _z_string_svec_t locators = _z_string_svec_make(0);
+    ret = _z_locators_by_config(config, zid, &locators, &peer_op);
+    if (ret != _Z_RES_OK) {
+        return ret;
     }
 
-    if (config != NULL) {
-        _z_string_svec_t locators = _z_string_svec_make(0);
-        char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
-        char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
-        if (connect == NULL && listen == NULL) {  // Scout if peer is not configured
-            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_WHAT_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_SCOUTING_WHAT_DEFAULT;
-            }
-            z_what_t what = strtol(opt_as_str, NULL, 10);
+    z_whatami_t mode;
+    ret = _z_config_get_mode(config, &mode);
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
 
-            opt_as_str = _z_config_get(config, Z_CONFIG_MULTICAST_LOCATOR_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_MULTICAST_LOCATOR_DEFAULT;
-            }
-            _z_string_t mcast_locator = _z_string_alias_str(opt_as_str);
+    ret = _Z_ERR_SCOUT_NO_RESULTS;
+    size_t len = _z_string_svec_len(&locators);
+    for (size_t i = 0; i < len; i++) {
+        ret = _Z_RES_OK;
 
-            opt_as_str = _z_config_get(config, Z_CONFIG_SCOUTING_TIMEOUT_KEY);
-            if (opt_as_str == NULL) {
-                opt_as_str = (char *)Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT;
-            }
-            uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
+        _z_string_t *locator = _z_string_svec_get(&locators, i);
+        // @TODO: check invalid configurations
+        // For example, client mode in multicast links
 
-            // Scout and return upon the first result
-            _z_hello_list_t *hellos = _z_scout_inner(what, zid, &mcast_locator, timeout, true);
-            if (hellos != NULL) {
-                _z_hello_t *hello = _z_hello_list_head(hellos);
-                _z_string_svec_copy(&locators, &hello->_locators);
-            }
-            _z_hello_list_free(&hellos);
-        } else {
-            uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
-            if (listen != NULL) {
-                if (connect == NULL) {
-                    key = Z_CONFIG_LISTEN_KEY;
-                    _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-                } else {
-                    return _Z_ERR_GENERIC;
-                }
-            }
-            locators = _z_string_svec_make(1);
-            _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
-            _z_string_svec_append(&locators, &s);
+        ret = _z_open_inner(zn, locator, zid, mode, peer_op);
+        if (ret == _Z_RES_OK) {
+            break;
         }
+    }
+    _z_string_svec_clear(&locators);
+    return ret;
+}
 
-        ret = _Z_ERR_SCOUT_NO_RESULTS;
-        size_t len = _z_string_svec_len(&locators);
-        for (size_t i = 0; i < len; i++) {
-            ret = _Z_RES_OK;
+#if Z_FEATURE_AUTO_RECONNECT == 1
 
-            _z_string_t *locator = _z_string_svec_get(&locators, i);
-            // @TODO: check invalid configurations
-            // For example, client mode in multicast links
+z_result_t _z_reopen(_z_session_rc_t *zn) {
+    z_result_t ret = _Z_RES_OK;
+    _z_session_t *zs = _Z_RC_IN_VAL(zn);
+    if (_z_config_is_empty(&zs->_config)) {
+        return ret;
+    }
 
-            // Check operation mode
-            char *s_mode = _z_config_get(config, Z_CONFIG_MODE_KEY);
-            z_whatami_t mode = Z_WHATAMI_CLIENT;  // By default, zenoh-pico will operate as a client
-            if (s_mode != NULL) {
-                if (_z_str_eq(s_mode, Z_CONFIG_MODE_CLIENT) == true) {
-                    mode = Z_WHATAMI_CLIENT;
-                } else if (_z_str_eq(s_mode, Z_CONFIG_MODE_PEER) == true) {
-                    mode = Z_WHATAMI_PEER;
-                } else {
-                    ret = _Z_ERR_CONFIG_INVALID_MODE;
-                }
-            }
-
-            if (ret == _Z_RES_OK) {
-                ret = __z_open_inner(zn, locator, mode);
-                if (ret == _Z_RES_OK) {
-                    break;
-                }
+    do {
+        ret = _z_open(zn, &zs->_config, &zs->_local_zid);
+        if (ret != _Z_RES_OK) {
+            if (ret == _Z_ERR_TRANSPORT_OPEN_FAILED || ret == _Z_ERR_SCOUT_NO_RESULTS ||
+                ret == _Z_ERR_TRANSPORT_TX_FAILED || ret == _Z_ERR_TRANSPORT_RX_FAILED) {
+                _Z_DEBUG("Reopen failed, next try in 1s");
+                z_sleep_s(1);
+                continue;
             } else {
-                _Z_ERROR("Trying to configure an invalid mode.");
+                return ret;
             }
         }
-        _z_string_svec_clear(&locators);
-    } else {
-        _Z_ERROR("A valid config is missing.");
-        ret = _Z_ERR_GENERIC;
-    }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+        ret = _zp_start_lease_task(zs, zs->_lease_task_attr);
+        if (ret != _Z_RES_OK) {
+            return ret;
+        }
+        ret = _zp_start_read_task(zs, zs->_read_task_attr);
+        if (ret != _Z_RES_OK) {
+            return ret;
+        }
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+        if (ret == _Z_RES_OK && !_z_network_message_list_is_empty(zs->_decalaration_cache)) {
+            _z_network_message_list_t *iter = zs->_decalaration_cache;
+            while (iter != NULL) {
+                _z_network_message_t *n_msg = _z_network_message_list_head(iter);
+                ret = _z_send_n_msg(zs, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+                if (ret != _Z_RES_OK) {
+                    _Z_DEBUG("Send message during reopen failed: %i", ret);
+                    continue;
+                }
+
+                iter = _z_network_message_list_tail(iter);
+            }
+        }
+    } while (ret != _Z_RES_OK);
 
     return ret;
 }
+
+void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
+    if (_z_config_is_empty(&zs->_config)) {
+        return;
+    }
+    zs->_decalaration_cache = _z_network_message_list_push_back(zs->_decalaration_cache, _z_n_msg_clone(n_msg));
+}
+
+#define _Z_CACHE_DECLARATION_UNDECLARE_FILTER(tp)                                                                     \
+    static bool _z_cache_declaration_undeclare_filter_##tp(const _z_network_message_t *left,                          \
+                                                           const _z_network_message_t *right) {                       \
+        return left->_body._declare._decl._body._undecl_##tp._id == right->_body._declare._decl._body._decl_##tp._id; \
+    }
+_Z_CACHE_DECLARATION_UNDECLARE_FILTER(kexpr)
+_Z_CACHE_DECLARATION_UNDECLARE_FILTER(subscriber)
+_Z_CACHE_DECLARATION_UNDECLARE_FILTER(queryable)
+_Z_CACHE_DECLARATION_UNDECLARE_FILTER(token)
+
+void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
+    if (n_msg->_tag != _Z_N_DECLARE) {
+        _Z_ERROR("Invalid net message for _z_prune_declaration: %i", n_msg->_tag);
+        return;
+    }
+#ifdef Z_BUILD_DEBUG
+    size_t cnt_before = _z_network_message_list_len(zs->_decalaration_cache);
+#endif
+    const _z_declaration_t *decl = &n_msg->_body._declare._decl;
+    switch (decl->_tag) {
+        case _Z_UNDECL_KEXPR:
+            zs->_decalaration_cache = _z_network_message_list_drop_filter(
+                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_kexpr, n_msg);
+            break;
+        case _Z_UNDECL_SUBSCRIBER:
+            zs->_decalaration_cache = _z_network_message_list_drop_filter(
+                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_subscriber, n_msg);
+            break;
+        case _Z_UNDECL_QUERYABLE:
+            zs->_decalaration_cache = _z_network_message_list_drop_filter(
+                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_queryable, n_msg);
+            break;
+        case _Z_UNDECL_TOKEN:
+            zs->_decalaration_cache = _z_network_message_list_drop_filter(
+                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_token, n_msg);
+            break;
+        default:
+            _Z_ERROR("Invalid decl for _z_prune_declaration: %i", decl->_tag);
+    };
+#ifdef Z_BUILD_DEBUG
+    size_t cnt_after = _z_network_message_list_len(zs->_decalaration_cache);
+    assert(cnt_before == cnt_after + 1);
+#endif
+}
+#endif  // Z_FEATURE_AUTO_RECONNECT == 1
 
 void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
 
@@ -166,11 +283,8 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     _z_config_t *ps = (_z_config_t *)z_malloc(sizeof(_z_config_t));
     if (ps != NULL) {
         _z_config_init(ps);
-        _z_slice_t local_zid = _z_slice_alias_buf(zn->_local_zid.id, _z_id_len(zn->_local_zid));
-        // TODO(sasahcmc): is it zero terminated???
-        // rework it!!!
-        _z_string_t s = _z_string_convert_bytes(&local_zid);
-        _zp_config_insert(ps, Z_INFO_PID_KEY, _z_string_data(&s));
+        _z_string_t s = _z_id_to_string(&zn->_local_zid);
+        _zp_config_insert_string(ps, Z_INFO_PID_KEY, &s);
         _z_string_clear(&s);
 
         switch (zn->_tp._type) {
@@ -221,6 +335,10 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
         z_free(task);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    } else {
+        zn->_read_task_attr = attr;
+#endif
     }
     return ret;
 }
@@ -250,6 +368,10 @@ z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     // Free task if operation failed
     if (ret != _Z_RES_OK) {
         z_free(task);
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    } else {
+        zn->_lease_task_attr = attr;
+#endif
     }
     return ret;
 }

@@ -225,6 +225,7 @@ see details at :ref:`owned_types_concept`
 .. c:type:: z_moved_bytes_writter_t
 
 .. autoctype:: types.h::z_bytes_reader_t
+.. autoctype:: types.h::z_bytes_slice_iterator_t
 
 Functions
 ^^^^^^^^^
@@ -242,6 +243,10 @@ Functions
 .. autocfunction:: primitives.h::z_bytes_copy_from_string
 .. autocfunction:: primitives.h::z_bytes_to_slice
 .. autocfunction:: primitives.h::z_bytes_to_string
+
+.. autocfunction:: primitives.h::z_bytes_get_contiguous_view
+.. autocfunction:: primitives.h::z_bytes_get_slice_iterator
+.. autocfunction:: primitives.h::z_bytes_slice_iterator_next
 
 .. autocfunction:: primitives.h::z_bytes_get_reader
 .. autocfunction:: primitives.h::z_bytes_reader_read
@@ -606,13 +611,13 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_loaned_closure_zid_t
 .. c:type:: z_moved_closure_zid_t
  
-.. c:type:: void (* z_closure_zid_callback_t)(z_loaned_zid_t * zid, void * arg);
+.. c:type:: void (* z_closure_zid_callback_t)(const z_id_t * id, void * arg);
 
     Function pointer type for handling Zenoh ID routers response.
     Represents a callback function that is invoked when a zid is available for processing.
 
     Parameters:
-      - **zid** - Pointer to a :c:type:`z_loaned_zid_t` representing the zid to be processed.
+      - **zid** - Pointer to a :c:type:`z_id_t` representing the zid to be processed.
       - **arg** - A user-defined pointer to additional data that can be used during the processing of the zid.
    
 Functions
@@ -627,6 +632,41 @@ See details at :ref:`owned_types_concept`
 
 .. c:function:: const z_loaned_closure_zid_t * z_closure_zid_loan(const z_owned_closure_zid_t * closure)
 .. c:function:: void z_closure_zid_drop(z_moved_closure_zid_t * closure) 
+
+
+Matching closure
+----------
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_closure_matching_status_t
+.. c:type:: z_loaned_closure_matching_status_t
+.. c:type:: z_moved_closure_matching_status_t
+ 
+.. c:type:: void (* z_closure_matching_status_callback_t)(z_matching_status_t * status, void * arg);
+
+    Function pointer type for handling matching status response.
+    Represents a callback function that is invoked when a matching status was changed.
+
+    Parameters:
+      - **status** - Pointer to a :c:type:`z_matching_status_t`.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the matching status.
+   
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_closure_matching_status
+.. autocfunction:: primitives.h::z_closure_matching_status_call
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_closure_matching_status_t * z_closure_matching_status_loan(const z_owned_closure_matching_status_t * closure)
+.. c:function:: void z_closure_matching_status_drop(z_moved_closure_matching_status_t * closure) 
 
 
 .. _channels_concept:
@@ -958,6 +998,26 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_session_drop(z_moved_session_t * closure) 
 
 
+Matching
+========
+
+Types
+-----
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_matching_listener_t
+.. c:type:: z_loaned_matching_listener_t
+.. c:type:: z_moved_matching_listener_t
+
+
+.. autoctype:: types.h::z_matching_status_t
+
+Functions
+---------
+
+.. autocfunction:: primitives.h::z_undeclare_matching_listener
+
+
 Publication
 ===========
 
@@ -1005,6 +1065,9 @@ Functions
 .. autocfunction:: primitives.h::z_publisher_put_options_default
 .. autocfunction:: primitives.h::z_publisher_delete_options_default
 .. autocfunction:: primitives.h::z_reliability_default
+.. autocfunction:: primitives.h::z_publisher_get_matching_status
+.. autocfunction:: primitives.h::z_publisher_declare_matching_listener
+.. autocfunction:: primitives.h::z_publisher_declare_background_matching_listener
 
 Ownership Functions
 -------------------
@@ -1162,6 +1225,49 @@ See details at :ref:`owned_types_concept`
 .. c:function:: z_loaned_reply_t * z_reply_loan_mut(z_owned_reply_t * reply)
 .. c:function:: z_result_t z_reply_take_from_loaned(z_owned_reply_t *dst, z_loaned_reply_t *src)
 
+Querier
+=======
+
+Represents a Zenoh Querier entity.
+
+Types
+-----
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_querier_t
+.. c:type:: z_loaned_querier_t
+.. c:type:: z_moved_querier_t
+
+Option Types
+------------
+
+.. autoctype:: types.h::z_querier_options_t
+.. autoctype:: types.h::z_querier_get_options_t
+
+Constants
+---------
+
+Functions
+---------
+.. autocfunction:: primitives.h::z_declare_querier
+.. autocfunction:: primitives.h::z_undeclare_querier
+.. autocfunction:: primitives.h::z_querier_get
+.. autocfunction:: primitives.h::z_querier_keyexpr
+.. autocfunction:: primitives.h::z_querier_get_matching_status
+.. autocfunction:: primitives.h::z_querier_declare_matching_listener
+.. autocfunction:: primitives.h::z_querier_declare_background_matching_listener
+
+.. autocfunction:: primitives.h::z_querier_options_default
+.. autocfunction:: primitives.h::z_querier_get_options_default
+
+Ownership Functions
+-------------------
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_querier_t * z_querier_loan(const z_owned_querier_t * closure)
+.. c:function:: void z_querier_drop(z_moved_querier_t * closure) 
 
 Scouting
 ========
@@ -1294,6 +1400,33 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const ze_loaned_serializer_t * ze_serializer_loan(const ze_owned_serializer_t * serializer)
 .. c:function:: ze_loaned_serializer_t * ze_serializer_loan_mut(ze_owned_serializer_t * serializer)
 .. c:function:: z_result_t ze_serializer_take_from_loaned(ze_owned_serializer_t *dst, ze_loaned_serializer_t *src)
+
+Liveliness
+========================
+Types
+-----
+.. autoctype:: liveliness.h::z_liveliness_token_options_t
+.. autoctype:: liveliness.h::z_liveliness_subscriber_options_t
+.. autoctype:: liveliness.h::z_liveliness_get_options_t
+
+Represents a Liveliness token entity.
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_liveliness_token_t
+.. c:type:: z_loaned_liveliness_token_t
+.. c:type:: z_moved_liveliness_token_t
+
+
+Functions
+---------
+.. autocfunction:: liveliness.h::z_liveliness_token_options_default
+.. autocfunction:: liveliness.h::z_liveliness_declare_token
+.. autocfunction:: liveliness.h::z_liveliness_undeclare_token
+.. autocfunction:: liveliness.h::z_liveliness_subscriber_options_default
+.. autocfunction:: liveliness.h::z_liveliness_declare_subscriber
+.. autocfunction:: liveliness.h::z_liveliness_declare_background_subscriber
+.. autocfunction:: liveliness.h::z_liveliness_get
+
 
 Others
 ======

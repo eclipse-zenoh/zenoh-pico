@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -32,11 +33,34 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     };
 }
 
+int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
+    if ((first->_id != 0) && (second->_id != 0)) {
+        if (_z_keyexpr_mapping_id(first) == _z_keyexpr_mapping_id(second)) {
+            if (first->_id == second->_id) {
+                return 0;
+            } else if (first->_id > second->_id) {
+                return 1;
+            }
+            return -1;
+        } else {
+            if (_z_keyexpr_mapping_id(first) > _z_keyexpr_mapping_id(second)) {
+                return 1;
+            }
+            return -1;
+        }
+    }
+    if (_z_keyexpr_has_suffix(first) && _z_keyexpr_has_suffix(second)) {
+        return _z_string_compare(&first->_suffix, &second->_suffix);
+    }
+    _Z_ERROR("Couldn't compare the two keyexpr");
+    return -1;
+}
+
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
     return (_z_keyexpr_t){
         ._id = rid,
         ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
-        ._suffix = (_z_string_check(str)) ? _z_string_alias(str) : _z_string_null(),
+        ._suffix = (_z_string_check(str)) ? _z_string_alias(*str) : _z_string_null(),
     };
 }
 
@@ -46,6 +70,11 @@ _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len) {
         ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
         ._suffix = (str != NULL) ? _z_string_alias_substr(str, len) : _z_string_null(),
     };
+}
+
+size_t _z_keyexpr_size(_z_keyexpr_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_keyexpr_t);
 }
 
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
@@ -59,9 +88,17 @@ z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
     return _Z_RES_OK;
 }
 
-_z_keyexpr_t _z_keyexpr_duplicate(_z_keyexpr_t src) {
+_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
     _z_keyexpr_t dst;
-    _z_keyexpr_copy(&dst, &src);
+    _z_keyexpr_copy(&dst, src);
+    return dst;
+}
+
+_z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src) {
+    _z_keyexpr_t *dst = z_malloc(sizeof(_z_keyexpr_t));
+    if (dst != NULL) {
+        _z_keyexpr_copy(dst, src);
+    }
     return dst;
 }
 
@@ -71,17 +108,11 @@ _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     return stolen;
 }
 
-void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
-    *dst = *src;
-    *src = _z_keyexpr_null();
-}
+void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) { *dst = _z_keyexpr_steal(src); }
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
-    if (_z_keyexpr_has_suffix(rk)) {
-        _z_string_clear(&rk->_suffix);
-    }
-    rk->_suffix = _z_string_null();
+    _z_string_clear(&rk->_suffix);
 }
 
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
@@ -102,16 +133,15 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     if (_z_keyexpr_mapping_id(left) != _z_keyexpr_mapping_id(right)) {
         return false;
     }
-    return _z_string_equals(&left->_suffix, &right->_suffix);
-}
-
-_z_keyexpr_t _z_keyexpr_alias(_z_keyexpr_t src) {
-    _z_keyexpr_t alias = {
-        ._id = src._id,
-        ._mapping = src._mapping,
-        ._suffix = _z_string_alias(&src._suffix),
-    };
-    return alias;
+    bool l_suffix = _z_keyexpr_has_suffix(left);
+    bool r_suffix = _z_keyexpr_has_suffix(right);
+    if (l_suffix != r_suffix) {
+        return false;
+    }
+    if (l_suffix && r_suffix) {
+        return _z_string_equals(&left->_suffix, &right->_suffix);
+    }
+    return true;
 }
 
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_declared) {
@@ -136,7 +166,7 @@ zp_keyexpr_canon_status_t __zp_canon_prefix(const char *start, size_t *len) {
     char const *next_slash;
 
     do {
-        next_slash = strchr(chunk_start, '/');
+        next_slash = memchr(chunk_start, '/', _z_ptr_char_diff(end, chunk_start));
         const char *chunk_end = next_slash ? next_slash : end;
         size_t chunk_len = _z_ptr_char_diff(chunk_end, chunk_start);
         switch (chunk_len) {
@@ -281,7 +311,7 @@ void __zp_ke_write_chunk(char **writer, const char *chunk, size_t len, const cha
         writer[0] = _z_ptr_char_offset(writer[0], 1);
     }
 
-    (void)memcpy(writer[0], chunk, len);
+    (void)memmove(writer[0], chunk, len);
     writer[0] = _z_ptr_char_offset(writer[0], (ptrdiff_t)len);
 }
 
@@ -756,10 +786,9 @@ zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len) {
         } else {
             assert(false);  // anything before "$*" or "**" must be part of the canon prefix
         }
-
         while (next_slash != NULL) {
             reader = _z_ptr_char_offset(next_slash, 1);
-            next_slash = strchr(reader, '/');
+            next_slash = memchr(reader, '/', _z_ptr_char_diff(end, reader));
             chunk_end = next_slash ? next_slash : end;
             switch (_z_ptr_char_diff(chunk_end, reader)) {
                 case 0: {

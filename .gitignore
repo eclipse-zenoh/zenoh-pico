@@ -2,6 +2,7 @@
 build
 crossbuilds
 CMakeFiles
+compile_commands.json
 
 # vscode
 .vscode 
@@ -55,6 +56,7 @@ cmake-build-release
 *.idb
 *.pdb
 *.sarif
+.gdb_history
 
 # Kernel Module Compile Results
 *.mod*

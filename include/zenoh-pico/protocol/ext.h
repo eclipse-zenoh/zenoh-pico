@@ -43,7 +43,11 @@ extern "C" {
 /*=============================*/
 /*        Extension IDs        */
 /*=============================*/
-// #define _Z_MSG_EXT_ID_FOO 0x00 // Hex(ENC|M|ID)
+#define _Z_MSG_EXT_ID_JOIN_QOS (0x01 | _Z_MSG_EXT_FLAG_M | _Z_MSG_EXT_ENC_ZBUF)
+#define _Z_MSG_EXT_ID_JOIN_PATCH (0x07 | _Z_MSG_EXT_ENC_ZINT)
+#define _Z_MSG_EXT_ID_INIT_PATCH (0x07 | _Z_MSG_EXT_ENC_ZINT)
+#define _Z_MSG_EXT_ID_FRAGMENT_FIRST (0x02 | _Z_MSG_EXT_ENC_UNIT)
+#define _Z_MSG_EXT_ID_FRAGMENT_DROP (0x03 | _Z_MSG_EXT_ENC_UNIT)
 
 /*=============================*/
 /*     Extension Encodings     */
@@ -58,6 +62,7 @@ extern "C" {
 #define _Z_MSG_EXT_FLAG_M 0x10
 #define _Z_MSG_EXT_IS_MANDATORY(h) ((h & _Z_MSG_EXT_FLAG_M) != 0)
 #define _Z_MSG_EXT_FLAG_Z 0x80
+#define _Z_MSG_EXT_MORE(more) (more ? _Z_MSG_EXT_FLAG_Z : 0)
 
 typedef struct {
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
@@ -100,7 +105,7 @@ void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, const _z_msg_ext_unit_t *ext
 void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext);
 void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, const _z_msg_ext_zbuf_t *ext);
 
-_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy)
+_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy, _z_noop_move)
 _Z_VEC_DEFINE(_z_msg_ext, _z_msg_ext_t)
 
 #ifdef __cplusplus

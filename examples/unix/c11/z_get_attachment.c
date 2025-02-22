@@ -68,12 +68,11 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
 
         // Check attachment
         const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
-        if (attachment == NULL) {
-            return;
-        }
         ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
         size_t attachment_len;
-        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
+        if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) < 0) {
+            return;
+        }
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
@@ -155,7 +154,7 @@ int main(int argc, char **argv) {
 
     z_view_keyexpr_t ke;
     if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
-        printf("%s is not a valid key expression", keyexpr);
+        printf("%s is not a valid key expression\n", keyexpr);
         return -1;
     }
 
@@ -178,7 +177,7 @@ int main(int argc, char **argv) {
 
     ze_owned_serializer_t serializer;
     ze_serializer_empty(&serializer);
-    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 2);
+    ze_serializer_serialize_sequence_length(z_loan_mut(serializer), 1);
     for (size_t i = 0; i < 1; ++i) {
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].key));
         ze_serializer_serialize_string(z_loan_mut(serializer), z_loan(kvs[i].value));

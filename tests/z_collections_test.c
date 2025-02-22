@@ -308,6 +308,70 @@ void fifo_test_init_free(void) {
     assert(r == NULL);
 }
 
+void int_map_iterator_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
+
+#define TEST_MAP(map)                                                      \
+    {                                                                      \
+        _z_str_intmap_iterator_t iter = _z_str_intmap_iterator_make(&map); \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 20);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "B") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 40);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "D") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 10);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "A") == 0);     \
+                                                                           \
+        assert(_z_str_intmap_iterator_next(&iter));                        \
+        assert(_z_str_intmap_iterator_key(&iter) == 30);                   \
+        assert(strcmp(_z_str_intmap_iterator_value(&iter), "C") == 0);     \
+                                                                           \
+        assert(!_z_str_intmap_iterator_next(&iter));                       \
+    }
+
+    TEST_MAP(map);
+
+    _z_str_intmap_t map2 = _z_str_intmap_clone(&map);
+
+    TEST_MAP(map2);
+
+    _z_str_intmap_clear(&map);
+    _z_str_intmap_clear(&map2);
+
+#undef TEST_MAP
+}
+
+void int_map_iterator_deletion_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
+
+    _z_str_intmap_iterator_t iter = _z_str_intmap_iterator_make(&map);
+    _z_str_intmap_iterator_next(&iter);
+    for (size_t s = 4; s != 0; s--) {
+        assert(s == _z_str_intmap_len(&map));
+        size_t key = _z_str_intmap_iterator_key(&iter);
+        assert(strlen(_z_str_intmap_iterator_value(&iter)) == 1);
+        _z_str_intmap_iterator_next(&iter);
+        _z_str_intmap_remove(&map, key);
+    }
+    _z_str_intmap_clear(&map);
+}
+
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -315,4 +379,7 @@ int main(void) {
     lifo_test_init_free();
     fifo_test();
     fifo_test_init_free();
+
+    int_map_iterator_test();
+    int_map_iterator_deletion_test();
 }

@@ -37,6 +37,7 @@ file(GLOB_RECURSE Sources
   "../src/session/*.c"
   "../src/transport/*.c"
   "../src/utils/*.c"
+  "../src/system/common/*.c"
 )
 
 file (GLOB Sources_Zephyr "../src/system/zephyr/*.c")

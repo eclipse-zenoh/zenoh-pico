@@ -53,7 +53,7 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
     sleep 5
 
     echo "> Running $TESTBIN ..."
-    "$TESTBIN" "$LOCATOR"
+    "$TESTBIN" "$LOCATOR" > client."$1".log 2>&1
     RETCODE=$?
 
     echo "> Stopping zenohd ..."
@@ -61,10 +61,13 @@ for LOCATOR in $(echo "$LOCATORS" | xargs); do
 
     sleep 1
 
-    echo "> Logs of zenohd ..."
-    cat zenohd."$1".log
-
-    [ "$RETCODE" -lt 0 ] && exit "$RETCODE"
+    if [ "$RETCODE" -lt 0 ]; then
+        echo "> Logs of client ..."
+        cat client."$1".log
+        echo "> Logs of zenohd ..."
+        cat zenohd."$1".log
+        exit "$RETCODE"
+    fi
 done
 
 echo "> Done ($RETCODE)."

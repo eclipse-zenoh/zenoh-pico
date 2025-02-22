@@ -64,12 +64,10 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
         printf("    with timestamp: %" PRIu64 "\n", z_timestamp_ntp64_time(ts));
     }
     // Check attachment
-
     const z_loaned_bytes_t *attachment = z_sample_attachment(sample);
-    if (attachment != NULL) {
-        ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
-        size_t attachment_len;
-        ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len);
+    ze_deserializer_t deserializer = ze_deserializer_from_bytes(attachment);
+    size_t attachment_len;
+    if (ze_deserializer_deserialize_sequence_length(&deserializer, &attachment_len) == Z_OK) {
         kv_pair_t *kvp = (kv_pair_t *)malloc(sizeof(kv_pair_t) * attachment_len);
         for (size_t i = 0; i < attachment_len; ++i) {
             ze_deserializer_deserialize_string(&deserializer, &kvp[i].key);
@@ -153,7 +151,10 @@ int main(int argc, char **argv) {
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, keyexpr);
+    if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
+        printf("%s is not a valid key expression\n", keyexpr);
+        return -1;
+    }
     if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), NULL) < 0) {
         printf("Unable to declare subscriber.\n");
         return -1;

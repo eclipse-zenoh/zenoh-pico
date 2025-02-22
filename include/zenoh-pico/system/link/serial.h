@@ -28,7 +28,7 @@ extern "C" {
 #if Z_FEATURE_LINK_SERIAL == 1
 
 #define _Z_SERIAL_MTU_SIZE 1500
-#define _Z_SERIAL_MFS_SIZE _Z_SERIAL_MTU_SIZE + 2 + 4  // MTU + Serial Len + Serial CRC32
+#define _Z_SERIAL_MFS_SIZE _Z_SERIAL_MTU_SIZE + 1 + 2 + 4  // MTU + Header + Serial Len + Serial CRC32
 #define _Z_SERIAL_MAX_COBS_BUF_SIZE \
     1516  // Max On-the-wire length for an MFS/MTU of 1510/1500 (MFS + Overhead Byte (OHB) + End of packet (EOP))
 
@@ -42,8 +42,8 @@ z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin,
 z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate);
 void _z_close_serial(_z_sys_net_socket_t *sock);
 size_t _z_read_exact_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len);
-size_t _z_send_serial(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len);
+size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len);
+size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len);
 
 #endif
 

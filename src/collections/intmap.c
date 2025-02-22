@@ -68,6 +68,9 @@ z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t 
 
 _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f) {
     _z_int_void_map_t dst = {._capacity = src->_capacity, ._vals = NULL};
+    if (src->_vals == NULL) {
+        return dst;
+    }
     // Lazily allocate and initialize to NULL all the pointers
     size_t len = dst._capacity * sizeof(_z_list_t *);
     dst._vals = (_z_list_t **)z_malloc(len);
@@ -143,6 +146,41 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
 
     return ret;
 }
+
+_z_int_void_map_iterator_t _z_int_void_map_iterator_make(const _z_int_void_map_t *map) {
+    _z_int_void_map_iterator_t iter = {0};
+
+    iter._map = map;
+
+    return iter;
+}
+
+bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter) {
+    if (iter->_map->_vals == NULL) {
+        return false;
+    }
+
+    while (iter->_idx < iter->_map->_capacity) {
+        if (iter->_list_ptr == NULL) {
+            iter->_list_ptr = iter->_map->_vals[iter->_idx];
+        } else {
+            iter->_list_ptr = _z_list_tail(iter->_list_ptr);
+        }
+        if (iter->_list_ptr == NULL) {
+            iter->_idx++;
+            continue;
+        }
+
+        iter->_entry = iter->_list_ptr->_val;
+
+        return true;
+    }
+    return false;
+}
+
+size_t _z_int_void_map_iterator_key(const _z_int_void_map_iterator_t *iter) { return iter->_entry->_key; }
+
+void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter) { return iter->_entry->_val; }
 
 void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
     if (map->_vals != NULL) {

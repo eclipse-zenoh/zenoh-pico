@@ -64,6 +64,8 @@ z_result_t _z_task_cancel(_z_task_t *task) {
     return res;
 }
 
+void _z_task_exit(void) {}
+
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
     z_free(ptr);
@@ -94,27 +96,112 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) {
 }
 
 /*------------------ Condvar ------------------*/
-z_result_t _z_condvar_init(_z_condvar_t *cv) { return 0; }
+struct condvar {
+    Mutex mutex;
+    Semaphore sem{0};
+    int waiters{0};
+};
+
+z_result_t _z_condvar_init(_z_condvar_t *cv) {
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    *cv = new condvar();
+    return 0;
+}
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
-    delete ((ConditionVariable *)*cv);
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    delete ((condvar *)*cv);
     return 0;
 }
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_one();
-    return 0;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    if (cond_var.waiters > 0) {
+        cond_var.sem.release();
+        cond_var.waiters--;
+    }
+    cond_var.mutex.unlock();
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
-    ((ConditionVariable *)*cv)->notify_all();
-    return 0;
+    if (!cv) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    while (cond_var.waiters > 0) {
+        cond_var.sem.release();
+        cond_var.waiters--;
+    }
+    cond_var.mutex.unlock();
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
-    *cv = new ConditionVariable(*((Mutex *)*m));
-    ((ConditionVariable *)*cv)->wait();
-    return 0;
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    cond_var.mutex.lock();
+    cond_var.waiters++;
+    cond_var.mutex.unlock();
+
+    _z_mutex_unlock(m);
+
+    cond_var.sem.acquire();
+
+    _z_mutex_lock(m);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
+    if (!cv || !m) {
+        return _Z_ERR_GENERIC;
+    }
+
+    auto &cond_var = *(condvar *)*cv;
+
+    auto target_time =
+        Kernel::Clock::time_point(Kernel::Clock::duration(abstime->tv_sec * 1000LL + abstime->tv_nsec / 1000000));
+
+    cond_var.mutex.lock();
+    cond_var.waiters++;
+    cond_var.mutex.unlock();
+
+    _z_mutex_unlock(m);
+
+    bool timed_out = cond_var.sem.try_acquire_until(target_time) == false;
+
+    _z_mutex_lock(m);
+
+    if (timed_out) {
+        cond_var.mutex.lock();
+        cond_var.waiters--;
+        cond_var.mutex.unlock();
+        return Z_ETIMEDOUT;
+    }
+
+    return _Z_RES_OK;
 }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
@@ -136,24 +223,58 @@ z_result_t z_sleep_s(size_t time) {
 
 /*------------------ Instant ------------------*/
 z_clock_t z_clock_now(void) {
-    // Not supported by default
-    return NULL;
+    auto now = Kernel::Clock::now();
+    auto duration = now.time_since_epoch();
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(duration);
+    auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration - secs);
+
+    z_clock_t ts;
+    ts.tv_sec = secs.count();
+    ts.tv_nsec = nanos.count();
+    return ts;
 }
 
 unsigned long z_clock_elapsed_us(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed =
+        (unsigned long)(1000000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000);
+    return elapsed;
 }
 
 unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed =
+        (unsigned long)(1000 * (now.tv_sec - instant->tv_sec) + (now.tv_nsec - instant->tv_nsec) / 1000000);
+    return elapsed;
 }
 
 unsigned long z_clock_elapsed_s(z_clock_t *instant) {
-    // Not supported by default
-    return -1;
+    z_clock_t now = z_clock_now();
+    unsigned long elapsed = (unsigned long)(now.tv_sec - instant->tv_sec);
+    return elapsed;
 }
+
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000000;
+    clock->tv_nsec += (duration % 1000000) * 1000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
+    clock->tv_sec += duration / 1000;
+    clock->tv_nsec += (duration % 1000) * 1000000;
+
+    if (clock->tv_nsec >= 1000000000) {
+        clock->tv_sec += 1;
+        clock->tv_nsec -= 1000000000;
+    }
+}
+
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
 
 /*------------------ Time ------------------*/
 z_time_t z_time_now(void) {

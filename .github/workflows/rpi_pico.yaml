@@ -1,0 +1,65 @@
+#
+# Copyright (c) 2024 ZettaScale Technology
+#
+# This program and the accompanying materials are made available under the
+# terms of the Eclipse Public License 2.0 which is available at
+# http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
+# which is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+# SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+#
+# Contributors:
+#   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
+#
+name: rpi_pico 
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} for ${{ matrix.pico_board }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        pico_board: ["pico", "pico_w", "pico2", "pico2_w"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jwlawson/actions-setup-cmake@v1.13
+      - name: Install requirements
+        run: |
+          sudo apt update
+          sudo apt install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential g++ libstdc++-arm-none-eabi-newlib
+          
+      - name: Install Raspberry Pico SDK 
+        run: |
+          export PICO_SDK_PATH=$HOME/work/pico-sdk
+          mkdir -p $PICO_SDK_PATH
+          cd $PICO_SDK_PATH
+          git clone https://github.com/raspberrypi/pico-sdk.git --branch 2.1.0 .
+          git submodule update --init
+          
+      - name: Install FreeRTOS SDK 
+        run: |
+          export FREERTOS_KERNEL_PATH=$HOME/work/FreeRTOS-Kernel/
+          mkdir -p $FREERTOS_KERNEL_PATH
+          cd $FREERTOS_KERNEL_PATH
+          git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git .
+          # Some version witch aleready supports the Pico SDK but not the latest, because sometimes latest is broken
+          git checkout e169442c29ba8e26faf033cc0886029dd5812979 
+          git submodule update --init
+          
+      - name: Build examples
+        run: |
+          export PICO_SDK_PATH=$HOME/work/pico-sdk
+          export FREERTOS_KERNEL_PATH=$HOME/work/FreeRTOS-Kernel/
+          cd $HOME/work/zenoh-pico/zenoh-pico/examples/rpi_pico
+          cmake -Bbuild -DWIFI_SSID=wifi_network_ssid -DWIFI_PASSWORD=wifi_network_password -DPICO_BOARD="$PICO_BOARD"
+          cmake --build ./build
+        env:
+          PICO_BOARD: ${{ matrix.pico_board}}

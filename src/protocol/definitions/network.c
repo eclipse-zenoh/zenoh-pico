@@ -19,6 +19,8 @@
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/utils/logging.h"
 
+const _z_qos_t _Z_N_QOS_DEFAULT = {._val = 5};
+
 _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *msg) {
     _z_n_msg_request_exts_t ret = {.n = 0,
                                    .ext_budget = msg->_ext_budget != 0,
@@ -72,10 +74,15 @@ _z_push_body_t _z_push_body_steal(_z_push_body_t *msg) {
     *msg = _z_push_body_null();
     return ret;
 }
-_z_push_body_t _z_push_body_null(void) {
-    return (_z_push_body_t){
-        ._is_put = false,
-        ._body._del._commons = {._timestamp = _z_timestamp_null(), ._source_info = _z_source_info_null()}};
+
+static z_result_t _z_push_body_copy(_z_push_body_t *dst, const _z_push_body_t *src) {
+    if (src->_is_put) {
+        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._put._attachment, &src->_body._put._attachment));
+        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._put._payload, &src->_body._put._payload));
+    } else {
+        _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._del._attachment, &src->_body._del._attachment));
+    }
+    return _Z_RES_OK;
 }
 
 void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg) { (void)(msg); }
@@ -227,6 +234,130 @@ _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest) {
                 ._interest = interest,
             },
     };
+}
+
+static z_result_t _z_n_msg_push_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._push._key, &src->_body._push._key));
+    return _z_push_body_copy(&dst->_body._push._body, &src->_body._push._body);
+}
+
+static z_result_t _z_n_msg_request_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._request._key, &src->_body._request._key));
+    switch (src->_body._request._tag) {
+        case _Z_REQUEST_QUERY:
+            _Z_RETURN_IF_ERR(_z_slice_copy(&dst->_body._request._body._query._parameters,
+                                           &src->_body._request._body._query._parameters));
+            _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._request._body._query._ext_attachment,
+                                           &src->_body._request._body._query._ext_attachment));
+            _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._request._body._query._ext_value.payload,
+                                           &src->_body._request._body._query._ext_value.payload));
+            break;
+        case _Z_REQUEST_PUT:
+            _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._request._body._put._attachment,
+                                           &src->_body._request._body._put._attachment));
+            _Z_RETURN_IF_ERR(
+                _z_bytes_copy(&dst->_body._request._body._put._payload, &src->_body._request._body._put._payload));
+            break;
+        case _Z_REQUEST_DEL:
+            _Z_RETURN_IF_ERR(_z_bytes_copy(&dst->_body._request._body._del._attachment,
+                                           &src->_body._request._body._del._attachment));
+            break;
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_n_msg_response_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._response._key, &src->_body._response._key));
+    switch (src->_body._response._tag) {
+        case _Z_RESPONSE_BODY_REPLY:
+            _Z_RETURN_IF_ERR(
+                _z_push_body_copy(&dst->_body._response._body._reply._body, &src->_body._response._body._reply._body));
+            break;
+        case _Z_RESPONSE_BODY_ERR:
+            _Z_RETURN_IF_ERR(
+                _z_bytes_copy(&dst->_body._response._body._err._payload, &src->_body._response._body._err._payload));
+            break;
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_n_msg_response_final_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_n_msg_declare_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    const _z_declaration_t *src_decl = &src->_body._declare._decl;
+    _z_declaration_t *dst_decl = &dst->_body._declare._decl;
+    switch (src_decl->_tag) {
+        case _Z_DECL_KEXPR: {
+            _Z_RETURN_IF_ERR(
+                _z_keyexpr_copy(&dst_decl->_body._decl_kexpr._keyexpr, &src_decl->_body._decl_kexpr._keyexpr));
+        } break;
+        case _Z_DECL_SUBSCRIBER: {
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._decl_subscriber._keyexpr,
+                                             &src_decl->_body._decl_subscriber._keyexpr));
+        } break;
+        case _Z_UNDECL_SUBSCRIBER: {
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_subscriber._ext_keyexpr,
+                                             &src_decl->_body._undecl_subscriber._ext_keyexpr));
+        } break;
+        case _Z_DECL_QUERYABLE: {
+            _Z_RETURN_IF_ERR(
+                _z_keyexpr_copy(&dst_decl->_body._decl_queryable._keyexpr, &src_decl->_body._decl_queryable._keyexpr));
+        } break;
+        case _Z_UNDECL_QUERYABLE: {
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_queryable._ext_keyexpr,
+                                             &src_decl->_body._undecl_queryable._ext_keyexpr));
+        } break;
+        case _Z_DECL_TOKEN: {
+            _Z_RETURN_IF_ERR(
+                _z_keyexpr_copy(&dst_decl->_body._decl_token._keyexpr, &src_decl->_body._decl_token._keyexpr));
+        } break;
+        case _Z_UNDECL_TOKEN: {
+            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_token._ext_keyexpr,
+                                             &src_decl->_body._undecl_token._ext_keyexpr));
+        } break;
+        default:
+            break;
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_n_msg_interest_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    memcpy(dst, src, sizeof(_z_network_message_t));
+    _Z_RETURN_IF_ERR(
+        _z_keyexpr_copy(&dst->_body._interest._interest._keyexpr, &src->_body._interest._interest._keyexpr));
+    return _Z_RES_OK;
+}
+
+z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
+    switch (src->_tag) {
+        case _Z_N_PUSH:
+            return _z_n_msg_push_copy(dst, src);
+        case _Z_N_REQUEST:
+            return _z_n_msg_request_copy(dst, src);
+        case _Z_N_RESPONSE:
+            return _z_n_msg_response_copy(dst, src);
+        case _Z_N_RESPONSE_FINAL:
+            return _z_n_msg_response_final_copy(dst, src);
+        case _Z_N_DECLARE:
+            return _z_n_msg_declare_copy(dst, src);
+        case _Z_N_INTEREST:
+            return _z_n_msg_interest_copy(dst, src);
+        default:
+            return _Z_ERR_ENTITY_UNKNOWN;
+    }
+}
+
+_z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src) {
+    _z_network_message_t *dst = z_malloc(sizeof(_z_network_message_t));
+    _z_n_msg_copy(dst, src);
+    return dst;
 }
 
 void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping) {

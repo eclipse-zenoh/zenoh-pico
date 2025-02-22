@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "zenoh-pico/api/types.h"
 #include "zenoh-pico/utils/pointers.h"
 
 #define UUID_SIZE 16
@@ -31,4 +32,9 @@ void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str) {
         *bytes = (uint8_t)strtoul(val, NULL, 0);
         bytes = _z_ptr_u8_offset(bytes, 1);
     }
+}
+
+_z_string_t _z_id_to_string(const z_id_t *id) {
+    _z_slice_t buf = _z_slice_alias_buf(id->id, sizeof(id->id));
+    return _z_string_convert_bytes_le(&buf);
 }

@@ -457,7 +457,7 @@ z_result_t z_slice_from_buf(z_owned_slice_t *slice, uint8_t *data, size_t len,
  * Return:
  *   ``0`` if creation is successful, ``negative value`` otherwise.
  */
-z_result_t z_view_slice_from_buf(z_view_slice_t *slice, uint8_t *data, size_t len);
+z_result_t z_view_slice_from_buf(z_view_slice_t *slice, const uint8_t *data, size_t len);
 
 /**
  * Builds an empty :c:type:`z_owned_slice_t`.
@@ -684,6 +684,23 @@ size_t z_bytes_len(const z_loaned_bytes_t *bytes);
  *   ``true`` if conainer is empty,  ``false`` otherwise.
  */
 bool z_bytes_is_empty(const z_loaned_bytes_t *bytes);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Attempts to get a contiguous view to the underlying bytes (unstable).
+ *
+ * This is only possible if data is not fragmented, otherwise the function will fail.
+ * In case of fragmented data, consider using `z_bytes_get_slice_iterator()`.
+ *
+ * Parameters:
+ *   bytes: An instance of Zenoh data.
+ *   view: An uninitialized memory location where a contiguous view on data will be constructed.
+ *
+ * Return:
+ *   ``0`` in case of success, ``negative value`` otherwise.
+ */
+z_result_t z_bytes_get_contiguous_view(const z_loaned_bytes_t *bytes, z_view_slice_t *view);
+#endif
 
 /**
  * Returns an iterator on raw bytes slices contained in the `z_loaned_bytes_t`.
@@ -1090,9 +1107,36 @@ z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_
  *
  * Parameters:
  *   closure: Pointer to the :c:type:`z_loaned_closure_zid_t` to call.
- *   zid: Pointer to the :c:type:`z_loaned_zid_t` to pass to the closure.
+ *   zid: Pointer to the :c:type:`z_id_t` to pass to the closure.
  */
 void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
+
+/**
+ * Builds a new matching status closure.
+ * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_matching_status_t`.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise
+ */
+z_result_t z_closure_matching_status(z_owned_closure_matching_status_t *closure,
+                                     z_closure_matching_status_callback_t call, z_closure_drop_callback_t drop,
+                                     void *context);
+
+/**
+ * Calls a matching status closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`z_loaned_closure_matching_status_t` to call.
+ *   status: Pointer to the :c:type:`z_matching_status_t` to pass to the closure.
+ */
+void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *closure,
+                                    const z_matching_status_t *status);
 
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
@@ -1101,6 +1145,8 @@ _Z_OWNED_FUNCTIONS_DEF(config)
 _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(session)
 _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(subscriber)
 _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(querier)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(matching_listener)
 _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(queryable)
 _Z_OWNED_FUNCTIONS_DEF(hello)
 _Z_OWNED_FUNCTIONS_DEF(reply)
@@ -1118,6 +1164,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_query)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_reply)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_hello)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_zid)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_matching_status)
 
 _Z_VIEW_FUNCTIONS_DEF(keyexpr)
 _Z_VIEW_FUNCTIONS_DEF(string)
@@ -1644,7 +1691,66 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher);
-#endif
+
+#if Z_FEATURE_MATCHING == 1
+/**
+ * Declares a matching listener, registering a callback for notifying subscribers matching with a given publisher.
+ * The callback will be run in the background until the corresponding publisher is dropped.
+ *
+ * Parameters:
+ *   publisher: A publisher to associate with matching listener.
+ *   callback: A closure that will be called every time the matching status of the publisher changes (If last subscriber
+ * disconnects or when the first subscriber connects).
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publisher_t *publisher,
+                                                            z_moved_closure_matching_status_t *callback);
+/**
+ * Constructs matching listener, registering a callback for notifying subscribers matching with a given publisher.
+ *
+ * Parameters:
+ *   publisher: A publisher to associate with matching listener.
+ *   matching_listener: An uninitialized memory location where matching listener will be constructed. The matching
+ * listener's callback will be automatically dropped when the publisher is dropped. callback: A closure that will be
+ * called every time the matching status of the publisher changes (If last subscriber disconnects or when the first
+ * subscriber connects).
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
+                                                 z_owned_matching_listener_t *matching_listener,
+                                                 z_moved_closure_matching_status_t *callback);
+/**
+ * Gets publisher matching status - i.e. if there are any subscribers matching its key expression.
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher, z_matching_status_t *matching_status);
+
+/**
+ * Undeclares the matching listener.
+ *
+ * Parameters:
+ *   listener: Moved :c:type:`z_owned_matching_listener_t` to undeclare.
+ *
+ * Return:
+ *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ */
+z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener);
+
+#endif  // Z_FEATURE_MATCHING == 1
+
+#endif  // Z_FEATURE_PUBLICATION == 1
 
 #if Z_FEATURE_QUERY == 1
 /**
@@ -1670,6 +1776,124 @@ void z_get_options_default(z_get_options_t *options);
  */
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
                  z_moved_closure_reply_t *callback, z_get_options_t *options);
+
+#ifdef Z_FEATURE_UNSTABLE_API
+/**
+ *  Constructs the default value for :c:type:`z_querier_get_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+void z_querier_get_options_default(z_querier_get_options_t *options);
+
+/**
+ *  Constructs the default value for :c:type:`z_querier_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+void z_querier_options_default(z_querier_options_t *options);
+
+/**
+ * Constructs and declares a querier on the given key expression.
+ *
+ * The queries can be send with the help of the `z_querier_get()` function.
+ *
+ * Parameters:
+ *   zs: The Zenoh session.
+ *   querier: An uninitialized location in memory where querier will be constructed.
+ *   keyexpr: The key expression to send queries on.
+ *   options: Additional options for the querier.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+
+z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
+                             const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options);
+
+/**
+ * Frees memory and resets querier to its gravestone state.
+ */
+z_result_t z_undeclare_querier(z_moved_querier_t *querier);
+
+/**
+ * Query data from the matching queryables in the system.
+ *
+ * Replies are provided through a callback function.
+ *
+ * Parameters:
+ *   querier: The querier to make query from.
+ *   parameters: The query's parameters, similar to a url's query segment.
+ *   callback: The callback function that will be called on reception of replies for this query. It will be
+ * 				automatically dropped once all replies are processed.
+ *   options: Additional options for the get. All owned fields will be consumed.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
+                         z_querier_get_options_t *options);
+
+/**
+ *  Returns the key expression of the querier.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+
+#if Z_FEATURE_MATCHING == 1
+/**
+ * Declares a matching listener, registering a callback for notifying queryables matching the given querier key
+ * expression and target. The callback will be run in the background until the corresponding querier is dropped.
+ *
+ * Parameters:
+ *   querier: A querier to associate with matching listener.
+ *   callback: A closure that will be called every time the matching status of the querier changes (If last
+ *             queryable disconnects or when the first queryable connects).
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier_t *querier,
+                                                          z_moved_closure_matching_status_t *callback);
+/**
+ * Constructs matching listener, registering a callback for notifying queryables matching with a given querier's
+ * key expression and target.
+ *
+ * Parameters:
+ *   querier: A querier to associate with matching listener.
+ *   matching_listener: An uninitialized memory location where matching listener will be constructed. The matching
+ *                      listener's callback will be automatically dropped when the querier is dropped.
+ *   callback: A closure that will be called every time the matching status of the querier changes (If last
+ *             queryable disconnects or when the first queryable connects).
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
+                                               z_owned_matching_listener_t *matching_listener,
+                                               z_moved_closure_matching_status_t *callback);
+/**
+ * Gets querier matching status - i.e. if there are any queryables matching its key expression and target.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_matching_status_t *matching_status);
+
+#endif  // Z_FEATURE_MATCHING == 1
+
+#endif  // Z_FEATURE_UNSTABLE_API
+
 /**
  * Checks if queryable answered with an OK, which allows this value to be treated as a sample.
  *
@@ -2060,6 +2284,43 @@ z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
+#endif
+
+#if Z_FEATURE_BATCHING == 1
+/**
+ * Activate the batching mechanism, any message that would have been sent on the network by a subsequent api call (e.g
+ * z_put, z_get) will be instead stored until either: the batch is full, flushed with :c:func:`zp_batch_flush`, batching
+ * is stopped with :c:func:`zp_batch_stop`, a message needs to be sent immediately.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` that will start batching messages.
+ *
+ * Return:
+ *   ``0`` if batching started, ``negative value`` otherwise.
+ */
+z_result_t zp_batch_start(const z_loaned_session_t *zs);
+
+/**
+ * Send the currently batched messages on the network.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` that will send its batched messages.
+ *
+ * Return:
+ *   ``0`` if batch successfully sent, ``negative value`` otherwise.
+ */
+z_result_t zp_batch_flush(const z_loaned_session_t *zs);
+
+/**
+ * Deactivate the batching mechanism and send the currently batched on the network.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` that will stop batching messages.
+ *
+ * Return:
+ *   ``0`` if batching stopped and batch successfully sent, ``negative value`` otherwise.
+ */
+z_result_t zp_batch_stop(const z_loaned_session_t *zs);
 #endif
 
 /************* Multi Thread Tasks helpers **************/

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2024 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -12,22 +12,19 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_MULTICAST_TX_H
-#define ZENOH_PICO_MULTICAST_TX_H
+#ifndef ZENOH_PICO_COMMON_TRANSPORT_H
+#define ZENOH_PICO_COMMON_TRANSPORT_H
 
-#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-z_result_t _z_multicast_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
-                                   z_congestion_control_t cong_ctrl);
-z_result_t _z_multicast_send_t_msg(_z_transport_multicast_t *ztm, const _z_transport_message_t *t_msg);
+void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ZENOH_PICO_MULTICAST_TX_H */
+#endif /* ZENOH_PICO_COMMON_TRANSPORT_H*/

@@ -19,10 +19,10 @@
 
 #if KERNEL_VERSION_MAJOR == 2
 #include <kernel.h>
-#elif KERNEL_VERSION_MAJOR == 3
+#elif KERNEL_VERSION_MAJOR == 3 || KERNEL_VERSION_MAJOR == 4
 #include <zephyr/kernel.h>
 #else
-#pragma "This Zephyr version might not be supported."
+#pragma GCC warning "This Zephyr version might not be supported."
 #include <zephyr/kernel.h>
 #endif
 

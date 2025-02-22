@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/sample.h"
@@ -29,6 +30,36 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
+
+#define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
+
+static inline _z_subscription_cache_data_t _z_subscription_cache_data_null(void) {
+    _z_subscription_cache_data_t ret = {0};
+    return ret;
+}
+
+void _z_subscription_cache_invalidate(_z_session_t *zn) {
+#if Z_FEATURE_RX_CACHE == 1
+    _z_subscription_lru_cache_clear(&zn->_subscription_cache);
+#else
+    _ZP_UNUSED(zn);
+#endif
+}
+
+#if Z_FEATURE_RX_CACHE == 1
+int _z_subscription_cache_data_compare(const void *first, const void *second) {
+    _z_subscription_cache_data_t *first_data = (_z_subscription_cache_data_t *)first;
+    _z_subscription_cache_data_t *second_data = (_z_subscription_cache_data_t *)second;
+    return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
+}
+
+void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val) {
+    _z_subscription_infos_svec_clear(&val->infos);
+    _z_keyexpr_clear(&val->ke_in);
+    _z_keyexpr_clear(&val->ke_out);
+}
+#endif  // Z_FEATURE_RX_CACHE == 1
+
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
     return this_->_id == other->_id;
 }
@@ -57,30 +88,15 @@ _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs
     return ret;
 }
 
-_z_subscription_rc_list_t *__z_get_subscriptions_by_key(_z_subscription_rc_list_t *subs, const _z_keyexpr_t *key) {
-    _z_subscription_rc_list_t *ret = NULL;
-
-    _z_subscription_rc_list_t *xs = subs;
-    while (xs != NULL) {
-        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key) == true) {
-            ret = _z_subscription_rc_list_push(ret, _z_subscription_rc_clone_as_ptr(sub));
-        }
-
-        xs = _z_subscription_rc_list_tail(xs);
-    }
-
-    return ret;
-}
-
 /**
  * This function is unsafe because it operates in potentially concurrent data.
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
+_z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind,
+                                                        const _z_zint_t id) {
     _z_subscription_rc_list_t *subs =
-        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
+        (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
     return __z_get_subscription_by_id(subs, id);
 }
 
@@ -89,127 +105,215 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, uint8_
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_subscription_rc_list_t *__unsafe_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local,
-                                                               const _z_keyexpr_t *key) {
+static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
+                                                      const _z_keyexpr_t *key,
+                                                      _z_subscription_infos_svec_t *sub_infos) {
     _z_subscription_rc_list_t *subs =
-        (is_local == _Z_RESOURCE_IS_LOCAL) ? zn->_local_subscriptions : zn->_remote_subscriptions;
-    return __z_get_subscriptions_by_key(subs, key);
+        (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
+
+    *sub_infos = _z_subscription_infos_svec_make(_Z_SUBINFOS_VEC_SIZE);
+    _z_subscription_rc_list_t *xs = subs;
+    while (xs != NULL) {
+        // Parse subscription list
+        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
+            _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
+                                                    .callback = _Z_RC_IN_VAL(sub)->_callback};
+            _Z_RETURN_IF_ERR(_z_subscription_infos_svec_append(sub_infos, &new_sub_info, false));
+        }
+        xs = _z_subscription_rc_list_tail(xs);
+    }
+    return _Z_RES_OK;
 }
 
-_z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, uint8_t is_local, const _z_zint_t id) {
-    _zp_session_lock_mutex(zn);
+_z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind, const _z_zint_t id) {
+    _z_session_mutex_lock(zn);
 
-    _z_subscription_rc_t *sub = __unsafe_z_get_subscription_by_id(zn, is_local, id);
+    _z_subscription_rc_t *sub = __unsafe_z_get_subscription_by_id(zn, kind, id);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return sub;
 }
 
-_z_subscription_rc_list_t *_z_get_subscriptions_by_key(_z_session_t *zn, uint8_t is_local, const _z_keyexpr_t *key) {
-    _zp_session_lock_mutex(zn);
-
-    _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, is_local, key);
-
-    _zp_session_unlock_mutex(zn);
-
-    return subs;
-}
-
-_z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_t *s) {
+_z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *s) {
     _Z_DEBUG(">>> Allocating sub decl for (%ju:%.*s)", (uintmax_t)s->_key._id, (int)_z_string_len(&s->_key._suffix),
              _z_string_data(&s->_key._suffix));
     _z_subscription_rc_t *ret = NULL;
 
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
     ret = (_z_subscription_rc_t *)z_malloc(sizeof(_z_subscription_rc_t));
     if (ret != NULL) {
         *ret = _z_subscription_rc_new_from_val(s);
-        if (is_local == _Z_RESOURCE_IS_LOCAL) {
-            zn->_local_subscriptions = _z_subscription_rc_list_push(zn->_local_subscriptions, ret);
+        if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
+            zn->_subscriptions = _z_subscription_rc_list_push(zn->_subscriptions, ret);
         } else {
-            zn->_remote_subscriptions = _z_subscription_rc_list_push(zn->_remote_subscriptions, ret);
+            zn->_liveliness_subscriptions = _z_subscription_rc_list_push(zn->_liveliness_subscriptions, ret);
         }
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 
     return ret;
 }
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t attachment, z_reliability_t reliability) {
-    z_result_t ret = _z_trigger_subscriptions(zn, keyexpr, payload, encoding, Z_SAMPLE_KIND_PUT, timestamp, qos,
-                                              attachment, reliability);
-    (void)ret;
+z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                        _z_encoding_t *encoding, const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
+                                        _z_bytes_t *attachment, z_reliability_t reliability) {
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, keyexpr, payload, encoding,
+                                         Z_SAMPLE_KIND_PUT, timestamp, qos, attachment, reliability);
 }
 
-z_result_t _z_trigger_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    _z_encoding_t *encoding, const _z_zint_t kind, const _z_timestamp_t *timestamp,
-                                    const _z_n_qos_t qos, const _z_bytes_t attachment, z_reliability_t reliability) {
-    z_result_t ret = _Z_RES_OK;
+z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr, const _z_timestamp_t *timestamp,
+                                        const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability) {
+    _z_encoding_t encoding = _z_encoding_null();
+    _z_bytes_t payload = _z_bytes_null();
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, keyexpr, &payload, &encoding,
+                                         Z_SAMPLE_KIND_DELETE, timestamp, qos, attachment, reliability);
+}
 
-    _zp_session_lock_mutex(zn);
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                       const _z_timestamp_t *timestamp) {
+    _z_encoding_t encoding = _z_encoding_null();
+    _z_bytes_t payload = _z_bytes_null();
+    _z_bytes_t attachment = _z_bytes_null();
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &key, &payload, &encoding,
+                                         Z_SAMPLE_KIND_PUT, timestamp, _Z_N_QOS_DEFAULT, &attachment,
+                                         Z_RELIABILITY_RELIABLE);
+}
 
-    _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", keyexpr._id, (int)_z_string_len(&keyexpr._suffix),
-             _z_string_data(&keyexpr._suffix), _z_keyexpr_mapping_id(&keyexpr));
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, &keyexpr);
-    _Z_DEBUG("Triggering subs for %d - %.*s", key._id, (int)_z_string_len(&key._suffix), _z_string_data(&key._suffix));
-    if (_z_keyexpr_has_suffix(&key)) {
-        _z_subscription_rc_list_t *subs = __unsafe_z_get_subscriptions_by_key(zn, _Z_RESOURCE_IS_LOCAL, &key);
+z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                         const _z_timestamp_t *timestamp) {
+    _z_encoding_t encoding = _z_encoding_null();
+    _z_bytes_t payload = _z_bytes_null();
+    _z_bytes_t attachment = _z_bytes_null();
+    _z_keyexpr_t key = _z_keyexpr_alias(keyexpr);
+    return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &key, &payload, &encoding,
+                                         Z_SAMPLE_KIND_DELETE, timestamp, _Z_N_QOS_DEFAULT, &attachment,
+                                         Z_RELIABILITY_RELIABLE);
+}
 
-        _zp_session_unlock_mutex(zn);
+static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind_t kind,
+                                            _z_subscription_cache_data_t *infos) {
+    // Check cache
+    _z_subscription_cache_data_t *cache_entry = NULL;
+#if Z_FEATURE_RX_CACHE == 1
+    cache_entry = _z_subscription_lru_cache_get(&zn->_subscription_cache, infos);
+#endif
+    // Note cache entry
+    if (cache_entry != NULL) {
+        infos->ke_out = _z_keyexpr_alias(&cache_entry->ke_out);
+        infos->infos = _z_subscription_infos_svec_alias(&cache_entry->infos);
+        infos->sub_nb = cache_entry->sub_nb;
+    } else {  // Construct data and add to cache
+        _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
+                 _z_string_data(&infos->ke_in._suffix), _z_keyexpr_mapping_id(&infos->ke_in));
+        _z_session_mutex_lock(zn);
+        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true);
 
-        // Build the sample
-        _z_sample_t sample = _z_sample_create(&key, payload, timestamp, encoding, kind, qos, attachment, reliability);
-        // Parse subscription list
-        _z_subscription_rc_list_t *xs = subs;
-        _Z_DEBUG("Triggering %ju subs", (uintmax_t)_z_subscription_rc_list_len(xs));
-        while (xs != NULL) {
-            _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
-            _Z_RC_IN_VAL(sub)->_callback(&sample, _Z_RC_IN_VAL(sub)->_arg);
-            xs = _z_subscription_rc_list_tail(xs);
+        if (!_z_keyexpr_has_suffix(&infos->ke_out)) {
+            _z_session_mutex_unlock(zn);
+            return _Z_ERR_KEYEXPR_UNKNOWN;
         }
-        // Clean up
-        _z_sample_clear(&sample);
-        _z_subscription_rc_list_free(&subs);
-    } else {
-        _zp_session_unlock_mutex(zn);
-        ret = _Z_ERR_KEYEXPR_UNKNOWN;
+        // Get subscription list
+        z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, kind, &infos->ke_out, &infos->infos);
+        _z_session_mutex_unlock(zn);
+        if (ret != _Z_RES_OK) {
+            return ret;
+        }
+        infos->sub_nb = _z_subscription_infos_svec_len(&infos->infos);
+#if Z_FEATURE_RX_CACHE == 1
+        // Update cache, takes ownership of the data
+        _z_subscription_cache_data_t cache_storage = {
+            .infos = _z_subscription_infos_svec_transfer(&infos->infos),
+            .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
+            .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
+            .sub_nb = infos->sub_nb,
+        };
+        return _z_subscription_lru_cache_insert(&zn->_subscription_cache, &cache_storage);
+#endif
     }
+    return _Z_RES_OK;
+}
 
+static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber_kind_t sub_kind,
+                                                 const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                                 _z_encoding_t *encoding, const _z_zint_t sample_kind,
+                                                 const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
+                                                 _z_bytes_t *attachment, z_reliability_t reliability) {
+    // Retrieve sub infos
+    _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
+    sub_infos.ke_in = _z_keyexpr_alias(keyexpr);
+    _Z_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos));
+    // Check if there are subs
+    _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_infos.sub_nb, sub_infos.ke_out._id,
+             (int)_z_string_len(&sub_infos.ke_out._suffix), _z_string_data(&sub_infos.ke_out._suffix));
+    if (sub_infos.sub_nb == 0) {
+        _z_keyexpr_clear(&sub_infos.ke_out);
+#if Z_FEATURE_RX_CACHE == 0
+        _z_subscription_infos_svec_release(&sub_infos.infos);  // Otherwise it's released with cache
+#endif
+        return _Z_RES_OK;
+    }
+    // Create sample
+    _z_sample_t sample =
+        _z_sample_alias(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos, attachment, reliability);
+    // Parse subscription infos svec
+    for (size_t i = 0; i < sub_infos.sub_nb; i++) {
+        _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, i);
+        sub_info->callback(&sample, sub_info->arg);
+    }
+    // Clean up
+    _z_keyexpr_clear(&sub_infos.ke_out);
+#if Z_FEATURE_RX_CACHE == 0
+    _z_subscription_infos_svec_release(&sub_infos.infos);  // Otherwise it's released with cache
+#endif
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
+                                         _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
+                                         const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
+                                         z_reliability_t reliability) {
+    z_result_t ret = _z_trigger_subscriptions_inner(zn, sub_kind, keyexpr, payload, encoding, sample_kind, timestamp,
+                                                    qos, attachment, reliability);
+    // Clean up
+    _z_keyexpr_clear(keyexpr);
+    _z_encoding_clear(encoding);
+    _z_bytes_drop(payload);
+    _z_bytes_drop(attachment);
     return ret;
 }
 
-void _z_unregister_subscription(_z_session_t *zn, uint8_t is_local, _z_subscription_rc_t *sub) {
-    _zp_session_lock_mutex(zn);
+void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub) {
+    _z_session_mutex_lock(zn);
 
-    if (is_local == _Z_RESOURCE_IS_LOCAL) {
-        zn->_local_subscriptions =
-            _z_subscription_rc_list_drop_filter(zn->_local_subscriptions, _z_subscription_rc_eq, sub);
+    if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
+        zn->_subscriptions = _z_subscription_rc_list_drop_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
     } else {
-        zn->_remote_subscriptions =
-            _z_subscription_rc_list_drop_filter(zn->_remote_subscriptions, _z_subscription_rc_eq, sub);
+        zn->_liveliness_subscriptions =
+            _z_subscription_rc_list_drop_filter(zn->_liveliness_subscriptions, _z_subscription_rc_eq, sub);
     }
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_subscriptions(_z_session_t *zn) {
-    _zp_session_lock_mutex(zn);
+    _z_session_mutex_lock(zn);
 
-    _z_subscription_rc_list_free(&zn->_local_subscriptions);
-    _z_subscription_rc_list_free(&zn->_remote_subscriptions);
+    _z_subscription_rc_list_free(&zn->_subscriptions);
+    _z_subscription_rc_list_free(&zn->_liveliness_subscriptions);
 
-    _zp_session_unlock_mutex(zn);
+    _z_session_mutex_unlock(zn);
 }
 #else  // Z_FEATURE_SUBSCRIPTION == 0
 
-void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
-                                    _z_encoding_t *encoding, const _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                    const _z_bytes_t attachment, z_reliability_t reliability) {
+z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                        _z_encoding_t *encoding, const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
+                                        _z_bytes_t *attachment, z_reliability_t reliability) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
@@ -218,6 +322,40 @@ void _z_trigger_local_subscriptions(_z_session_t *zn, const _z_keyexpr_t keyexpr
     _ZP_UNUSED(timestamp);
     _ZP_UNUSED(attachment);
     _ZP_UNUSED(reliability);
+
+    return _Z_RES_OK;
 }
+
+z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr, const _z_timestamp_t *timestamp,
+                                        const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(keyexpr);
+    _ZP_UNUSED(qos);
+    _ZP_UNUSED(timestamp);
+    _ZP_UNUSED(attachment);
+    _ZP_UNUSED(reliability);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                       const _z_timestamp_t *timestamp) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(keyexpr);
+    _ZP_UNUSED(timestamp);
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+                                                         const _z_timestamp_t *timestamp) {
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(keyexpr);
+    _ZP_UNUSED(timestamp);
+
+    return _Z_RES_OK;
+}
+
+void _z_subscription_cache_invalidate(_z_session_t *zn) { _ZP_UNUSED(zn); }
 
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

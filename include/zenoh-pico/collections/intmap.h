@@ -30,7 +30,7 @@ extern "C" {
 #define _Z_DEFAULT_INT_MAP_CAPACITY 16
 
 /**
- * An entry of an hashmap with integer keys.
+ * An entry of a hashmap with integer keys.
  *
  * Members:
  *   size_t key: the hashed key of the value
@@ -54,6 +54,17 @@ typedef struct {
     _z_list_t **_vals;
 } _z_int_void_map_t;
 
+/**
+ * An iterator of an hashmap with integer keys.
+ */
+typedef struct {
+    _z_int_void_map_entry_t *_entry;
+
+    const _z_int_void_map_t *_map;
+    size_t _idx;
+    _z_list_t *_list_ptr;
+} _z_int_void_map_iterator_t;
+
 void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity);
 _z_int_void_map_t _z_int_void_map_make(size_t capacity);
 
@@ -75,6 +86,11 @@ static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_
     *src = _z_int_void_map_make(src->_capacity);
 }
 
+_z_int_void_map_iterator_t _z_int_void_map_iterator_make(const _z_int_void_map_t *map);
+bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter);
+size_t _z_int_void_map_iterator_key(const _z_int_void_map_iterator_t *iter);
+void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter);
+
 #define _Z_INT_MAP_DEFINE(name, type)                                                                           \
     typedef _z_int_void_map_entry_t name##_intmap_entry_t;                                                      \
     static inline void name##_intmap_entry_elem_free(void **e) {                                                \
@@ -93,6 +109,7 @@ static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_
         return dst;                                                                                             \
     }                                                                                                           \
     typedef _z_int_void_map_t name##_intmap_t;                                                                  \
+    typedef _z_int_void_map_iterator_t name##_intmap_iterator_t;                                                \
     static inline void name##_intmap_init(name##_intmap_t *m) {                                                 \
         _z_int_void_map_init(m, _Z_DEFAULT_INT_MAP_CAPACITY);                                                   \
     }                                                                                                           \
@@ -122,6 +139,18 @@ static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_
     }                                                                                                           \
     static inline void name##_intmap_move(name##_intmap_t *dst, name##_intmap_t *src) {                         \
         _z_int_void_map_move(dst, src);                                                                         \
+    }                                                                                                           \
+    static inline name##_intmap_iterator_t name##_intmap_iterator_make(const name##_intmap_t *m) {              \
+        return _z_int_void_map_iterator_make(m);                                                                \
+    }                                                                                                           \
+    static inline bool name##_intmap_iterator_next(name##_intmap_iterator_t *iter) {                            \
+        return _z_int_void_map_iterator_next(iter);                                                             \
+    }                                                                                                           \
+    static inline size_t name##_intmap_iterator_key(const name##_intmap_iterator_t *iter) {                     \
+        return _z_int_void_map_iterator_key(iter);                                                              \
+    }                                                                                                           \
+    static inline type *name##_intmap_iterator_value(const name##_intmap_iterator_t *iter) {                    \
+        return (type *)_z_int_void_map_iterator_value(iter);                                                    \
     }
 
 #ifdef __cplusplus

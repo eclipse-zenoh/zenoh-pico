@@ -50,7 +50,10 @@ int main(int argc, char **argv) {
 
     printf("Declaring key expression '%s'...\n", keyexpr);
     z_view_keyexpr_t vke;
-    z_view_keyexpr_from_str(&vke, keyexpr);
+    if (z_view_keyexpr_from_str(&vke, keyexpr) < 0) {
+        printf("%s is not a valid key expression\n", keyexpr);
+        return -1;
+    }
     z_owned_keyexpr_t ke;
     if (z_declare_keyexpr(z_loan(s), &ke, z_loan(vke)) < 0) {
         printf("Unable to declare key expression!\n");

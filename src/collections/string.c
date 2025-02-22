@@ -17,16 +17,10 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 /*-------- string --------*/
-_z_string_t _z_string_null(void) {
-    _z_string_t s = {._slice = _z_slice_empty()};
-    return s;
-}
-
-bool _z_string_check(const _z_string_t *value) { return !_z_slice_is_empty(&value->_slice); }
-
 _z_string_t _z_string_copy_from_str(const char *value) {
     _z_string_t s;
     s._slice = _z_slice_copy_from_buf((uint8_t *)value, strlen(value));
@@ -36,6 +30,12 @@ _z_string_t _z_string_copy_from_str(const char *value) {
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     _z_string_t s;
     s._slice = _z_slice_copy_from_buf((uint8_t *)value, len);
+    return s;
+}
+
+_z_string_t _z_string_alias_slice(const _z_slice_t *slice) {
+    _z_string_t s;
+    s._slice = _z_slice_alias(*slice);
     return s;
 }
 
@@ -77,17 +77,12 @@ z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, si
     return _z_slice_n_copy(&dst->_slice, &src->_slice, offset, len);
 }
 
-void _z_string_move(_z_string_t *dst, _z_string_t *src) { *dst = _z_string_steal(src); }
+void _z_string_move(_z_string_t *dst, _z_string_t *src) { _z_slice_move(&dst->_slice, &src->_slice); }
 
 _z_string_t _z_string_steal(_z_string_t *str) {
     _z_string_t ret;
     ret._slice = _z_slice_steal(&str->_slice);
     return ret;
-}
-
-_z_string_t _z_string_alias(const _z_string_t *str) {
-    _z_string_t alias = {._slice = _z_slice_alias(&str->_slice)};
-    return alias;
 }
 
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_alias_str(src); }
@@ -106,6 +101,23 @@ void _z_string_free(_z_string_t **str) {
     }
 }
 
+int _z_string_compare(const _z_string_t *left, const _z_string_t *right) {
+    size_t len_left = _z_string_len(left);
+    size_t len_right = _z_string_len(right);
+
+    int result = strncmp(_z_string_data(left), _z_string_data(right), len_left < len_right ? len_left : len_right);
+
+    if (result == 0) {
+        if (len_left < len_right) {
+            return -1;
+        } else if (len_left > len_right) {
+            return 1;
+        }
+    }
+
+    return result;
+}
+
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
     if (_z_string_len(left) != _z_string_len(right)) {
         return false;
@@ -113,7 +125,7 @@ bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
     return (strncmp(_z_string_data(left), _z_string_data(right), _z_string_len(left)) == 0);
 }
 
-_z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
+_z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs) {
     _z_string_t s = _z_string_null();
     size_t len = bs->len * (size_t)2;
     char *s_val = (char *)z_malloc((len) * sizeof(char));
@@ -122,19 +134,20 @@ _z_string_t _z_string_convert_bytes(const _z_slice_t *bs) {
     }
 
     const char c[] = "0123456789abcdef";
+    size_t pos = bs->len * 2;
     for (size_t i = 0; i < bs->len; i++) {
-        s_val[i * (size_t)2] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
-        s_val[(i * (size_t)2) + 1] = c[bs->start[i] & (uint8_t)0x0F];
+        s_val[--pos] = c[bs->start[i] & (uint8_t)0x0F];
+        s_val[--pos] = c[(bs->start[i] & (uint8_t)0xF0) >> (uint8_t)4];
     }
     s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)s_val, len, _z_delete_context_default());
     return s;
 }
 
 _z_string_t _z_string_preallocate(size_t len) {
-    _z_string_t s = _z_string_null();
-    _z_slice_init(&s._slice, len);
-    if (_z_slice_is_empty(&s._slice)) {
-        return _z_string_null();
+    _z_string_t s;
+    // As long as _z_string_t is only a slice, no need to do anything more
+    if (_z_slice_init(&s._slice, len) != _Z_RES_OK) {
+        _Z_ERROR("String allocation failed");
     }
     return s;
 }
@@ -218,6 +231,10 @@ char *_z_str_n_clone(const char *src, size_t len) {
     }
 
     return dst;
+}
+
+char *_z_str_from_string_clone(const _z_string_t *str) {
+    return _z_str_n_clone((const char *)str->_slice.start, str->_slice.len);
 }
 
 bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
