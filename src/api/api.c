@@ -502,10 +502,6 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_nu
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_move,
                               _z_string_clear)
 
-bool _z_value_check(const _z_value_t *value) {
-    return _z_encoding_check(&value->encoding) || _z_bytes_check(&value->payload);
-}
-
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_move, _z_value_clear)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
@@ -1222,7 +1218,7 @@ void _z_querier_drop(_z_querier_t *querier) {
     _z_querier_clear(querier);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
 
 #ifdef Z_FEATURE_UNSTABLE_API
 void z_querier_get_options_default(z_querier_get_options_t *options) {

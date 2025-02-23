@@ -45,13 +45,6 @@ void _z_timestamp_clear(_z_timestamp_t *tstamp) {
     tstamp->time = 0;
 }
 
-void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src) {
-    *dst = *src;
-    _z_timestamp_clear(src);
-}
-
-bool _z_timestamp_check(const _z_timestamp_t *stamp) { return _z_id_check(stamp->id); }
-
 z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
     z_result_t ret = _Z_RES_OK;
     z_random_fill((uint8_t *)bs->id, size);
