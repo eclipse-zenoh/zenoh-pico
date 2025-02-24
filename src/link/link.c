@@ -150,6 +150,14 @@ size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len
     return rb;
 }
 
+size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket) {
+    size_t rb = link->_read_socket_f(socket, _z_zbuf_get_wptr(zbf), _z_zbuf_space_left(zbf));
+    if (rb != SIZE_MAX) {
+        _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
+    }
+    return rb;
+}
+
 z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     z_result_t ret = _Z_RES_OK;
     bool link_is_streamed = link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
@@ -173,4 +181,36 @@ z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
     }
 
     return ret;
+}
+
+_z_sys_net_socket_t _z_link_get_socket(const _z_link_t *link) {
+    switch (link->_type) {
+#if Z_FEATURE_LINK_TCP == 1
+        case _Z_LINK_TYPE_TCP:
+            return link->_socket._tcp._sock;
+#endif
+#if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
+        case _Z_LINK_TYPE_UDP:
+            return link->_socket._udp._sock;
+#endif
+#if Z_FEATURE_LINK_BLUETOOTH == 1
+        case _Z_LINK_TYPE_BT:
+            return link->_socket._bt._sock;
+#endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        case _Z_LINK_TYPE_SERIAL:
+            return link->_socket._serial._sock;
+#endif
+#if Z_FEATURE_LINK_WS == 1
+        case _Z_LINK_TYPE_WS:
+            return link->_socket._ws._sock;
+#endif
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
+        case _Z_LINK_TYPE_RAWETH:
+            return link->_socket._raweth._sock;
+#endif
+        default:
+            _Z_INFO("Unknown link type");
+            return (_z_sys_net_socket_t){0};
+    }
 }

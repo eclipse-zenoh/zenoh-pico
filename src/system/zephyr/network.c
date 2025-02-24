@@ -20,10 +20,12 @@
 #include <zephyr/drivers/uart.h>
 #endif
 
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <zephyr/net/net_if.h>
 
 #include "zenoh-pico/collections/string.h"
@@ -34,6 +36,33 @@
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    int flags = fcntl(sock->_fd, F_GETFL, 0);
+    if (flags == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    struct pollfd *fds = (struct pollfd *)z_malloc(sock_nb * sizeof(struct pollfd));
+
+    if (fds == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    for (size_t i = 0; i < sock_nb; i++) {
+        fds[i].fd = sock[i]._fd;
+        fds[i].events = POLLIN;  // Check POLLERR in accept task?
+    }
+    if (poll(fds, sock_nb, -1) <= 0) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/

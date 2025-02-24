@@ -34,7 +34,7 @@
 #define ipconfigUSE_TCP 1
 #define ipconfigUSE_ARP_REMOVE_ENTRY 0
 #define ipconfigUSE_ARP_REVERSED_LOOKUP 0
-#define ipconfigSUPPORT_SELECT_FUNCTION 0
+#define ipconfigSUPPORT_SELECT_FUNCTION 1
 #define ipconfigSUPPORT_OUTGOING_PINGS 0
 #define ipconfigUSE_NETWORK_EVENT_HOOK 1
 #define ipconfigUSE_DHCP_HOOK 0

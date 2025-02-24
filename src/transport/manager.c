@@ -41,6 +41,10 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
                 return ret;
             }
             ret = _z_unicast_transport_create(zt, &zl, &tp_param);
+            // Fill peer list
+            if (ret == _Z_RES_OK) {
+                _z_transport_unicast_peer_add(&zt->_transport._unicast, &tp_param, _z_link_get_socket(&zl));
+            }
             break;
         }
         // Multicast transport

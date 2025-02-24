@@ -774,8 +774,14 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
 bool z_session_is_closed(const z_loaned_session_t *zs) { return _z_session_is_closed(_Z_RC_IN_VAL(zs)); }
 
 z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {
+    if (_Z_RC_IN_VAL(zs)->_mode != Z_WHATAMI_PEER) {
+        return _Z_RES_OK;
+    }
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            _zp_unicast_fetch_zid(&(_Z_RC_IN_VAL(zs)->_tp), &callback->_this._val);
+            break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
             _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)->_tp), &callback->_this._val);
@@ -791,10 +797,13 @@ z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t 
         callback->_this._val.drop(ctx);
     }
     z_internal_closure_zid_null(&callback->_this);
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {
+    if (_Z_RC_IN_VAL(zs)->_mode != Z_WHATAMI_CLIENT) {
+        return _Z_RES_OK;
+    }
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -811,7 +820,7 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
         callback->_this._val.drop(ctx);
     }
     z_internal_closure_zid_null(&callback->_this);
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
@@ -1160,6 +1169,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     z_source_info_drop(opt.source_info);
 #endif
     z_bytes_drop(payload);
+#endif
     return ret;
 }
 
