@@ -42,6 +42,7 @@ typedef struct _z_session_t {
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.
+    z_whatami_t _mode;
     _z_transport_t _tp;
 
     // Zenoh PID

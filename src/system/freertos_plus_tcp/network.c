@@ -22,6 +22,43 @@
 // FreeRTOS includes
 #include "FreeRTOS.h"
 #include "FreeRTOS_IP.h"
+#include "FreeRTOS_Sockets.h"
+
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    TickType_t option_value = 0;  // Non-blocking mode
+    BaseType_t result;
+
+    result = FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_RCVTIMEO, &option_value, sizeof(option_value));
+
+    if (result != pdPASS) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    // Create a SocketSet to monitor multiple sockets
+    SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
+
+    if (socketSet == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    // Add each socket to the socket set
+    for (size_t i = 0; i < sock_nb; i++) {
+        FreeRTOS_FD_SET(sock[i]._socket, socketSet, eSELECT_READ);
+    }
+    // Wait for an event on any of the sockets in the set, non-blocking
+    BaseType_t result = FreeRTOS_select(socketSet, portMAX_DELAY);
+    // Check for errors or events
+    z_result_t ret = _Z_RES_OK;
+    if (result != 0) {
+        ret = _Z_ERR_GENERIC;
+    }
+    // Clean up
+    FreeRTOS_DeleteSocketSet(socketSet);
+    return ret;
+}
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/

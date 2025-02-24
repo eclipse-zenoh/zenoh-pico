@@ -25,6 +25,33 @@
 
 WSADATA wsaData;
 
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    u_long mode = 1;  // 1 for non-blocking mode
+    if (ioctlsocket(sock->_sock._fd, FIONBIO, &mode) != 0) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    fd_set read_fds;
+    struct timeval timeout;
+
+    FD_ZERO(&read_fds);
+    for (size_t i = 0; i < sock_nb; i++) {
+        FD_SET(sock[i]._sock._fd, &read_fds);
+    }
+    timeout.tv_sec = 0;  // No timeout, blocking indefinitely
+    timeout.tv_usec = 0;
+
+    int result = select(0, &read_fds, NULL, NULL, &timeout);
+
+    if (result <= 0) {
+        return _Z_ERR_GENERIC;  // Error or no data ready
+    }
+    return _Z_RES_OK;
+}
+
 #if Z_FEATURE_LINK_TCP == 1
 
 /*------------------ TCP sockets ------------------*/
