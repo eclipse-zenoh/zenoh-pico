@@ -812,7 +812,7 @@ inline void z_take(ze_owned_serializer_t* this_, ze_moved_serializer_t* v) { ze_
 // z_clone definition
 inline z_result_t z_clone(z_owned_bytes_t* dst, const z_loaned_bytes_t* this_) { return z_bytes_clone(dst, this_); }
 inline z_result_t z_clone(z_owned_config_t* dst, const z_loaned_config_t* this_) { return z_config_clone(dst, this_); }
-inline z_result_t z_clone(z_owned_encoding_t* dst, const const z_loaned_encoding_t* this_) {
+inline z_result_t z_clone(z_owned_encoding_t* dst, const z_loaned_encoding_t* this_) {
     return z_encoding_clone(dst, this_);
 }
 inline z_result_t z_clone(z_owned_keyexpr_t* dst, const z_loaned_keyexpr_t* this_) {
