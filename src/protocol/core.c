@@ -78,6 +78,11 @@ z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     return _Z_RES_OK;
 }
 
+void _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
+    *dst = *src;
+    *src = _z_hello_null();
+}
+
 void _z_value_move(_z_value_t *dst, _z_value_t *src) {
     _z_encoding_move(&dst->encoding, &src->encoding);
     _z_bytes_move(&dst->payload, &src->payload);

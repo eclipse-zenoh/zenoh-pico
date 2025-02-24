@@ -217,7 +217,7 @@ z_result_t zp_config_insert(z_loaned_config_t *config, uint8_t key, const char *
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_encoding_t, encoding, _z_encoding_check, _z_encoding_null, _z_encoding_copy,
-                              _z_encoding_clear)
+                              _z_encoding_move, _z_encoding_clear)
 
 bool z_encoding_equals(const z_loaned_encoding_t *left, const z_loaned_encoding_t *right) {
     return left->id == right->id && _z_string_equals(&left->schema, &right->schema);
@@ -496,19 +496,23 @@ z_result_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
     return _Z_RES_OK;
 }
 void _z_config_drop(_z_config_t *config) { _z_str_intmap_clear(config); }
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_null, _z_config_copy, _z_config_drop)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_config_t, config, _z_config_check, _z_config_null, _z_config_copy, _z_str_intmap_move,
+                              _z_config_drop)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_null, _z_string_copy, _z_string_move,
+                              _z_string_clear)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_move,
+                              _z_value_clear)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
-                              _z_keyexpr_clear)
+                              _z_keyexpr_move, _z_keyexpr_clear)
 _Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string, _z_string_check, _z_string_null)
 _Z_VIEW_FUNCTIONS_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_null)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_move,
+                              _z_hello_clear)
 
 z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
 
@@ -547,11 +551,13 @@ z_result_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *s
     return _z_string_svec_copy(dst, src, true);
 }
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_svec_t, string_array, _z_string_array_check, _z_string_array_null,
-                              _z_string_array_copy, _z_string_svec_clear)
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_null, _z_slice_copy, _z_slice_clear)
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_drop)
+                              _z_string_array_copy, _z_string_svec_move, _z_string_svec_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_null, _z_slice_copy, _z_slice_move,
+                              _z_slice_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_bytes_t, bytes, _z_bytes_check, _z_bytes_null, _z_bytes_copy, _z_bytes_move,
+                              _z_bytes_drop)
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_writer_check, _z_bytes_writer_empty,
-                                      _z_bytes_writer_clear)
+                                      _z_bytes_writer_move, _z_bytes_writer_clear)
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
@@ -574,7 +580,8 @@ static _z_encoding_t _z_encoding_from_owned(const z_owned_encoding_t *encoding) 
 }
 #endif
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_move,
+                              _z_sample_clear)
 _Z_OWNED_FUNCTIONS_RC_IMPL(session)
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_sample, _z_closure_sample_callback_t, z_closure_drop_callback_t)
@@ -852,8 +859,8 @@ void _z_publisher_drop(_z_publisher_t *pub) {
     _z_publisher_clear(pub);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
-                                      _z_publisher_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
+                                              _z_publisher_drop)
 
 void z_put_options_default(z_put_options_t *options) {
     options->congestion_control = z_internal_congestion_control_default_push();
@@ -1154,7 +1161,8 @@ bool _z_reply_check(const _z_reply_t *reply) {
     }
     return false;
 }
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, _z_reply_copy, _z_reply_clear)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_reply_t, reply, _z_reply_check, _z_reply_null, _z_reply_copy, _z_reply_move,
+                              _z_reply_clear)
 
 void z_get_options_default(z_get_options_t *options) {
     options->target = z_query_target_default();
@@ -1213,7 +1221,7 @@ void _z_querier_drop(_z_querier_t *querier) {
     _z_querier_clear(querier);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
 
 #ifdef Z_FEATURE_UNSTABLE_API
 void z_querier_get_options_default(z_querier_get_options_t *options) {
@@ -1408,13 +1416,25 @@ bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id) {
 #if Z_FEATURE_QUERYABLE == 1
 _Z_OWNED_FUNCTIONS_RC_IMPL(query)
 
+z_result_t z_query_take_from_loaned(z_owned_query_t *dst, z_loaned_query_t *src) {
+    dst->_rc = *src;
+    _z_query_t q = _z_query_null();
+    *src = _z_query_rc_new_from_val(&q);
+    if (_Z_RC_IS_NULL(src)) {
+        *src = dst->_rc;  // reset src to its original value
+        z_internal_query_null(dst);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    return _Z_RES_OK;
+}
+
 void _z_queryable_drop(_z_queryable_t *queryable) {
     _z_undeclare_queryable(queryable);
     _z_queryable_clear(queryable);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_queryable_t, queryable, _z_queryable_check, _z_queryable_null,
-                                      _z_queryable_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_queryable_t, queryable, _z_queryable_check, _z_queryable_null,
+                                              _z_queryable_drop)
 
 void z_queryable_options_default(z_queryable_options_t *options) { options->complete = _Z_QUERYABLE_COMPLETE_DEFAULT; }
 
@@ -1631,8 +1651,8 @@ void _z_subscriber_drop(_z_subscriber_t *sub) {
     _z_subscriber_clear(sub);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
-                                      _z_subscriber_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_subscriber_t, subscriber, _z_subscriber_check, _z_subscriber_null,
+                                              _z_subscriber_drop)
 
 void z_subscriber_options_default(z_subscriber_options_t *options) { options->__dummy = 0; }
 
@@ -1751,8 +1771,8 @@ void _z_matching_listener_drop(_z_matching_listener_t *listener) {
     _z_matching_listener_clear(listener);
 }
 
-_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_matching_listener_t, matching_listener, _z_matching_listener_check,
-                                      _z_matching_listener_null, _z_matching_listener_drop)
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_matching_listener_t, matching_listener, _z_matching_listener_check,
+                                              _z_matching_listener_null, _z_matching_listener_drop)
 
 z_result_t z_undeclare_matching_listener(z_moved_matching_listener_t *listener) {
     z_result_t ret = _z_matching_listener_undeclare(&listener->_this._val);

@@ -206,7 +206,7 @@ static inline _z_hello_t _z_hello_null(void) { return (_z_hello_t){0}; }
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
-
+void _z_hello_move(_z_hello_t *dst, _z_hello_t *src);
 bool _z_hello_check(const _z_hello_t *hello);
 
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy, _z_noop_move)

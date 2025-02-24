@@ -101,7 +101,7 @@ static inline _z_reply_t _z_reply_err_alias(const _z_bytes_t *payload, _z_encodi
     r.data._result.error.encoding = *encoding;
     return r;
 }
-_z_reply_t _z_reply_move(_z_reply_t *src_reply);
+void _z_reply_move(_z_reply_t *dst, _z_reply_t *src);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
 z_result_t _z_reply_copy(_z_reply_t *dst, const _z_reply_t *src);
