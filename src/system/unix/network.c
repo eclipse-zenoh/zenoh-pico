@@ -46,6 +46,19 @@ z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
     return _Z_RES_OK;
 }
 
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct sockaddr naddr;
+    unsigned int nlen = sizeof(naddr);
+    int con_socket = accept(sock_in->_fd, &naddr, &nlen);
+    if (con_socket < 0) {
+        return _Z_ERR_GENERIC;
+    }
+    sock_out->_fd = con_socket;
+    return _Z_RES_OK;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+
 z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
     fd_set read_fds;
     struct timeval timeout;
@@ -187,23 +200,11 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
                 break;
             }
         }
-        if (listen(sock->_fd, 1) < 0) {
+        if (listen(sock->_fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
             if (it->ai_next == NULL) {
                 ret = _Z_ERR_GENERIC;
                 break;
             }
-        }
-        struct sockaddr naddr;
-        unsigned int nlen = sizeof(naddr);
-        int con_socket = accept(sock->_fd, &naddr, &nlen);
-        if (con_socket < 0) {
-            if (it->ai_next == NULL) {
-                ret = _Z_ERR_GENERIC;
-                break;
-            }
-        } else {
-            sock->_fd = con_socket;
-            break;
         }
     }
     if (ret != _Z_RES_OK) {

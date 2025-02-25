@@ -393,7 +393,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 #
-# Build tests, examples, intallation only when project is root
+# Build tests, examples, installation only when project is root
 #
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 
