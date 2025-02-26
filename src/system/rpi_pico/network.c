@@ -195,7 +195,29 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 size_t _z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len) {
     return send(sock._fd, ptr, len, 0);
 }
-#endif
+#else
+z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+    _ZP_UNUSED(sock);
+    _Z_ERROR("Function not yet supported on this system");
+    return _Z_ERR_GENERIC;
+}
+
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    _ZP_UNUSED(sock_in);
+    _ZP_UNUSED(sock_out);
+    _Z_ERROR("Function not yet supported on this system");
+    return _Z_ERR_GENERIC;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
+
+z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+    _ZP_UNUSED(sock);
+    _ZP_UNUSED(sock_nb);
+    _Z_ERROR("Function not yet supported on this system");
+    return _Z_ERR_GENERIC;
+}
+#endif  // Z_FEATURE_LINK_TCP == 1
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1
 /*------------------ UDP sockets ------------------*/
