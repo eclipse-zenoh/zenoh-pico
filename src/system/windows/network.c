@@ -35,7 +35,7 @@ z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
-    unsigned int nlen = sizeof(naddr);
+    int nlen = sizeof(naddr);
     SOCKET con_socket = accept(sock_in->_sock._fd, &naddr, &nlen);
     if (con_socket == INVALID_SOCKET) {
         return _Z_ERR_GENERIC;
