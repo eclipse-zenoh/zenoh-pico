@@ -37,7 +37,7 @@ z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
 }
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
-    struct sockaddr naddr;
+    struct freertos_sockaddr naddr;
     socklen_t nlen = sizeof(naddr);
     int con_socket = FreeRTOS_accept(sock_in->_socket, &naddr, &nlen);
     if (con_socket < 0) {
