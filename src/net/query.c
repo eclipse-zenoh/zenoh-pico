@@ -40,7 +40,7 @@ z_result_t _z_query_send_reply_final(_z_query_t *q) {
 
 void _z_query_clear(_z_query_t *q) {
     // Send REPLY_FINAL message
-    if (_z_query_send_reply_final(q) != _Z_RES_OK) {
+    if (!_Z_RC_IS_NULL(&q->_zn) && _z_query_send_reply_final(q) != _Z_RES_OK) {
         _Z_ERROR("Query send REPLY_FINAL transport failure !");
     }
     // Clean up memory
