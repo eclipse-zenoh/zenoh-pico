@@ -109,9 +109,9 @@ z_result_t _z_transport_unicast_peer_add(_z_transport_unicast_t *ztu, _z_transpo
     peer->_dbuf_best_effort = _z_wbuf_null();
 #endif
     // Insert peer
-    _z_mutex_lock(&ztu->_mutex_peer);
+    _z_transport_peer_mutex_lock(&ztu->_common);
     ztu->_peers = _z_transport_unicast_peer_list_push(ztu->_peers, peer);
-    _z_mutex_unlock(&ztu->_mutex_peer);
+    _z_transport_peer_mutex_unlock(&ztu->_common);
     if (ztu->_peers == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

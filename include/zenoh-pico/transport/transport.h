@@ -122,6 +122,7 @@ typedef struct {
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
+    _z_mutex_t _mutex_peer;
 
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
@@ -142,9 +143,6 @@ typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
     _z_transport_unicast_peer_list_t *_peers;
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex_peer;
-#endif
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
@@ -153,10 +151,6 @@ typedef struct _z_transport_multicast_t {
     _z_transport_peer_entry_list_t *_peers;
     // T message send function
     _zp_f_send_tmsg _send_f;
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex_peer;  // Peer list mutex
-#endif
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -217,6 +211,10 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _z_mutex_lock(&ztc->_mutex_rx); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_rx); }
+static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { (void)_z_mutex_lock(&ztc->_mutex_peer); }
+static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) {
+    (void)_z_mutex_unlock(&ztc->_mutex_peer);
+}
 #else
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {
     _ZP_UNUSED(ztc);
@@ -226,6 +224,8 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
+static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
+static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #ifdef __cplusplus
