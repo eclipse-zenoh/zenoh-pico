@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-z_result_t _zp_unicast_start_accept_task(_z_transport_t *zt);
+z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu);
 
 #ifdef __cplusplus
 }

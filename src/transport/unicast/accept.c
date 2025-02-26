@@ -59,11 +59,11 @@ static void *_zp_unicast_accept_task(void *ctx) {
     return NULL;
 }
 
-z_result_t _zp_unicast_start_accept_task(_z_transport_t *zt) {
+z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     // Init memory
     _z_task_t task;
     // Init task
-    if (_z_task_init(&task, NULL, _zp_unicast_accept_task, &zt->_transport._unicast) != _Z_RES_OK) {
+    if (_z_task_init(&task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
     }
     // Detach the thread
@@ -73,8 +73,8 @@ z_result_t _zp_unicast_start_accept_task(_z_transport_t *zt) {
 
 #else
 
-z_result_t _zp_unicast_start_accept_task(_z_transport_t *zt) {
-    _ZP_UNUSED(zt);
+z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
+    _ZP_UNUSED(ztu);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 #endif
