@@ -36,6 +36,19 @@ z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
     return _Z_RES_OK;
 }
 
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct sockaddr naddr;
+    unsigned int nlen = sizeof(naddr);
+    int con_socket = FreeRTOS_accept(sock_in->_socket, &naddr, &nlen);
+    if (con_socket < 0) {
+        return _Z_ERR_GENERIC;
+    }
+    sock_out->_socket = con_socket;
+    return _Z_RES_OK;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
+
 z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
     // Create a SocketSet to monitor multiple sockets
     SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
