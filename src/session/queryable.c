@@ -198,9 +198,6 @@ static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_r
                                                  _z_keyexpr_t *key, uint32_t qid, bool anyke) {
     // Steal received data in query
     *query = _z_query_alias(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
-    msgq->_ext_value = _z_value_null();
-    msgq->_ext_attachment = _z_bytes_null();
-    msgq->_parameters = _z_slice_null();
 }
 
 static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,
@@ -244,8 +241,6 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         qle_info->callback(&query, qle_info->arg);
     }
     _z_query_rc_drop(&query);
-    // Clean up
-    _z_keyexpr_clear(&qle_infos.ke_out);
 #if Z_FEATURE_RX_CACHE == 0
     _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
 #endif

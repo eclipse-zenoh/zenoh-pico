@@ -16,15 +16,17 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
-void _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
-    _z_keyexpr_move(&dst->keyexpr, &src->keyexpr);
+z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
+    *dst = _z_sample_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->keyexpr, &src->keyexpr));
+    _Z_CLEAN_RETURN_IF_ERR(_z_encoding_move(&dst->encoding, &src->encoding), _z_sample_clear(dst));
     _z_bytes_move(&dst->payload, &src->payload);
-    _z_encoding_move(&dst->encoding, &src->encoding);
     _z_timestamp_move(&dst->timestamp, &src->timestamp);
     _z_bytes_move(&dst->attachment, &src->attachment);
     dst->qos = src->qos;
     dst->reliability = src->reliability;
     dst->kind = src->kind;
+    return _Z_RES_OK;
 }
 
 void _z_sample_clear(_z_sample_t *sample) {
@@ -51,6 +53,8 @@ z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, &src->attachment), _z_sample_clear(dst));
     dst->kind = src->kind;
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
+    dst->qos = src->qos;
+    dst->reliability = src->reliability;
     return _Z_RES_OK;
 }
 

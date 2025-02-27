@@ -286,7 +286,7 @@ z_result_t z_bytes_from_buf(z_owned_bytes_t *bytes, uint8_t *data, size_t len,
 
 z_result_t z_bytes_from_static_buf(z_owned_bytes_t *bytes, const uint8_t *data, size_t len) {
     z_owned_slice_t s;
-    s._val = _z_slice_alias_buf(data, len);
+    s._val = _z_slice_from_buf_custom_deleter(data, len, _z_delete_context_static());
     return z_bytes_from_slice(bytes, z_slice_move(&s));
 }
 
@@ -334,7 +334,7 @@ z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value) {
 
 z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    s._val = _z_string_alias_str(value);
+    s._val = _z_string_from_str_custom_deleter((char*)value, _z_delete_context_static());
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 

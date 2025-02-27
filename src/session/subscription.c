@@ -238,11 +238,11 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
     return _Z_RES_OK;
 }
 
-static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber_kind_t sub_kind,
-                                                 const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
-                                                 _z_encoding_t *encoding, const _z_zint_t sample_kind,
-                                                 const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
-                                                 _z_bytes_t *attachment, z_reliability_t reliability) {
+static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
+                                                 _z_bytes_t *payload, _z_encoding_t *encoding,
+                                                 const _z_zint_t sample_kind, const _z_timestamp_t *timestamp,
+                                                 const _z_n_qos_t qos, _z_bytes_t *attachment,
+                                                 z_reliability_t reliability) {
     // Retrieve sub infos
     _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
     sub_infos.ke_in = _z_keyexpr_alias(keyexpr);
@@ -266,7 +266,7 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
         sub_info->callback(&sample, sub_info->arg);
     }
     // Clean up
-    _z_keyexpr_clear(&sub_infos.ke_out);
+    _z_sample_clear(&sample);
 #if Z_FEATURE_RX_CACHE == 0
     _z_subscription_infos_svec_release(&sub_infos.infos);  // Otherwise it's released with cache
 #endif

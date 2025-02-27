@@ -108,7 +108,11 @@ _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     return stolen;
 }
 
-void _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) { *dst = _z_keyexpr_steal(src); }
+z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
+    dst->_id = src->_id;
+    dst->_mapping = src->_mapping;
+    return _z_string_move(&dst->_suffix, &src->_suffix);
+}
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
     rk->_id = 0;
