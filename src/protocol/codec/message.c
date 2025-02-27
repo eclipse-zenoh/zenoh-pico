@@ -198,7 +198,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     _z_zint_t intbuf;
     z_result_t ret = _z_uint8_decode(&zidlen, zbf);
     if (ret == _Z_RES_OK) {
-        zidlen >>= 4;
+        zidlen = (zidlen >> 4) + 1;
         if (_z_zbuf_len(zbf) >= zidlen) {
             _z_zbuf_read_bytes(zbf, info->_source_id.zid.id, 0, zidlen);
         } else {
@@ -229,7 +229,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
 z_result_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     z_result_t ret = 0;
     uint8_t zidlen = _z_id_len(info->_source_id.zid);
-    ret |= _z_uint8_encode(wbf, zidlen << 4);
+    ret |= _z_uint8_encode(wbf, (zidlen - 1) << 4);
     _z_slice_t zid = _z_slice_alias_buf(info->_source_id.zid.id, zidlen);
     ret |= _z_slice_val_encode(wbf, &zid);
     ret |= _z_zsize_encode(wbf, info->_source_id.eid);
@@ -241,7 +241,7 @@ z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *inf
     uint8_t zidlen = _z_id_len(info->_source_id.zid);
     size_t ext_size = 1u + zidlen + _z_zint_len(info->_source_id.eid) + _z_zint_len(info->_source_sn);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (zidlen - 1) << 4));
     _z_slice_t zid = _z_slice_alias_buf(info->_source_id.zid.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_id.eid));

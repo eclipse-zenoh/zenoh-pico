@@ -1184,6 +1184,36 @@ const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publis
     return (const z_loaned_keyexpr_t *)&publisher->_key;
 }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher) {
+    z_entity_global_id_t egid;
+    _z_session_t *session = NULL;
+#if Z_FEATURE_SESSION_CHECK == 1
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+#else
+    session = _Z_RC_IN_VAL(&publisher->_zn);
+#endif
+
+    if (session != NULL) {
+        egid.zid = session->_local_zid;
+        egid.eid = publisher->_id;
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return egid;
+}
+#endif
+
 #if Z_FEATURE_MATCHING == 1
 z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publisher_t *publisher,
                                                             z_moved_closure_matching_status_t *callback) {
@@ -1428,6 +1458,36 @@ const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier) {
     return (const z_loaned_keyexpr_t *)&querier->_key;
 }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier) {
+    z_entity_global_id_t egid;
+    _z_session_t *session = NULL;
+#if Z_FEATURE_SESSION_CHECK == 1
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+#else
+    session = _Z_RC_IN_VAL(&querier->_zn);
+#endif
+
+    if (session != NULL) {
+        egid.zid = session->_local_zid;
+        egid.eid = querier->_id;
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return egid;
+}
+#endif
+
 #if Z_FEATURE_MATCHING == 1
 z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier_t *querier,
                                                           z_moved_closure_matching_status_t *callback) {
@@ -1652,6 +1712,37 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
 #endif
     return ret;
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable) {
+    z_entity_global_id_t egid;
+    _z_session_t *session = NULL;
+#if Z_FEATURE_SESSION_CHECK == 1
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&queryable->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+#else
+    session = _Z_RC_IN_VAL(&queryable->_zn);
+#endif
+
+    if (session != NULL) {
+        egid.zid = session->_local_zid;
+        egid.eid = queryable->_entity_id;
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return egid;
+}
+#endif
+
 #endif
 
 z_result_t z_keyexpr_from_str_autocanonize(z_owned_keyexpr_t *key, const char *name) {

@@ -232,9 +232,10 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes
                         ._qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
                         ._timestamp = _z_timestamp_null(),
                         ._body._is_put = false,
-                        ._body._body._del = {._commons = {._timestamp =
-                                                              ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
-                                                          ._source_info = _z_source_info_null()}},
+                        ._body._body._del =
+                            {._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
+                                          ._source_info =
+                                              ((source_info != NULL) ? *source_info : _z_source_info_null())}},
                     },
             };
             break;

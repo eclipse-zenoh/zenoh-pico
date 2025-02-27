@@ -1771,6 +1771,19 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
  */
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher);
 
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a publisher.
+ * 
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_publisher_t` to get the entity global Id from.
+ * 
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ */
+z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher);
+#endif
+
 #if Z_FEATURE_MATCHING == 1
 /**
  * Declares a matching listener, registering a callback for notifying subscribers matching with a given publisher.
@@ -1922,6 +1935,19 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a querier.
+ * 
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_querier_t` to get the entity global Id from.
+ * 
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ */
+z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier);
+#endif
 
 #if Z_FEATURE_MATCHING == 1
 /**
@@ -2162,6 +2188,19 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  */
 z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
                              const z_query_reply_err_options_t *options);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a queryable.
+ * 
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_queryable_t` to get the entity global Id from.
+ * 
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_loaned_queryable_t`.
+ */
+z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable);
+#endif
 
 #endif
 
