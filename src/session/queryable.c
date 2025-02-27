@@ -235,16 +235,27 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     _z_queryable_query_steal_data(q, zsrc, msgq, &qle_infos.ke_out, qid, anyke);
+
+    z_result_t ret = _Z_RES_OK;
     // Parse session_queryable svec
-    for (size_t i = 0; i < qle_infos.qle_nb; i++) {
+    for (size_t i = 1; i < qle_infos.qle_nb; i++) {
+        _z_query_rc_t query_copy;
+        ret = _z_query_rc_copy(&query_copy, &query);
+        if (ret != _Z_RES_OK) {
+            break;
+        }
         _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qle_infos.infos, i);
-        qle_info->callback(&query, qle_info->arg);
+        qle_info->callback(&query_copy, qle_info->arg);
+        _z_query_rc_drop(&query_copy);
     }
+
+    _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qle_infos.infos, 0);
+    qle_info->callback(&query, qle_info->arg);
     _z_query_rc_drop(&query);
 #if Z_FEATURE_RX_CACHE == 0
     _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
 #endif
-    return _Z_RES_OK;
+    return ret;
 }
 
 z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
