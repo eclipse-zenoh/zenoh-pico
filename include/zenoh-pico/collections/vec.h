@@ -158,7 +158,10 @@ void _z_svec_release(_z_svec_t *v);
         return ret;                                                                                                 \
     }                                                                                                               \
     static inline name##_svec_t name##_svec_alias_element(type *e) { return _z_svec_alias_element((void *)e); }     \
-    static inline void name##_svec_move(name##_svec_t *dst, name##_svec_t *src) { _z_svec_move(dst, src); }         \
+    static inline z_result_t name##_svec_move(name##_svec_t *dst, name##_svec_t *src) {                             \
+        _z_svec_move(dst, src);                                                                                     \
+        return _Z_RES_OK;                                                                                           \
+    }                                                                                                               \
     static inline void name##_svec_reset(name##_svec_t *v) { _z_svec_reset(v, name##_elem_clear, sizeof(type)); }   \
     static inline void name##_svec_clear(name##_svec_t *v) { _z_svec_clear(v, name##_elem_clear, sizeof(type)); }   \
     static inline void name##_svec_release(name##_svec_t *v) { _z_svec_release(v); }                                \

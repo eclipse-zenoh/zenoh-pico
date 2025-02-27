@@ -78,9 +78,10 @@ z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     return _Z_RES_OK;
 }
 
-void _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
+z_result_t _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
     *dst = *src;
     *src = _z_hello_null();
+    return _Z_RES_OK;
 }
 
 z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src) {

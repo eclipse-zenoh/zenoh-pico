@@ -128,8 +128,7 @@
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, attribute) \
     attribute z_result_t prefix##_##name##_take_from_loaned(prefix##_owned_##name##_t *obj,                            \
                                                             prefix##_loaned_##name##_t *src) {                         \
-        f_move((&obj->_val), src);                                                                                     \
-        return _Z_RES_OK;                                                                                              \
+        return f_move((&obj->_val), src);                                                                              \
     }
 
 #define _Z_OWNED_FUNCTIONS_VALUE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_copy, f_move, f_drop,        \

@@ -162,9 +162,16 @@ _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
     return _z_slice_null();
 }
 
-void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
+z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
     *dst = *src;
     *src = _z_bytes_null();
+    return _Z_RES_OK;
+}
+
+_z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
+    _z_bytes_t b = *src;
+    *src = _z_bytes_null();
+    return b;
 }
 
 _z_bytes_reader_t _z_bytes_get_reader(const _z_bytes_t *bytes) {
@@ -316,7 +323,7 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
 _z_bytes_writer_t _z_bytes_writer_from_bytes(_z_bytes_t *bytes) {
     _z_bytes_writer_t writer;
     writer.cache = NULL;
-    _z_bytes_move(&writer.bytes, bytes);
+    writer.bytes = _z_bytes_steal(bytes);
     return writer;
 }
 
@@ -409,10 +416,11 @@ void _z_bytes_writer_clear(_z_bytes_writer_t *writer) {
     writer->cache = NULL;
 }
 
-void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {
+z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src) {
     dst->cache = src->cache;
     _z_bytes_move(&dst->bytes, &src->bytes);
     src->cache = NULL;
+    return _Z_RES_OK;
 }
 
 size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader) {

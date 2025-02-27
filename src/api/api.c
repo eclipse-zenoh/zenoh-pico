@@ -334,7 +334,7 @@ z_result_t z_bytes_copy_from_str(z_owned_bytes_t *bytes, const char *value) {
 
 z_result_t z_bytes_from_static_str(z_owned_bytes_t *bytes, const char *value) {
     z_owned_string_t s;
-    s._val = _z_string_from_str_custom_deleter((char*)value, _z_delete_context_static());
+    s._val = _z_string_from_str_custom_deleter((char *)value, _z_delete_context_static());
     return z_bytes_from_string(bytes, z_string_move(&s));
 }
 

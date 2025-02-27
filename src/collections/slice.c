@@ -127,6 +127,7 @@ z_result_t _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
     }
     *dst = *src;
     _z_slice_reset(src);
+    return _Z_RES_OK;
 }
 
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {

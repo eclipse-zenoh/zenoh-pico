@@ -55,8 +55,8 @@ static inline _z_sample_t _z_sample_alias(_z_keyexpr_t *key, _z_bytes_t *payload
                                           _z_bytes_t *attachment, z_reliability_t reliability) {
     _z_sample_t ret;
     ret.keyexpr = _z_keyexpr_steal(key);
-    _z_bytes_move(&ret.payload, payload);
-    _z_bytes_move(&ret.attachment, attachment);
+    ret.payload = _z_bytes_steal(payload);
+    ret.attachment = _z_bytes_steal(attachment);
     ret.encoding = _z_encoding_steal(encoding);
     ret.timestamp = *timestamp;
     ret.kind = kind;

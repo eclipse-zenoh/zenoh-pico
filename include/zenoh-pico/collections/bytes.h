@@ -57,7 +57,8 @@ z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
-void _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
+z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
+_z_bytes_t _z_bytes_steal(_z_bytes_t *src);
 void _z_bytes_drop(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
 size_t _z_bytes_num_slices(const _z_bytes_t *bs);
@@ -97,7 +98,7 @@ z_result_t _z_bytes_writer_append_z_bytes(_z_bytes_writer_t *writer, _z_bytes_t 
 z_result_t _z_bytes_writer_append_slice(_z_bytes_writer_t *writer, _z_arc_slice_t *bytes);
 _z_bytes_t _z_bytes_writer_finish(_z_bytes_writer_t *writer);
 void _z_bytes_writer_clear(_z_bytes_writer_t *writer);
-void _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
+z_result_t _z_bytes_writer_move(_z_bytes_writer_t *dst, _z_bytes_writer_t *src);
 size_t _z_bytes_reader_remaining(const _z_bytes_reader_t *reader);
 
 #ifdef __cplusplus
