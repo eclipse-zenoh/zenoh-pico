@@ -163,6 +163,12 @@ _z_slice_t _z_bytes_try_get_contiguous(const _z_bytes_t *bs) {
 }
 
 z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
+    if (src->_slices._aliased) {
+        *dst = _z_bytes_null();
+        _z_bytes_t csrc;
+        _Z_RETURN_IF_ERR(_z_arc_slice_svec_copy(&csrc._slices, &src->_slices, false));
+        *src = csrc;
+    }
     *dst = *src;
     *src = _z_bytes_null();
     return _Z_RES_OK;

@@ -20,9 +20,9 @@ z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     *dst = _z_sample_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->keyexpr, &src->keyexpr));
     _Z_CLEAN_RETURN_IF_ERR(_z_encoding_move(&dst->encoding, &src->encoding), _z_sample_clear(dst));
-    _z_bytes_move(&dst->payload, &src->payload);
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->payload, &src->payload), _z_sample_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->attachment, &src->attachment), _z_sample_clear(dst));
     _z_timestamp_move(&dst->timestamp, &src->timestamp);
-    _z_bytes_move(&dst->attachment, &src->attachment);
     dst->qos = src->qos;
     dst->reliability = src->reliability;
     dst->kind = src->kind;
