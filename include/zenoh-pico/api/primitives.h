@@ -1774,10 +1774,10 @@ const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publis
 #if defined(Z_FEATURE_UNSTABLE_API)
 /**
  * Gets the entity global Id from a publisher.
- * 
+ *
  * Parameters:
  *   publisher: Pointer to a :c:type:`z_loaned_publisher_t` to get the entity global Id from.
- * 
+ *
  * Return:
  *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
  */
@@ -1939,10 +1939,10 @@ const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
 #if defined(Z_FEATURE_UNSTABLE_API)
 /**
  * Gets the entity global Id from a querier.
- * 
+ *
  * Parameters:
  *   publisher: Pointer to a :c:type:`z_loaned_querier_t` to get the entity global Id from.
- * 
+ *
  * Return:
  *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
  */
@@ -2192,10 +2192,10 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
 #if defined(Z_FEATURE_UNSTABLE_API)
 /**
  * Gets the entity global Id from a queryable.
- * 
+ *
  * Parameters:
  *   publisher: Pointer to a :c:type:`z_loaned_queryable_t` to get the entity global Id from.
- * 
+ *
  * Return:
  *   The entity gloabl Id wrapped as a :c:type:`z_loaned_queryable_t`.
  */
