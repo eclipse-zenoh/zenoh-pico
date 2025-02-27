@@ -73,7 +73,6 @@ static inline _z_entity_global_id_t _z_entity_global_id_null(void) { return (_z_
 static inline bool _z_entity_global_id_check(const _z_entity_global_id_t *info) {
     return _z_id_check(info->zid) || info->eid != 0;
 }
-z_result_t _z_entity_global_id_copy(_z_entity_global_id_t *dst, const _z_entity_global_id_t *src);
 
 /**
  * A zenoh timestamp.
@@ -237,6 +236,7 @@ typedef struct {
 static inline _z_source_info_t _z_source_info_null(void) { return (_z_source_info_t){0}; }
 static inline void _z_source_info_clear(_z_source_info_t *info) { (void)(info); }
 z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src);
+void _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src);
 static inline bool _z_source_info_check(const _z_source_info_t *info) {
     return _z_entity_global_id_check(&info->_source_id) || info->_source_sn != 0;
 }
