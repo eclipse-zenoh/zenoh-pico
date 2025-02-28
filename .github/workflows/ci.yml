@@ -123,9 +123,9 @@ jobs:
         timeout-minutes: 5
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
-          Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription > 0 ? 1 : 0 }}
+          Z_FEATURE_SUBSCRIPTION: ${{ fromJSON(matrix.feature_subscription) != 0 && 1 || 0 }}
           Z_FEATURE_LOCAL_SUBSCRIBER: ${{ fromJSON(matrix.feature_subscription) == 2 && 1 || 0 }}
-          Z_FEATURE_QUERYABLE: ${{ fromJSON(matrix.feature_queryable) != 0 && 1 || 0 }}
+          Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
           Z_FEATURE_QUERY: ${{ matrix.feature_query }}
 
       - name: Kill Zenoh router
