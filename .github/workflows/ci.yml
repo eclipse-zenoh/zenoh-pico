@@ -32,7 +32,7 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja ASAN=ON make test
+          CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
   check_format:
     name: Check codebase format with clang-format
