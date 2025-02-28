@@ -1131,7 +1131,6 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     z_source_info_drop(opt.source_info);
 #endif
 #if Z_FEATURE_PAYLOAD_REUSE == 0
-#endif
     z_bytes_drop(payload);
 #endif
     return ret;
