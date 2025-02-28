@@ -95,6 +95,7 @@ jobs:
       matrix:
         feature_publication: [1, 0]
         feature_subscription: [1, 0]
+        feature_local_subscriber: [1, 0]
         feature_queryable: [1, 0]
         feature_query: [1, 0]
     steps:
@@ -124,6 +125,7 @@ jobs:
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
           Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
+          Z_FEATURE_LOCAL_SUBSCRIBER: ${{ matrix.feature_local_subscriber }}
           Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
           Z_FEATURE_QUERY: ${{ matrix.feature_query }}
 
