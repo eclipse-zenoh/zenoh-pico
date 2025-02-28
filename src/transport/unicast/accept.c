@@ -24,7 +24,7 @@
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
-    _z_sys_net_socket_t listen_socket = _z_link_get_socket(&ztu->_common._link);
+    _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);
     _z_sys_net_socket_t con_socket = {0};
 
     while (true) {
@@ -44,11 +44,11 @@ static void *_zp_unicast_accept_task(void *ctx) {
                 continue;
             }
             // Set socket as non blocking (FIXME: activate when read tasks reworked)
-            // if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
-            //     _Z_INFO("Failed to set socket non blocking");
-            //     _z_socket_close(&con_socket);
-            //     continue;
-            // }
+            if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
+                _Z_INFO("Failed to set socket non blocking");
+                _z_socket_close(&con_socket);
+                continue;
+            }
             // Add peer
             _z_transport_unicast_peer_add(ztu, &param, con_socket);
         } else {
