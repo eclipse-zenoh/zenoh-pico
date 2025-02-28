@@ -79,6 +79,7 @@ typedef struct {
     _z_zint_t _sn_rx_reliable;
     _z_zint_t _sn_rx_best_effort;
     volatile bool _received;
+    bool _pending;
 
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
