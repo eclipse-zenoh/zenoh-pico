@@ -200,6 +200,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     if (ret == _Z_RES_OK) {
         zidlen = (zidlen >> 4) + 1;
         if (_z_zbuf_len(zbf) >= zidlen) {
+            memset(info->_source_id.zid.id, 0, sizeof(info->_source_id.zid.id) / sizeof(info->_source_id.zid.id[0]));
             _z_zbuf_read_bytes(zbf, info->_source_id.zid.id, 0, zidlen);
         } else {
             _Z_INFO("Not enough bytes to read");
