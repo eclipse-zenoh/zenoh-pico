@@ -67,9 +67,13 @@ z_result_t _z_socket_wait_event(void *ctx) {
     // Create select mask
     _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
     _z_transport_unicast_peer_list_t *curr = peers;
+    int max_fd = 0;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         FD_SET(peer->_socket._fd, &read_fds);
+        if (peer->_socket._fd > max_fd) {
+            max_fd = peer->_socket._fd;
+        }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // No timeout, blocking indefinitely
@@ -77,7 +81,7 @@ z_result_t _z_socket_wait_event(void *ctx) {
     timeout.tv_sec = 0;
     timeout.tv_usec = 0;
     // Wait for events
-    if (lwip_select(0, &read_fds, NULL, NULL, &timeout) <= 0) {
+    if (lwip_select(max_fd, &read_fds, NULL, NULL, &timeout) <= 0) {
         return _Z_ERR_GENERIC;  // Error or no data ready
     }
     // Mark sockets that are pending

@@ -61,16 +61,19 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
 z_result_t _z_socket_wait_event(void *ctx) {
-    // FIXME(perf): Don't recreate this mask every time
     fd_set read_fds;
     struct timeval timeout;
     FD_ZERO(&read_fds);
     // Create select mask
     _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
     _z_transport_unicast_peer_list_t *curr = peers;
+    int max_fd = 0;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         FD_SET(peer->_socket._fd, &read_fds);
+        if (peer->_socket._fd > max_fd) {
+            max_fd = peer->_socket._fd;
+        }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // No timeout
@@ -78,7 +81,7 @@ z_result_t _z_socket_wait_event(void *ctx) {
     timeout.tv_usec = 0;
     // Wait for events
     // FIXME: Need highest file descriptor
-    int result = select(0, &read_fds, NULL, NULL, &timeout);
+    int result = select(max_fd, &read_fds, NULL, NULL, &timeout);
     if (result <= 0) {
         return _Z_ERR_GENERIC;
     }
