@@ -875,6 +875,38 @@ uint64_t z_timestamp_ntp64_time(const z_timestamp_t *ts);
 z_id_t z_timestamp_id(const z_timestamp_t *ts);
 
 /**
+ * Creates an entity global id.
+ *
+ * Parameters:
+ *   gid: An uninitialized :c:type:`z_entity_global_id_t`.
+ *   zid: Pointer to a :c:type:`z_id_t` zenoh id.
+ *   eid: :c:type:`uint32_t` entity id.
+ */
+z_result_t z_entity_global_id_new(z_entity_global_id_t *gid, const z_id_t *zid, uint32_t eid);
+
+/**
+ * Returns the entity id of the entity global id.
+ *
+ * Parameters:
+ *   gid: Pointer to the valid :c:type:`z_entity_global_id_t`.
+ *
+ * Return:
+ *   Entity id represented by c:type:`uint32_t`.
+ */
+uint32_t z_entity_global_id_eid(const z_entity_global_id_t *gid);
+
+/**
+ * Returns the zenoh id of entity global id.
+ *
+ * Parameters:
+ *   gid: Pointer to the valid :c:type:`z_entity_global_id_t`.
+ *
+ * Return:
+ *   Zenoh id represented by c:type:`z_id_t`.
+ */
+z_id_t z_entity_global_id_zid(const z_entity_global_id_t *gid);
+
+/**
  * Builds a default query target.
  *
  * Return:
