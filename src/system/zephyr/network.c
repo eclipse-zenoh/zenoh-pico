@@ -27,17 +27,19 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/posix/sys/select.h>
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/checksum.h"
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         return _Z_ERR_GENERIC;
@@ -61,18 +63,34 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
-z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
-    struct pollfd *fds = (struct pollfd *)z_malloc(sock_nb * sizeof(struct pollfd));
-
-    if (fds == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+z_result_t _z_socket_wait_event(void *ctx) {
+    fd_set read_fds;
+    struct timeval timeout;
+    FD_ZERO(&read_fds);
+    // Create select mask
+    _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
+    _z_transport_unicast_peer_list_t *curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        FD_SET(peer->_socket._fd, &read_fds);
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
-    for (size_t i = 0; i < sock_nb; i++) {
-        fds[i].fd = sock[i]._fd;
-        fds[i].events = POLLIN;  // Check POLLERR in accept task?
-    }
-    if (poll(fds, sock_nb, -1) <= 0) {
+    // No timeout
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    // Wait for events
+    int result = select(0, &read_fds, NULL, NULL, &timeout);
+    if (result <= 0) {
         return _Z_ERR_GENERIC;
+    }
+    // Mark sockets that are pending
+    curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (FD_ISSET(peer->_socket._fd, &read_fds)) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
     return _Z_RES_OK;
 }

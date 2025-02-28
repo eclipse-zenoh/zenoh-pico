@@ -20,12 +20,13 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
 WSADATA wsaData;
 
-z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     u_long mode = 1;  // 1 for non-blocking mode
     if (ioctlsocket(sock->_sock._fd, FIONBIO, &mode) != 0) {
         return _Z_ERR_GENERIC;
@@ -46,21 +47,34 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { closesocket(sock->_sock._fd); }
 
-z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+z_result_t _z_socket_wait_event(void *ctx) {
     fd_set read_fds;
     struct timeval timeout;
-
     FD_ZERO(&read_fds);
-    for (size_t i = 0; i < sock_nb; i++) {
-        FD_SET(sock[i]._sock._fd, &read_fds);
+    // Create select mask
+    _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
+    _z_transport_unicast_peer_list_t *curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        FD_SET(peer->_socket._sock._fd, &read_fds);
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
-    timeout.tv_sec = 0;  // No timeout, blocking indefinitely
+    // No timeout
+    timeout.tv_sec = 0;
     timeout.tv_usec = 0;
-
+    // Wait for events
     int result = select(0, &read_fds, NULL, NULL, &timeout);
-
     if (result <= 0) {
-        return _Z_ERR_GENERIC;  // Error or no data ready
+        return _Z_ERR_GENERIC;
+    }
+    // Mark sockets that are pending
+    curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (FD_ISSET(peer->_socket._sock._fd, &read_fds)) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
     return _Z_RES_OK;
 }

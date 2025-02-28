@@ -69,13 +69,12 @@ void _z_report_system_error(int errcode);
         return _Z_RES_OK;                  \
     } while (false)
 
-/*------------------ Random ------------------*/
-
-z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock);
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock);
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
 void _z_socket_close(_z_sys_net_socket_t *sock);
-z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb);
+z_result_t _z_socket_wait_event(void *peers);
 
+/*------------------ Random ------------------*/
 /**
  * Generates a random unsigned 8-bit integer.
  */

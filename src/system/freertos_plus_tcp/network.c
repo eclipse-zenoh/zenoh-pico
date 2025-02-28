@@ -16,6 +16,7 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -24,7 +25,7 @@
 #include "FreeRTOS_IP.h"
 #include "FreeRTOS_Sockets.h"
 
-z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     TickType_t option_value = 0;  // Non-blocking mode
     BaseType_t result;
 
@@ -49,24 +50,35 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
-z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
+z_result_t _z_socket_wait_event(void *ctx) {
+    z_result_t ret = _Z_RES_OK;
     // Create a SocketSet to monitor multiple sockets
     SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
-
     if (socketSet == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-
     // Add each socket to the socket set
-    for (size_t i = 0; i < sock_nb; i++) {
-        FreeRTOS_FD_SET(sock[i]._socket, socketSet, eSELECT_READ);
+    _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
+    _z_transport_unicast_peer_list_t *curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        FreeRTOS_FD_SET(peer->_socket._socket, socketSet, eSELECT_READ);
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // Wait for an event on any of the sockets in the set, non-blocking
     BaseType_t result = FreeRTOS_select(socketSet, portMAX_DELAY);
     // Check for errors or events
-    z_result_t ret = _Z_RES_OK;
     if (result != 0) {
         ret = _Z_ERR_GENERIC;
+    }
+    // Mark sockets that are pending
+    curr = peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (FreeRTOS_FD_ISSET(peer->_socket._socket, socketSet)) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // Clean up
     FreeRTOS_DeleteSocketSet(socketSet);

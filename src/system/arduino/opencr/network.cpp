@@ -26,7 +26,7 @@ extern "C" {
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
-z_result_t _z_socket_set_non_blocking(_z_sys_net_socket_t *sock) {
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     _ZP_UNUSED(sock);
     _Z_ERROR("Function not yet supported on this system");
     return _Z_ERR_GENERIC;
@@ -41,9 +41,8 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-z_result_t _z_socket_wait_event(_z_sys_net_socket_t *sock, size_t sock_nb) {
-    _ZP_UNUSED(sock);
-    _ZP_UNUSED(sock_nb);
+z_result_t _z_socket_wait_event(void *peers) {
+    _ZP_UNUSED(peers);
     _Z_ERROR("Function not yet supported on this system");
     return _Z_ERR_GENERIC;
 }
