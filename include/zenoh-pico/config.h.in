@@ -187,6 +187,11 @@
 #define Z_GET_TIMEOUT_DEFAULT 10000
 
 /**
+ * Default number of connections for unicast listen sockets.
+ */
+#define Z_LISTEN_MAX_CONNECTION_NB 10
+
+/**
  * Default "nop" instruction
  */
 #define ZP_ASM_NOP __asm__("nop")

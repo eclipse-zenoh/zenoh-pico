@@ -93,7 +93,8 @@ void _z_f_link_close_bt(_z_link_t *self) { _z_close_bt(&self->_socket._bt._sock)
 
 void _z_f_link_free_bt(_z_link_t *self) { _ZP_UNUSED(self); }
 
-size_t _z_f_link_write_bt(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+size_t _z_f_link_write_bt(const _z_link_t *self, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     return _z_send_bt(self->_socket._bt._sock, ptr, len);
 }
 
@@ -111,7 +112,9 @@ size_t _z_f_link_read_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_sli
     return rb;
 }
 
-size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
+size_t _z_f_link_read_exact_bt(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                               _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     size_t rb = _z_read_exact_bt(self->_socket._bt._sock, ptr, len);
     if ((rb == len) && (addr != NULL)) {
         addr->len = strlen(self->_socket._bt._gname);
