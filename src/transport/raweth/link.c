@@ -86,7 +86,8 @@ static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, 
                                      _z_sys_net_socket_t *socket);
 static size_t _z_f_link_write_all_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len);
 static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
-static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
+static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                          _z_sys_net_socket_t *socket);
 static uint16_t _z_get_link_mtu_raweth(void);
 
 static bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
