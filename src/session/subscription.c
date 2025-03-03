@@ -278,10 +278,9 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
     }
     _z_sample_clear(&sample);
 #if Z_FEATURE_RX_CACHE == 0
-    _z_subscription_infos_svec_release(&sub_infos.infos);
-#else
-    _z_keyexpr_clear(&sub_infos.ke_in);
+    _z_subscription_infos_svec_release(&sub_infos.infos);  // Otherwise it's released with cache
 #endif
+    _z_keyexpr_clear(&sub_infos.ke_in);
     return ret;
 }
 
