@@ -59,7 +59,6 @@ void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
 z_result_t _z_socket_wait_event(void *ctx) {
     fd_set read_fds;
-    struct timeval timeout;
     FD_ZERO(&read_fds);
     // Create select mask
     _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
@@ -73,11 +72,8 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
-    // No timeout
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
     // Wait for events
-    int result = select(max_fd, &read_fds, NULL, NULL, &timeout);
+    int result = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
     if (result <= 0) {
         return _Z_ERR_GENERIC;
     }

@@ -76,12 +76,8 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
-    // No timeout, blocking indefinitely
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
     // Wait for events
-    if (lwip_select(max_fd, &read_fds, NULL, NULL, &timeout) <= 0) {
+    if (lwip_select(max_fd + 1, &read_fds, NULL, NULL, NULL) <= 0) {
         return _Z_ERR_GENERIC;  // Error or no data ready
     }
     // Mark sockets that are pending

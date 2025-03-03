@@ -62,9 +62,9 @@ void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
 z_result_t _z_socket_wait_event(void *ctx) {
     fd_set read_fds;
-    struct timeval timeout;
     FD_ZERO(&read_fds);
     // Create select mask
+    // FIXME: PEER MUTEX LOCK
     _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
     _z_transport_unicast_peer_list_t *curr = peers;
     int max_fd = 0;
@@ -76,17 +76,16 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
-    // No timeout
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
     // Wait for events
     // FIXME: Need highest file descriptor
-    int result = select(max_fd, &read_fds, NULL, NULL, &timeout);
+    int result = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
     if (result <= 0) {
+        _Z_ERROR("Errno: %d\n", errno);
         return _Z_ERR_GENERIC;
     }
     // Mark sockets that are pending
     curr = peers;
+    // FIXME: PEER MUTEX LOCK
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         if (FD_ISSET(peer->_socket._fd, &read_fds)) {
@@ -239,6 +238,7 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < (ssize_t)0) {
+        _Z_ERROR("Errno: %d\n", errno);
         return SIZE_MAX;
     }
 
