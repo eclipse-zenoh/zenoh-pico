@@ -245,8 +245,8 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
                                                  z_reliability_t reliability) {
     // Retrieve sub infos
     _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
-    sub_infos.ke_in = _z_keyexpr_alias(keyexpr);
-    _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos), _z_keyexpr_clear(keyexpr);
+    sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
+    _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos), _z_keyexpr_clear(&sub_infos.ke_in);
                            _z_encoding_clear(encoding); _z_bytes_drop(payload); _z_bytes_drop(attachment););
     // Check if there are subs
     _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_infos.sub_nb, sub_infos.ke_out._id,
@@ -257,25 +257,31 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
 
     z_result_t ret = _Z_RES_OK;
     // Parse subscription infos svec
-    for (size_t i = 0; i < sub_infos.sub_nb; i++) {
-        _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, i);
-        if (i + 1 == sub_infos.sub_nb) {
-            sub_info->callback(&sample, sub_info->arg);
-        } else {
-            _z_sample_t sample_copy;
-            ret = _z_sample_copy(&sample_copy, &sample);
-            if (ret != _Z_RES_OK) {
-                break;
+    if (sub_infos.sub_nb == 1) {
+        _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, 0);
+        sub_info->callback(&sample, sub_info->arg);
+    } else {
+        for (size_t i = 0; i < sub_infos.sub_nb; i++) {
+            _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, i);
+            if (i + 1 == sub_infos.sub_nb) {
+                sub_info->callback(&sample, sub_info->arg);
+            } else {
+                _z_sample_t sample_copy;
+                ret = _z_sample_copy(&sample_copy, &sample);
+                if (ret != _Z_RES_OK) {
+                    break;
+                }
+                sub_info->callback(&sample_copy, sub_info->arg);
+                _z_sample_clear(&sample_copy);
             }
-            sub_info->callback(&sample_copy, sub_info->arg);
-            _z_sample_clear(&sample_copy);
         }
     }
     _z_sample_clear(&sample);
 #if Z_FEATURE_RX_CACHE == 0
     _z_subscription_infos_svec_release(&sub_infos.infos);
+#else
+    _z_keyexpr_clear(&sub_infos.ke_in);
 #endif
-    _z_keyexpr_clear(keyexpr);
     return ret;
 }
 
