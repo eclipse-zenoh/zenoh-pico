@@ -252,8 +252,8 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
     _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_infos.sub_nb, sub_infos.ke_out._id,
              (int)_z_string_len(&sub_infos.ke_out._suffix), _z_string_data(&sub_infos.ke_out._suffix));
     // Create sample
-    _z_sample_t sample =
-        _z_sample_alias(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos, attachment, reliability);
+    _z_sample_t sample = _z_sample_steal_data(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos,
+                                              attachment, reliability);
 
     z_result_t ret = _Z_RES_OK;
     // Parse subscription infos svec

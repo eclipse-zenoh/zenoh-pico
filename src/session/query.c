@@ -128,8 +128,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         return _Z_ERR_QUERY_NOT_MATCH;
     }
     // Build the reply
-    _z_reply_t reply = _z_reply_alias(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                                      &msg->_encoding, kind, &msg->_attachment);
+    _z_reply_t reply = _z_reply_steal_data(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
+                                           &msg->_encoding, kind, &msg->_attachment);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {

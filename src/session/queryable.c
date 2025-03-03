@@ -197,7 +197,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_rc_t *zsrc, _z_msg_query_t *msgq,
                                                  _z_keyexpr_t *key, uint32_t qid, bool anyke) {
     // Steal received data in query
-    *query = _z_query_alias(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
+    *query = _z_query_steal_data(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
 }
 
 static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,

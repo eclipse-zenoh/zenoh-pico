@@ -50,9 +50,9 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
-static inline _z_sample_t _z_sample_alias(_z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
-                                          _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos,
-                                          _z_bytes_t *attachment, z_reliability_t reliability) {
+static inline _z_sample_t _z_sample_steal_data(_z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
+                                               _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos,
+                                               _z_bytes_t *attachment, z_reliability_t reliability) {
     _z_sample_t ret;
     ret.keyexpr = _z_keyexpr_steal(key);
     ret.payload = _z_bytes_steal(payload);

@@ -84,14 +84,14 @@ typedef struct _z_reply_t {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
-static inline _z_reply_t _z_reply_alias(_z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
-                                        const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
-                                        _z_bytes_t *attachment) {
+static inline _z_reply_t _z_reply_steal_data(_z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
+                                             const _z_timestamp_t *timestamp, _z_encoding_t *encoding,
+                                             z_sample_kind_t kind, _z_bytes_t *attachment) {
     _z_reply_t r;
     r.data.replier_id = id;
     r.data._tag = _Z_REPLY_TAG_DATA;
-    r.data._result.sample = _z_sample_alias(keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT, attachment,
-                                            Z_RELIABILITY_DEFAULT);
+    r.data._result.sample = _z_sample_steal_data(keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
+                                                 attachment, Z_RELIABILITY_DEFAULT);
     return r;
 }
 static inline _z_reply_t _z_reply_err_alias(_z_bytes_t *payload, _z_encoding_t *encoding) {
