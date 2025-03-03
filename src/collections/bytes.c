@@ -174,12 +174,6 @@ z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src) {
     return _Z_RES_OK;
 }
 
-_z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
-    _z_bytes_t b = *src;
-    *src = _z_bytes_null();
-    return b;
-}
-
 _z_bytes_reader_t _z_bytes_get_reader(const _z_bytes_t *bytes) {
     _z_bytes_reader_t r;
     r.bytes = bytes;
