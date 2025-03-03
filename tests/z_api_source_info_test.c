@@ -76,6 +76,7 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
     assert_ok(z_fifo_channel_sample_new(&callback, &handler, 1));
     z_owned_subscriber_t sub;
     assert_ok(z_declare_subscriber(sub_session, &sub, z_loan(ke), z_move(callback), NULL));
+    z_sleep_s(1);
 
     z_owned_bytes_t payload;
     assert_ok(z_bytes_copy_from_str(&payload, test_payload));
@@ -85,6 +86,7 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
     if (publisher) {
         z_owned_publisher_t pub;
         assert_ok(z_declare_publisher(z_loan(s1), &pub, z_loan(ke), NULL));
+        z_sleep_s(1);
 
         z_publisher_put_options_t opt;
         z_publisher_put_options_default(&opt);
@@ -92,8 +94,7 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
         z_owned_source_info_t si;
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
-        
-        z_sleep_s(1);
+
         z_publisher_put(z_loan(pub), z_move(payload), &opt);
         z_sleep_s(1);
         assert_ok(z_undeclare_publisher(z_move(pub)));
@@ -107,10 +108,9 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
 
-        z_sleep_s(1);
         assert_ok(z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt));
-        z_sleep_s(1);
     }
+    z_sleep_s(1);
 
     z_owned_sample_t sample;
     assert_ok(z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(&handler), &sample));
