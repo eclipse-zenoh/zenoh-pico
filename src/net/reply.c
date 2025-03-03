@@ -49,9 +49,17 @@ z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) 
     return _Z_RES_OK;
 }
 
-void _z_reply_move(_z_reply_t *dst, _z_reply_t *src) {
-    *dst = *src;
+z_result_t _z_reply_move(_z_reply_t *dst, _z_reply_t *src) {
+    dst->data._tag = src->data._tag;
+    dst->data.replier_id = src->data.replier_id;
+    if (src->data._tag == _Z_REPLY_TAG_DATA) {
+        _Z_RETURN_IF_ERR(_z_sample_move(&dst->data._result.sample, &src->data._result.sample));
+    } else if (src->data._tag == _Z_REPLY_TAG_ERROR) {
+        _Z_RETURN_IF_ERR(_z_value_move(&dst->data._result.error, &src->data._result.error));
+    }
+
     *src = _z_reply_null();
+    return _Z_RES_OK;
 }
 
 void _z_reply_clear(_z_reply_t *reply) { _z_reply_data_clear(&reply->data); }

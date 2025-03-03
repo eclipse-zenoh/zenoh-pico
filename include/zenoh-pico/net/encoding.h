@@ -41,8 +41,12 @@ z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *sc
 void _z_encoding_clear(_z_encoding_t *encoding);
 z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src);
 _z_encoding_t _z_encoding_alias(_z_encoding_t src);
-void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
-_z_encoding_t _z_encoding_steal(_z_encoding_t *val);
+z_result_t _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src);
+static inline _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
+    _z_encoding_t ret = *val;
+    *val = _z_encoding_null();
+    return ret;
+}
 
 #ifdef __cplusplus
 }

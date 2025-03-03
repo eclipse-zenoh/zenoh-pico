@@ -42,7 +42,7 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
     _z_liveliness_register_token(_Z_RC_IN_VAL(zn), id, keyexpr);
 
     ret_token->_id = id;
-    _z_keyexpr_move(&ret_token->_key, keyexpr);
+    ret_token->_key = _z_keyexpr_steal(keyexpr);
     ret_token->_zn = _z_session_rc_clone_as_weak(zn);
     return ret;
 }

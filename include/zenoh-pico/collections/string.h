@@ -94,7 +94,7 @@ size_t _z_string_len(const _z_string_t *s);
 const char *_z_string_data(const _z_string_t *s);
 z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
-void _z_string_move(_z_string_t *dst, _z_string_t *src);
+z_result_t _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_clear(_z_string_t *s);

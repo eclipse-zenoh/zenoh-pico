@@ -25,8 +25,8 @@ _ze_serializer_t _ze_serializer_empty(void) {
 }
 
 void _ze_serializer_clear(_ze_serializer_t *serializer) { _z_bytes_writer_clear(&serializer->_writer); }
-void _ze_serializer_move(_ze_serializer_t *dst, _ze_serializer_t *src) {
-    _z_bytes_writer_move(&dst->_writer, &src->_writer);
+z_result_t _ze_serializer_move(_ze_serializer_t *dst, _ze_serializer_t *src) {
+    return _z_bytes_writer_move(&dst->_writer, &src->_writer);
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX(ze, _ze_serializer_t, serializer, _ze_serializer_check,

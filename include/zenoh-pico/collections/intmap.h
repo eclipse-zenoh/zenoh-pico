@@ -137,8 +137,9 @@ void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter);
     static inline void name##_intmap_free(name##_intmap_t **m) {                                                \
         _z_int_void_map_free(m, name##_intmap_entry_elem_free);                                                 \
     }                                                                                                           \
-    static inline void name##_intmap_move(name##_intmap_t *dst, name##_intmap_t *src) {                         \
+    static inline z_result_t name##_intmap_move(name##_intmap_t *dst, name##_intmap_t *src) {                   \
         _z_int_void_map_move(dst, src);                                                                         \
+        return _Z_RES_OK;                                                                                       \
     }                                                                                                           \
     static inline name##_intmap_iterator_t name##_intmap_iterator_make(const name##_intmap_t *m) {              \
         return _z_int_void_map_iterator_make(m);                                                                \

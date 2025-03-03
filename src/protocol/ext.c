@@ -59,7 +59,7 @@ _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_slice_t zbuf) {
     ext._header |= (id & _Z_EXT_ID_MASK);
     ext._header |= _Z_MSG_EXT_ENC_ZBUF;
 
-    _z_slice_move(&ext._body._zbuf._val, &zbuf);
+    ext._body._zbuf._val = _z_slice_steal(&zbuf);
 
     return ext;
 }
