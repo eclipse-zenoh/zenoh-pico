@@ -122,6 +122,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_uni
 }
 
 static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer, size_t *to_read) {
+    // Warning: if we receive fragmented data we have to discard it because we only have one buffer for all sockets
     size_t read_size = 0;
     switch (ztu->_common._link._cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
@@ -161,7 +162,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_common._zbuf);
-    enum z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
+    z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
     _z_transport_unicast_peer_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
         curr_peer = _z_transport_unicast_peer_list_head(ztu->_peers);
@@ -172,6 +173,14 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         size_t to_read = 0;
 
         if (mode == Z_WHATAMI_PEER) {
+            // Wait for at least one peer
+            _z_transport_peer_mutex_lock(&ztu->_common);
+            size_t peer_len = _z_transport_unicast_peer_list_len(ztu->_peers);
+            _z_transport_peer_mutex_unlock(&ztu->_common);
+            if (peer_len == 0) {
+                z_sleep_s(1);
+                continue;
+            }
             // Wait for events on sockets
             if (_z_socket_wait_event(ztu->_peers) != _Z_RES_OK) {
                 _Z_ERROR("Wait event failed");
