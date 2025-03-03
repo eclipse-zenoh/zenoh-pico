@@ -106,7 +106,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 }
 
 static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                            const _z_id_t *local_zid, enum z_whatami_t mode) {
+                                            const _z_id_t *local_zid, z_whatami_t mode) {
     _z_transport_message_t ism = _z_t_msg_make_init_syn(mode, *local_zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
     param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
@@ -181,8 +181,10 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     // Create the OpenSyn message
     _z_zint_t lease = Z_TRANSPORT_LEASE;
     _z_zint_t initial_sn = param->_initial_sn_tx;
-    _z_slice_t cookie;
-    _z_slice_copy(&cookie, &iam._body._init._cookie);
+    _z_slice_t cookie = _z_slice_null();
+    if (!_z_slice_is_empty(&iam._body._init._cookie)) {
+        _z_slice_copy(&cookie, &iam._body._init._cookie);
+    }
     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
     _z_t_msg_clear(&iam);
     // Encode and send the message
