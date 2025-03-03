@@ -92,8 +92,10 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
         z_owned_source_info_t si;
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
-
+        
+        z_sleep_s(1);
         z_publisher_put(z_loan(pub), z_move(payload), &opt);
+        z_sleep_s(1);
         assert_ok(z_undeclare_publisher(z_move(pub)));
 
     } else {
@@ -105,9 +107,10 @@ void test_source_info_put(bool publisher, bool local_subscriber) {
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
 
+        z_sleep_s(1);
         assert_ok(z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt));
+        z_sleep_s(1);
     }
-    z_sleep_s(1);
 
     z_owned_sample_t sample;
     assert_ok(z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(&handler), &sample));
