@@ -142,8 +142,9 @@ size_t _z_link_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, _z_slice_t *addr
     return rb;
 }
 
-size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr) {
-    size_t rb = link->_read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr);
+size_t _z_link_recv_exact_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr,
+                               _z_sys_net_socket_t *socket) {
+    size_t rb = link->_read_exact_f(link, _z_zbuf_get_wptr(zbf), len, addr, socket);
     if (rb != SIZE_MAX) {
         _z_zbuf_set_wpos(zbf, _z_zbuf_get_wpos(zbf) + rb);
     }
@@ -158,7 +159,7 @@ size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_
     return rb;
 }
 
-z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
+z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf, _z_sys_net_socket_t *socket) {
     z_result_t ret = _Z_RES_OK;
     bool link_is_streamed = link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
 
@@ -166,7 +167,7 @@ z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf) {
         _z_slice_t bs = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
         size_t n = bs.len;
         do {
-            size_t wb = link->_write_f(link, bs.start, n);
+            size_t wb = link->_write_f(link, bs.start, n, socket);
             if (wb == SIZE_MAX) {
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;

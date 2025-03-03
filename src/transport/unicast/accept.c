@@ -36,8 +36,9 @@ static void *_zp_unicast_accept_task(void *ctx) {
             }
             _z_transport_unicast_establish_param_t param = {0};
             // Start handshake
-            z_result_t ret = _z_unicast_handshake_listen(
-                &param, &ztu->_common._link, &_Z_RC_IN_VAL(ztu->_common._session)->_local_zid, Z_WHATAMI_PEER);
+            z_result_t ret = _z_unicast_handshake_listen(&param, &ztu->_common._link,
+                                                         &_Z_RC_IN_VAL(ztu->_common._session)->_local_zid,
+                                                         Z_WHATAMI_PEER, &con_socket);
             if (ret != _Z_RES_OK) {
                 _Z_INFO("Connection accept handshake failed with error %d", ret);
                 _z_socket_close(&con_socket);

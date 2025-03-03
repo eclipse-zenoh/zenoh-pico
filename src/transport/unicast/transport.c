@@ -114,14 +114,14 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_INIT(Syn)");
-    z_result_t ret = _z_link_send_t_msg(zl, &ism);
+    z_result_t ret = _z_link_send_t_msg(zl, &ism, NULL);
     _z_t_msg_clear(&ism);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, NULL));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
         return _Z_ERR_MESSAGE_UNEXPECTED;
@@ -187,14 +187,14 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _z_t_msg_clear(&iam);
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Syn)");
-    ret = _z_link_send_t_msg(zl, &osm);
+    ret = _z_link_send_t_msg(zl, &osm, NULL);
     _z_t_msg_clear(&osm);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, NULL));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
@@ -210,11 +210,11 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
 }
 
 z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                       const _z_id_t *local_zid, enum z_whatami_t mode) {
+                                       const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
     assert(mode == Z_WHATAMI_PEER);
     // Read t message from link
     _z_transport_message_t tmsg = {0};
-    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl);
+    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -249,13 +249,13 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     _z_t_msg_clear(&tmsg);
     // Send InitAck
     _Z_DEBUG("Sending Z_INIT(Ack)");
-    ret = _z_link_send_t_msg(zl, &iam);
+    ret = _z_link_send_t_msg(zl, &iam, socket);
     _z_t_msg_clear(&iam);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Read t message from link
-    ret = _z_link_recv_t_msg(&tmsg, zl);
+    ret = _z_link_recv_t_msg(&tmsg, zl, socket);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -277,7 +277,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Ack)");
-    ret = _z_link_send_t_msg(zl, &oam);
+    ret = _z_link_send_t_msg(zl, &oam, socket);
     _z_t_msg_clear(&oam);
     if (ret != _Z_RES_OK) {
         return ret;

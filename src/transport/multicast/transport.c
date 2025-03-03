@@ -149,7 +149,7 @@ z_result_t _z_multicast_open_peer(_z_transport_multicast_establish_param_t *para
     _Z_DEBUG("Sending Z_JOIN message");
     switch (zl->_cap._transport) {
         case Z_LINK_CAP_TRANSPORT_MULTICAST:
-            ret = _z_link_send_t_msg(zl, &jsm);
+            ret = _z_link_send_t_msg(zl, &jsm, NULL);
             break;
         case Z_LINK_CAP_TRANSPORT_RAWETH:
             ret = _z_raweth_link_send_t_msg(zl, &jsm);
