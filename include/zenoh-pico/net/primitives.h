@@ -140,13 +140,14 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
  *     timestamp: The timestamp of this write. The API level timestamp (e.g. of the data when it was created).
  *     attachment: An optional attachment to this write.
  *     reliability: The message reliability.
+ *     source_info: The message source info.
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
 z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, _z_bytes_t payload, const _z_encoding_t *encoding,
                     const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
                     bool is_express, const _z_timestamp_t *timestamp, const _z_bytes_t attachment,
-                    z_reliability_t reliability);
+                    z_reliability_t reliability, const _z_source_info_t *source_info);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1

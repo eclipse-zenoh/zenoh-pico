@@ -32,7 +32,8 @@ void _z_msg_put_clear(_z_msg_put_t *msg) {
 _z_msg_query_reqexts_t _z_msg_query_required_extensions(const _z_msg_query_t *msg) {
     return (_z_msg_query_reqexts_t){
         .body = _z_bytes_check(&msg->_ext_value.payload) || _z_encoding_check(&msg->_ext_value.encoding),
-        .info = _z_id_check(msg->_ext_info._id) || msg->_ext_info._entity_id != 0 || msg->_ext_info._source_sn != 0,
+        .info = _z_id_check(msg->_ext_info._source_id.zid) || msg->_ext_info._source_id.eid != 0 ||
+                msg->_ext_info._source_sn != 0,
         .attachment = _z_bytes_check(&msg->_ext_attachment),
     };
 }

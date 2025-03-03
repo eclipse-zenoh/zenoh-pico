@@ -426,6 +426,7 @@ Functions
 .. autocfunction:: primitives.h::z_sample_express
 .. autocfunction:: primitives.h::z_sample_reliability
 .. autocfunction:: primitives.h::z_sample_kind
+.. autocfunction:: primitives.h::z_sample_source_info
 
 Ownership Functions
 ^^^^^^^^^^^^^^^^^^^
@@ -453,14 +454,46 @@ Functions
 
 Entity Global ID
 ----------------
+
+Represents an entity global id.
+
 Types
 ^^^^^
 .. c:type:: z_entity_global_id_t
 
 Functions
 ^^^^^^^^^
+.. autocfunction:: primitives.h::z_entity_global_id_new
 .. autocfunction:: primitives.h::z_entity_global_id_eid
 .. autocfunction:: primitives.h::z_entity_global_id_zid
+
+Source Info
+-----------
+
+Represents sample source information.
+
+Types
+^^^^^
+.. c:type:: z_owned_source_info_t
+.. c:type:: z_loaned_source_info_t
+.. c:type:: z_moved_source_info_t
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_source_info_new
+.. autocfunction:: primitives.h::z_source_info_sn
+.. autocfunction:: primitives.h::z_source_info_id
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: void z_source_info_drop(z_moved_source_info_t * source_info) 
+.. c:function:: void z_source_info_clone(z_owned_source_info_t * dst, const z_loaned_source_info_t * source_info) 
+.. c:function:: const z_loaned_source_info_t * z_source_info_loan(const z_owned_source_info_t * source_info)
+.. c:function:: z_loaned_source_info_t * z_source_info_loan_mut(z_owned_source_info_t * source_info)
+.. c:function:: z_result_t z_source_info_take_from_loaned(z_owned_source_info_t *dst, z_loaned_source_info_t *src)
 
 Closures
 ========
@@ -1080,6 +1113,7 @@ Functions
 .. autocfunction:: primitives.h::z_publisher_get_matching_status
 .. autocfunction:: primitives.h::z_publisher_declare_matching_listener
 .. autocfunction:: primitives.h::z_publisher_declare_background_matching_listener
+.. autocfunction:: primitives.h::z_publisher_id
 
 Ownership Functions
 -------------------
@@ -1160,6 +1194,8 @@ Functions
 .. autocfunction:: primitives.h::z_declare_queryable
 .. autocfunction:: primitives.h::z_undeclare_queryable
 .. autocfunction:: primitives.h::z_declare_background_queryable
+
+.. autocfunction:: primitives.h::z_queryable_id
 
 .. autocfunction:: primitives.h::z_queryable_options_default
 .. autocfunction:: primitives.h::z_query_reply_options_default
@@ -1269,6 +1305,7 @@ Functions
 .. autocfunction:: primitives.h::z_querier_get_matching_status
 .. autocfunction:: primitives.h::z_querier_declare_matching_listener
 .. autocfunction:: primitives.h::z_querier_declare_background_matching_listener
+.. autocfunction:: primitives.h::z_querier_id
 
 .. autocfunction:: primitives.h::z_querier_options_default
 .. autocfunction:: primitives.h::z_querier_get_options_default

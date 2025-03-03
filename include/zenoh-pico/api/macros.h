@@ -53,6 +53,7 @@
                   z_view_string_t : z_view_string_loan,                                \
                   z_owned_string_array_t : z_string_array_loan,                        \
                   z_owned_sample_t : z_sample_loan,                                    \
+                  z_owned_source_info_t : z_source_info_loan,                          \
                   z_owned_query_t : z_query_loan,                                      \
                   z_owned_slice_t : z_slice_loan,                                      \
                   z_view_slice_t : z_view_slice_loan,                                  \
@@ -94,6 +95,7 @@
                   z_view_string_t : z_view_string_loan_mut,                   \
                   z_owned_string_array_t : z_string_array_loan_mut,           \
                   z_owned_sample_t : z_sample_loan_mut,                       \
+                  z_owned_source_info_t : z_source_info_loan_mut,             \
                   z_owned_query_t : z_query_loan_mut,                         \
                   z_owned_slice_t : z_slice_loan_mut,                         \
                   z_view_slice_t : z_view_slice_loan_mut,                     \
@@ -127,6 +129,7 @@
                   z_moved_string_t* : z_string_drop,                                   \
                   z_moved_string_array_t* : z_string_array_drop,                       \
                   z_moved_sample_t* : z_sample_drop,                                   \
+                  z_moved_source_info_t* : z_source_info_drop,                         \
                   z_moved_query_t* : z_query_drop,                                     \
                   z_moved_encoding_t* : z_encoding_drop,                               \
                   z_moved_slice_t* : z_slice_drop,                                     \
@@ -185,6 +188,7 @@
                   z_owned_slice_t : z_internal_slice_check,                                      \
                   z_owned_bytes_t : z_internal_bytes_check,                                      \
                   z_owned_sample_t : z_internal_sample_check,                                    \
+                  z_owned_source_info_t : z_internal_source_info_check,                          \
                   z_owned_query_t : z_internal_query_check,                                      \
                   z_owned_encoding_t : z_internal_encoding_check,                                \
                   ze_owned_serializer_t : ze_internal_serializer_check,                          \
@@ -256,6 +260,7 @@
                   z_owned_closure_zid_t  : z_closure_zid_move,                          \
                   z_owned_closure_matching_status_t  : z_closure_matching_status_move,  \
                   z_owned_sample_t : z_sample_move,                                     \
+                  z_owned_source_info_t : z_source_info_move,                           \
                   z_owned_query_t : z_query_move,                                       \
                   z_owned_slice_t : z_slice_move,                                       \
                   z_owned_bytes_t : z_bytes_move,                                       \
@@ -314,6 +319,7 @@
         z_owned_ring_handler_reply_t *: z_ring_handler_reply_take,             \
         z_owned_ring_handler_sample_t *: z_ring_handler_sample_take,           \
         z_owned_sample_t *: z_sample_take,                                     \
+        z_owned_source_info_t *: z_source_info_take,                           \
         z_owned_session_t *: z_session_take,                                   \
         z_owned_slice_t *: z_slice_take,                                       \
         z_owned_string_array_t *: z_string_array_take,                         \
@@ -337,6 +343,7 @@
                   z_owned_keyexpr_t* : z_keyexpr_clone,                 \
                   z_owned_query_t* : z_query_clone,                     \
                   z_owned_sample_t* : z_sample_clone,                   \
+                  z_owned_source_info_t* : z_source_info_clone,         \
                   z_owned_bytes_t* : z_bytes_clone,                     \
                   z_owned_encoding_t* : z_encoding_clone,               \
                   z_owned_reply_err_t* : z_reply_err_clone,             \
@@ -405,6 +412,7 @@
                   z_owned_closure_zid_t * : z_internal_closure_zid_null,                          \
                   z_owned_closure_matching_status_t * : z_internal_closure_matching_status_null,  \
                   z_owned_sample_t * : z_internal_sample_null,                                    \
+                  z_owned_source_info_t * : z_internal_source_info_null,                          \
                   z_owned_encoding_t * : z_internal_encoding_null,                                \
                   z_owned_reply_err_t * : z_internal_reply_err_null,                              \
                   ze_owned_serializer_t * : ze_internal_serializer_null,                          \
@@ -454,6 +462,7 @@ inline const z_loaned_string_t* z_loan(const z_owned_string_t& x) { return z_str
 inline const z_loaned_string_t* z_loan(const z_view_string_t& x) { return z_view_string_loan(&x); }
 inline const z_loaned_string_array_t* z_loan(const z_owned_string_array_t& x) { return z_string_array_loan(&x); }
 inline const z_loaned_sample_t* z_loan(const z_owned_sample_t& x) { return z_sample_loan(&x); }
+inline const z_loaned_source_info_t* z_loan(const z_owned_source_info_t& x) { return z_source_info_loan(&x); }
 inline const z_loaned_query_t* z_loan(const z_owned_query_t& x) { return z_query_loan(&x); }
 inline const z_loaned_slice_t* z_loan(const z_owned_slice_t& x) { return z_slice_loan(&x); }
 inline const z_loaned_slice_t* z_loan(const z_view_slice_t& x) { return z_view_slice_loan(&x); }
@@ -496,6 +505,7 @@ inline z_loaned_string_t* z_loan_mut(z_view_string_t& x) { return z_view_string_
 inline z_loaned_slice_t* z_loan_mut(z_view_slice_t& x) { return z_view_slice_loan_mut(&x); }
 inline z_loaned_string_array_t* z_loan_mut(z_owned_string_array_t& x) { return z_string_array_loan_mut(&x); }
 inline z_loaned_sample_t* z_loan_mut(z_owned_sample_t& x) { return z_sample_loan_mut(&x); }
+inline z_loaned_source_info_t* z_loan_mut(z_owned_source_info_t& x) { return z_source_info_loan_mut(&x); }
 inline z_loaned_query_t* z_loan_mut(z_owned_query_t& x) { return z_query_loan_mut(&x); }
 inline z_loaned_slice_t* z_loan_mut(z_owned_slice_t& x) { return z_slice_loan_mut(&x); }
 inline z_loaned_bytes_t* z_loan_mut(z_owned_bytes_t& x) { return z_bytes_loan_mut(&x); }
@@ -523,6 +533,7 @@ inline void z_drop(z_moved_string_t* v) { z_string_drop(v); }
 inline void z_drop(z_moved_slice_t* v) { z_slice_drop(v); }
 inline void z_drop(z_moved_string_array_t* v) { z_string_array_drop(v); }
 inline void z_drop(z_moved_sample_t* v) { z_sample_drop(v); }
+inline void z_drop(z_moved_source_info_t* v) { z_source_info_drop(v); }
 inline void z_drop(z_moved_query_t* v) { z_query_drop(v); }
 inline void z_drop(z_moved_bytes_t* v) { z_bytes_drop(v); }
 inline void z_drop(z_moved_encoding_t* v) { z_encoding_drop(v); }
@@ -556,6 +567,7 @@ inline void z_internal_null(z_owned_queryable_t* v) { z_internal_queryable_null(
 inline void z_internal_null(z_owned_liveliness_token_t* v) { z_internal_liveliness_token_null(v); }
 inline void z_internal_null(z_owned_query_t* v) { z_internal_query_null(v); }
 inline void z_internal_null(z_owned_sample_t* v) { z_internal_sample_null(v); }
+inline void z_internal_null(z_owned_source_info_t* v) { z_internal_source_info_null(v); }
 inline void z_internal_null(z_owned_reply_t* v) { z_internal_reply_null(v); }
 inline void z_internal_null(z_owned_hello_t* v) { z_internal_hello_null(v); }
 inline void z_internal_null(z_owned_string_t* v) { z_internal_string_null(v); }
@@ -592,6 +604,7 @@ inline bool z_internal_check(const z_owned_query_t& v) { return z_internal_query
 inline bool z_internal_check(const z_owned_hello_t& v) { return z_internal_hello_check(&v); }
 inline bool z_internal_check(const z_owned_string_t& v) { return z_internal_string_check(&v); }
 inline bool z_internal_check(const z_owned_sample_t& v) { return z_internal_sample_check(&v); }
+inline bool z_internal_check(const z_owned_source_info_t& v) { return z_internal_source_info_check(&v); }
 inline bool z_internal_check(const z_owned_bytes_t& v) { return z_internal_bytes_check(&v); }
 inline bool z_internal_check(const z_owned_encoding_t& v) { return z_internal_encoding_check(&v); }
 inline bool z_internal_check(const z_owned_reply_err_t& v) { return z_internal_reply_err_check(&v); }
@@ -736,6 +749,7 @@ inline z_moved_queryable_t* z_move(z_owned_queryable_t& x) { return z_queryable_
 inline z_moved_liveliness_token_t* z_move(z_owned_liveliness_token_t& x) { return z_liveliness_token_move(&x); }
 inline z_moved_reply_t* z_move(z_owned_reply_t& x) { return z_reply_move(&x); }
 inline z_moved_sample_t* z_move(z_owned_sample_t& x) { return z_sample_move(&x); }
+inline z_moved_source_info_t* z_move(z_owned_source_info_t& x) { return z_source_info_move(&x); }
 inline z_moved_session_t* z_move(z_owned_session_t& x) { return z_session_move(&x); }
 inline z_moved_slice_t* z_move(z_owned_slice_t& x) { return z_slice_move(&x); }
 inline z_moved_string_array_t* z_move(z_owned_string_array_t& x) { return z_string_array_move(&x); }
@@ -774,6 +788,7 @@ inline void z_take(z_owned_string_t* this_, z_moved_string_t* v) { z_string_take
 inline void z_take(z_owned_slice_t* this_, z_moved_slice_t* v) { z_slice_take(this_, v); }
 inline void z_take(z_owned_string_array_t* this_, z_moved_string_array_t* v) { z_string_array_take(this_, v); }
 inline void z_take(z_owned_sample_t* this_, z_moved_sample_t* v) { z_sample_take(this_, v); }
+inline void z_take(z_owned_source_info_t* this_, z_moved_source_info_t* v) { z_source_info_take(this_, v); }
 inline void z_take(z_owned_query_t* this_, z_moved_query_t* v) { z_query_take(this_, v); }
 inline void z_take(z_owned_bytes_t* this_, z_moved_bytes_t* v) { z_bytes_take(this_, v); }
 inline void z_take(z_owned_encoding_t* this_, z_moved_encoding_t* v) { z_encoding_take(this_, v); }
@@ -824,6 +839,9 @@ inline z_result_t z_clone(z_owned_reply_err_t* dst, const z_loaned_reply_err_t* 
     return z_reply_err_clone(dst, this_);
 }
 inline z_result_t z_clone(z_owned_sample_t* dst, const z_loaned_sample_t* this_) { return z_sample_clone(dst, this_); }
+inline z_result_t z_clone(z_owned_source_info_t* dst, const z_loaned_source_info_t* this_) {
+    return z_source_info_clone(dst, this_);
+}
 inline z_result_t z_clone(z_owned_slice_t* dst, const z_loaned_slice_t* this_) { return z_slice_clone(dst, this_); }
 inline z_result_t z_clone(z_owned_string_t* dst, const z_loaned_string_t* this_) { return z_string_clone(dst, this_); }
 inline z_result_t z_clone(z_owned_string_array_t* dst, const z_loaned_string_array_t* this_) {
@@ -990,6 +1008,14 @@ struct z_loaned_to_owned_type_t<z_loaned_sample_t> {
 template <>
 struct z_owned_to_loaned_type_t<z_owned_sample_t> {
     typedef z_loaned_sample_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_source_info_t> {
+    typedef z_owned_source_info_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_source_info_t> {
+    typedef z_loaned_source_info_t type;
 };
 template <>
 struct z_loaned_to_owned_type_t<z_loaned_session_t> {

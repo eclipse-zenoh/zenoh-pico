@@ -148,6 +148,11 @@ _Z_OWNED_TYPE_VALUE(_z_encoding_t, encoding)
 _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 
 /**
+ * Represents sample source information.
+ */
+_Z_OWNED_TYPE_VALUE(_z_source_info_t, source_info)
+
+/**
  * A struct that indicates if there exist Subscribers matching the Publisher's key expression or Queryables matching
  * Querier's key expression and target.
  * Members:
@@ -313,6 +318,7 @@ typedef struct {
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
  *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -323,6 +329,7 @@ typedef struct {
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
+    z_moved_source_info_t *source_info;
 #endif
 } z_put_options_t;
 
@@ -335,6 +342,7 @@ typedef struct {
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
@@ -343,6 +351,7 @@ typedef struct {
     z_timestamp_t *timestamp;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
+    z_moved_source_info_t *source_info;
 #endif
 } z_delete_options_t;
 
@@ -354,11 +363,15 @@ typedef struct {
  *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_timestamp_t *timestamp;
     z_moved_bytes_t *attachment;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_source_info_t *source_info;
+#endif
 } z_publisher_put_options_t;
 
 /**
@@ -367,9 +380,13 @@ typedef struct {
  *
  * Members:
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_timestamp_t *timestamp;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_source_info_t *source_info;
+#endif
 } z_publisher_delete_options_t;
 
 /**

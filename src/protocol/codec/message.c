@@ -198,9 +198,10 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     _z_zint_t intbuf;
     z_result_t ret = _z_uint8_decode(&zidlen, zbf);
     if (ret == _Z_RES_OK) {
-        zidlen >>= 4;
+        zidlen = (zidlen >> 4) + 1;
         if (_z_zbuf_len(zbf) >= zidlen) {
-            _z_zbuf_read_bytes(zbf, info->_id.id, 0, zidlen);
+            memset(info->_source_id.zid.id, 0, sizeof(info->_source_id.zid.id) / sizeof(info->_source_id.zid.id[0]));
+            _z_zbuf_read_bytes(zbf, info->_source_id.zid.id, 0, zidlen);
         } else {
             _Z_INFO("Not enough bytes to read");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -209,7 +210,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
     if (ret == _Z_RES_OK) {
         ret = _z_zsize_decode(&intbuf, zbf);
         if (intbuf <= UINT32_MAX) {
-            info->_entity_id = (uint32_t)intbuf;
+            info->_source_id.eid = (uint32_t)intbuf;
         } else {
             _Z_INFO("Invalid value decoded");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -228,23 +229,23 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
 }
 z_result_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     z_result_t ret = 0;
-    uint8_t zidlen = _z_id_len(info->_id);
-    ret |= _z_uint8_encode(wbf, zidlen << 4);
-    _z_slice_t zid = _z_slice_alias_buf(info->_id.id, zidlen);
+    uint8_t zidlen = _z_id_len(info->_source_id.zid);
+    ret |= _z_uint8_encode(wbf, (zidlen - 1) << 4);
+    _z_slice_t zid = _z_slice_alias_buf(info->_source_id.zid.id, zidlen);
     ret |= _z_slice_val_encode(wbf, &zid);
-    ret |= _z_zsize_encode(wbf, info->_entity_id);
+    ret |= _z_zsize_encode(wbf, info->_source_id.eid);
     ret |= _z_zsize_encode(wbf, info->_source_sn);
     return ret;
 }
 z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info) {
     z_result_t ret = 0;
-    uint8_t zidlen = _z_id_len(info->_id);
-    size_t ext_size = 1u + zidlen + _z_zint_len(info->_entity_id) + _z_zint_len(info->_source_sn);
+    uint8_t zidlen = _z_id_len(info->_source_id.zid);
+    size_t ext_size = 1u + zidlen + _z_zint_len(info->_source_id.eid) + _z_zint_len(info->_source_sn);
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ext_size));
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, zidlen << 4));
-    _z_slice_t zid = _z_slice_alias_buf(info->_id.id, zidlen);
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (zidlen - 1) << 4));
+    _z_slice_t zid = _z_slice_alias_buf(info->_source_id.zid.id, zidlen);
     _Z_RETURN_IF_ERR(_z_slice_val_encode(wbf, &zid));
-    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_entity_id));
+    _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_id.eid));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, info->_source_sn));
     return ret;
 }
@@ -254,9 +255,9 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
     (void)(wbf);
     (void)(pshb);
     uint8_t header = pshb->_is_put ? _Z_MID_Z_PUT : _Z_MID_Z_DEL;
-    bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._id) ||
+    bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._source_id.zid) ||
                            pshb->_body._put._commons._source_info._source_sn != 0 ||
-                           pshb->_body._put._commons._source_info._entity_id != 0;
+                           pshb->_body._put._commons._source_info._source_id.eid != 0;
 
     bool has_attachment = pshb->_is_put && _z_bytes_check(&pshb->_body._put._attachment);
     bool has_timestamp = _z_timestamp_check(&pshb->_body._put._commons._timestamp);
@@ -533,8 +534,8 @@ z_result_t _z_err_encode(_z_wbuf_t *wbf, const _z_msg_err_t *err) {
     if (has_encoding) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_E_E);
     }
-    bool has_sinfo_ext = _z_id_check(err->_ext_source_info._id) || err->_ext_source_info._entity_id != 0 ||
-                         err->_ext_source_info._source_sn != 0;
+    bool has_sinfo_ext = _z_id_check(err->_ext_source_info._source_id.zid) ||
+                         err->_ext_source_info._source_id.eid != 0 || err->_ext_source_info._source_sn != 0;
     if (has_sinfo_ext) {
         _Z_SET_FLAG(header, _Z_FLAG_Z_Z);
     }
