@@ -88,6 +88,10 @@ z_result_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 z_result_t _z_timestamp_encode_ext(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 z_result_t _z_timestamp_decode(_z_timestamp_t *ts, _z_zbuf_t *buf);
 
+z_result_t _z_source_info_encode(_z_wbuf_t *wbf, const _z_source_info_t *info);
+z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *info);
+z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf);
+
 #ifdef __cplusplus
 }
 #endif
