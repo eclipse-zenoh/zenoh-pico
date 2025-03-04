@@ -200,8 +200,7 @@ static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_r
     *query = _z_query_steal_data(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
 }
 
-static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,
-                                              uint32_t qid) {
+z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
     qle_infos.ke_in = _z_keyexpr_steal(q_key);
@@ -264,10 +263,6 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
 #endif
     _z_keyexpr_clear(&qle_infos.ke_in);
     return ret;
-}
-
-z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
-    return _z_trigger_queryables_inner(zsrc, msgq, q_key, qid);
 }
 
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *qle) {

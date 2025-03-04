@@ -242,11 +242,10 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
     return _Z_RES_OK;
 }
 
-static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
-                                                 _z_bytes_t *payload, _z_encoding_t *encoding,
-                                                 const _z_zint_t sample_kind, const _z_timestamp_t *timestamp,
-                                                 const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                                 z_reliability_t reliability, _z_source_info_t *source_info) {
+z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
+                                         _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
+                                         const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
+                                         z_reliability_t reliability, _z_source_info_t *source_info) {
     // Retrieve sub infos
     _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
@@ -286,14 +285,6 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
 #endif
     _z_keyexpr_clear(&sub_infos.ke_in);
     return ret;
-}
-
-z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
-                                         _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
-                                         const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                         z_reliability_t reliability, _z_source_info_t *source_info) {
-    return _z_trigger_subscriptions_inner(zn, sub_kind, keyexpr, payload, encoding, sample_kind, timestamp, qos,
-                                          attachment, reliability, source_info);
 }
 
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub) {
