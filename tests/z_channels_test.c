@@ -35,7 +35,6 @@
             .attachment = _z_bytes_null(),                                                          \
         };                                                                                          \
         z_call(*z_loan(closure), &sample);                                                          \
-        _z_bytes_drop(&payload);                                                                    \
     } while (0);
 
 #define _RECV(handler, method, buf)                                             \

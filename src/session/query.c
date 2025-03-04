@@ -128,8 +128,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         return _Z_ERR_QUERY_NOT_MATCH;
     }
     // Build the reply
-    _z_reply_t reply = _z_reply_alias(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                                      &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
+    _z_reply_t reply = _z_reply_steal_data(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
+                                           &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
@@ -157,6 +157,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
             // Cache most recent reply
             pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
             if (pen_rep == NULL) {
+                _z_reply_clear(&reply);
                 _z_session_mutex_unlock(zn);
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
@@ -164,10 +165,14 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 // No need to store the whole reply in the monotonic mode.
                 pen_rep->_reply = _z_reply_null();
                 pen_rep->_reply.data._tag = _Z_REPLY_TAG_DATA;
-                pen_rep->_reply.data._result.sample.keyexpr = _z_keyexpr_duplicate(&reply.data._result.sample.keyexpr);
+                _Z_CLEAN_RETURN_IF_ERR(
+                    _z_keyexpr_move(&pen_rep->_reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
+                    _z_reply_clear(&reply);
+                    _z_session_mutex_unlock(zn));
             } else {
                 // Copy the reply to store it out of context
-                _Z_CLEAN_RETURN_IF_ERR(_z_reply_copy(&pen_rep->_reply, &reply), _z_session_mutex_unlock(zn));
+                _Z_CLEAN_RETURN_IF_ERR(_z_reply_move(&pen_rep->_reply, &reply), _z_reply_clear(&reply);
+                                       _z_session_mutex_unlock(zn));
             }
             pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
             pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
@@ -179,6 +184,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
         pen_qry->_callback(&reply, pen_qry->_arg);
     }
+    _z_reply_clear(&reply);
     return _Z_RES_OK;
 }
 
@@ -206,12 +212,13 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 
     // Trigger the user callback
     if (ret == _Z_RES_OK) {
-        _z_reply_t reply = _z_reply_err_alias(&msg->_payload, &msg->_encoding);
+        _z_reply_t reply = _z_reply_err_steal_data(&msg->_payload, &msg->_encoding);
         pen_qry->_callback(&reply, pen_qry->_arg);
+        _z_reply_clear(&reply);
+    } else {
+        _z_bytes_drop(&msg->_payload);
+        _z_encoding_clear(&msg->_encoding);
     }
-    // Clean up
-    _z_bytes_drop(&msg->_payload);
-    _z_encoding_clear(&msg->_encoding);
     return ret;
 }
 
