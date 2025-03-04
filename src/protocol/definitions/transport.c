@@ -332,7 +332,9 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
     clone->_req_id_res = msg->_req_id_res;
     clone->_batch_size = msg->_batch_size;
     memcpy(clone->_zid.id, msg->_zid.id, 16);
-    _z_slice_copy(&clone->_cookie, &msg->_cookie);
+    if (!_z_slice_is_empty(&msg->_cookie)) {
+        _z_slice_copy(&clone->_cookie, &msg->_cookie);
+    }
 #if Z_FEATURE_FRAGMENTATION == 1
     clone->_patch = msg->_patch;
 #endif

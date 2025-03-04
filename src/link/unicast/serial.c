@@ -110,7 +110,8 @@ void _z_f_link_close_serial(_z_link_t *self) { _z_close_serial(&self->_socket._s
 
 void _z_f_link_free_serial(_z_link_t *self) { (void)(self); }
 
-size_t _z_f_link_write_serial(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+size_t _z_f_link_write_serial(const _z_link_t *self, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     return _z_send_serial(self->_socket._serial._sock, ptr, len);
 }
 
@@ -119,12 +120,14 @@ size_t _z_f_link_write_all_serial(const _z_link_t *self, const uint8_t *ptr, siz
 }
 
 size_t _z_f_link_read_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
+    _ZP_UNUSED(addr);
     return _z_read_serial(self->_socket._serial._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
+size_t _z_f_link_read_exact_serial(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                   _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(addr);
+    _ZP_UNUSED(socket);
     return _z_read_exact_serial(self->_socket._serial._sock, ptr, len);
 }
 

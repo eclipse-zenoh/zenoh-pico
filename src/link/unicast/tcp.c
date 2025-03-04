@@ -137,8 +137,12 @@ void _z_f_link_close_tcp(_z_link_t *zl) { _z_close_tcp(&zl->_socket._tcp._sock);
 
 void _z_f_link_free_tcp(_z_link_t *zl) { _z_free_endpoint_tcp(&zl->_socket._tcp._rep); }
 
-size_t _z_f_link_write_tcp(const _z_link_t *zl, const uint8_t *ptr, size_t len) {
-    return _z_send_tcp(zl->_socket._tcp._sock, ptr, len);
+size_t _z_f_link_write_tcp(const _z_link_t *zl, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
+    if (socket != NULL) {
+        return _z_send_tcp(*socket, ptr, len);
+    } else {
+        return _z_send_tcp(zl->_socket._tcp._sock, ptr, len);
+    }
 }
 
 size_t _z_f_link_write_all_tcp(const _z_link_t *zl, const uint8_t *ptr, size_t len) {
@@ -146,13 +150,18 @@ size_t _z_f_link_write_all_tcp(const _z_link_t *zl, const uint8_t *ptr, size_t l
 }
 
 size_t _z_f_link_read_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
+    _ZP_UNUSED(addr);
     return _z_read_tcp(zl->_socket._tcp._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
-    return _z_read_exact_tcp(zl->_socket._tcp._sock, ptr, len);
+size_t _z_f_link_read_exact_tcp(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(addr);
+    if (socket != NULL) {
+        return _z_read_exact_tcp(*socket, ptr, len);
+    } else {
+        return _z_read_exact_tcp(zl->_socket._tcp._sock, ptr, len);
+    }
 }
 
 size_t _z_f_link_tcp_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {

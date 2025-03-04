@@ -147,6 +147,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
 
     ret = _Z_ERR_SCOUT_NO_RESULTS;
     size_t len = _z_string_svec_len(&locators);
+    // FIXME: This for loop doesn't make sense
     for (size_t i = 0; i < len; i++) {
         ret = _Z_RES_OK;
 

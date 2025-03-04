@@ -41,7 +41,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Initialize the mutexes
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_rx));
-    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_mutex_peer));
+    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_peer));
 
     // Tasks
     ztu->_common._read_task_running = false;
@@ -95,7 +95,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_drop(&ztu->_common._mutex_rx);
         _z_mutex_drop(&ztu->_common._mutex_tx);
-        _z_mutex_drop(&ztu->_mutex_peer);
+        _z_mutex_drop(&ztu->_common._mutex_peer);
 #endif
         _z_wbuf_clear(&ztu->_common._wbuf);
         _z_zbuf_clear(&ztu->_common._zbuf);
@@ -105,45 +105,53 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     return ret;
 }
 
-static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                              const _z_id_t *local_zid, enum z_whatami_t whatami) {
-    _z_transport_message_t ism = _z_t_msg_make_init_syn(whatami, *local_zid);
+static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                            const _z_id_t *local_zid, z_whatami_t mode) {
+    _z_transport_message_t ism = _z_t_msg_make_init_syn(mode, *local_zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
     param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
     param->_batch_size = ism._body._init._batch_size;    // The announced batch size
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_INIT(Syn)");
-    z_result_t ret = _z_link_send_t_msg(zl, &ism);
+    z_result_t ret = _z_link_send_t_msg(zl, &ism, NULL);
     _z_t_msg_clear(&ism);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, NULL));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
         return _Z_ERR_MESSAGE_UNEXPECTED;
     }
     _Z_DEBUG("Received Z_INIT(Ack)");
-    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
-    // otherwise the InitAck message is considered invalid and it should be treated as a
-    // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-    if (iam._body._init._seq_num_res <= param->_seq_num_res) {
-        param->_seq_num_res = iam._body._init._seq_num_res;
+    if (mode == Z_WHATAMI_CLIENT) {
+        // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
+        // otherwise the InitAck message is considered invalid and it should be treated as a
+        // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+        if (iam._body._init._seq_num_res <= param->_seq_num_res) {
+            param->_seq_num_res = iam._body._init._seq_num_res;
+        } else {
+            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        }
+        if (iam._body._init._req_id_res <= param->_req_id_res) {
+            param->_req_id_res = iam._body._init._req_id_res;
+        } else {
+            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        }
+        if (iam._body._init._batch_size <= param->_batch_size) {
+            param->_batch_size = iam._body._init._batch_size;
+        } else {
+            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        }
     } else {
-        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-    }
-    if (iam._body._init._req_id_res <= param->_req_id_res) {
-        param->_req_id_res = iam._body._init._req_id_res;
-    } else {
-        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-    }
-    if (iam._body._init._batch_size <= param->_batch_size) {
-        param->_batch_size = iam._body._init._batch_size;
-    } else {
-        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        // If the new node has less representing capabilities then it is incompatible to communication
+        if ((iam._body._init._seq_num_res < param->_seq_num_res) ||
+            (iam._body._init._req_id_res < param->_req_id_res) || (iam._body._init._batch_size < param->_batch_size)) {
+            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        }
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     if (iam._body._init._patch <= ism._body._init._patch) {
@@ -160,9 +168,12 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     param->_key_id_res = 0x08 << param->_key_id_res;
     param->_req_id_res = 0x08 << param->_req_id_res;
 
-    // The initial SN at TX side
-    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
-    param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
+    if (mode == Z_WHATAMI_CLIENT) {
+        // The initial SN at TX side
+        z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+        param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
+    }
+    // Should be pre-initialized in peer mode
 
     // Initialize the Local and Remote Peer IDs
     param->_remote_zid = iam._body._init._zid;
@@ -170,20 +181,22 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     // Create the OpenSyn message
     _z_zint_t lease = Z_TRANSPORT_LEASE;
     _z_zint_t initial_sn = param->_initial_sn_tx;
-    _z_slice_t cookie;
-    _z_slice_copy(&cookie, &iam._body._init._cookie);
+    _z_slice_t cookie = _z_slice_null();
+    if (!_z_slice_is_empty(&iam._body._init._cookie)) {
+        _z_slice_copy(&cookie, &iam._body._init._cookie);
+    }
     _z_transport_message_t osm = _z_t_msg_make_open_syn(lease, initial_sn, cookie);
     _z_t_msg_clear(&iam);
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Syn)");
-    ret = _z_link_send_t_msg(zl, &osm);
+    ret = _z_link_send_t_msg(zl, &osm, NULL);
     _z_t_msg_clear(&osm);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, NULL));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
@@ -198,13 +211,12 @@ static z_result_t _z_unicast_handshake_client(_z_transport_unicast_establish_par
     return _Z_RES_OK;
 }
 
-// TODO: Activate if we add peer unicast support
-#if 0
-static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                                const _z_id_t *local_zid, enum z_whatami_t whatami) {
+z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
+                                       const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
+    assert(mode == Z_WHATAMI_PEER);
     // Read t message from link
     _z_transport_message_t tmsg = {0};
-    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl);
+    z_result_t ret = _z_link_recv_t_msg(&tmsg, zl, socket);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -216,38 +228,36 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     _Z_DEBUG("Received Z_INIT(Syn)");
     // Encode InitAck
     _z_slice_t cookie = _z_slice_null();
-    _z_transport_message_t iam = _z_t_msg_make_init_ack(whatami, *local_zid, cookie);
-    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
-    if (iam._body._init._seq_num_res > tmsg._body._init._seq_num_res) {
-        iam._body._init._seq_num_res = tmsg._body._init._seq_num_res;
-    }
-    if (iam._body._init._req_id_res > tmsg._body._init._req_id_res) {
-        iam._body._init._req_id_res = tmsg._body._init._req_id_res;
-    }
-    if (iam._body._init._batch_size > tmsg._body._init._batch_size) {
-        iam._body._init._batch_size = tmsg._body._init._batch_size;
+    _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, cookie);
+
+    // If the new node has less representing capabilities then it is incompatible to communication
+    if ((tmsg._body._init._seq_num_res < iam._body._init._seq_num_res) ||
+        (tmsg._body._init._req_id_res < iam._body._init._req_id_res) ||
+        (tmsg._body._init._batch_size < iam._body._init._batch_size)) {
+        _z_t_msg_clear(&tmsg);
+        return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     if (iam._body._init._patch > tmsg._body._init._patch) {
         iam._body._init._patch = tmsg._body._init._patch;
     }
 #endif
-    param->_remote_zid = tmsg._body._init._zid;
     param->_seq_num_res = iam._body._init._seq_num_res;
     param->_req_id_res = iam._body._init._req_id_res;
     param->_batch_size = iam._body._init._batch_size;
+    param->_remote_zid = tmsg._body._init._zid;
     param->_key_id_res = 0x08 << param->_key_id_res;
     param->_req_id_res = 0x08 << param->_req_id_res;
     _z_t_msg_clear(&tmsg);
     // Send InitAck
     _Z_DEBUG("Sending Z_INIT(Ack)");
-    ret = _z_link_send_t_msg(zl, &iam);
+    ret = _z_link_send_t_msg(zl, &iam, socket);
     _z_t_msg_clear(&iam);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Read t message from link
-    ret = _z_link_recv_t_msg(&tmsg, zl);
+    ret = _z_link_recv_t_msg(&tmsg, zl, socket);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -262,10 +272,6 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     param->_initial_sn_rx = tmsg._body._open._initial_sn;
     _z_t_msg_clear(&tmsg);
 
-    // Init sn, tx side
-    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
-    param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
-
     // Encode OpenAck
     _z_zint_t lease = Z_TRANSPORT_LEASE;
     _z_zint_t initial_sn = param->_initial_sn_tx;
@@ -273,7 +279,7 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Ack)");
-    ret = _z_link_send_t_msg(zl, &oam);
+    ret = _z_link_send_t_msg(zl, &oam, socket);
     _z_t_msg_clear(&oam);
     if (ret != _Z_RES_OK) {
         return ret;
@@ -281,29 +287,27 @@ static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_p
     // Handshake finished
     return _Z_RES_OK;
 }
-#else
-static z_result_t _z_unicast_handshake_listener(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                                const _z_id_t *local_zid, enum z_whatami_t whatami) {
-    _ZP_UNUSED(param);
-    _ZP_UNUSED(zl);
-    _ZP_UNUSED(local_zid);
-    _ZP_UNUSED(whatami);
-    return _Z_ERR_TRANSPORT_OPEN_FAILED;
-}
-#endif
 
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                   const _z_id_t *local_zid) {
-    return _z_unicast_handshake_client(param, zl, local_zid, Z_WHATAMI_CLIENT);
+    return _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_CLIENT);
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                 const _z_id_t *local_zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
+
+    // Init sn tx
+    z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+    param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
+
     if (peer_op == _Z_PEER_OP_OPEN) {
-        ret = _z_unicast_handshake_client(param, zl, local_zid, Z_WHATAMI_PEER);
+        ret = _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_PEER);
     } else {
-        ret = _z_unicast_handshake_listener(param, zl, local_zid, Z_WHATAMI_PEER);
+        // Initialize common parameters
+        param->_lease = Z_TRANSPORT_LEASE;
+        param->_batch_size = Z_BATCH_UNICAST_SIZE;
+        param->_seq_num_res = Z_SN_RESOLUTION;
     }
     return ret;
 }
@@ -323,9 +327,6 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
 
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
     _z_common_transport_clear(&ztu->_common, detach_tasks);
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_drop(&ztu->_mutex_peer);
-#endif
     _z_transport_unicast_peer_list_free(&ztu->_peers);
 }
 

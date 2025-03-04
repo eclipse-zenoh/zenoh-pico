@@ -293,6 +293,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer");
+            // Peer will be dropped thanks to the error
             ret = _Z_ERR_CONNECTION_CLOSED;
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;

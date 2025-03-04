@@ -132,7 +132,8 @@ void _z_f_link_close_ws(_z_link_t *zl) { _z_close_ws(&zl->_socket._ws._sock); }
 
 void _z_f_link_free_ws(_z_link_t *zl) { _z_free_endpoint_ws(&zl->_socket._ws._rep); }
 
-size_t _z_f_link_write_ws(const _z_link_t *zl, const uint8_t *ptr, size_t len) {
+size_t _z_f_link_write_ws(const _z_link_t *zl, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     return _z_send_ws(zl->_socket._ws._sock, ptr, len);
 }
 
@@ -141,12 +142,14 @@ size_t _z_f_link_write_all_ws(const _z_link_t *zl, const uint8_t *ptr, size_t le
 }
 
 size_t _z_f_link_read_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
+    _ZP_UNUSED(addr);
     return _z_read_ws(zl->_socket._ws._sock, ptr, len);
 }
 
-size_t _z_f_link_read_exact_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr) {
-    (void)(addr);
+size_t _z_f_link_read_exact_ws(const _z_link_t *zl, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                               _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(addr);
+    _ZP_UNUSED(socket);
     return _z_read_exact_ws(zl->_socket._ws._sock, ptr, len);
 }
 

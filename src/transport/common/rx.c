@@ -32,7 +32,7 @@ size_t _z_read_stream_size(_z_zbuf_t *zbuf) {
     return _z_host_le_load16(stream_size);
 }
 
-z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl) {
+z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket) {
     z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer
@@ -42,7 +42,7 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
     switch (zl->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             // Read the message length
-            if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL) == _Z_MSG_LEN_ENC_SIZE) {
+            if (_z_link_recv_exact_zbuf(zl, &zbf, _Z_MSG_LEN_ENC_SIZE, NULL, socket) == _Z_MSG_LEN_ENC_SIZE) {
                 size_t len = 0;
                 for (uint8_t i = 0; i < _Z_MSG_LEN_ENC_SIZE; i++) {
                     len |= (size_t)(_z_zbuf_read(&zbf) << (i * (uint8_t)8));
@@ -51,7 +51,7 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
                 size_t writable = _z_zbuf_capacity(&zbf) - _z_zbuf_len(&zbf);
                 if (writable >= len) {
                     // Read enough bytes to decode the message
-                    if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL) != len) {
+                    if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL, socket) != len) {
                         ret = _Z_ERR_TRANSPORT_RX_FAILED;
                     }
                 } else {

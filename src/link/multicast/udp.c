@@ -157,7 +157,9 @@ void _z_f_link_free_udp_multicast(_z_link_t *self) {
     _z_free_endpoint_udp(&self->_socket._udp._rep);
 }
 
-size_t _z_f_link_write_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+size_t _z_f_link_write_udp_multicast(const _z_link_t *self, const uint8_t *ptr, size_t len,
+                                     _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     return _z_send_udp_multicast(self->_socket._udp._msock, ptr, len, self->_socket._udp._rep);
 }
 
@@ -169,7 +171,9 @@ size_t _z_f_link_read_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t 
     return _z_read_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
 }
 
-size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
+size_t _z_f_link_read_exact_udp_multicast(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                          _z_sys_net_socket_t *socket) {
+    _ZP_UNUSED(socket);
     return _z_read_exact_udp_multicast(self->_socket._udp._sock, ptr, len, self->_socket._udp._lep, addr);
 }
 
