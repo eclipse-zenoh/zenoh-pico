@@ -95,10 +95,10 @@ static inline _z_reply_t _z_reply_steal_data(_z_keyexpr_t *keyexpr, _z_id_t id, 
                                                  attachment, Z_RELIABILITY_DEFAULT, source_info);
     return r;
 }
-static inline _z_reply_t _z_reply_err_alias(_z_bytes_t *payload, _z_encoding_t *encoding) {
+static inline _z_reply_t _z_reply_err_steal_data(_z_bytes_t *payload, _z_encoding_t *encoding) {
     _z_reply_t r;
     r.data._tag = _Z_REPLY_TAG_ERROR;
-    _z_bytes_move(&r.data._result.error.payload, payload);
+    r.data._result.error.payload = _z_bytes_steal(payload);
     r.data._result.error.encoding = _z_encoding_steal(encoding);
     return r;
 }

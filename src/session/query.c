@@ -212,7 +212,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 
     // Trigger the user callback
     if (ret == _Z_RES_OK) {
-        _z_reply_t reply = _z_reply_err_alias(&msg->_payload, &msg->_encoding);
+        _z_reply_t reply = _z_reply_err_steal_data(&msg->_payload, &msg->_encoding);
         pen_qry->_callback(&reply, pen_qry->_arg);
         _z_reply_clear(&reply);
     } else {
