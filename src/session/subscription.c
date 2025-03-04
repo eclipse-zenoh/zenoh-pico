@@ -246,20 +246,20 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
                                                  _z_bytes_t *payload, _z_encoding_t *encoding,
                                                  const _z_zint_t sample_kind, const _z_timestamp_t *timestamp,
                                                  const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                                 z_reliability_t reliability,
-                                                 _z_source_info_t *source_info) {
+                                                 z_reliability_t reliability, _z_source_info_t *source_info) {
     // Retrieve sub infos
     _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
     _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos), _z_keyexpr_clear(&sub_infos.ke_in);
-                           _z_encoding_clear(encoding); _z_bytes_drop(payload); _z_bytes_drop(attachment); _z_source_info_clear(source_info));
+                           _z_encoding_clear(encoding); _z_bytes_drop(payload); _z_bytes_drop(attachment);
+                           _z_source_info_clear(source_info));
     // Check if there are subs
     _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_infos.sub_nb, sub_infos.ke_out._id,
              (int)_z_string_len(&sub_infos.ke_out._suffix), _z_string_data(&sub_infos.ke_out._suffix));
     // Create sample
     z_result_t ret = _Z_RES_OK;
-    _z_sample_t sample =
-        _z_sample_steal_data(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos, attachment, reliability, source_info);
+    _z_sample_t sample = _z_sample_steal_data(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos,
+                                              attachment, reliability, source_info);
     // Parse subscription infos svec
     if (sub_infos.sub_nb == 1) {
         _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, 0);
@@ -291,7 +291,7 @@ static z_result_t _z_trigger_subscriptions_inner(_z_session_t *zn, _z_subscriber
 z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
                                          _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
                                          const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                         z_reliability_t reliability, _z_source_info_t* source_info) {
+                                         z_reliability_t reliability, _z_source_info_t *source_info) {
     return _z_trigger_subscriptions_inner(zn, sub_kind, keyexpr, payload, encoding, sample_kind, timestamp, qos,
                                           attachment, reliability, source_info);
 }

@@ -55,7 +55,8 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
 
 static inline _z_sample_t _z_sample_steal_data(_z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
                                                _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos,
-                                               _z_bytes_t *attachment, z_reliability_t reliability, _z_source_info_t *source_info) {
+                                               _z_bytes_t *attachment, z_reliability_t reliability,
+                                               _z_source_info_t *source_info) {
     _z_sample_t ret;
     ret.keyexpr = _z_keyexpr_steal(key);
     ret.payload = _z_bytes_steal(payload);
@@ -65,7 +66,7 @@ static inline _z_sample_t _z_sample_steal_data(_z_keyexpr_t *key, _z_bytes_t *pa
     ret.kind = kind;
     ret.qos = qos;
     ret.reliability = reliability;
-    ret.source_info =_z_source_info_steal(source_info);
+    ret.source_info = _z_source_info_steal(source_info);
     return ret;
 }
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src);

@@ -86,7 +86,8 @@ typedef struct _z_reply_t {
 static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
 static inline _z_reply_t _z_reply_steal_data(_z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
                                              const _z_timestamp_t *timestamp, _z_encoding_t *encoding,
-                                             z_sample_kind_t kind, _z_bytes_t *attachment, _z_source_info_t *source_info) {
+                                             z_sample_kind_t kind, _z_bytes_t *attachment,
+                                             _z_source_info_t *source_info) {
     _z_reply_t r;
     r.data.replier_id = id;
     r.data._tag = _Z_REPLY_TAG_DATA;
