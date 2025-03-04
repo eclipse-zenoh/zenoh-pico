@@ -193,7 +193,7 @@ static inline bool _z_value_check(const _z_value_t *value) {
 _z_value_t _z_value_steal(_z_value_t *value);
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
 _z_value_t _z_value_alias(_z_value_t *src);
-void _z_value_move(_z_value_t *dst, _z_value_t *src);
+z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);
 
@@ -217,7 +217,7 @@ static inline _z_hello_t _z_hello_null(void) { return (_z_hello_t){0}; }
 void _z_hello_clear(_z_hello_t *src);
 void _z_hello_free(_z_hello_t **hello);
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src);
-void _z_hello_move(_z_hello_t *dst, _z_hello_t *src);
+z_result_t _z_hello_move(_z_hello_t *dst, _z_hello_t *src);
 bool _z_hello_check(const _z_hello_t *hello);
 
 _Z_ELEM_DEFINE(_z_hello, _z_hello_t, _z_noop_size, _z_hello_clear, _z_noop_copy, _z_noop_move)
@@ -236,11 +236,16 @@ typedef struct {
 static inline _z_source_info_t _z_source_info_null(void) { return (_z_source_info_t){0}; }
 static inline void _z_source_info_clear(_z_source_info_t *info) { (void)(info); }
 z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src);
-void _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src);
+z_result_t _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src);
 static inline bool _z_source_info_check(const _z_source_info_t *info) {
     return _z_entity_global_id_check(&info->_source_id) || info->_source_sn != 0;
 }
-
+static inline _z_source_info_t _z_source_info_steal(_z_source_info_t *info) {
+    _z_source_info_t si;
+    si._source_id = info->_source_id;
+    si._source_sn = info->_source_sn;
+    return si;
+}
 typedef struct {
     uint32_t _request_id;
     uint32_t _entity_id;

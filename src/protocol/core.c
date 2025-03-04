@@ -64,8 +64,8 @@ z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
 }
 _z_value_t _z_value_alias(_z_value_t *src) {
     _z_value_t dst;
-    dst.payload = _z_bytes_alias(src->payload);
-    dst.encoding = _z_encoding_alias(src->encoding);
+    dst.payload = _z_bytes_alias(&src->payload);
+    dst.encoding = _z_encoding_alias(&src->encoding);
     return dst;
 }
 
@@ -78,14 +78,17 @@ z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     return _Z_RES_OK;
 }
 
-void _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
+z_result_t _z_hello_move(_z_hello_t *dst, _z_hello_t *src) {
     *dst = *src;
     *src = _z_hello_null();
+    return _Z_RES_OK;
 }
 
-void _z_value_move(_z_value_t *dst, _z_value_t *src) {
-    _z_encoding_move(&dst->encoding, &src->encoding);
-    _z_bytes_move(&dst->payload, &src->payload);
+z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src) {
+    *dst = _z_value_null();
+    _Z_RETURN_IF_ERR(_z_bytes_move(&dst->payload, &src->payload));
+    _Z_CLEAN_RETURN_IF_ERR(_z_encoding_move(&dst->encoding, &src->encoding), _z_value_clear(dst));
+    return _Z_RES_OK;
 }
 
 z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src) {
@@ -94,7 +97,8 @@ z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *sr
     return _Z_RES_OK;
 }
 
-void _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src) {
+z_result_t _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src) {
     dst->_source_id = src->_source_id;
     dst->_source_sn = src->_source_sn;
+    return _Z_RES_OK;
 }

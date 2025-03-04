@@ -28,7 +28,13 @@ void _z_default_deleter(void *data, void *context) {
     z_free(data);
 }
 
+void _z_static_deleter(void *data, void *context) {
+    _ZP_UNUSED(data);
+    _ZP_UNUSED(context);
+}
+
 _z_delete_context_t _z_delete_context_default(void) { return _z_delete_context_create(_z_default_deleter, NULL); }
+_z_delete_context_t _z_delete_context_static(void) { return _z_delete_context_create(_z_static_deleter, NULL); }
 
 void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
     if (!_z_delete_context_is_null(c)) {
@@ -111,9 +117,17 @@ z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset
     return ret;
 }
 
-void _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
+z_result_t _z_slice_move(_z_slice_t *dst, _z_slice_t *src) {
+    // avoid moving of aliased slices
+    if (!_z_slice_is_alloced(src)) {
+        *dst = _z_slice_null();
+        _z_slice_t csrc;
+        _Z_RETURN_IF_ERR(_z_slice_copy(&csrc, src));
+        *src = csrc;
+    }
     *dst = *src;
     _z_slice_reset(src);
+    return _Z_RES_OK;
 }
 
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src) {

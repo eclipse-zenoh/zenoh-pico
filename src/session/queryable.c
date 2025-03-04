@@ -197,23 +197,25 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_rc_t *zsrc, _z_msg_query_t *msgq,
                                                  _z_keyexpr_t *key, uint32_t qid, bool anyke) {
     // Steal received data in query
-    *query = _z_query_alias(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
-    msgq->_ext_value = _z_value_null();
-    msgq->_ext_attachment = _z_bytes_null();
-    msgq->_parameters = _z_slice_null();
+    *query = _z_query_steal_data(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
 }
 
-static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,
-                                              uint32_t qid) {
+z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
-    qle_infos.ke_in = _z_keyexpr_alias(q_key);
+    qle_infos.ke_in = _z_keyexpr_steal(q_key);
     // Retrieve sub infos
-    _Z_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos));
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos), _z_keyexpr_clear(&qle_infos.ke_in);
+                           _z_value_clear(&msgq->_ext_value); _z_bytes_drop(&msgq->_ext_attachment);
+                           _z_slice_clear(&msgq->_parameters););
     // Check if there are queryables
     _Z_DEBUG("Triggering %ju queryables for key %d - %.*s", (uintmax_t)qle_infos.qle_nb, qle_infos.ke_out._id,
              (int)_z_string_len(&qle_infos.ke_out._suffix), _z_string_data(&qle_infos.ke_out._suffix));
     if (qle_infos.qle_nb == 0) {
+        _z_keyexpr_clear(&qle_infos.ke_in);
+        _z_value_clear(&msgq->_ext_value);
+        _z_bytes_drop(&msgq->_ext_attachment);
+        _z_slice_clear(&msgq->_parameters);
         _z_keyexpr_clear(&qle_infos.ke_out);
 #if Z_FEATURE_RX_CACHE == 0
         _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
@@ -238,27 +240,28 @@ static z_result_t _z_trigger_queryables_inner(_z_session_rc_t *zsrc, _z_msg_quer
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     _z_queryable_query_steal_data(q, zsrc, msgq, &qle_infos.ke_out, qid, anyke);
+
+    z_result_t ret = _Z_RES_OK;
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_infos.qle_nb; i++) {
         _z_queryable_infos_t *qle_info = _z_queryable_infos_svec_get(&qle_infos.infos, i);
-        qle_info->callback(&query, qle_info->arg);
+        if (i + 1 == qle_infos.qle_nb) {
+            qle_info->callback(&query, qle_info->arg);
+        } else {
+            _z_query_rc_t query_copy;
+            ret = _z_query_rc_copy(&query_copy, &query);
+            if (ret != _Z_RES_OK) {
+                break;
+            }
+            qle_info->callback(&query_copy, qle_info->arg);
+            _z_query_rc_drop(&query_copy);
+        }
     }
     _z_query_rc_drop(&query);
-    // Clean up
-    _z_keyexpr_clear(&qle_infos.ke_out);
 #if Z_FEATURE_RX_CACHE == 0
     _z_queryable_infos_svec_release(&qle_infos.infos);  // Otherwise it's released with cache
 #endif
-    return _Z_RES_OK;
-}
-
-z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
-    z_result_t ret = _z_trigger_queryables_inner(zsrc, msgq, q_key, qid);
-    // Clean up
-    _z_keyexpr_clear(q_key);
-    _z_value_clear(&msgq->_ext_value);
-    _z_bytes_drop(&msgq->_ext_attachment);
-    _z_slice_clear(&msgq->_parameters);
+    _z_keyexpr_clear(&qle_infos.ke_in);
     return ret;
 }
 

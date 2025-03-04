@@ -55,32 +55,23 @@ z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
     return _Z_RES_OK;
 }
 
-_z_encoding_t _z_encoding_alias(_z_encoding_t src) {
+_z_encoding_t _z_encoding_alias(const _z_encoding_t *src) {
     _z_encoding_t dst;
-    dst.id = src.id;
-    if (_z_string_check(&src.schema)) {
-        dst.schema = _z_string_alias(src.schema);
+    dst.id = src->id;
+    if (_z_string_check(&src->schema)) {
+        dst.schema = _z_string_alias(src->schema);
     } else {
         dst.schema = _z_string_null();
     }
     return dst;
 }
 
-void _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
+z_result_t _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     dst->id = src->id;
     src->id = _Z_ENCODING_ID_DEFAULT;
+    dst->schema = _z_string_null();
     if (_z_string_check(&src->schema)) {
-        _z_string_move(&dst->schema, &src->schema);
-    } else {
-        dst->schema = _z_string_null();
+        _Z_RETURN_IF_ERR(_z_string_move(&dst->schema, &src->schema));
     }
-}
-
-_z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
-    _z_encoding_t ret = {
-        .id = val->id,
-        .schema = _z_string_steal(&val->schema),
-    };
-    val->id = _Z_ENCODING_ID_DEFAULT;
-    return ret;
+    return _Z_RES_OK;
 }
