@@ -94,7 +94,7 @@ jobs:
     strategy:
       matrix:
         feature_publication: [1, 0]
-        feature_subscription: [2, 1, 0]   # 2 = Enable local subscribers
+        feature_subscription: [1, 0]
         feature_queryable: [1, 0]
         feature_query: [1, 0]
     steps:
@@ -123,8 +123,7 @@ jobs:
         timeout-minutes: 5
         env:
           Z_FEATURE_PUBLICATION: ${{ matrix.feature_publication }}
-          Z_FEATURE_SUBSCRIPTION: ${{ fromJSON(matrix.feature_subscription) != 0 && 1 || 0 }}
-          Z_FEATURE_LOCAL_SUBSCRIBER: ${{ fromJSON(matrix.feature_subscription) == 2 && 1 || 0 }}
+          Z_FEATURE_SUBSCRIPTION: ${{ matrix.feature_subscription }}
           Z_FEATURE_QUERYABLE: ${{ matrix.feature_queryable }}
           Z_FEATURE_QUERY: ${{ matrix.feature_query }}
 
@@ -340,7 +339,7 @@ jobs:
     uses: ./.github/workflows/build-static.yaml
 
   integration:
-    name: Run integration tests
+    name: Run inhttps://github.com/eclipse-zenoh/zenoh-pico/pull/899egration tests
     uses: ./.github/workflows/integration.yaml
 
   multicast:
