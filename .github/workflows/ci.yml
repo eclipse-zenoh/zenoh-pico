@@ -339,7 +339,7 @@ jobs:
     uses: ./.github/workflows/build-static.yaml
 
   integration:
-    name: Run inhttps://github.com/eclipse-zenoh/zenoh-pico/pull/899egration tests
+    name: Run integration tests
     uses: ./.github/workflows/integration.yaml
 
   multicast:
