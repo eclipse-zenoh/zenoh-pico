@@ -28,7 +28,10 @@ static void *_zp_unicast_accept_task(void *ctx) {
     _z_sys_net_socket_t con_socket = {0};
 
     while (true) {
-        if (_z_transport_unicast_peer_list_len(ztu->_peers) < Z_LISTEN_MAX_CONNECTION_NB) {
+        _z_transport_peer_mutex_lock(&ztu->_common);
+        size_t peer_len = _z_transport_unicast_peer_list_len(ztu->_peers);
+        _z_transport_peer_mutex_unlock(&ztu->_common);
+        if (peer_len < Z_LISTEN_MAX_CONNECTION_NB) {
             // Accept connection
             if (_z_socket_accept(&listen_socket, &con_socket) != _Z_RES_OK) {
                 _Z_INFO("Connection accept failed");
@@ -44,7 +47,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
                 _z_socket_close(&con_socket);
                 continue;
             }
-            // Set socket as non blocking (FIXME: activate when read tasks reworked)
+            // Set socket as non blocking
             if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
                 _Z_INFO("Failed to set socket non blocking");
                 _z_socket_close(&con_socket);

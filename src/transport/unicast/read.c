@@ -128,17 +128,20 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
         case Z_LINK_CAP_FLOW_STREAM:
             read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
             if (read_size == 0) {
+                _Z_DEBUG("Socket closed");
                 return -2;
             } else if (read_size == SIZE_MAX) {
                 return -1;
             }
             if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                _Z_DEBUG("Not enough bytes to read stream size");
                 return -1;
             }
             // Get stream size
             *to_read = _z_read_stream_size(&ztu->_common._zbuf);
             // Read data if needed
             if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
+                _Z_DEBUG("Not enough bytes to read packet");
                 return -1;
             }
             break;
@@ -181,13 +184,12 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 z_sleep_s(1);
                 continue;
             }
-            // Wait for events on sockets
+            // Wait for events on sockets (need mutex)
             if (_z_socket_wait_event(ztu->_peers) != _Z_RES_OK) {
-                _Z_ERROR("Wait event failed");
-                ztu->_common._read_task_running = false;
-                continue;
+                continue;  // Might need to process errors other than timeout
             }
             // Process events
+            _z_transport_peer_mutex_lock(&ztu->_common);
             _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
             _z_transport_unicast_peer_list_t *to_drop = NULL;
             _z_transport_unicast_peer_list_t *prev = NULL;
@@ -211,9 +213,11 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 prev = curr_list;
                 curr_list = _z_transport_unicast_peer_list_tail(curr_list);
                 if (drop_peer) {
+                    _Z_DEBUG("Dropping peer");
                     ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev);
                 }
             }
+            _z_transport_peer_mutex_unlock(&ztu->_common);
         } else {
             // Retrieve data
             if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
