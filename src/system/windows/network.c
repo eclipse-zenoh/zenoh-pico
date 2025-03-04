@@ -59,7 +59,10 @@ z_result_t _z_socket_wait_event(void *ctx) {
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // Wait for events
-    int result = select(0, &read_fds, NULL, NULL, NULL);
+    struct timeval timeout;
+    timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
+    timeout.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % 1000) * 1000;
+    int result = select(0, &read_fds, NULL, NULL, &timeout);
     if (result <= 0) {
         return _Z_ERR_GENERIC;
     }

@@ -77,8 +77,10 @@ z_result_t _z_socket_wait_event(void *ctx) {
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     // Wait for events
-    // FIXME: Need highest file descriptor
-    int result = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+    struct timeval timeout;
+    timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
+    timeout.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % 1000) * 1000;
+    int result = select(max_fd + 1, &read_fds, NULL, NULL, &timeout);
     if (result <= 0) {
         _Z_ERROR("Errno: %d\n", errno);
         return _Z_ERR_GENERIC;
@@ -238,7 +240,8 @@ void _z_close_tcp(_z_sys_net_socket_t *sock) {
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     ssize_t rb = recv(sock._fd, ptr, len, 0);
     if (rb < (ssize_t)0) {
-        _Z_ERROR("Errno: %d\n", errno);
+        // Errno can be -11(EAGAIN) because of SO_RCVTIMEO
+        _Z_INFO("Errno: %d\n", errno);
         return SIZE_MAX;
     }
 
