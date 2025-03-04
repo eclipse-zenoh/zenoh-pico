@@ -86,12 +86,12 @@ typedef struct _z_reply_t {
 static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
 static inline _z_reply_t _z_reply_steal_data(_z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
                                              const _z_timestamp_t *timestamp, _z_encoding_t *encoding,
-                                             z_sample_kind_t kind, _z_bytes_t *attachment) {
+                                             z_sample_kind_t kind, _z_bytes_t *attachment, _z_source_info_t *source_info) {
     _z_reply_t r;
     r.data.replier_id = id;
     r.data._tag = _Z_REPLY_TAG_DATA;
     r.data._result.sample = _z_sample_steal_data(keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
-                                                 attachment, Z_RELIABILITY_DEFAULT);
+                                                 attachment, Z_RELIABILITY_DEFAULT, source_info);
     return r;
 }
 static inline _z_reply_t _z_reply_err_alias(_z_bytes_t *payload, _z_encoding_t *encoding) {

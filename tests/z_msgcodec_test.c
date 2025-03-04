@@ -575,16 +575,6 @@ void payload_field(void) {
     _z_wbuf_clear(&wbf);
 }
 
-_z_source_info_t gen_source_info(void) {
-    return (_z_source_info_t){
-        ._id = gen_zid(), ._source_sn = (uint32_t)gen_uint64(), ._entity_id = (uint32_t)gen_uint64()};
-}
-
-void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t *right) {
-    assert(left->_source_sn == right->_source_sn);
-    assert(left->_entity_id == right->_entity_id);
-    assert(memcmp(left->_id.id, right->_id.id, 16) == 0);
-}
 void assert_eq_encoding(const _z_encoding_t *left, const _z_encoding_t *right) {
     assert(left->id == right->id);
     assert_eq_string(&left->schema, &right->schema);
@@ -593,6 +583,53 @@ void assert_eq_value(const _z_value_t *left, const _z_value_t *right) {
     assert_eq_encoding(&left->encoding, &right->encoding);
     assert_eq_bytes(&left->payload, &right->payload);
 }
+
+/*----------------- Source info field -----------------*/
+_z_source_info_t gen_source_info(void) {
+    return (_z_source_info_t){
+        ._source_id.zid = gen_zid(), ._source_sn = (uint32_t)gen_uint64(), ._source_id.eid = (uint32_t)gen_uint64()};
+}
+
+void assert_eq_source_info(const _z_source_info_t *left, const _z_source_info_t *right) {
+    assert(left->_source_sn == right->_source_sn);
+    assert(left->_source_id.eid == right->_source_id.eid);
+    assert(memcmp(left->_source_id.zid.id, right->_source_id.zid.id, 16) == 0);
+}
+
+void source_info_field(void) {
+    printf("\n>> Source info field\n");
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    // Initialize
+    _z_source_info_t e_si = gen_source_info();
+    printf("eid: %u, sn: %u\n", e_si._source_id.eid, e_si._source_sn);
+
+    // Encode
+    z_result_t res = _z_source_info_encode(&wbf, &e_si);
+    assert(res == _Z_RES_OK);
+    (void)(res);
+
+    // Decode
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+    print_wbuf(&wbf);
+    print_iosli(&zbf._ios);
+    printf("\n");
+    _z_source_info_t d_si;
+    res = _z_source_info_decode(&d_si, &zbf);
+    assert(res == _Z_RES_OK);
+    printf("eid: %u, sn: %u\n", d_si._source_id.eid, d_si._source_sn);
+
+    printf("   ");
+    assert_eq_source_info(&e_si, &d_si);
+    printf("\n");
+
+    // Free
+    _z_source_info_clear(&e_si);
+    _z_source_info_clear(&d_si);
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
 /*------------------ Timestamp field ------------------*/
 _z_timestamp_t gen_timestamp(void) {
     _z_timestamp_t ts;
@@ -616,7 +653,6 @@ void assert_eq_timestamp(const _z_timestamp_t *left, const _z_timestamp_t *right
     printf(")\n");
     assert(memcmp(left->id.id, right->id.id, 16) == 0);
 }
-/*------------------ Timestamp field ------------------*/
 
 void timestamp_field(void) {
     printf("\n>> Timestamp field\n");
@@ -659,7 +695,7 @@ _z_keyexpr_t gen_keyexpr(void) {
     if (is_numerical == true) {
         key._suffix = _z_string_null();
     } else {
-        size_t len = gen_zint() % 16;
+        size_t len = gen_zint() % 16 + 1;
         key._suffix = _z_string_preallocate(len);
         char *suffix = gen_str(len);
         memcpy((char *)_z_string_data(&key._suffix), suffix, len);
@@ -2056,6 +2092,7 @@ int main(void) {
         payload_field();
         timestamp_field();
         keyexpr_field();
+        source_info_field();
 
         // Zenoh declarations
         resource_declaration();

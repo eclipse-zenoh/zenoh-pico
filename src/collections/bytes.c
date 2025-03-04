@@ -104,6 +104,7 @@ z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
 
 z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
     *b = _z_bytes_null();
+    if (len == 0) return _Z_RES_OK;
     _z_slice_t s = _z_slice_copy_from_buf(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     return _z_bytes_from_slice(b, s);

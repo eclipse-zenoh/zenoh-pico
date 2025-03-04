@@ -50,10 +50,12 @@ void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val);
 /*------------------ Subscription ------------------*/
 z_result_t _z_trigger_subscriptions_put(_z_session_t *zn, _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                         _z_encoding_t *encoding, const _z_timestamp_t *timestamp, const _z_n_qos_t qos,
-                                        _z_bytes_t *attachment, z_reliability_t reliability);
+                                        _z_bytes_t *attachment, z_reliability_t reliability,
+                                        _z_source_info_t *source_info);
 
 z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr, const _z_timestamp_t *timestamp,
-                                        const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability);
+                                        const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability,
+                                        _z_source_info_t *source_info);
 
 z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp);
@@ -74,7 +76,7 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, _z_subscriber_k
 z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
                                          _z_bytes_t *payload, _z_encoding_t *encoding, const _z_zint_t sample_kind,
                                          const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
-                                         z_reliability_t reliability);
+                                         z_reliability_t reliability, _z_source_info_t *source_info);
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub);
 void _z_flush_subscriptions(_z_session_t *zn);
 #endif

@@ -110,7 +110,7 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
             // Memory cleaning must be done in the feature layer
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &put._encoding,
                                                           &put._commons._timestamp, req->_ext_qos, &put._attachment,
-                                                          reliability));
+                                                          reliability, &put._commons._source_info));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
@@ -124,7 +124,7 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
             _z_msg_del_t del = req->_body._del;
             // Memory cleaning must be done in the feature layer
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_del(zn, &req->_key, &del._commons._timestamp, req->_ext_qos,
-                                                          &del._attachment, reliability));
+                                                          &del._attachment, reliability, &del._commons._source_info));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);

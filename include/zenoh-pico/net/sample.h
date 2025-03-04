@@ -31,6 +31,7 @@ extern "C" {
  *   _z_keyexpr_t key: The resource key of this data sample.
  *   _z_slice_t value: The value of this data sample.
  *   _z_encoding_t encoding: The encoding for the value of this data sample.
+ *   _z_source_info_t source_info: The source info for this data sample (unstable).
  */
 typedef struct _z_sample_t {
     _z_keyexpr_t keyexpr;
@@ -41,6 +42,7 @@ typedef struct _z_sample_t {
     _z_qos_t qos;
     _z_bytes_t attachment;
     z_reliability_t reliability;
+    _z_source_info_t source_info;
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
 
@@ -50,9 +52,10 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
+
 static inline _z_sample_t _z_sample_steal_data(_z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
                                                _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos,
-                                               _z_bytes_t *attachment, z_reliability_t reliability) {
+                                               _z_bytes_t *attachment, z_reliability_t reliability, _z_source_info_t *source_info) {
     _z_sample_t ret;
     ret.keyexpr = _z_keyexpr_steal(key);
     ret.payload = _z_bytes_steal(payload);
@@ -62,6 +65,7 @@ static inline _z_sample_t _z_sample_steal_data(_z_keyexpr_t *key, _z_bytes_t *pa
     ret.kind = kind;
     ret.qos = qos;
     ret.reliability = reliability;
+    ret.source_info =_z_source_info_steal(source_info);
     return ret;
 }
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src);

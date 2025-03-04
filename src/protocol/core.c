@@ -90,3 +90,15 @@ z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_encoding_move(&dst->encoding, &src->encoding), _z_value_clear(dst));
     return _Z_RES_OK;
 }
+
+z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src) {
+    dst->_source_id = src->_source_id;
+    dst->_source_sn = src->_source_sn;
+    return _Z_RES_OK;
+}
+
+z_result_t _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src) {
+    dst->_source_id = src->_source_id;
+    dst->_source_sn = src->_source_sn;
+    return _Z_RES_OK;
+}
