@@ -75,7 +75,7 @@ static z_result_t _z_transport_tx_send_fragment_inner(_z_transport_common_t *ztc
         }
         // Send fragment
         __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
-        _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf));
+        _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf, NULL));
         ztc->_transmitted = true;  // Tell session we transmitted data
         is_first = false;
     }
@@ -118,7 +118,7 @@ static inline bool _z_transport_tx_batch_has_data(_z_transport_common_t *ztc) {
 static z_result_t _z_transport_tx_flush_buffer(_z_transport_common_t *ztc) {
     // Send network message
     __unsafe_z_finalize_wbuf(&ztc->_wbuf, ztc->_link._cap._flow);
-    _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf));
+    _Z_RETURN_IF_ERR(_z_link_send_wbuf(&ztc->_link, &ztc->_wbuf, NULL));
     ztc->_transmitted = true;  // Tell session we transmitted data
 #if Z_FEATURE_BATCHING == 1
     ztc->_batch_count = 0;
@@ -348,7 +348,7 @@ z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg
     return ret;
 }
 
-z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
+z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg, _z_sys_net_socket_t *socket) {
     z_result_t ret = _Z_RES_OK;
 
     // Create and prepare the buffer to serialize the message on
@@ -387,7 +387,7 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
                 break;
         }
         // Send the wbuf on the socket
-        ret = _z_link_send_wbuf(zl, &wbf);
+        ret = _z_link_send_wbuf(zl, &wbf, socket);
     }
     _z_wbuf_clear(&wbf);
 
@@ -431,7 +431,10 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
     // Call transport function
     switch (zn->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability, cong_ctrl);
+            if ((zn->_mode == Z_WHATAMI_CLIENT) ||
+                (_z_transport_unicast_peer_list_len(zn->_tp._transport._unicast._peers) > 0)) {
+                ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability, cong_ctrl);
+            }
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._multicast._common, z_msg, reliability, cong_ctrl);

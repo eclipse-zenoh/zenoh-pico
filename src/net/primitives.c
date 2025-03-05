@@ -90,8 +90,8 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
-    // FIXME: remove this check when resource declaration is implemented for multicast transport
-    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
         uint16_t id = _z_register_resource(zn, keyexpr, 0, _Z_KEYEXPR_MAPPING_LOCAL);
         if (id != 0) {
             // Build the declare message to send on the wire
@@ -143,10 +143,8 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (zs->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased);
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
@@ -301,7 +299,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&sub->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&sub->_zn)->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
@@ -367,7 +365,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&qle->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&qle->_zn)->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);

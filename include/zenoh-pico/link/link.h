@@ -97,10 +97,12 @@ struct _z_link_t;  // Forward declaration to be used in _z_f_link_*
 typedef z_result_t (*_z_f_link_open)(struct _z_link_t *self);
 typedef z_result_t (*_z_f_link_listen)(struct _z_link_t *self);
 typedef void (*_z_f_link_close)(struct _z_link_t *self);
-typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
+typedef size_t (*_z_f_link_write)(const struct _z_link_t *self, const uint8_t *ptr, size_t len,
+                                  _z_sys_net_socket_t *socket);
 typedef size_t (*_z_f_link_write_all)(const struct _z_link_t *self, const uint8_t *ptr, size_t len);
 typedef size_t (*_z_f_link_read)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
-typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
+typedef size_t (*_z_f_link_read_exact)(const struct _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                       _z_sys_net_socket_t *socket);
 typedef size_t (*_z_f_link_read_socket)(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len);
 typedef void (*_z_f_link_free)(struct _z_link_t *self);
 
@@ -164,11 +166,12 @@ void _z_link_free(_z_link_t **zl);
 z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator);
 z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator);
 
-z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf);
+z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf, _z_sys_net_socket_t *socket);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);
-size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr);
+size_t _z_link_recv_exact_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, size_t len, _z_slice_t *addr,
+                               _z_sys_net_socket_t *socket);
 size_t _z_link_socket_recv_zbuf(const _z_link_t *link, _z_zbuf_t *zbf, const _z_sys_net_socket_t socket);
-_z_sys_net_socket_t _z_link_get_socket(const _z_link_t *link);
+const _z_sys_net_socket_t *_z_link_get_socket(const _z_link_t *link);
 
 #ifdef __cplusplus
 }
