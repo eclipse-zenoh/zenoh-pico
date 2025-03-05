@@ -61,6 +61,7 @@ void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src) {
     _z_wbuf_clear(&src->_dbuf_best_effort);
 #endif
     src->_remote_zid = _z_id_empty();
+    _z_socket_close(&src->_socket);
 }
 
 void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src) {

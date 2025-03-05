@@ -209,13 +209,13 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         to_drop = curr_list;
                     }
                 }
-                _z_zbuf_reset(&ztu->_common._zbuf);
-                prev = curr_list;
-                curr_list = _z_transport_unicast_peer_list_tail(curr_list);
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
                     ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev);
                 }
+                prev = curr_list;
+                curr_list = _z_transport_unicast_peer_list_tail(curr_list);
+                _z_zbuf_reset(&ztu->_common._zbuf);
             }
             _z_transport_peer_mutex_unlock(&ztu->_common);
         } else {
