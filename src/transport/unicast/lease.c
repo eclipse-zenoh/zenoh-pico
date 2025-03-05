@@ -92,6 +92,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             }
             // Next keep alive process
             if (next_keep_alive <= 0) {
+                _Z_DEBUG("Sending keep alive");
                 // Check if need to send a keep alive
                 if (!ztu->_common._transmitted) {
                     if (_zp_unicast_send_keep_alive(ztu) < 0) {
@@ -129,13 +130,16 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
             }
             if (next_keep_alive <= 0) {
                 if (!ztu->_common._transmitted) {
+                    _Z_DEBUG("Sending keep alive");
                     // Send keep alive to all peers
                     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
                     _z_transport_peer_mutex_lock(&ztu->_common);
-                    if (_z_transport_tx_send_t_msg(&ztu->_common, &t_msg, ztu->_peers) != _Z_RES_OK) {
-                        _Z_INFO("Send keep alive failed.");
+                    if (_z_transport_unicast_peer_list_len(ztu->_peers) > 0) {
+                        if (_z_transport_tx_send_t_msg(&ztu->_common, &t_msg, ztu->_peers) != _Z_RES_OK) {
+                            _Z_INFO("Send keep alive failed.");
+                        }
                     }
-                    _z_transport_peer_mutex_lock(&ztu->_common);
+                    _z_transport_peer_mutex_unlock(&ztu->_common);
                 }
                 ztu->_common._transmitted = false;
                 next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
