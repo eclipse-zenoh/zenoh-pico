@@ -61,12 +61,13 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
-z_result_t _z_socket_wait_event(void *ctx) {
+z_result_t _z_socket_wait_event(void *ctx, _z_mutex_t *mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     // Create select mask
-    _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
-    _z_transport_unicast_peer_list_t *curr = peers;
+    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)ctx;
+    _z_mutex_lock(mutex);
+    _z_transport_unicast_peer_list_t *curr = *peers;
     int max_fd = 0;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
@@ -76,6 +77,7 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
+    _z_mutex_unlock(mutex);
     // Wait for events
     struct timeval timeout;
     timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
@@ -85,7 +87,8 @@ z_result_t _z_socket_wait_event(void *ctx) {
         return _Z_ERR_GENERIC;
     }
     // Mark sockets that are pending
-    curr = peers;
+    _z_mutex_lock(mutex);
+    curr = *peers;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         if (FD_ISSET(peer->_socket._fd, &read_fds)) {
@@ -93,6 +96,7 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
+    _z_mutex_unlock(mutex);
     return _Z_RES_OK;
 }
 

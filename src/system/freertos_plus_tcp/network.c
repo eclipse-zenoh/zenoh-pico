@@ -50,7 +50,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
-z_result_t _z_socket_wait_event(void *ctx) {
+z_result_t _z_socket_wait_event(void *ctx, _z_mutex_t *mutex) {
     z_result_t ret = _Z_RES_OK;
     // Create a SocketSet to monitor multiple sockets
     SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
@@ -58,13 +58,15 @@ z_result_t _z_socket_wait_event(void *ctx) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Add each socket to the socket set
-    _z_transport_unicast_peer_list_t *peers = (_z_transport_unicast_peer_list_t *)ctx;
-    _z_transport_unicast_peer_list_t *curr = peers;
+    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)ctx;
+    _z_mutex_lock(mutex);
+    _z_transport_unicast_peer_list_t *curr = *peers;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         FreeRTOS_FD_SET(peer->_socket._socket, socketSet, eSELECT_READ);
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
+    _z_mutex_unlock(mutex);
     // Wait for an event on any of the sockets in the set, non-blocking
     BaseType_t result = FreeRTOS_select(socketSet, portMAX_DELAY);
     // Check for errors or events
@@ -72,7 +74,8 @@ z_result_t _z_socket_wait_event(void *ctx) {
         ret = _Z_ERR_GENERIC;
     }
     // Mark sockets that are pending
-    curr = peers;
+    _z_mutex_lock(mutex);
+    curr = *peers;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
         if (FreeRTOS_FD_ISSET(peer->_socket._socket, socketSet)) {
@@ -80,6 +83,7 @@ z_result_t _z_socket_wait_event(void *ctx) {
         }
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
+    _z_mutex_unlock(mutex);
     // Clean up
     FreeRTOS_DeleteSocketSet(socketSet);
     return ret;

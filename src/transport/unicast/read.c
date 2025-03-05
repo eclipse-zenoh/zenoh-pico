@@ -185,7 +185,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 continue;
             }
             // Wait for events on sockets (need mutex)
-            if (_z_socket_wait_event(ztu->_peers) != _Z_RES_OK) {
+            if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) != _Z_RES_OK) {
                 continue;  // Might need to process errors other than timeout
             }
             // Process events

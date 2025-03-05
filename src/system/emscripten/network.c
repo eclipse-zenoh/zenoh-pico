@@ -43,8 +43,9 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-z_result_t _z_socket_wait_event(void *peers) {
+z_result_t _z_socket_wait_event(void *peers, _z_mutex_t *mutex) {
     _ZP_UNUSED(peers);
+    _ZP_UNUSED(mutex);
     _Z_ERROR("Function not yet supported on this system");
     return _Z_ERR_GENERIC;
 }
