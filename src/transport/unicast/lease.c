@@ -106,7 +106,6 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 ztu->_common._transmitted = false;
                 next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
             }
-            return 0;
         } else {  // Peer lease
             if (next_lease <= 0) {
                 _z_transport_unicast_peer_list_t *prev = NULL;
