@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -12,22 +12,19 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_TRANSPORT_RX_H
-#define ZENOH_PICO_TRANSPORT_RX_H
+#ifndef ZENOH_PICO_UNICAST_ACCEPT_H
+#define ZENOH_PICO_UNICAST_ACCEPT_H
 
-#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/transport/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*------------------ Transmission and Reception helpers ------------------*/
-size_t _z_read_stream_size(_z_zbuf_t *zbuf);
-z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl, _z_sys_net_socket_t *socket);
+z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ZENOH_PICO_TRANSPORT_RX_H */
+#endif /* ZENOH_PICO_UNICAST_ACCEPT_H */
