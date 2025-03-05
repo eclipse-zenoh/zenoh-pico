@@ -469,13 +469,9 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             if (zn->_mode == Z_WHATAMI_CLIENT) {
                 ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability, cong_ctrl,
                                                  NULL);
-            } else {
-                _z_transport_peer_mutex_lock(&zn->_tp._transport._unicast._common);
-                if (_z_transport_unicast_peer_list_len(zn->_tp._transport._unicast._peers) > 0) {
-                    ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability,
-                                                     cong_ctrl, zn->_tp._transport._unicast._peers);
-                }
-                _z_transport_peer_mutex_unlock(&zn->_tp._transport._unicast._common);
+            } else if (_z_transport_unicast_peer_list_len(zn->_tp._transport._unicast._peers) > 0) {
+                ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability, cong_ctrl,
+                                                 zn->_tp._transport._unicast._peers);
             }
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
@@ -499,14 +495,11 @@ z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             if (zn->_mode == Z_WHATAMI_CLIENT) {
                 ret = _z_transport_tx_send_n_batch(&zn->_tp._transport._unicast._common, cong_ctrl, NULL);
-            } else {
-                _z_transport_peer_mutex_lock(&zn->_tp._transport._unicast._common);
-                if (_z_transport_unicast_peer_list_len(zn->_tp._transport._unicast._peers) > 0) {
-                    ret = _z_transport_tx_send_n_batch(&zn->_tp._transport._unicast._common, cong_ctrl,
-                                                       zn->_tp._transport._unicast._peers);
-                }
-                _z_transport_peer_mutex_unlock(&zn->_tp._transport._unicast._common);
+            } else if (_z_transport_unicast_peer_list_len(zn->_tp._transport._unicast._peers) > 0) {
+                ret = _z_transport_tx_send_n_batch(&zn->_tp._transport._unicast._common, cong_ctrl,
+                                                   zn->_tp._transport._unicast._peers);
             }
+
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
             ret = _z_transport_tx_send_n_batch(&zn->_tp._transport._multicast._common, cong_ctrl, NULL);
