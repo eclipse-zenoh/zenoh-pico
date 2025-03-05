@@ -193,6 +193,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
             _z_transport_unicast_peer_list_t *to_drop = NULL;
             _z_transport_unicast_peer_list_t *prev = NULL;
+            _z_transport_unicast_peer_list_t *prev_drop = NULL;
             while (curr_list != NULL) {
                 bool drop_peer = false;
                 curr_peer = _z_transport_unicast_peer_list_head(curr_list);
@@ -203,18 +204,22 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
                             drop_peer = true;
                             to_drop = curr_list;
+                            prev_drop = prev;
                         }
                     } else if (res == -2) {
                         drop_peer = true;
                         to_drop = curr_list;
+                        prev_drop = prev;
                     }
                 }
-                if (drop_peer) {
-                    _Z_DEBUG("Dropping peer");
-                    ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev);
-                }
+                // Progress list
                 prev = curr_list;
                 curr_list = _z_transport_unicast_peer_list_tail(curr_list);
+                // Drop if needed
+                if (drop_peer) {
+                    _Z_DEBUG("Dropping peer");
+                    ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev_drop);
+                }
                 _z_zbuf_reset(&ztu->_common._zbuf);
             }
             _z_transport_peer_mutex_unlock(&ztu->_common);

@@ -109,20 +109,29 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         } else {  // Peer lease
             if (next_lease <= 0) {
                 _z_transport_unicast_peer_list_t *prev = NULL;
+                _z_transport_unicast_peer_list_t *to_drop = NULL;
+                _z_transport_unicast_peer_list_t *prev_drop = NULL;
                 _z_transport_peer_mutex_lock(&ztu->_common);
                 _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
                 while (curr_list != NULL) {
+                    bool drop_peer = false;
                     curr_peer = _z_transport_unicast_peer_list_head(curr_list);
                     // Check if peer received data
                     if (curr_peer->_received) {
                         curr_peer->_received = false;
                     } else {
                         _Z_INFO("Deleting peer because it has expired after %zums", ztu->_common._lease);
-                        // Send close message
-                        ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, curr_list, prev);
+                        drop_peer = true;
+                        to_drop = curr_list;
+                        prev_drop = prev;
                     }
+                    // Progress list
                     prev = curr_list;
                     curr_list = _z_transport_unicast_peer_list_tail(curr_list);
+                    // Drop if needed
+                    if (drop_peer) {
+                        ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev_drop);
+                    }
                 }
                 _z_transport_peer_mutex_unlock(&ztu->_common);
                 next_lease = (int)ztu->_common._lease;
