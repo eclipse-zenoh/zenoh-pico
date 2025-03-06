@@ -50,6 +50,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
 
+#if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
     z_result_t ret = _Z_RES_OK;
     // Create a SocketSet to monitor multiple sockets
@@ -89,6 +90,13 @@ z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
     FreeRTOS_DeleteSocketSet(socketSet);
     return ret;
 }
+#else
+z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
+    _ZP_UNUSED(ctx);
+    _ZP_UNUSED(v_mutex);
+    return _Z_RES_OK;
+}
+#endif
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/

@@ -63,6 +63,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
 
+#if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -102,6 +103,13 @@ z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
     _z_mutex_unlock(mutex);
     return _Z_RES_OK;
 }
+#else
+z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
+    _ZP_UNUSED(ctx);
+    _ZP_UNUSED(v_mutex);
+    return _Z_RES_OK;
+}
+#endif
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
