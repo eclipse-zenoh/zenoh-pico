@@ -61,11 +61,12 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { lwip_close(sock->_fd); }
 
-z_result_t _z_socket_wait_event(void *ctx, _z_mutex_t *mutex) {
+z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     // Create select mask
     _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)ctx;
+    _z_mutex_t *mutex = (_z_mutex_t *)v_mutex;
     _z_mutex_lock(mutex);
     _z_transport_unicast_peer_list_t *curr = *peers;
     int max_fd = 0;
@@ -234,7 +235,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
 
-z_result_t _z_socket_wait_event(void *peers, _z_mutex_t *mutex) {
+z_result_t _z_socket_wait_event(void *peers, void *mutex) {
     _ZP_UNUSED(peers);
     _ZP_UNUSED(mutex);
     _Z_ERROR("Function not yet supported on this system");
