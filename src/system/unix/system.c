@@ -136,9 +136,9 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unloc
 
 z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) {
     pthread_mutexattr_t attr;
-    _Z_CHECK_SYS_ERR(pthread_mutexattr_init(&attr));
-    _Z_CHECK_SYS_ERR(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE));
-    _Z_CHECK_SYS_ERR(pthread_mutex_init(m, &attr));
+    _Z_RETURN_IF_SYS_ERR(pthread_mutexattr_init(&attr));
+    _Z_RETURN_IF_SYS_ERR(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE));
+    _Z_RETURN_IF_SYS_ERR(pthread_mutex_init(m, &attr));
     _Z_CHECK_SYS_ERR(pthread_mutexattr_destroy(&attr));
 }
 
