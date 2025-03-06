@@ -28,10 +28,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
     _z_sys_net_socket_t con_socket = {0};
 
     while (true) {
-        _z_transport_peer_mutex_lock(&ztu->_common);
-        size_t peer_len = _z_transport_unicast_peer_list_len(ztu->_peers);
-        _z_transport_peer_mutex_unlock(&ztu->_common);
-        if (peer_len < Z_LISTEN_MAX_CONNECTION_NB) {
+        if (_z_transport_unicast_peer_list_len(ztu->_peers) < Z_LISTEN_MAX_CONNECTION_NB) {
             // Accept connection
             if (_z_socket_accept(&listen_socket, &con_socket) != _Z_RES_OK) {
                 _Z_INFO("Connection accept failed");

@@ -37,7 +37,7 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         case Z_LINK_CAP_TRANSPORT_MULTICAST:
             zt->_type = _Z_TRANSPORT_MULTICAST_TYPE;
             ztm = &zt->_transport._multicast;
-            ztm->_send_f = _z_transport_tx_send_t_msg;
+            ztm->_send_f = _z_transport_tx_send_t_msg_wrapper;
             break;
         case Z_LINK_CAP_TRANSPORT_RAWETH:
             zt->_type = _Z_TRANSPORT_RAWETH_TYPE;
