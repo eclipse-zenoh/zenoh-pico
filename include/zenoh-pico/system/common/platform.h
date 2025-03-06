@@ -141,6 +141,7 @@ void z_free(void *ptr);
 // dummy types for correct macros work
 typedef void *_z_task_t;
 typedef void *_z_mutex_t;
+typedef void *_z_mutex_rec_t;
 typedef void *_z_condvar_t;
 typedef void *z_task_attr_t;
 #endif
@@ -213,6 +214,12 @@ z_result_t _z_mutex_drop(_z_mutex_t *m);
 z_result_t _z_mutex_lock(_z_mutex_t *m);
 z_result_t _z_mutex_try_lock(_z_mutex_t *m);
 z_result_t _z_mutex_unlock(_z_mutex_t *m);
+
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m);
 
 /**
  * Constructs a mutex.
