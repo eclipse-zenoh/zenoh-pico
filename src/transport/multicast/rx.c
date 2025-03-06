@@ -415,7 +415,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         }
 
         case _Z_MID_T_CLOSE: {
-            _Z_INFO("Closing session as requested by the remote peer");
+            _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
                 ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
             }

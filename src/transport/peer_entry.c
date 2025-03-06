@@ -61,6 +61,7 @@ void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src) {
     _z_wbuf_clear(&src->_dbuf_best_effort);
 #endif
     src->_remote_zid = _z_id_empty();
+    _z_socket_close(&src->_socket);
 }
 
 void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src) {
@@ -95,6 +96,7 @@ z_result_t _z_transport_unicast_peer_add(_z_transport_unicast_t *ztu, _z_transpo
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill peer data
+    peer->_pending = false;
     peer->_socket = socket;
     peer->_remote_zid = param->_remote_zid;
     _z_zint_t initial_sn_rx = _z_sn_decrement(ztu->_common._sn_res, param->_initial_sn_rx);
