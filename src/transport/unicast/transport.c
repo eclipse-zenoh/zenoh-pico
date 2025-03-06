@@ -41,7 +41,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Initialize the mutexes
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_tx));
     _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_rx));
-    _Z_RETURN_IF_ERR(_z_mutex_init(&ztu->_common._mutex_peer));
+    _Z_RETURN_IF_ERR(_z_mutex_rec_init(&ztu->_common._mutex_peer));
 
     // Tasks
     ztu->_common._read_task_running = false;
@@ -95,7 +95,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_drop(&ztu->_common._mutex_rx);
         _z_mutex_drop(&ztu->_common._mutex_tx);
-        _z_mutex_drop(&ztu->_common._mutex_peer);
+        _z_mutex_rec_drop(&ztu->_common._mutex_peer);
 #endif
         _z_wbuf_clear(&ztu->_common._wbuf);
         _z_zbuf_clear(&ztu->_common._zbuf);
