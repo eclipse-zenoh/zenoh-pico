@@ -199,6 +199,7 @@ static z_result_t _z_transport_tx_batch_overflow(_z_transport_common_t *ztc, con
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(sn);
     _ZP_UNUSED(prev_wpos);
+    _ZP_UNUSED(peers);
     return _Z_RES_OK;
 #endif
 }
@@ -315,6 +316,7 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
 #else
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(cong_ctrl);
+    _ZP_UNUSED(peers);
     return _Z_RES_OK;
 #endif
 }

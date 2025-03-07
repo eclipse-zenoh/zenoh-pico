@@ -53,30 +53,6 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
-static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
-                                                   size_t extra_size) {
-    if (extra_size < _Z_MSG_LEN_ENC_SIZE) {
-        peer->flow_state = _Z_FLOW_STATE_PENDING_SIZE;
-        peer->flow_curr_size = _z_zbuf_read(&ztu->_common._zbuf);
-        return _Z_RES_OK;
-    }
-    // Get stream size
-    size_t to_read = _z_read_stream_size(&ztu->_common._zbuf);
-    if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
-        peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
-        peer->flow_curr_size = (uint16_t)to_read;
-        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
-        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
-            _Z_ERROR("Not enough memory to allocate flow state buffer");
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-        }
-        _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
-        return _Z_RES_OK;
-    }
-    _Z_ERROR("Entire packet to process remaining");  // Shouldn't happen
-    return _Z_ERR_GENERIC;
-}
-
 static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
                                               size_t to_read) {
     // Wrap the main buffer to_read bytes
@@ -152,6 +128,31 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_uni
             break;
     }
     return true;
+}
+
+static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
+                                                   size_t extra_size, size_t *to_read, bool *message_to_process) {
+    *message_to_process = false;
+    if (extra_size < _Z_MSG_LEN_ENC_SIZE) {
+        peer->flow_state = _Z_FLOW_STATE_PENDING_SIZE;
+        peer->flow_curr_size = _z_zbuf_read(&ztu->_common._zbuf);
+        return _Z_RES_OK;
+    }
+    // Get stream size
+    *to_read = _z_read_stream_size(&ztu->_common._zbuf);
+    if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
+        peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
+        peer->flow_curr_size = (uint16_t)*to_read;
+        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
+        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+            _Z_ERROR("Not enough memory to allocate flow state buffer");
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
+        return _Z_RES_OK;
+    }
+    *message_to_process = true;
+    return _Z_RES_OK;
 }
 
 static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer, size_t *to_read) {
@@ -277,7 +278,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             if (_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer) != _Z_RES_OK) {
                 continue;  // Might need to process errors other than timeout
             }
-            // Process events
+            // Process events for all peers
             _z_transport_peer_mutex_lock(&ztu->_common);
             _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
             _z_transport_unicast_peer_list_t *to_drop = NULL;
@@ -288,29 +289,37 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 curr_peer = _z_transport_unicast_peer_list_head(curr_list);
                 if (curr_peer->_pending) {
                     curr_peer->_pending = false;
+                    // Read data from socket
                     int res = _z_unicast_peer_read(ztu, curr_peer, &to_read);
-                    if (res == 0) {
-                        if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
-                            drop_peer = true;
-                            to_drop = curr_list;
-                            prev_drop = prev;
-                        } else if (curr_peer->flow_state != _Z_FLOW_STATE_READY) {
-                            // Process remaining data
-                            size_t extra_data = _z_zbuf_len(&ztu->_common._zbuf);
-                            if (extra_data > 0) {
-                                if (_z_unicast_handle_remaining_data(ztu, curr_peer, extra_data) != _Z_RES_OK) {
-                                    // Irrecoverable error
-                                    ztu->_common._read_task_running = false;
-                                    continue;
+                    if (res == 0) {  // Messages to process
+                        bool message_to_process = false;
+                        do {
+                            message_to_process = false;
+                            // Process one message
+                            if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
+                                // Failed to process, drop peer
+                                drop_peer = true;
+                                to_drop = curr_list;
+                                prev_drop = prev;
+                                break;
+                            } else if (curr_peer->flow_state != _Z_FLOW_STATE_READY) {
+                                // Process remaining data
+                                size_t extra_data = _z_zbuf_len(&ztu->_common._zbuf);
+                                if (extra_data > 0) {
+                                    if (_z_unicast_handle_remaining_data(ztu, curr_peer, extra_data, &to_read,
+                                                                         &message_to_process) != _Z_RES_OK) {
+                                        // Irrecoverable error
+                                        ztu->_common._read_task_running = false;
+                                        continue;
+                                    }
                                 }
                             }
-                        }
-                    } else if (res == -2) {
+                        } while (message_to_process);
+                    } else if (res == -2) {  // Socket closed
                         drop_peer = true;
                         to_drop = curr_list;
                         prev_drop = prev;
-                    } else if (res == -3) {
-                        // Irrecoverable error
+                    } else if (res == -3) {  // Irrecoverable error
                         ztu->_common._read_task_running = false;
                         continue;
                     }
