@@ -647,7 +647,7 @@ z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *z
             } break;
             default: {
                 _Z_INFO("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid,
-                         msg->_header);
+                        msg->_header);
                 ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
             } break;
         }

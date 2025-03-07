@@ -53,10 +53,39 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
+static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
+                                                   size_t extra_size) {
+    if (extra_size < _Z_MSG_LEN_ENC_SIZE) {
+        peer->flow_state = _Z_FLOW_STATE_PENDING_SIZE;
+        peer->flow_curr_size = _z_zbuf_read(&ztu->_common._zbuf);
+        return _Z_RES_OK;
+    }
+    // Get stream size
+    size_t to_read = _z_read_stream_size(&ztu->_common._zbuf);
+    if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
+        peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
+        peer->flow_curr_size = (uint16_t)to_read;
+        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
+        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+            _Z_ERROR("Not enough memory to allocate flow state buffer");
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
+        return _Z_RES_OK;
+    }
+    _Z_ERROR("Entire packet to process remaining");  // Shouldn't happen
+    return _Z_ERR_GENERIC;
+}
+
 static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
                                               size_t to_read) {
-    // Wrap the main buffer for to_read bytes
-    _z_zbuf_t zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
+    // Wrap the main buffer to_read bytes
+    _z_zbuf_t zbuf;
+    if (peer->flow_state == _Z_FLOW_STATE_READY) {
+        zbuf = _z_zbuf_view(&peer->flow_buff, to_read);
+    } else {
+        zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
+    }
 
     peer->_received = true;
     while (_z_zbuf_len(&zbuf) > 0) {
@@ -65,19 +94,23 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
         z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf, &ztu->_common._arc_pool, &ztu->_common._msg_pool);
 
         if (ret != _Z_RES_OK) {
-            _Z_ERROR("Connection closed due to malformed message: %d", ret);
+            _Z_INFO("Connection compromised due to malformed message: %d", ret);
             return ret;
         }
         ret = _z_unicast_handle_transport_message(ztu, &t_msg, peer);
         if (ret != _Z_RES_OK) {
             if (ret != _Z_ERR_CONNECTION_CLOSED) {
-                _Z_ERROR("Connection closed due to message processing error: %d", ret);
+                _Z_INFO("Connection compromised due to message processing error: %d", ret);
             }
             return ret;
         }
     }
     // Move the read position of the read buffer
-    _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) + to_read);
+    if (peer->flow_state == _Z_FLOW_STATE_READY) {
+        _z_zbuf_set_rpos(&peer->flow_buff, _z_zbuf_get_rpos(&peer->flow_buff) + to_read);
+    } else {
+        _z_zbuf_set_rpos(&ztu->_common._zbuf, _z_zbuf_get_rpos(&ztu->_common._zbuf) + to_read);
+    }
 
     if (_z_unicast_update_rx_buffer(ztu) != _Z_RES_OK) {
         _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
@@ -122,28 +155,84 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_uni
 }
 
 static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer, size_t *to_read) {
-    // Warning: if we receive fragmented data we have to discard it because we only have one buffer for all sockets
+    // If we receive fragmented data we have to store it on a separate buffer
     size_t read_size = 0;
     switch (ztu->_common._link._cap._flow) {
+        // DATA REMAINING CASE
         case Z_LINK_CAP_FLOW_STREAM:
-            read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
-            if (read_size == 0) {
-                _Z_DEBUG("Socket closed");
-                return -2;
-            } else if (read_size == SIZE_MAX) {
-                return -1;
+            switch (peer->flow_state) {
+                case _Z_FLOW_STATE_READY:
+                    peer->flow_state = _Z_FLOW_STATE_INACTIVE;
+                    peer->flow_curr_size = 0;
+                    _z_zbuf_clear(&peer->flow_buff);  // fall through
+                default:                              // fall through
+                case _Z_FLOW_STATE_INACTIVE:
+                    read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
+                    if (read_size == 0) {
+                        _Z_DEBUG("Socket closed");
+                        return -2;
+                    } else if (read_size == SIZE_MAX) {
+                        return -1;
+                    }
+                    if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
+                        peer->flow_state = _Z_FLOW_STATE_PENDING_SIZE;
+                        peer->flow_curr_size = _z_zbuf_read(&ztu->_common._zbuf);
+                        return -1;
+                    }
+                    // Get stream size
+                    *to_read = _z_read_stream_size(&ztu->_common._zbuf);
+                    // Read data if needed
+                    read_size = _z_zbuf_len(&ztu->_common._zbuf);
+                    if (read_size < *to_read) {
+                        peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
+                        peer->flow_curr_size = (uint16_t)*to_read;
+                        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
+                        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+                            _Z_ERROR("Not enough memory to allocate flow state buffer");
+                            return -3;
+                        }
+                        _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
+                        return -1;
+                    }
+                    break;
+                case _Z_FLOW_STATE_PENDING_SIZE:
+                    read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
+                    if (read_size == 0) {
+                        _Z_DEBUG("Socket closed");
+                        return -2;
+                    } else if (read_size == SIZE_MAX) {
+                        return -1;
+                    }
+                    peer->flow_curr_size += (uint16_t)(_z_zbuf_read(&ztu->_common._zbuf) << 8);
+                    *to_read = peer->flow_curr_size;
+                    if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
+                        peer->flow_state = _Z_FLOW_STATE_PENDING_DATA;
+                        peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
+                        if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
+                            _Z_ERROR("Not enough memory to allocate flow state buffer");
+                            return -3;
+                        }
+                        _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
+                        return -1;
+                    }
+                    break;
+                case _Z_FLOW_STATE_PENDING_DATA:
+                    read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &peer->flow_buff, peer->_socket);
+                    if (read_size == 0) {
+                        _Z_DEBUG("Socket closed");
+                        return -2;
+                    } else if (read_size == SIZE_MAX) {
+                        return -1;
+                    }
+                    *to_read = peer->flow_curr_size;
+                    if (_z_zbuf_len(&peer->flow_buff) < *to_read) {
+                        return -1;
+                    } else {
+                        peer->flow_state = _Z_FLOW_STATE_READY;
+                    }
+                    break;
             }
-            if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _Z_DEBUG("Not enough bytes to read stream size");
-                return -1;
-            }
-            // Get stream size
-            *to_read = _z_read_stream_size(&ztu->_common._zbuf);
-            // Read data if needed
-            if (_z_zbuf_len(&ztu->_common._zbuf) < *to_read) {
-                _Z_DEBUG("Not enough bytes to read packet");
-                return -1;
-            }
+
             break;
         case Z_LINK_CAP_FLOW_DATAGRAM:
             *to_read = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
@@ -205,11 +294,25 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                             drop_peer = true;
                             to_drop = curr_list;
                             prev_drop = prev;
+                        } else if (curr_peer->flow_state != _Z_FLOW_STATE_READY) {
+                            // Process remaining data
+                            size_t extra_data = _z_zbuf_len(&ztu->_common._zbuf);
+                            if (extra_data > 0) {
+                                if (_z_unicast_handle_remaining_data(ztu, curr_peer, extra_data) != _Z_RES_OK) {
+                                    // Irrecoverable error
+                                    ztu->_common._read_task_running = false;
+                                    continue;
+                                }
+                            }
                         }
                     } else if (res == -2) {
                         drop_peer = true;
                         to_drop = curr_list;
                         prev_drop = prev;
+                    } else if (res == -3) {
+                        // Irrecoverable error
+                        ztu->_common._read_task_running = false;
+                        continue;
                     }
                 }
                 // Progress list
