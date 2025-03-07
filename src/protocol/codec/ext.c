@@ -96,7 +96,7 @@ z_result_t _z_msg_ext_encode(_z_wbuf_t *wbf, const _z_msg_ext_t *ext, bool has_n
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
+            _Z_INFO("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
         } break;
     }
 
@@ -120,7 +120,7 @@ z_result_t _z_msg_ext_unknown_body_decode(_z_msg_ext_body_t *body, uint8_t enc, 
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
+            _Z_INFO("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
         } break;
     }
 

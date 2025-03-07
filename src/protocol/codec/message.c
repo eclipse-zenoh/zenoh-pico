@@ -697,7 +697,7 @@ z_result_t _z_scouting_message_encode(_z_wbuf_t *wbf, const _z_scouting_message_
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
+            _Z_INFO("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
@@ -726,7 +726,7 @@ z_result_t _z_scouting_message_decode_na(_z_scouting_message_t *msg, _z_zbuf_t *
                 } break;
 
                 default: {
-                    _Z_DEBUG("WARNING: Trying to decode scouting message with unknown ID(0x%x)", mid);
+                    _Z_INFO("WARNING: Trying to decode scouting message with unknown ID(0x%x)", mid);
                     ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
                     is_last = true;
                 } break;

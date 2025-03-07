@@ -56,6 +56,7 @@ bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_
 }
 
 void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src) {
+    _z_zbuf_clear(&src->flow_buff);
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_clear(&src->_dbuf_reliable);
     _z_wbuf_clear(&src->_dbuf_best_effort);
@@ -96,6 +97,9 @@ z_result_t _z_transport_unicast_peer_add(_z_transport_unicast_t *ztu, _z_transpo
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill peer data
+    peer->flow_state = _Z_FLOW_STATE_INACTIVE;
+    peer->flow_curr_size = 0;
+    peer->flow_buff = _z_zbuf_null();
     peer->_pending = false;
     peer->_socket = socket;
     peer->_remote_zid = param->_remote_zid;

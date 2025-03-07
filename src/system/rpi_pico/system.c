@@ -143,6 +143,16 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return xSemaphoreTakeRecursive(*m,
 
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return xSemaphoreGiveRecursive(*m) == pdTRUE ? 0 : -1; }
 
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) { return _z_mutex_init(m); }
+
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m) { return _z_mutex_drop(m); }
+
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m) { return _z_mutex_lock(m); }
+
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m) { return _z_mutex_try_lock(m); }
+
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) { return _z_mutex_unlock(m); }
+
 /*------------------ CondVar ------------------*/
 static UBaseType_t CONDVAR_MAX_WAITERS_COUNT = UINT_MAX;
 

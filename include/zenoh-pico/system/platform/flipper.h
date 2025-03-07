@@ -34,6 +34,7 @@ extern "C" {
 typedef FuriThread* _z_task_t;
 typedef uint32_t z_task_attr_t;
 typedef FuriMutex* _z_mutex_t;
+typedef void* _z_mutex_t;
 typedef void* _z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

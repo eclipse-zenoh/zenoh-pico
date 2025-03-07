@@ -88,7 +88,7 @@ void _z_msg_ext_copy(_z_msg_ext_t *clone, const _z_msg_ext_t *ext) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
+            _Z_INFO("WARNING: Trying to copy message extension with unknown encoding(%d)", enc);
         } break;
     }
 }
@@ -109,7 +109,7 @@ void _z_msg_ext_clear(_z_msg_ext_t *ext) {
         } break;
 
         default: {
-            _Z_DEBUG("WARNING: Trying to free message extension with unknown encoding(%d)", enc);
+            _Z_INFO("WARNING: Trying to free message extension with unknown encoding(%d)", enc);
         } break;
     }
 }
