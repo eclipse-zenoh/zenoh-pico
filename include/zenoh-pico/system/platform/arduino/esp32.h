@@ -29,6 +29,7 @@ extern "C" {
 typedef void *_z_task_t;
 typedef void *z_task_attr_t;  // Not used in ESP32
 typedef pthread_mutex_t _z_mutex_t;
+typedef pthread_mutex_t _z_mutex_rec_t;
 typedef pthread_cond_t _z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 

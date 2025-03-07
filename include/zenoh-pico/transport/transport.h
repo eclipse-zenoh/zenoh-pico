@@ -72,6 +72,13 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
                                                                     _z_transport_peer_entry_t *entry);
 
+typedef enum _z_unicast_peer_flow_state_e {
+    _Z_FLOW_STATE_INACTIVE = 0,
+    _Z_FLOW_STATE_PENDING_SIZE = 1,
+    _Z_FLOW_STATE_PENDING_DATA = 2,
+    _Z_FLOW_STATE_READY = 3,
+} _z_unicast_peer_flow_state_e;
+
 typedef struct {
     _z_sys_net_socket_t _socket;
     _z_id_t _remote_zid;
@@ -80,6 +87,9 @@ typedef struct {
     _z_zint_t _sn_rx_best_effort;
     volatile bool _received;
     bool _pending;
+    uint8_t flow_state;
+    uint16_t flow_curr_size;
+    _z_zbuf_t flow_buff;
 
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
@@ -123,7 +133,7 @@ typedef struct {
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
-    _z_mutex_t _mutex_peer;
+    _z_mutex_rec_t _mutex_peer;
 
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
@@ -212,9 +222,11 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _z_mutex_lock(&ztc->_mutex_rx); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_rx); }
-static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { (void)_z_mutex_lock(&ztc->_mutex_peer); }
+static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) {
+    (void)_z_mutex_rec_lock(&ztc->_mutex_peer);
+}
 static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) {
-    (void)_z_mutex_unlock(&ztc->_mutex_peer);
+    (void)_z_mutex_rec_unlock(&ztc->_mutex_peer);
 }
 #else
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {
