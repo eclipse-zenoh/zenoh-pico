@@ -24,6 +24,11 @@
 #include "zenoh-pico/transport/unicast/rx.h"
 #include "zenoh-pico/utils/logging.h"
 
+#define _Z_UNICAST_PEER_READ_STATUS_OK 0
+#define _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA -1
+#define _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED -2
+#define _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR -3
+
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
 z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
@@ -159,7 +164,6 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
     // If we receive fragmented data we have to store it on a separate buffer
     size_t read_size = 0;
     switch (ztu->_common._link._cap._flow) {
-        // DATA REMAINING CASE
         case Z_LINK_CAP_FLOW_STREAM:
             switch (peer->flow_state) {
                 case _Z_FLOW_STATE_READY:
@@ -171,14 +175,14 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
                     read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
-                        return -2;
+                        return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
                     } else if (read_size == SIZE_MAX) {
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         peer->flow_state = _Z_FLOW_STATE_PENDING_SIZE;
                         peer->flow_curr_size = _z_zbuf_read(&ztu->_common._zbuf);
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     // Get stream size
                     *to_read = _z_read_stream_size(&ztu->_common._zbuf);
@@ -190,19 +194,19 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
                         peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
                         if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
                             _Z_ERROR("Not enough memory to allocate flow state buffer");
-                            return -3;
+                            return _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR;
                         }
                         _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     break;
                 case _Z_FLOW_STATE_PENDING_SIZE:
                     read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
-                        return -2;
+                        return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
                     } else if (read_size == SIZE_MAX) {
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     peer->flow_curr_size += (uint16_t)(_z_zbuf_read(&ztu->_common._zbuf) << 8);
                     *to_read = peer->flow_curr_size;
@@ -211,23 +215,23 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
                         peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
                         if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
                             _Z_ERROR("Not enough memory to allocate flow state buffer");
-                            return -3;
+                            return _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR;
                         }
                         _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     break;
                 case _Z_FLOW_STATE_PENDING_DATA:
                     read_size = _z_link_socket_recv_zbuf(&ztu->_common._link, &peer->flow_buff, peer->_socket);
                     if (read_size == 0) {
                         _Z_DEBUG("Socket closed");
-                        return -2;
+                        return _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED;
                     } else if (read_size == SIZE_MAX) {
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     }
                     *to_read = peer->flow_curr_size;
                     if (_z_zbuf_len(&peer->flow_buff) < *to_read) {
-                        return -1;
+                        return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
                     } else {
                         peer->flow_state = _Z_FLOW_STATE_READY;
                     }
@@ -238,13 +242,13 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
         case Z_LINK_CAP_FLOW_DATAGRAM:
             *to_read = _z_link_socket_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, peer->_socket);
             if (*to_read == SIZE_MAX) {
-                return -1;
+                return _Z_UNICAST_PEER_READ_STATUS_PENDING_DATA;
             }
             break;
         default:
             break;
     }
-    return 0;
+    return _Z_UNICAST_PEER_READ_STATUS_OK;
 }
 
 void *_zp_unicast_read_task(void *ztu_arg) {
@@ -291,7 +295,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                     curr_peer->_pending = false;
                     // Read data from socket
                     int res = _z_unicast_peer_read(ztu, curr_peer, &to_read);
-                    if (res == 0) {  // Messages to process
+                    if (res == _Z_UNICAST_PEER_READ_STATUS_OK) {  // Messages to process
                         bool message_to_process = false;
                         do {
                             message_to_process = false;
@@ -315,11 +319,11 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                                 }
                             }
                         } while (message_to_process);
-                    } else if (res == -2) {  // Socket closed
+                    } else if (res == _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED) {
                         drop_peer = true;
                         to_drop = curr_list;
                         prev_drop = prev;
-                    } else if (res == -3) {  // Irrecoverable error
+                    } else if (res == _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR) {
                         ztu->_common._read_task_running = false;
                         continue;
                     }
