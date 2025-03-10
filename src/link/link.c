@@ -21,6 +21,17 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
+z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socket) {
+    _z_endpoint_t ep;
+    _Z_RETURN_IF_ERR(_z_endpoint_from_string(&ep, locator));
+    // For now only tcp endpoints are supported
+    if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
+        return _z_new_peer_tcp(&ep, socket);
+    } else {
+        return _Z_ERR_GENERIC;
+    }
+}
+
 z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
     z_result_t ret = _Z_RES_OK;
 
