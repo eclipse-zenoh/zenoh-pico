@@ -32,20 +32,29 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          ASAN_OPTIONS=detect_leaks=1:report_objects=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
-      
-      # - name: Install valgrind
-      #   run: sudo apt install -y valgrind
-      
-      # - name: Memory leak unit tests
-      #   run: |
-      #     cd build/tests
-      #     for test in *; do
-      #       if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
-      #         echo "Running Valgrind on $test"
-      #         valgrind --leak-check=full --error-exitcode=1 "ASAN=ON ./$test" || exit 1
-      #       fi
-      #     done
+          MAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
+  
+  memory_leak_unit_tests:
+    - name: Checkout code
+        uses: actions/checkout@v4
+
+    - name: Build tests
+      run: |
+        sudo apt install -y ninja-build
+        MAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
+
+    - name: Install valgrind
+      run: sudo apt install -y valgrind
+    
+    - name: Memory leak unit tests
+      run: |
+        cd build/tests
+        for test in *; do
+          if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
+            echo "Running Valgrind on $test"
+            valgrind --leak-check=full --error-exitcode=1 "./$test" || exit 1
+          fi
+        done
 
   check_format:
     name: Check codebase format with clang-format
@@ -367,7 +376,7 @@ jobs:
   ci:
     name: CI status checks
     runs-on: ubuntu-latest
-    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, multicast]
+    needs: [run_tests, memory_leak_unit_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, multicast]
     if: always()
     steps:
       - name: Check whether all jobs pass
