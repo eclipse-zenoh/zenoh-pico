@@ -32,20 +32,20 @@ jobs:
       - name: Build & run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
+          ASAN_OPTIONS=detect_leaks=1:report_objects=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
       
-      - name: Install valgrind
-        run: sudo apt install -y valgrind
+      # - name: Install valgrind
+      #   run: sudo apt install -y valgrind
       
-      - name: Memory leak unit tests
-        run: |
-          cd build/tests
-          for test in *; do
-            if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
-              echo "Running Valgrind on $test"
-              valgrind --leak-check=full --error-exitcode=1 "./$test" || exit 1
-            fi
-          done
+      # - name: Memory leak unit tests
+      #   run: |
+      #     cd build/tests
+      #     for test in *; do
+      #       if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
+      #         echo "Running Valgrind on $test"
+      #         valgrind --leak-check=full --error-exitcode=1 "ASAN=ON ./$test" || exit 1
+      #       fi
+      #     done
 
   check_format:
     name: Check codebase format with clang-format
