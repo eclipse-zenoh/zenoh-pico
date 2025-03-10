@@ -68,8 +68,9 @@ typedef struct {
 void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity);
 _z_int_void_map_t _z_int_void_map_make(size_t capacity);
 
-void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f);
+void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f, bool replace);
 void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k);
+_z_list_t *_z_int_void_map_get_all(const _z_int_void_map_t *map, size_t k);
 void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f);
 
 size_t _z_int_void_map_capacity(const _z_int_void_map_t *map);
@@ -113,10 +114,16 @@ void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter);
         return _z_int_void_map_make(_Z_DEFAULT_INT_MAP_CAPACITY);                                               \
     }                                                                                                           \
     static inline type *name##_intmap_insert(name##_intmap_t *m, size_t k, type *v) {                           \
-        return (type *)_z_int_void_map_insert(m, k, v, name##_intmap_entry_elem_free);                          \
+        return (type *)_z_int_void_map_insert(m, k, v, name##_intmap_entry_elem_free, true);                    \
+    }                                                                                                           \
+    static inline type *name##_intmap_insert_push(name##_intmap_t *m, size_t k, type *v) {                      \
+        return (type *)_z_int_void_map_insert(m, k, v, name##_intmap_entry_elem_free, false);                   \
     }                                                                                                           \
     static inline type *name##_intmap_get(const name##_intmap_t *m, size_t k) {                                 \
         return (type *)_z_int_void_map_get(m, k);                                                               \
+    }                                                                                                           \
+    static inline _z_list_t *name##_intmap_get_all(const name##_intmap_t *m, size_t k) {                        \
+        return _z_int_void_map_get_all(m, k);                                                                   \
     }                                                                                                           \
     static inline name##_intmap_t name##_intmap_clone(const name##_intmap_t *m) {                               \
         return _z_int_void_map_clone(m, name##_intmap_entry_elem_clone, name##_intmap_entry_elem_free);         \
