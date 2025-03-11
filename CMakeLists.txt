@@ -244,6 +244,7 @@ set(Z_FEATURE_SESSION_CHECK 1 CACHE STRING "Toggle publisher/querier session che
 set(Z_FEATURE_BATCHING 1 CACHE STRING "Toggle batching")
 set(Z_FEATURE_MATCHING 1 CACHE STRING "Toggle matching feature")
 set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
+set(Z_FEATURE_UNICAST_PEER 0 CACHE STRING "Toggle Unicast peer mode")
 set(Z_FEATURE_PAYLOAD_REUSE 0 CACHE STRING "Toggle payload reuse")
 set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 
