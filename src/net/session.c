@@ -72,12 +72,23 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
 }
 
 static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *locators, int *peer_op) {
-    z_result_t ret = _Z_RES_OK;
     char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
     char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
     if (connect == NULL && listen == NULL) {
         return _Z_RES_OK;
     }
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (listen != NULL) {
+        // Add listen as first endpoint
+        _z_string_t s = _z_string_copy_from_str(listen);
+        _Z_RETURN_IF_ERR(_z_string_svec_append(locators, &s, true));
+        _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+    } else {
+        *peer_op = _Z_PEER_OP_OPEN;
+    }
+    // Add open endpoints
+    return _z_config_get_all(config, locators, Z_CONFIG_CONNECT_KEY);
+#else
     uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
     if (listen != NULL) {
         if (connect == NULL) {
@@ -89,8 +100,8 @@ static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *l
     } else {
         *peer_op = _Z_PEER_OP_OPEN;
     }
-    ret = _z_config_get_all(config, locators, key);
-    return ret;
+    return _z_config_get_all(config, locators, key);
+#endif
 }
 
 static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mode) {
