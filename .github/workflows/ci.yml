@@ -55,7 +55,7 @@ jobs:
           for test in *_test; do
             if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
               echo "Running Valgrind on $test"
-              valgrind --leak-check=full --error-exitcode=1 "./$test" || exit 1
+              valgrind --leak-check=full --error-exitcode=1 "./$test" > /dev/null || exit 1
             fi
           done
 
