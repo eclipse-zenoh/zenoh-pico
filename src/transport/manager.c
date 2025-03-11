@@ -46,7 +46,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
             ret = _z_unicast_transport_create(zt, &zl, &tp_param);
             // Fill peer list
             if (ret == _Z_RES_OK) {
-                _z_transport_unicast_peer_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(&zl));
+                ret = _z_transport_unicast_peer_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(&zl));
             }
             break;
         }
@@ -87,7 +87,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
     switch (zl._cap._transport) {
         case Z_LINK_CAP_TRANSPORT_UNICAST: {
             _z_transport_unicast_establish_param_t tp_param = {0};
-            ret = _z_unicast_open_peer(&tp_param, &zl, local_zid, peer_op);
+            ret = _z_unicast_open_peer(&tp_param, &zl, local_zid, peer_op, NULL);
             if (ret != _Z_RES_OK) {
                 _z_link_clear(&zl);
                 return ret;
@@ -133,5 +133,32 @@ z_result_t _z_new_transport(_z_transport_t *zt, const _z_id_t *bs, const _z_stri
         ret = _z_new_transport_peer(zt, locator, bs, peer_op);
     }
 
+    return ret;
+}
+
+z_result_t _z_new_peer(_z_transport_t *zt, const _z_id_t *session_id, const _z_string_t *locator) {
+    z_result_t ret = _Z_RES_OK;
+    switch (zt->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE: {
+            _z_sys_net_socket_t socket = {0};
+            _Z_RETURN_IF_ERR(_z_open_socket(locator, &socket));
+            _z_transport_unicast_establish_param_t tp_param = {0};
+            ret = _z_unicast_open_peer(&tp_param, &zt->_transport._unicast._common._link, session_id, _Z_PEER_OP_OPEN,
+                                       &socket);
+            if (ret != _Z_RES_OK) {
+                _z_socket_close(&socket);
+                return ret;
+            }
+            ret = _z_socket_set_non_blocking(&socket);
+            if (ret != _Z_RES_OK) {
+                _z_socket_close(&socket);
+                return ret;
+            }
+            ret = _z_transport_unicast_peer_add(&zt->_transport._unicast, &tp_param, socket);
+        } break;
+
+        default:
+            break;
+    }
     return ret;
 }

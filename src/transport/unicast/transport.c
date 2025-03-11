@@ -48,6 +48,8 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     ztu->_common._read_task = NULL;
     ztu->_common._lease_task_running = false;
     ztu->_common._lease_task = NULL;
+    ztu->_common._accept_task_running = false;
+
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers
@@ -106,7 +108,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 }
 
 static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                            const _z_id_t *local_zid, z_whatami_t mode) {
+                                            const _z_id_t *local_zid, z_whatami_t mode, _z_sys_net_socket_t *socket) {
     _z_transport_message_t ism = _z_t_msg_make_init_syn(mode, *local_zid);
     param->_seq_num_res = ism._body._init._seq_num_res;  // The announced sn resolution
     param->_req_id_res = ism._body._init._req_id_res;    // The announced req id resolution
@@ -114,14 +116,14 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
 
     // Encode and send the message
     _Z_DEBUG("Sending Z_INIT(Syn)");
-    z_result_t ret = _z_link_send_t_msg(zl, &ism, NULL);
+    z_result_t ret = _z_link_send_t_msg(zl, &ism, socket);
     _z_t_msg_clear(&ism);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t iam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, NULL));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
         return _Z_ERR_MESSAGE_UNEXPECTED;
@@ -189,14 +191,14 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _z_t_msg_clear(&iam);
     // Encode and send the message
     _Z_DEBUG("Sending Z_OPEN(Syn)");
-    ret = _z_link_send_t_msg(zl, &osm, NULL);
+    ret = _z_link_send_t_msg(zl, &osm, socket);
     _z_t_msg_clear(&osm);
     if (ret != _Z_RES_OK) {
         return ret;
     }
     // Try to receive response
     _z_transport_message_t oam = {0};
-    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, NULL));
+    _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
@@ -290,11 +292,11 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
 
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
                                   const _z_id_t *local_zid) {
-    return _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_CLIENT);
+    return _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_CLIENT, NULL);
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid, int peer_op) {
+                                const _z_id_t *local_zid, int peer_op, _z_sys_net_socket_t *socket) {
     z_result_t ret = _Z_RES_OK;
 
     // Init sn tx
@@ -302,7 +304,7 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
     param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
 
     if (peer_op == _Z_PEER_OP_OPEN) {
-        ret = _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_PEER);
+        ret = _z_unicast_handshake_open(param, zl, local_zid, Z_WHATAMI_PEER, socket);
     } else {
         // Initialize common parameters
         param->_lease = Z_TRANSPORT_LEASE;
@@ -349,11 +351,12 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
-                                const _z_id_t *local_zid, int peer_op) {
+                                const _z_id_t *local_zid, int peer_op, _z_sys_net_socket_t *socket) {
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
     _ZP_UNUSED(peer_op);
+    _ZP_UNUSED(socket);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
