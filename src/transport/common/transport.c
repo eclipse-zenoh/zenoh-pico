@@ -22,6 +22,7 @@
 void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
+    ztc->_accept_task_running = false;
     if (ztc->_read_task != NULL) {
         ztc->_read_task_running = false;
         if (detach_tasks) {

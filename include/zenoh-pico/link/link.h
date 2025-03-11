@@ -163,6 +163,7 @@ typedef struct _z_link_t {
 
 void _z_link_clear(_z_link_t *zl);
 void _z_link_free(_z_link_t **zl);
+z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socket);
 z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator);
 z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator);
 
