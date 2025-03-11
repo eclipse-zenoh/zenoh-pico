@@ -48,6 +48,8 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     ztu->_common._read_task = NULL;
     ztu->_common._lease_task_running = false;
     ztu->_common._lease_task = NULL;
+    ztu->_common._accept_task_running = false;
+
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Initialize the read and write buffers

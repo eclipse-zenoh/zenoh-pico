@@ -27,7 +27,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
     _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);
     _z_sys_net_socket_t con_socket = {0};
 
-    while (true) {
+    while (ztu->_common._accept_task_running) {
         if (_z_transport_unicast_peer_list_len(ztu->_peers) < Z_LISTEN_MAX_CONNECTION_NB) {
             // Accept connection
             if (_z_socket_accept(&listen_socket, &con_socket) != _Z_RES_OK) {
@@ -62,7 +62,8 @@ static void *_zp_unicast_accept_task(void *ctx) {
 
 z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     // Init memory
-    _z_task_t task;
+    _z_task_t task = {0};
+    ztu->_common._accept_task_running = true;  // Init before z_task_init for concurrency issue
     // Init task
     if (_z_task_init(&task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
