@@ -52,7 +52,7 @@ jobs:
       - name: Memory leak unit tests
         run: |
           cd build/tests
-          for test in *; do
+          for test in *_test; do
             if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
               echo "Running Valgrind on $test"
               valgrind --leak-check=full --error-exitcode=1 "./$test" || exit 1
