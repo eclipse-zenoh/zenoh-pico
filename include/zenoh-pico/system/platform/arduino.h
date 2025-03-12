@@ -12,17 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
-#define ZENOH_PICO_SYSTEM_ARDUINO_OPENCR_TYPES_H
+#ifndef ZENOH_PICO_SYSTEM_ARDUINO_TYPES_H
+#define ZENOH_PICO_SYSTEM_ARDUINO_TYPES_H
 
 #include <stddef.h>
 #include <sys/time.h>
+
 
 #include "zenoh-pico/config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef void *_z_task_t;
@@ -37,6 +40,7 @@ typedef struct timeval z_time_t;
 typedef struct IPAddress IPAddress;    // Forward declaration to be used in __z_net_iptcp_addr_t
 typedef struct WiFiClient WiFiClient;  // Forward declaration to be used in _z_sys_net_socket_t
 typedef struct WiFiUDP WiFiUDP;        // Forward declaration to be used in _z_sys_net_socket_t
+typedef struct HardwareSerial HardwareSerial;    // Forward declaration to be used in _z_sys_net_socket_t
 
 typedef struct {
     union {
@@ -45,6 +49,9 @@ typedef struct {
 #endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         WiFiUDP *_udp;  // As pointer to cross the boundary between C and C++
+#endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        HardwareSerial *_serial;
 #endif
         bool _err;
     };
