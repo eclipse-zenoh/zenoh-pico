@@ -23,6 +23,7 @@
     "license": "Apache-2.0 OR EPL-2.0",
     "frameworks": [
         "arduino",
+	"libopencm3",
         "espidf",
         "mbed",
         "zephyr"
