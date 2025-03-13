@@ -1868,7 +1868,6 @@ void frame_message(void) {
     assert_eq_frame(&expected._body._frame, &decoded);
     _z_network_message_svec_clear(&msg);
     _z_arc_slice_svec_release(&arcs);
-    _z_t_msg_frame_clear(&decoded);
     _z_t_msg_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
@@ -1965,7 +1964,6 @@ void transport_message(void) {
     assert_eq_transport(&expected, &decoded);
     _z_network_message_svec_clear(&msg);
     _z_arc_slice_svec_release(&arcs);
-    _z_t_msg_clear(&decoded);
     _z_t_msg_clear(&expected);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
