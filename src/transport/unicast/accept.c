@@ -21,7 +21,7 @@
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
+#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
     _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);

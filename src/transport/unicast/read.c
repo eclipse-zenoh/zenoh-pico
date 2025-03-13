@@ -135,6 +135,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_uni
     return true;
 }
 
+#if Z_FEATURE_UNICAST_PEER == 1
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
@@ -250,6 +251,7 @@ static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicas
     }
     return _Z_UNICAST_PEER_READ_STATUS_OK;
 }
+#endif
 
 void *_zp_unicast_read_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
@@ -269,6 +271,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         // Read bytes from socket to the main buffer
         size_t to_read = 0;
 
+#if Z_FEATURE_UNICAST_PEER == 1
         if (mode == Z_WHATAMI_PEER) {
             // Wait for at least one peer
             _z_transport_peer_mutex_lock(&ztu->_common);
@@ -339,7 +342,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 _z_zbuf_reset(&ztu->_common._zbuf);
             }
             _z_transport_peer_mutex_unlock(&ztu->_common);
-        } else {
+        } else
+#endif
+        {
             // Retrieve data
             if (!_z_unicast_client_read(ztu, curr_peer, &to_read)) {
                 continue;
