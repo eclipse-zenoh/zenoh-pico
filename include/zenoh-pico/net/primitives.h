@@ -261,7 +261,8 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
  */
 _z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                 z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
-                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms);
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
+                                _z_encoding_t *encoding, z_reliability_t reliability);
 
 /**
  * Undeclare a :c:type:`_z_querier_t`.
