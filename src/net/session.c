@@ -154,8 +154,8 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         // Use first locator to open session
         _z_string_t *locator = _z_string_svec_get(&locators, 0);
         ret = _z_open_inner(zn, locator, zid, peer_op);
-        // Add other locators as peers if applicable
 #if Z_FEATURE_UNICAST_PEER == 1
+        // Add other locators as peers if applicable
         if ((ret == _Z_RES_OK) && (mode == Z_WHATAMI_PEER)) {
             for (size_t i = 1; i < len; i++) {
                 // Add peer
