@@ -139,7 +139,6 @@ typedef struct {
     _z_task_t *_lease_task;
     volatile bool _read_task_running;
     volatile bool _lease_task_running;
-    volatile bool _accept_task_running;
 #endif
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
