@@ -22,46 +22,46 @@
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_QUERY == 1 && Z_FEATURE_QUERYABLE == 1 && \
     Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_LOCAL_SUBSCRIBER == 0 && Z_FEATURE_UNICAST_PEER == 1 &&                 \
     defined Z_FEATURE_UNSTABLE_API
+typedef struct _node_ctx {
+    z_owned_config_t config;
+    const char *keyexpr_out;
+    int id;
+    int sub_msg_nb;
+    int qybl_msg_nb;
+} _node_ctx_t;
+
 const char *keyexpr_in = "test/**";
 const char *qybl_val = "Queryable data";
 const char *pub_val = "Publisher data";
 const int tx_nb = 5;
 const int rx_nb = 15;
-static int sub_msg_nb = 0;
-static int qybl_msg_nb = 0;
 
 void query_handler(z_loaned_query_t *query, void *ctx) {
-    int *id = (int *)ctx;
+    _node_ctx_t *node_ctx = (_node_ctx_t *)ctx;
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_query_keyexpr(query), &keystr);
     z_view_string_t params;
     z_query_parameters(query, &params);
-    printf(" >> [Queryable %d] Received ('%.*s': '%.*s')\n", *id, (int)z_string_len(z_loan(keystr)),
+    printf(" >> [Queryable %d] Received ('%.*s': '%.*s')\n", node_ctx->id, (int)z_string_len(z_loan(keystr)),
            z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(params)), z_string_data(z_loan(params)));
     // Reply value
     z_owned_bytes_t reply_payload;
     z_bytes_from_static_str(&reply_payload, qybl_val);
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
-    qybl_msg_nb++;
+    node_ctx->qybl_msg_nb++;
 }
 
 void pub_handler(z_loaned_sample_t *sample, void *ctx) {
-    int *id = (int *)ctx;
+    _node_ctx_t *node_ctx = (_node_ctx_t *)ctx;
     z_view_string_t keystr;
     z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
     z_owned_string_t value;
     z_bytes_to_string(z_sample_payload(sample), &value);
-    printf(">> [Subscriber %d] Received ('%.*s': '%.*s')\n", *id, (int)z_string_len(z_loan(keystr)),
+    printf(">> [Subscriber %d] Received ('%.*s': '%.*s')\n", node_ctx->id, (int)z_string_len(z_loan(keystr)),
            z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(value)), z_string_data(z_loan(value)));
     z_drop(z_move(value));
-    sub_msg_nb++;
+    node_ctx->sub_msg_nb++;
 }
-
-typedef struct _node_ctx {
-    z_owned_config_t config;
-    const char *keyexpr_out;
-    int id;
-} _node_ctx_t;
 
 void *node_task(void *ptr) {
     _node_ctx_t *ctx = (_node_ctx_t *)ptr;
@@ -93,7 +93,7 @@ void *node_task(void *ptr) {
     // Declare subscriber
     printf("Declaring Subscriber on '%s'...\n", keyexpr_in);
     z_owned_closure_sample_t sub_cb;
-    z_closure(&sub_cb, pub_handler, NULL, &ctx->id);
+    z_closure(&sub_cb, pub_handler, NULL, ctx);
     if (z_declare_background_subscriber(z_loan(s), z_loan(sub_qybl_ke), z_move(sub_cb), NULL) != Z_OK) {
         printf("Unable to declare subscriber.\n");
         return NULL;
@@ -101,7 +101,7 @@ void *node_task(void *ptr) {
     // Declare queryable
     printf("Creating Queryable on '%s'...\n", keyexpr_in);
     z_owned_closure_query_t qybl_cb;
-    z_closure(&qybl_cb, query_handler, NULL, &ctx->id);
+    z_closure(&qybl_cb, query_handler, NULL, ctx);
     if (z_declare_background_queryable(z_loan(s), z_loan(sub_qybl_ke), z_move(qybl_cb), NULL) != Z_OK) {
         printf("Unable to create queryable.\n");
         return NULL;
@@ -167,13 +167,13 @@ void *node_task(void *ptr) {
     }
     // Wait for sub & queryable data
     while (true) {
-        if ((sub_msg_nb >= rx_nb) && (qybl_msg_nb >= rx_nb)) {
+        if ((ctx->sub_msg_nb >= rx_nb) && (ctx->qybl_msg_nb >= rx_nb)) {
             break;
         }
         z_sleep_s(1);
     }
-    // Wait for queries to resolve (weak rc segfault)
-    z_sleep_s(5);
+    // Wait for other threads to resolve properly
+    z_sleep_s(1);
     // Clean up
     z_drop(z_move(pub));
     z_drop(z_move(querier));
@@ -184,11 +184,11 @@ void *node_task(void *ptr) {
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
-    // Create node context
-    _node_ctx_t node_ctx_0 = {.keyexpr_out = "test/A", .id = 0};
-    _node_ctx_t node_ctx_1 = {.keyexpr_out = "test/B", .id = 1};
-    _node_ctx_t node_ctx_2 = {.keyexpr_out = "test/C", .id = 2};
-    _node_ctx_t node_ctx_3 = {.keyexpr_out = "test/D", .id = 3};
+    // Create node context for functional test
+    _node_ctx_t node_ctx_0 = {.keyexpr_out = "test/A", .id = 0, .qybl_msg_nb = 0, .sub_msg_nb = 0};
+    _node_ctx_t node_ctx_1 = {.keyexpr_out = "test/B", .id = 1, .qybl_msg_nb = 0, .sub_msg_nb = 0};
+    _node_ctx_t node_ctx_2 = {.keyexpr_out = "test/C", .id = 2, .qybl_msg_nb = 0, .sub_msg_nb = 0};
+    _node_ctx_t node_ctx_3 = {.keyexpr_out = "test/D", .id = 3, .qybl_msg_nb = 0, .sub_msg_nb = 0};
     // Init config
     z_config_default(&node_ctx_0.config);
     z_config_default(&node_ctx_1.config);
@@ -211,11 +211,11 @@ int main(int argc, char **argv) {
     // Init threads in a staggered manner to let time for sockets to establish
     pthread_t task0, task1, task2, task3;
     pthread_create(&task0, NULL, node_task, &node_ctx_0);
-    z_sleep_s(1);
+    z_sleep_ms(100);
     pthread_create(&task1, NULL, node_task, &node_ctx_1);
-    z_sleep_s(1);
+    z_sleep_ms(100);
     pthread_create(&task2, NULL, node_task, &node_ctx_2);
-    z_sleep_s(1);
+    z_sleep_ms(100);
     pthread_create(&task3, NULL, node_task, &node_ctx_3);
     // Wait a bit
     z_sleep_s(20);

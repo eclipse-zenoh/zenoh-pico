@@ -22,14 +22,13 @@
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
-static bool accept_task_is_running = false;
-
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
     _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);
     _z_sys_net_socket_t con_socket = {0};
+    bool *accept_task_is_running = ztu->_common._accept_task_running;
 
-    while (accept_task_is_running) {
+    while (*accept_task_is_running) {
         if (_z_transport_unicast_peer_list_len(ztu->_peers) < Z_LISTEN_MAX_CONNECTION_NB) {
             // Accept connection
             if (_z_socket_accept(&listen_socket, &con_socket) != _Z_RES_OK) {
@@ -60,13 +59,18 @@ static void *_zp_unicast_accept_task(void *ctx) {
             z_sleep_s(1);
         }
     }
+    z_free(accept_task_is_running);
     return NULL;
 }
 
 z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     // Init memory
     _z_task_t task = {0};
-    accept_task_is_running = true;  // Init first for concurrency issues
+    ztu->_common._accept_task_running = (bool *)z_malloc(sizeof(bool));
+    if (ztu->_common._accept_task_running == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    *ztu->_common._accept_task_running = true;  // Init first for concurrency issues
     // Init task
     if (_z_task_init(&task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
         return _Z_ERR_SYSTEM_TASK_FAILED;
@@ -76,7 +80,7 @@ z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     return _Z_RES_OK;
 }
 
-void _zp_unicast_stop_accept_task(void) { accept_task_is_running = false; }
+void _zp_unicast_stop_accept_task(_z_transport_common_t *ztc) { ztc->_accept_task_running = false; }
 
 #else
 
