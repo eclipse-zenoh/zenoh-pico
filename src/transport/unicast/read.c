@@ -331,10 +331,13 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         continue;
                     }
                 }
+                // Update previous only if current node is not dropped
+                if (!drop_peer) {
+                    prev = curr_list;
+                }
                 // Progress list
-                prev = curr_list;
                 curr_list = _z_transport_unicast_peer_list_tail(curr_list);
-                // Drop if needed
+                // Drop peer if needed
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
                     ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev_drop);

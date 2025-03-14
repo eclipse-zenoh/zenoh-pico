@@ -127,8 +127,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                         to_drop = curr_list;
                         prev_drop = prev;
                     }
+                    // Update previous only if current node is not dropped
+                    if (!drop_peer) {
+                        prev = curr_list;
+                    }
                     // Progress list
-                    prev = curr_list;
                     curr_list = _z_transport_unicast_peer_list_tail(curr_list);
                     // Drop if needed
                     if (drop_peer) {
