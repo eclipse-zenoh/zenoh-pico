@@ -28,7 +28,7 @@ typedef struct {
     size_t pkt_len;
 } z_stats_t;
 
-#if Z_FEATURE_SUBSCRIPTION == 1
+#if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_MULTI_THREAD == 1
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, unsigned long *freq, bool *is_peer);
 

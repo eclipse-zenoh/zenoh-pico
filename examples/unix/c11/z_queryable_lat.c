@@ -28,7 +28,7 @@ typedef struct {
 
 #define TEST_RUN_TIME_S 20
 
-#if Z_FEATURE_QUERYABLE == 1
+#if Z_FEATURE_QUERYABLE == 1 && Z_FEATURE_MULTI_THREAD == 1
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, size_t *pkt_size);
 
