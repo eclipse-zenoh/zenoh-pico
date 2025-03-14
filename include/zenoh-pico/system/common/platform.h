@@ -51,8 +51,8 @@
 #elif defined(ZENOH_ARDUINO)
 #include "zenoh-pico/system/platform/arduino.h"
 #else
-#include "zenoh-pico/system/platform/void.h"
-#error "Unknown platform"
+#include "generic.h"
+//#error "Unknown platform"
 #endif
 
 #ifdef __cplusplus

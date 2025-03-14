@@ -119,7 +119,23 @@ elif FRAMEWORK == 'mbed':
                   "-<system/windows/>",
                   "-<system/zephyr/>"]
     CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
-
+else:
+    print(" ======================> SELECTED 2")
+    SRC_FILTER = ["+<*>",
+                    "-<tests/>",
+                    "-<example/>",
+                    "-<system/arduino/esp32>",
+                    "-<system/arduino/opencr>",
+                    "-<system/emscripten/>",
+                    "-<system/espidf>",
+                    "-<system/freertos_plus_tcp/>",
+                    "-<system/rpi_pico/>",
+                    "-<system/mbed/>",
+                    "-<system/unix/>",
+                    "-<system/flipper/>",
+                    "-<system/windows/>",
+                    "-<system/zephyr/>"]
+    CPPDEFINES = ["ZENOH_ARDUINO_STM32", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
 env.Append(SRC_FILTER=SRC_FILTER)
 env.Append(CPPDEFINES=CPPDEFINES)
 
