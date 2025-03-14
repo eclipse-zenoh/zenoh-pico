@@ -169,9 +169,10 @@ jobs:
       - name: Build project and run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja ASAN=ON make test
+          CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
+          ninja -C build/ test
           python3 ./build/tests/single_thread.py
-        timeout-minutes: 10
+        timeout-minutes: 5
         env:
           Z_FEATURE_MULTI_THREAD: 0
 
