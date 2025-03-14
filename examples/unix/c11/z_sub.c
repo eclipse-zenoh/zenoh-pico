@@ -24,6 +24,8 @@
 
 static int msg_nb = 0;
 
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, int *n);
+
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
     (void)(ctx);
     z_view_string_t keystr;
@@ -37,50 +39,15 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    const char *keyexpr = "demo/example/**";
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
+    char *keyexpr = "demo/example/**";
     int n = 0;
-
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
 
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &n);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -123,6 +90,40 @@ int main(int argc, char **argv) {
     z_drop(z_move(s));
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, int *n) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:e:m:l:n:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *ke = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'n':
+                *n = atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'l' || optopt == 'n') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");

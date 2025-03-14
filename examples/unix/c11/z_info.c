@@ -27,43 +27,15 @@ void print_zid(const z_id_t *id, void *ctx) {
     printf("\n");
 }
 
+static int parse_args(int argc, char **argv, z_owned_config_t *config);
+
 int main(int argc, char **argv) {
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
-
-    int opt;
-    while ((opt = getopt(argc, argv, "e:m:l:")) != -1) {
-        switch (opt) {
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case '?':
-                if (optopt == 'e' || optopt == 'm' || optopt == 'l') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
-
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -97,4 +69,33 @@ int main(int argc, char **argv) {
     z_info_peers_zid(z_loan(s), z_move(callback2));
 
     z_drop(z_move(s));
+}
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config) {
+    int opt;
+    while ((opt = getopt(argc, argv, "e:m:l:")) != -1) {
+        switch (opt) {
+            case 'e':
+                if (optarg != NULL) {
+                    zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                }
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case '?':
+                if (optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
 }

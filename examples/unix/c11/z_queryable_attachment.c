@@ -24,9 +24,12 @@ typedef struct kv_pair_t {
 } kv_pair_t;
 
 #if Z_FEATURE_QUERYABLE == 1
-const char *keyexpr = "demo/example/zenoh-pico-queryable";
-const char *value = "Queryable from Pico!";
-static int msg_nb = 0;
+char *keyexpr = "demo/example/zenoh-pico-queryable";
+char *const default_value = "Queryable from Pico!";
+char *value = default_value;
+int msg_nb = 0;
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, char **val, int *n);
 
 void print_attachment(const kv_pair_t *kvp, size_t len) {
     printf("    with attachment:\n");
@@ -114,53 +117,13 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
     int n = 0;
-
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:n:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
-                    optopt == 'n') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
 
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+    int ret = parse_args(argc, argv, &config, &keyexpr, &value, &n);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -206,6 +169,44 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, char **val, int *n) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *ke = optarg;
+                break;
+            case 'v':
+                *val = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'n':
+                *n = atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERYABLE but this example requires it.\n");

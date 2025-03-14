@@ -19,52 +19,19 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_QUERYABLE == 1
-const char *keyexpr = "demo/example/zenoh-pico-queryable";
-const char *value = "Queryable from Pico!";
+char *keyexpr = "demo/example/zenoh-pico-queryable";
+char *const default_value = "Queryable from Pico!";
+char *value = default_value;
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, char **val);
 
 int main(int argc, char **argv) {
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
-
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
-
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &value);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -132,6 +99,40 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, char **val) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *ke = optarg;
+                break;
+            case 'v':
+                *val = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_QUERYABLE but this example requires it.\n");

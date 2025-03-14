@@ -19,43 +19,21 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-int main(int argc, char **argv) {
-    const char *keyexpr = "demo/example/**";
-    char *locator = NULL;
-    size_t interval = 5000;
-    size_t size = 3;
 
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:i:s:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                locator = optarg;
-                break;
-            case 'i':
-                interval = (size_t)atoi(optarg);
-                break;
-            case 's':
-                size = (size_t)atoi(optarg);
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'i' || optopt == 's') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, size_t *interval,
+                      size_t *ring_size);
+
+int main(int argc, char **argv) {
+    char *keyexpr = "demo/example/**";
+    size_t interval = 5000;
+    size_t ring_size = 3;
 
     z_owned_config_t config;
     z_config_default(&config);
-    if (locator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, locator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &interval, &ring_size);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -75,7 +53,7 @@ int main(int argc, char **argv) {
     printf("Declaring Subscriber on '%s'...\n", keyexpr);
     z_owned_closure_sample_t closure;
     z_owned_ring_handler_sample_t handler;
-    z_ring_channel_sample_new(&closure, &handler, size);
+    z_ring_channel_sample_new(&closure, &handler, ring_size);
     z_owned_subscriber_t sub;
     z_view_keyexpr_t ke;
     if (z_view_keyexpr_from_str(&ke, keyexpr) < 0) {
@@ -87,7 +65,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    printf("Pulling data every %zu ms... Ring size: %zd\n", interval, size);
+    printf("Pulling data every %zu ms... Ring size: %zd\n", interval, ring_size);
     z_owned_sample_t sample;
     while (true) {
         z_result_t res;
@@ -116,6 +94,45 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, size_t *interval,
+                      size_t *ring_size) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:e:m:l:i:s:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *keyexpr = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'i':
+                *interval = (size_t)atoi(optarg);
+                break;
+            case 's':
+                *ring_size = (size_t)atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'i' || optopt == 's' || optopt == 'e' || optopt == 'm' ||
+                    optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SUBSCRIPTION but this example requires it.\n");

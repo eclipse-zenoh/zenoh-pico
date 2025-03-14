@@ -19,6 +19,9 @@
 
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined Z_FEATURE_UNSTABLE_API
 
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **selector, char **value, int *n,
+                      int *timeout_ms, bool *add_matching_listener);
+
 #if Z_FEATURE_MATCHING == 1
 void matching_status_handler(const z_matching_status_t *matching_status, void *arg) {
     (void)arg;
@@ -31,63 +34,18 @@ void matching_status_handler(const z_matching_status_t *matching_status, void *a
 #endif
 
 int main(int argc, char **argv) {
-    const char *selector = "demo/example/**";
-    const char *mode = "client";
-    const char *clocator = NULL;
-    const char *llocator = NULL;
-    const char *value = NULL;
+    char *selector = "demo/example/**";
+    char *value = NULL;
     int n = INT_MAX;
     int timeout_ms = 0;
     bool add_matching_listener = false;
 
-    int opt;
-    while ((opt = getopt(argc, argv, "s:e:m:v:l:n:t:a")) != -1) {
-        switch (opt) {
-            case 's':
-                selector = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case 't':
-                timeout_ms = atoi(optarg);
-                break;
-            case 'a':
-                add_matching_listener = true;
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
-                    optopt == 'n' || optopt == 't') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
-
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &selector, &value, &n, &timeout_ms, &add_matching_listener);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -190,6 +148,51 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **selector, char **value, int *n,
+                      int *timeout_ms, bool *add_matching_listener) {
+    int opt;
+    while ((opt = getopt(argc, argv, "s:v:e:m:l:n:t:a")) != -1) {
+        switch (opt) {
+            case 's':
+                *selector = optarg;
+                break;
+            case 'v':
+                *value = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'n':
+                *n = atoi(optarg);
+                break;
+            case 't':
+                *timeout_ms = atoi(optarg);
+                break;
+            case 'a':
+                *add_matching_listener = true;
+                break;
+            case '?':
+                if (optopt == 's' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 't' || optopt == 'n') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf(

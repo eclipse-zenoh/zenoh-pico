@@ -86,6 +86,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
     }
     switch (zl._cap._transport) {
         case Z_LINK_CAP_TRANSPORT_UNICAST: {
+#if Z_FEATURE_UNICAST_PEER == 1
             _z_transport_unicast_establish_param_t tp_param = {0};
             ret = _z_unicast_open_peer(&tp_param, &zl, local_zid, peer_op, NULL);
             if (ret != _Z_RES_OK) {
@@ -103,6 +104,9 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                     _zp_unicast_start_accept_task(&zt->_transport._unicast);
                 }
             }
+#else
+            ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
+#endif
             break;
         }
         case Z_LINK_CAP_TRANSPORT_RAWETH:

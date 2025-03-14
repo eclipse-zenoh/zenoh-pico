@@ -52,13 +52,20 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     unsigned int nlen = sizeof(naddr);
     int con_socket = accept(sock_in->_fd, &naddr, &nlen);
     if (con_socket < 0) {
-        return _Z_ERR_GENERIC;
+        if (errno == EBADF) {
+            return _Z_ERR_INVALID;
+        } else {
+            return _Z_ERR_GENERIC;
+        }
     }
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
 }
 
-void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_socket_close(_z_sys_net_socket_t *sock) {
+    shutdown(sock->_fd, SHUT_RDWR);
+    close(sock->_fd);
+}
 
 #if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {

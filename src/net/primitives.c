@@ -522,10 +522,13 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 /*------------------  Querier Declaration ------------------*/
 _z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                 z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
-                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms) {
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
+                                _z_encoding_t *encoding, z_reliability_t reliability) {
     // Allocate querier
     _z_querier_t ret;
     // Fill querier
+    ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    ret.reliability = reliability;
     ret._key = _z_keyexpr_duplicate(&keyexpr);
     ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     ret._consolidation_mode = consolidation_mode;
