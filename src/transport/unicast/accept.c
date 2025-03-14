@@ -29,41 +29,39 @@ static void *_zp_unicast_accept_task(void *ctx) {
     bool *accept_task_is_running = ztu->_common._accept_task_running;
 
     while (*accept_task_is_running) {
-        if (_z_transport_unicast_peer_list_len(ztu->_peers) < Z_LISTEN_MAX_CONNECTION_NB) {
-            // Accept connection
-            z_result_t ret = _z_socket_accept(&listen_socket, &con_socket);
-            if (ret != _Z_RES_OK) {
-                if (ret == _Z_ERR_INVALID) {
-                    _Z_INFO("Accept socket was closed");
-                    break;
-                } else {
-                    _Z_INFO("Connection accept failed");
-                    continue;
-                }
-            }
-            _z_transport_unicast_establish_param_t param = {0};
-            // Start handshake
-            ret = _z_unicast_handshake_listen(&param, &ztu->_common._link,
-                                              &_Z_RC_IN_VAL(ztu->_common._session)->_local_zid, Z_WHATAMI_PEER,
-                                              &con_socket);
-            if (ret != _Z_RES_OK) {
-                _Z_INFO("Connection accept handshake failed with error %d", ret);
-                _z_socket_close(&con_socket);
+        // Accept connection
+        z_result_t ret = _z_socket_accept(&listen_socket, &con_socket);
+        if (ret != _Z_RES_OK) {
+            if (ret == _Z_ERR_INVALID) {
+                _Z_INFO("Accept socket was closed");
+                break;
+            } else {
+                _Z_INFO("Connection accept failed");
                 continue;
             }
-            // Set socket as non blocking
-            if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
-                _Z_INFO("Failed to set socket non blocking");
-                _z_socket_close(&con_socket);
-                continue;
-            }
-            // Add peer
-            _z_transport_unicast_peer_add(ztu, &param, con_socket);
-        } else {
-            _Z_DEBUG("Accept task max connections currently reached");
-            // Wait for connections to drop
-            z_sleep_s(1);
         }
+        if (_z_transport_unicast_peer_list_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
+            _Z_INFO("Refusing connection as max connections currently reached");
+            _z_socket_close(&con_socket);
+            continue;
+        }
+        _z_transport_unicast_establish_param_t param = {0};
+        // Start handshake
+        ret = _z_unicast_handshake_listen(&param, &ztu->_common._link, &_Z_RC_IN_VAL(ztu->_common._session)->_local_zid,
+                                          Z_WHATAMI_PEER, &con_socket);
+        if (ret != _Z_RES_OK) {
+            _Z_INFO("Connection accept handshake failed with error %d", ret);
+            _z_socket_close(&con_socket);
+            continue;
+        }
+        // Set socket as non blocking
+        if (_z_socket_set_non_blocking(&con_socket) != _Z_RES_OK) {
+            _Z_INFO("Failed to set socket non blocking");
+            _z_socket_close(&con_socket);
+            continue;
+        }
+        // Add peer
+        _z_transport_unicast_peer_add(ztu, &param, con_socket);
     }
     z_free(accept_task_is_running);
     return NULL;
