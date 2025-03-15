@@ -237,5 +237,8 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 
-void _z_multicast_transport_clear(_z_transport_t *zt) { _ZP_UNUSED(zt); }
+void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
+    _ZP_UNUSED(zt);
+    _ZP_UNUSED(detach_tasks);
+}
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1

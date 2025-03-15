@@ -598,7 +598,7 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_
         ret = _Z_ERR_GENERIC;
     }
 
-    return _z_connect_serial(*sock);
+    return (ret == _Z_RES_OK ? _z_connect_serial(*sock) : ret);
 }
 
 z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
