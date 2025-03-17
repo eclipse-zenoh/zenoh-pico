@@ -76,9 +76,7 @@ static int parse_args(int argc, char **argv, z_owned_config_t *config) {
     while ((opt = getopt(argc, argv, "e:m:l:")) != -1) {
         switch (opt) {
             case 'e':
-                if (optarg != NULL) {
-                    zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
-                }
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
                 break;
             case 'm':
                 zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
