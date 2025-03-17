@@ -181,10 +181,8 @@ void *node_task(void *ptr) {
     return NULL;
 }
 
-int main(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    // Create node context for functional test
+static void test_packet_transmission(void) {
+    // Create node context
     _node_ctx_t node_ctx_0 = {.keyexpr_out = "test/A", .id = 0, .qybl_msg_nb = 0, .sub_msg_nb = 0};
     _node_ctx_t node_ctx_1 = {.keyexpr_out = "test/B", .id = 1, .qybl_msg_nb = 0, .sub_msg_nb = 0};
     _node_ctx_t node_ctx_2 = {.keyexpr_out = "test/C", .id = 2, .qybl_msg_nb = 0, .sub_msg_nb = 0};
@@ -224,6 +222,73 @@ int main(int argc, char **argv) {
     pthread_join(task1, NULL);
     pthread_join(task2, NULL);
     pthread_join(task3, NULL);
+}
+
+static bool test_peer_connection(void) {
+    // Init config
+    z_owned_config_t config;
+    z_config_default(&config);
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, "tcp/127.0.0.1:7447");
+    // Open main session
+    z_owned_session_t s;
+    if (z_open(&s, z_move(config), NULL) != Z_OK) {
+        printf("Unable to open main session!\n");
+        return false;
+    }
+    if (zp_start_read_task(z_loan_mut(s), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(s), NULL) != Z_OK) {
+        printf("Unable to start read and lease tasks\n");
+        z_session_drop(z_session_move(&s));
+        return NULL;
+    }
+    z_owned_session_t sess_array[11];
+    z_owned_config_t cfg_array[11];
+    // // Open max peers
+    for (int i = 0; i < Z_LISTEN_MAX_CONNECTION_NB; i++) {
+        z_config_default(&cfg_array[i]);
+        zp_config_insert(z_loan_mut(cfg_array[i]), Z_CONFIG_MODE_KEY, "peer");
+        zp_config_insert(z_loan_mut(cfg_array[i]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
+        if (z_open(&sess_array[i], z_move(cfg_array[i]), NULL) != Z_OK) {
+            printf("Unable to open peer session!\n");
+            return false;
+        }
+        z_sleep_ms(100);
+    }
+    // Fail to open a new one
+    z_config_default(&cfg_array[10]);
+    zp_config_insert(z_loan_mut(cfg_array[10]), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(cfg_array[10]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
+    if (z_open(&sess_array[10], z_move(cfg_array[10]), NULL) == Z_OK) {
+        printf("Should not have been able to open this session\n");
+        return false;
+    }
+    // Close first session
+    z_drop(z_move(sess_array[0]));
+    z_sleep_ms(100);
+    // Alternate opening and closing first session a few times
+    for (int i = 0; i < 5; i++) {
+        z_config_default(&cfg_array[0]);
+        zp_config_insert(z_loan_mut(cfg_array[0]), Z_CONFIG_MODE_KEY, "peer");
+        zp_config_insert(z_loan_mut(cfg_array[0]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
+        if (z_open(&sess_array[0], z_move(cfg_array[0]), NULL) != Z_OK) {
+            printf("Unable to open peer session!\n");
+            return false;
+        }
+        z_sleep_ms(100);
+        z_drop(z_move(sess_array[0]));
+        z_sleep_ms(100);
+    }
+    z_drop(z_move(s));
+    return true;
+}
+
+int main(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
+    test_packet_transmission();
+    if (!test_peer_connection()) {
+        return -1;
+    }
     return 0;
 }
 
