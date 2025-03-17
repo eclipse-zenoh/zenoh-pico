@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -39,14 +39,19 @@ void query_handler(z_loaned_query_t *query, void *ctx) {
     z_owned_bytes_t reply_payload;
     z_bytes_from_static_buf(&reply_payload, stats->payload, stats->payload_len);
     z_query_reply(query, z_query_keyexpr(query), z_move(reply_payload), NULL);
+    z_drop(z_move(reply_payload));
 }
 
-void drop_stats(void *context) { free(context); }
+void drop_stats(void *context) {
+    z_stats_t *stats = (z_stats_t *)context;
+    free(stats->payload);
+    free(context);
+}
 
 void *stop_task(void *ctx) {
     z_sleep_s(TEST_RUN_TIME_S);
-    bool *stop_flag = (bool *)ctx;
-    *stop_flag = true;
+    _Atomic int *stop_flag = (_Atomic int *)ctx;
+    atomic_store_explicit(stop_flag, 1, memory_order_relaxed);
     return NULL;
 }
 
@@ -90,14 +95,18 @@ int main(int argc, char **argv) {
         printf("Unable to create queryable.\n");
         return -1;
     }
-    bool stop_flag = false;
+    _Atomic int stop_flag;
+    atomic_store_explicit(&stop_flag, 0, memory_order_relaxed);
     pthread_t task;
     pthread_create(&task, NULL, stop_task, &stop_flag);
 
     // Listen until stopped
-    while (!stop_flag) {
+    while (atomic_load_explicit(&stop_flag, memory_order_relaxed) == 0) {
+        z_sleep_s(1);
     }
+    pthread_join(task, NULL);
     // Clean up
+    z_drop(z_move(qable));
     z_drop(z_move(s));
     exit(0);
 }

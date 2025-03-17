@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -241,8 +241,8 @@ static bool test_peer_connection(void) {
         z_session_drop(z_session_move(&s));
         return NULL;
     }
-    z_owned_session_t sess_array[11];
-    z_owned_config_t cfg_array[11];
+    z_owned_session_t sess_array[Z_LISTEN_MAX_CONNECTION_NB + 1];
+    z_owned_config_t cfg_array[Z_LISTEN_MAX_CONNECTION_NB + 1];
     // // Open max peers
     for (int i = 0; i < Z_LISTEN_MAX_CONNECTION_NB; i++) {
         z_config_default(&cfg_array[i]);
@@ -255,10 +255,10 @@ static bool test_peer_connection(void) {
         z_sleep_ms(100);
     }
     // Fail to open a new one
-    z_config_default(&cfg_array[10]);
-    zp_config_insert(z_loan_mut(cfg_array[10]), Z_CONFIG_MODE_KEY, "peer");
-    zp_config_insert(z_loan_mut(cfg_array[10]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
-    if (z_open(&sess_array[10], z_move(cfg_array[10]), NULL) == Z_OK) {
+    z_config_default(&cfg_array[Z_LISTEN_MAX_CONNECTION_NB]);
+    zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_MODE_KEY, "peer");
+    zp_config_insert(z_loan_mut(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7447");
+    if (z_open(&sess_array[Z_LISTEN_MAX_CONNECTION_NB], z_move(cfg_array[Z_LISTEN_MAX_CONNECTION_NB]), NULL) == Z_OK) {
         printf("Should not have been able to open this session\n");
         return false;
     }

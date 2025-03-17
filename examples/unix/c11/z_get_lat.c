@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -92,13 +92,13 @@ int main(int argc, char **argv) {
     }
     unsigned long prev_val = sync_tx_rx;
     z_owned_closure_reply_t callback;
-    z_closure(&callback, reply_handler, NULL, NULL);
 
     // Send packets
     if (warmup_ms) {
         z_clock_t warmup_start = z_clock_now();
         unsigned long elapsed_us = 0;
         while (elapsed_us < warmup_ms * 1000) {
+            z_closure(&callback, reply_handler, NULL, NULL);
             if (z_querier_get(z_loan(que), NULL, z_move(callback), NULL) != 0) {
                 printf("Tx failed");
                 continue;
@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
     unsigned long *results = z_malloc(sizeof(unsigned long) * ping_nb);
     for (unsigned int i = 0; i < ping_nb; i++) {
         z_clock_t measure_start = z_clock_now();
+        z_closure(&callback, reply_handler, NULL, NULL);
         if (z_querier_get(z_loan(que), NULL, z_move(callback), NULL) != 0) {
             printf("Tx failed");
             continue;
