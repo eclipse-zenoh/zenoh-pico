@@ -149,7 +149,7 @@ size_t _z_read_exact_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len
 
     do {
         size_t rb = _z_read_ws(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
