@@ -44,6 +44,12 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     if (con_socket < 0) {
         return _Z_ERR_GENERIC;
     }
+    // Set socket options
+    TickType_t receive_timeout = pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT);
+    if (FreeRTOS_setsockopt(con_socket, 0, FREERTOS_SO_RCVTIMEO, &receive_timeout, 0) != 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Note socket
     sock_out->_socket = con_socket;
     return _Z_RES_OK;
 }
