@@ -188,11 +188,11 @@ int main(int argc, char **argv) {
 #if Z_FEATURE_BATCHING == 1
     if (batch_size > 0) zp_batch_start(z_loan(s));
 #endif
+    z_owned_bytes_t p;
     while (!stop_flag) {
         // Clone payload
-        z_owned_bytes_t p;
         z_bytes_clone(&p, z_loan(payload));
-        z_publisher_put(z_loan(pub), z_move(payload), NULL);
+        z_publisher_put(z_loan(pub), z_move(p), NULL);
         atomic_fetch_add_explicit(&context->count, 1, memory_order_relaxed);
     }
 #if Z_FEATURE_BATCHING == 1

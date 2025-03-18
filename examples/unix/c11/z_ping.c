@@ -107,11 +107,13 @@ int main(int argc, char** argv) {
     unsigned long prev_val = sync_tx_rx;
     z_owned_bytes_t payload;
     z_bytes_from_buf(&payload, data, pkt_size, NULL, NULL);
+    z_owned_bytes_t curr_payload;
     if (warmup_ms) {
         z_clock_t warmup_start = z_clock_now();
         unsigned long elapsed_us = 0;
         while (elapsed_us < warmup_ms * 1000) {
-            if (z_publisher_put(z_loan(pub), z_move(payload), NULL) != _Z_RES_OK) {
+            z_bytes_clone(&curr_payload, z_loan(payload));
+            if (z_publisher_put(z_loan(pub), z_move(curr_payload), NULL) != _Z_RES_OK) {
                 printf("Tx failed");
                 continue;
             }
@@ -122,7 +124,8 @@ int main(int argc, char** argv) {
     unsigned long* results = z_malloc(sizeof(unsigned long) * ping_nb);
     for (unsigned int i = 0; i < ping_nb; i++) {
         z_clock_t measure_start = z_clock_now();
-        if (z_publisher_put(z_loan(pub), z_move(payload), NULL) != _Z_RES_OK) {
+        z_bytes_clone(&curr_payload, z_loan(payload));
+        if (z_publisher_put(z_loan(pub), z_move(curr_payload), NULL) != _Z_RES_OK) {
             printf("Tx failed");
             continue;
         }
