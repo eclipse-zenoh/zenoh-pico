@@ -207,21 +207,21 @@ static void test_packet_transmission(void) {
     zp_config_insert(z_loan_mut(node_ctx_3.config), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7448");
     zp_config_insert(z_loan_mut(node_ctx_3.config), Z_CONFIG_CONNECT_KEY, "tcp/127.0.0.1:7449");
     // Init threads in a staggered manner to let time for sockets to establish
-    pthread_t task0, task1, task2, task3;
-    pthread_create(&task0, NULL, node_task, &node_ctx_0);
+    _z_task_t task0, task1, task2, task3;
+    _z_task_init(&task0, NULL, node_task, &node_ctx_0);
     z_sleep_ms(100);
-    pthread_create(&task1, NULL, node_task, &node_ctx_1);
+    _z_task_init(&task1, NULL, node_task, &node_ctx_1);
     z_sleep_ms(100);
-    pthread_create(&task2, NULL, node_task, &node_ctx_2);
+    _z_task_init(&task2, NULL, node_task, &node_ctx_2);
     z_sleep_ms(100);
-    pthread_create(&task3, NULL, node_task, &node_ctx_3);
+    _z_task_init(&task3, NULL, node_task, &node_ctx_3);
     // Wait a bit
     z_sleep_s(20);
     // Clean up
-    pthread_join(task0, NULL);
-    pthread_join(task1, NULL);
-    pthread_join(task2, NULL);
-    pthread_join(task3, NULL);
+    _z_task_join(&task0);
+    _z_task_join(&task1);
+    _z_task_join(&task2);
+    _z_task_join(&task3);
 }
 
 static bool test_peer_connection(void) {
@@ -286,9 +286,11 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
     test_packet_transmission();
+    printf("Test connections...");
     if (!test_peer_connection()) {
         return -1;
     }
+    printf(" Ok\n");
     return 0;
 }
 
