@@ -975,7 +975,7 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     z_source_info_drop(opt.source_info);
 #endif
     z_bytes_drop(payload);
-#endif
+#endif  // Z_FEATURE_LOCAL_SUBSCRIBER == 1
 
     return ret;
 }
@@ -1172,7 +1172,6 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     z_source_info_drop(opt.source_info);
 #endif
     z_bytes_drop(payload);
-#endif
     return ret;
 }
 
