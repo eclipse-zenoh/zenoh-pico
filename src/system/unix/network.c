@@ -52,13 +52,47 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     unsigned int nlen = sizeof(naddr);
     int con_socket = accept(sock_in->_fd, &naddr, &nlen);
     if (con_socket < 0) {
+        if (errno == EBADF) {
+            return _Z_ERR_INVALID;
+        } else {
+            return _Z_ERR_GENERIC;
+        }
+    }
+    // Set socket options
+    z_time_t tv;
+    tv.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / (uint32_t)1000;
+    tv.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % (uint32_t)1000) * (uint32_t)1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
+        close(con_socket);
         return _Z_ERR_GENERIC;
     }
+    int flags = 1;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0) {
+        close(con_socket);
+        return _Z_ERR_GENERIC;
+    }
+#if Z_FEATURE_TCP_NODELAY == 1
+    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0) {
+        close(con_socket);
+        return _Z_ERR_GENERIC;
+    }
+#endif
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        close(con_socket);
+        return _Z_ERR_GENERIC;
+    }
+    // Note socket
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
 }
 
-void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_socket_close(_z_sys_net_socket_t *sock) {
+    shutdown(sock->_fd, SHUT_RDWR);
+    close(sock->_fd);
+}
 
 #if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *ctx, void *v_mutex) {
@@ -183,7 +217,6 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
     } else {
         ret = _Z_ERR_GENERIC;
     }
-
     return ret;
 }
 
@@ -267,7 +300,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 
     do {
         size_t rb = _z_read_tcp(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -364,7 +397,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
 
     do {
         size_t rb = _z_read_udp_unicast(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -695,7 +728,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
 
     do {
         size_t rb = _z_read_udp_multicast(sock, pos, len - n, lep, addr);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }

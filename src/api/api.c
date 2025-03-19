@@ -1363,6 +1363,7 @@ void z_querier_get_options_default(z_querier_get_options_t *options) {
 }
 
 void z_querier_options_default(z_querier_options_t *options) {
+    options->encoding = NULL;
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
     options->congestion_control = z_internal_congestion_control_default_request();
@@ -1391,10 +1392,12 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     if (options != NULL) {
         opt = *options;
     }
+    z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
 
     // Set querier
     _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
-                                                  opt.priority, opt.is_express, opt.timeout_ms);
+                                                  opt.priority, opt.is_express, opt.timeout_ms,
+                                                  opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
 
     // TODO: Rework write filters to work with non-aggregated interests
     if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {

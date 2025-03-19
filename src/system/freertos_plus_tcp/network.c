@@ -44,6 +44,12 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     if (con_socket < 0) {
         return _Z_ERR_GENERIC;
     }
+    // Set socket options
+    TickType_t receive_timeout = pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT);
+    if (FreeRTOS_setsockopt(con_socket, 0, FREERTOS_SO_RCVTIMEO, &receive_timeout, 0) != 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Note socket
     sock_out->_socket = con_socket;
     return _Z_RES_OK;
 }
@@ -170,7 +176,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 
     do {
         size_t rb = _z_read_tcp(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -263,7 +269,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
 
     do {
         size_t rb = _z_read_udp_unicast(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }

@@ -20,57 +20,21 @@
 #include <zenoh-pico.h>
 
 #if Z_FEATURE_PUBLICATION == 1
-int main(int argc, char **argv) {
-    const char *keyexpr = "demo/example/zenoh-pico-pub";
-    char *const default_value = "Pub from Pico!";
-    const char *value = default_value;
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
-    int n = 2147483647;  // max int value by default
 
-    int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
-                    optopt == 'n') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n);
+
+int main(int argc, char **argv) {
+    char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *const default_value = "Pub from Pico!";
+    char *value = default_value;
+    int n = 2147483647;  // max int value by default
 
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &value, &n);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -113,6 +77,44 @@ int main(int argc, char **argv) {
     z_drop(z_move(s));
     return 0;
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *keyexpr = optarg;
+                break;
+            case 'v':
+                *value = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'n':
+                *n = atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");

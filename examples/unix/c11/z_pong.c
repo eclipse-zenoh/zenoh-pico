@@ -12,14 +12,19 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "stdio.h"
+#include <stdio.h>
+#include <unistd.h>
+
 #include "zenoh-pico.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
+
+static int parse_args(int argc, char** argv, z_owned_config_t* config);
+
 void callback(z_loaned_sample_t* sample, void* context) {
     const z_loaned_publisher_t* pub = z_loan(*(z_owned_publisher_t*)context);
-    z_owned_bytes_t payload;
-    z_bytes_clone(&payload, z_sample_payload(sample));
+    z_owned_bytes_t payload = {._val = sample->payload};
+    // z_bytes_clone(&payload, z_sample_payload(sample));
     z_publisher_put(pub, z_move(payload), NULL);
 }
 void drop(void* context) {
@@ -36,16 +41,29 @@ int main(int argc, char** argv) {
     (void)argv;
     z_owned_config_t config;
     z_config_default(&config);
+
+    int ret = parse_args(argc, argv, &config);
+    if (ret != 0) {
+        return ret;
+    }
+
     z_owned_session_t session;
     if (z_open(&session, z_move(config), NULL) < 0) {
         printf("Unable to open session!\n");
         return -1;
     }
 
-    if (zp_start_read_task(z_loan_mut(session), NULL) < 0 || zp_start_lease_task(z_loan_mut(session), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
+    if (zp_start_read_task(z_loan_mut(session), NULL) < 0) {
+        printf("Unable to start read tasks\n");
         z_drop(z_move(session));
         return -1;
+    }
+    if (argc <= 1) {
+        if (zp_start_lease_task(z_loan_mut(session), NULL) < 0) {
+            printf("Unable to start lease tasks\n");
+            z_drop(z_move(session));
+            return -1;
+        }
     }
 
     z_view_keyexpr_t pong;
@@ -64,12 +82,40 @@ int main(int argc, char** argv) {
         printf("Unable to declare subscriber for key expression.\n");
         return -1;
     }
-
+    printf("Pong app is running, press 'q' to quit\n");
     while (getchar() != 'q') {
     }
-
+    z_drop(z_move(pub));
     z_drop(z_move(session));
 }
+
+static int parse_args(int argc, char** argv, z_owned_config_t* config) {
+    int opt;
+    while ((opt = getopt(argc, argv, "e:m:l:")) != -1) {
+        switch (opt) {
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case '?':
+                if (optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf(
