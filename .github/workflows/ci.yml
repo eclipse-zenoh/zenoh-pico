@@ -169,7 +169,8 @@ jobs:
       - name: Build project and run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja ASAN=ON make test
+          CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug
+          ninja -C build/ test
           python3 ./build/tests/single_thread.py
         timeout-minutes: 5
         env:
@@ -321,6 +322,23 @@ jobs:
           RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 15
 
+  unicast_peer_test:
+    name: P2p unicast test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build & test pico
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
+          ./build/tests/z_test_unicast
+        env:
+          Z_FEATURE_UNSTABLE_API: 1 
+          Z_FEATURE_UNICAST_PEER: 1
+        timeout-minutes: 5
+
   markdown_lint:
     runs-on: ubuntu-latest
     steps:
@@ -354,7 +372,7 @@ jobs:
   ci:
     name: CI status checks
     runs-on: ubuntu-latest
-    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, multicast]
+    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, unicast_peer_test, markdown_lint, build_shared, build_static, integration, multicast]
     if: always()
     steps:
       - name: Check whether all jobs pass

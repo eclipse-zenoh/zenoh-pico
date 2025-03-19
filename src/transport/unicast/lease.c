@@ -106,7 +106,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 ztu->_common._transmitted = false;
                 next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
             }
-        } else {  // Peer lease
+        }
+#if Z_FEATURE_UNICAST_PEER == 1
+        else {  // Peer lease
             if (next_lease <= 0) {
                 _z_transport_unicast_peer_list_t *prev = NULL;
                 _z_transport_unicast_peer_list_t *to_drop = NULL;
@@ -125,8 +127,11 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                         to_drop = curr_list;
                         prev_drop = prev;
                     }
+                    // Update previous only if current node is not dropped
+                    if (!drop_peer) {
+                        prev = curr_list;
+                    }
                     // Progress list
-                    prev = curr_list;
                     curr_list = _z_transport_unicast_peer_list_tail(curr_list);
                     // Drop if needed
                     if (drop_peer) {
@@ -153,6 +158,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                 next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
             }
         }
+#endif
 
         // Query timeout process
         _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztu->_common._session));

@@ -23,6 +23,7 @@ static z_owned_condvar_t cond;
 static z_owned_mutex_t mutex;
 
 const char *kind_to_str(z_sample_kind_t kind);
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value);
 
 void reply_dropper(void *ctx) {
     (void)(ctx);
@@ -54,53 +55,18 @@ void reply_handler(z_loaned_reply_t *reply, void *ctx) {
 }
 
 int main(int argc, char **argv) {
-    const char *keyexpr = "demo/example/**";
-    const char *mode = "client";
-    const char *clocator = NULL;
-    const char *llocator = NULL;
-    const char *value = NULL;
-
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:v:l:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
+    char *keyexpr = "demo/example/**";
+    char *value = NULL;
 
     z_mutex_init(&mutex);
     z_condvar_init(&cond);
 
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &value);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -157,6 +123,40 @@ const char *kind_to_str(z_sample_kind_t kind) {
             return "UNKNOWN";
     }
 }
+
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *keyexpr = optarg;
+                break;
+            case 'v':
+                *value = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf(

@@ -57,6 +57,22 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     if (con_socket < 0) {
         return _Z_ERR_GENERIC;
     }
+    // Set socket options
+#if Z_FEATURE_TCP_NODELAY == 1
+    int optflag = 1;
+    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
+        return _Z_ERR_GENERIC;
+    }
+#endif
+#if LWIP_SO_LINGER == 1
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        return _Z_ERR_GENERIC;
+    }
+#endif
+    // Note socket
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
 }
@@ -157,7 +173,8 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-        if ((ret == _Z_RES_OK) && (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
 #endif
@@ -215,7 +232,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 
     do {
         size_t rb = _z_read_tcp(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -310,7 +327,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
 
     do {
         size_t rb = _z_read_udp_unicast(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -623,7 +640,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
 
     do {
         size_t rb = _z_read_udp_multicast(sock, pos, len - n, lep, addr);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
