@@ -299,7 +299,11 @@ int main(int argc, char **argv) {
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
-    printf("Missing config token to build this test.\n");
+    printf(
+        "Missing config token to build this test. This test requires: Z_FEATURE_SUBSCRIPTION, Z_FEATURE_PUBLICATION, "
+        "Z_FEATURE_QUERY, Z_FEATURE_QUERYABLE, Z_FEATURE_MULTI_THREAD, Z_FEATURE_UNICAST_PEER and "
+        "Z_FEATURE_UNSTABLE_API (until querier becomes stable)\n");
+    printf("It also requires Z_FEATURE_LOCAL_SUBSCRIBER to be deactivated\n");
     return 0;
 }
 
