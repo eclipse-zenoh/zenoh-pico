@@ -209,6 +209,8 @@ int main(int argc, char **argv) {
     exit(0);
 }
 
+// Note: All args can be specified multiple times. For "-e" it will append the list of endpoints, for the other it will
+// simply replace the previous value.
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, unsigned long *freq, size_t *pkt_size,
                       bool *is_peer, bool *is_udp) {
     int opt;

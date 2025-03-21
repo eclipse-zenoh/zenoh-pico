@@ -78,6 +78,8 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+// Note: All args can be specified multiple times. For "-e" it will append the list of endpoints, for the other it will
+// simply replace the previous value.
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n) {
     int opt;
     while ((opt = getopt(argc, argv, "k:v:e:m:l:n:")) != -1) {
