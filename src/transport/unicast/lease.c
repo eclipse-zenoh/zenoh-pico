@@ -44,18 +44,19 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 
 static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
+#if Z_FEATURE_AUTO_RECONNECT == 1
     _z_unicast_transport_clear(ztu, true);
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
     _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztu->_common._session));
 #endif
-
-#if Z_FEATURE_AUTO_RECONNECT == 1
     _z_session_rc_ref_t *zs = ztu->_common._session;
     z_result_t ret = _z_reopen(zs);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Reopen failed: %i", ret);
     }
+#else
+    ztu->_common._lease_task_running = false;
 #endif
 }
 
