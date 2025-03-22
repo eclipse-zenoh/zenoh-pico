@@ -97,7 +97,6 @@ static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, cons
 static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, const _z_network_message_t *n_msg,
                                                 z_reliability_t reliability, _z_zint_t first_sn) {
     _ZP_UNUSED(ztc);
-    _ZP_UNUSED(fbf);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(first_sn);
