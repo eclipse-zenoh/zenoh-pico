@@ -79,6 +79,7 @@ z_result_t _z_task_join(_z_task_t *task) {
 z_result_t _z_task_detach(_z_task_t *task) {
     z_result_t ret = _Z_RES_OK;
     CloseHandle(*task);
+    *task = NULL;
     return ret;
 }
 

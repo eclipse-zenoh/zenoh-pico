@@ -22,6 +22,9 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+#include "zenoh-pico/system/link/serial.h"
+#include "zenoh-pico/utils/checksum.h"
+#include "zenoh-pico/utils/encoding.h"
 
 WSADATA wsaData;
 
@@ -606,7 +609,308 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 #endif
 
 #if Z_FEATURE_LINK_SERIAL == 1
-#error "Serial not supported yet on Windows port of Zenoh-Pico"
+int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    (void)(sock);
+    (void)(txpin);
+    (void)(rxpin);
+    (void)(baudrate);
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    DCB dcb;
+
+    // Fix device name for ports >= COM10
+    char _dev[16];
+    sprintf_s(_dev, sizeof(_dev), "\\\\.\\%s", dev);
+
+    // Open serial device
+    sock->_sock._fault = (BOOL*)z_malloc(sizeof(BOOL));
+    if (sock->_sock._fault != NULL) {
+        *sock->_sock._fault = FALSE;
+    } else {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+    sock->_sock._serial = CreateFile(_dev,
+            GENERIC_READ | GENERIC_WRITE,
+            0,                      //  must be opened with exclusive-access
+            NULL,                   //  default security attributes
+            OPEN_EXISTING,          //  must use OPEN_EXISTING
+            FILE_FLAG_OVERLAPPED,   //  overlapped I/O
+            NULL);                  //  hTemplate must be NULL for comm devices
+    if (sock->_sock._serial == INVALID_HANDLE_VALUE) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    // Setup device parameters
+    SecureZeroMemory(&dcb, sizeof(DCB));
+    dcb.DCBlength = sizeof(DCB);
+    if (!GetCommState(sock->_sock._serial, &dcb)) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+    dcb.BaudRate    = baudrate;
+    dcb.ByteSize    = 8;
+    dcb.Parity      = NOPARITY;
+    dcb.StopBits    = ONESTOPBIT;
+    dcb.fRtsControl = RTS_CONTROL_DISABLE;
+    if (!SetCommState(sock->_sock._serial, &dcb)) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    // Setup read/write timeouts
+    // Remarks
+    //  If an application sets ReadIntervalTimeout and ReadTotalTimeoutMultiplier to MAXDWORD and sets 
+    //  ReadTotalTimeoutConstant to a value greater than zero and less than MAXDWORD, one of the following 
+    //  occurs when the ReadFile function is called
+    //  - if there are any bytes in the input buffer, ReadFile returns immediately with the bytes in the buffer
+    //  - if there are no bytes in the input buffer, ReadFile waits until a byte arrives and then returns immediately
+    //  - if no bytes arrive within the time specified by ReadTotalTimeoutConstant, ReadFile times out
+    COMMTIMEOUTS t = {
+        .ReadIntervalTimeout         = MAXDWORD,
+        .ReadTotalTimeoutConstant    = 1000,
+        .ReadTotalTimeoutMultiplier  = MAXDWORD,
+        .WriteTotalTimeoutConstant   = 1000,
+        .WriteTotalTimeoutMultiplier = 0
+    };
+    if (!SetCommTimeouts(sock->_sock._serial, &t)) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    // Setup data for async/IO
+    sock->_sock._ro = (LPOVERLAPPED)z_malloc(sizeof(OVERLAPPED));
+    if (sock->_sock._ro != NULL) {
+        memset(sock->_sock._ro, 0, sizeof(OVERLAPPED));
+        sock->_sock._ro->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        if (sock->_sock._ro->hEvent == INVALID_HANDLE_VALUE) {
+            _z_close_serial(sock);
+            return _Z_ERR_GENERIC;
+        }
+    } else {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+    sock->_sock._wo = (LPOVERLAPPED)z_malloc(sizeof(OVERLAPPED));
+    if (sock->_sock._wo != NULL) {
+        memset(sock->_sock._wo, 0, sizeof(OVERLAPPED));
+        sock->_sock._wo->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        if (sock->_sock._wo->hEvent == INVALID_HANDLE_VALUE) {
+            _z_close_serial(sock);
+            return _Z_ERR_GENERIC;
+        }
+    } else {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    // Flush serial port input buffer
+    PurgeComm(sock->_sock._serial, PURGE_RXCLEAR);
+
+    // Allocate buffers
+    sock->_sock.r_before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    sock->_sock.r_after_cobs  = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    if (sock->_sock.r_before_cobs == NULL || sock->_sock.r_after_cobs == NULL) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+    sock->_sock.w_before_cobs = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
+    sock->_sock.w_after_cobs  = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    if (sock->_sock.w_before_cobs == NULL || sock->_sock.w_after_cobs == NULL) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+    (void)(sock);
+    (void)(txpin);
+    (void)(rxpin);
+    (void)(baudrate);
+
+    // @TODO: To be implemented
+    ret = _Z_ERR_GENERIC;
+
+    return ret;
+}
+
+int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t baudrate) {
+    int8_t ret = _Z_RES_OK;
+
+    ret = _z_open_serial_from_dev(sock, dev, baudrate);
+
+    return ret;
+}
+
+void _z_close_serial(_z_sys_net_socket_t *sock) {
+    if (sock->_sock.r_before_cobs != NULL) {
+        z_free(sock->_sock.r_before_cobs);
+        sock->_sock.r_before_cobs = NULL;
+    }
+    if (sock->_sock.r_after_cobs != NULL) {
+        z_free(sock->_sock.r_after_cobs);
+        sock->_sock.r_after_cobs = NULL;
+    }
+    if (sock->_sock.w_before_cobs != NULL) {
+        z_free(sock->_sock.w_before_cobs);
+        sock->_sock.w_before_cobs = NULL;
+    }
+    if (sock->_sock.w_after_cobs != NULL) {
+        z_free(sock->_sock.w_after_cobs);
+        sock->_sock.w_after_cobs = NULL;
+    }
+    if (sock->_sock._ro != NULL) {
+        if (sock->_sock._ro->hEvent != INVALID_HANDLE_VALUE) {
+            CloseHandle(sock->_sock._ro->hEvent);
+        }
+        z_free(sock->_sock._ro);
+        sock->_sock._ro = NULL;
+    }
+    if (sock->_sock._wo != NULL) {
+        if (sock->_sock._wo->hEvent != INVALID_HANDLE_VALUE) {
+            CloseHandle(sock->_sock._wo->hEvent);
+        }
+        z_free(sock->_sock._wo);
+        sock->_sock._wo = NULL;
+    }
+    if (sock->_sock._serial != INVALID_HANDLE_VALUE) {
+        CloseHandle(sock->_sock._serial);
+    }
+    if (sock->_sock._fault != NULL) {
+        z_free(sock->_sock._fault);
+        sock->_sock._fault = NULL;
+    }
+}
+
+size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+    int8_t ret = _Z_RES_OK;
+
+    size_t rb = 0;
+    while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
+
+    	size_t r = 0;
+        if (!(*sock._sock._fault)) {
+            ReadFile(sock._sock._serial, &sock._sock.r_before_cobs[rb], 1, NULL, sock._sock._ro);
+            if (WaitForSingleObject(sock._sock._ro->hEvent, 5000) == WAIT_OBJECT_0) {
+                r = (size_t)sock._sock._ro->InternalHigh;
+            } else {
+                *sock._sock._fault = TRUE;
+            }
+        } else {
+            Sleep(10);
+        }
+
+        if (r == 0) {
+            _Z_DEBUG("Timeout reading from serial");
+            if (rb == 0) {
+                ret = _Z_ERR_GENERIC;
+            }
+            break;
+        } else if (r == 1) {
+            rb = rb + (size_t)1;
+            if (sock._sock.r_before_cobs[rb - 1] == (uint8_t)0x00) {
+                break;
+            }
+        } else {
+            _Z_ERROR("Error reading from serial");
+            ret = _Z_ERR_GENERIC;
+        }
+    }
+    uint16_t payload_len = 0;
+
+    if (ret == _Z_RES_OK) {
+        _Z_DEBUG("Read %llu bytes from serial", rb);
+        size_t trb = _z_cobs_decode(sock._sock.r_before_cobs, rb, sock._sock.r_after_cobs);
+        _Z_DEBUG("Decoded %llu bytes from serial", trb);
+        size_t i = 0;
+        for (i = 0; i < sizeof(payload_len); i++) {
+            payload_len |= (sock._sock.r_after_cobs[i] << ((uint8_t)i * (uint8_t)8));
+        }
+        _Z_DEBUG("payload_len = %u <= %X %X", payload_len, sock._sock.r_after_cobs[1], sock._sock.r_after_cobs[0]);
+
+        if (trb == (size_t)(payload_len + (uint16_t)6)) {
+            (void)memcpy(ptr, &sock._sock.r_after_cobs[i], payload_len);
+            i = i + (size_t)payload_len;
+
+            uint32_t crc = 0;
+            for (uint8_t j = 0; j < sizeof(crc); j++) {
+                crc |= (uint32_t)(sock._sock.r_after_cobs[i] << (j * (uint8_t)8));
+                i = i + (size_t)1;
+            }
+
+            uint32_t c_crc = _z_crc32(ptr, payload_len);
+            if (c_crc != crc) {
+                _Z_ERROR("CRC mismatch: %d != %d ", c_crc, crc);
+                ret = _Z_ERR_GENERIC;
+            }
+        } else {
+            _Z_ERROR("length mismatch => %lld <> %d ", trb, payload_len + (uint16_t)6);
+            ret = _Z_ERR_GENERIC;
+        }
+    }
+
+    rb = payload_len;
+    if (ret != _Z_RES_OK) {
+        rb = SIZE_MAX;
+    }
+    _Z_DEBUG("return _z_read_serial() = %lld ", rb);
+    return rb;
+}
+
+size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, const uint8_t *ptr, size_t len) {
+    int8_t ret = _Z_RES_OK;
+
+    size_t i = 0;
+    for (i = 0; i < sizeof(uint16_t); ++i) {
+        sock._sock.w_before_cobs[i] = (len >> (i * (size_t)8)) & (size_t)0XFF;
+    }
+
+    (void)memcpy(&sock._sock.w_before_cobs[i], ptr, len);
+    i = i + len;
+
+    uint32_t crc = _z_crc32(ptr, len);
+    for (uint8_t j = 0; j < sizeof(crc); j++) {
+        sock._sock.w_before_cobs[i] = (crc >> (j * (uint8_t)8)) & (uint32_t)0XFF;
+        i = i + (size_t)1;
+    }
+
+    size_t twb = _z_cobs_encode(sock._sock.w_before_cobs, i, sock._sock.w_after_cobs);
+    sock._sock.w_after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
+    size_t wb = 0;
+
+    if (!(*sock._sock._fault)) {
+        WriteFile(sock._sock._serial, sock._sock.w_after_cobs, (DWORD)(twb + (size_t)1), NULL, sock._sock._wo);
+        if (WaitForSingleObject(sock._sock._wo->hEvent, 5000) == WAIT_OBJECT_0) {
+            wb = (size_t)sock._sock._wo->InternalHigh;
+        } else {
+            *sock._sock._fault = TRUE;
+        }
+    } else {
+        Sleep(10);
+    }
+    if (wb != (twb + (size_t)1)) {
+        ret = _Z_ERR_GENERIC;
+    }
+
+    size_t sb = len;
+    if (ret != _Z_RES_OK) {
+        sb = SIZE_MAX;
+    }
+
+    return sb;
+}
 #endif
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1

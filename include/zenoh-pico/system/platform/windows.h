@@ -39,6 +39,18 @@ typedef struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         SOCKET _fd;
 #endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        struct {
+			HANDLE _serial;
+            LPOVERLAPPED _ro;
+            LPOVERLAPPED _wo;
+            BOOL *_fault;
+			uint8_t *r_before_cobs;
+			uint8_t *r_after_cobs;
+			uint8_t *w_before_cobs;
+			uint8_t *w_after_cobs;
+        };
+#endif
     } _sock;
 } _z_sys_net_socket_t;
 
