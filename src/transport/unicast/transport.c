@@ -332,7 +332,30 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
                                 const _z_id_t *local_zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
     if (peer_op == _Z_PEER_OP_OPEN) {
+#if Z_FEATURE_LINK_SERIAL == 1
+        if (_z_endpoint_serial_valid((_z_endpoint_t*)&zl->_endpoint) == _Z_RES_OK) {
+
+            _z_id_t zid = *local_zid;
+            _z_transport_message_t ism = _z_t_msg_make_init_syn(Z_WHATAMI_PEER, zid);
+            param->_seq_num_res = ism._body._init._seq_num_res; // The announced sn resolution
+            param->_req_id_res = ism._body._init._req_id_res;   // The announced req id resolution
+            param->_batch_size = ism._body._init._batch_size;   // The announced batch size
+            param->_lease = Z_TRANSPORT_LEASE;                  // The announced session lease
+
+            // The initial SN at TX side
+            z_random_fill(&param->_initial_sn_tx, sizeof(param->_initial_sn_tx));
+            param->_initial_sn_tx = param->_initial_sn_tx & !_z_sn_modulo_mask(param->_seq_num_res);
+
+            _Z_INFO("Sending Z_INIT(Syn)");
+            ret = _z_link_send_t_msg(zl, &ism);
+            _z_t_msg_clear(&ism);
+
+        } else {
+#endif
         ret = _z_unicast_handshake_client(param, zl, local_zid, Z_WHATAMI_PEER);
+#if Z_FEATURE_LINK_SERIAL == 1
+        }
+#endif
     } else {
         ret = _z_unicast_handshake_listener(param, zl, local_zid, Z_WHATAMI_PEER);
     }

@@ -26,6 +26,7 @@
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/transport/common/tx.h"
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
@@ -88,6 +89,75 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
 
 z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     return _z_unicast_recv_t_msg_na(ztu, t_msg);
+}
+
+int8_t _z_clear_remote_lists(_z_session_t *zn) {
+    int8_t ret = _Z_RES_OK;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    _Z_INFO("Clearing remote lists");
+    _z_resource_list_free(&zn->_remote_resources);
+    _z_declare_data_list_free(&zn->_remote_declares);
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    return ret;
+}
+
+int8_t _z_send_local_lists(_z_session_t *zn) {
+    int8_t ret = _Z_RES_OK;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_lock(&zn->_mutex_inner);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    _Z_INFO("Sending local resources");
+    _z_resource_list_t *xr = zn->_local_resources;
+    while (xr != NULL) {
+        _z_resource_t *r = _z_resource_list_head(xr);
+        uint16_t id = r->_id;
+        _z_keyexpr_t alias = _z_keyexpr_alias(&r->_key);
+        _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+        _z_n_msg_clear(&n_msg);
+        xr = _z_resource_list_tail(xr);
+    }
+
+    _Z_INFO("Sending local subscriptions");
+    _z_subscription_rc_list_t *xs = zn->_subscriptions;
+    while (xs != NULL) {
+        _z_subscription_rc_t *s = _z_subscription_rc_list_head(xs);
+        uint16_t id = zn->_entity_id;
+        _z_keyexpr_t alias = _z_keyexpr_alias(&_Z_RC_IN_VAL(s)->_key);
+        _z_declaration_t declaration = _z_make_decl_subscriber(&alias, id);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+        _z_n_msg_clear(&n_msg);
+        xs = _z_subscription_rc_list_tail(xs);
+    }
+
+    _Z_INFO("Sending local tokens");
+    _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&zn->_local_tokens);
+    while (_z_keyexpr_intmap_iterator_next(&iter)) {
+        uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
+        _z_keyexpr_t key = *_z_keyexpr_intmap_iterator_value(&iter);
+        _z_declaration_t declaration = _z_make_decl_token(&key, id);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+        _z_n_msg_clear(&n_msg);
+    }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_unlock(&zn->_mutex_inner);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    return ret;
 }
 
 z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
@@ -278,20 +348,74 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         }
 
         case _Z_MID_T_INIT: {
+#if Z_FEATURE_LINK_SERIAL == 1
+            if (_z_endpoint_serial_valid(&ztu->_common._link._endpoint) == _Z_RES_OK) {
+				assert(t_msg->_body._init._version == Z_PROTO_VERSION);
+				assert(t_msg->_body._init._whatami == Z_WHATAMI_PEER);
+				assert(t_msg->_body._init._batch_size >= ztu->_common._link._mtu);
+				if (_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_INIT_S)) {
+					assert(t_msg->_body._init._seq_num_res == _Z_DEFAULT_RESOLUTION_SIZE);
+					assert(t_msg->_body._init._req_id_res == _Z_DEFAULT_RESOLUTION_SIZE);
+				}
+				ztu->_remote_zid = t_msg->_body._init._zid;
+				if (!_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_INIT_A)) {
+					_Z_INFO("Received Z_INIT(Syn)");
+					_Z_INFO("Sending Z_INIT(Ack)");
+                    _z_slice_t cookie;
+                    _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+					_z_transport_message_t ism = _z_t_msg_make_init_ack(Z_WHATAMI_PEER, _Z_RC_IN_VAL(ztu->_common._session)->_local_zid, cookie);
+					ret = _z_transport_tx_send_t_msg(&ztu->_common, &ism);
+					_z_t_msg_clear(&ism);
+				} else {
+					_Z_INFO("Received Z_INIT(Ack)");
+					_Z_INFO("Sending Z_OPEN(Syn)");
+                    _z_slice_t cookie;
+                    _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+					_z_transport_message_t ism = _z_t_msg_make_open_syn(ztu->_common._lease, ztu->_common._sn_tx_reliable, cookie);
+					ret = _z_transport_tx_send_t_msg(&ztu->_common, &ism);
+					_z_t_msg_clear(&ism);
+                    _z_send_local_lists(_Z_RC_IN_VAL(ztu->_common._session));
+				}
+            }
+#else
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-            _z_t_msg_init_clear(&t_msg->_body._init);
+#endif
+			_z_t_msg_init_clear(&t_msg->_body._init);
             break;
         }
 
         case _Z_MID_T_OPEN: {
+#if Z_FEATURE_LINK_SERIAL == 1
+            if (_z_endpoint_serial_valid(&ztu->_common._link._endpoint) == _Z_RES_OK) {
+				ztu->_common._lease = t_msg->_body._open._lease > ztu->_common._lease ? t_msg->_body._open._lease : ztu->_common._lease;
+				ztu->_sn_rx_reliable = (t_msg->_body._open._initial_sn - 1) & ztu->_common._sn_res;
+				ztu->_sn_rx_best_effort = (t_msg->_body._open._initial_sn - 1) & ztu->_common._sn_res;
+                _z_clear_remote_lists(_Z_RC_IN_VAL(ztu->_common._session));
+				if (!_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_OPEN_A)) {
+					_Z_INFO("Received Z_OPEN(Syn)");
+					_Z_INFO("Sending Z_OPEN(Ack)");
+					_z_transport_message_t ism = _z_t_msg_make_open_ack(ztu->_common._lease, ztu->_common._sn_tx_reliable);
+					ret = _z_transport_tx_send_t_msg(&ztu->_common, &ism);
+					_z_t_msg_clear(&ism);
+                    _z_send_local_lists(_Z_RC_IN_VAL(ztu->_common._session));
+				} else {
+					_Z_INFO("Received Z_OPEN(Ack)");
+				}
+            }
+#else
             // Do nothing, zenoh clients are not expected to handle accept messages on established sessions
-            _z_t_msg_open_clear(&t_msg->_body._open);
+#endif
+			_z_t_msg_open_clear(&t_msg->_body._open);
             break;
         }
 
         case _Z_MID_T_CLOSE: {
+#if Z_FEATURE_LINK_SERIAL == 1
+            // Do nothing, keep the session opened, the peer may reconnect
+#else
             _Z_INFO("Closing session as requested by the remote peer");
             ret = _Z_ERR_CONNECTION_CLOSED;
+#endif
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
