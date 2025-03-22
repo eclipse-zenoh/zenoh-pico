@@ -45,6 +45,15 @@ typedef struct {
     Z_FEATURE_RAWETH_TRANSPORT == 1
         int _fd;
 #endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        struct {
+            int _serial;
+			uint8_t *r_before_cobs;
+			uint8_t *r_after_cobs;
+			uint8_t *w_before_cobs;
+			uint8_t *w_after_cobs;
+        };
+#endif
     };
 } _z_sys_net_socket_t;
 
