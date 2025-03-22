@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback);
-void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps);
+void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps, int mode);
 
 #ifdef __cplusplus
 }

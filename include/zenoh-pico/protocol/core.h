@@ -55,12 +55,16 @@ typedef size_t _z_zint_t;
  * A zenoh ID.
  */
 
+#define ZENOH_ID_SIZE 16
 typedef struct {
-    uint8_t id[16];
+    uint8_t id[ZENOH_ID_SIZE];
 } _z_id_t;
 extern const _z_id_t empty_id;
 uint8_t _z_id_len(_z_id_t id);
 static inline bool _z_id_check(_z_id_t id) { return memcmp(&id, &empty_id, sizeof(id)) != 0; }
+static inline bool _z_id_eq(const _z_id_t *left, const _z_id_t *right) {
+    return memcmp(left->id, right->id, ZENOH_ID_SIZE) == 0;
+}
 static inline _z_id_t _z_id_empty(void) { return (_z_id_t){0}; }
 
 typedef struct {

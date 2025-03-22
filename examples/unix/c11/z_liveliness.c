@@ -19,52 +19,18 @@
 
 #if Z_FEATURE_LIVELINESS == 1
 
-int main(int argc, char **argv) {
-    const char *keyexpr = "group1/zenoh-pico";
-    const char *mode = "client";
-    const char *clocator = NULL;
-    const char *llocator = NULL;
-    unsigned long timeout = 0;
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, unsigned long *timeout);
 
-    int opt;
-    while ((opt = getopt(argc, argv, "k:e:m:l:t:")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 't':
-                timeout = (unsigned long)atoi(optarg);
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'e' || optopt == 'm' || optopt == 'v' || optopt == 'l' ||
-                    optopt == 't') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
+int main(int argc, char **argv) {
+    char *keyexpr = "group1/zenoh-pico";
+    unsigned long timeout = 0;
 
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &timeout);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -108,6 +74,42 @@ int main(int argc, char **argv) {
     z_drop(z_move(s));
     return 0;
 }
+
+// Note: All args can be specified multiple times. For "-e" it will append the list of endpoints, for the other it will
+// simply replace the previous value.
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, unsigned long *timeout) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:t:e:m:l:")) != -1) {
+        switch (opt) {
+            case 'k':
+                *keyexpr = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 't':
+                *timeout = (unsigned long)atoi(optarg);
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 't' || optopt == 'e' || optopt == 'm' || optopt == 'l') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf(

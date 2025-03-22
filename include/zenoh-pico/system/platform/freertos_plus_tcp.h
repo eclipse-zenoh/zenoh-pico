@@ -52,6 +52,9 @@ typedef struct {
     StaticSemaphore_t buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
 } _z_mutex_t;
+
+typedef _z_mutex_t _z_mutex_rec_t;
+
 typedef struct {
     SemaphoreHandle_t mutex;
     SemaphoreHandle_t sem;

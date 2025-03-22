@@ -30,7 +30,12 @@ z_result_t _z_config_init(_z_config_t *ps) {
 z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
     z_result_t ret = _Z_RES_OK;
 
-    char *res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
+    char *res = "";
+    if (key == Z_CONFIG_CONNECT_KEY) {
+        res = _z_str_intmap_insert_push(ps, key, _z_str_clone(value));
+    } else {
+        res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
+    }
     if (strcmp(res, value) != 0) {
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
@@ -51,6 +56,18 @@ z_result_t _zp_config_insert_string(_z_config_t *ps, uint8_t key, const _z_strin
 }
 
 char *_z_config_get(const _z_config_t *ps, uint8_t key) { return _z_str_intmap_get(ps, key); }
+
+z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, uint8_t key) {
+    _z_list_t *cfg_list = _z_str_intmap_get_all(ps, key);
+    while (cfg_list != NULL) {
+        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_head(cfg_list);
+        char *val = (char *)entry->_val;
+        _z_string_t s = _z_string_copy_from_str(val);
+        _Z_RETURN_IF_ERR(_z_string_svec_append(locators, &s, true));
+        cfg_list = _z_list_tail(cfg_list);
+    }
+    return _Z_RES_OK;
+}
 
 /*------------------ int-string map ------------------*/
 z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8_t argc, _z_str_intmapping_t argv[],

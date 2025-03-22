@@ -63,6 +63,7 @@ z_result_t _zp_config_insert_string(_z_config_t *ps, uint8_t key, const _z_strin
  *     The value of the property with key ``key`` in properties map ``ps``.
  */
 char *_z_config_get(const _z_config_t *ps, uint8_t key);
+z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, uint8_t key);
 
 /**
  * Get the length of the given properties map.

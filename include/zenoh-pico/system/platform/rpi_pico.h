@@ -45,6 +45,7 @@ typedef struct {
 } _z_task_t;
 
 typedef SemaphoreHandle_t _z_mutex_t;
+typedef SemaphoreHandle_t _z_mutex_rec_t;
 typedef struct {
     SemaphoreHandle_t mutex;
     SemaphoreHandle_t sem;

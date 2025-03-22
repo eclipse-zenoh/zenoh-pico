@@ -61,7 +61,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         return ret;
     }
 #endif
-
+    zn->_mode = Z_WHATAMI_CLIENT;
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;

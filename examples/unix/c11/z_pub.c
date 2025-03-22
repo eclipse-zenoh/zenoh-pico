@@ -22,6 +22,9 @@
 
 #if Z_FEATURE_PUBLICATION == 1
 
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n,
+                      bool *add_matching_listener);
+
 #if Z_FEATURE_MATCHING == 1
 void matching_status_handler(const z_matching_status_t *matching_status, void *arg) {
     (void)arg;
@@ -34,60 +37,18 @@ void matching_status_handler(const z_matching_status_t *matching_status, void *a
 #endif
 
 int main(int argc, char **argv) {
-    const char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *keyexpr = "demo/example/zenoh-pico-pub";
     char *const default_value = "Pub from Pico!";
     char *value = default_value;
-    const char *mode = "client";
-    char *clocator = NULL;
-    char *llocator = NULL;
     int n = 2147483647;  // max int value by default
     bool add_matching_listener = false;
 
-    int opt;
-    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:a")) != -1) {
-        switch (opt) {
-            case 'k':
-                keyexpr = optarg;
-                break;
-            case 'v':
-                value = optarg;
-                break;
-            case 'e':
-                clocator = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                llocator = optarg;
-                break;
-            case 'n':
-                n = atoi(optarg);
-                break;
-            case 'a':
-                add_matching_listener = true;
-                break;
-            case '?':
-                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
-                    optopt == 'n') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                } else {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                return 1;
-            default:
-                return -1;
-        }
-    }
-
     z_owned_config_t config;
     z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, mode);
-    if (clocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, clocator);
-    }
-    if (llocator != NULL) {
-        zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, llocator);
+
+    int ret = parse_args(argc, argv, &config, &keyexpr, &value, &n, &add_matching_listener);
+    if (ret != 0) {
+        return ret;
     }
 
     printf("Opening session...\n");
@@ -102,11 +63,6 @@ int main(int argc, char **argv) {
         printf("Unable to start read and lease tasks\n");
         z_drop(z_move(s));
         return -1;
-    }
-    // Wait for joins in peer mode
-    if (strcmp(mode, "peer") == 0) {
-        printf("Waiting for joins...\n");
-        sleep(3);
     }
     // Declare publisher
     printf("Declaring publisher for '%s'...\n", keyexpr);
@@ -151,6 +107,50 @@ int main(int argc, char **argv) {
     z_drop(z_move(s));
     return 0;
 }
+
+// Note: All args can be specified multiple times. For "-e" it will append the list of endpoints, for the other it will
+// simply replace the previous value.
+static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, int *n,
+                      bool *add_matching_listener) {
+    int opt;
+    while ((opt = getopt(argc, argv, "k:v:e:m:l:n:a")) != -1) {
+        switch (opt) {
+            case 'k':
+                *keyexpr = optarg;
+                break;
+            case 'v':
+                *value = optarg;
+                break;
+            case 'e':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_CONNECT_KEY, optarg);
+                break;
+            case 'm':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_MODE_KEY, optarg);
+                break;
+            case 'l':
+                zp_config_insert(z_loan_mut(*config), Z_CONFIG_LISTEN_KEY, optarg);
+                break;
+            case 'n':
+                *n = atoi(optarg);
+                break;
+            case 'a':
+                *add_matching_listener = true;
+                break;
+            case '?':
+                if (optopt == 'k' || optopt == 'v' || optopt == 'e' || optopt == 'm' || optopt == 'l' ||
+                    optopt == 'n') {
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                } else {
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                return 1;
+            default:
+                return -1;
+        }
+    }
+    return 0;
+}
+
 #else
 int main(void) {
     printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");

@@ -774,8 +774,14 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
 bool z_session_is_closed(const z_loaned_session_t *zs) { return _z_session_is_closed(_Z_RC_IN_VAL(zs)); }
 
 z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {
+    if (_Z_RC_IN_VAL(zs)->_mode != Z_WHATAMI_PEER) {
+        return _Z_RES_OK;
+    }
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            _zp_unicast_fetch_zid(&(_Z_RC_IN_VAL(zs)->_tp), &callback->_this._val);
+            break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
         case _Z_TRANSPORT_RAWETH_TYPE:
             _zp_multicast_fetch_zid(&(_Z_RC_IN_VAL(zs)->_tp), &callback->_this._val);
@@ -791,10 +797,13 @@ z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t 
         callback->_this._val.drop(ctx);
     }
     z_internal_closure_zid_null(&callback->_this);
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {
+    if (_Z_RC_IN_VAL(zs)->_mode != Z_WHATAMI_CLIENT) {
+        return _Z_RES_OK;
+    }
     // Call transport function
     switch (_Z_RC_IN_VAL(zs)->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
@@ -811,7 +820,7 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
         callback->_this._val.drop(ctx);
     }
     z_internal_closure_zid_null(&callback->_this);
-    return 0;
+    return _Z_RES_OK;
 }
 
 z_id_t z_info_zid(const z_loaned_session_t *zs) { return _Z_RC_IN_VAL(zs)->_local_zid; }
@@ -966,7 +975,7 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     z_source_info_drop(opt.source_info);
 #endif
     z_bytes_drop(payload);
-#endif
+#endif  // Z_FEATURE_LOCAL_SUBSCRIBER == 1
 
     return ret;
 }
@@ -1013,10 +1022,8 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     _z_keyexpr_t key = keyexpr_aliased;
 
     pub->_val = _z_publisher_null();
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1037,14 +1044,17 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     // Set publisher
     _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                                                   opt.congestion_control, opt.priority, opt.is_express, reliability);
-    // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
-    if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+    // TODO: Rework write filters to work with non-aggregated interests
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+        // Create write filter
+        z_result_t res =
+            _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
+        if (res != _Z_RES_OK) {
+            if (key._id != Z_RESOURCE_ID_NONE) {
+                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+            }
+            return res;
         }
-        return res;
     }
     pub->_val = int_pub;
     return _Z_RES_OK;
@@ -1117,12 +1127,14 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         _z_bytes_t payload_bytes = _z_bytes_from_moved(payload);
         _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
 
+        // TODO: Rework write filters to work with non-aggregated interests
         // Check if write filter is active before writing
-        if (!_z_write_filter_active(&pub->_filter)) {
+        if ((session->_mode != Z_WHATAMI_CLIENT) || !_z_write_filter_active(&pub->_filter)) {
             // Write value
             ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
         }
+
         // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
         _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
@@ -1350,6 +1362,7 @@ void z_querier_get_options_default(z_querier_get_options_t *options) {
 }
 
 void z_querier_options_default(z_querier_options_t *options) {
+    options->encoding = NULL;
     options->target = z_query_target_default();
     options->consolidation = z_query_consolidation_default();
     options->congestion_control = z_internal_congestion_control_default_request();
@@ -1364,10 +1377,8 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     _z_keyexpr_t key = keyexpr_aliased;
 
     querier->_val = _z_querier_null();
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1380,19 +1391,24 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     if (options != NULL) {
         opt = *options;
     }
+    z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
 
     // Set querier
     _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
-                                                  opt.priority, opt.is_express, opt.timeout_ms);
+                                                  opt.priority, opt.is_express, opt.timeout_ms,
+                                                  opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
 
-    // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
-    if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+    // TODO: Rework write filters to work with non-aggregated interests
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+        // Create write filter
+        z_result_t res = _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased,
+                                                _Z_INTEREST_FLAG_QUERYABLES);
+        if (res != _Z_RES_OK) {
+            if (key._id != Z_RESOURCE_ID_NONE) {
+                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+            }
+            return res;
         }
-        return res;
     }
     querier->_val = int_querier;
     return _Z_RES_OK;
@@ -1451,7 +1467,8 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        if (_z_write_filter_active(&querier->_filter)) {
+        // TODO: Rework write filters to work with non-aggregated interests
+        if ((session->_mode == Z_WHATAMI_CLIENT) && _z_write_filter_active(&querier->_filter)) {
             callback->_this._val.drop(ctx);
         } else {
             _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = encoding};
@@ -1604,10 +1621,8 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1852,10 +1867,8 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
 
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
         if (r == NULL) {
             bool do_keydecl = true;

@@ -90,8 +90,8 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
-    // FIXME: remove this check when resource declaration is implemented for multicast transport
-    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
         uint16_t id = _z_register_resource(zn, keyexpr, 0, _Z_KEYEXPR_MAPPING_LOCAL);
         if (id != 0) {
             // Build the declare message to send on the wire
@@ -143,10 +143,8 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Currently, if resource declarations are done over multicast transports, the current protocol definition
-    //       lacks a way to convey them to later-joining nodes. Thus, in the current version automatic
-    //       resource declarations are only performed on unicast transports.
-    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    // TODO: Implement interest protocol for multicast transports, unicast p2p
+    if (zs->_mode == Z_WHATAMI_CLIENT) {
         _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased);
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
@@ -185,7 +183,10 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&pub->_zn), pub->_id);
 #endif
     // Clear publisher
-    _z_write_filter_destroy(_Z_RC_IN_VAL(&pub->_zn), &pub->_filter);
+    // TODO: Rework write filters to work with non-aggregated interests
+    if (_Z_RC_IN_VAL(&pub->_zn)->_mode == Z_WHATAMI_CLIENT) {
+        _z_write_filter_destroy(_Z_RC_IN_VAL(&pub->_zn), &pub->_filter);
+    }
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
     return _Z_RES_OK;
 }
@@ -301,7 +302,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&sub->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&sub->_zn)->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
@@ -367,7 +368,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&qle->_zn)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+    if (_Z_RC_IN_VAL(&qle->_zn)->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
@@ -523,10 +524,13 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 /*------------------  Querier Declaration ------------------*/
 _z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                 z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
-                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms) {
+                                z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
+                                _z_encoding_t *encoding, z_reliability_t reliability) {
     // Allocate querier
     _z_querier_t ret;
     // Fill querier
+    ret._encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+    ret.reliability = reliability;
     ret._key = _z_keyexpr_duplicate(&keyexpr);
     ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     ret._consolidation_mode = consolidation_mode;
@@ -546,7 +550,10 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 #if Z_FEATURE_MATCHING == 1
     _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&querier->_zn), querier->_id);
 #endif
-    _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
+    // TODO: Rework write filters to work with non-aggregated interests
+    if (_Z_RC_IN_VAL(&querier->_zn)->_mode == Z_WHATAMI_CLIENT) {
+        _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
+    }
     _z_undeclare_resource(_Z_RC_IN_VAL(&querier->_zn), querier->_key._id);
     return _Z_RES_OK;
 }
@@ -609,14 +616,16 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     if (sintr == NULL) {
         return 0;
     }
-    // Build the interest message to send on the wire
-    _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
-    _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-    if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        _z_unregister_interest(zn, sintr);
-        return 0;
+    // Build the interest message to send on the wire (only needed in client mode)
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
+        _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
+        _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            _z_unregister_interest(zn, sintr);
+            return 0;
+        }
+        _z_n_msg_clear(&n_msg);
     }
-    _z_n_msg_clear(&n_msg);
     return intr._id;
 }
 
@@ -626,13 +635,15 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
     if (sintr == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
-    // Build the declare message to send on the wire
-    _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
-    _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-    if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
-        return _Z_ERR_TRANSPORT_TX_FAILED;
+    // Build the declare message to send on the wire (only needed in client mode)
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
+        _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
+        _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+            return _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+        _z_n_msg_clear(&n_msg);
     }
-    _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, session interest can be removed
     _z_unregister_interest(zn, sintr);
     return _Z_RES_OK;

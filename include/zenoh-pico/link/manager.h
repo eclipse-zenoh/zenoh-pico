@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *ep);
+z_result_t _z_new_peer_tcp(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket);
 z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *ep);
 
 #if Z_FEATURE_LINK_UDP_UNICAST == 1

@@ -121,7 +121,7 @@ z_result_t _z_mutex_lock(_z_mutex_t *m) {
 
 z_result_t _z_mutex_try_lock(_z_mutex_t *m) {
     z_result_t ret = _Z_RES_OK;
-    if (TryAcquireSRWLockExclusive(m) == 0) {
+    if (!TryAcquireSRWLockExclusive(m)) {
         ret = _Z_ERR_GENERIC;
     }
     return ret;
@@ -131,6 +131,33 @@ z_result_t _z_mutex_unlock(_z_mutex_t *m) {
     z_result_t ret = _Z_RES_OK;
     ReleaseSRWLockExclusive(m);
     return ret;
+}
+
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) {
+    InitializeCriticalSection(m);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m) {
+    DeleteCriticalSection(m);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m) {
+    EnterCriticalSection(m);
+    return _Z_RES_OK;
+}
+
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m) {
+    if (!TryEnterCriticalSection(m)) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) {
+    LeaveCriticalSection(m);
+    return _Z_RES_OK;
 }
 
 /*------------------ Condvar ------------------*/
