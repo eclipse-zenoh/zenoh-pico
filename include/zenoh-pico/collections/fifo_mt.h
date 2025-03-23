@@ -35,7 +35,7 @@ typedef struct {
 #endif
 } _z_fifo_mt_t;
 
-z_result_t _z_fifo_mti_init(size_t capacity);
+z_result_t _z_fifo_mt_init(_z_fifo_mt_t *fifo, size_t capacity);
 _z_fifo_mt_t *_z_fifo_mt_new(size_t capacity);
 
 z_result_t _z_fifo_mt_close(_z_fifo_mt_t *fifo);
