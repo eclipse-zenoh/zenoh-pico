@@ -732,6 +732,7 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     }
 
     // Flush serial port input buffer
+    usleep(20000);
     tcflush(sock->_serial, TCIFLUSH);
 
     // Allocate buffers
