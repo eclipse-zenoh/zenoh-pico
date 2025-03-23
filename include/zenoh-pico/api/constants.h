@@ -152,8 +152,18 @@ typedef enum { Z_RELIABILITY_BEST_EFFORT = 1, Z_RELIABILITY_RELIABLE = 0 } z_rel
  *   Z_CONGESTION_CONTROL_DROP: Defines congestion control as ``DROP``. Messages are dropped in case
  *     of congestion control.
  */
-typedef enum { Z_CONGESTION_CONTROL_BLOCK = 0, Z_CONGESTION_CONTROL_DROP = 1 } z_congestion_control_t;
-#define Z_CONGESTION_CONTROL_DEFAULT Z_CONGESTION_CONTROL_BLOCK
+typedef enum { Z_CONGESTION_CONTROL_BLOCK = 1, Z_CONGESTION_CONTROL_DROP = 0 } z_congestion_control_t;
+#define Z_CONGESTION_CONTROL_DEFAULT Z_CONGESTION_CONTROL_DROP
+
+static inline z_congestion_control_t z_internal_congestion_control_default_push(void) {
+    return Z_CONGESTION_CONTROL_DROP;
+}
+static inline z_congestion_control_t z_internal_congestion_control_default_request(void) {
+    return Z_CONGESTION_CONTROL_BLOCK;
+}
+static inline z_congestion_control_t z_internal_congestion_control_default_response(void) {
+    return Z_CONGESTION_CONTROL_BLOCK;
+}
 
 /**
  * Priority of Zenoh messages values.
