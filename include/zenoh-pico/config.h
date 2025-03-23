@@ -48,7 +48,7 @@
 #define Z_FEATURE_BATCHING 1
 #define Z_FEATURE_MATCHING 0
 #define Z_FEATURE_RX_CACHE 0
-#define Z_FEATURE_AUTO_RECONNECT 1
+#define Z_FEATURE_AUTO_RECONNECT 0
 // End of CMake generation
 
 /*------------------ Runtime configuration properties ------------------*/
