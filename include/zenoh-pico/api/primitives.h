@@ -907,6 +907,41 @@ uint32_t z_entity_global_id_eid(const z_entity_global_id_t *gid);
 z_id_t z_entity_global_id_zid(const z_entity_global_id_t *gid);
 
 /**
+ * Constructs a new source info.
+ *
+ * Parameters:
+ *   info: An uninitialized :c:type:`z_owned_source_info_t`.
+ *   source_id: Pointer to a :c:type:`z_entity_global_id_t` global entity id.
+ *   source_sn: :c:type:`uint32_t` sequence number.
+ *
+ * Return:
+ *   ``0`` if construction is successful, ``negative value`` otherwise.
+ */
+z_result_t z_source_info_new(z_owned_source_info_t *info, const z_entity_global_id_t *source_id, uint32_t source_sn);
+
+/**
+ * Returns the sequence number associated with this source info.
+ *
+ * Parameters:
+ *   info: Pointer to the :c:type:`z_loaned_source_info_t` to get the parameters from.
+ *
+ * Return:
+ *   :c:type:`uint32_t` sequence number.
+ */
+uint32_t z_source_info_sn(const z_loaned_source_info_t *info);
+
+/**
+ * Returns the sequence number associated with this source info.
+ *
+ * Parameters:
+ *   info: Pointer to the :c:type:`z_loaned_source_info_t` to get the parameters from.
+ *
+ * Return:
+ *   Global entity ID as a :c:type:`z_entity_global_id_t`.
+ */
+z_entity_global_id_t z_source_info_id(const z_loaned_source_info_t *info);
+
+/**
  * Builds a default query target.
  *
  * Return:
@@ -1184,6 +1219,7 @@ _Z_OWNED_FUNCTIONS_DEF(hello)
 _Z_OWNED_FUNCTIONS_DEF(reply)
 _Z_OWNED_FUNCTIONS_DEF(string_array)
 _Z_OWNED_FUNCTIONS_DEF(sample)
+_Z_OWNED_FUNCTIONS_DEF(source_info)
 _Z_OWNED_FUNCTIONS_DEF(query)
 _Z_OWNED_FUNCTIONS_DEF(slice)
 _Z_OWNED_FUNCTIONS_DEF(bytes)
@@ -1543,6 +1579,17 @@ z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample);
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
+
+/**
+ * Gets the source info for the sample (unstable).
+ *
+ * Parameters:
+ *   sample: Pointer to a :c:type:`z_loaned_sample_t` to get the source info from.
+ *
+ * Return:
+ *   The source info wrapped as a :c:type:`z_loaned_source_info_t`.
+ */
+const z_loaned_source_info_t *z_sample_source_info(const z_loaned_sample_t *sample);
 #endif
 
 /**
@@ -1724,6 +1771,19 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
  */
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher);
 
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a publisher.
+ *
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_publisher_t` to get the entity global Id from.
+ *
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ */
+z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher);
+#endif
+
 #if Z_FEATURE_MATCHING == 1
 /**
  * Declares a matching listener, registering a callback for notifying subscribers matching with a given publisher.
@@ -1875,6 +1935,19 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_keyexpr_t *z_querier_keyexpr(const z_loaned_querier_t *querier);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a querier.
+ *
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_querier_t` to get the entity global Id from.
+ *
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ */
+z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier);
+#endif
 
 #if Z_FEATURE_MATCHING == 1
 /**
@@ -2115,6 +2188,19 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options);
  */
 z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
                              const z_query_reply_err_options_t *options);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a queryable.
+ *
+ * Parameters:
+ *   publisher: Pointer to a :c:type:`z_loaned_queryable_t` to get the entity global Id from.
+ *
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_loaned_queryable_t`.
+ */
+z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable);
+#endif
 
 #endif
 
