@@ -87,7 +87,7 @@ void setup() {
     z_owned_closure_sample_t closure;
     z_ring_channel_sample_new(&closure, &handler, SIZE);
     z_view_keyexpr_t ke;
-    z_view_keyexpr_from_str(&ke, KEYEXPR);
+    z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     if (z_declare_subscriber(z_session_loan(&s), &sub, z_view_keyexpr_loan(&ke), z_closure_sample_move(&closure),
                              NULL) < 0) {
         Serial.println("Unable to declare subscriber.");

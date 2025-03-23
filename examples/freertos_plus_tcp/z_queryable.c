@@ -83,7 +83,7 @@ void app_main(void) {
 
     z_view_keyexpr_t ke;
     if (z_view_keyexpr_from_str(&ke, KEYEXPR) < 0) {
-        printf("%s is not a valid key expression", KEYEXPR);
+        printf("%s is not a valid key expression\n", KEYEXPR);
         return;
     }
 
