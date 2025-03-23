@@ -21,10 +21,10 @@
 
 int main(int argc, char **argv) {
     const char *keyexpr = "group1/zenoh-pico";
-    const char *mode = "client";
-    const char *clocator = NULL;
+    const char *mode = "peer";
+    const char *clocator = "serial/ttyACM0#baudrate=921600";
     const char *llocator = NULL;
-    unsigned long timeout = 0;
+    unsigned long timeout = 5;
 
     int opt;
     while ((opt = getopt(argc, argv, "k:e:m:l:t:")) != -1) {
@@ -79,6 +79,12 @@ int main(int argc, char **argv) {
         printf("Unable to start read and lease tasks\n");
         z_session_drop(z_session_move(&s));
         return -1;
+    }
+
+    // Wait for the serial port connection sequence to complete
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for startup...\n");
+        usleep(100);
     }
 
     z_view_keyexpr_t ke;

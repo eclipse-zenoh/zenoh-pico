@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/zenoh-pico-pub";
     char *const default_value = "Pub from Pico!";
     char *value = default_value;
-    const char *mode = "client";
-    char *clocator = NULL;
+    const char *mode = "peer";
+    char *clocator = "serial/ttyACM0#baudrate=921600";
     char *llocator = NULL;
     int n = 2147483647;  // max int value by default
     bool add_matching_listener = false;
@@ -103,10 +103,10 @@ int main(int argc, char **argv) {
         z_drop(z_move(s));
         return -1;
     }
-    // Wait for joins in peer mode
+    // Wait for the serial port connection sequence to complete
     if (strcmp(mode, "peer") == 0) {
-        printf("Waiting for joins...\n");
-        sleep(3);
+        printf("Waiting for startup...\n");
+        usleep(100);
     }
     // Declare publisher
     printf("Declaring publisher for '%s'...\n", keyexpr);

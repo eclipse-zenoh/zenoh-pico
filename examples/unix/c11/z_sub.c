@@ -38,8 +38,8 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
 
 int main(int argc, char **argv) {
     const char *keyexpr = "demo/example/**";
-    const char *mode = "client";
-    char *clocator = NULL;
+    const char *mode = "peer";
+    char *clocator = "serial/ttyACM0#baudrate=921600";
     char *llocator = NULL;
     int n = 0;
 
@@ -95,6 +95,12 @@ int main(int argc, char **argv) {
         printf("Unable to start read and lease tasks\n");
         z_session_drop(z_session_move(&s));
         return -1;
+    }
+
+    // Wait for the serial port connection sequence to complete
+    if (strcmp(mode, "peer") == 0) {
+        printf("Waiting for startup...\n");
+        usleep(100);
     }
 
     z_owned_closure_sample_t callback;
