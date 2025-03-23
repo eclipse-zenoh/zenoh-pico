@@ -166,10 +166,10 @@ jobs:
           RUST_LOG=debug ./zenoh-standalone/zenohd &
           echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
 
-      - name: Build project and run test
+      - name: Build project and run tests
         run: |
           sudo apt install -y ninja-build
-          CMAKE_GENERATOR=Ninja make
+          CMAKE_GENERATOR=Ninja ASAN=ON make test
           python3 ./build/tests/single_thread.py
         timeout-minutes: 5
         env:

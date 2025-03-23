@@ -107,14 +107,17 @@ z_result_t _z_ring_mt_pull(void *dst, void *context, z_element_move_f element_mo
         }
     }
     _Z_RETURN_IF_ERR(_z_mutex_unlock(&r->_mutex))
-    if (r->is_closed && src == NULL) return _Z_RES_CHANNEL_CLOSED;
-    element_move(dst, src);
 #else   // Z_FEATURE_MULTI_THREAD == 1
     void *src = _z_ring_pull(&r->_ring);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    if (r->is_closed && src == NULL) {
+        return _Z_RES_CHANNEL_CLOSED;
+    }
+
     if (src != NULL) {
         element_move(dst, src);
     }
-#endif  // Z_FEATURE_MULTI_THREAD == 1
 
     return _Z_RES_OK;
 }
