@@ -58,8 +58,6 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
 #else
     ztu->_common._lease_task_running = false;
 #endif
-
-    _z_task_exit();
 }
 
 void *_zp_unicast_lease_task(void *ztu_arg) {
