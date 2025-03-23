@@ -121,6 +121,7 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
     z_encoding_to_string(z_sample_encoding(sample), &encoding);
     printf("%s\n", z_string_data(z_loan(encoding)));
     assert(strncmp(encoding_expected, z_string_data(z_loan(encoding)), strlen(encoding_expected)) == 0);
+    z_drop(z_move(encoding));
 }
 
 int main(int argc, char **argv) {
@@ -200,6 +201,7 @@ int main(int argc, char **argv) {
     z_owned_string_t id_str;
     z_id_to_string(&_ret_zid, &id_str);
     printf("%.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
+    z_drop(z_move(id_str));
 
     z_owned_closure_zid_t _ret_closure_zid;
     z_closure(&_ret_closure_zid, zid_handler, NULL, NULL);
@@ -242,6 +244,7 @@ int main(int argc, char **argv) {
     printf("Session 2 with PID: 0x");
     z_id_to_string(&_ret_zid, &id_str);
     printf("%.*s\n", (int)z_string_len(z_loan(id_str)), z_string_data(z_loan(id_str)));
+    z_drop(z_move(id_str));
 
 #ifdef ZENOH_PICO
     zp_start_read_task(z_loan_mut(s2), NULL);
