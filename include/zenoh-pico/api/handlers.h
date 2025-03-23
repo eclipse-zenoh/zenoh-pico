@@ -31,7 +31,7 @@ extern "C" {
 #define _Z_CHANNEL_DEFINE_IMPL(handler_type, handler_name, handler_new_f_name, callback_type, callback_new_f,         \
                                collection_type, collection_new_f, collection_free_f, collection_push_f,               \
                                collection_pull_f, collection_try_pull_f, collection_close_f, elem_owned_type,         \
-                               elem_loaned_type, elem_clone_f, elem_move_f, elem_drop_f, elem_null_f)                 \
+                               elem_loaned_type, elem_take_f, elem_move_f, elem_drop_f, elem_null_f)                  \
     typedef struct {                                                                                                  \
         collection_type *collection;                                                                                  \
     } handler_type;                                                                                                   \
@@ -59,7 +59,7 @@ extern "C" {
             _Z_ERROR("Out of memory");                                                                                \
             return;                                                                                                   \
         }                                                                                                             \
-        elem_clone_f(internal_elem, elem);                                                                            \
+        elem_take_f(internal_elem, elem);                                                                             \
         z_result_t ret = collection_push_f(internal_elem, context, _z_##handler_name##_elem_free);                    \
         if (ret != _Z_RES_OK) {                                                                                       \
             _Z_ERROR("%s failed: %i", #collection_push_f, ret);                                                       \
@@ -140,7 +140,7 @@ extern "C" {
                            /* collection_close_f              */ _z_##kind_name##_mt_close,                 \
                            /* elem_owned_type                 */ z_owned_##item_name##_t,                   \
                            /* elem_loaned_type                */ z_loaned_##item_name##_t,                  \
-                           /* elem_clone_f                    */ z_##item_name##_clone,                     \
+                           /* elem_take_f                     */ z_##item_name##_take_from_loaned,          \
                            /* elem_move_f                     */ z_##item_name##_move,                      \
                            /* elem_drop_f                     */ z_##item_name##_drop,                      \
                            /* elem_null_f                     */ z_internal_##item_name##_null)
