@@ -659,7 +659,7 @@ _z_keyexpr_t gen_keyexpr(void) {
     if (is_numerical == true) {
         key._suffix = _z_string_null();
     } else {
-        size_t len = gen_zint() % 16;
+        size_t len = gen_zint() % 16 + 1;
         key._suffix = _z_string_preallocate(len);
         char *suffix = gen_str(len);
         memcpy((char *)_z_string_data(&key._suffix), suffix, len);
