@@ -366,8 +366,8 @@ void int_map_iterator_deletion_test(void) {
         assert(s == _z_str_intmap_len(&map));
         size_t key = _z_str_intmap_iterator_key(&iter);
         assert(strlen(_z_str_intmap_iterator_value(&iter)) == 1);
-        _z_str_intmap_remove(&map, key);
         _z_str_intmap_iterator_next(&iter);
+        _z_str_intmap_remove(&map, key);
     }
     _z_str_intmap_clear(&map);
 }
