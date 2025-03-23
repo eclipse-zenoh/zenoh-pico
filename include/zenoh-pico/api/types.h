@@ -46,6 +46,11 @@ extern "C" {
  */
 typedef _z_id_t z_id_t;
 
+/**
+ *  Represents an ID globally identifying an entity in a Zenoh system.
+ */
+typedef _z_entity_global_id_t z_entity_global_id_t;
+
 /*
  * Represents timestamp value in Zenoh
  */
