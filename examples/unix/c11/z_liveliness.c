@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     // Wait for the serial port connection sequence to complete
     if (strcmp(mode, "peer") == 0) {
         printf("Waiting for startup...\n");
-        usleep(100);
+        usleep(100000);
     }
 
     z_view_keyexpr_t ke;
