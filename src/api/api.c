@@ -928,7 +928,9 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     // Clean-up
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
+#if Z_FEATURE_PAYLOAD_REUSE == 0
     z_bytes_drop(payload);
+#endif
     return ret;
 }
 
@@ -1084,7 +1086,9 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     // Clean-up
     _z_encoding_clear(&encoding);
     z_bytes_drop(opt.attachment);
+#if Z_FEATURE_PAYLOAD_REUSE == 0
     z_bytes_drop(payload);
+#endif
     return ret;
 }
 
@@ -1527,11 +1531,13 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_owned_bytes(&opts.attachment->_this));
-    z_bytes_drop(payload);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
     z_bytes_drop(opts.attachment);
+#if Z_FEATURE_PAYLOAD_REUSE == 0
+    z_bytes_drop(payload);
+#endif
     return ret;
 }
 
@@ -1588,10 +1594,12 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
     _z_value_t value = {.payload = _z_bytes_from_owned_bytes(&payload->_this),
                         .encoding = _z_encoding_from_owned(&opts.encoding->_this)};
     z_result_t ret = _z_send_reply_err(_Z_RC_IN_VAL(query), &sess_rc, value);
-    _z_session_rc_drop(&sess_rc);
-    z_bytes_drop(payload);
     // Clean-up
+    _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
+#if Z_FEATURE_PAYLOAD_REUSE == 0
+    z_bytes_drop(payload);
+#endif
     return ret;
 }
 #endif
