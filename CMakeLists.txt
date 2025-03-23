@@ -226,7 +226,6 @@ set(Z_FEATURE_INTEREST 1 CACHE STRING "Toggle interests")
 set(Z_FEATURE_FRAGMENTATION 1 CACHE STRING "Toggle fragmentation")
 set(Z_FEATURE_ENCODING_VALUES 1 CACHE STRING "Toggle encoding values")
 set(Z_FEATURE_MULTI_THREAD 1 CACHE STRING "Toggle multithread")
-set(Z_FEATURE_DYNAMIC_MEMORY_ALLOCATION 0 CACHE STRING "Toggle dynamic memory allocation")
 
 set(Z_FEATURE_LINK_TCP 1 CACHE STRING "Toggle TCP links")
 set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
