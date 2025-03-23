@@ -13,6 +13,7 @@
 //
 
 #include <errno.h>
+#include <pthread.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -114,7 +115,13 @@ z_result_t _z_task_detach(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_detach(*ta
 
 z_result_t _z_task_cancel(_z_task_t *task) { _Z_CHECK_SYS_ERR(pthread_cancel(*task)); }
 
-void _z_task_free(_z_task_t **task) { *task = NULL; }
+void _z_task_exit(void) { pthread_exit(NULL); }
+
+void _z_task_free(_z_task_t **task) {
+    _z_task_t *ptr = *task;
+    z_free(ptr);
+    *task = NULL;
+}
 
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, 0)); }

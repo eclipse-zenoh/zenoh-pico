@@ -79,7 +79,7 @@ z_result_t _z_task_join(_z_task_t *task) {
 z_result_t _z_task_detach(_z_task_t *task) {
     z_result_t ret = _Z_RES_OK;
     CloseHandle(*task);
-    *task = NULL;
+    *task = 0;
     return ret;
 }
 
@@ -89,9 +89,13 @@ z_result_t _z_task_cancel(_z_task_t *task) {
     return ret;
 }
 
+void _z_task_exit(void) { ExitThread(0); }
+
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
-    CloseHandle(*ptr);
+    if (*ptr != 0) {
+        CloseHandle(*ptr);
+    }
     z_free(ptr);
     *task = NULL;
 }
