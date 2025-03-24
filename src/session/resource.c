@@ -223,6 +223,8 @@ uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_
     uint16_t mapping = register_to_mapping;
     uint16_t parent_mapping = _z_keyexpr_mapping_id(key);
     _z_keyexpr_t full_ke = _z_keyexpr_alias(key);
+    _Z_DEBUG("registering: key: %.*s id: %d, mapping: %d", (int)_z_string_len(&key->_suffix),
+             _z_string_data(&key->_suffix), id, mapping);
 
     _z_session_mutex_lock(zn);
 
@@ -267,7 +269,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping) {
         _z_resource_list_t *parent = *parent_mut;
         while (parent != NULL) {
             _z_resource_t *head = _z_resource_list_head(parent);
-            if (head && head->_id == id && _z_keyexpr_mapping_id(&head->_key) == mapping) {
+            if ((head != NULL) && (head->_id == id) && (_z_keyexpr_mapping_id(&head->_key) == mapping)) {
                 head->_refcount--;
                 if (head->_refcount == 0) {
                     *parent_mut = _z_resource_list_pop(parent, &head);

@@ -613,7 +613,7 @@ z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_messag
             ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
         } break;
         default: {
-            _Z_DEBUG("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
+            _Z_INFO("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
             ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
@@ -651,8 +651,8 @@ z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *z
                 ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
             } break;
             default: {
-                _Z_DEBUG("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid,
-                         msg->_header);
+                _Z_INFO("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid,
+                        msg->_header);
                 ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
             } break;
         }

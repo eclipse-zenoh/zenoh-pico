@@ -41,6 +41,9 @@ typedef struct {
 typedef struct {
     SemaphoreHandle_t handle;
 } _z_mutex_t;
+
+typedef _z_mutex_t _z_mutex_rec_t;
+
 typedef struct {
     SemaphoreHandle_t mutex;
     SemaphoreHandle_t sem;

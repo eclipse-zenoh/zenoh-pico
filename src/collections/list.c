@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/collections/list.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 /*-------- Inner single-linked list --------*/
@@ -88,6 +89,24 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, const void *e) 
         l = _z_list_tail(l);
     }
     return ret;
+}
+
+_z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free_f f_f) {
+    _z_list_t *dropped = NULL;
+    if (prev == NULL) {  // Head removal
+        dropped = list;
+        list = list->_tail;
+    } else {  // Other cases
+        dropped = prev->_tail;
+        if (dropped != NULL) {
+            prev->_tail = dropped->_tail;
+        }
+    }
+    if (dropped != NULL) {
+        f_f(&dropped->_val);
+        z_free(dropped);
+    }
+    return list;
 }
 
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, const void *left) {

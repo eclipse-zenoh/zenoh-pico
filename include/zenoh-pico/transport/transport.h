@@ -72,6 +72,44 @@ _Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
 _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
                                                                     _z_transport_peer_entry_t *entry);
 
+typedef enum _z_unicast_peer_flow_state_e {
+    _Z_FLOW_STATE_INACTIVE = 0,
+    _Z_FLOW_STATE_PENDING_SIZE = 1,
+    _Z_FLOW_STATE_PENDING_DATA = 2,
+    _Z_FLOW_STATE_READY = 3,
+} _z_unicast_peer_flow_state_e;
+
+typedef struct {
+    _z_sys_net_socket_t _socket;
+    _z_id_t _remote_zid;
+    // SN numbers
+    _z_zint_t _sn_rx_reliable;
+    _z_zint_t _sn_rx_best_effort;
+    volatile bool _received;
+    bool _pending;
+    uint8_t flow_state;
+    uint16_t flow_curr_size;
+    _z_zbuf_t flow_buff;
+
+#if Z_FEATURE_FRAGMENTATION == 1
+    // Defragmentation buffers
+    uint8_t _state_reliable;
+    uint8_t _state_best_effort;
+    _z_wbuf_t _dbuf_reliable;
+    _z_wbuf_t _dbuf_best_effort;
+    // Patch
+    uint8_t _patch;
+#endif
+} _z_transport_unicast_peer_t;
+
+void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src);
+void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src);
+size_t _z_transport_unicast_peer_size(const _z_transport_unicast_peer_t *src);
+bool _z_transport_unicast_peer_eq(const _z_transport_unicast_peer_t *left, const _z_transport_unicast_peer_t *right);
+_Z_ELEM_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t, _z_transport_unicast_peer_size,
+               _z_transport_unicast_peer_clear, _z_transport_unicast_peer_copy, _z_noop_move)
+_Z_LIST_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t)
+
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
@@ -95,9 +133,11 @@ typedef struct {
     // TX and RX mutexes
     _z_mutex_t _mutex_rx;
     _z_mutex_t _mutex_tx;
+    _z_mutex_rec_t _mutex_peer;
 
     _z_task_t *_read_task;
     _z_task_t *_lease_task;
+    bool *_accept_task_running;
     volatile bool _read_task_running;
     volatile bool _lease_task_running;
 #endif
@@ -113,20 +153,8 @@ typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_tran
 
 typedef struct {
     _z_transport_common_t _common;
-    _z_id_t _remote_zid;
-    _z_zint_t _sn_rx_reliable;
-    _z_zint_t _sn_rx_best_effort;
-    volatile bool _received;
-
-#if Z_FEATURE_FRAGMENTATION == 1
-    // Defragmentation buffer
-    uint8_t _state_reliable;
-    uint8_t _state_best_effort;
-    _z_wbuf_t _dbuf_reliable;
-    _z_wbuf_t _dbuf_best_effort;
-    // Patch
-    uint8_t _patch;
-#endif
+    // Known valid peers
+    _z_transport_unicast_peer_list_t *_peers;
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
@@ -135,10 +163,6 @@ typedef struct _z_transport_multicast_t {
     _z_transport_peer_entry_list_t *_peers;
     // T message send function
     _zp_f_send_tmsg _send_f;
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex_peer;  // Peer list mutex
-#endif
 } _z_transport_multicast_t;
 
 typedef struct {
@@ -175,6 +199,8 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
+z_result_t _z_transport_unicast_peer_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
+                                         _z_sys_net_socket_t socket);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
 void _z_transport_clear(_z_transport_t *zt);
@@ -197,6 +223,12 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_tx); }
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _z_mutex_lock(&ztc->_mutex_rx); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _z_mutex_unlock(&ztc->_mutex_rx); }
+static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) {
+    (void)_z_mutex_rec_lock(&ztc->_mutex_peer);
+}
+static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) {
+    (void)_z_mutex_rec_unlock(&ztc->_mutex_peer);
+}
 #else
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {
     _ZP_UNUSED(ztc);
@@ -206,6 +238,8 @@ static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, 
 static inline void _z_transport_tx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_rx_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 static inline void _z_transport_rx_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
+static inline void _z_transport_peer_mutex_lock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
+static inline void _z_transport_peer_mutex_unlock(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #ifdef __cplusplus

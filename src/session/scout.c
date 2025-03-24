@@ -52,7 +52,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
         err = _z_open_link(&zl, locator);
         if (err == _Z_RES_OK) {
             // Send the scout message
-            err = _z_link_send_wbuf(&zl, wbf);
+            err = _z_link_send_wbuf(&zl, wbf, NULL);
             if (err == _Z_RES_OK) {
                 // The receiving buffer
                 _z_zbuf_t zbf = _z_zbuf_make(Z_BATCH_UNICAST_SIZE);

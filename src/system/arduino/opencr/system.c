@@ -90,6 +90,16 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { return -1; }
 
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { return -1; }
 
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) { return -1; }
+
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m) { return -1; }
+
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m) { return -1; }
+
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m) { return -1; }
+
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) { return -1; }
+
 /*------------------ Condvar ------------------*/
 z_result_t _z_condvar_init(_z_condvar_t *cv) { return -1; }
 

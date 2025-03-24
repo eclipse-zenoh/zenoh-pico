@@ -82,10 +82,12 @@ static z_result_t _z_f_link_open_raweth(_z_link_t *self);
 static z_result_t _z_f_link_listen_raweth(_z_link_t *self);
 static void _z_f_link_close_raweth(_z_link_t *self);
 static void _z_f_link_free_raweth(_z_link_t *self);
-static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len);
+static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len,
+                                     _z_sys_net_socket_t *socket);
 static size_t _z_f_link_write_all_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len);
 static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
-static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr);
+static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                          _z_sys_net_socket_t *socket);
 static uint16_t _z_get_link_mtu_raweth(void);
 
 static bool _z_valid_iface_raweth(_z_str_intmap_t *config) {
@@ -423,10 +425,12 @@ static void _z_f_link_close_raweth(_z_link_t *self) {
 
 static void _z_f_link_free_raweth(_z_link_t *self) { _ZP_UNUSED(self); }
 
-static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len) {
+static size_t _z_f_link_write_raweth(const _z_link_t *self, const uint8_t *ptr, size_t len,
+                                     _z_sys_net_socket_t *socket) {
     _ZP_UNUSED(self);
     _ZP_UNUSED(ptr);
     _ZP_UNUSED(len);
+    _ZP_UNUSED(socket);
     return SIZE_MAX;
 }
 
@@ -445,11 +449,13 @@ static size_t _z_f_link_read_raweth(const _z_link_t *self, uint8_t *ptr, size_t 
     return SIZE_MAX;
 }
 
-static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr) {
+static size_t _z_f_link_read_exact_raweth(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
+                                          _z_sys_net_socket_t *socket) {
     _ZP_UNUSED(self);
     _ZP_UNUSED(ptr);
     _ZP_UNUSED(len);
     _ZP_UNUSED(addr);
+    _ZP_UNUSED(socket);
     return SIZE_MAX;
 }
 
@@ -468,7 +474,7 @@ z_result_t _z_endpoint_raweth_valid(_z_endpoint_t *endpoint) {
 
 z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
     z_result_t ret = _Z_RES_OK;
-
+    zl->_type = _Z_LINK_TYPE_RAWETH;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_RAWETH;
     zl->_cap._is_reliable = false;
     zl->_mtu = _z_get_link_mtu_raweth();
@@ -487,6 +493,7 @@ z_result_t _z_new_link_raweth(_z_link_t *zl, _z_endpoint_t endpoint) {
     zl->_write_all_f = _z_f_link_write_all_raweth;
     zl->_read_f = _z_f_link_read_raweth;
     zl->_read_exact_f = _z_f_link_read_exact_raweth;
+    zl->_read_socket_f = _z_noop_link_read_socket;
 
     return ret;
 }
