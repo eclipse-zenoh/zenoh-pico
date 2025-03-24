@@ -146,6 +146,22 @@ z_result_t _z_mutex_try_lock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_try
 
 z_result_t _z_mutex_unlock(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
 
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) {
+    pthread_mutexattr_t attr;
+    _Z_RETURN_IF_SYS_ERR(pthread_mutexattr_init(&attr));
+    _Z_RETURN_IF_SYS_ERR(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE));
+    _Z_RETURN_IF_SYS_ERR(pthread_mutex_init(m, &attr));
+    _Z_CHECK_SYS_ERR(pthread_mutexattr_destroy(&attr));
+}
+
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_destroy(m)); }
+
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_lock(m)); }
+
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_trylock(m)); }
+
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_unlock(m)); }
+
 /*------------------ Condvar ------------------*/
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
     pthread_condattr_t attr;

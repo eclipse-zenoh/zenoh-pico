@@ -20,20 +20,111 @@
 #include <zephyr/drivers/uart.h>
 #endif
 
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/posix/sys/select.h>
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/checksum.h"
 #include "zenoh-pico/utils/encoding.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
+
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+    int flags = fcntl(sock->_fd, F_GETFL, 0);
+    if (flags == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct sockaddr naddr;
+    unsigned int nlen = sizeof(naddr);
+    int con_socket = accept(sock_in->_fd, &naddr, &nlen);
+    if (con_socket < 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Set socket options
+#if Z_FEATURE_TCP_NODELAY == 1
+    int optflag = 1;
+    if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
+        return _Z_ERR_GENERIC;
+    }
+#endif
+#if LWIP_SO_LINGER == 1
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        return _Z_ERR_GENERIC;
+    }
+#endif
+    // Note socket
+    sock_out->_fd = con_socket;
+    return _Z_RES_OK;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    // Create select mask
+    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
+    _z_mutex_rec_lock(mutex);
+    _z_transport_unicast_peer_list_t *curr = *peers;
+    int max_fd = 0;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        FD_SET(peer->_socket._fd, &read_fds);
+        if (peer->_socket._fd > max_fd) {
+            max_fd = peer->_socket._fd;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
+    }
+    _z_mutex_rec_unlock(mutex);
+    // Wait for events
+    struct timeval timeout;
+    timeout.tv_sec = Z_CONFIG_SOCKET_TIMEOUT / 1000;
+    timeout.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % 1000) * 1000;
+    int result = select(max_fd + 1, &read_fds, NULL, NULL, &timeout);
+    if (result <= 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Mark sockets that are pending
+    _z_mutex_rec_lock(mutex);
+    curr = *peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (FD_ISSET(peer->_socket._fd, &read_fds)) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
+    }
+    _z_mutex_rec_unlock(mutex);
+    return _Z_RES_OK;
+}
+#else
+z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
+    _ZP_UNUSED(peers);
+    _ZP_UNUSED(mutex);
+    return _Z_RES_OK;
+}
+#endif
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
@@ -81,7 +172,8 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         struct linger ling;
         ling.l_onoff = 1;
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
-        if ((ret == _Z_RES_OK) && (setsockopt(sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+        if ((ret == _Z_RES_OK) &&
+            (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
             ret = _Z_ERR_GENERIC;
         }
 #endif
@@ -139,7 +231,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 
     do {
         size_t rb = _z_read_tcp(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -234,7 +326,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
 
     do {
         size_t rb = _z_read_udp_unicast(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -547,7 +639,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
 
     do {
         size_t rb = _z_read_udp_multicast(sock, pos, len - n, lep, addr);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }

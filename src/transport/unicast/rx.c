@@ -29,11 +29,12 @@
 
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 
-z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _Z_DEBUG(">> recv session msg");
     z_result_t ret = _Z_RES_OK;
     _z_transport_rx_mutex_lock(&ztu->_common);
     size_t to_read = 0;
+    _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(ztu->_peers);
     do {
         switch (ztu->_common._link._cap._flow) {
             // Stream capable links
@@ -79,30 +80,27 @@ z_result_t _z_unicast_recv_t_msg_na(_z_transport_unicast_t *ztu, _z_transport_me
 
         // Mark the session that we have received data
         if (ret == _Z_RES_OK) {
-            ztu->_received = true;
+            peer->_received = true;
         }
     }
     _z_transport_rx_mutex_unlock(&ztu->_common);
     return ret;
 }
 
-z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
-    return _z_unicast_recv_t_msg_na(ztu, t_msg);
-}
-
-static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_frame_t *msg) {
+static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_frame_t *msg,
+                                          _z_transport_unicast_peer_t *peer) {
     z_reliability_t tmsg_reliability;
     // Check if the SN is correct
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_FRAME_R)) {
         tmsg_reliability = Z_RELIABILITY_RELIABLE;
         // @TODO: amend once reliability is in place. For the time being only
         //        monotonic SNs are ensured
-        if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_reliable, msg->_sn)) {
-            ztu->_sn_rx_reliable = msg->_sn;
+        if (_z_sn_precedes(ztu->_common._sn_res, peer->_sn_rx_reliable, msg->_sn)) {
+            peer->_sn_rx_reliable = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            _z_wbuf_clear(&ztu->_dbuf_reliable);
-            ztu->_state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->_dbuf_reliable);
+            peer->_state_reliable = _Z_DBUF_STATE_NULL;
 #endif
             _Z_INFO("Reliable message dropped because it is out of order");
             _z_t_msg_frame_clear(msg);
@@ -110,12 +108,12 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
         }
     } else {
         tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
-        if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_best_effort, msg->_sn)) {
-            ztu->_sn_rx_best_effort = msg->_sn;
+        if (_z_sn_precedes(ztu->_common._sn_res, peer->_sn_rx_best_effort, msg->_sn)) {
+            peer->_sn_rx_best_effort = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            _z_wbuf_clear(&ztu->_dbuf_best_effort);
-            ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->_dbuf_best_effort);
+            peer->_state_best_effort = _Z_DBUF_STATE_NULL;
 #endif
             _Z_INFO("Best effort message dropped because it is out of order");
             _z_t_msg_frame_clear(msg);
@@ -134,7 +132,7 @@ static z_result_t _z_unicast_handle_frame(_z_transport_unicast_t *ztu, uint8_t h
 }
 
 static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, uint8_t header,
-                                                   _z_t_msg_fragment_t *msg) {
+                                                   _z_t_msg_fragment_t *msg, _z_transport_unicast_peer_t *peer) {
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_FRAGMENTATION == 1
     _z_wbuf_t *dbuf;
@@ -148,28 +146,28 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
         // Check SN
         // @TODO: amend once reliability is in place. For the time being only
         //        monotonic SNs are ensured
-        if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_reliable, msg->_sn)) {
-            consecutive = _z_sn_consecutive(ztu->_common._sn_res, ztu->_sn_rx_reliable, msg->_sn);
-            ztu->_sn_rx_reliable = msg->_sn;
-            dbuf = &ztu->_dbuf_reliable;
-            dbuf_state = &ztu->_state_reliable;
+        if (_z_sn_precedes(ztu->_common._sn_res, peer->_sn_rx_reliable, msg->_sn)) {
+            consecutive = _z_sn_consecutive(ztu->_common._sn_res, peer->_sn_rx_reliable, msg->_sn);
+            peer->_sn_rx_reliable = msg->_sn;
+            dbuf = &peer->_dbuf_reliable;
+            dbuf_state = &peer->_state_reliable;
         } else {
-            _z_wbuf_clear(&ztu->_dbuf_reliable);
-            ztu->_state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->_dbuf_reliable);
+            peer->_state_reliable = _Z_DBUF_STATE_NULL;
             _Z_INFO("Reliable message dropped because it is out of order");
             return _Z_RES_OK;
         }
     } else {
         tmsg_reliability = Z_RELIABILITY_BEST_EFFORT;
         // Check SN
-        if (_z_sn_precedes(ztu->_common._sn_res, ztu->_sn_rx_best_effort, msg->_sn)) {
-            consecutive = _z_sn_consecutive(ztu->_common._sn_res, ztu->_sn_rx_best_effort, msg->_sn);
-            ztu->_sn_rx_best_effort = msg->_sn;
-            dbuf = &ztu->_dbuf_best_effort;
-            dbuf_state = &ztu->_state_best_effort;
+        if (_z_sn_precedes(ztu->_common._sn_res, peer->_sn_rx_best_effort, msg->_sn)) {
+            consecutive = _z_sn_consecutive(ztu->_common._sn_res, peer->_sn_rx_best_effort, msg->_sn);
+            peer->_sn_rx_best_effort = msg->_sn;
+            dbuf = &peer->_dbuf_best_effort;
+            dbuf_state = &peer->_state_best_effort;
         } else {
-            _z_wbuf_clear(&ztu->_dbuf_best_effort);
-            ztu->_state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&peer->_dbuf_best_effort);
+            peer->_state_best_effort = _Z_DBUF_STATE_NULL;
             _Z_INFO("Best effort message dropped because it is out of order");
             return _Z_RES_OK;
         }
@@ -182,7 +180,7 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
         return _Z_RES_OK;
     }
     // Handle fragment markers
-    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(ztu->_patch)) {
+    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(peer->_patch)) {
         if (msg->first) {
             _z_wbuf_reset(dbuf);
         } else if (_z_wbuf_len(dbuf) == 0) {
@@ -253,24 +251,26 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
     return ret;
 }
 
-static z_result_t _z_unicast_handle_fragment(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_fragment_t *msg) {
-    z_result_t ret = _z_unicast_handle_fragment_inner(ztu, header, msg);
+static z_result_t _z_unicast_handle_fragment(_z_transport_unicast_t *ztu, uint8_t header, _z_t_msg_fragment_t *msg,
+                                             _z_transport_unicast_peer_t *peer) {
+    z_result_t ret = _z_unicast_handle_fragment_inner(ztu, header, msg, peer);
     _z_t_msg_fragment_clear(msg);
     return ret;
 }
 
-z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
+z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg,
+                                               _z_transport_unicast_peer_t *peer) {
     z_result_t ret = _Z_RES_OK;
 
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME:
             _Z_DEBUG("Received Z_FRAME message");
-            ret = _z_unicast_handle_frame(ztu, t_msg->_header, &t_msg->_body._frame);
+            ret = _z_unicast_handle_frame(ztu, t_msg->_header, &t_msg->_body._frame, peer);
             break;
 
         case _Z_MID_T_FRAGMENT:
             _Z_DEBUG("Received Z_FRAGMENT message");
-            ret = _z_unicast_handle_fragment(ztu, t_msg->_header, &t_msg->_body._fragment);
+            ret = _z_unicast_handle_fragment(ztu, t_msg->_header, &t_msg->_body._fragment, peer);
             break;
 
         case _Z_MID_T_KEEP_ALIVE: {
@@ -293,13 +293,14 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer");
+            // Peer will be dropped thanks to the error
             ret = _Z_ERR_CONNECTION_CLOSED;
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;
         }
 
         default: {
-            _Z_ERROR("Unknown transport message ID");
+            _Z_INFO("WARNING: Unknown transport message ID");
             _z_t_msg_clear(t_msg);
             break;
         }

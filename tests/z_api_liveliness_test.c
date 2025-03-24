@@ -100,7 +100,7 @@ void test_liveliness_sub(bool multicast, bool history) {
     assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
 
     z_owned_liveliness_token_t t1, t2;
-    // In history mode we can declare token before subsribing
+    // In history mode we can declare token before subscribing
     if (history) {
         assert_ok(z_liveliness_declare_token(z_session_loan(&s2), &t1, z_view_keyexpr_loan(&k1), NULL));
         assert_ok(z_liveliness_declare_token(z_session_loan(&s2), &t2, z_view_keyexpr_loan(&k2), NULL));
