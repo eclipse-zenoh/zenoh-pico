@@ -16,12 +16,92 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
 // FreeRTOS includes
 #include "FreeRTOS.h"
 #include "FreeRTOS_IP.h"
+#include "FreeRTOS_Sockets.h"
+
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+    TickType_t option_value = 0;  // Non-blocking mode
+    BaseType_t result;
+
+    result = FreeRTOS_setsockopt(sock->_socket, 0, FREERTOS_SO_RCVTIMEO, &option_value, sizeof(option_value));
+
+    if (result != pdPASS) {
+        return _Z_ERR_GENERIC;
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    struct freertos_sockaddr naddr;
+    socklen_t nlen = sizeof(naddr);
+    int con_socket = FreeRTOS_accept(sock_in->_socket, &naddr, &nlen);
+    if (con_socket < 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Set socket options
+    TickType_t receive_timeout = pdMS_TO_TICKS(Z_CONFIG_SOCKET_TIMEOUT);
+    if (FreeRTOS_setsockopt(con_socket, 0, FREERTOS_SO_RCVTIMEO, &receive_timeout, 0) != 0) {
+        return _Z_ERR_GENERIC;
+    }
+    // Note socket
+    sock_out->_socket = con_socket;
+    return _Z_RES_OK;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { FreeRTOS_closesocket(sock->_socket); }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
+    z_result_t ret = _Z_RES_OK;
+    // Create a SocketSet to monitor multiple sockets
+    SocketSet_t socketSet = FreeRTOS_CreateSocketSet();
+    if (socketSet == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    // Add each socket to the socket set
+    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
+    _z_mutex_rec_lock(mutex);
+    _z_transport_unicast_peer_list_t *curr = *peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        FreeRTOS_FD_SET(peer->_socket._socket, socketSet, eSELECT_READ);
+        curr = _z_transport_unicast_peer_list_tail(curr);
+    }
+    _z_mutex_rec_unlock(mutex);
+    // Wait for an event on any of the sockets in the set, non-blocking
+    BaseType_t result = FreeRTOS_select(socketSet, portMAX_DELAY);
+    // Check for errors or events
+    if (result != 0) {
+        ret = _Z_ERR_GENERIC;
+    }
+    // Mark sockets that are pending
+    _z_mutex_rec_lock(mutex);
+    curr = *peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (FreeRTOS_FD_ISSET(peer->_socket._socket, socketSet)) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
+    }
+    _z_mutex_rec_unlock(mutex);
+    // Clean up
+    FreeRTOS_DeleteSocketSet(socketSet);
+    return ret;
+}
+#else
+z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
+    _ZP_UNUSED(peers);
+    _ZP_UNUSED(mutex);
+    return _Z_RES_OK;
+}
+#endif
 
 #if Z_FEATURE_LINK_TCP == 1
 /*------------------ TCP sockets ------------------*/
@@ -95,7 +175,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
 
     do {
         size_t rb = _z_read_tcp(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }
@@ -188,7 +268,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
 
     do {
         size_t rb = _z_read_udp_unicast(sock, pos, len - n);
-        if (rb == SIZE_MAX) {
+        if ((rb == SIZE_MAX) || (rb == 0)) {
             n = rb;
             break;
         }

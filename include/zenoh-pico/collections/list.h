@@ -50,7 +50,7 @@ _z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x);
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f f_f, const void *e);
-
+_z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free_f f_f);
 _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, const void *left);
 
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f);
@@ -70,6 +70,9 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     }                                                                                                                 \
     static inline name##_list_t *name##_list_find(const name##_list_t *l, name##_eq_f c_f, const type *e) {           \
         return _z_list_find(l, (z_element_eq_f)c_f, e);                                                               \
+    }                                                                                                                 \
+    static inline name##_list_t *name##_list_drop_element(name##_list_t *l, name##_list_t *p) {                       \
+        return _z_list_drop_element(l, p, name##_elem_free);                                                          \
     }                                                                                                                 \
     static inline name##_list_t *name##_list_drop_filter(name##_list_t *l, name##_eq_f c_f, const type *e) {          \
         return _z_list_drop_filter(l, name##_elem_free, (z_element_eq_f)c_f, e);                                      \

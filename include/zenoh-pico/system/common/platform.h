@@ -69,8 +69,16 @@ void _z_report_system_error(int errcode);
         return _Z_RES_OK;                  \
     } while (false)
 
-/*------------------ Random ------------------*/
+#define _Z_RETURN_IF_SYS_ERR(expr)         \
+    do {                                   \
+        int __res = expr;                  \
+        if (__res != 0) {                  \
+            _z_report_system_error(__res); \
+            return _Z_ERR_SYSTEM_GENERIC;  \
+        }                                  \
+    } while (false)
 
+/*------------------ Random ------------------*/
 /**
  * Generates a random unsigned 8-bit integer.
  */
@@ -137,6 +145,7 @@ void z_free(void *ptr);
 // dummy types for correct macros work
 typedef void *_z_task_t;
 typedef void *_z_mutex_t;
+typedef void *_z_mutex_rec_t;
 typedef void *_z_condvar_t;
 typedef void *z_task_attr_t;
 #endif
@@ -209,6 +218,12 @@ z_result_t _z_mutex_drop(_z_mutex_t *m);
 z_result_t _z_mutex_lock(_z_mutex_t *m);
 z_result_t _z_mutex_try_lock(_z_mutex_t *m);
 z_result_t _z_mutex_unlock(_z_mutex_t *m);
+
+z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_drop(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m);
+z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m);
 
 /**
  * Constructs a mutex.
@@ -499,6 +514,14 @@ typedef struct {
 } _z_time_since_epoch;
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t);
+
+/*------------------ P2p unicast internal functions ------------------*/
+
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock);
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out);
+void _z_socket_close(_z_sys_net_socket_t *sock);
+z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex);
+
 #ifdef __cplusplus
 }
 #endif
