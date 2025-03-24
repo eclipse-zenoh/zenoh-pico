@@ -288,7 +288,6 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             // Process events for all peers
             _z_transport_peer_mutex_lock(&ztu->_common);
             _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
-            _z_transport_unicast_peer_list_t *to_drop = NULL;
             _z_transport_unicast_peer_list_t *prev = NULL;
             _z_transport_unicast_peer_list_t *prev_drop = NULL;
             while (curr_list != NULL) {
@@ -306,7 +305,6 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                             if (_z_unicast_process_messages(ztu, curr_peer, to_read) != _Z_RES_OK) {
                                 // Failed to process, drop peer
                                 drop_peer = true;
-                                to_drop = curr_list;
                                 prev_drop = prev;
                                 break;
                             } else if (curr_peer->flow_state != _Z_FLOW_STATE_READY) {
@@ -324,7 +322,6 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                         } while (message_to_process);
                     } else if (res == _Z_UNICAST_PEER_READ_STATUS_SOCKET_CLOSED) {
                         drop_peer = true;
-                        to_drop = curr_list;
                         prev_drop = prev;
                     } else if (res == _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR) {
                         ztu->_common._read_task_running = false;
@@ -340,7 +337,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 // Drop peer if needed
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
-                    ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev_drop);
+                    ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, prev_drop);
                 }
                 _z_zbuf_reset(&ztu->_common._zbuf);
             }

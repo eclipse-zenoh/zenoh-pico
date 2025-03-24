@@ -91,15 +91,21 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, const void *e) 
     return ret;
 }
 
-_z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *elem, _z_list_t *prev, z_element_free_f f_f) {
-    if (list == elem) {  // Head removal
+_z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free_f f_f) {
+    _z_list_t *dropped = NULL;
+    if (prev == NULL) {  // Head removal
+        dropped = list;
         list = list->_tail;
     } else {  // Other cases
-        assert(prev != NULL);
-        prev->_tail = elem->_tail;
+        dropped = prev->_tail;
+        if (dropped != NULL) {
+            prev->_tail = dropped->_tail;
+        }
     }
-    f_f(&elem->_val);
-    z_free(elem);
+    if (dropped != NULL) {
+        f_f(&dropped->_val);
+        z_free(dropped);
+    }
     return list;
 }
 

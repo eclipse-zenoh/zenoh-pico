@@ -111,7 +111,6 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
         else {  // Peer lease
             if (next_lease <= 0) {
                 _z_transport_unicast_peer_list_t *prev = NULL;
-                _z_transport_unicast_peer_list_t *to_drop = NULL;
                 _z_transport_unicast_peer_list_t *prev_drop = NULL;
                 _z_transport_peer_mutex_lock(&ztu->_common);
                 _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
@@ -124,7 +123,6 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     } else {
                         _Z_INFO("Deleting peer because it has expired after %zums", ztu->_common._lease);
                         drop_peer = true;
-                        to_drop = curr_list;
                         prev_drop = prev;
                     }
                     // Update previous only if current node is not dropped
@@ -135,7 +133,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     curr_list = _z_transport_unicast_peer_list_tail(curr_list);
                     // Drop if needed
                     if (drop_peer) {
-                        ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, to_drop, prev_drop);
+                        ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, prev_drop);
                     }
                 }
                 _z_transport_peer_mutex_unlock(&ztu->_common);
