@@ -216,7 +216,7 @@ typedef struct {
  * Options passed to the :c:func:`z_declare_querier()` function.
  *
  * Members:
- *  z_moved_encoding_t *encoding: Default encoding for values sent by this querier.
+ *   z_moved_encoding_t *encoding: Default encoding for values sent by this querier.
  *   z_query_target_t target: The Queryables that should be target of the querier queries.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies to the querier
  *    queries.
