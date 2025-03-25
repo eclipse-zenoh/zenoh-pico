@@ -168,6 +168,17 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
 
+  no_interest_build:
+    name: Check compilation without interests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build without interests
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_INTEREST=0 CMAKE_GENERATOR=Ninja make
 
   st_build:
     needs: zenoh_build
@@ -397,7 +408,7 @@ jobs:
   ci:
     name: CI status checks
     runs-on: ubuntu-latest
-    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, multicast, memory_leak_unit_tests, unicast_peer_test]
+    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, no_interest_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, multicast, memory_leak_unit_tests, unicast_peer_test]
     if: always()
     steps:
       - name: Check whether all jobs pass

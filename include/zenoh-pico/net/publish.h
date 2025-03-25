@@ -35,9 +35,7 @@ typedef struct _z_publisher_t {
     z_priority_t _priority;
     z_reliability_t reliability;
     bool _is_express;
-#if Z_FEATURE_INTEREST == 1
     _z_write_filter_t _filter;
-#endif
 } _z_publisher_t;
 
 #if Z_FEATURE_PUBLICATION == 1
