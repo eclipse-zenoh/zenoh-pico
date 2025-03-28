@@ -44,6 +44,7 @@ void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
 
 /*-------- Slice --------*/
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
+    assert(capacity != 0);
     bs->start = (uint8_t *)z_malloc(capacity);
     if (bs->start == NULL) {
         bs->len = 0;

@@ -363,16 +363,20 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
 				if (!_Z_HAS_FLAG(t_msg->_header, _Z_FLAG_T_INIT_A)) {
 					_Z_INFO("Received Z_INIT(Syn)");
 					_Z_INFO("Sending Z_INIT(Ack)");
-                    _z_slice_t cookie;
-                    _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+                    _z_slice_t cookie = {0};
+                    if (!_z_slice_is_empty(&t_msg->_body._init._cookie)) {
+                        _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+                    }
 					_z_transport_message_t ism = _z_t_msg_make_init_ack(Z_WHATAMI_PEER, _Z_RC_IN_VAL(ztu->_common._session)->_local_zid, cookie);
 					ret = _z_transport_tx_send_t_msg(&ztu->_common, &ism);
 					_z_t_msg_clear(&ism);
 				} else {
 					_Z_INFO("Received Z_INIT(Ack)");
 					_Z_INFO("Sending Z_OPEN(Syn)");
-                    _z_slice_t cookie;
-                    _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+                    _z_slice_t cookie = {0};
+                    if (!_z_slice_is_empty(&t_msg->_body._init._cookie)) {
+                        _z_slice_copy(&cookie, &t_msg->_body._init._cookie);
+                    }
 					_z_transport_message_t ism = _z_t_msg_make_open_syn(ztu->_common._lease, ztu->_common._sn_tx_reliable, cookie);
 					ret = _z_transport_tx_send_t_msg(&ztu->_common, &ism);
 					_z_t_msg_clear(&ism);

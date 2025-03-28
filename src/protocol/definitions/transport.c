@@ -341,7 +341,9 @@ void _z_t_msg_copy_init(_z_t_msg_init_t *clone, _z_t_msg_init_t *msg) {
 void _z_t_msg_copy_open(_z_t_msg_open_t *clone, _z_t_msg_open_t *msg) {
     clone->_lease = msg->_lease;
     clone->_initial_sn = msg->_initial_sn;
-    _z_slice_copy(&clone->_cookie, &msg->_cookie);
+    if (!_z_slice_is_empty(&msg->_cookie)) {
+        _z_slice_copy(&clone->_cookie, &msg->_cookie);
+    }
 }
 
 void _z_t_msg_copy_close(_z_t_msg_close_t *clone, _z_t_msg_close_t *msg) { clone->_reason = msg->_reason; }

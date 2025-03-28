@@ -39,7 +39,7 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
     ret = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
     _z_n_msg_clear(&n_msg);
 
-    _z_liveliness_register_token(_Z_RC_IN_VAL(zn), id, &declaration._body._decl_token._keyexpr);
+    _z_liveliness_register_token(_Z_RC_IN_VAL(zn), id, keyexpr);
 
     ret_token->_id = id;
     ret_token->_key = _z_keyexpr_steal(keyexpr);
