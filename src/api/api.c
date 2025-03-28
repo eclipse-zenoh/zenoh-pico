@@ -1240,7 +1240,7 @@ z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher) {
 
     if (session != NULL) {
         egid.zid = session->_local_zid;
-        egid.eid = publisher->_id;
+        egid.eid = (uint32_t)publisher->_id;
     } else {
         egid = _z_entity_global_id_null();
     }
@@ -1517,7 +1517,7 @@ z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier) {
 
     if (session != NULL) {
         egid.zid = session->_local_zid;
-        egid.eid = querier->_id;
+        egid.eid = (uint32_t)querier->_id;
     } else {
         egid = _z_entity_global_id_null();
     }

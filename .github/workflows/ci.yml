@@ -33,6 +33,22 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
+
+  run_windows_test:
+    name: Run unit tests on windows-latest
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build & run tests
+        run: |
+          make all
+          .\build\tests\Debug\z_test_unicast.exe
+        shell: cmd
+        env: 
+          Z_FEATURE_UNSTABLE_API: 1
+          
   
   memory_leak_unit_tests:
     name: Memory leak unit tests
