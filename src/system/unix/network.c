@@ -25,6 +25,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
+#include <sys/file.h>
 #include <unistd.h>
 
 #include "zenoh-pico/collections/string.h"
@@ -682,6 +683,12 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     snprintf(fname, sizeof(fname), "/dev/%s", dev);
     sock->_serial = open(fname, O_RDWR);
     if (sock->_serial < 0) {
+        _z_close_serial(sock);
+        return _Z_ERR_GENERIC;
+    }
+
+    // Acquire non-blocking exclusive lock
+    if(flock(sock->_serial , LOCK_EX | LOCK_NB) == -1) {
         _z_close_serial(sock);
         return _Z_ERR_GENERIC;
     }
