@@ -195,7 +195,7 @@ typedef struct {
  * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
- *   z_owned_encoding_t *encoding: Default encoding for messages put by this publisher.
+ *   z_moved_encoding_t *encoding: Default encoding for messages put by this publisher.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing messages from this
  *     publisher.
  *   z_priority_t priority: The priority of messages issued by this publisher.
@@ -216,6 +216,7 @@ typedef struct {
  * Options passed to the :c:func:`z_declare_querier()` function.
  *
  * Members:
+ *   z_moved_encoding_t *encoding: Default encoding for values sent by this querier.
  *   z_query_target_t target: The Queryables that should be target of the querier queries.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies to the querier
  *    queries.
@@ -227,6 +228,7 @@ typedef struct {
  *     configuration.
  */
 typedef struct z_querier_options_t {
+    z_moved_encoding_t *encoding;
     z_query_target_t target;
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;

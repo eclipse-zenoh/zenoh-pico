@@ -71,31 +71,37 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
     return ret;
 }
 
-static z_result_t _z_locators_by_config(_z_config_t *config, const _z_id_t *zid, _z_string_svec_t *locators,
-                                        int *peer_op) {
-    z_result_t ret = _Z_RES_OK;
+static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *locators, int *peer_op) {
     char *connect = _z_config_get(config, Z_CONFIG_CONNECT_KEY);
     char *listen = _z_config_get(config, Z_CONFIG_LISTEN_KEY);
     if (connect == NULL && listen == NULL) {
-        // Scout if peer is not configured
-        ret = _z_locators_by_scout(config, zid, locators);
-    } else {
-        uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
-        if (listen != NULL) {
-            if (connect == NULL) {
-                key = Z_CONFIG_LISTEN_KEY;
-                _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
-            } else {
-                return _Z_ERR_GENERIC;
-            }
-        } else {
-            *peer_op = _Z_PEER_OP_OPEN;
-        }
-        *locators = _z_string_svec_make(1);
-        _z_string_t s = _z_string_copy_from_str(_z_config_get(config, key));
-        _z_string_svec_append(locators, &s, true);
+        return _Z_RES_OK;
     }
-    return ret;
+#if Z_FEATURE_UNICAST_PEER == 1
+    if (listen != NULL) {
+        // Add listen as first endpoint
+        _z_string_t s = _z_string_copy_from_str(listen);
+        _Z_RETURN_IF_ERR(_z_string_svec_append(locators, &s, true));
+        _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+    } else {
+        *peer_op = _Z_PEER_OP_OPEN;
+    }
+    // Add open endpoints
+    return _z_config_get_all(config, locators, Z_CONFIG_CONNECT_KEY);
+#else
+    uint_fast8_t key = Z_CONFIG_CONNECT_KEY;
+    if (listen != NULL) {
+        if (connect == NULL) {
+            key = Z_CONFIG_LISTEN_KEY;
+            _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
+        } else {
+            return _Z_ERR_GENERIC;
+        }
+    } else {
+        *peer_op = _Z_PEER_OP_OPEN;
+    }
+    return _z_config_get_all(config, locators, key);
+#endif
 }
 
 static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mode) {
@@ -115,11 +121,10 @@ static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mod
     return ret;
 }
 
-static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, z_whatami_t mode,
-                                int peer_op) {
+static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
 
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, mode, peer_op);
+    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, _Z_RC_IN_VAL(zn)->_mode, peer_op);
     if (ret != _Z_RES_OK) {
         return ret;
     }
@@ -133,30 +138,48 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
     _Z_RC_IN_VAL(zn)->_tp._type = _Z_TRANSPORT_NONE;
 
     int peer_op = _Z_PEER_OP_LISTEN;
-    _z_string_svec_t locators = _z_string_svec_make(0);
-    ret = _z_locators_by_config(config, zid, &locators, &peer_op);
-    if (ret != _Z_RES_OK) {
-        return ret;
-    }
+    _z_string_svec_t locators = _z_string_svec_null();
+    // Try getting locators from config
+    _Z_RETURN_IF_ERR(_z_locators_by_config(config, &locators, &peer_op));
+    size_t len = _z_string_svec_len(&locators);
 
     z_whatami_t mode;
     ret = _z_config_get_mode(config, &mode);
     if (ret != _Z_RES_OK) {
         return ret;
     }
+    _Z_RC_IN_VAL(zn)->_mode = mode;
 
-    ret = _Z_ERR_SCOUT_NO_RESULTS;
-    size_t len = _z_string_svec_len(&locators);
-    for (size_t i = 0; i < len; i++) {
-        ret = _Z_RES_OK;
-
-        _z_string_t *locator = _z_string_svec_get(&locators, i);
-        // @TODO: check invalid configurations
-        // For example, client mode in multicast links
-
-        ret = _z_open_inner(zn, locator, zid, mode, peer_op);
-        if (ret == _Z_RES_OK) {
-            break;
+    if (len > 0) {
+        // Use first locator to open session
+        _z_string_t *locator = _z_string_svec_get(&locators, 0);
+        ret = _z_open_inner(zn, locator, zid, peer_op);
+#if Z_FEATURE_UNICAST_PEER == 1
+        // Add other locators as peers if applicable
+        if ((ret == _Z_RES_OK) && (mode == Z_WHATAMI_PEER)) {
+            for (size_t i = 1; i < len; i++) {
+                // Add peer
+                locator = _z_string_svec_get(&locators, i);
+                ret = _z_new_peer(&_Z_RC_IN_VAL(zn)->_tp, &_Z_RC_IN_VAL(zn)->_local_zid, locator);
+                if (ret != _Z_RES_OK) {
+                    break;
+                }
+            }
+        }
+#endif
+    } else {  // No locators in config, scout
+        _Z_RETURN_IF_ERR(_z_locators_by_scout(config, zid, &locators));
+        len = _z_string_svec_len(&locators);
+        if (len == 0) {
+            return _Z_ERR_SCOUT_NO_RESULTS;
+        }
+        // Loop on locators until we successfully open one
+        for (size_t i = 0; i < len; i++) {
+            _z_string_t *locator = _z_string_svec_get(&locators, i);
+            ret = _z_open_inner(zn, locator, zid, peer_op);
+            if (ret == _Z_RES_OK) {
+                break;
+            }
         }
     }
     _z_string_svec_clear(&locators);
@@ -289,7 +312,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
 
         switch (zn->_tp._type) {
             case _Z_TRANSPORT_UNICAST_TYPE:
-                _zp_unicast_info_session(&zn->_tp, ps);
+                _zp_unicast_info_session(&zn->_tp, ps, zn->_mode);
                 break;
             case _Z_TRANSPORT_MULTICAST_TYPE:
             case _Z_TRANSPORT_RAWETH_TYPE:

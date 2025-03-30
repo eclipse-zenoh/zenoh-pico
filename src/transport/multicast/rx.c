@@ -372,7 +372,7 @@ static z_result_t _z_multicast_handle_join(_z_transport_multicast_t *ztm, _z_sli
 z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, _z_transport_message_t *t_msg,
                                                  _z_slice_t *addr) {
     z_result_t ret = _Z_RES_OK;
-    _z_multicast_peer_mutex_lock(ztm);
+    _z_transport_peer_mutex_lock(&ztm->_common);
     // Mark the session that we have received data from this peer
     _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
@@ -415,7 +415,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         }
 
         case _Z_MID_T_CLOSE: {
-            _Z_INFO("Closing session as requested by the remote peer");
+            _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
                 ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
             }
@@ -429,7 +429,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             break;
         }
     }
-    _z_multicast_peer_mutex_unlock(ztm);
+    _z_transport_peer_mutex_unlock(&ztm->_common);
     return ret;
 }
 
