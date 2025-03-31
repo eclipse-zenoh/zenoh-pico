@@ -149,12 +149,18 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
 z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
     z_result_t ret = _Z_RES_OK;
-    (void)sock;
-    (void)lep;
-
-    // @TODO: To be implemented
-    ret = _Z_ERR_GENERIC;
-
+    sock->_socket = FreeRTOS_socket(lep._iptcp->ai_family, FREERTOS_SOCK_STREAM, FREERTOS_IPPROTO_TCP);
+    if (sock->_socket == FREERTOS_INVALID_SOCKET) {
+        return _Z_ERR_GENERIC;
+    }
+    if (FreeRTOS_bind(sock->_socket, lep._iptcp->ai_addr, lep._iptcp->ai_addrlen) != 0) {
+        FreeRTOS_closesocket(sock->_socket);
+        return _Z_ERR_GENERIC;
+    }
+    if (FreeRTOS_listen(sock->_socket, Z_LISTEN_MAX_CONNECTION_NB) != 0) {
+        FreeRTOS_closesocket(sock->_socket);
+        return _Z_ERR_GENERIC;
+    }
     return ret;
 }
 
