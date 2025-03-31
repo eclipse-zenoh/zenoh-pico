@@ -209,12 +209,49 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
 z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t lep) {
     z_result_t ret = _Z_RES_OK;
-    (void)sock;
-    (void)lep;
 
-    // @TODO: To be implemented
-    ret = _Z_ERR_GENERIC;
-
+    sock->_fd = socket(lep._iptcp->ai_family, lep._iptcp->ai_socktype, lep._iptcp->ai_protocol);
+    if (sock->_fd == -1) {
+        return _Z_ERR_GENERIC;
+    }
+    z_time_t tv;
+    tv.tv_sec = tout / (uint32_t)1000;
+    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
+    if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+        ret = _Z_ERR_GENERIC;
+    }
+    int flags = 1;
+    if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
+        ret = _Z_ERR_GENERIC;
+    }
+#if Z_FEATURE_TCP_NODELAY == 1
+    if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
+        ret = _Z_ERR_GENERIC;
+    }
+#endif
+    struct linger ling;
+    ling.l_onoff = 1;
+    ling.l_linger = Z_TRANSPORT_LEASE / 1000;
+    if ((ret == _Z_RES_OK) &&
+        (setsockopt(sock->_fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+        ret = _Z_ERR_GENERIC;
+    }
+    struct addrinfo *it = NULL;
+    if (ret == _Z_RES_OK) {
+        for (it = rep._iptcp; it != NULL; it = it->ai_next) {
+            if (bind(sock->_fd, it->ai_addr, it->ai_addrlen) < 0) {
+                ret = _Z_ERR_GENERIC;
+                break;
+            }
+            if (listen(sock->_fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+                ret = _Z_ERR_GENERIC;
+                break;
+            }
+        }
+    }
+    if (ret != _Z_RES_OK) {
+        close(sock->_fd);
+    }
     return ret;
 }
 
