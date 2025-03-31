@@ -63,3 +63,4 @@ jobs:
           cmake --build ./build
         env:
           PICO_BOARD: ${{ matrix.pico_board}}
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
