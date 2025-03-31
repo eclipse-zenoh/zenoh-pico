@@ -50,7 +50,7 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
-    unsigned int nlen = sizeof(naddr);
+    socklen_t nlen = sizeof(naddr);
     int con_socket = lwip_accept(sock_in->_fd, &naddr, &nlen);
     if (con_socket < 0) {
         return _Z_ERR_GENERIC;
@@ -214,12 +214,6 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     if (sock->_fd == -1) {
         return _Z_ERR_GENERIC;
     }
-    z_time_t tv;
-    tv.tv_sec = tout / (uint32_t)1000;
-    tv.tv_usec = (tout % (uint32_t)1000) * (uint32_t)1000;
-    if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
-        ret = _Z_ERR_GENERIC;
-    }
     int flags = 1;
     if ((ret == _Z_RES_OK) && (setsockopt(sock->_fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
         ret = _Z_ERR_GENERIC;
@@ -238,7 +232,7 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     }
     struct addrinfo *it = NULL;
     if (ret == _Z_RES_OK) {
-        for (it = rep._iptcp; it != NULL; it = it->ai_next) {
+        for (it = lep._iptcp; it != NULL; it = it->ai_next) {
             if (bind(sock->_fd, it->ai_addr, it->ai_addrlen) < 0) {
                 ret = _Z_ERR_GENERIC;
                 break;
