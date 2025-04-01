@@ -22,7 +22,20 @@ CPPDEFINES = []
 FRAMEWORK = env.get("PIOFRAMEWORK")[0]
 PLATFORM = env.get("PIOPLATFORM")
 BOARD = env.get("PIOENV")
-print(" ============================> FRAMEWORK :",FRAMEWORK," PLATFORM : ",PLATFORM," BOARD : ",BOARD)
+ZENOH_GENERIC = env.get("ZENOH_GENERIC", "0")
+LIBRARY_VERSION = env.GetProjectOption("build_flags", "")
+print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",LIBRARY_VERSION)  
+
+
+if ZENOH_GENERIC == "1":
+    FRAMEWORK = 'generic'
+    PLATFORM = 'generic'
+    BOARD = 'generic'
+
+print("FRAMEWORK: ", FRAMEWORK)
+print("PLATFORM: ", PLATFORM)
+print("BOARD: ", BOARD)
+
 if FRAMEWORK == 'zephyr':
     SRC_FILTER = ["+<*>",
                   "-<tests/>",
@@ -72,23 +85,6 @@ elif FRAMEWORK == 'arduino':
                           "-<system/windows/>",
                           "-<system/zephyr/>"]
             CPPDEFINES = ["ZENOH_ARDUINO_OPENCR", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
-        else:
-            print(" ======================> SELECTED ")
-            SRC_FILTER = ["+<*>",
-                            "-<tests/>",
-                            "-<example/>",
-                            "-<system/arduino/esp32>",
-                            "-<system/arduino/opencr>",
-                            "-<system/emscripten/>",
-                            "-<system/espidf>",
-                            "-<system/freertos_plus_tcp/>",
-                            "-<system/rpi_pico/>",
-                            "-<system/mbed/>",
-                            "-<system/unix/>",
-                            "-<system/flipper/>",
-                            "-<system/windows/>",
-                            "-<system/zephyr/>"]
-            CPPDEFINES = ["ZENOH_ARDUINO_STM32", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
 
 elif FRAMEWORK == 'espidf':
     SRC_FILTER = ["+<*>",
@@ -119,23 +115,13 @@ elif FRAMEWORK == 'mbed':
                   "-<system/windows/>",
                   "-<system/zephyr/>"]
     CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
-else:
-    print(" ======================> SELECTED 2")
+elif FRAMEWORK == 'generic':
+    print(" ======================> SELECTED generic")
     SRC_FILTER = ["+<*>",
                     "-<tests/>",
                     "-<example/>",
-                    "-<system/arduino/esp32>",
-                    "-<system/arduino/opencr>",
-                    "-<system/emscripten/>",
-                    "-<system/espidf>",
-                    "-<system/freertos_plus_tcp/>",
-                    "-<system/rpi_pico/>",
-                    "-<system/mbed/>",
-                    "-<system/unix/>",
-                    "-<system/flipper/>",
-                    "-<system/windows/>",
-                    "-<system/zephyr/>"]
-    CPPDEFINES = ["ZENOH_ARDUINO_STM32", "ZENOH_C_STANDARD=99", "Z_FEATURE_MULTI_THREAD=0"]
+                    "-<system/*>"]
+    CPPDEFINES = ["ZENOH_GENERIC"]
 env.Append(SRC_FILTER=SRC_FILTER)
 env.Append(CPPDEFINES=CPPDEFINES)
 
