@@ -120,7 +120,8 @@ elif FRAMEWORK == 'generic':
     SRC_FILTER = ["+<*>",
                     "-<tests/>",
                     "-<example/>",
-                    "-<system/*>"]
+                    "-<system/*>",
+                    "+<system/common>"]
     CPPDEFINES = ["ZENOH_GENERIC"]
 env.Append(SRC_FILTER=SRC_FILTER)
 env.Append(CPPDEFINES=CPPDEFINES)
