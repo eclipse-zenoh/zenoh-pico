@@ -63,7 +63,9 @@ jobs:
           MAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
 
       - name: Install valgrind
-        run: sudo apt install -y valgrind
+        run: |
+          sudo apt update
+          sudo apt install -y valgrind
       
       - name: Memory leak unit tests
         run: |
