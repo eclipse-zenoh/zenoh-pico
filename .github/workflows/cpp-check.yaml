@@ -41,6 +41,11 @@ jobs:
     - name: checkout zenoh-pico
       uses: actions/checkout@v3
 
+    - name: Install cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.31.x'
+
     - name: build zenoh-pico
       run: |
         mkdir build && cd build
