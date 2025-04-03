@@ -1,11 +1,11 @@
 # How to add a new platform to zenoh-pico 
 - objective is to use the zenoh-pico tree as such and provide the platform specific implementation
 - provide all config.h setting specifically for your platform
-- was applied for TI Tiva platform lm4f120h5qr single thread
+- tested for TI Tiva platform lm4f120h5qr libopencm3 single thread and stm32cube
 
 ## Flags for zenoh-pico compilation
 - pass define ZENOH_GENERIC via compile flags
-- the below example uses the source tree zenoh-pico locally copied
+- the below example uses the source tree zenoh-pico from github directly
 ```ini
 [env:tiva]
 platform = titiva
@@ -17,7 +17,7 @@ extra_scripts =
 platform_packages =
   	toolchain-gccarmnoneeabi@~1.90201.0
 lib_deps = 
-	lib/zenoh-pico
+	https://github.com/vortex314/zenoh-pico#zenoh-generic
 	lib/titiva_libopencm3
 	https://github.com/mpaland/printf
 
