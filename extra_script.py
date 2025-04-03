@@ -14,8 +14,6 @@
 
 Import('env', 'projenv')
 
-print("-------------------------------------------------------------------------------------> extra_script.py")
-
 SRC_FILTER = []
 CPPDEFINES = []
 
@@ -24,8 +22,6 @@ PLATFORM = env.get("PIOPLATFORM")
 BOARD = env.get("PIOENV")
 ZENOH_GENERIC = env.get("ZENOH_GENERIC", "0")
 LIBRARY_VERSION = env.GetProjectOption("build_flags", "")
-print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",LIBRARY_VERSION)  
-
 
 if ZENOH_GENERIC == "1":
     FRAMEWORK = 'generic'
