@@ -227,6 +227,12 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
         return _Z_ERR_MESSAGE_UNEXPECTED;
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
+    // Check if node is in client mode
+    if (tmsg._body._init._whatami == Z_WHATAMI_CLIENT) {
+        _z_t_msg_clear(&tmsg);
+        _Z_INFO("Warning: Peer mode does not support client connection for the moment.");
+        return _Z_ERR_GENERIC;
+    }
     // Encode InitAck
     _z_slice_t cookie = _z_slice_null();
     _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, cookie);
