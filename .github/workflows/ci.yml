@@ -59,6 +59,32 @@ jobs:
             fi
           done
 
+  
+  memory_leak_unit_tests:
+    name: Memory leak unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build tests
+        run: |
+          sudo apt install -y ninja-build
+          MAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
+
+      - name: Install valgrind
+        run: sudo apt install -y valgrind
+      
+      - name: Memory leak unit tests
+        run: |
+          cd build/tests
+          for test in *_test; do
+            if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
+              echo "Running Valgrind on $test"
+              valgrind --leak-check=full --error-exitcode=1 "./$test" > /dev/null || exit 1
+            fi
+          done
+
   check_format:
     name: Check codebase format with clang-format
     runs-on: ubuntu-24.04

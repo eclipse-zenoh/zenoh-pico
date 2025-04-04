@@ -234,7 +234,11 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
 }
 
 void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
+<<<<<<< HEAD
     _ZP_UNUSED(zt);
+=======
+    _ZP_UNUSED(ztm);
+>>>>>>> 421a73ebb852044819a1e69e08543ea45d7a206b
     _ZP_UNUSED(detach_tasks);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
