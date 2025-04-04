@@ -18,6 +18,14 @@ SRC_FILTER = []
 CPPDEFINES = []
 
 FRAMEWORK = env.get("PIOFRAMEWORK")[0]
+PLATFORM = env.get("PIOPLATFORM")
+BOARD = env.get("PIOENV")
+ZENOH_GENERIC = env.get("ZENOH_GENERIC", "0")
+if ZENOH_GENERIC == "1":
+    FRAMEWORK = 'generic'
+    PLATFORM = 'generic'
+    BOARD = 'generic'
+
 if FRAMEWORK == 'zephyr':
     SRC_FILTER = ["+<*>",
                   "-<tests/>",
@@ -97,6 +105,13 @@ elif FRAMEWORK == 'mbed':
                   "-<system/windows/>",
                   "-<system/zephyr/>"]
     CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
+elif FRAMEWORK == 'generic':
+    SRC_FILTER = ["+<*>",
+                    "-<tests/>",
+                    "-<example/>",
+                    "-<system/*>",
+                    "+<system/common>"]
+    CPPDEFINES = ["ZENOH_GENERIC"]
 
 env.Append(SRC_FILTER=SRC_FILTER)
 env.Append(CPPDEFINES=CPPDEFINES)
