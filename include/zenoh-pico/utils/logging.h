@@ -23,10 +23,21 @@
 extern "C" {
 #endif
 
+// Compatibility with old logging system where
+// 1 -> ERROR
+// 2 -> INFO
+// 3 -> DEBUG
+#if ZENOH_DEBUG != 0
+#undef ZENOH_LOG
+#define ZENOH_LOG (ZENOH_DEBUG == 1 ? 1 : ZENOH_DEBUG + 1)
+#endif // ZENOH_DEBUG != 0
+
 // Logging values
 #define _Z_LOG_LVL_ERROR 1
-#define _Z_LOG_LVL_INFO 2
-#define _Z_LOG_LVL_DEBUG 3
+#define _Z_LOG_LVL_WARN 2
+#define _Z_LOG_LVL_INFO 3
+#define _Z_LOG_LVL_DEBUG 4
+#define _Z_LOG_LVL_TRACE 5
 
 // Timestamp function
 static inline void __z_print_timestamp(void) {
@@ -34,47 +45,85 @@ static inline void __z_print_timestamp(void) {
     printf("[%s ", z_time_now_as_str(ret, sizeof(ret)));
 }
 
-// Logging macros
-#define _Z_LOG_PREFIX(prefix) \
-    __z_print_timestamp();    \
-    printf(#prefix " ::%s] ", __func__);
 
-// Ignore print only if log deactivated and build is release
-#if ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+// Release build only expand log code when the given level is enabled,
+// while debug build always expand log code, to ensure it compiles fine.
+#if ZENOH_LOG >= 0 || defined(Z_BUILD_LOG)
+#define _Z_LOG(level, ...)                       \
+    do {                                         \
+        if (ZENOH_LOG >= _Z_LOG_LVL_##level) {   \
+            __z_print_timestamp();               \
+            printf(#level " ::%s] ", __func__);  \
+            printf(__VA_ARGS__);                 \
+            printf("\r\n");                      \
+        }                                        \
+    } while(false)
+#else
+#define _Z_LOG(level, ...) (void)(0)
+#endif
 
-#define _Z_DEBUG(...) (void)(0)
-#define _Z_INFO(...) (void)(0)
+#if ZENOH_LOG >= _Z_LOG_LVL_ERROR || defined(Z_BUILD_LOG)
+#define _Z_ERROR(...) _Z_LOG(ERROR, __VA_ARGS__)
+#else
 #define _Z_ERROR(...) (void)(0)
+#endif
 
-#else  // ZENOH_DEBUG != 0 || defined(Z_BUILD_DEBUG)
+#if ZENOH_LOG >= _Z_LOG_LVL_WARN || defined(Z_BUILD_LOG)
+#define _Z_WARN(...) _Z_LOG(WARN, __VA_ARGS__)
+#else
+#define _Z_WARN(...) (void)(0)
+#endif
 
-#define _Z_DEBUG(...)                          \
-    do {                                       \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_DEBUG) { \
-            _Z_LOG_PREFIX(DEBUG);              \
-            printf(__VA_ARGS__);               \
-            printf("\r\n");                    \
-        }                                      \
-    } while (false)
+#if ZENOH_LOG >= _Z_LOG_LVL_INFO || defined(Z_BUILD_LOG)
+#define _Z_INFO(...) _Z_LOG(INFO, __VA_ARGS__)
+#else
+#define _Z_INFO(...) (void)(0)
+#endif
 
-#define _Z_INFO(...)                          \
-    do {                                      \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_INFO) { \
-            _Z_LOG_PREFIX(INFO);              \
-            printf(__VA_ARGS__);              \
-            printf("\r\n");                   \
-        }                                     \
-    } while (false)
+#if ZENOH_LOG >= _Z_LOG_LVL_DEBUG || defined(Z_BUILD_LOG)
+#define _Z_DEBUG(...) _Z_LOG(DEBUG, __VA_ARGS__)
+#else
+#define _Z_DEBUG(...) (void)(0)
+#endif
 
-#define _Z_ERROR(...)                          \
-    do {                                       \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_ERROR) { \
-            _Z_LOG_PREFIX(ERROR);              \
-            printf(__VA_ARGS__);               \
-            printf("\r\n");                    \
-        }                                      \
-    } while (false)
-#endif  // ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+#if ZENOH_LOG >= _Z_LOG_LVL_TRACE || defined(Z_BUILD_LOG)
+#define _Z_TRACE(...) _Z_LOG(TRACE, __VA_ARGS__)
+#else
+#define _Z_TRACE(...) (void)(0)
+#endif
+
+
+//// Logging macros
+//// Ignore print only if log deactivated and build is release
+//// (log code is kept in debug build to have it compiled and ensure it remains valid)
+//#if ZENOH_LOG == 0 && !defined(Z_BUILD_LOG)
+//
+//#define _Z_LOG(level, ...) (void)(0)
+//#define _Z_TRACE(...) (void)(0)
+//#define _Z_DEBUG(...) (void)(0)
+//#define _Z_INFO(...) (void)(0)
+//#define _Z_WARN(...) (void)(0)
+//#define _Z_ERROR(...) (void)(0)
+//
+//#else  // ZENOH_LOG != 0 || defined(Z_BUILD_LOG)
+//
+//#define _Z_LOG(level, ...)
+//    do {                                         \
+//        if (level <= ZENOH_LOG) {                \
+//            __z_print_timestamp();               \
+//            printf(#prefix " ::%s] ", __func__); \
+//            printf(__VA_ARGS__);                 \
+//            printf("\r\n");                      \
+//        }                                        \
+//    } while(false)
+//
+//#define _Z_TRACE(...) _Z_LOG(_Z_LOG_LVL_TRACE, __VA_ARGS__)
+//#define _Z_DEBUG(...) _Z_LOG(_Z_LOG_LVL_DEBUG, __VA_ARGS__)
+//#define _Z_INFO(...) _Z_LOG(_Z_LOG_LVL_INFO, __VA_ARGS__)
+//#define _Z_WARN(...) _Z_LOG(_Z_LOG_LVL_WARN, __VA_ARGS__)
+//#define _Z_ERROR(...) _Z_LOG(_Z_LOG_LVL_ERROR, __VA_ARGS__)
+//
+//#endif  // ZENOH_LOG == 0 && !defined(Z_BUILD_LOG)
 
 #ifdef __cplusplus
 }

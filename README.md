@@ -542,7 +542,7 @@ A publisher will start publishing over UDP multicast and the **zenoh** router wi
 
 ### Activate debug logs
 
-By default debug logs are deactivated but if you're encountering issues they can help you finding the cause. To activate them you need to pass the build flag value: `-DZENOH_DEBUG=3`
+By default debug logs are deactivated but if you're encountering issues they can help you finding the cause. To activate them you need to pass the build flag value: `-DZENOH_LOG=4`
 
 ### Error when opening a session on a microcontroller
 

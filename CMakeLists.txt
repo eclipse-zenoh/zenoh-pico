@@ -46,7 +46,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
-set(ZENOH_DEBUG 0 CACHE STRING "Use this to set the ZENOH_DEBUG variable")
+set(ZENOH_LOG 0 CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -207,7 +207,7 @@ else()
   pico_add_compile_definition(ZENOH_COMPILER_OTHER)
 endif()
 
-pico_add_compile_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
+pico_add_compile_definition(ZENOH_LOG=${ZENOH_LOG})
 
 
 # Zenoh pico feature configuration options
@@ -268,7 +268,7 @@ if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature" FORCE)
 endif()
 
-add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
+add_compile_definitions("Z_BUILD_LOG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
@@ -297,7 +297,7 @@ configure_file(
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
+message(STATUS "Zenoh Level Log: ${ZENOH_LOG}")
 message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
 message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
 message(STATUS "Multicast batch max size: ${BATCH_MULTICAST_SIZE}")

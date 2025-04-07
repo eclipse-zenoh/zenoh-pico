@@ -25,26 +25,26 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v4
-    - name: Compile debug
-      run: make all
-      env:
-        BUILD_TYPE: Debug
-        BUILD_SHARED_LIBS: OFF
-        BUILD_TESTING: ON
-        BUILD_MULTICAST: ON
-        BUILD_INTEGRATION: ON
-        BUILD_TOOLS: ON
-        ZENOH_DEBUG: 3
+      - uses: actions/checkout@v4
+      - name: Compile debug
+        run: make all
+        env:
+          BUILD_TYPE: Debug
+          BUILD_SHARED_LIBS: OFF
+          BUILD_TESTING: ON
+          BUILD_MULTICAST: ON
+          BUILD_INTEGRATION: ON
+          BUILD_TOOLS: ON
+          ZENOH_LOG: 4
 
   crossbuilds:
     name: Build on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Crosscompile debug
-      run: make crossbuilds
-      env:
-        BUILD_TYPE: Debug
-        BUILD_SHARED_LIBS: OFF
-        ZENOH_DEBUG: 3
+      - uses: actions/checkout@v4
+      - name: Crosscompile debug
+        run: make crossbuilds
+        env:
+          BUILD_TYPE: Debug
+          BUILD_SHARED_LIBS: OFF
+          ZENOH_LOG: 4
