@@ -182,7 +182,7 @@ z_result_t _z_link_send_wbuf(const _z_link_t *link, const _z_wbuf_t *wbf, _z_sys
         size_t n = bs.len;
         do {
             size_t wb = link->_write_f(link, bs.start, n, socket);
-            if (wb == SIZE_MAX) {
+            if ((wb == SIZE_MAX) || (wb > n)) {
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
                 break;
             }
