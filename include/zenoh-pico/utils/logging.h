@@ -92,39 +92,6 @@ static inline void __z_print_timestamp(void) {
 #define _Z_TRACE(...) (void)(0)
 #endif
 
-
-//// Logging macros
-//// Ignore print only if log deactivated and build is release
-//// (log code is kept in debug build to have it compiled and ensure it remains valid)
-//#if ZENOH_LOG == 0 && !defined(Z_BUILD_LOG)
-//
-//#define _Z_LOG(level, ...) (void)(0)
-//#define _Z_TRACE(...) (void)(0)
-//#define _Z_DEBUG(...) (void)(0)
-//#define _Z_INFO(...) (void)(0)
-//#define _Z_WARN(...) (void)(0)
-//#define _Z_ERROR(...) (void)(0)
-//
-//#else  // ZENOH_LOG != 0 || defined(Z_BUILD_LOG)
-//
-//#define _Z_LOG(level, ...)
-//    do {                                         \
-//        if (level <= ZENOH_LOG) {                \
-//            __z_print_timestamp();               \
-//            printf(#prefix " ::%s] ", __func__); \
-//            printf(__VA_ARGS__);                 \
-//            printf("\r\n");                      \
-//        }                                        \
-//    } while(false)
-//
-//#define _Z_TRACE(...) _Z_LOG(_Z_LOG_LVL_TRACE, __VA_ARGS__)
-//#define _Z_DEBUG(...) _Z_LOG(_Z_LOG_LVL_DEBUG, __VA_ARGS__)
-//#define _Z_INFO(...) _Z_LOG(_Z_LOG_LVL_INFO, __VA_ARGS__)
-//#define _Z_WARN(...) _Z_LOG(_Z_LOG_LVL_WARN, __VA_ARGS__)
-//#define _Z_ERROR(...) _Z_LOG(_Z_LOG_LVL_ERROR, __VA_ARGS__)
-//
-//#endif  // ZENOH_LOG == 0 && !defined(Z_BUILD_LOG)
-
 #ifdef __cplusplus
 }
 #endif
