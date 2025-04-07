@@ -15,6 +15,10 @@
 #ifndef INCLUDE_ZENOH_PICO_CONFIG_H
 #define INCLUDE_ZENOH_PICO_CONFIG_H
 
+#ifdef ZENOH_GENERIC
+#include <zenoh_generic_config.h>
+#else
+
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
 #define Z_FRAG_MAX_SIZE 4096
 #define Z_BATCH_UNICAST_SIZE 2048
@@ -51,6 +55,8 @@
 #define Z_FEATURE_UNICAST_PEER 1
 #define Z_FEATURE_AUTO_RECONNECT 0
 // End of CMake generation
+
+#endif /* ZENOH_GENERIC */
 
 /*------------------ Runtime configuration properties ------------------*/
 /**
