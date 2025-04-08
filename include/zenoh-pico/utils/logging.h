@@ -39,7 +39,7 @@ extern "C" {
 #ifdef ZENOH_DEBUG
 #undef ZENOH_LOG_LEVEL
 #define ZENOH_LOG_LEVEL (ZENOH_DEBUG * 10 + (ZENOH_DEBUG >= 2 ? 10 : 0))
-#endif // ZENOH_DEBUG != 0
+#endif
 
 // Logging values
 #define _Z_LOG_LVL_ERROR 10
@@ -54,19 +54,18 @@ static inline void __z_print_timestamp(void) {
     ZENOH_LOG_PRINT("[%s ", z_time_now_as_str(ret, sizeof(ret)));
 }
 
-
 // Release build only expand log code when the given level is enabled,
 // while debug build always expand log code, to ensure it compiles fine.
 #if ZENOH_LOG_LEVEL >= 0 || defined(Z_BUILD_LOG)
-#define _Z_LOG(level, ...)                       \
-    do {                                         \
-        if (ZENOH_LOG_LEVEL >= _Z_LOG_LVL_##level) {   \
-            __z_print_timestamp();               \
-            ZENOH_LOG_PRINT(#level " ::%s] ", __func__);  \
-            ZENOH_LOG_PRINT(__VA_ARGS__);                 \
-            ZENOH_LOG_PRINT("\r\n");                      \
-        }                                        \
-    } while(false)
+#define _Z_LOG(level, ...)                               \
+    do {                                                 \
+        if (ZENOH_LOG_LEVEL >= _Z_LOG_LVL_##level) {     \
+            __z_print_timestamp();                       \
+            ZENOH_LOG_PRINT(#level " ::%s] ", __func__); \
+            ZENOH_LOG_PRINT(__VA_ARGS__);                \
+            ZENOH_LOG_PRINT("\r\n");                     \
+        }                                                \
+    } while (false)
 #else
 #define _Z_LOG(level, ...) (void)(0)
 #endif
