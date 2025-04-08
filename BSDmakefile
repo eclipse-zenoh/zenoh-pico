@@ -37,15 +37,14 @@ BUILD_INTEGRATION?=OFF
 # Accepted values: ON, OFF
 BUILD_TOOLS?=OFF
 
-# Debug level. This sets the ZENOH_LOG variable.
-# Accepted values:
-#  0: NONE
-#  1: ERROR
-#  2: WARN + ERROR
-#  3: INFO + WARN + ERROR
-#  4: DEBUG + INFO + WARN + ERROR
-#  5: TRACE + DEBUG + INFO + WARN + ERROR
-ZENOH_LOG?=0
+# Logging level. This sets the ZENOH_LOG variable.
+# Accepted values (empty string means no log):
+#  ERROR/error
+#  WARN/warn
+#  INFO/info
+#  DEBUG/debug
+#  TRACE/trace
+ZENOH_LOG?=""
 
 # zenoh-pico/ directory
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -60,7 +59,7 @@ CROSSIMG_PREFIX=zenoh-pico_
 # NOTES:
 # - ARM:   old versions of dockcross/dockcross were creating some issues since they used an old GCC (4.8.3) which lacks <stdatomic.h> (even using -std=gnu11)
 
-CMAKE_OPT=-DZENOH_LOG=$(ZENOH_LOG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -DBUILD_TOOLS=$(BUILD_TOOLS) -DBUILD_SHARED_LIBS=$(BUILD_SHARED_LIBS) -H.
+CMAKE_OPT=-DZENOH_LOG=$(ZENOH_LOG) -DZENOH_LOG_LEVEL=$(ZENOH_LOG_LEVEL) -DZENOH_DEBUG=$(ZENOH_DEBUG) -DBUILD_EXAMPLES=$(BUILD_EXAMPLES) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -DBUILD_TESTING=$(BUILD_TESTING) -DBUILD_MULTICAST=$(BUILD_MULTICAST) -DBUILD_INTEGRATION=$(BUILD_INTEGRATION) -DBUILD_TOOLS=$(BUILD_TOOLS) -DBUILD_SHARED_LIBS=$(BUILD_SHARED_LIBS) -H.
 
 all: make
 

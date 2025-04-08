@@ -46,7 +46,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
-set(ZENOH_LOG 0 CACHE STRING "Use this to set the ZENOH_LOG variable")
+set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -207,8 +207,21 @@ else()
   pico_add_compile_definition(ZENOH_COMPILER_OTHER)
 endif()
 
-pico_add_compile_definition(ZENOH_LOG=${ZENOH_LOG})
-
+if (DEFINED ZENOH_DEBUG AND NOT (ZENOH_DEBUG STREQUAL ""))
+  pico_add_compile_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
+elseif (DEFINED ZENOH_LOG_LEVEL AND NOT (ZENOH_LOG_LEVEL STREQUAL ""))
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=${ZENOH_LOG_LEVEL})
+elseif (ZENOH_LOG STREQUAL ERROR OR ZENOH_LOG STREQUAL error)
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=10)
+elseif (ZENOH_LOG STREQUAL WARN OR ZENOH_LOG STREQUAL warn)
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=20)
+elseif (ZENOH_LOG STREQUAL INFO OR ZENOH_LOG STREQUAL info)
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=30)
+elseif (ZENOH_LOG STREQUAL DEBUG OR ZENOH_LOG STREQUAL debug)
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=40)
+elseif (ZENOH_LOG STREQUAL TRACE OR ZENOH_LOG STREQUAL trace)
+  pico_add_compile_definition(ZENOH_LOG_LEVEL=50)
+endif()
 
 # Zenoh pico feature configuration options
 set(FRAG_MAX_SIZE 4096 CACHE STRING "Use this to override the maximum size for fragmented messages")

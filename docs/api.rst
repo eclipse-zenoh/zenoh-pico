@@ -1542,15 +1542,25 @@ Zenoh-Pico supports three logging levels:
 Enabling Logging
 ----------------
 
-To enable logging, you can adjust the logging level by defining the ``ZENOH_LOG`` macro at compile time.
+To enable logging, you can adjust the logging level by defining the ``ZENOH_LOG_LEVEL`` macro at compile time.
 
-- Set ``ZENOH_LOG`` to ``1`` to enable error messages.
-- Set ``ZENOH_LOG`` to ``2`` to enable warning messages.
-- Set ``ZENOH_LOG`` to ``3`` to enable informational messages.
-- Set ``ZENOH_LOG`` to ``4`` to enable debug messages.
-- Set ``ZENOH_LOG`` to ``5`` to enable trace messages.
+- Set ``ZENOH_LOG_LEVEL`` to ``10`` or greater to enable error messages.
+- Set ``ZENOH_LOG_LEVEL`` to ``20`` or greater to enable warning messages.
+- Set ``ZENOH_LOG_LEVEL`` to ``30`` or greater to enable informational messages.
+- Set ``ZENOH_LOG_LEVEL`` to ``40`` or greater to enable debug messages.
+- Set ``ZENOH_LOG_LEVEL`` to ``50`` or greater to enable trace messages.
 
-In release builds, logging is disabled unless ``ZENOH_LOG`` is explicitly set.
+In release builds, logging is disabled unless ``ZENOH_LOG_LEVEL`` is explicitly set.
+
+CMake build also provides a string variable ``ZENOH_LOG`` which accepts the following values:
+
+- ``ERROR``/``error`` to enable error messages.
+- ``WARN``/``warn`` to enable warning messages.
+- ``INFO``/``info`` to enable informational messages.
+- ``DEBUG``/``debug`` to enable debug messages.
+- ``TRACE``/``trace`` to enable trace messages.
+
+``ZENOH_LOG_LEVEL`` has priority over ``ZENOH_LOG``.
 
 Example of Enabling Logging
 ---------------------------
@@ -1559,15 +1569,24 @@ To enable **debug-level logging** in your build, you would add the following fla
 
 .. code-block:: bash
 
-    gcc -DZENOH_LOG=4 -o my_program my_program.c
+    gcc -DZENOH_LOG_LEVEL=40 -o my_program my_program.c
 
-This will enable the most verbose logging, printing debug, info, and error messages.
+This will enable the most verbose logging, printing debug, info, warning, and error messages.
 
 Disabling Logging
 -----------------
 
-To disable all logging, set ``ZENOH_LOG`` to ``0`` or ensure it is undefined in release builds:
+To disable all logging, set ``ZENOH_LOG_LEVEL`` to ``0`` or ensure it is undefined in release builds:
 
 .. code-block:: bash
 
-    gcc -DZENOH_LOG=0 -o my_program my_program.c
+    gcc -DZENOH_LOG_LEVEL=0 -o my_program my_program.c
+
+Override Logs printing
+----------------------
+
+By default, logging use `printf`, but it can be overridden by setting `ZENOH_LOG_PRINT`:
+
+.. code-block:: bash
+
+    gcc -DZENOH_LOG_PRINT=my_print -o my_program my_program.c
