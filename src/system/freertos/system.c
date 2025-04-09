@@ -19,7 +19,14 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#if defined(ZENOH_FREERTOS_PLUS_TCP)
 #include "FreeRTOS_IP.h"
+#elif defined(ZENOH_FREERTOS_LWIP)
+#include "lwip/arch.h"
+#else
+#error "FreeRTOS System Implementation was used but no compatible network stack was selected"
+#endif
+
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
 
@@ -29,9 +36,15 @@ uint8_t z_random_u8(void) { return z_random_u32(); }
 uint16_t z_random_u16(void) { return z_random_u32(); }
 
 uint32_t z_random_u32(void) {
+#if defined(ZENOH_FREERTOS_PLUS_TCP)
     uint32_t ret = 0;
     xApplicationGetRandomNumber(&ret);
     return ret;
+#elif defined(ZENOH_FREERTOS_LWIP)
+    return LWIP_RAND();
+#else
+#error "FreeRTOS System Implementation was used but no compatible network stack was selected"
+#endif
 }
 
 uint64_t z_random_u64(void) {

@@ -45,7 +45,9 @@
 #elif defined(ZENOH_FLIPPER)
 #include "zenoh-pico/system/platform/flipper.h"
 #elif defined(ZENOH_FREERTOS_PLUS_TCP)
-#include "zenoh-pico/system/platform/freertos_plus_tcp.h"
+#include "zenoh-pico/system/platform/freertos/freertos_plus_tcp.h"
+#elif defined(ZENOH_FREERTOS_LWIP)
+#include "zenoh-pico/system/platform/freertos/lwip.h"
 #elif defined(ZENOH_RPI_PICO)
 #include "zenoh-pico/system/platform/rpi_pico.h"
 #elif defined(ZENOH_GENERIC)
