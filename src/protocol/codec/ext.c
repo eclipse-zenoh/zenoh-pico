@@ -173,7 +173,7 @@ z_result_t _z_msg_ext_vec_decode(_z_msg_ext_vec_t *extensions, _z_zbuf_t *zbf) {
 }
 
 z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
-#if (ZENOH_LOG_LEVEL >= _Z_LOG_LVL_ERROR)
+#ifdef ZENOH_LOG_ERROR
     uint8_t ext_id = _Z_EXT_ID(extension->_header);
     switch (_Z_EXT_ENC(extension->_header)) {
         case _Z_MSG_EXT_ENC_UNIT: {
