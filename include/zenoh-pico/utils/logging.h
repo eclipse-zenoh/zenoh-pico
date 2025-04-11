@@ -43,7 +43,7 @@ extern "C" {
 #elif ZENOH_DEBUG == 2
 #define ZENOH_LOG_INFO
 #elif ZENOH_DEBUG == 3
-#define #ZENOH_LOG_DEBUG
+#define ZENOH_LOG_DEBUG
 #endif
 #endif
 
