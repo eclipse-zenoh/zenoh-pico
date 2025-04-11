@@ -225,6 +225,7 @@ endif()
 if (NOT(ZENOH_LOG_PRINT STREQUAL ""))
  pico_add_compile_definition(ZENOH_LOG_PRINT=${ZENOH_LOG_PRINT})
 endif()
+add_compile_definitions("Z_BUILD_LOG=$<CONFIG:Debug>")
 
 # Zenoh pico feature configuration options
 set(FRAG_MAX_SIZE 4096 CACHE STRING "Use this to override the maximum size for fragmented messages")
@@ -284,7 +285,6 @@ if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature" FORCE)
 endif()
 
-add_compile_definitions("Z_BUILD_LOG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\

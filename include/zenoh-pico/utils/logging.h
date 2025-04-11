@@ -47,7 +47,7 @@ extern "C" {
 #endif
 #endif
 
-#define _Z_CHECK_LOG(...) do { if (false) ZENOH_LOG_PRINT(__VA_ARGS__); } while (false)
+// Logging macros
 #define _Z_LOG(level, ...)                                               \
     do {                                                                 \
         char __timestamp[64];                                            \
@@ -56,6 +56,9 @@ extern "C" {
         ZENOH_LOG_PRINT(__VA_ARGS__);                                    \
         ZENOH_LOG_PRINT("\r\n");                                         \
     } while (false)
+// In debug build, if a level is not enabled, the following macro is used instead
+// in order to check that the arguments are valid and compile fine.
+#define _Z_CHECK_LOG(...) do { if (false) ZENOH_LOG_PRINT(__VA_ARGS__); } while (false)
 
 #ifdef ZENOH_LOG_TRACE
 #define ZENOH_LOG_DEBUG
