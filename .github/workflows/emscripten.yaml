@@ -15,9 +15,9 @@ name: emscripten
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ['**']
   pull_request:
-    branches: [ '**' ]
+    branches: ['**']
 
 jobs:
   build:
@@ -28,11 +28,11 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v4
-    - uses: jwlawson/actions-setup-cmake@v1.14
-    - uses: mymindstorm/setup-emsdk@v12
-    - name: Compile debug
-      run: |
-       mkdir build
-       emcmake cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_STANDARD=11 -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF -DBUILD_MULTICAST=OFF -DBUILD_INTEGRATION=OFF -DBUILD_TOOLS=OFF -DZENOH_DEBUG=3 -DZ_FEATURE_LINK_WS=1 -DZ_FEATURE_LINK_TCP=0 -DZ_FEATURE_LINK_UDP_MULTICAST=0 -DZ_FEATURE_LINK_UDP_UNICAST=0 -DZ_FEATURE_SCOUTING_UDP=0 -H. -Bbuild
-       make -C build
+      - uses: actions/checkout@v4
+      - uses: jwlawson/actions-setup-cmake@v1.14
+      - uses: mymindstorm/setup-emsdk@v12
+      - name: Compile debug
+        run: |
+          mkdir build
+          emcmake cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_STANDARD=11 -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF -DBUILD_MULTICAST=OFF -DBUILD_INTEGRATION=OFF -DBUILD_TOOLS=OFF -DZENOH_LOG=debug -DZ_FEATURE_LINK_WS=1 -DZ_FEATURE_LINK_TCP=0 -DZ_FEATURE_LINK_UDP_MULTICAST=0 -DZ_FEATURE_LINK_UDP_UNICAST=0 -DZ_FEATURE_SCOUTING_UDP=0 -H. -Bbuild
+          make -C build

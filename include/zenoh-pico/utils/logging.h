@@ -23,58 +23,89 @@
 extern "C" {
 #endif
 
-// Logging values
-#define _Z_LOG_LVL_ERROR 1
-#define _Z_LOG_LVL_INFO 2
-#define _Z_LOG_LVL_DEBUG 3
+// Allows replacement of printf on targets that don't support it
+#ifndef ZENOH_LOG_PRINT
+#define ZENOH_LOG_PRINT printf
+#endif
 
-// Timestamp function
-static inline void __z_print_timestamp(void) {
-    char ret[64];
-    printf("[%s ", z_time_now_as_str(ret, sizeof(ret)));
-}
+// Compatibility with legacy logging system where
+// 1 -> ERROR
+// 2 -> INFO
+// 3 -> DEBUG
+#ifdef ZENOH_DEBUG
+#undef ZENOH_LOG_ERROR
+#undef ZENOH_LOG_WARN
+#undef ZENOH_LOG_INFO
+#undef ZENOH_LOG_DEBUG
+#undef ZENOH_LOG_TRACE
+#if ZENOH_DEBUG == 1
+#define ZENOH_LOG_ERROR
+#elif ZENOH_DEBUG == 2
+#define ZENOH_LOG_INFO
+#elif ZENOH_DEBUG == 3
+#define ZENOH_LOG_DEBUG
+#endif
+#endif
 
 // Logging macros
-#define _Z_LOG_PREFIX(prefix) \
-    __z_print_timestamp();    \
-    printf(#prefix " ::%s] ", __func__);
+#define _Z_LOG(level, ...)                                               \
+    do {                                                                 \
+        char __timestamp[64];                                            \
+        z_time_now_as_str(__timestamp, sizeof(__timestamp));             \
+        ZENOH_LOG_PRINT("[%s " #level " ::%s] ", __timestamp, __func__); \
+        ZENOH_LOG_PRINT(__VA_ARGS__);                                    \
+        ZENOH_LOG_PRINT("\r\n");                                         \
+    } while (false)
+// In debug build, if a level is not enabled, the following macro is used instead
+// in order to check that the arguments are valid and compile fine.
+#define _Z_CHECK_LOG(...)                        \
+    do {                                         \
+        if (false) ZENOH_LOG_PRINT(__VA_ARGS__); \
+    } while (false)
 
-// Ignore print only if log deactivated and build is release
-#if ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+#ifdef ZENOH_LOG_TRACE
+#define ZENOH_LOG_DEBUG
+#define _Z_TRACE(...) _Z_LOG(TRACE, __VA_ARGS__)
+#elif defined(Z_BUILD_LOG)
+#define _Z_TRACE _Z_CHECK_LOG
+#else
+#define _Z_TRACE(...) (void)(0)
+#endif
 
+#ifdef ZENOH_LOG_DEBUG
+#define ZENOH_LOG_INFO
+#define _Z_DEBUG(...) _Z_LOG(DEBUG, __VA_ARGS__)
+#elif defined(Z_BUILD_LOG)
+#define _Z_DEBUG _Z_CHECK_LOG
+#else
 #define _Z_DEBUG(...) (void)(0)
+#endif
+
+#ifdef ZENOH_LOG_INFO
+#define ZENOH_LOG_WARN
+#define _Z_INFO(...) _Z_LOG(INFO, __VA_ARGS__)
+#elif defined(Z_BUILD_LOG)
+#define _Z_INFO _Z_CHECK_LOG
+#else
 #define _Z_INFO(...) (void)(0)
+#endif
+
+#ifdef ZENOH_LOG_WARN
+#define ZENOH_LOG_ERROR
+#define _Z_WARN(...) _Z_LOG(WARN, __VA_ARGS__)
+#elif defined(Z_BUILD_LOG)
+#define _Z_WARN _Z_CHECK_LOG
+#else
+#define _Z_WARN(...) (void)(0)
+#endif
+
+#ifdef ZENOH_LOG_ERROR
+#define _Z_ERROR(...) _Z_LOG(ERROR, __VA_ARGS__)
+#elif defined(Z_BUILD_LOG)
+#define _Z_ERROR _Z_CHECK_LOG
+#else
 #define _Z_ERROR(...) (void)(0)
-
-#else  // ZENOH_DEBUG != 0 || defined(Z_BUILD_DEBUG)
-
-#define _Z_DEBUG(...)                          \
-    do {                                       \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_DEBUG) { \
-            _Z_LOG_PREFIX(DEBUG);              \
-            printf(__VA_ARGS__);               \
-            printf("\r\n");                    \
-        }                                      \
-    } while (false)
-
-#define _Z_INFO(...)                          \
-    do {                                      \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_INFO) { \
-            _Z_LOG_PREFIX(INFO);              \
-            printf(__VA_ARGS__);              \
-            printf("\r\n");                   \
-        }                                     \
-    } while (false)
-
-#define _Z_ERROR(...)                          \
-    do {                                       \
-        if (ZENOH_DEBUG >= _Z_LOG_LVL_ERROR) { \
-            _Z_LOG_PREFIX(ERROR);              \
-            printf(__VA_ARGS__);               \
-            printf("\r\n");                    \
-        }                                      \
-    } while (false)
-#endif  // ZENOH_DEBUG == 0 && !defined(Z_BUILD_DEBUG)
+#endif
 
 #ifdef __cplusplus
 }

@@ -1542,31 +1542,24 @@ Zenoh-Pico supports three logging levels:
 Enabling Logging
 ----------------
 
-To enable logging, you can adjust the logging level by defining the ``ZENOH_DEBUG`` macro at compile time.
-
-- Set ``ZENOH_DEBUG`` to ``1`` to enable error messages.
-- Set ``ZENOH_DEBUG`` to ``2`` to enable informational messages.
-- Set ``ZENOH_DEBUG`` to ``3`` to enable debug messages (includes info and error).
-
-Additionally, logging can be automatically enabled in **debug builds** by defining the ``Z_BUILD_DEBUG`` macro.
-In release builds, logging is disabled unless ``ZENOH_DEBUG`` is explicitly set.
-
-Example of Enabling Logging
----------------------------
-
-To enable **debug-level logging** in your build, you would add the following flags during compilation:
+CMake build provides a variable ``ZENOH_LOG`` which accepts the following values (either uppercase or lowercase):
+ - ``ERROR`` to enable error messages.
+ - ``WARN`` to enable warning and higher level messages.
+ - ``INFO`` to enable informational and higher level messages.
+ - ``DEBUG`` to enable debug and higher level messages.
+ - ``TRACE`` to enable trace and higher level messages.
 
 .. code-block:: bash
 
-    gcc -DZENOH_DEBUG=3 -o my_program my_program.c
+    ZENOH_LOG=debug make  # build zenoh-pico with debug and higher level messages enabled
 
-This will enable the most verbose logging, printing debug, info, and error messages.
+When building zenoh-pico from source, logging can be enabled by defining corresponding macro, like ``-DZENOH_LOG_DEBUG``.
 
-Disabling Logging
------------------
+Override Logs printing
+----------------------
 
-To disable all logging, set ``ZENOH_DEBUG`` to ``0`` or ensure it is undefined in release builds:
+By default, logging use `printf`, but it can be overridden by setting `ZENOH_LOG_PRINT`:
 
 .. code-block:: bash
 
-    gcc -DZENOH_DEBUG=0 -o my_program my_program.c
+    ZENOH_LOG_PRINT=my_print make  # build zenoh-pico using `my_print` instead of `printf` for logging
