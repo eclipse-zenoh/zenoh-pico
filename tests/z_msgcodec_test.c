@@ -1485,7 +1485,7 @@ void push_message(void) {
 _z_n_msg_request_t gen_request(void) {
     _z_qos_t qos_default = {._val = 5};
     _z_n_msg_request_t request = {
-        ._rid = gen_uint64(),
+        ._rid = gen_zint(),
         ._key = gen_keyexpr(),
         ._ext_qos = gen_bool() ? _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8) : qos_default,
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
@@ -1558,7 +1558,7 @@ void request_message(void) {
 _z_n_msg_response_t gen_response(void) {
     _z_n_msg_response_t ret = {
         ._key = gen_keyexpr(),
-        ._request_id = gen_uint64(),
+        ._request_id = gen_zint(),
         ._ext_qos = _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8),
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_responder = {._eid = gen_uint16(), ._zid = gen_zid()},
@@ -1614,7 +1614,7 @@ void response_message(void) {
     _z_wbuf_clear(&wbf);
 }
 
-_z_n_msg_response_final_t gen_response_final(void) { return (_z_n_msg_response_final_t){._request_id = gen_uint64()}; }
+_z_n_msg_response_final_t gen_response_final(void) { return (_z_n_msg_response_final_t){._request_id = gen_zint()}; }
 void assert_eq_response_final(const _z_n_msg_response_final_t *left, const _z_n_msg_response_final_t *right) {
     assert(left->_request_id == right->_request_id);
 }
@@ -1639,14 +1639,14 @@ _z_transport_message_t gen_join(void) {
     _z_conduit_sn_list_t conduit = {._is_qos = gen_bool()};
     if (conduit._is_qos) {
         for (int i = 0; i < Z_PRIORITIES_NUM; i++) {
-            conduit._val._qos[i]._best_effort = gen_uint64();
-            conduit._val._qos[i]._reliable = gen_uint64();
+            conduit._val._qos[i]._best_effort = gen_zint();
+            conduit._val._qos[i]._reliable = gen_zint();
         }
     } else {
-        conduit._val._plain._best_effort = gen_uint64();
-        conduit._val._plain._reliable = gen_uint64();
+        conduit._val._plain._best_effort = gen_zint();
+        conduit._val._plain._reliable = gen_zint();
     }
-    return _z_t_msg_make_join(_z_whatami_from_uint8((gen_uint8() % 3)), gen_uint64(), gen_zid(), conduit);
+    return _z_t_msg_make_join(_z_whatami_from_uint8((gen_uint8() % 3)), gen_zint(), gen_zid(), conduit);
 }
 void assert_eq_join(const _z_t_msg_join_t *left, const _z_t_msg_join_t *right) {
     assert(memcmp(left->_zid.id, right->_zid.id, 16) == 0);
