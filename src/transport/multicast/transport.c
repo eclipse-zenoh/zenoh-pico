@@ -112,6 +112,7 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 
 #if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
+        ztm->_common._accept_task_running = NULL;
         ztm->_common._read_task_running = false;
         ztm->_common._read_task = NULL;
         ztm->_common._lease_task_running = false;
