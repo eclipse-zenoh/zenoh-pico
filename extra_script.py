@@ -36,7 +36,7 @@ if FRAMEWORK == 'zephyr':
         "-<system/arduino/>",
         "-<system/emscripten/>",
         "-<system/espidf/>",
-        "-<system/freertos_plus_tcp/>",
+        "-<system/freertos/>",
         "-<system/rpi_pico/>",
         "-<system/mbed/>",
         "-<system/unix/>",
@@ -55,7 +55,7 @@ elif FRAMEWORK == 'arduino':
             "-<system/arduino/opencr>",
             "-<system/emscripten/>",
             "-<system/espidf>",
-            "-<system/freertos_plus_tcp/>",
+            "-<system/freertos/>",
             "-<system/rpi_pico/>",
             "-<system/mbed/>",
             "-<system/unix/>",
@@ -74,7 +74,7 @@ elif FRAMEWORK == 'arduino':
                 "-<system/arduino/esp32>",
                 "-<system/emscripten/>",
                 "-<system/espidf>",
-                "-<system/freertos_plus_tcp/>",
+                "-<system/freertos/>",
                 "-<system/rpi_pico/>",
                 "-<system/mbed/>",
                 "-<system/unix/>",
@@ -91,7 +91,7 @@ elif FRAMEWORK == 'espidf':
         "-<example/>",
         "-<system/arduino/>",
         "-<system/emscripten/>",
-        "-<system/freertos_plus_tcp/>",
+        "-<system/freertos/>",
         "-<system/rpi_pico/>",
         "-<system/mbed/>",
         "-<system/unix/>",
@@ -109,7 +109,7 @@ elif FRAMEWORK == 'mbed':
         "-<system/arduino/>",
         "-<system/emscripten/>",
         "-<system/espidf/>",
-        "-<system/freertos_plus_tcp/>",
+        "-<system/freertos/>",
         "-<system/rpi_pico/>",
         "-<system/unix/>",
         "-<system/flipper/>",
@@ -118,11 +118,7 @@ elif FRAMEWORK == 'mbed':
     ]
     CPPDEFINES = ["ZENOH_MBED", "ZENOH_C_STANDARD=99"]
 elif FRAMEWORK == 'generic':
-    SRC_FILTER = ["+<*>",
-                    "-<tests/>",
-                    "-<example/>",
-                    "-<system/*>",
-                    "+<system/common>"]
+    SRC_FILTER = ["+<*>", "-<tests/>", "-<example/>", "-<system/*>", "+<system/common>"]
     CPPDEFINES = ["ZENOH_GENERIC"]
 
 env.Append(SRC_FILTER=SRC_FILTER)
