@@ -23,12 +23,9 @@
     "license": "Apache-2.0 OR EPL-2.0",
     "frameworks": [
         "arduino",
-        "libopencm3",
-        "stm32cube",
         "espidf",
         "mbed",
-        "zephyr",
-        "spl"
+        "zephyr"
     ],
     "headers": [
         "zenoh-pico.h"
