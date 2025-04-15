@@ -151,7 +151,7 @@ z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         exts.n -= 1;
         uint8_t extheader = 0x06 | _Z_MSG_EXT_ENC_ZINT | (exts.n ? _Z_FLAG_Z_Z : 0);
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, extheader));
-        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_ext_timeout_ms));
+        _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, msg->_ext_timeout_ms));
     }
 
     switch (msg->_tag) {

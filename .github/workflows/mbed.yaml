@@ -51,7 +51,7 @@ jobs:
 
           mkdir -p $MBED_BASE
           cd $MBED_BASE
-          pio init -b nucleo_f767zi --project-option="framework=mbed" --project-option="board_build.cmake_extra_args=-DZENOH_LOG=debug -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC"
+          pio init -b nucleo_f767zi --project-option="framework=mbed" --project-option="board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG"
 
           cd $MBED_BASE/lib
           ln -s $ZENOH_PICO_BASE

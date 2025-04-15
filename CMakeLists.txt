@@ -101,7 +101,9 @@ else()
     if (NOT CMAKE_C_STANDARD STREQUAL "99")
       add_compile_options(-Wpedantic)
     endif()
-    # add_compile_options(-Wconversion)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      add_compile_options(-Wconversion)
+    endif()
   elseif(MSVC)
     add_compile_options(/W4 /WX /Od /wd4127)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Generic")
@@ -288,7 +290,7 @@ if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature" FORCE)
 endif()
 
-message(STATUS "Building with feature confing:\n\
+message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\

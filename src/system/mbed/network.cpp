@@ -24,6 +24,8 @@ extern "C" {
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/protocol/codec/serial.h"
+#include "zenoh-pico/system/common/serial.h"
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/checksum.h"
@@ -343,17 +345,14 @@ size_t _z_send_udp_multicast(const _z_sys_net_socket_t sock, const uint8_t *ptr,
 #if Z_FEATURE_LINK_SERIAL == 1
 
 z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
-    z_result_t ret = _Z_RES_OK;
-
     sock->_serial = new BufferedSerial(PinName(txpin), PinName(rxpin), baudrate);
     if (sock->_serial != NULL) {
         sock->_serial->set_format(8, BufferedSerial::None, 1);  // Default in Zenoh Rust
         sock->_serial->enable_input(true);
         sock->_serial->enable_output(true);
     } else {
-        ret = _Z_ERR_GENERIC;
+        return _Z_ERR_GENERIC;
     }
-
     return _z_connect_serial(*sock);
 }
 
@@ -394,18 +393,18 @@ z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *device, ui
 
 void _z_close_serial(_z_sys_net_socket_t *sock) { delete sock->_serial; }
 
-size_t _z_read_serial(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
-    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
         sock._serial->read(&raw_buf[i], 1);
         rb++;
-        if (before_cobs[i] == (uint8_t)0x00) {
+        if (raw_buf[i] == (uint8_t)0x00) {
             break;
         }
     }
 
-    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     z_free(raw_buf);
@@ -424,7 +423,7 @@ size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, c
         return ret;
     }
 
-    ssize_t wb = sock._serial->write(after_cobs, raw_buf, ret);
+    ssize_t wb = sock._serial->write(raw_buf, ret);
     if (wb != (ssize_t)ret) {
         ret = SIZE_MAX;
     }
