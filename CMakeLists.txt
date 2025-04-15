@@ -46,7 +46,8 @@ option(BUILD_SHARED_LIBS "Build shared libraries if ON, otherwise build static l
 option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
-set(ZENOH_DEBUG 0 CACHE STRING "Use this to set the ZENOH_DEBUG variable")
+set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
+set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
   set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES 
@@ -207,8 +208,24 @@ else()
   pico_add_compile_definition(ZENOH_COMPILER_OTHER)
 endif()
 
-pico_add_compile_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
-
+# Logging
+if (DEFINED ZENOH_DEBUG AND NOT (ZENOH_DEBUG STREQUAL ""))
+  pico_add_compile_definition(ZENOH_DEBUG=${ZENOH_DEBUG})
+elseif (ZENOH_LOG STREQUAL ERROR OR ZENOH_LOG STREQUAL error)
+  pico_add_compile_definition(ZENOH_LOG_ERROR)
+elseif (ZENOH_LOG STREQUAL WARN OR ZENOH_LOG STREQUAL warn)
+  pico_add_compile_definition(ZENOH_LOG_WARN)
+elseif (ZENOH_LOG STREQUAL INFO OR ZENOH_LOG STREQUAL info)
+  pico_add_compile_definition(ZENOH_LOG_INFO)
+elseif (ZENOH_LOG STREQUAL DEBUG OR ZENOH_LOG STREQUAL debug)
+  pico_add_compile_definition(ZENOH_LOG_DEBUG)
+elseif (ZENOH_LOG STREQUAL TRACE OR ZENOH_LOG STREQUAL trace)
+  pico_add_compile_definition(ZENOH_LOG_TRACE)
+endif()
+if (NOT(ZENOH_LOG_PRINT STREQUAL ""))
+ pico_add_compile_definition(ZENOH_LOG_PRINT=${ZENOH_LOG_PRINT})
+endif()
+add_compile_definitions("Z_BUILD_LOG=$<CONFIG:Debug>")
 
 # Zenoh pico feature configuration options
 set(FRAG_MAX_SIZE 4096 CACHE STRING "Use this to override the maximum size for fragmented messages")
@@ -268,7 +285,6 @@ if(Z_FEATURE_MATCHING AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_MATCHING 0 CACHE STRING "Toggle matching feature" FORCE)
 endif()
 
-add_compile_definitions("Z_BUILD_DEBUG=$<CONFIG:Debug>")
 message(STATUS "Building with feature confing:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
@@ -297,7 +313,7 @@ configure_file(
 # Print summary of CMAKE configurations
 message(STATUS "Building in ${CMAKE_BUILD_TYPE} mode")
 message(STATUS "Build shared library: ${BUILD_SHARED_LIBS}")
-message(STATUS "Zenoh Level Log: ${ZENOH_DEBUG}")
+message(STATUS "Zenoh Level Log: ${ZENOH_LOG}")
 message(STATUS "Fragmented message max size: ${FRAG_MAX_SIZE}")
 message(STATUS "Unicast batch max size: ${BATCH_UNICAST_SIZE}")
 message(STATUS "Multicast batch max size: ${BATCH_MULTICAST_SIZE}")

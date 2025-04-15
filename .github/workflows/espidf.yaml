@@ -51,7 +51,7 @@ jobs:
 
           mkdir -p $ESPIDF_BASE
           cd $ESPIDF_BASE
-          platformio init -b az-delivery-devkit-v4 -O "board_build.cmake_extra_args=-DZ_FEATURE_LINK_SERIAL=1" --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF -DZENOH_DEBUG=3"
+          platformio init -b az-delivery-devkit-v4 -O "board_build.cmake_extra_args=-DZENOH_LOG=debug -DZ_FEATURE_LINK_SERIAL=1" --project-option="framework=espidf" --project-option="build_flags=-DZENOH_ESPIDF"
 
           cd $ESPIDF_BASE/lib
           ln -s $ZENOH_PICO_BASE
