@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
+#include "event_groups.h"
+
 typedef struct {
     const char *name;
     UBaseType_t priority;
@@ -53,6 +55,9 @@ typedef struct {
     StaticSemaphore_t buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
 } _z_mutex_t;
+
+typedef _z_mutex_t _z_mutex_rec_t;
+
 typedef struct {
     SemaphoreHandle_t mutex;
     SemaphoreHandle_t sem;
