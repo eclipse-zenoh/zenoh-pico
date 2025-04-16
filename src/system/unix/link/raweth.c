@@ -12,9 +12,9 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#if Z_FEATURE_RAWETH_TRANSPORT == 1
-
 #include "zenoh-pico/system/link/raweth.h"
+
+#if Z_FEATURE_RAWETH_TRANSPORT == 1
 
 #include <arpa/inet.h>
 #include <errno.h>
