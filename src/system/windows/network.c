@@ -76,13 +76,13 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
     // Create select mask
-    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
+    _z_transport_peer_unicast_list_t **peers = (_z_transport_peer_unicast_list_t **)v_peers;
     _z_mutex_rec_lock(mutex);
-    _z_transport_unicast_peer_list_t *curr = *peers;
+    _z_transport_peer_unicast_list_t *curr = *peers;
     while (curr != NULL) {
-        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(curr);
         FD_SET(peer->_socket._sock._fd, &read_fds);
-        curr = _z_transport_unicast_peer_list_tail(curr);
+        curr = _z_transport_peer_unicast_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);
     // Wait for events
@@ -97,11 +97,11 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     _z_mutex_rec_lock(mutex);
     curr = *peers;
     while (curr != NULL) {
-        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(curr);
         if (FD_ISSET(peer->_socket._sock._fd, &read_fds)) {
             peer->_pending = true;
         }
-        curr = _z_transport_unicast_peer_list_tail(curr);
+        curr = _z_transport_peer_unicast_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);
     return _Z_RES_OK;

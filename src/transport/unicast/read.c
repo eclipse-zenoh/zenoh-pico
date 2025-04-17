@@ -35,7 +35,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
     z_result_t ret = _Z_RES_OK;
 
     _z_transport_message_t t_msg;
-    _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(ztu->_peers);
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(ztu->_peers);
     assert(peer != NULL);
     ret = _z_unicast_recv_t_msg(ztu, &t_msg);
     if (ret == _Z_RES_OK) {
@@ -58,7 +58,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
-static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
+static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                               size_t to_read) {
     // Wrap the main buffer to_read bytes
     _z_zbuf_t zbuf;
@@ -68,7 +68,7 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
         zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
     }
 
-    peer->_received = true;
+    peer->common._received = true;
     while (_z_zbuf_len(&zbuf) > 0) {
         // Decode one session message
         _z_transport_message_t t_msg;
@@ -100,7 +100,7 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
     return _Z_RES_OK;
 }
 
-static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer, size_t *to_read) {
+static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer, size_t *to_read) {
     switch (ztu->_common._link._cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
@@ -136,7 +136,7 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_uni
 }
 
 #if Z_FEATURE_UNICAST_PEER == 1
-static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer,
+static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
     if (extra_size < _Z_MSG_LEN_ENC_SIZE) {
@@ -161,7 +161,7 @@ static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, 
     return _Z_RES_OK;
 }
 
-static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_unicast_peer_t *peer, size_t *to_read) {
+static int _z_unicast_peer_read(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer, size_t *to_read) {
     // If we receive fragmented data we have to store it on a separate buffer
     size_t read_size = 0;
     switch (ztu->_common._link._cap._flow) {
@@ -262,9 +262,9 @@ void *_zp_unicast_read_task(void *ztu_arg) {
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_common._zbuf);
     z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
-    _z_transport_unicast_peer_t *curr_peer = NULL;
+    _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
-        curr_peer = _z_transport_unicast_peer_list_head(ztu->_peers);
+        curr_peer = _z_transport_peer_unicast_list_head(ztu->_peers);
         assert(curr_peer != NULL);
     }
     while (ztu->_common._read_task_running) {
@@ -275,7 +275,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
         if (mode == Z_WHATAMI_PEER) {
             // Wait for at least one peer
             _z_transport_peer_mutex_lock(&ztu->_common);
-            size_t peer_len = _z_transport_unicast_peer_list_len(ztu->_peers);
+            size_t peer_len = _z_transport_peer_unicast_list_len(ztu->_peers);
             _z_transport_peer_mutex_unlock(&ztu->_common);
             if (peer_len == 0) {
                 z_sleep_s(1);
@@ -287,12 +287,12 @@ void *_zp_unicast_read_task(void *ztu_arg) {
             }
             // Process events for all peers
             _z_transport_peer_mutex_lock(&ztu->_common);
-            _z_transport_unicast_peer_list_t *curr_list = ztu->_peers;
-            _z_transport_unicast_peer_list_t *prev = NULL;
-            _z_transport_unicast_peer_list_t *prev_drop = NULL;
+            _z_transport_peer_unicast_list_t *curr_list = ztu->_peers;
+            _z_transport_peer_unicast_list_t *prev = NULL;
+            _z_transport_peer_unicast_list_t *prev_drop = NULL;
             while (curr_list != NULL) {
                 bool drop_peer = false;
-                curr_peer = _z_transport_unicast_peer_list_head(curr_list);
+                curr_peer = _z_transport_peer_unicast_list_head(curr_list);
                 if (curr_peer->_pending) {
                     curr_peer->_pending = false;
                     // Read data from socket
@@ -333,11 +333,11 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                     prev = curr_list;
                 }
                 // Progress list
-                curr_list = _z_transport_unicast_peer_list_tail(curr_list);
+                curr_list = _z_transport_peer_unicast_list_tail(curr_list);
                 // Drop peer if needed
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
-                    ztu->_peers = _z_transport_unicast_peer_list_drop_element(ztu->_peers, prev_drop);
+                    ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
                 }
                 _z_zbuf_reset(&ztu->_common._zbuf);
             }

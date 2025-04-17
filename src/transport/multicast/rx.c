@@ -97,12 +97,13 @@ z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_m
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_list_t *l, _z_slice_t *remote_addr) {
-    _z_transport_peer_entry_t *ret = NULL;
+static _z_transport_peer_multicast_t *_z_find_peer_entry(_z_transport_peer_multicast_list_t *l,
+                                                         _z_slice_t *remote_addr) {
+    _z_transport_peer_multicast_t *ret = NULL;
 
-    _z_transport_peer_entry_list_t *xs = l;
-    for (; xs != NULL; xs = _z_transport_peer_entry_list_tail(xs)) {
-        _z_transport_peer_entry_t *val = _z_transport_peer_entry_list_head(xs);
+    _z_transport_peer_multicast_list_t *xs = l;
+    for (; xs != NULL; xs = _z_transport_peer_multicast_list_tail(xs)) {
+        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_list_head(xs);
         if (val->_remote_addr.len != remote_addr->len) {
             continue;
         }
@@ -116,7 +117,7 @@ static _z_transport_peer_entry_t *_z_find_peer_entry(_z_transport_peer_entry_lis
 }
 
 static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_frame_t *msg,
-                                            _z_transport_peer_entry_t *entry) {
+                                            _z_transport_peer_multicast_t *entry) {
     // Check peer
     if (entry == NULL) {
         _Z_INFO("Dropping _Z_FRAME from unknown peer");
@@ -124,7 +125,7 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
         return _Z_RES_OK;
     }
     // Note that we receive data from peer
-    entry->_received = true;
+    entry->common._received = true;
 
     z_reliability_t tmsg_reliability;
     // Check if the SN is correct
@@ -136,8 +137,8 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
             entry->_sn_rx_sns._val._plain._reliable = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            entry->_state_reliable = _Z_DBUF_STATE_NULL;
-            _z_wbuf_clear(&entry->_dbuf_reliable);
+            entry->common._state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&entry->common._dbuf_reliable);
 #endif
             _Z_INFO("Reliable message dropped because it is out of order");
             _z_t_msg_frame_clear(msg);
@@ -149,8 +150,8 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
             entry->_sn_rx_sns._val._plain._best_effort = msg->_sn;
         } else {
 #if Z_FEATURE_FRAGMENTATION == 1
-            entry->_state_best_effort = _Z_DBUF_STATE_NULL;
-            _z_wbuf_clear(&entry->_dbuf_best_effort);
+            entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&entry->common._dbuf_best_effort);
 #endif
             _Z_INFO("Best effort message dropped because it is out of order");
             _z_t_msg_frame_clear(msg);
@@ -171,7 +172,7 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
 }
 
 static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *ztm, uint8_t header,
-                                                     _z_t_msg_fragment_t *msg, _z_transport_peer_entry_t *entry) {
+                                                     _z_t_msg_fragment_t *msg, _z_transport_peer_multicast_t *entry) {
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_FRAGMENTATION == 1
     // Check peer
@@ -180,7 +181,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         return _Z_RES_OK;
     }
     // Note that we receive data from the peer
-    entry->_received = true;
+    entry->common._received = true;
 
     _z_wbuf_t *dbuf;
     uint8_t *dbuf_state;
@@ -196,11 +197,11 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, msg->_sn)) {
             consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._reliable, msg->_sn);
             entry->_sn_rx_sns._val._plain._reliable = msg->_sn;
-            dbuf = &entry->_dbuf_reliable;
-            dbuf_state = &entry->_state_reliable;
+            dbuf = &entry->common._dbuf_reliable;
+            dbuf_state = &entry->common._state_reliable;
         } else {
-            _z_wbuf_clear(&entry->_dbuf_reliable);
-            entry->_state_reliable = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&entry->common._dbuf_reliable);
+            entry->common._state_reliable = _Z_DBUF_STATE_NULL;
             _Z_INFO("Reliable message dropped because it is out of order");
             return _Z_RES_OK;
         }
@@ -210,11 +211,11 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         if (_z_sn_precedes(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, msg->_sn)) {
             consecutive = _z_sn_consecutive(entry->_sn_res, entry->_sn_rx_sns._val._plain._best_effort, msg->_sn);
             entry->_sn_rx_sns._val._plain._best_effort = msg->_sn;
-            dbuf = &entry->_dbuf_best_effort;
-            dbuf_state = &entry->_state_best_effort;
+            dbuf = &entry->common._dbuf_best_effort;
+            dbuf_state = &entry->common._state_best_effort;
         } else {
-            _z_wbuf_clear(&entry->_dbuf_best_effort);
-            entry->_state_best_effort = _Z_DBUF_STATE_NULL;
+            _z_wbuf_clear(&entry->common._dbuf_best_effort);
+            entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
             _Z_INFO("Best effort message dropped because it is out of order");
             return _Z_RES_OK;
         }
@@ -226,7 +227,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         return _Z_RES_OK;
     }
     // Handle fragment markers
-    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(entry->_patch)) {
+    if (_Z_PATCH_HAS_FRAGMENT_MARKERS(entry->common._patch)) {
         if (msg->first) {
             _z_wbuf_reset(dbuf);
         } else if (_z_wbuf_len(dbuf) == 0) {
@@ -300,14 +301,14 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
 }
 
 static z_result_t _z_multicast_handle_fragment(_z_transport_multicast_t *ztm, uint8_t header, _z_t_msg_fragment_t *msg,
-                                               _z_transport_peer_entry_t *entry) {
+                                               _z_transport_peer_multicast_t *entry) {
     z_result_t ret = _z_multicast_handle_fragment_inner(ztm, header, msg, entry);
     _z_t_msg_fragment_clear(msg);
     return ret;
 }
 
 static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, _z_slice_t *addr, _z_t_msg_join_t *msg,
-                                                 _z_transport_peer_entry_t *entry) {
+                                                 _z_transport_peer_multicast_t *entry) {
     // Check proto version
     if (msg->_version != Z_PROTO_VERSION) {
         return _Z_RES_OK;
@@ -320,37 +321,37 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
             return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
         // Initialize entry
-        entry = (_z_transport_peer_entry_t *)z_malloc(sizeof(_z_transport_peer_entry_t));
+        entry = (_z_transport_peer_multicast_t *)z_malloc(sizeof(_z_transport_peer_multicast_t));
         if (entry == NULL) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
         entry->_sn_res = _z_sn_max(msg->_seq_num_res);
         entry->_remote_addr = _z_slice_duplicate(addr);
-        entry->_remote_zid = msg->_zid;
         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &msg->_next_sn);
         _z_conduit_sn_list_decrement(entry->_sn_res, &entry->_sn_rx_sns);
-
-#if Z_FEATURE_FRAGMENTATION == 1
-        entry->_patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
-        entry->_state_reliable = _Z_DBUF_STATE_NULL;
-        entry->_state_best_effort = _Z_DBUF_STATE_NULL;
-        entry->_dbuf_reliable = _z_wbuf_null();
-        entry->_dbuf_best_effort = _z_wbuf_null();
-#endif
         // Update lease time (set as ms during)
         entry->_lease = msg->_lease;
         entry->_next_lease = entry->_lease;
-        entry->_received = true;
-        ztm->_peers = _z_transport_peer_entry_list_insert(ztm->_peers, entry);
+
+        entry->common._remote_zid = msg->_zid;
+        entry->common._received = true;
+#if Z_FEATURE_FRAGMENTATION == 1
+        entry->common._patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
+        entry->common._state_reliable = _Z_DBUF_STATE_NULL;
+        entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
+        entry->common._dbuf_reliable = _z_wbuf_null();
+        entry->common._dbuf_best_effort = _z_wbuf_null();
+#endif
+        ztm->_peers = _z_transport_peer_multicast_list_insert(ztm->_peers, entry);
     } else {  // Existing peer
         // Note that we receive data from the peer
-        entry->_received = true;
+        entry->common._received = true;
 
         // Check representing capabilities
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
             // TODO: cleanup here should also be done on mappings/subs/etc...
-            _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
+            _z_transport_peer_multicast_list_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             return _Z_RES_OK;
         }
         // Update SNs
@@ -363,7 +364,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
 }
 
 static z_result_t _z_multicast_handle_join(_z_transport_multicast_t *ztm, _z_slice_t *addr, _z_t_msg_join_t *msg,
-                                           _z_transport_peer_entry_t *entry) {
+                                           _z_transport_peer_multicast_t *entry) {
     z_result_t ret = _z_multicast_handle_join_inner(ztm, addr, msg, entry);
     _z_t_msg_join_clear(msg);
     return ret;
@@ -374,7 +375,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
     z_result_t ret = _Z_RES_OK;
     _z_transport_peer_mutex_lock(&ztm->_common);
     // Mark the session that we have received data from this peer
-    _z_transport_peer_entry_t *entry = _z_find_peer_entry(ztm->_peers, addr);
+    _z_transport_peer_multicast_t *entry = _z_find_peer_entry(ztm->_peers, addr);
     switch (_Z_MID(t_msg->_header)) {
         case _Z_MID_T_FRAME: {
             _Z_DEBUG("Received _Z_FRAME message");
@@ -390,7 +391,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         case _Z_MID_T_KEEP_ALIVE: {
             _Z_DEBUG("Received _Z_KEEP_ALIVE message");
             if (entry != NULL) {
-                entry->_received = true;
+                entry->common._received = true;
             }
             _z_t_msg_keep_alive_clear(&t_msg->_body._keep_alive);
             break;
@@ -417,7 +418,8 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
-                ztm->_peers = _z_transport_peer_entry_list_drop_filter(ztm->_peers, _z_transport_peer_entry_eq, entry);
+                ztm->_peers =
+                    _z_transport_peer_multicast_list_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             }
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;

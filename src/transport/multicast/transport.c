@@ -108,7 +108,7 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         ztm->_common._sn_tx_best_effort = param->_initial_sn_tx._val._plain._best_effort;
 
         // Initialize peer list
-        ztm->_peers = _z_transport_peer_entry_list_new();
+        ztm->_peers = _z_transport_peer_multicast_list_new();
 
 #if Z_FEATURE_MULTI_THREAD == 1
         // Tasks
@@ -192,7 +192,7 @@ z_result_t _z_multicast_transport_close(_z_transport_multicast_t *ztm, uint8_t r
 
 void _z_multicast_transport_clear(_z_transport_multicast_t *ztm, bool detach_tasks) {
     _z_common_transport_clear(&ztm->_common, detach_tasks);
-    _z_transport_peer_entry_list_free(&ztm->_peers);
+    _z_transport_peer_multicast_list_free(&ztm->_peers);
 }
 
 #else

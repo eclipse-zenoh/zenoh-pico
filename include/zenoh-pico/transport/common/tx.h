@@ -32,7 +32,7 @@ z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z
 
 /*------------------ Transmission and Reception helpers ------------------*/
 z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg,
-                                      _z_transport_unicast_peer_list_t *peers);
+                                      _z_transport_peer_unicast_list_t *peers);
 z_result_t _z_transport_tx_send_t_msg_wrapper(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg);
 z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg);
 z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg, _z_sys_net_socket_t *socket);

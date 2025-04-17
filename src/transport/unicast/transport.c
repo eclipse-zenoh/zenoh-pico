@@ -81,7 +81,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Transport link for unicast
     ztu->_common._link = *zl;
 
-    ztu->_peers = _z_transport_unicast_peer_list_new();
+    ztu->_peers = _z_transport_peer_unicast_list_new();
     return _Z_RES_OK;
 }
 
@@ -335,7 +335,7 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
 
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
     _z_common_transport_clear(&ztu->_common, detach_tasks);
-    _z_transport_unicast_peer_list_free(&ztu->_peers);
+    _z_transport_peer_unicast_list_free(&ztu->_peers);
 }
 
 #else

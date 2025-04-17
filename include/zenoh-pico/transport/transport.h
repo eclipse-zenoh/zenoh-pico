@@ -42,15 +42,7 @@ enum _z_batching_state_e {
 
 typedef struct {
     _z_id_t _remote_zid;
-    _z_slice_t _remote_addr;
-    _z_conduit_sn_list_t _sn_rx_sns;
-    // SN numbers
-    _z_zint_t _sn_res;
-    volatile _z_zint_t _lease;
-    volatile _z_zint_t _next_lease;
-    uint16_t _peer_id;
     volatile bool _received;
-
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
     uint8_t _state_reliable;
@@ -60,17 +52,33 @@ typedef struct {
     // Patch
     uint8_t _patch;
 #endif
-} _z_transport_peer_entry_t;
+} _z_transport_peer_common_t;
 
-size_t _z_transport_peer_entry_size(const _z_transport_peer_entry_t *src);
-void _z_transport_peer_entry_clear(_z_transport_peer_entry_t *src);
-void _z_transport_peer_entry_copy(_z_transport_peer_entry_t *dst, const _z_transport_peer_entry_t *src);
-bool _z_transport_peer_entry_eq(const _z_transport_peer_entry_t *left, const _z_transport_peer_entry_t *right);
-_Z_ELEM_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t, _z_transport_peer_entry_size,
-               _z_transport_peer_entry_clear, _z_transport_peer_entry_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_transport_peer_entry, _z_transport_peer_entry_t)
-_z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
-                                                                    _z_transport_peer_entry_t *entry);
+void _z_transport_peer_common_clear(_z_transport_peer_common_t *src);
+void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src);
+bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right);
+
+typedef struct {
+    _z_transport_peer_common_t common;
+    _z_slice_t _remote_addr;
+    _z_conduit_sn_list_t _sn_rx_sns;
+    // SN numbers
+    _z_zint_t _sn_res;
+    volatile _z_zint_t _lease;
+    volatile _z_zint_t _next_lease;
+    uint16_t _peer_id;
+} _z_transport_peer_multicast_t;
+
+size_t _z_transport_peer_multicast_size(const _z_transport_peer_multicast_t *src);
+void _z_transport_peer_multicast_clear(_z_transport_peer_multicast_t *src);
+void _z_transport_peer_multicast_copy(_z_transport_peer_multicast_t *dst, const _z_transport_peer_multicast_t *src);
+bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
+                                    const _z_transport_peer_multicast_t *right);
+_Z_ELEM_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, _z_transport_peer_multicast_size,
+               _z_transport_peer_multicast_clear, _z_transport_peer_multicast_copy, _z_noop_move)
+_Z_LIST_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t)
+_z_transport_peer_multicast_list_t *_z_transport_peer_multicast_list_insert(_z_transport_peer_multicast_list_t *root,
+                                                                            _z_transport_peer_multicast_t *entry);
 
 typedef enum _z_unicast_peer_flow_state_e {
     _Z_FLOW_STATE_INACTIVE = 0,
@@ -80,35 +88,24 @@ typedef enum _z_unicast_peer_flow_state_e {
 } _z_unicast_peer_flow_state_e;
 
 typedef struct {
+    _z_transport_peer_common_t common;
     _z_sys_net_socket_t _socket;
-    _z_id_t _remote_zid;
     // SN numbers
     _z_zint_t _sn_rx_reliable;
     _z_zint_t _sn_rx_best_effort;
-    volatile bool _received;
     bool _pending;
     uint8_t flow_state;
     uint16_t flow_curr_size;
     _z_zbuf_t flow_buff;
+} _z_transport_peer_unicast_t;
 
-#if Z_FEATURE_FRAGMENTATION == 1
-    // Defragmentation buffers
-    uint8_t _state_reliable;
-    uint8_t _state_best_effort;
-    _z_wbuf_t _dbuf_reliable;
-    _z_wbuf_t _dbuf_best_effort;
-    // Patch
-    uint8_t _patch;
-#endif
-} _z_transport_unicast_peer_t;
-
-void _z_transport_unicast_peer_clear(_z_transport_unicast_peer_t *src);
-void _z_transport_unicast_peer_copy(_z_transport_unicast_peer_t *dst, const _z_transport_unicast_peer_t *src);
-size_t _z_transport_unicast_peer_size(const _z_transport_unicast_peer_t *src);
-bool _z_transport_unicast_peer_eq(const _z_transport_unicast_peer_t *left, const _z_transport_unicast_peer_t *right);
-_Z_ELEM_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t, _z_transport_unicast_peer_size,
-               _z_transport_unicast_peer_clear, _z_transport_unicast_peer_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_transport_unicast_peer, _z_transport_unicast_peer_t)
+void _z_transport_peer_unicast_clear(_z_transport_peer_unicast_t *src);
+void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_transport_peer_unicast_t *src);
+size_t _z_transport_peer_unicast_size(const _z_transport_peer_unicast_t *src);
+bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const _z_transport_peer_unicast_t *right);
+_Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transport_peer_unicast_size,
+               _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move)
+_Z_LIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t)
 
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
@@ -154,13 +151,13 @@ typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_tran
 typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
-    _z_transport_unicast_peer_list_t *_peers;
+    _z_transport_peer_unicast_list_t *_peers;
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {
     _z_transport_common_t _common;
     // Known valid peers
-    _z_transport_peer_entry_list_t *_peers;
+    _z_transport_peer_multicast_list_t *_peers;
     // T message send function
     _zp_f_send_tmsg _send_f;
 } _z_transport_multicast_t;
@@ -199,7 +196,7 @@ typedef struct {
     uint8_t _seq_num_res;
 } _z_transport_multicast_establish_param_t;
 
-z_result_t _z_transport_unicast_peer_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
+z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
                                          _z_sys_net_socket_t socket);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);

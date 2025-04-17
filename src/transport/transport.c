@@ -103,27 +103,27 @@ void _z_transport_stop_batching(_z_transport_t *zt) { _z_transport_get_common(zt
  *
  * @param root the insertion root.
  * @param entry the entry to be inserted.
- * @return _z_transport_peer_entry_list_t* the new root, after inserting the entry.
+ * @return _z_transport_peer_multicast_list_t* the new root, after inserting the entry.
  */
-_z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport_peer_entry_list_t *root,
-                                                                    _z_transport_peer_entry_t *entry) {
+_z_transport_peer_multicast_list_t *_z_transport_peer_multicast_list_insert(_z_transport_peer_multicast_list_t *root,
+                                                                            _z_transport_peer_multicast_t *entry) {
     if (root == NULL) {
         entry->_peer_id = 1;
-        root = _z_transport_peer_entry_list_push(root, entry);
+        root = _z_transport_peer_multicast_list_push(root, entry);
     } else {
-        _z_transport_peer_entry_t *head = _z_transport_peer_entry_list_head(root);
+        _z_transport_peer_multicast_t *head = _z_transport_peer_multicast_list_head(root);
         if (head->_peer_id + 1 < _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
             entry->_peer_id = head->_peer_id + 1;
-            root = _z_transport_peer_entry_list_push(root, entry);
+            root = _z_transport_peer_multicast_list_push(root, entry);
         } else {
-            _z_transport_peer_entry_list_t *parent = root;
+            _z_transport_peer_multicast_list_t *parent = root;
             uint16_t target = head->_peer_id - 1;
             while (parent->_tail != NULL) {
-                _z_transport_peer_entry_list_t *list = _z_transport_peer_entry_list_tail(parent);
-                head = _z_transport_peer_entry_list_head(list);
+                _z_transport_peer_multicast_list_t *list = _z_transport_peer_multicast_list_tail(parent);
+                head = _z_transport_peer_multicast_list_head(list);
                 if (head->_peer_id < target) {
                     entry->_peer_id = head->_peer_id + 1;
-                    parent->_tail = _z_transport_peer_entry_list_push(list, entry);
+                    parent->_tail = _z_transport_peer_multicast_list_push(list, entry);
                     return root;
                 }
                 parent = list;
@@ -131,7 +131,7 @@ _z_transport_peer_entry_list_t *_z_transport_peer_entry_list_insert(_z_transport
             }
             assert(target > 0);
             entry->_peer_id = 1;
-            parent->_tail = _z_transport_peer_entry_list_push(NULL, entry);
+            parent->_tail = _z_transport_peer_multicast_list_push(NULL, entry);
             parent->_tail->_val = entry;
         }
     }

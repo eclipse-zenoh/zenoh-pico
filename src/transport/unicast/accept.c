@@ -40,7 +40,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
                 continue;
             }
         }
-        if (_z_transport_unicast_peer_list_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
+        if (_z_transport_peer_unicast_list_len(ztu->_peers) >= Z_LISTEN_MAX_CONNECTION_NB) {
             _Z_INFO("Refusing connection as max connections currently reached");
             _z_socket_close(&con_socket);
             continue;
@@ -61,7 +61,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
             continue;
         }
         // Add peer
-        _z_transport_unicast_peer_add(ztu, &param, con_socket);
+        _z_transport_peer_unicast_add(ztu, &param, con_socket);
     }
     z_free(accept_task_is_running);
     return NULL;
