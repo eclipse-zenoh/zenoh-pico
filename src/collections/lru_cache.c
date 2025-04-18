@@ -134,53 +134,55 @@ static _z_lru_cache_node_t *_z_lru_cache_search_slist(_z_lru_cache_t *cache, voi
     return NULL;
 }
 
-static void _z_lru_cache_sort_slist(_z_lru_cache_node_t **slist, size_t slist_size, _z_lru_val_cmp_f compare) {
-    for (size_t i = 1; i < slist_size; i++) {
-        _z_lru_cache_node_t *node = slist[i];
-        void *node_val = _z_lru_cache_node_value(node);
-        int j = (int)i - 1;
-        while ((j >= 0) && (compare(_z_lru_cache_node_value(slist[j]), node_val) > 0)) {
-            slist[j + 1] = slist[j];
-            j--;
+static int _z_lru_cache_find_position(_z_lru_cache_node_t **slist, _z_lru_val_cmp_f compare, void *node_val,
+                                      size_t slist_size) {
+    int start = 0;
+    int end = (int)slist_size - 1;
+    while (start <= end) {
+        int mid = start + (end - start) / 2;
+        if (compare(_z_lru_cache_node_value(slist[mid]), node_val) < 0) {
+            start = mid + 1;
+        } else {
+            end = mid - 1;
         }
-        slist[j + 1] = node;
     }
+    return start;
 }
 
-static void _z_lru_cache_insert_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare,
-                                      size_t *idx) {
-    if (idx != NULL) {
-        assert(*idx < cache->capacity);
-        cache->slist[*idx] = node;
-    } else {
-        assert(cache->len < cache->capacity);
-        assert(cache->slist[cache->len] == NULL);
-        cache->slist[cache->len] = node;
+static void _z_lru_cache_insert_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
+    // Find insert position:
+    if (cache->len == 0) {
+        cache->slist[0] = node;
+        return;
     }
-    _z_lru_cache_sort_slist(cache->slist, cache->len + 1, compare);
+    void *node_val = _z_lru_cache_node_value(node);
+    size_t pos = (size_t)_z_lru_cache_find_position(cache->slist, compare, node_val, cache->len);
+    // Move elements
+    memmove(&cache->slist[pos + 1], &cache->slist[pos], (cache->len - pos) * sizeof(_z_lru_cache_node_t *));
+    // Store element
+    cache->slist[pos] = node;
 }
 
-static size_t _z_lru_cache_delete_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
-    size_t idx = 0;
-    (void)_z_lru_cache_search_slist(cache, _z_lru_cache_node_value(node), compare, &idx);
-    return idx;
+static void _z_lru_cache_delete_slist(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
+    size_t pos = 0;
+    (void)_z_lru_cache_search_slist(cache, _z_lru_cache_node_value(node), compare, &pos);
+    // Move elements
+    memmove(&cache->slist[pos], &cache->slist[pos + 1], (cache->len - 1 - pos) * sizeof(_z_lru_cache_node_t *));
 }
 
 // Main static functions
-static size_t _z_lru_cache_delete_last(_z_lru_cache_t *cache, _z_lru_val_cmp_f compare) {
+static void _z_lru_cache_delete_last(_z_lru_cache_t *cache, _z_lru_val_cmp_f compare) {
     _z_lru_cache_node_t *last = cache->tail;
     assert(last != NULL);
     _z_lru_cache_remove_list_node(cache, last);
-    size_t idx = _z_lru_cache_delete_slist(cache, last, compare);
+    _z_lru_cache_delete_slist(cache, last, compare);
     z_free(last);
     cache->len--;
-    return idx;
 }
 
-static void _z_lru_cache_insert_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare,
-                                     size_t *idx) {
+static void _z_lru_cache_insert_node(_z_lru_cache_t *cache, _z_lru_cache_node_t *node, _z_lru_val_cmp_f compare) {
     _z_lru_cache_insert_list_node(cache, node);
-    _z_lru_cache_insert_slist(cache, node, compare, idx);
+    _z_lru_cache_insert_slist(cache, node, compare);
     cache->len++;
 }
 
@@ -223,15 +225,12 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Check capacity
-    size_t *idx = NULL;
-    size_t del_idx = 0;
     if (cache->len == cache->capacity) {
         // Delete lru entry
-        del_idx = _z_lru_cache_delete_last(cache, compare);
-        idx = &del_idx;
+        _z_lru_cache_delete_last(cache, compare);
     }
     // Update the cache
-    _z_lru_cache_insert_node(cache, node, compare, idx);
+    _z_lru_cache_insert_node(cache, node, compare);
     return _Z_RES_OK;
 }
 
@@ -242,7 +241,7 @@ void _z_lru_cache_clear(_z_lru_cache_t *cache, z_element_clear_f clear) {
     }
     // Clear list
     _z_lru_cache_clear_list(cache, clear);
-    // Reset cacge
+    // Reset cache
     cache->len = 0;
     cache->head = NULL;
     cache->tail = NULL;
