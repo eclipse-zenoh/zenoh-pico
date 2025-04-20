@@ -214,7 +214,8 @@ void StartDefaultTask(void *argument)
 		}
 	}
 	st = _st;
-	osDelay(10);  }
+	osDelay(10);
+  }
   /* USER CODE END StartDefaultTask */
 }
 
@@ -292,5 +293,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	}
 }
 
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	if (huart == Z_UART) {
+		// Restart reception on error
+		HAL_UART_Abort(&huart2);
+		HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, sizeof(rxBuffer));
+	}
+}
 /* USER CODE END Application */
 
