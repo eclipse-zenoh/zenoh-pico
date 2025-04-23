@@ -249,7 +249,7 @@ void test_benchmark(void) {
     for (size_t i = 1; i <= BENCH_THRESHOLD; i *= 10) {
         printf("Capacity: %ld\n", i);
         test_search_benchmark(i);
-        // test_insert_benchmark(i);
+        test_insert_benchmark(i);
     }
 }
 #endif
