@@ -146,7 +146,7 @@ z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, ch
 void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len);
 
 /**
- * Gets a null-terminated string view from a :c:type:`z_keyexpr_t`.
+ * Gets a string view from a :c:type:`z_keyexpr_t`.
  *
  * Parameters:
  *   keyexpr: Pointer to a loaned instance of :c:type:`z_keyexpr_t`.
@@ -2201,6 +2201,18 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
  */
 z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable);
 #endif
+
+/**
+ * Gets the keyexpr from a queryable.
+ *
+ * Parameters:
+ *   queryable: Pointer to a :c:type:`z_loaned_queryable_t` to get the keyexpr from.
+ *
+ * Return:
+ *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`. Will return NULL if
+ *   corresponding session is closed or dropped.
+ */
+const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *queryable);
 
 #endif
 

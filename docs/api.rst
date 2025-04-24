@@ -1196,6 +1196,7 @@ Functions
 .. autocfunction:: primitives.h::z_declare_background_queryable
 
 .. autocfunction:: primitives.h::z_queryable_id
+.. autocfunction:: primitives.h::z_queryable_keyexpr
 
 .. autocfunction:: primitives.h::z_queryable_options_default
 .. autocfunction:: primitives.h::z_query_reply_options_default
