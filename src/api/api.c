@@ -1649,6 +1649,27 @@ z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
     return ret;
 }
 
+const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *queryable) {
+    // Retrieve keyexpr from session
+    uint32_t lookup = queryable->_entity_id;
+    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&queryable->_zn);
+    if (_Z_RC_IS_NULL(&s)) {
+        return NULL;
+    }
+    const z_loaned_keyexpr_t *ret = NULL;
+    _z_session_queryable_rc_list_t *tail = _Z_RC_IN_VAL(&s)->_local_queryable;
+    while (tail != NULL) {
+        _z_session_queryable_rc_t *head = _z_session_queryable_rc_list_head(tail);
+        if (_Z_RC_IN_VAL(head)->_id == lookup) {
+            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(head)->_key;
+            break;
+        }
+        tail = _z_session_queryable_rc_list_tail(tail);
+    }
+    _z_session_rc_drop(&s);
+    return ret;
+}
+
 void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->encoding = NULL;
     options->congestion_control = z_internal_congestion_control_default_response();
@@ -1821,7 +1842,7 @@ z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *ke
     // we still need to store the original suffix, for user needs
     // (for example to compare keys or perform other operations on their string representation).
     // Generally this breaks internal keyexpr representation, but is ok for user-defined keyexprs
-    // since they consist of 2 disjoint sets: either they have a non-nul suffix or non-trivial id/mapping.
+    // since they consist of 2 disjoint sets: either they have a non-null suffix or non-trivial id/mapping.
     // The resulting keyexpr can be separated later into valid internal keys using _z_keyexpr_alias_from_user_defined.
     if (_z_keyexpr_has_suffix(keyexpr)) {
         _Z_RETURN_IF_ERR(_z_string_copy(&key->_val._suffix, &keyexpr->_suffix));
