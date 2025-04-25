@@ -41,7 +41,9 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
+
 z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_TCP == 1
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         return _Z_ERR_GENERIC;
@@ -49,9 +51,11 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     if (fcntl(sock->_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
         return _Z_ERR_GENERIC;
     }
+#endif
     return _Z_RES_OK;
 }
 
+#if Z_FEATURE_LINK_TCP == 1
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
     unsigned int nlen = sizeof(naddr);
@@ -78,10 +82,15 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
 }
+#endif /* Z_FEATURE_LINK_TCP == 1 */
 
-void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_socket_close(_z_sys_net_socket_t *sock) { 
+#if Z_FEATURE_LINK_TCP == 1
+	close(sock->_fd); 
+#endif
+}
 
-#if Z_FEATURE_MULTI_THREAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_LINK_TCP == 1
 z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     fd_set read_fds;
     FD_ZERO(&read_fds);
