@@ -822,10 +822,10 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     }
 
     // Setup device parameters
-    speed_t baud[] = {9600, 19200, 38400, 57600, 115200, 230400, 460800, 500000, 576000, 921600,
-                      1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000};
-    int _baud[] = {B9600, B19200, B38400, B57600, B115200, B230400, B460800, B500000, B576000, B921600,
-                   B1000000, B1152000, B1500000, B2000000, B2500000, B3000000, B3500000, B4000000};
+    uint32_t baud[] = {9600, 19200, 38400, 57600, 115200, 230400, 460800, 500000, 576000, 921600,
+                       1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000};
+    speed_t _baud[] = {B9600, B19200, B38400, B57600, B115200, B230400, B460800, B500000, B576000, B921600,
+                       B1000000, B1152000, B1500000, B2000000, B2500000, B3000000, B3500000, B4000000};
     speed = B0;
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(baud); i++) {
         if (baud[i] == baudrate) {
@@ -843,23 +843,23 @@ int8_t _z_open_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t ba
     }
     cfsetispeed(&tty, speed);
     cfsetospeed(&tty, speed);
-    tty.c_cflag &= ~CSIZE;          // Clear all the size bits
-    tty.c_cflag |= CS8;             // 8 bits per byte
-    tty.c_cflag &= ~PARENB;         // Clear parity bit, disabling parity
-    tty.c_cflag &= ~CSTOPB;         // Clear stop field, only one stop bit used in communication
-    tty.c_cflag &= ~CRTSCTS;        // Disable RTS/CTS hardware flow control
-    tty.c_cflag |= CREAD | CLOCAL;  // Turn on READ & ignore ctrl lines (CLOCAL = 1)
-    tty.c_lflag &= ~ICANON;         // Disable canonical mode
-    tty.c_lflag &= ~ECHO;           // Disable echo
-    tty.c_lflag &= ~ECHOE; 			// Disable erasure
-    tty.c_lflag &= ~ECHONL; 		// Disable new-line echo    
-    tty.c_lflag &= ~ISIG;           // Disable interpretation of INTR, QUIT and SUSP
-    tty.c_iflag &= ~(IXON|IXOFF|IXANY); // Turn off s/w flow ctrl
-    tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
-    tty.c_oflag &= ~OPOST;          // Prevent special interpretation of output bytes (e.g. newline chars)
-    tty.c_oflag &= ~ONLCR;          // Prevent conversion of newline to carriage return/line feed
-	tty.c_cc[VTIME] = 10;			// Wait for up to 1s (10 deciseconds), returning as soon as any data is received
- 	tty.c_cc[VMIN] = 0;    			//
+    tty.c_cflag &= (tcflag_t)~CSIZE;          // Clear all the size bits
+    tty.c_cflag |= (tcflag_t)CS8;             // 8 bits per byte
+    tty.c_cflag &= (tcflag_t)~PARENB;         // Clear parity bit, disabling parity
+    tty.c_cflag &= (tcflag_t)~CSTOPB;         // Clear stop field, only one stop bit used in communication
+    tty.c_cflag &= (tcflag_t)~CRTSCTS;        // Disable RTS/CTS hardware flow control
+    tty.c_cflag |= (tcflag_t)(CREAD | CLOCAL);// Turn on READ & ignore ctrl lines (CLOCAL = 1)
+    tty.c_lflag &= (tcflag_t)~ICANON;         // Disable canonical mode
+    tty.c_lflag &= (tcflag_t)~ECHO;           // Disable echo
+    tty.c_lflag &= (tcflag_t)~ECHOE; 		  // Disable erasure
+    tty.c_lflag &= (tcflag_t)~ECHONL; 		  // Disable new-line echo    
+    tty.c_lflag &= (tcflag_t)~ISIG;           // Disable interpretation of INTR, QUIT and SUSP
+    tty.c_iflag &= (tcflag_t)~(IXON|IXOFF|IXANY); // Turn off s/w flow ctrl
+    tty.c_iflag &= (tcflag_t)~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+    tty.c_oflag &= (tcflag_t)~OPOST;          // Prevent special interpretation of output bytes (e.g. newline chars)
+    tty.c_oflag &= (tcflag_t)~ONLCR;          // Prevent conversion of newline to carriage return/line feed
+	tty.c_cc[VTIME] = 10;			          // Wait for up to 1s (10 deciseconds), returning as soon as any data is received
+ 	tty.c_cc[VMIN] = 0;    			          //
 
     if (tcsetattr(sock->_serial, TCSANOW, &tty) != 0) {
         _z_close_serial(sock);
@@ -935,7 +935,7 @@ size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, 
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
 
     	size_t r = 0;
-        r = read(sock._serial, &sock.r_before_cobs[rb], 1);
+        r = (size_t)read(sock._serial, &sock.r_before_cobs[rb], 1);
 
         if (r == 0) {
             _Z_DEBUG("Timeout reading from serial");
@@ -1016,7 +1016,7 @@ size_t _z_send_serial_internal(const _z_sys_net_socket_t sock, uint8_t header, c
     size_t twb = _z_cobs_encode(sock.w_before_cobs, i, sock.w_after_cobs);
     sock.w_after_cobs[twb] = 0x00;  // Manually add the COBS delimiter
     size_t wb = 0;
-    wb = write(sock._serial, sock.w_after_cobs, twb + (size_t)1);
+    wb = (size_t)write(sock._serial, sock.w_after_cobs, twb + (size_t)1);
 
     if (wb != (twb + (size_t)1)) {
         ret = _Z_ERR_GENERIC;

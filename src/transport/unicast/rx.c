@@ -301,7 +301,7 @@ int8_t _z_send_local_lists(_z_session_t *zn) {
     _z_subscription_rc_list_t *xs = zn->_subscriptions;
     while (xs != NULL) {
         _z_subscription_rc_t *s = _z_subscription_rc_list_head(xs);
-        uint16_t id = zn->_entity_id;
+        uint32_t id = zn->_entity_id;
         _z_keyexpr_t alias = _z_keyexpr_alias(&_Z_RC_IN_VAL(s)->_key);
         _z_declaration_t declaration = _z_make_decl_subscriber(&alias, id);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
