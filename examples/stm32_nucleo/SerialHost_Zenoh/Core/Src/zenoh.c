@@ -253,7 +253,7 @@ static void DataHandler(z_loaned_sample_t *sample, void *ctx)
 }
 
 /**
- * Called as a reply to a Z_GetRoutesAsync() call.
+ * Called as a reply to a Z_GetAsync() call.
  *
  * @param reply Represents a matching query
  * @param ctx the context associated to the callback

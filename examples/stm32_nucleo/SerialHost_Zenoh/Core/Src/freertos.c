@@ -188,6 +188,7 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   GPIO_PinState st = GPIO_PIN_RESET;
+  TickType_t last = xTaskGetTickCount();
 
   // Startup application
   osEventFlagsSet(bootEventsHandle, SYS_READY);
@@ -205,15 +206,18 @@ void StartDefaultTask(void *argument)
   for(;;)
   {
 	GPIO_PinState _st = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+	TickType_t now = xTaskGetTickCount();
 	if (_st != st) {
 		if (_st == GPIO_PIN_SET) {
-			Z_TickCount(osKernelGetTickCount());
 			Z_GetAsync();
 		} else {
 			Z_GetSync();
 		}
+		st = _st;
+	} else if (now - last >= 1000) {
+		Z_TickCount(osKernelGetTickCount());
+		last = now;
 	}
-	st = _st;
 	osDelay(10);
   }
   /* USER CODE END StartDefaultTask */
