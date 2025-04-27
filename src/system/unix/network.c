@@ -43,6 +43,11 @@
 #include "zenoh-pico/utils/encoding.h"
 
 z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_SERIAL == 1
+    _ZP_UNUSED(sock);
+    _Z_INFO("Using serial link in blocking mode");
+    return _Z_RES_OK;
+#else
     int flags = fcntl(sock->_fd, F_GETFL, 0);
     if (flags == -1) {
         return _Z_ERR_GENERIC;
@@ -51,9 +56,16 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
         return _Z_ERR_GENERIC;
     }
     return _Z_RES_OK;
+#endif        
 }
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+#if Z_FEATURE_LINK_SERIAL == 1
+    _ZP_UNUSED(sock_in);
+    _ZP_UNUSED(sock_out);
+    _Z_ERROR("Function not supported on serial link");
+	return _Z_ERR_GENERIC;
+#else
     struct sockaddr naddr;
     unsigned int nlen = sizeof(naddr);
     int con_socket = accept(sock_in->_fd, &naddr, &nlen);
@@ -93,11 +105,16 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     // Note socket
     sock_out->_fd = con_socket;
     return _Z_RES_OK;
+    #endif
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_SERIAL == 1
+    _z_close_serial(sock);
+#else
     shutdown(sock->_fd, SHUT_RDWR);
     close(sock->_fd);
+#endif
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -111,10 +128,17 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     int max_fd = 0;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+#if Z_FEATURE_LINK_SERIAL == 1
+        FD_SET(peer->_socket._serial, &read_fds);
+        if (peer->_socket._serial > max_fd) {
+            max_fd = peer->_socket._serial;
+        }
+#else
         FD_SET(peer->_socket._fd, &read_fds);
         if (peer->_socket._fd > max_fd) {
             max_fd = peer->_socket._fd;
         }
+#endif
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);
@@ -132,9 +156,15 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     curr = *peers;
     while (curr != NULL) {
         _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+#if Z_FEATURE_LINK_SERIAL == 1
+        if (FD_ISSET(peer->_socket._serial, &read_fds)) {
+            peer->_pending = true;
+        }
+#else
         if (FD_ISSET(peer->_socket._fd, &read_fds)) {
             peer->_pending = true;
         }
+#endif
         curr = _z_transport_unicast_peer_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);

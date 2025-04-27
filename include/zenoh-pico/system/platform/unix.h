@@ -63,6 +63,9 @@ typedef struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         struct addrinfo *_iptcp;
 #endif
+#if Z_FEATURE_LINK_SERIAL == 1
+        char _dummy[1];
+#endif
     };
 } _z_sys_net_endpoint_t;
 
