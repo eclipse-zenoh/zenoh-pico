@@ -56,6 +56,44 @@ static uint8_t _r_before_cobs[_Z_SERIAL_MFS_SIZE];
 static uint8_t _w_after_cobs [_Z_SERIAL_MFS_SIZE];
 static uint8_t _w_before_cobs[_Z_SERIAL_MAX_COBS_BUF_SIZE];
 
+z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
+	return _Z_RES_OK;
+}
+
+z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
+    _ZP_UNUSED(sock_in);
+    _ZP_UNUSED(sock_out);
+    _Z_ERROR("Function not yet supported on this system");
+	return _Z_ERR_GENERIC;
+}
+
+void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
+
+z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
+
+	size_t avail;
+	TickType_t startTime = xTaskGetTickCount();
+	do {
+		if ((avail = xStreamBufferBytesAvailable(xSerialRxStreamBuffer)) > 0) {
+			break;
+		}
+		vTaskDelay(1);
+	} while (xTaskGetTickCount() - startTime < Z_CONFIG_SOCKET_TIMEOUT);
+
+	_z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
+    _z_mutex_rec_lock(mutex);
+    _z_transport_unicast_peer_list_t *curr = *peers;
+    while (curr != NULL) {
+        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        if (avail > 0) {
+            peer->_pending = true;
+        }
+        curr = _z_transport_unicast_peer_list_tail(curr);
+    }
+    _z_mutex_rec_unlock(mutex);
+    return _Z_RES_OK;
+}
+
 int8_t _z_open_serial_from_pins(_z_sys_net_socket_t *sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
     int8_t ret = _Z_RES_OK;
     (void)(sock);
@@ -115,43 +153,6 @@ int8_t _z_listen_serial_from_dev(_z_sys_net_socket_t *sock, char *dev, uint32_t 
 
 void _z_close_serial(_z_sys_net_socket_t *sock) {
 
-}
-
-z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
-	return 0;
-}
-
-z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
-	return 0;
-}
-
-void _z_socket_close(_z_sys_net_socket_t *sock) {
-
-}
-
-z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
-
-	size_t avail;
-	TickType_t startTime = xTaskGetTickCount();
-	do {
-		if ((avail = xStreamBufferBytesAvailable(xSerialRxStreamBuffer)) > 0) {
-			break;
-		}
-		vTaskDelay(1);
-	} while (xTaskGetTickCount() - startTime < Z_CONFIG_SOCKET_TIMEOUT);
-
-	_z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
-    _z_mutex_rec_lock(mutex);
-    _z_transport_unicast_peer_list_t *curr = *peers;
-    while (curr != NULL) {
-        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
-        if (avail > 0) {
-            peer->_pending = true;
-        }
-        curr = _z_transport_unicast_peer_list_tail(curr);
-    }
-    _z_mutex_rec_unlock(mutex);
-    return _Z_RES_OK;
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
