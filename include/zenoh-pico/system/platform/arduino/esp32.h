@@ -15,6 +15,10 @@
 #ifndef ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 #define ZENOH_PICO_SYSTEM_ESP32_TYPES_H
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
+#include <freertos/task.h>
+
 #include "zenoh-pico/config.h"
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -26,8 +30,20 @@ extern "C" {
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1
-typedef void *_z_task_t;
-typedef void *z_task_attr_t;  // Not used in ESP32
+typedef struct {
+    const char *name;
+    UBaseType_t priority;
+    size_t stack_depth;
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    bool static_allocation;
+    StackType_t *stack_buffer;
+    StaticTask_t *task_buffer;
+#endif /* SUPPORT_STATIC_ALLOCATION */
+} z_task_attr_t;
+typedef struct {
+    TaskHandle_t handle;
+    EventGroupHandle_t join_event;
+} _z_task_t;
 typedef pthread_mutex_t _z_mutex_t;
 typedef pthread_mutex_t _z_mutex_rec_t;
 typedef pthread_cond_t _z_condvar_t;
