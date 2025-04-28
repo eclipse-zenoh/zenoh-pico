@@ -20,6 +20,7 @@
 #include "lwip/dns.h"
 #include "lwip/ip4_addr.h"
 #include "lwip/netdb.h"
+#include "lwip/netif.h"
 #include "lwip/pbuf.h"
 #include "lwip/sockets.h"
 #include "lwip/udp.h"
@@ -405,8 +406,8 @@ size_t _z_send_udp_unicast(const _z_sys_net_socket_t sock, const uint8_t *ptr, s
 long unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct sockaddr **lsockaddr) {
     unsigned int addrlen = 0U;
 
-    struct netif *netif = &cyw43_state.netif[CYW43_ITF_STA];
-    if (netif_is_up(netif)) {
+    struct netif *netif = netif_find(iface);
+    if (netif != NULL && netif_is_up(netif)) {
         struct sockaddr_in *lsockaddr_in = z_malloc(sizeof(struct sockaddr_in));
         if (lsockaddr != NULL) {
             (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
