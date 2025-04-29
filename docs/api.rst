@@ -680,7 +680,7 @@ See details at :ref:`owned_types_concept`
 
 
 Matching closure
-----------
+----------------
 Types
 ^^^^^
 
@@ -845,19 +845,19 @@ Random
 ------
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_random_u8
-.. autocfunction:: platform_common.h::z_random_u16
-.. autocfunction:: platform_common.h::z_random_u32
-.. autocfunction:: platform_common.h::z_random_u64
-.. autocfunction:: platform_common.h::z_random_fill
+.. autocfunction:: common/platform.h::z_random_u8
+.. autocfunction:: common/platform.h::z_random_u16
+.. autocfunction:: common/platform.h::z_random_u32
+.. autocfunction:: common/platform.h::z_random_u64
+.. autocfunction:: common/platform.h::z_random_fill
 
 Sleep
 ------
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_sleep_s
-.. autocfunction:: platform_common.h::z_sleep_ms
-.. autocfunction:: platform_common.h::z_sleep_us
+.. autocfunction:: common/platform.h::z_sleep_s
+.. autocfunction:: common/platform.h::z_sleep_ms
+.. autocfunction:: common/platform.h::z_sleep_us
 
 Time
 ----
@@ -874,16 +874,16 @@ This is like a :c:type:`z_time_t` but has nanoseconds instead of microseconds.
 
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_time_now
-.. autocfunction:: platform_common.h::z_time_elapsed_s
-.. autocfunction:: platform_common.h::z_time_elapsed_ms
-.. autocfunction:: platform_common.h::z_time_elapsed_us
-.. autocfunction:: platform_common.h::z_time_now_as_str
+.. autocfunction:: common/platform.h::z_time_now
+.. autocfunction:: common/platform.h::z_time_elapsed_s
+.. autocfunction:: common/platform.h::z_time_elapsed_ms
+.. autocfunction:: common/platform.h::z_time_elapsed_us
+.. autocfunction:: common/platform.h::z_time_now_as_str
 
-.. autocfunction:: platform_common.h::z_clock_now
-.. autocfunction:: platform_common.h::z_clock_elapsed_s
-.. autocfunction:: platform_common.h::z_clock_elapsed_ms
-.. autocfunction:: platform_common.h::z_clock_elapsed_us
+.. autocfunction:: common/platform.h::z_clock_now
+.. autocfunction:: common/platform.h::z_clock_elapsed_s
+.. autocfunction:: common/platform.h::z_clock_elapsed_ms
+.. autocfunction:: common/platform.h::z_clock_elapsed_us
 
 
 Mutex
@@ -902,10 +902,10 @@ See details at :ref:`owned_types_concept`
 Functions
 ^^^^^^^^^
 
-.. autocfunction:: platform_common.h::z_mutex_init
-.. autocfunction:: platform_common.h::z_mutex_lock
-.. autocfunction:: platform_common.h::z_mutex_unlock
-.. autocfunction:: platform_common.h::z_mutex_try_lock
+.. autocfunction:: common/platform.h::z_mutex_init
+.. autocfunction:: common/platform.h::z_mutex_lock
+.. autocfunction:: common/platform.h::z_mutex_unlock
+.. autocfunction:: common/platform.h::z_mutex_try_lock
 
 Ownership Functions
 ^^^^^^^^^^^^^^^^^^^
@@ -937,9 +937,9 @@ See details at :ref:`owned_types_concept`
 
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_condvar_init
-.. autocfunction:: platform_common.h::z_condvar_wait
-.. autocfunction:: platform_common.h::z_condvar_signal
+.. autocfunction:: common/platform.h::z_condvar_init
+.. autocfunction:: common/platform.h::z_condvar_wait
+.. autocfunction:: common/platform.h::z_condvar_signal
 
 Ownership Functions
 ^^^^^^^^^^^^^^^^^^^
@@ -967,10 +967,10 @@ multiple operations concurrently.
 
 Functions
 ^^^^^^^^^
-.. autocfunction:: platform_common.h::z_task_init
-.. autocfunction:: platform_common.h::z_task_join
-.. autocfunction:: platform_common.h::z_task_detach
-.. autocfunction:: platform_common.h::z_task_drop
+.. autocfunction:: common/platform.h::z_task_init
+.. autocfunction:: common/platform.h::z_task_join
+.. autocfunction:: common/platform.h::z_task_detach
+.. autocfunction:: common/platform.h::z_task_drop
 
 Session
 =======
@@ -1355,7 +1355,7 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_hello_drop(z_moved_hello_t * hello) 
 .. c:function:: void z_hello_clone(z_owned_hello_t * dst, const z_loaned_hello_t * hello) 
 .. c:function:: const z_loaned_hello_t * z_hello_loan(const z_owned_hello_t * hello)
-.. c:function:: z_loaned_hello_t * z_hello_loan(z_owned_hello_t * hello)
+.. c:function:: z_loaned_hello_t * z_hello_loan_mut(z_owned_hello_t * hello)
 .. c:function:: z_result_t z_hello_take_from_loaned(z_owned_hello_t *dst, z_loaned_hello_t *src)
 
 
