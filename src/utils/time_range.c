@@ -162,10 +162,10 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
     }
 
     // Search for '..'
-    const char *separator = _z_strstr(_z_cptr_char_offset(str, 1), _z_cptr_char_offset(str, len - 1), "..");
+    const char *separator = _z_strstr(_z_cptr_char_offset(str, 1), _z_cptr_char_offset(str, (ptrdiff_t)(len - 1)), "..");
     if (separator != NULL) {
         _z_str_se_t start_str = {.start = _z_cptr_char_offset(str, 1), .end = separator};
-        _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 2), .end = _z_cptr_char_offset(str, len - 1)};
+        _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 2), .end = _z_cptr_char_offset(str, (ptrdiff_t)(len - 1))};
 
         if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &range->start) ||
             !_z_time_range_parse_time_bound(&end_str, inclusive_end, &range->end)) {
@@ -173,13 +173,13 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
         }
     } else {
         // Search for ';'
-        separator = _z_strstr(_z_cptr_char_offset(str, 1), _z_cptr_char_offset(str, len - 1), ";");
+        separator = _z_strstr(_z_cptr_char_offset(str, 1), _z_cptr_char_offset(str, (ptrdiff_t)(len - 1)), ";");
         if (separator == NULL) {
             return false;
         }
 
         _z_str_se_t start_str = {.start = _z_cptr_char_offset(str, 1), .end = separator};
-        _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 1), .end = _z_cptr_char_offset(str, len - 1)};
+        _z_str_se_t end_str = {.start = _z_cptr_char_offset(separator, 1), .end = _z_cptr_char_offset(str, (ptrdiff_t)(len - 1))};
 
         if (!_z_time_range_parse_time_bound(&start_str, inclusive_start, &range->start) ||
             range->start.bound == _Z_TIME_BOUND_UNBOUNDED) {
