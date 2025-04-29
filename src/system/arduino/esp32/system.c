@@ -55,35 +55,71 @@ void z_free(void *ptr) { heap_caps_free(ptr); }
 typedef struct {
     void *(*_fun)(void *);
     void *_arg;
+    EventGroupHandle_t join_event;
 } z_task_arg;
 
 void z_task_wrapper(z_task_arg *targ) {
     targ->_fun(targ->_arg);
-    vTaskDelete(NULL);
+    // Notify the deleter task that this task is done
+    xEventGroupSetBits(targ->join_event, 1);
+    // No one else uses this task argument after this
     z_free(targ);
+    // Put the task in a safe state to be culled by another task
+    vTaskSuspend(NULL);
 }
+
+static z_task_attr_t z_default_task_attr = {
+    .name = "",
+    .priority = configMAX_PRIORITIES / 2,
+    .stack_depth = 5120,
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    .static_allocation = false,
+    .stack_buffer = NULL,
+    .task_buffer = NULL,
+#endif /* SUPPORT_STATIC_ALLOCATION */
+};
 
 /*------------------ Task ------------------*/
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    int ret = 0;
-
-    z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
-    if (z_arg != NULL) {
-        z_arg->_fun = fun;
-        z_arg->_arg = arg;
-        if (xTaskCreate((void *)z_task_wrapper, "", 5120, z_arg, configMAX_PRIORITIES / 2, (TaskHandle_t *)task) !=
-            pdPASS) {
-            ret = -1;
-        }
-    } else {
-        ret = -1;
+    if (attr == NULL) {
+        attr = &z_default_task_attr;
     }
 
-    return ret;
+    z_task_arg *z_arg = (z_task_arg *)z_malloc(sizeof(z_task_arg));
+
+    if (z_arg == NULL) {
+        return -1;
+    }
+
+    z_arg->_fun = fun;
+    z_arg->_arg = arg;
+    task->join_event = xEventGroupCreate();
+    z_arg->join_event = task->join_event;
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (attr->static_allocation) {
+        task->handle = xTaskCreateStatic((void *)z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority,
+                                         attr->stack_buffer, attr->task_buffer);
+        if (task->handle == NULL) {
+            z_free(z_arg);
+            return -1;
+        }
+    } else {
+#endif /* SUPPORT_STATIC_ALLOCATION */
+        if (xTaskCreate((void *)z_task_wrapper, attr->name, attr->stack_depth, z_arg, attr->priority, &task->handle) !=
+            pdPASS) {
+            z_free(z_arg);
+            return -1;
+        }
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    }
+#endif /* SUPPORT_STATIC_ALLOCATION */
+
+    return _Z_RES_OK;
 }
 
 z_result_t _z_task_join(_z_task_t *task) {
-    // Note: task/thread join not supported on FreeRTOS API, so we force its deletion instead.
+    xEventGroupWaitBits(task->join_event, 1, pdFALSE, pdFALSE, portMAX_DELAY);
     return _z_task_cancel(task);
 }
 
@@ -93,14 +129,16 @@ z_result_t _z_task_detach(_z_task_t *task) {
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    vTaskDelete(*task);
-    return 0;
+    vTaskDelete(task->handle);
+    task->handle = NULL;
+    return _Z_RES_OK;
 }
 
 void _z_task_exit(void) { vTaskDelete(NULL); }
 
 void _z_task_free(_z_task_t **task) {
     _z_task_t *ptr = *task;
+    vEventGroupDelete(ptr->join_event);
     z_free(ptr);
     *task = NULL;
 }
