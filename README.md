@@ -57,8 +57,6 @@ For other platforms - like RTOS for embedded systems / microcontrollers -, you w
 
 ## 2. How to build it
 
-> :warning: **WARNING** :warning: : Zenoh and its ecosystem are under active development. When you build from git, make sure you also build from git any other Zenoh repository you plan to use (e.g. binding, plugin, backend, etc.). It may happen that some changes in git are not compatible with the most recent packaged Zenoh release (e.g. deb, docker, pip). We put particular effort in mantaining compatibility between the various git repositories in the Zenoh project.
-
 ### 2.1 Unix Environments
 
 To build the **zenoh-pico** library, you need to ensure that [cmake](https://cmake.org) is available
