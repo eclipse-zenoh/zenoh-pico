@@ -24,6 +24,7 @@
 #define Z_BATCH_UNICAST_SIZE @BATCH_UNICAST_SIZE@
 #define Z_BATCH_MULTICAST_SIZE @BATCH_MULTICAST_SIZE@
 #define Z_CONFIG_SOCKET_TIMEOUT @Z_CONFIG_SOCKET_TIMEOUT@
+#define Z_TRANSPORT_LEASE @Z_TRANSPORT_LEASE@
 
 #cmakedefine Z_FEATURE_UNSTABLE_API
 #define Z_FEATURE_MULTI_THREAD @Z_FEATURE_MULTI_THREAD@
@@ -54,6 +55,7 @@
 #define Z_FEATURE_RX_CACHE @Z_FEATURE_RX_CACHE@
 #define Z_FEATURE_UNICAST_PEER @Z_FEATURE_UNICAST_PEER@
 #define Z_FEATURE_AUTO_RECONNECT @Z_FEATURE_AUTO_RECONNECT@
+
 // End of CMake generation
 
 #endif /* ZENOH_GENERIC */
@@ -158,11 +160,6 @@
  * Do not change this value.
  */
 #define Z_PROTO_VERSION 0x09
-
-/**
- * Default session lease in milliseconds.
- */
-#define Z_TRANSPORT_LEASE 10000
 
 /**
  * Default session lease expire factor.
