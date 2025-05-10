@@ -22,9 +22,27 @@ on:
     - cron: "0 6 * * 1-5"
 
 jobs:
+  determine-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.set-runner.outputs.runner }}
+    steps:
+      - name: Clone this repository
+        uses: actions/checkout@v4
+
+      - name: Determine which runner to use
+        id: set-runner
+        run: |
+          if [[ -f ci/runners.json ]]; then
+            echo "runner=$(cat ci/runners.json)" >> $GITHUB_OUTPUT
+          else
+            echo "runner=['ubuntu-latest']" >> $GITHUB_OUTPUT
+          fi
+
   run_tests:
     name: Run unit tests on ubuntu-latest
-    runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -79,7 +97,8 @@ jobs:
 
   check_format:
     name: Check codebase format with clang-format
-    runs-on: ubuntu-24.04
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -92,6 +111,8 @@ jobs:
   c99_build:
     name: Check c99 compilation
     runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -104,6 +125,8 @@ jobs:
   raweth_build:
     name: Build raweth transport on ubuntu-latest
     runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,6 +139,8 @@ jobs:
   zenoh_build:
     name: Build Zenoh from source
     runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     outputs:
       artifact-name: ${{ steps.main.outputs.artifact-name }}
     steps:
@@ -131,9 +156,9 @@ jobs:
             ^libzenoh_plugin_storage_manager.so$
 
   modular_build:
-    needs: zenoh_build
+    needs: [determine-runner, zenoh_build]
     name: Modular build on ubuntu-latest
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     strategy:
       matrix:
         feature_publication: [1, 0]
@@ -176,7 +201,8 @@ jobs:
 
   unstable_build:
     name: Check compilation with unstable API
-    runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -199,9 +225,9 @@ jobs:
           Z_FEATURE_INTEREST=0 CMAKE_GENERATOR=Ninja make
 
   st_build:
-    needs: zenoh_build
+    needs: [determine-runner,zenoh_build]
     name: Build and test in single thread on ubuntu-latest
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -235,9 +261,9 @@ jobs:
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
   fragment_test:
-    needs: zenoh_build
+    needs: [determine-runner,zenoh_build]
     name: Test multicast and unicast fragmentation
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -269,9 +295,9 @@ jobs:
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
   attachment_test:
-    needs: zenoh_build
+    needs: [determine-runner, zenoh_build]
     name: Test attachments
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -302,9 +328,9 @@ jobs:
         run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
 
   memory_leak_test:
-    needs: zenoh_build
+    needs: [determine-runner, zenoh_build]
     name: Test examples memory leak
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -341,7 +367,8 @@ jobs:
 
   no_router:
     name: Test examples without router
-    runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -354,9 +381,9 @@ jobs:
         timeout-minutes: 5
   
   connection_restore_test:
-    needs: zenoh_build
     name: Connection restore test 
-    runs-on: ubuntu-latest
+    needs: [determine-runner, zenoh_build]
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -394,7 +421,8 @@ jobs:
         timeout-minutes: 5
 
   markdown_lint:
-    runs-on: ubuntu-latest
+    needs: determine-runner
+    runs-on: ${{ fromJSON(needs.determine-runner.outputs.runner) }}
     steps:
       - uses: actions/checkout@v4
       - uses: DavidAnson/markdownlint-cli2-action@v18
