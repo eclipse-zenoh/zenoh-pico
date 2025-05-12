@@ -277,7 +277,8 @@ static z_result_t _unsafe_z_unregister_declare(_z_session_t *zn, uint32_t id, ui
     return _Z_RES_OK;
 }
 
-z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {
+z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl,
+                                        _z_transport_peer_common_t *peer) {
     const _z_keyexpr_t *decl_key = NULL;
     _z_interest_msg_t msg;
     uint8_t flags = 0;
@@ -309,7 +310,7 @@ z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t
     }
     // Retrieve key
     _z_session_mutex_lock(zn);
-    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key, true);
+    _z_keyexpr_t key = __unsafe_z_get_expanded_key_from_key(zn, decl_key, true, peer);
     if (!_z_keyexpr_has_suffix(&key)) {
         _z_session_mutex_unlock(zn);
         return _Z_ERR_KEYEXPR_UNKNOWN;
@@ -468,9 +469,11 @@ void _z_interest_init(_z_session_t *zn) { _ZP_UNUSED(zn); }
 
 void _z_flush_interest(_z_session_t *zn) { _ZP_UNUSED(zn); }
 
-z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl) {
+z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl,
+                                        _z_transport_peer_common_t *peer) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
+    _ZP_UNUSED(peer);
     return _Z_RES_OK;
 }
 

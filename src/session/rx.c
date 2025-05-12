@@ -37,28 +37,29 @@
 
 /*------------------ Handle message ------------------*/
 
-static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *decl, uint16_t local_peer_id) {
+static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *decl,
+                                          _z_transport_peer_common_t *peer) {
     switch (decl->_decl._tag) {
         case _Z_DECL_KEXPR:
             if (_z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr, decl->_decl._body._decl_kexpr._id,
-                                     local_peer_id) == 0) {
+                                     peer) == 0) {
                 return _Z_ERR_ENTITY_DECLARATION_FAILED;
             }
             break;
 
         case _Z_UNDECL_KEXPR:
-            _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, local_peer_id);
+            _z_unregister_resource(zn, decl->_decl._body._undecl_kexpr._id, peer);
             break;
 
         case _Z_DECL_SUBSCRIBER:
-            return _z_interest_process_declares(zn, &decl->_decl);
+            return _z_interest_process_declares(zn, &decl->_decl, peer);
 
         case _Z_DECL_QUERYABLE:
-            return _z_interest_process_declares(zn, &decl->_decl);
+            return _z_interest_process_declares(zn, &decl->_decl, peer);
 
         case _Z_DECL_TOKEN:
-            _Z_RETURN_IF_ERR(_z_liveliness_process_token_declare(zn, decl));
-            return _z_interest_process_declares(zn, &decl->_decl);
+            _Z_RETURN_IF_ERR(_z_liveliness_process_token_declare(zn, decl, peer));
+            return _z_interest_process_declares(zn, &decl->_decl, peer);
 
         case _Z_UNDECL_SUBSCRIBER:
             return _z_interest_process_undeclares(zn, &decl->_decl);
@@ -67,7 +68,7 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             return _z_interest_process_undeclares(zn, &decl->_decl);
 
         case _Z_UNDECL_TOKEN:
-            _Z_RETURN_IF_ERR(_z_liveliness_process_token_undeclare(zn, decl));
+            _Z_RETURN_IF_ERR(_z_liveliness_process_token_undeclare(zn, decl, peer));
             return _z_interest_process_undeclares(zn, &decl->_decl);
 
         case _Z_DECL_FINAL:
@@ -85,19 +86,19 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
     return _Z_RES_OK;
 }
 
-static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, uint16_t local_peer_id) {
-    z_result_t ret = _z_handle_declare_inner(zn, decl, local_peer_id);
+static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, _z_transport_peer_common_t *peer) {
+    z_result_t ret = _z_handle_declare_inner(zn, decl, peer);
     _z_n_msg_declare_clear(decl);
     return ret;
 }
 
 static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_n_msg_request_t *req,
-                                    z_reliability_t reliability) {
+                                    z_reliability_t reliability, _z_transport_peer_common_t *peer) {
     switch (req->_tag) {
         case _Z_REQUEST_QUERY:
 #if Z_FEATURE_QUERYABLE == 1
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_queryables(zsrc, &req->_body._query, &req->_key, (uint32_t)req->_rid);
+            return _z_trigger_queryables(zsrc, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             _z_n_msg_request_clear(req);
@@ -110,7 +111,7 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
             // Memory cleaning must be done in the feature layer
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_put(zn, &req->_key, &put._payload, &put._encoding,
                                                           &put._commons._timestamp, req->_ext_qos, &put._attachment,
-                                                          reliability, &put._commons._source_info));
+                                                          reliability, &put._commons._source_info, peer));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
@@ -124,7 +125,8 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
             _z_msg_del_t del = req->_body._del;
             // Memory cleaning must be done in the feature layer
             _Z_RETURN_IF_ERR(_z_trigger_subscriptions_del(zn, &req->_key, &del._commons._timestamp, req->_ext_qos,
-                                                          &del._attachment, reliability, &del._commons._source_info));
+                                                          &del._attachment, reliability, &del._commons._source_info,
+                                                          peer));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
             z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
@@ -142,12 +144,12 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
     return _Z_RES_OK;
 }
 
-static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp) {
+static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp, _z_transport_peer_common_t *peer) {
 #if Z_FEATURE_QUERY == 1
     switch (resp->_tag) {
         case _Z_RESPONSE_BODY_REPLY:
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply);
+            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, peer);
         case _Z_RESPONSE_BODY_ERR:
             // Memory cleaning must be done in the feature layer
             return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err);
@@ -162,29 +164,29 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     return _Z_RES_OK;
 }
 
-z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, uint16_t local_peer_id) {
+z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, _z_transport_peer_common_t *peer) {
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     switch (msg->_tag) {
         case _Z_N_DECLARE:
             _Z_DEBUG("Handling _Z_N_DECLARE: %i", msg->_body._declare._decl._tag);
-            ret = _z_handle_declare(zn, &msg->_body._declare, local_peer_id);
+            ret = _z_handle_declare(zn, &msg->_body._declare, peer);
             break;
 
         case _Z_N_PUSH:
             _Z_DEBUG("Handling _Z_N_PUSH");
-            ret = _z_trigger_push(zn, &msg->_body._push, msg->_reliability);
+            ret = _z_trigger_push(zn, &msg->_body._push, msg->_reliability, peer);
             break;
 
         case _Z_N_REQUEST:
             _Z_DEBUG("Handling _Z_N_REQUEST");
-            ret = _z_handle_request(zsrc, zn, &msg->_body._request, msg->_reliability);
+            ret = _z_handle_request(zsrc, zn, &msg->_body._request, msg->_reliability, peer);
             break;
 
         case _Z_N_RESPONSE:
             _Z_DEBUG("Handling _Z_N_RESPONSE");
-            ret = _z_handle_response(zn, &msg->_body._response);
+            ret = _z_handle_response(zn, &msg->_body._response, peer);
             break;
 
         case _Z_N_RESPONSE_FINAL:

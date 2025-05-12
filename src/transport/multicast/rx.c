@@ -160,13 +160,12 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     }
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
-    uint16_t mapping = entry->_peer_id;
     size_t len = _z_svec_len(&msg->_messages);
     for (size_t i = 0; i < len; i++) {
         _z_network_message_t *zm = _z_network_message_svec_get(&msg->_messages, i);
         zm->_reliability = tmsg_reliability;
-        _z_msg_fix_mapping(zm, mapping);
-        _z_handle_network_message(ztm->_common._session, zm, mapping);
+        _z_msg_fix_mapping(zm, (uintptr_t)&entry->common);
+        _z_handle_network_message(ztm->_common._session, zm, &entry->common);
     }
     return _Z_RES_OK;
 }
@@ -282,10 +281,9 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         ret = _z_network_message_decode(&zm, &zbf, arcs);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
-            uint16_t mapping = entry->_peer_id;
-            _z_msg_fix_mapping(&zm, mapping);
+            _z_msg_fix_mapping(&zm, (uintptr_t)&entry->common);
             // Memory clear of the network message data must be handled by the network message layer
-            _z_handle_network_message(ztm->_common._session, &zm, mapping);
+            _z_handle_network_message(ztm->_common._session, &zm, &entry->common);
         } else {
             _Z_INFO("Failed to decode defragmented message");
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
@@ -342,7 +340,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         entry->common._dbuf_reliable = _z_wbuf_null();
         entry->common._dbuf_best_effort = _z_wbuf_null();
 #endif
-        ztm->_peers = _z_transport_peer_multicast_list_insert(ztm->_peers, entry);
+        ztm->_peers = _z_transport_peer_multicast_list_push(ztm->_peers, entry);
     } else {  // Existing peer
         // Note that we receive data from the peer
         entry->common._received = true;

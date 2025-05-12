@@ -13,6 +13,7 @@
 //
 
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/session.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 
@@ -22,6 +23,7 @@ void _z_transport_peer_common_clear(_z_transport_peer_common_t *src) {
     _z_wbuf_clear(&src->_dbuf_best_effort);
 #endif
     src->_remote_zid = _z_id_empty();
+    _z_resource_list_free(&src->_remote_resources);
 }
 void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src) {
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -104,6 +106,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
 
     peer->common._remote_zid = param->_remote_zid;
     peer->common._received = true;
+    peer->common._remote_resources = NULL;
 #if Z_FEATURE_FRAGMENTATION == 1
     peer->common._patch = param->_patch < _Z_CURRENT_PATCH ? param->_patch : _Z_CURRENT_PATCH;
     peer->common._state_reliable = _Z_DBUF_STATE_NULL;

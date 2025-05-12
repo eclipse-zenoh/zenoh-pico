@@ -57,7 +57,8 @@ _Z_LRU_CACHE_DEFINE(_z_queryable, _z_queryable_cache_data_t, _z_queryable_cache_
 /*------------------ Queryable ------------------*/
 _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, const _z_zint_t id);
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q);
-z_result_t _z_trigger_queryables(_z_session_rc_t *zn, _z_msg_query_t *query, _z_keyexpr_t *q_key, uint32_t qid);
+z_result_t _z_trigger_queryables(_z_session_rc_t *zn, _z_msg_query_t *query, _z_keyexpr_t *q_key, uint32_t qid,
+                                 _z_transport_peer_common_t *peer);
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *q);
 void _z_flush_session_queryable(_z_session_t *zn);
 #endif

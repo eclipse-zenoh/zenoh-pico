@@ -104,7 +104,7 @@ _z_declaration_t _z_make_decl_final(void) {
     return (_z_declaration_t){._tag = _Z_DECL_FINAL, ._body = {._decl_final = {0}}};
 }
 
-void _z_decl_fix_mapping(_z_declaration_t *msg, uint16_t mapping) {
+void _z_decl_fix_mapping(_z_declaration_t *msg, uintptr_t mapping) {
     switch (msg->_tag) {
         case _Z_DECL_KEXPR: {
             _z_keyexpr_fix_mapping(&msg->_body._decl_kexpr._keyexpr, mapping);

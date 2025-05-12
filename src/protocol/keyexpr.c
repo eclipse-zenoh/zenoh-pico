@@ -23,19 +23,20 @@
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
 
-_z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(0, rname); }
+_z_keyexpr_t _z_rname(const char *rname) { return _z_rid_with_suffix(Z_RESOURCE_ID_NONE, rname); }
 
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._mapping = _Z_KEYEXPR_MAPPING_LOCAL,
         ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_alias_str(suffix),
     };
 }
 
 int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
-    if ((first->_id != 0) && (second->_id != 0)) {
-        if (_z_keyexpr_mapping_id(first) == _z_keyexpr_mapping_id(second)) {
+    // Compare ids only if they are valid and originate from the same location
+    if ((first->_id != Z_RESOURCE_ID_NONE) && (second->_id != Z_RESOURCE_ID_NONE)) {
+        if (first->_mapping == second->_mapping) {
             if (first->_id == second->_id) {
                 return 0;
             } else if (first->_id > second->_id) {
@@ -43,12 +44,13 @@ int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
             }
             return -1;
         } else {
-            if (_z_keyexpr_mapping_id(first) > _z_keyexpr_mapping_id(second)) {
+            if (first->_mapping > second->_mapping) {
                 return 1;
             }
             return -1;
         }
     }
+    // Compare string
     if (_z_keyexpr_has_suffix(first) && _z_keyexpr_has_suffix(second)) {
         return _z_string_compare(&first->_suffix, &second->_suffix);
     }
@@ -59,7 +61,7 @@ int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
 _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._mapping = _Z_KEYEXPR_MAPPING_LOCAL,
         ._suffix = (_z_string_check(str)) ? _z_string_alias(*str) : _z_string_null(),
     };
 }
@@ -67,7 +69,7 @@ _z_keyexpr_t _z_keyexpr_from_string(uint16_t rid, _z_string_t *str) {
 _z_keyexpr_t _z_keyexpr_from_substr(uint16_t rid, const char *str, size_t len) {
     return (_z_keyexpr_t){
         ._id = rid,
-        ._mapping = _z_keyexpr_mapping(_Z_KEYEXPR_MAPPING_LOCAL),
+        ._mapping = _Z_KEYEXPR_MAPPING_LOCAL,
         ._suffix = (str != NULL) ? _z_string_alias_substr(str, len) : _z_string_null(),
     };
 }
@@ -109,7 +111,7 @@ z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
 }
 
 void _z_keyexpr_clear(_z_keyexpr_t *rk) {
-    rk->_id = 0;
+    rk->_id = Z_RESOURCE_ID_NONE;
     _z_string_clear(&rk->_suffix);
 }
 
@@ -128,7 +130,7 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     if (left->_id != right->_id) {
         return false;
     }
-    if (_z_keyexpr_mapping_id(left) != _z_keyexpr_mapping_id(right)) {
+    if (left->_mapping != right->_mapping) {
         return false;
     }
     bool l_suffix = _z_keyexpr_has_suffix(left);
@@ -150,7 +152,7 @@ _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_decla
             ._suffix = _z_string_null(),
         };
     } else {
-        return _z_keyexpr_from_string(0, &src._suffix);
+        return _z_keyexpr_from_string(Z_RESOURCE_ID_NONE, &src._suffix);
     }
 }
 

@@ -690,7 +690,7 @@ void timestamp_field(void) {
 _z_keyexpr_t gen_keyexpr(void) {
     _z_keyexpr_t key;
     key._id = gen_uint16();
-    key._mapping._val = gen_uint8();
+    key._mapping = gen_uint32();
     bool is_numerical = gen_bool();
     if (is_numerical == true) {
         key._suffix = _z_string_null();
@@ -1264,9 +1264,9 @@ _z_network_message_t gen_interest_message(void) {
 void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
     printf("Interest: 0x%x, 0x%x, %u, %u\n", left->flags, right->flags, left->_id, right->_id);
     printf("Interest ke: %d, %d, %d, %d, %.*s, %.*s\n", left->_keyexpr._id, right->_keyexpr._id,
-           left->_keyexpr._mapping._val, right->_keyexpr._mapping._val, (int)_z_string_len(&left->_keyexpr._suffix),
-           _z_string_data(&left->_keyexpr._suffix), (int)_z_string_len(&right->_keyexpr._suffix),
-           _z_string_data(&right->_keyexpr._suffix));
+           (unsigned int)left->_keyexpr._mapping, (unsigned int)right->_keyexpr._mapping,
+           (int)_z_string_len(&left->_keyexpr._suffix), _z_string_data(&left->_keyexpr._suffix),
+           (int)_z_string_len(&right->_keyexpr._suffix), _z_string_data(&right->_keyexpr._suffix));
     assert(left->flags == right->flags);
     assert(left->_id == right->_id);
     assert_eq_keyexpr(&left->_keyexpr, &right->_keyexpr);

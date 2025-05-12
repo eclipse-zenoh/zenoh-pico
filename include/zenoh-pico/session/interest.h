@@ -31,7 +31,8 @@ void _z_unregister_interest(_z_session_t *zn, _z_session_interest_rc_t *intr);
 
 void _z_interest_init(_z_session_t *zn);
 void _z_flush_interest(_z_session_t *zn);
-z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl);
+z_result_t _z_interest_process_declares(_z_session_t *zn, const _z_declaration_t *decl,
+                                        _z_transport_peer_common_t *peer);
 z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration_t *decl);
 z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id);
 z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);

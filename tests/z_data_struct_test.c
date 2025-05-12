@@ -26,34 +26,6 @@
 #undef NDEBUG
 #include <assert.h>
 
-void entry_list_test(void) {
-    _z_transport_peer_multicast_list_t *root = _z_transport_peer_multicast_list_new();
-    for (int i = 0; i < 10; i++) {
-        _z_transport_peer_multicast_t *entry =
-            (_z_transport_peer_multicast_t *)z_malloc(sizeof(_z_transport_peer_multicast_t));
-        memset(entry, 0, sizeof(_z_transport_peer_multicast_t));
-        root = _z_transport_peer_multicast_list_insert(root, entry);
-    }
-    _z_transport_peer_multicast_list_t *list = root;
-    for (int i = 10; list != NULL; i--, list = _z_transport_peer_multicast_list_tail(list)) {
-        assert(_z_transport_peer_multicast_list_head(list)->_peer_id == i);
-    }
-    _z_transport_peer_multicast_list_head(root)->_peer_id = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1;
-
-    for (int i = 0; i < 11; i++) {
-        _z_transport_peer_multicast_t *entry =
-            (_z_transport_peer_multicast_t *)z_malloc(sizeof(_z_transport_peer_multicast_t));
-        memset(entry, 0, sizeof(_z_transport_peer_multicast_t));
-        root = _z_transport_peer_multicast_list_insert(root, entry);
-    }
-    assert(_z_transport_peer_multicast_list_head(root)->_peer_id == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE - 1);
-    list = _z_transport_peer_multicast_list_tail(root);
-    for (int i = 20; list != NULL; i--, list = _z_transport_peer_multicast_list_tail(list)) {
-        assert(_z_transport_peer_multicast_list_head(list)->_peer_id == i);
-    }
-    _z_transport_peer_multicast_list_free(&root);
-}
-
 void str_vec_list_intmap_test(void) {
     char *s = (char *)malloc(64);
     size_t len = 128;
@@ -254,7 +226,6 @@ void z_id_to_string_test(void) {
 }
 
 int main(void) {
-    entry_list_test();
     str_vec_list_intmap_test();
     z_slice_custom_delete_test();
     z_string_array_test();

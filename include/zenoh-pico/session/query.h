@@ -32,7 +32,7 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
 
 z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pq);
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, _z_zint_t reply_context, _z_keyexpr_t *keyexpr,
-                                          _z_msg_put_t *msg, z_sample_kind_t kind);
+                                          _z_msg_put_t *msg, z_sample_kind_t kind, _z_transport_peer_common_t *peer);
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg);
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id);
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pq);

@@ -92,7 +92,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
 
     // TODO: Implement interest protocol for multicast transports, unicast p2p
     if (zn->_mode == Z_WHATAMI_CLIENT) {
-        uint16_t id = _z_register_resource(zn, keyexpr, 0, _Z_KEYEXPR_MAPPING_LOCAL);
+        uint16_t id = _z_register_resource(zn, keyexpr, Z_RESOURCE_ID_NONE, NULL);
         if (id != 0) {
             // Build the declare message to send on the wire
             _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
@@ -104,7 +104,7 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
                 _z_subscription_cache_invalidate(zn);
                 _z_queryable_cache_invalidate(zn);
             } else {
-                _z_unregister_resource(zn, id, _Z_KEYEXPR_MAPPING_LOCAL);
+                _z_unregister_resource(zn, id, NULL);
             }
             _z_n_msg_clear(&n_msg);
         }
@@ -115,14 +115,14 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
 z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Undeclaring local keyexpr %d", rid);
-    _z_resource_t *r = _z_get_resource_by_id(zn, _Z_KEYEXPR_MAPPING_LOCAL, rid);
+    _z_resource_t *r = _z_get_resource_by_id(zn, rid, NULL);
     if (r != NULL) {
         // Build the declare message to send on the wire
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
         _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
         if (_z_send_undeclare(zn, &n_msg) == _Z_RES_OK) {
             // Remove local resource
-            _z_unregister_resource(zn, rid, _Z_KEYEXPR_MAPPING_LOCAL);
+            _z_unregister_resource(zn, rid, NULL);
             // Invalidate cache
             _z_subscription_cache_invalidate(zn);
             _z_queryable_cache_invalidate(zn);
@@ -145,7 +145,7 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
 
     // TODO: Implement interest protocol for multicast transports, unicast p2p
     if (zs->_mode == Z_WHATAMI_CLIENT) {
-        _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased);
+        _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
         } else {
@@ -261,7 +261,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr._id;
-    s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr);
+    s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
@@ -327,7 +327,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
                                     _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
-    q._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr);
+    q._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
     q._complete = complete;
     q._callback = callback;
     q._dropper = dropper;
@@ -395,8 +395,8 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     _z_keyexpr_t q_ke;
     _z_keyexpr_t r_ke;
     if (query->_anyke == false) {
-        q_ke = _z_get_expanded_key_from_key(zn, &query->_key);
-        r_ke = _z_get_expanded_key_from_key(zn, keyexpr);
+        q_ke = _z_get_expanded_key_from_key(zn, &query->_key, NULL);
+        r_ke = _z_get_expanded_key_from_key(zn, keyexpr, NULL);
         if (_z_keyexpr_suffix_intersects(&q_ke, &r_ke) == false) {
             ret = _Z_ERR_KEYEXPR_NOT_MATCH;
         }
@@ -569,7 +569,7 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
     _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
     if (pq != NULL) {
         pq->_id = _z_get_query_id(zn);
-        pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr);
+        pq->_key = _z_get_expanded_key_from_key(zn, &keyexpr, NULL);
         pq->_target = target;
         pq->_consolidation = consolidation;
         pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
@@ -606,7 +606,7 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
                          void *arg) {
     _z_session_interest_t intr;
     intr._id = _z_get_entity_id(zn);
-    intr._key = _z_get_expanded_key_from_key(zn, &keyexpr);
+    intr._key = _z_get_expanded_key_from_key(zn, &keyexpr, NULL);
     intr._flags = flags;
     intr._callback = callback;
     intr._arg = arg;

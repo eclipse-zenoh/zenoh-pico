@@ -34,7 +34,8 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid);
 void _z_session_clear(_z_session_t *zn);
 z_result_t _z_session_close(_z_session_t *zn, uint8_t reason);
 
-z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *z_msg, uint16_t local_peer_id);
+z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *z_msg,
+                                     _z_transport_peer_common_t *peer);
 
 #if Z_FEATURE_MULTI_THREAD == 1
 static inline void _z_session_mutex_lock(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }

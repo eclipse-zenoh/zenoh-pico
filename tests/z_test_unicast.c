@@ -278,6 +278,9 @@ static bool test_peer_connection(void) {
         z_drop(z_move(sess_array[0]));
         z_sleep_ms(100);
     }
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(sess_array); i++) {
+        z_drop(z_move(sess_array[i]));
+    }
     z_drop(z_move(s));
     return true;
 }

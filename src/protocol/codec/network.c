@@ -96,8 +96,8 @@ z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, 
     z_result_t ret = _Z_RES_OK;
     msg->_qos = _Z_N_QOS_DEFAULT;
     ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
-    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
-                                                                             : _Z_KEYEXPR_MAPPING_LOCAL);
+    msg->_key._mapping =
+        _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         ret = _z_msg_ext_decode_iter(zbf, _z_push_decode_ext_cb, msg);
     }
@@ -210,8 +210,8 @@ z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
-    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
-                                                                                : _Z_KEYEXPR_MAPPING_LOCAL);
+    msg->_key._mapping =
+        _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_request_decode_extensions, msg));
     }
@@ -338,8 +338,8 @@ z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t 
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     z_result_t ret = _Z_RES_OK;
-    _z_keyexpr_set_mapping(&msg->_key, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE
-                                                                                 : _Z_KEYEXPR_MAPPING_LOCAL);
+    msg->_key._mapping =
+        _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_request_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N)));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {

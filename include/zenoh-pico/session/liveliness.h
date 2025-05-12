@@ -46,10 +46,12 @@ void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr,
-                                              const _z_timestamp_t *timestamp);
-z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, const _z_timestamp_t *timestamp);
+                                              const _z_timestamp_t *timestamp, _z_transport_peer_common_t *peer);
+z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, const _z_timestamp_t *timestamp,
+                                                _z_transport_peer_common_t *peer);
 z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn);
-z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
+z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
+                                                      _z_transport_peer_common_t *peer);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -57,8 +59,10 @@ z_result_t _z_liveliness_register_pending_query(_z_session_t *zn, uint32_t id, _
 void _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id);
 #endif
 
-z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl);
-z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl);
+z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
+                                               _z_transport_peer_common_t *peer);
+z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
+                                                 _z_transport_peer_common_t *peer);
 z_result_t _z_liveliness_process_declare_final(_z_session_t *zn, const _z_n_msg_declare_t *decl);
 
 void _z_liveliness_init(_z_session_t *zn);

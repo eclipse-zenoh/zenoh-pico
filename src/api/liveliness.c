@@ -108,7 +108,7 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
     }
 
     if (opt.history) {
-        z_result_t ret = _z_liveliness_subscription_trigger_history(_Z_RC_IN_VAL(zs), keyexpr);
+        z_result_t ret = _z_liveliness_subscription_trigger_history(_Z_RC_IN_VAL(zs), keyexpr, NULL);
         if (ret != _Z_RES_OK) {
             return ret;
         }
