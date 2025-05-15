@@ -95,7 +95,7 @@ _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
 }
 
 _z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src) {
-    _z_keyexpr_t *dst = z_malloc(sizeof(_z_keyexpr_t));
+    _z_keyexpr_t *dst = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
     if (dst != NULL) {
         _z_keyexpr_copy(dst, src);
     }

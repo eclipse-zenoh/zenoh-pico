@@ -702,7 +702,7 @@ static _z_id_t _z_session_get_zid(const _z_config_t *config) {
 
 static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
     z_internal_session_null(zs);
-    _z_session_t *s = z_malloc(sizeof(_z_session_t));
+    _z_session_t *s = (_z_session_t *)z_malloc(sizeof(_z_session_t));
     if (s == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

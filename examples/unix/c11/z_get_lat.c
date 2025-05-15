@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    unsigned long *results = z_malloc(sizeof(unsigned long) * ping_nb);
+    unsigned long *results = (unsigned long *)z_malloc(sizeof(unsigned long) * ping_nb);
     for (unsigned int i = 0; i < ping_nb; i++) {
         z_clock_t measure_start = z_clock_now();
         z_closure(&callback, reply_handler, NULL, NULL);

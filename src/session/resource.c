@@ -238,7 +238,7 @@ uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_
     }
     ret = full_ke._id;
     if (_z_keyexpr_has_suffix(&full_ke)) {
-        _z_resource_t *res = z_malloc(sizeof(_z_resource_t));
+        _z_resource_t *res = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
         if (res == NULL) {
             ret = Z_RESOURCE_ID_NONE;
         } else {

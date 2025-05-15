@@ -408,7 +408,7 @@ long unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct s
 
     struct netif *netif = &cyw43_state.netif[CYW43_ITF_STA];
     if (netif_is_up(netif)) {
-        struct sockaddr_in *lsockaddr_in = z_malloc(sizeof(struct sockaddr_in));
+        struct sockaddr_in *lsockaddr_in = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
         if (lsockaddr != NULL) {
             (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
             const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);
@@ -756,7 +756,7 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
-    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     for (size_t i = 0; i < _Z_SERIAL_MAX_COBS_BUF_SIZE; i++) {
 #if Z_FEATURE_LINK_SERIAL_USB == 1
@@ -770,7 +770,7 @@ size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, 
         }
     }
 
-    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     z_free(raw_buf);

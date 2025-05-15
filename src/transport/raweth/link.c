@@ -119,7 +119,7 @@ static size_t _z_valid_mapping_raweth(_z_str_intmap_t *config) {
     if (cfg_str == NULL) {
         return 0;
     }
-    char *s_mapping = z_malloc(strlen(cfg_str));
+    char *s_mapping = (char *)z_malloc(strlen(cfg_str));
     if (s_mapping == NULL) {
         return 0;
     }
@@ -149,7 +149,7 @@ static z_result_t _z_get_mapping_raweth(_z_str_intmap_t *config, _zp_raweth_mapp
         return _Z_ERR_GENERIC;
     }
     // Copy data
-    char *s_mapping = z_malloc(strlen(cfg_str));
+    char *s_mapping = (char *)z_malloc(strlen(cfg_str));
     if (s_mapping == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -183,7 +183,7 @@ static size_t _z_valid_whitelist_raweth(_z_str_intmap_t *config) {
         return 0;
     }
     // Copy data
-    char *s_whitelist = z_malloc(strlen(cfg_str));
+    char *s_whitelist = (char *)z_malloc(strlen(cfg_str));
     if (s_whitelist == NULL) {
         return 0;
     }
@@ -215,7 +215,7 @@ static z_result_t _z_get_whitelist_raweth(_z_str_intmap_t *config, _zp_raweth_wh
         return _Z_ERR_GENERIC;
     }
     // Copy data
-    char *s_whitelist = z_malloc(strlen(cfg_str));
+    char *s_whitelist = (char *)z_malloc(strlen(cfg_str));
     if (s_whitelist == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
