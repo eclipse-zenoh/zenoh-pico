@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/transport/unicast/lease.h"
 
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -133,6 +134,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     curr_list = _z_transport_peer_unicast_list_tail(curr_list);
                     // Drop if needed
                     if (drop_peer) {
+                        // TODO: Drop peer references (sub/queryable cache + interests)
+                        _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
                         ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
                     }
                 }

@@ -1044,17 +1044,14 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     // Set publisher
     _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                                                   opt.congestion_control, opt.priority, opt.is_express, reliability);
-    // TODO: Rework write filters to work with non-aggregated interests
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
-        // Create write filter
-        z_result_t res =
-            _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
-        if (res != _Z_RES_OK) {
-            if (key._id != Z_RESOURCE_ID_NONE) {
-                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
-            }
-            return res;
+    // Create write filter
+    z_result_t res =
+        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
+    if (res != _Z_RES_OK) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
         }
+        return res;
     }
     pub->_val = int_pub;
     return _Z_RES_OK;
@@ -1127,9 +1124,8 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         _z_bytes_t payload_bytes = _z_bytes_from_moved(payload);
         _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
 
-        // TODO: Rework write filters to work with non-aggregated interests
         // Check if write filter is active before writing
-        if ((session->_mode != Z_WHATAMI_CLIENT) || !_z_write_filter_active(&pub->_filter)) {
+        if (!_z_write_filter_active(&pub->_filter)) {
             // Write value
             ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
@@ -1397,18 +1393,14 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
                                                   opt.priority, opt.is_express, opt.timeout_ms,
                                                   opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
-
-    // TODO: Rework write filters to work with non-aggregated interests
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
-        // Create write filter
-        z_result_t res = _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased,
-                                                _Z_INTEREST_FLAG_QUERYABLES);
-        if (res != _Z_RES_OK) {
-            if (key._id != Z_RESOURCE_ID_NONE) {
-                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
-            }
-            return res;
+    // Create write filter
+    z_result_t res =
+        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
+    if (res != _Z_RES_OK) {
+        if (key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
         }
+        return res;
     }
     querier->_val = int_querier;
     return _Z_RES_OK;
@@ -1467,8 +1459,7 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        // TODO: Rework write filters to work with non-aggregated interests
-        if ((session->_mode == Z_WHATAMI_CLIENT) && _z_write_filter_active(&querier->_filter)) {
+        if (_z_write_filter_active(&querier->_filter)) {
             callback->_this._val.drop(ctx);
         } else {
             _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = encoding};

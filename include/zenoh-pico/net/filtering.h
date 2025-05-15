@@ -24,6 +24,22 @@
 extern "C" {
 #endif
 
+typedef struct {
+    uintptr_t peer;
+    uint32_t decl_id;
+} _z_filter_target_t;
+
+typedef z_element_eq_f _z_filter_target_eq_f;
+static inline void *_z_filter_target_elem_clone(const void *src) {
+    uint32_t *dst = (uint32_t *)z_malloc(sizeof(uint32_t));
+    if (dst != NULL) {
+        *dst = *(uint32_t *)src;
+    }
+    return dst;
+}
+void _z_filter_target_elem_free(void **elem);
+_Z_LIST_DEFINE(_z_filter_target, _z_filter_target_t)
+
 typedef enum {
     WRITE_FILTER_INIT = 0,
     WRITE_FILTER_ACTIVE = 1,
@@ -31,7 +47,10 @@ typedef enum {
 } _z_write_filter_state_t;
 
 typedef struct {
-    uint32_t decl_id;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_t mutex;
+#endif
+    _z_filter_target_list_t *targets;
     uint8_t state;
 } _z_writer_filter_ctx_t;
 

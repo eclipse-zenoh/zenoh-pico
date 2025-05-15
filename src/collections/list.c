@@ -17,13 +17,17 @@
 #include <assert.h>
 #include <stddef.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 /*-------- Inner single-linked list --------*/
 _z_list_t *_z_list_of(void *x) {
     _z_list_t *xs = (_z_list_t *)z_malloc(sizeof(_z_list_t));
-    if (xs != NULL) {
-        xs->_val = x;
-        xs->_tail = NULL;
+    if (xs == NULL) {
+        _Z_ERROR("Failed to allocate list element.");
+        return NULL;
     }
+    xs->_val = x;
+    xs->_tail = NULL;
     return xs;
 }
 
@@ -115,7 +119,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
     _z_list_t *current = xs;
 
     while (current != NULL) {
-        if (c_f(left, current->_val) == true) {
+        if (c_f(left, current->_val)) {
             _z_list_t *this_ = current;
 
             // head removal

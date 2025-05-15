@@ -27,7 +27,8 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_MATCHING == 1
-static void _z_matching_listener_callback(const _z_interest_msg_t *msg, void *arg) {
+static void _z_matching_listener_callback(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg) {
+    _ZP_UNUSED(peer);
     _z_matching_listener_ctx_t *ctx = (_z_matching_listener_ctx_t *)arg;
     switch (msg->type) {
         case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:

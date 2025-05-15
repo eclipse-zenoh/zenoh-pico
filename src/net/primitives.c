@@ -183,10 +183,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
     _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&pub->_zn), pub->_id);
 #endif
     // Clear publisher
-    // TODO: Rework write filters to work with non-aggregated interests
-    if (_Z_RC_IN_VAL(&pub->_zn)->_mode == Z_WHATAMI_CLIENT) {
-        _z_write_filter_destroy(_Z_RC_IN_VAL(&pub->_zn), &pub->_filter);
-    }
+    _z_write_filter_destroy(_Z_RC_IN_VAL(&pub->_zn), &pub->_filter);
     _z_undeclare_resource(_Z_RC_IN_VAL(&pub->_zn), pub->_key._id);
     return _Z_RES_OK;
 }
@@ -550,10 +547,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 #if Z_FEATURE_MATCHING == 1
     _z_matching_listener_entity_undeclare(_Z_RC_IN_VAL(&querier->_zn), querier->_id);
 #endif
-    // TODO: Rework write filters to work with non-aggregated interests
-    if (_Z_RC_IN_VAL(&querier->_zn)->_mode == Z_WHATAMI_CLIENT) {
-        _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
-    }
+    _z_write_filter_destroy(_Z_RC_IN_VAL(&querier->_zn), &querier->_filter);
     _z_undeclare_resource(_Z_RC_IN_VAL(&querier->_zn), querier->_key._id);
     return _Z_RES_OK;
 }

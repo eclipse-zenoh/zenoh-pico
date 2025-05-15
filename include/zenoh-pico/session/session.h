@@ -171,6 +171,7 @@ typedef enum {
     _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER = 4,
     _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE = 5,
     _Z_INTEREST_MSG_TYPE_UNDECL_TOKEN = 6,
+    _Z_INTEREST_MSG_TYPE_CONNECTION_DROPPED = 7,
 } _z_interest_msg_type_t;
 
 typedef struct _z_interest_msg_t {
@@ -181,7 +182,7 @@ typedef struct _z_interest_msg_t {
 /**
  * The callback signature of the functions handling interest messages.
  */
-typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, void *arg);
+typedef void (*_z_interest_handler_t)(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
@@ -197,8 +198,8 @@ void _z_session_interest_clear(_z_session_interest_t *res);
 _Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
 _Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy,
                _z_noop_move)
-_Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_noop_size, _z_session_interest_rc_drop,
-               _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_session_interest_rc_size,
+               _z_session_interest_rc_drop, _z_session_interest_rc_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
 
 typedef enum {

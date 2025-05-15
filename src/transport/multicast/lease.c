@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/multicast/lease.h"
@@ -126,6 +127,10 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                     it = _z_transport_peer_multicast_list_tail(it);
                 } else {
                     _Z_INFO("Remove peer from know list because it has expired after %zums", entry->_lease);
+                    // TODO: Drop peer references (sub/queryable cache + interests)
+                    _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztm->_common._session), &entry->common);
+                    // FIXME: Remember parent and use _z_transport_peer_multicast_list_drop_element to avoid recursive
+                    // list parsing
                     ztm->_peers = _z_transport_peer_multicast_list_drop_filter(ztm->_peers,
                                                                                _z_transport_peer_multicast_eq, entry);
                     it = ztm->_peers;

@@ -62,14 +62,14 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             return _z_interest_process_declares(zn, &decl->_decl, peer);
 
         case _Z_UNDECL_SUBSCRIBER:
-            return _z_interest_process_undeclares(zn, &decl->_decl);
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
 
         case _Z_UNDECL_QUERYABLE:
-            return _z_interest_process_undeclares(zn, &decl->_decl);
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
 
         case _Z_UNDECL_TOKEN:
             _Z_RETURN_IF_ERR(_z_liveliness_process_token_undeclare(zn, decl, peer));
-            return _z_interest_process_undeclares(zn, &decl->_decl);
+            return _z_interest_process_undeclares(zn, &decl->_decl, peer);
 
         case _Z_DECL_FINAL:
             _Z_RETURN_IF_ERR(_z_liveliness_process_declare_final(zn, decl));
@@ -77,7 +77,7 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             if (!decl->has_interest_id) {
                 return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
             }
-            return _z_interest_process_declare_final(zn, decl->_interest_id);
+            return _z_interest_process_declare_final(zn, decl->_interest_id, peer);
 
         default:
             _Z_INFO("Received unknown declare tag: %d\n", decl->_decl._tag);

@@ -19,6 +19,7 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/transport.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/transport/common/rx.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/unicast/rx.h"
@@ -337,6 +338,8 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 // Drop peer if needed
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
+                    // TODO: Drop peer references (sub/queryable cache + filter target)
+                    _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
                     ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
                 }
                 _z_zbuf_reset(&ztu->_common._zbuf);
