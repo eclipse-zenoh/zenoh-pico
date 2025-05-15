@@ -95,7 +95,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
     }
     // Process filter state
     switch (ctx->state) {
-        default: // Incorrect values are treated as init
+        default:  // Incorrect values are treated as init
         case WRITE_FILTER_INIT:
             // Update init state
             if (ctx->targets == NULL) {
