@@ -138,7 +138,8 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                 curr_list = _z_transport_peer_unicast_list_tail(curr_list);
                 // Drop if needed
                 if (drop_peer) {
-                    // TODO: Drop peer references (sub/queryable cache + interests)
+                    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
+                    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
                     _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztm->_common._session), &curr_peer->common);
                     ztm->_peers = _z_transport_peer_multicast_list_drop_element(ztm->_peers, prev_drop);
                 }
