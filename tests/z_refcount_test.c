@@ -56,7 +56,7 @@ void test_rc_drop(void) {
 }
 
 void test_rc_new(void) {
-    _dummy_t *val = z_malloc(sizeof(_dummy_t));
+    _dummy_t *val = (_dummy_t *)z_malloc(sizeof(_dummy_t));
     val->foo = 42;
     _dummy_rc_t drc = _dummy_rc_new(val);
     assert(!_Z_RC_IS_NULL(&drc));
@@ -277,7 +277,7 @@ void test_simple_rc_drop(void) {
 }
 
 void test_simple_rc_new(void) {
-    _dummy_t *val = z_malloc(sizeof(_dummy_t));
+    _dummy_t *val = (_dummy_t *)z_malloc(sizeof(_dummy_t));
     val->foo = 42;
     _dummy_simple_rc_t drc = _dummy_simple_rc_new(val);
     assert(!_Z_RC_IS_NULL(&drc));

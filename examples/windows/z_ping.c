@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    uint8_t* data = z_malloc(args.size);
+    uint8_t* data = (uint8_t*)z_malloc(args.size);
     for (unsigned int i = 0; i < args.size; i++) {
         data[i] = i % 10;
     }
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
             elapsed_us = z_clock_elapsed_us(&warmup_start);
         }
     }
-    unsigned long* results = z_malloc(sizeof(unsigned long) * args.number_of_pings);
+    unsigned long* results = (unsigned long*)z_malloc(sizeof(unsigned long) * args.number_of_pings);
     for (unsigned int i = 0; i < args.number_of_pings; i++) {
         z_clock_t measure_start = z_clock_now();
 

@@ -44,7 +44,7 @@ static inline void *_z_lru_cache_node_value(_z_lru_cache_node_t *node) {
 
 static _z_lru_cache_node_t *_z_lru_cache_node_create(void *value, size_t value_size) {
     size_t node_size = NODE_DATA_SIZE + value_size;
-    _z_lru_cache_node_t *node = z_malloc(node_size);
+    _z_lru_cache_node_t *node = (_z_lru_cache_node_t *)z_malloc(node_size);
     if (node == NULL) {
         return node;
     }

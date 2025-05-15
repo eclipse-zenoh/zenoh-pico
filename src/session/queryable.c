@@ -231,7 +231,7 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z
         }
     }
     // Build the z_query
-    _z_query_t *q = z_malloc(sizeof(_z_query_t));
+    _z_query_t *q = (_z_query_t *)z_malloc(sizeof(_z_query_t));
     if (q == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }

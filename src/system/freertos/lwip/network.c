@@ -408,7 +408,7 @@ long unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct s
 
     struct netif *netif = netif_find(iface);
     if (netif != NULL && netif_is_up(netif)) {
-        struct sockaddr_in *lsockaddr_in = z_malloc(sizeof(struct sockaddr_in));
+        struct sockaddr_in *lsockaddr_in = (struct sockaddr_in *)z_malloc(sizeof(struct sockaddr_in));
         if (lsockaddr != NULL) {
             (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
             const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);

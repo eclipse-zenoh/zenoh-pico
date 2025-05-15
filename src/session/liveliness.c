@@ -182,7 +182,8 @@ void _z_liveliness_pending_query_copy(_z_liveliness_pending_query_t *dst, const 
 }
 
 _z_liveliness_pending_query_t *_z_liveliness_pending_query_clone(const _z_liveliness_pending_query_t *src) {
-    _z_liveliness_pending_query_t *dst = z_malloc(sizeof(_z_liveliness_pending_query_t));
+    _z_liveliness_pending_query_t *dst =
+        (_z_liveliness_pending_query_t *)z_malloc(sizeof(_z_liveliness_pending_query_t));
     if (dst != NULL) {
         _z_liveliness_pending_query_copy(dst, src);
     }

@@ -763,7 +763,7 @@ void _z_close_serial(_z_sys_net_socket_t *sock) {
 }
 
 size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, uint8_t *ptr, size_t len) {
-    uint8_t *raw_buf = z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
+    uint8_t *raw_buf = (uint8_t *)z_malloc(_Z_SERIAL_MAX_COBS_BUF_SIZE);
     size_t rb = 0;
     while (rb < _Z_SERIAL_MAX_COBS_BUF_SIZE) {
         int r = uart_read_bytes(sock._serial, &raw_buf[rb], 1, 1000);
@@ -783,7 +783,7 @@ size_t _z_read_serial_internal(const _z_sys_net_socket_t sock, uint8_t *header, 
         }
     }
 
-    uint8_t *tmp_buf = z_malloc(_Z_SERIAL_MFS_SIZE);
+    uint8_t *tmp_buf = (uint8_t *)z_malloc(_Z_SERIAL_MFS_SIZE);
     size_t ret = _z_serial_msg_deserialize(raw_buf, rb, ptr, len, header, tmp_buf, _Z_SERIAL_MFS_SIZE);
 
     z_free(raw_buf);

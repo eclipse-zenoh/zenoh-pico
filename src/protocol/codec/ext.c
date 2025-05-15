@@ -187,7 +187,7 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
         }
         case _Z_MSG_EXT_ENC_ZBUF: {
             _z_slice_t buf = extension->_body._zbuf._val;
-            char *hex = z_malloc(buf.len * 2 + 1);
+            char *hex = (char *)z_malloc(buf.len * 2 + 1);
             for (size_t i = 0; i < buf.len; ++i) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
             }
