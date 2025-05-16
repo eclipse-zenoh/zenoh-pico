@@ -131,8 +131,6 @@ z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&ctx->mutex));
 #endif
-    // FIXME: Require interest protocol profile implementation
-    // ctx->state = (zn->_mode == Z_WHATAMI_CLIENT) ? WRITE_FILTER_INIT : WRITE_FILTER_ACTIVE;
     ctx->state = WRITE_FILTER_INIT;
     ctx->targets = _z_filter_target_list_new();
 

@@ -449,7 +449,7 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint
     // TODO: process restricted flag & associated key
     _ZP_UNUSED(key);
     // Check transport type
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         return _Z_RES_OK;  // Nothing to do on unicast
     }
     // Current flags process

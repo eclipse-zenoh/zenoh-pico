@@ -90,8 +90,8 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         uint16_t id = _z_register_resource(zn, keyexpr, Z_RESOURCE_ID_NONE, NULL);
         if (id != 0) {
             // Build the declare message to send on the wire
@@ -143,8 +143,8 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (zs->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);

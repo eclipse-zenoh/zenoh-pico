@@ -269,7 +269,7 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_com
     uintptr_t mapping = _Z_KEYEXPR_MAPPING_LOCAL;
     if (peer != NULL) {
         is_local = false;
-        mapping = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE;
+        mapping = (uintptr_t)peer;
     }
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, (unsigned int)mapping);
     _z_session_mutex_lock(zn);
