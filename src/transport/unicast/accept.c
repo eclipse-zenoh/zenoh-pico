@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/system/common/platform.h"
@@ -61,7 +62,11 @@ static void *_zp_unicast_accept_task(void *ctx) {
             continue;
         }
         // Add peer
-        _z_transport_peer_unicast_add(ztu, &param, con_socket);
+        _z_transport_peer_unicast_t *new_peer;
+        _z_transport_peer_unicast_add(ztu, &param, con_socket, &new_peer);
+        if (new_peer != NULL) {
+            _z_interest_push_declarations_to_peer(_Z_RC_IN_VAL(ztu->_common._session), (void *)new_peer);
+        }
     }
     z_free(accept_task_is_running);
     return NULL;

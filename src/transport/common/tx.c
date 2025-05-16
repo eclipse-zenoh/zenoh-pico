@@ -20,6 +20,7 @@
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/transport/raweth/tx.h"
+#include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/endianness.h"
 #include "zenoh-pico/utils/logging.h"
@@ -463,7 +464,7 @@ z_result_t __unsafe_z_serialize_zenoh_fragment(_z_wbuf_t *dst, _z_wbuf_t *src, z
 }
 
 z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_reliability_t reliability,
-                         z_congestion_control_t cong_ctrl) {
+                         z_congestion_control_t cong_ctrl, void *peer) {
     z_result_t ret = _Z_RES_OK;
     // Call transport function
     switch (zn->_tp._type) {
@@ -473,8 +474,20 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                                                  NULL);
             } else if (_z_transport_peer_unicast_list_len(zn->_tp._transport._unicast._peers) > 0) {
                 _z_transport_peer_mutex_lock(&zn->_tp._transport._unicast._common);
-                ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability, cong_ctrl,
-                                                 zn->_tp._transport._unicast._peers);
+                if (peer == NULL) {
+                    ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability,
+                                                     cong_ctrl, zn->_tp._transport._unicast._peers);
+                } else {
+                    // Send to a single peer, convert to peer list
+                    _z_transport_peer_unicast_list_t *dst_list = _z_transport_peer_unicast_list_new();
+                    dst_list = _z_transport_peer_unicast_list_push(dst_list, (_z_transport_peer_unicast_t *)peer);
+                    if (dst_list != NULL) {
+                        // Send message
+                        ret = _z_transport_tx_send_n_msg(&zn->_tp._transport._unicast._common, z_msg, reliability,
+                                                         cong_ctrl, dst_list);
+                        z_free(dst_list);
+                    }
+                }
                 _z_transport_peer_mutex_unlock(&zn->_tp._transport._unicast._common);
             }
             break;

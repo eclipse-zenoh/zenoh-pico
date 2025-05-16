@@ -112,8 +112,8 @@ void _z_session_queryable_clear(_z_session_queryable_t *res);
 _Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
 _Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy,
                _z_noop_move)
-_Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size, _z_session_queryable_rc_drop,
-               _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_session_queryable_rc_size,
+               _z_session_queryable_rc_drop, _z_session_queryable_rc_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes

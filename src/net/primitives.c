@@ -45,7 +45,7 @@
 /*------------------ Declaration Helpers ------------------*/
 z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
-    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     if (ret == _Z_RES_OK) {
@@ -58,7 +58,7 @@ z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) 
 
 z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
-    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     if (ret == _Z_RES_OK) {
@@ -241,7 +241,7 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes
             return _Z_ERR_GENERIC;
     }
 
-    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
@@ -474,7 +474,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
             default:
                 return _Z_ERR_GENERIC;
         }
-        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
 
@@ -509,7 +509,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
                     },
             },
     };
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
@@ -581,7 +581,7 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
             _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
                                                          timeout_ms, attachment, cong_ctrl, priority, is_express);
 
-            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -614,7 +614,7 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     if (zn->_mode == Z_WHATAMI_CLIENT) {
         _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             _z_unregister_interest(zn, sintr);
             return 0;
         }
@@ -633,7 +633,7 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
     if (zn->_mode == Z_WHATAMI_CLIENT) {
         _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_n_msg_clear(&n_msg);

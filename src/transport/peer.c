@@ -88,7 +88,7 @@ bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const
 }
 
 z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
-                                         _z_sys_net_socket_t socket) {
+                                         _z_sys_net_socket_t socket, _z_transport_peer_unicast_t **output_peer) {
     // Create peer
     _z_transport_peer_unicast_t *peer = (_z_transport_peer_unicast_t *)z_malloc(sizeof(_z_transport_peer_unicast_t));
     if (peer == NULL) {
@@ -120,6 +120,9 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
     _z_transport_peer_mutex_unlock(&ztu->_common);
     if (ztu->_peers == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    if (output_peer != NULL) {
+        *output_peer = peer;
     }
     return _Z_RES_OK;
 }
