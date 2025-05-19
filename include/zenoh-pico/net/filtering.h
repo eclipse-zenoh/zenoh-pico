@@ -41,9 +41,8 @@ void _z_filter_target_elem_free(void **elem);
 _Z_LIST_DEFINE(_z_filter_target, _z_filter_target_t)
 
 typedef enum {
-    WRITE_FILTER_INIT = 0,
-    WRITE_FILTER_ACTIVE = 1,
-    WRITE_FILTER_OFF = 2,
+    WRITE_FILTER_ACTIVE = 0,
+    WRITE_FILTER_OFF = 1,
 } _z_write_filter_state_t;
 
 typedef struct {
