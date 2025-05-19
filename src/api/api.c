@@ -1129,7 +1129,8 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
 
         // Check if write filter is active before writing
-        if (!_z_write_filter_active(&pub->_filter)) {
+        if ((_Z_RC_IN_VAL(&pub->_zn)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) ||
+            !_z_write_filter_active(&pub->_filter)) {
             // Write value
             ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
@@ -1466,7 +1467,8 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        if (_z_write_filter_active(&querier->_filter)) {
+        if (((_Z_RC_IN_VAL(&querier->_zn)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)) &&
+            _z_write_filter_active(&querier->_filter)) {
             callback->_this._val.drop(ctx);
         } else {
             _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = encoding};
