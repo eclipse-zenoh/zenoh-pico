@@ -71,10 +71,16 @@ int main(int argc, char **argv) {
     }
 
     printf("Press CTRL-C to quit...\n");
+    z_clock_t pulse_time = z_clock_now();
     while (msg_nb < n) {
+        z_sleep_ms(50);
         zp_read(z_loan(s), NULL);
-        zp_send_keep_alive(z_loan(s), NULL);
-        zp_send_join(z_loan(s), NULL);
+        unsigned long elapsed_ms = z_clock_elapsed_ms(&pulse_time);
+        if (elapsed_ms >= (Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR)) {
+            pulse_time = z_clock_now();
+            zp_send_keep_alive(z_loan(s), NULL);
+            zp_send_join(z_loan(s), NULL);
+        }
     }
     z_drop(z_move(sub));
     z_drop(z_move(s));
