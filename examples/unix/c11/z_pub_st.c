@@ -55,11 +55,14 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
+    // Read received declaration
+    zp_read(z_loan(s), NULL);
     // Main loop
     printf("Press CTRL-C to quit...\n");
     char buf[256];
+    z_clock_t pulse_time = z_clock_now();
     for (int idx = 0; idx < n; idx++) {
-        sleep(1);
+        z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
 
@@ -70,8 +73,12 @@ int main(int argc, char **argv) {
         z_publisher_put(z_loan(pub), z_move(payload), NULL);
 
         zp_read(z_loan(s), NULL);
-        zp_send_keep_alive(z_loan(s), NULL);
-        zp_send_join(z_loan(s), NULL);
+        unsigned long elapsed_ms = z_clock_elapsed_ms(&pulse_time);
+        if (elapsed_ms >= (Z_TRANSPORT_LEASE / Z_TRANSPORT_LEASE_EXPIRE_FACTOR)) {
+            pulse_time = z_clock_now();
+            zp_send_keep_alive(z_loan(s), NULL);
+            zp_send_join(z_loan(s), NULL);
+        }
     }
     z_drop(z_move(pub));
     z_drop(z_move(s));
