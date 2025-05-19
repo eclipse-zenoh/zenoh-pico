@@ -40,6 +40,7 @@ z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
 z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t key, uint32_t id, uint8_t flags);
 z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, _z_transport_peer_common_t *peer);
 void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t *peer);
+void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest);
 
 #ifdef __cplusplus
 }

@@ -164,6 +164,15 @@ z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, void *peer) {
 
 #if Z_FEATURE_INTEREST == 1
 void _z_declare_data_clear(_z_declare_data_t *data) { _z_keyexpr_clear(&data->_key); }
+size_t _z_declare_data_size(_z_declare_data_t *data) {
+    _ZP_UNUSED(data);
+    return sizeof(_z_declare_data_t);
+}
+void _z_declare_data_copy(_z_declare_data_t *dst, const _z_declare_data_t *src) {
+    dst->_id = src->_id;
+    dst->_type = src->_type;
+    _z_keyexpr_copy(&dst->_key, &src->_key);
+}
 
 bool _z_declare_data_eq(const _z_declare_data_t *left, const _z_declare_data_t *right) {
     return ((left->_id == right->_id) && (left->_type == right->_type));
@@ -495,6 +504,36 @@ void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t 
     }
     // Clean up
     _z_session_interest_rc_list_free(&intrs);
+}
+
+void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest) {
+    _z_session_mutex_lock(zn);
+    _z_declare_data_list_t *res_list = _z_declare_data_list_clone(zn->_remote_declares);
+    _z_session_mutex_unlock(zn);
+
+    _z_declare_data_list_t *xs = res_list;
+    while (xs != NULL) {
+        _z_declare_data_t *res = _z_declare_data_list_head(xs);
+        if (_z_keyexpr_suffix_intersects(&interest->_key, &res->_key)) {
+            _z_interest_msg_t msg = {0};
+            switch (res->_type) {
+                default:
+                    break;
+                case _Z_DECLARE_TYPE_QUERYABLE:
+                    msg.type = _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE;
+                    break;
+                case _Z_DECLARE_TYPE_SUBSCRIBER:
+                    msg.type = _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER;
+                    break;
+                case _Z_DECLARE_TYPE_TOKEN:
+                    msg.type = _Z_INTEREST_MSG_TYPE_DECL_TOKEN;
+                    break;
+            }
+            interest->_callback(&msg, (_z_transport_peer_common_t *)res->_key._mapping, interest->_arg);
+        }
+        xs = _z_declare_data_list_tail(xs);
+    }
+    _z_declare_data_list_free(&res_list);
 }
 
 #else

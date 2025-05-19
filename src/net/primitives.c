@@ -620,6 +620,8 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
         }
         _z_n_msg_clear(&n_msg);
     }
+    // Replay declares
+    _z_interest_replay_declare(zn, &intr);
     return intr._id;
 }
 
