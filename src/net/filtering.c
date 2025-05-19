@@ -95,15 +95,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
     }
     // Process filter state
     switch (ctx->state) {
-        default: // Incorrect values are treated as init
-        case WRITE_FILTER_INIT:
-            // Update init state
-            if (ctx->targets == NULL) {
-                ctx->state = WRITE_FILTER_ACTIVE;
-            } else {
-                ctx->state = WRITE_FILTER_OFF;
-            }
-            break;
+        default:  // Incorrect values are treated as active
         case WRITE_FILTER_ACTIVE:
             // Deactivate filter if no more targets
             if (ctx->targets != NULL) {
@@ -131,9 +123,7 @@ z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&ctx->mutex));
 #endif
-    // FIXME: Require interest protocol profile implementation
-    // ctx->state = (zn->_mode == Z_WHATAMI_CLIENT) ? WRITE_FILTER_INIT : WRITE_FILTER_ACTIVE;
-    ctx->state = WRITE_FILTER_INIT;
+    ctx->state = WRITE_FILTER_ACTIVE;
     ctx->targets = _z_filter_target_list_new();
 
     filter->ctx = ctx;

@@ -52,7 +52,7 @@ void _z_resource_copy(_z_resource_t *dst, const _z_resource_t *src);
 void _z_resource_free(_z_resource_t **res);
 size_t _z_resource_size(_z_resource_t *p);
 
-_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_noop_size, _z_resource_clear, _z_resource_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_resource, _z_resource_t, _z_resource_size, _z_resource_clear, _z_resource_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_resource, _z_resource_t)
 
 _Z_ELEM_DEFINE(_z_keyexpr, _z_keyexpr_t, _z_keyexpr_size, _z_keyexpr_clear, _z_keyexpr_copy, _z_keyexpr_move)
@@ -112,8 +112,8 @@ void _z_session_queryable_clear(_z_session_queryable_t *res);
 _Z_REFCOUNT_DEFINE(_z_session_queryable, _z_session_queryable)
 _Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_session_queryable_clear, _z_noop_copy,
                _z_noop_move)
-_Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_noop_size, _z_session_queryable_rc_drop,
-               _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_session_queryable_rc_size,
+               _z_session_queryable_rc_drop, _z_session_queryable_rc_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes
@@ -215,7 +215,10 @@ typedef struct {
 } _z_declare_data_t;
 
 void _z_declare_data_clear(_z_declare_data_t *data);
-_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_noop_size, _z_declare_data_clear, _z_noop_copy, _z_noop_move)
+size_t _z_declare_data_size(_z_declare_data_t *data);
+void _z_declare_data_copy(_z_declare_data_t *dst, const _z_declare_data_t *src);
+_Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_declare_data_size, _z_declare_data_clear, _z_declare_data_copy,
+               _z_noop_move)
 _Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
 
 #ifdef __cplusplus

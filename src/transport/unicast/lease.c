@@ -134,7 +134,8 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     curr_list = _z_transport_peer_unicast_list_tail(curr_list);
                     // Drop if needed
                     if (drop_peer) {
-                        // TODO: Drop peer references (sub/queryable cache + interests)
+                        _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
+                        _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
                         _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
                         ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
                     }

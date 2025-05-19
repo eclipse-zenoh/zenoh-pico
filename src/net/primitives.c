@@ -45,7 +45,7 @@
 /*------------------ Declaration Helpers ------------------*/
 z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
-    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     if (ret == _Z_RES_OK) {
@@ -58,7 +58,7 @@ z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) 
 
 z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg) {
     z_result_t ret = _Z_RES_OK;
-    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    ret = _z_send_n_msg(zn, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     if (ret == _Z_RES_OK) {
@@ -90,8 +90,8 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         uint16_t id = _z_register_resource(zn, keyexpr, Z_RESOURCE_ID_NONE, NULL);
         if (id != 0) {
             // Build the declare message to send on the wire
@@ -143,8 +143,8 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (zs->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
         if (r != NULL) {
             key = _z_rid_with_suffix(r->_id, NULL);
@@ -241,7 +241,7 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes
             return _Z_ERR_GENERIC;
     }
 
-    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
@@ -474,7 +474,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
             default:
                 return _Z_ERR_GENERIC;
         }
-        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
 
@@ -509,7 +509,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
                     },
             },
     };
-    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
 
@@ -581,7 +581,7 @@ z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *paramete
             _z_zenoh_message_t z_msg = _z_msg_make_query(&keyexpr, &params, pq->_id, pq->_consolidation, &value,
                                                          timeout_ms, attachment, cong_ctrl, priority, is_express);
 
-            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl) != _Z_RES_OK) {
+            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -614,12 +614,14 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     if (zn->_mode == Z_WHATAMI_CLIENT) {
         _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             _z_unregister_interest(zn, sintr);
             return 0;
         }
         _z_n_msg_clear(&n_msg);
     }
+    // Replay declares
+    _z_interest_replay_declare(zn, &intr);
     return intr._id;
 }
 
@@ -633,7 +635,7 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
     if (zn->_mode == Z_WHATAMI_CLIENT) {
         _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
-        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK) != _Z_RES_OK) {
+        if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_n_msg_clear(&n_msg);

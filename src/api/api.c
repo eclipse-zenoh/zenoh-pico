@@ -1022,8 +1022,8 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     _z_keyexpr_t key = keyexpr_aliased;
 
     pub->_val = _z_publisher_null();
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1044,14 +1044,18 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     // Set publisher
     _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                                                   opt.congestion_control, opt.priority, opt.is_express, reliability);
-    // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
-    if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        // Create write filter
+        z_result_t res =
+            _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
+        if (res != _Z_RES_OK) {
+            if (key._id != Z_RESOURCE_ID_NONE) {
+                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+            }
+            return res;
         }
-        return res;
     }
     pub->_val = int_pub;
     return _Z_RES_OK;
@@ -1373,8 +1377,8 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     _z_keyexpr_t key = keyexpr_aliased;
 
     querier->_val = _z_querier_null();
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1393,14 +1397,17 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
                                                   opt.priority, opt.is_express, opt.timeout_ms,
                                                   opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
-    // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
-    if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        // Create write filter
+        z_result_t res = _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased,
+                                                _Z_INTEREST_FLAG_QUERYABLES);
+        if (res != _Z_RES_OK) {
+            if (key._id != Z_RESOURCE_ID_NONE) {
+                _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+            }
+            return res;
         }
-        return res;
     }
     querier->_val = int_querier;
     return _Z_RES_OK;
@@ -1612,8 +1619,8 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
@@ -1858,8 +1865,8 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
 
-    // TODO: Implement interest protocol for multicast transports, unicast p2p
-    if (_Z_RC_IN_VAL(zs)->_mode == Z_WHATAMI_CLIENT) {
+    // TODO: Implement interest protocol for multicast transports
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             bool do_keydecl = true;

@@ -338,7 +338,8 @@ void *_zp_unicast_read_task(void *ztu_arg) {
                 // Drop peer if needed
                 if (drop_peer) {
                     _Z_DEBUG("Dropping peer");
-                    // TODO: Drop peer references (sub/queryable cache + filter target)
+                    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
+                    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
                     _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
                     ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
                 }

@@ -114,7 +114,7 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
                                                           reliability, &put._commons._source_info, peer));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
-            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 #if Z_FEATURE_SUBSCRIPTION == 0
             _z_n_msg_request_clear(req);
 #endif
@@ -129,7 +129,7 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
                                                           peer));
 #endif
             _z_network_message_t final = _z_n_msg_make_response_final(req->_rid);
-            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+            z_result_t ret = _z_send_n_msg(zn, &final, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
 #if Z_FEATURE_SUBSCRIPTION == 0
             _z_n_msg_request_clear(req);
 #endif

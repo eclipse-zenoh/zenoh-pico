@@ -59,7 +59,7 @@ void *_zp_raweth_read_task(void *ztm_arg) {
     _z_slice_t addr = _z_slice_alias_buf(NULL, 0);
 
     // Task loop
-    while (ztm->_common._read_task_running == true) {
+    while (ztm->_common._read_task_running) {
         // Read message from link
         z_result_t ret = _z_raweth_recv_t_msg(ztm, &t_msg, &addr);
         switch (ret) {
