@@ -170,7 +170,7 @@ z_result_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t h
     *decl = _z_decl_kexpr_null();
     _Z_RETURN_IF_ERR(_z_zint16_decode(&decl->_id, zbf));
     _Z_RETURN_IF_ERR(_z_keyexpr_decode(&decl->_keyexpr, zbf, _Z_HAS_FLAG(header, _Z_DECL_KEXPR_FLAG_N)));
-    _z_keyexpr_set_mapping(&decl->_keyexpr, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+    decl->_keyexpr._mapping = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE;
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x15));
@@ -195,7 +195,7 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             _z_zbuf_t *zbf = &_zbf;
             uint8_t header;
             _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-            uint16_t mapping = _Z_HAS_FLAG(header, 2) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
+            uintptr_t mapping = _Z_HAS_FLAG(header, 2) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
             _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
             if (_Z_HAS_FLAG(header, 1)) {
                 size_t len = _z_zbuf_len(zbf);
@@ -203,11 +203,9 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 if (!_z_keyexpr_has_suffix(ke)) {
                     return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                 }
-                ke->_mapping = _z_keyexpr_mapping(mapping);
                 _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
-            } else {
-                ke->_mapping = _z_keyexpr_mapping(mapping);
             }
+            ke->_mapping = mapping;
         } break;
         default:
             if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
@@ -226,7 +224,7 @@ z_result_t _z_undecl_trivial_decode(_z_zbuf_t *zbf, _z_keyexpr_t *_ext_keyexpr, 
 z_result_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, bool *has_extensions, uint32_t *id,
                                   _z_keyexpr_t *ke) {
     *has_extensions = _Z_HAS_FLAG(header, _Z_FLAG_Z_Z);
-    uint16_t mapping =
+    uintptr_t mapping =
         _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_RETURN_IF_ERR(_z_zint32_decode(id, zbf));
     _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
@@ -241,12 +239,11 @@ z_result_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, bool *has_exte
         if (!_z_keyexpr_has_suffix(ke)) {
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
-        ke->_mapping = _z_keyexpr_mapping(mapping);
         _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
     } else {
         ke->_suffix = _z_string_null();
-        ke->_mapping = _z_keyexpr_mapping(mapping);
     }
+    ke->_mapping = mapping;
     return _Z_RES_OK;
 }
 z_result_t _z_decl_subscriber_decode_extensions(_z_msg_ext_t *extension, void *ctx) {

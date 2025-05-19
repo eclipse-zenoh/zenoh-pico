@@ -28,16 +28,16 @@ uint32_t _z_get_entity_id(_z_session_t *zn);
 
 /*------------------ Resource ------------------*/
 uint16_t _z_get_resource_id(_z_session_t *zn);
-_z_resource_t *_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t rid);
-_z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
-_z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
-uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_t id, uint16_t register_to_mapping);
-void _z_unregister_resource(_z_session_t *zn, uint16_t id, uint16_t mapping);
-void _z_unregister_resources_for_peer(_z_session_t *zn, uint16_t mapping);
-void _z_flush_resources(_z_session_t *zn);
+_z_resource_t *_z_get_resource_by_id(_z_session_t *zn, _z_zint_t rid, _z_transport_peer_common_t *peer);
+_z_resource_t *_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_transport_peer_common_t *peer);
+_z_keyexpr_t _z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
+                                          _z_transport_peer_common_t *peer);
+uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_t id, _z_transport_peer_common_t *peer);
+void _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_common_t *peer);
+void _z_flush_local_resources(_z_session_t *zn);
 
-_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, bool force_alias);
-_z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, uint16_t mapping, _z_zint_t id);
+_z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, bool force_alias,
+                                                  _z_transport_peer_common_t *peer);
 _z_resource_t *__unsafe_z_get_resource_matching_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr);
 
 #ifdef __cplusplus

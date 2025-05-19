@@ -65,13 +65,13 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Add each socket to the socket set
-    _z_transport_unicast_peer_list_t **peers = (_z_transport_unicast_peer_list_t **)v_peers;
+    _z_transport_peer_unicast_list_t **peers = (_z_transport_peer_unicast_list_t **)v_peers;
     _z_mutex_rec_lock(mutex);
-    _z_transport_unicast_peer_list_t *curr = *peers;
+    _z_transport_peer_unicast_list_t *curr = *peers;
     while (curr != NULL) {
-        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(curr);
         FreeRTOS_FD_SET(peer->_socket._socket, socketSet, eSELECT_READ);
-        curr = _z_transport_unicast_peer_list_tail(curr);
+        curr = _z_transport_peer_unicast_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);
     // Wait for an event on any of the sockets in the set, non-blocking
@@ -84,11 +84,11 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     _z_mutex_rec_lock(mutex);
     curr = *peers;
     while (curr != NULL) {
-        _z_transport_unicast_peer_t *peer = _z_transport_unicast_peer_list_head(curr);
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(curr);
         if (FreeRTOS_FD_ISSET(peer->_socket._socket, socketSet)) {
             peer->_pending = true;
         }
-        curr = _z_transport_unicast_peer_list_tail(curr);
+        curr = _z_transport_peer_unicast_list_tail(curr);
     }
     _z_mutex_rec_unlock(mutex);
     // Clean up

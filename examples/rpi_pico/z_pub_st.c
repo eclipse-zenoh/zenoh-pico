@@ -50,6 +50,8 @@ void app_main(void) {
         printf("Unable to declare publisher for key expression!\n");
         return;
     }
+    // Read received declaration
+    zp_read(z_loan(s), NULL);
 
     char *buf = (char *)pvPortMalloc(256);
     z_clock_t now = z_clock_now();

@@ -90,6 +90,8 @@ int main(int argc, char **argv) {
         printf("Unable to declare publisher for key expression!\n");
         return -1;
     }
+    // Read received declaration
+    zp_read(z_session_loan(&s), NULL);
 
     printf("Press CTRL-C to quit...\n");
     char *buf = (char *)malloc(256);

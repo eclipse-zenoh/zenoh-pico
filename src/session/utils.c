@@ -74,7 +74,6 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
     // Initialize the data structs
     zn->_local_resources = NULL;
-    zn->_remote_resources = NULL;
 #if Z_FEATURE_SUBSCRIPTION == 1
     zn->_subscriptions = NULL;
     zn->_liveliness_subscriptions = NULL;
@@ -127,7 +126,7 @@ void _z_session_clear(_z_session_t *zn) {
     _z_transport_clear(&zn->_tp);
 
     // Clean up the entities
-    _z_flush_resources(zn);
+    _z_flush_local_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);
 #if Z_FEATURE_RX_CACHE == 1

@@ -32,7 +32,8 @@ z_result_t _z_query_send_reply_final(_z_query_t *q) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
     _z_zenoh_message_t z_msg = _z_n_msg_make_response_final(q->_request_id);
-    z_result_t ret = _z_send_n_msg(_Z_RC_IN_VAL(&sess_rc), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+    z_result_t ret =
+        _z_send_n_msg(_Z_RC_IN_VAL(&sess_rc), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
     _z_msg_clear(&z_msg);
     _z_session_rc_drop(&sess_rc);
     return ret;

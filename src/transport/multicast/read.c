@@ -65,7 +65,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
 
     uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
     _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
-    while (ztm->_common._read_task_running == true) {
+    while (ztm->_common._read_task_running) {
         size_t to_read = 0;
 
         // Read bytes from socket to the main buffer

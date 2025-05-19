@@ -151,7 +151,8 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
     return ret;
 }
 
-static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_cache_data_t *infos) {
+static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_cache_data_t *infos,
+                                                 _z_transport_peer_common_t *peer) {
     _z_queryable_cache_data_t *cache_entry = NULL;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_queryable_lru_cache_get(&zn->_queryable_cache, infos);
@@ -165,9 +166,9 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     } else {
         // Build queryable data
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
-                 _z_string_data(&infos->ke_in._suffix), _z_keyexpr_mapping_id(&infos->ke_in));
+                 _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
         _z_session_mutex_lock(zn);
-        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true);
+        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true, peer);
 
         if (!_z_keyexpr_has_suffix(&infos->ke_out)) {
             _z_session_mutex_unlock(zn);
@@ -200,12 +201,13 @@ static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_r
     *query = _z_query_steal_data(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
 }
 
-z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid) {
+z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid,
+                                 _z_transport_peer_common_t *peer) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
     qle_infos.ke_in = _z_keyexpr_steal(q_key);
     // Retrieve sub infos
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos), _z_keyexpr_clear(&qle_infos.ke_in);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos, peer), _z_keyexpr_clear(&qle_infos.ke_in);
                            _z_value_clear(&msgq->_ext_value); _z_bytes_drop(&msgq->_ext_attachment);
                            _z_slice_clear(&msgq->_parameters););
     // Check if there are queryables

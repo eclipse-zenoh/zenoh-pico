@@ -110,7 +110,7 @@ typedef struct {
     } _body;
 } _z_declaration_t;
 void _z_declaration_clear(_z_declaration_t* decl);
-void _z_decl_fix_mapping(_z_declaration_t* msg, uint16_t mapping);
+void _z_decl_fix_mapping(_z_declaration_t* msg, uintptr_t mapping);
 
 _z_declaration_t _z_make_decl_keyexpr(uint16_t id, _Z_MOVE(_z_keyexpr_t) key);
 _z_declaration_t _z_make_undecl_keyexpr(uint16_t id);

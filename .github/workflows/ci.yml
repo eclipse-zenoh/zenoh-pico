@@ -35,7 +35,7 @@ jobs:
           CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
   run_windows_test:
-    name: Run unit tests on windows-latest
+    name: Run peer unicast test on windows-latest
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -45,6 +45,7 @@ jobs:
         run: |
           make all
           .\build\tests\Debug\z_test_unicast.exe
+        timeout-minutes: 10
         shell: cmd
         env: 
           Z_FEATURE_UNSTABLE_API: 1

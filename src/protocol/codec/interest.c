@@ -82,7 +82,7 @@ z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_f
             _Z_RETURN_IF_ERR(_z_keyexpr_decode(&interest->_keyexpr, zbf, _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_N)));
             // Set mapping
             if (_Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M)) {
-                _z_keyexpr_set_mapping(&interest->_keyexpr, _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
+                interest->_keyexpr._mapping = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE;
             }
         }
         // Store interest flags (current and future already processed)

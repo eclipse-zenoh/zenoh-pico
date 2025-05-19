@@ -113,7 +113,7 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_q
 
 static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id,
                                                        const _z_keyexpr_t *keyexpr, _z_msg_put_t *msg,
-                                                       z_sample_kind_t kind) {
+                                                       z_sample_kind_t kind, _z_transport_peer_common_t *peer) {
     _z_session_mutex_lock(zn);
 
     // Get query infos
@@ -122,7 +122,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         _z_session_mutex_unlock(zn);
         return _Z_ERR_ENTITY_UNKNOWN;
     }
-    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true);
+    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true, peer);
     if (!pen_qry->_anykey && !_z_keyexpr_suffix_intersects(&pen_qry->_key, keyexpr)) {
         _z_session_mutex_unlock(zn);
         return _Z_ERR_QUERY_NOT_MATCH;
@@ -189,8 +189,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
 }
 
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
-                                          _z_msg_put_t *msg, z_sample_kind_t kind) {
-    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind);
+                                          _z_msg_put_t *msg, z_sample_kind_t kind, _z_transport_peer_common_t *peer) {
+    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind, peer);
     // Clean up
     _z_keyexpr_clear(keyexpr);
     _z_bytes_drop(&msg->_payload);

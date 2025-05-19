@@ -56,7 +56,6 @@ typedef struct _z_session_t {
 
     // Session declarations
     _z_resource_list_t *_local_resources;
-    _z_resource_list_t *_remote_resources;
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     // Information for session restoring

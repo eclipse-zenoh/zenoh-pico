@@ -307,7 +307,7 @@ _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_
 _Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 _Z_LIST_DEFINE(_z_network_message, _z_network_message_t)
 
-void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uint16_t mapping);
+void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uintptr_t mapping);
 _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_slice_t) parameters, _z_zint_t qid,
                                        z_consolidation_mode_t consolidation, _Z_MOVE(_z_value_t) value,
                                        uint64_t timeout_ms, _z_bytes_t attachment, z_congestion_control_t cong_ctrl,

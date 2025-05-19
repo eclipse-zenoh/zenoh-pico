@@ -223,7 +223,7 @@ z_result_t _z_reopen(_z_session_rc_t *zn) {
             _z_network_message_list_t *iter = zs->_decalaration_cache;
             while (iter != NULL) {
                 _z_network_message_t *n_msg = _z_network_message_list_head(iter);
-                ret = _z_send_n_msg(zs, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK);
+                ret = _z_send_n_msg(zs, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
                 if (ret != _Z_RES_OK) {
                     _Z_DEBUG("Send message during reopen failed: %i", ret);
                     continue;

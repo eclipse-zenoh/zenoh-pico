@@ -98,54 +98,35 @@ void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
 uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
- * The product of:
- * - top-most bit: whether or not the keyexpr containing this mapping owns its suffix (1=true)
- * - the mapping for the keyexpr prefix:
- *     - 0: local mapping.
- *     - 0x7fff (MAX): unknown remote mapping.
- *     - x: the mapping associated with the x-th peer.
- */
-typedef struct {
-    uint16_t _val;
-} _z_mapping_t;
-#define _Z_KEYEXPR_MAPPING_LOCAL 0
-#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE 0x7fff
-
-/**
  * A zenoh key-expression.
  *
  * Members:
- *   uint16_t _id: The resource ID of the ke.
- *   _z_mapping_t _mapping: The resource mapping of the ke.
- *   _z_string_t _suffix: The string value of the ke.
+ *  uint16_t _id: The resource ID of the ke.
+ *  uintptr_t _mapping: Address of the peer as id, if ke is remotely declared.
+ *  _z_string_t _suffix: The string value of the ke.
  */
+// Note on the _mapping field: there are collisions on _id value between peers/local, this field is used only to
+// distinguish which peer/local id space we are in and should not be dereferenced, just compared. NULL/0 value is used
+// for local declared keyexpr and the address of empty_id as a placeholder.
+#define _Z_KEYEXPR_MAPPING_LOCAL (uintptr_t)0
+#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE (uintptr_t)(&empty_id)
+
 typedef struct {
     uint16_t _id;
-    _z_mapping_t _mapping;
+    uintptr_t _mapping;
     _z_string_t _suffix;
 } _z_keyexpr_t;
 
-static inline uint16_t _z_keyexpr_mapping_id(const _z_keyexpr_t *key) { return key->_mapping._val & 0x7fff; }
-static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) {
-    return (key->_mapping._val & 0x7fff) == _Z_KEYEXPR_MAPPING_LOCAL;
-}
-static inline _z_mapping_t _z_keyexpr_mapping(uint16_t id) {
-    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-    _z_mapping_t mapping = {id};
-    return mapping;
-}
-static inline void _z_keyexpr_set_mapping(_z_keyexpr_t *ke, uint16_t id) {
-    assert(id <= _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE);
-    ke->_mapping._val &= 0x8000;
-    ke->_mapping._val |= id;
-}
-static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uint16_t id) {
-    if (_z_keyexpr_mapping_id(ke) == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
-        _z_keyexpr_set_mapping(ke, id);
+static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) { return key->_mapping == _Z_KEYEXPR_MAPPING_LOCAL; }
+static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uintptr_t mapping) {
+    if (ke->_mapping == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
+        ke->_mapping = mapping;
     }
 }
 static inline bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
-static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) { return (ke->_id != 0) || _z_keyexpr_has_suffix(ke); }
+static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) {
+    return (ke->_id != Z_RESOURCE_ID_NONE) || _z_keyexpr_has_suffix(ke);
+}
 
 /**
  * Create a resource key from a resource name.
