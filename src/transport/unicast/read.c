@@ -73,7 +73,7 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
     while (_z_zbuf_len(&zbuf) > 0) {
         // Decode one session message
         _z_transport_message_t t_msg;
-        z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf, &ztu->_common._arc_pool, &ztu->_common._msg_pool);
+        z_result_t ret = _z_transport_message_decode(&t_msg, &zbuf);
 
         if (ret != _Z_RES_OK) {
             _Z_INFO("Connection compromised due to malformed message: %d", ret);

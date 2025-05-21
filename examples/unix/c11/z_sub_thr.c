@@ -89,12 +89,10 @@ int main(int argc, char **argv) {
         z_drop(z_move(s));
         exit(-1);
     }
-    if (!is_peer) {
-        if (zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-            printf("Unable to start lease tasks\n");
-            z_drop(z_move(s));
-            exit(-1);
-        }
+    if (zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
+        printf("Unable to start lease tasks\n");
+        z_drop(z_move(s));
+        exit(-1);
     }
 
     // Declare Subscriber/resource

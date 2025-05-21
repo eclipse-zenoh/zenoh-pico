@@ -56,8 +56,6 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
     // Clean up the buffers
     _z_wbuf_clear(&ztc->_wbuf);
     _z_zbuf_clear(&ztc->_zbuf);
-    _z_arc_slice_svec_release(&ztc->_arc_pool);
-    _z_network_message_svec_release(&ztc->_msg_pool);
 
     _z_link_clear(&ztc->_link);
 }
