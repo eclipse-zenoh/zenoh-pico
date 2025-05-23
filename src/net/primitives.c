@@ -260,6 +260,7 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr._id;
+    s._declared_key = _z_keyexpr_duplicate(&keyexpr);
     s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
     s._callback = callback;
     s._dropper = dropper;
@@ -326,6 +327,7 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
                                     _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg) {
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
+    q._declared_key = _z_keyexpr_duplicate(&keyexpr);
     q._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
     q._complete = complete;
     q._callback = callback;

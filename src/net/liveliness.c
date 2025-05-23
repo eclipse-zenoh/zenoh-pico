@@ -73,6 +73,7 @@ _z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_k
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._key_id = keyexpr->_id;
+    s._declared_key = _z_keyexpr_duplicate(keyexpr);
     s._key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), keyexpr, NULL);
     s._callback = callback;
     s._dropper = dropper;
