@@ -239,7 +239,7 @@ static bool test_peer_connection(void) {
     if (zp_start_read_task(z_loan_mut(s), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(s), NULL) != Z_OK) {
         printf("Unable to start read and lease tasks\n");
         z_session_drop(z_session_move(&s));
-        return NULL;
+        return false;
     }
     z_owned_session_t sess_array[Z_LISTEN_MAX_CONNECTION_NB + 1];
     z_owned_config_t cfg_array[Z_LISTEN_MAX_CONNECTION_NB + 1];

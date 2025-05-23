@@ -201,7 +201,8 @@ _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice) {
                                 ._is_alloc = false,
                                 ._capacity = slice.len,
                                 ._r_pos = 0,
-                                ._w_pos = slice.len}};
+                                ._w_pos = slice.len},
+                       ._slice = {0}};
 }
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._capacity; }
@@ -214,6 +215,11 @@ uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf) {
 size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
 
 void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src) { _z_iosli_copy_bytes(&dst->_ios, &src->_ios); }
+
+void _z_zbuf_copy(_z_zbuf_t *dst, const _z_zbuf_t *src) {
+    dst->_slice = _z_slice_simple_rc_clone(&src->_slice);
+    _z_iosli_copy_bytes(&dst->_ios, &src->_ios);
+}
 
 bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
 

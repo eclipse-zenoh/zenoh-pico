@@ -77,13 +77,14 @@ static inline size_t _z_zbuf_get_ref_count(const _z_zbuf_t *zbf) { return _z_sli
 static inline _z_zbuf_t _z_zbuf_null(void) { return (_z_zbuf_t){0}; }
 _z_zbuf_t _z_zbuf_make(size_t capacity);
 _z_zbuf_t _z_zbuf_view(_z_zbuf_t *zbf, size_t length);
-/// Constructs a _borrowing_ reader on `slice`
+// Constructs a _borrowing_ reader on `slice`
 _z_zbuf_t _z_slice_as_zbuf(_z_slice_t slice);
 
 size_t _z_zbuf_capacity(const _z_zbuf_t *zbf);
 uint8_t const *_z_zbuf_start(const _z_zbuf_t *zbf);
 size_t _z_zbuf_len(const _z_zbuf_t *zbf);
 void _z_zbuf_copy_bytes(_z_zbuf_t *dst, const _z_zbuf_t *src);
+void _z_zbuf_copy(_z_zbuf_t *dst, const _z_zbuf_t *src);
 bool _z_zbuf_can_read(const _z_zbuf_t *zbf);
 size_t _z_zbuf_space_left(const _z_zbuf_t *zbf);
 

@@ -120,7 +120,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
         _z_session_mutex_unlock(zn);
-        return _Z_ERR_ENTITY_UNKNOWN;
+        // Not concerned by the reply
+        return _Z_RES_OK;
     }
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true, peer);
     if (!pen_qry->_anykey && !_z_keyexpr_suffix_intersects(&pen_qry->_key, keyexpr)) {
@@ -200,39 +201,34 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
 }
 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
-    z_result_t ret = _Z_RES_OK;
-
     // Retrieve query
     _z_session_mutex_lock(zn);
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
-    if (pen_qry == NULL) {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
-    }
     _z_session_mutex_unlock(zn);
-
-    // Trigger the user callback
-    if (ret == _Z_RES_OK) {
-        _z_reply_t reply = _z_reply_err_steal_data(&msg->_payload, &msg->_encoding);
-        pen_qry->_callback(&reply, pen_qry->_arg);
-        _z_reply_clear(&reply);
-    } else {
+    if (pen_qry == NULL) {
+        // Not concerned by the reply
         _z_bytes_drop(&msg->_payload);
         _z_encoding_clear(&msg->_encoding);
+        return _Z_RES_OK;
     }
-    return ret;
+    // Trigger the user callback
+    _z_reply_t reply = _z_reply_err_steal_data(&msg->_payload, &msg->_encoding);
+    pen_qry->_callback(&reply, pen_qry->_arg);
+    _z_reply_clear(&reply);
+    return _Z_RES_OK;
 }
 
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
-    z_result_t ret = _Z_RES_OK;
-
     // Retrieve query
     _z_session_mutex_lock(zn);
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
-        ret = _Z_ERR_ENTITY_UNKNOWN;
+        _z_session_mutex_unlock(zn);
+        // Not concerned by the reply
+        return _Z_RES_OK;
     }
     // The reply is the final one, apply consolidation if needed
-    if ((ret == _Z_RES_OK) && (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST)) {
+    if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
         while (pen_qry->_pending_replies != NULL) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
 
@@ -241,12 +237,10 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
             pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
         }
     }
-    if (ret == _Z_RES_OK) {
-        // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
-        zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
-    }
+    // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
+    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     _z_session_mutex_unlock(zn);
-    return ret;
+    return _Z_RES_OK;
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {

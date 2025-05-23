@@ -77,7 +77,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
 
     if (ret == _Z_RES_OK) {
         _Z_DEBUG(">> \t transport_message_decode: %ju", (uintmax_t)_z_zbuf_len(&ztm->_common._zbuf));
-        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf, &ztm->_common._arc_pool, &ztm->_common._msg_pool);
+        ret = _z_transport_message_decode(t_msg, &ztm->_common._zbuf);
     }
     _z_transport_rx_mutex_unlock(&ztm->_common);
     return ret;
@@ -160,12 +160,13 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     }
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
-    size_t len = _z_svec_len(&msg->_messages);
-    for (size_t i = 0; i < len; i++) {
-        _z_network_message_t *zm = _z_network_message_svec_get(&msg->_messages, i);
-        zm->_reliability = tmsg_reliability;
-        _z_msg_fix_mapping(zm, (uintptr_t)&entry->common);
-        _z_handle_network_message(ztm->_common._session, zm, &entry->common);
+    while (_z_zbuf_len(msg->_payload) > 0) {
+        _z_network_message_t curr_nmsg = {0};
+        _z_arc_slice_t arcs = _z_arc_slice_empty();
+        _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs));
+        curr_nmsg._reliability = tmsg_reliability;
+        _z_msg_fix_mapping(&curr_nmsg, (uintptr_t)&entry->common);
+        _Z_RETURN_IF_ERR(_z_handle_network_message(ztm->_common._session, &curr_nmsg, &entry->common));
     }
     return _Z_RES_OK;
 }
@@ -276,9 +277,8 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         }
         // Decode message
         _z_zenoh_message_t zm = {0};
-        assert(ztm->_common._arc_pool._capacity >= 1);
-        _z_arc_slice_t *arcs = _z_arc_slice_svec_get_mut(&ztm->_common._arc_pool, 0);
-        ret = _z_network_message_decode(&zm, &zbf, arcs);
+        _z_arc_slice_t arcs = _z_arc_slice_empty();
+        ret = _z_network_message_decode(&zm, &zbf, &arcs);
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             _z_msg_fix_mapping(&zm, (uintptr_t)&entry->common);

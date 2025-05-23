@@ -1467,7 +1467,7 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        if (((_Z_RC_IN_VAL(&querier->_zn)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)) &&
+        if (((_Z_RC_IN_VAL(&querier->_zn)->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE)) &&
             _z_write_filter_active(&querier->_filter)) {
             callback->_this._val.drop(ctx);
         } else {

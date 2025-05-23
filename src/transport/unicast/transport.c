@@ -59,13 +59,9 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Initialize tx rx buffers
     ztu->_common._wbuf = _z_wbuf_make(wbuf_size, false);
     ztu->_common._zbuf = _z_zbuf_make(zbuf_size);
-    // Initialize resources pool
-    ztu->_common._arc_pool = _z_arc_slice_svec_make(_Z_RES_POOL_INIT_SIZE);
-    ztu->_common._msg_pool = _z_network_message_svec_make(_Z_RES_POOL_INIT_SIZE);
 
     // Check if a buffer failed to allocate
-    if ((ztu->_common._msg_pool._capacity == 0) || (ztu->_common._arc_pool._capacity == 0) ||
-        (_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
+    if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
         _Z_ERROR("Not enough memory to allocate transport buffers!");
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -101,8 +97,6 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 #endif
         _z_wbuf_clear(&ztu->_common._wbuf);
         _z_zbuf_clear(&ztu->_common._zbuf);
-        _z_arc_slice_svec_release(&ztu->_common._arc_pool);
-        _z_network_message_svec_release(&ztu->_common._msg_pool);
     }
     return ret;
 }
@@ -228,12 +222,6 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
         return _Z_ERR_MESSAGE_UNEXPECTED;
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
-    // Check if node is in client mode
-    if (tmsg._body._init._whatami == Z_WHATAMI_CLIENT) {
-        _z_t_msg_clear(&tmsg);
-        _Z_INFO("Warning: Peer mode does not support client connection for the moment.");
-        return _Z_ERR_GENERIC;
-    }
     // Encode InitAck
     _z_slice_t cookie = _z_slice_null();
     _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, cookie);
