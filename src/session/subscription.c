@@ -69,6 +69,7 @@ void _z_subscription_clear(_z_subscription_t *sub) {
         sub->_dropper(sub->_arg);
     }
     _z_keyexpr_clear(&sub->_key);
+    _z_keyexpr_clear(&sub->_declared_key);
 }
 
 _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs, const _z_zint_t id) {
