@@ -48,7 +48,7 @@ jobs:
         timeout-minutes: 10
         shell: cmd
         env: 
-          ZENOH_LOG: DEBUG
+          ZENOH_LOG: INFO
           Z_FEATURE_UNSTABLE_API: 1
           
   

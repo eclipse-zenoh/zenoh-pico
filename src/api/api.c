@@ -1626,6 +1626,9 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
         // Remove wilds
         char *wild_loc = NULL;
         _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc));
+        if (wild_loc != NULL) {
+            printf("Pouet: %s\n", wild_loc);
+        }
         // Declare resource if needed
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
         uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
