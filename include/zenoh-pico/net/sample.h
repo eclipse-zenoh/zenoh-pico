@@ -45,6 +45,7 @@ typedef struct _z_sample_t {
     _z_source_info_t source_info;
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
+size_t _z_sample_size(const _z_sample_t *s);
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_sample_t _z_sample_null(void) { return (_z_sample_t){0}; }
