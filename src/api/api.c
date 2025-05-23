@@ -1612,32 +1612,6 @@ z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_
     return _Z_RES_OK;
 }
 
-static z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc) {
-    // Check suffix
-    if (!_z_keyexpr_has_suffix(base_key)) {
-        return _Z_RES_OK;
-    }
-    // Search for wilds
-    char *wild = _z_string_pbrk(&base_key->_suffix, "*$");
-    if (wild == NULL) {
-        return _Z_RES_OK;
-    } else if (wild == _z_string_data(&base_key->_suffix)) {
-        return _Z_ERR_INVALID;
-    }
-    // Remove wildcards from suffix
-    wild = _z_ptr_char_offset(wild, -1);
-    *wild_loc = wild;
-    size_t len = _z_ptr_char_diff(wild, _z_string_data(&base_key->_suffix));
-    // Copy non-wild prefix
-    _z_string_t new_suffix = _z_string_preallocate(len);
-    if (!_z_string_check(&new_suffix)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    memcpy((char *)_z_string_data(&new_suffix), _z_string_data(&base_key->_suffix), len);
-    base_key->_suffix = new_suffix;
-    return _Z_RES_OK;
-}
-
 z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
                                const z_loaned_keyexpr_t *keyexpr, z_moved_closure_query_t *callback,
                                const z_queryable_options_t *options) {
