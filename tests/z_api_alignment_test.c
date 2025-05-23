@@ -309,13 +309,6 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
     assert_eq(datas, 2);
 
-    printf("Undeclaring Keyexpr...");
-    _ret_res = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
-    printf(" %02x\n", _ret_res);
-    assert_eq(_ret_res, 0);
-    assert(!z_internal_check(_ret_expr));
-    printf("Ok\n");
-
     printf("Declaring Publisher...");
     z_publisher_options_t _ret_pub_opt;
     z_publisher_options_default(&_ret_pub_opt);
@@ -409,6 +402,13 @@ int main(int argc, char **argv) {
 
     printf("Undeclaring Queryable...");
     z_drop(z_move(qle));
+    printf("Ok\n");
+
+    printf("Undeclaring Keyexpr...");
+    _ret_res = z_undeclare_keyexpr(z_loan(s1), z_move(_ret_expr));
+    printf(" %02x\n", _ret_res);
+    assert_eq(_ret_res, 0);
+    assert(!z_internal_check(_ret_expr));
     printf("Ok\n");
 
 #ifdef ZENOH_PICO
