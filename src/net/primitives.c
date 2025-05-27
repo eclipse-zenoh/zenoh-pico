@@ -89,25 +89,21 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 /*------------------ Resource Declaration ------------------*/
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
     uint16_t ret = Z_RESOURCE_ID_NONE;
-
-    // TODO: Implement interest protocol for multicast transports
-    if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        uint16_t id = _z_register_resource(zn, keyexpr, Z_RESOURCE_ID_NONE, NULL);
-        if (id != 0) {
-            // Build the declare message to send on the wire
-            _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
-            _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
-            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
-            if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
-                ret = id;
-                // Invalidate cache
-                _z_subscription_cache_invalidate(zn);
-                _z_queryable_cache_invalidate(zn);
-            } else {
-                _z_unregister_resource(zn, id, NULL);
-            }
-            _z_n_msg_clear(&n_msg);
+    uint16_t id = _z_register_resource(zn, keyexpr, Z_RESOURCE_ID_NONE, NULL);
+    if (id != 0) {
+        // Build the declare message to send on the wire
+        _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
+        _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
+        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
+            ret = id;
+            // Invalidate cache
+            _z_subscription_cache_invalidate(zn);
+            _z_queryable_cache_invalidate(zn);
+        } else {
+            _z_unregister_resource(zn, id, NULL);
         }
+        _z_n_msg_clear(&n_msg);
     }
     return ret;
 }
@@ -142,16 +138,12 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr) {
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(keyexpr, true);
     _z_keyexpr_t key = keyexpr_aliased;
-
-    // TODO: Implement interest protocol for multicast transports
-    if (zs->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
-        if (r != NULL) {
-            key = _z_rid_with_suffix(r->_id, NULL);
-        } else {
-            uint16_t id = _z_declare_resource(zs, &keyexpr_aliased);
-            key = _z_rid_with_suffix(id, NULL);
-        }
+    _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
+    if (r != NULL) {
+        key = _z_rid_with_suffix(r->_id, NULL);
+    } else {
+        uint16_t id = _z_declare_resource(zs, &keyexpr_aliased);
+        key = _z_rid_with_suffix(id, NULL);
     }
     return key;
 }
@@ -616,8 +608,12 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     if (sintr == NULL) {
         return 0;
     }
-    // Build the interest message to send on the wire (only needed in client mode)
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    // Build the interest message to send on the wire (only needed in client mode or multicast transport)
+    if ((zn->_mode == Z_WHATAMI_CLIENT)
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 1
+        || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
+#endif
+    ) {
         _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
@@ -637,8 +633,12 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
     if (sintr == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
-    // Build the declare message to send on the wire (only needed in client mode)
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    // Build the declare message to send on the wire (only needed in client mode or multicast transport)
+    if ((zn->_mode == Z_WHATAMI_CLIENT)
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 1
+        || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
+#endif
+    ) {
         _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
         _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
