@@ -126,7 +126,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true, peer);
     if (!pen_qry->_anykey && !_z_keyexpr_suffix_intersects(&pen_qry->_key, keyexpr)) {
         _z_session_mutex_unlock(zn);
-        return _Z_ERR_QUERY_NOT_MATCH;
+        // Not concerned by the reply
+        return _Z_RES_OK;
     }
     // Build the reply
     _z_reply_t reply = _z_reply_steal_data(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,

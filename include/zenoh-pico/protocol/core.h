@@ -150,6 +150,7 @@ _z_keyexpr_t _z_rname(const char *rname);
  *     A :c:type:`_z_keyexpr_t` containing a new resource key.
  */
 _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
+_z_keyexpr_t _z_rid_with_substr_suffix(uint16_t rid, const char *suffix, size_t suffix_len);
 
 /**
  * QoS settings of zenoh message.

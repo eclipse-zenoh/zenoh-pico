@@ -1618,16 +1618,20 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = keyexpr_aliased;
+    _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
     // TODO: Implement interest protocol for multicast transports
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
-        if (r == NULL) {
-            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
-            key = _z_rid_with_suffix(id, NULL);
-        }
+        // Remove wilds
+        char *wild_loc = NULL;
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
+        // Declare resource if needed
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
+        uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
+        _z_keyexpr_clear(&base_key);
     }
 
     z_queryable_options_t opt;
@@ -1637,7 +1641,7 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     }
 
     queryable->_val =
-        _z_declare_queryable(zs, key, opt.complete, callback->_this._val.call, callback->_this._val.drop, ctx);
+        _z_declare_queryable(zs, final_key, opt.complete, callback->_this._val.call, callback->_this._val.drop, ctx);
 
     z_internal_closure_query_null(&callback->_this);
     return _Z_RES_OK;
@@ -1885,37 +1889,24 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = _z_keyexpr_alias(&keyexpr_aliased);
+    _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
     // TODO: Implement interest protocol for multicast transports
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
-        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
-        if (r == NULL) {
-            bool do_keydecl = true;
-            _z_keyexpr_t resource_key = _z_keyexpr_alias(&keyexpr_aliased);
-            // Remove wild
-            char *wild = _z_string_pbrk(&keyexpr_aliased._suffix, "*$");
-            if ((wild != NULL) && _z_keyexpr_has_suffix(&keyexpr_aliased)) {
-                wild = _z_ptr_char_offset(wild, -1);
-                size_t len = _z_ptr_char_diff(wild, _z_string_data(&keyexpr_aliased._suffix));
-                resource_key._suffix = _z_string_preallocate(len);
-
-                if (!_z_keyexpr_has_suffix(&resource_key)) {
-                    return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-                }
-                memcpy((char *)_z_string_data(&resource_key._suffix), _z_string_data(&keyexpr_aliased._suffix), len);
-            }
-            // Declare resource
-            if (do_keydecl) {
-                uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &resource_key);
-                key = _z_rid_with_suffix(id, wild);
-            }
-            _z_keyexpr_clear(&resource_key);
-        }
+        // Remove wilds
+        char *wild_loc = NULL;
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
+        // Declare resource if needed
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
+        uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
+        _z_keyexpr_clear(&base_key);
     }
 
-    _z_subscriber_t int_sub = _z_declare_subscriber(zs, key, callback->_this._val.call, callback->_this._val.drop, ctx);
+    _z_subscriber_t int_sub =
+        _z_declare_subscriber(zs, final_key, callback->_this._val.call, callback->_this._val.drop, ctx);
 
     z_internal_closure_sample_null(&callback->_this);
     sub->_val = int_sub;

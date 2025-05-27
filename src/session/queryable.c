@@ -68,6 +68,7 @@ void _z_session_queryable_clear(_z_session_queryable_t *qle) {
         qle->_dropper(qle->_arg);
     }
     _z_keyexpr_clear(&qle->_key);
+    _z_keyexpr_clear(&qle->_declared_key);
 }
 
 /*------------------ Queryable ------------------*/
