@@ -113,11 +113,10 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
 
 z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
                                   uint8_t interest_flag) {
-    uint8_t flags = interest_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE |
-                    _Z_INTEREST_FLAG_AGGREGATE;
-    // Add keyexpr flag for clients
+    uint8_t flags = interest_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT;
+    // Add client specific flags
     if (zn->_mode == Z_WHATAMI_CLIENT) {
-        interest_flag |= _Z_INTEREST_FLAG_KEYEXPRS;
+        flags |= _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_AGGREGATE | _Z_INTEREST_FLAG_FUTURE;
     }
     _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
 
