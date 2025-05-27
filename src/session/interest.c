@@ -184,6 +184,18 @@ z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, void *peer) {
     return _Z_RES_OK;
 }
 
+z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn) {
+    // Retrieve all current resource declarations
+    uint32_t eid = _z_get_entity_id(zn);
+    uint8_t flags = _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_CURRENT;
+    // Send message on the network
+    _z_interest_t interest = _z_make_interest(NULL, eid, flags);
+    _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+    z_result_t ret = _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
+    _z_n_msg_clear(&n_msg);
+    return ret;
+}
+
 #if Z_FEATURE_INTEREST == 1
 void _z_declare_data_clear(_z_declare_data_t *data) { _z_keyexpr_clear(&data->_key); }
 size_t _z_declare_data_size(_z_declare_data_t *data) {

@@ -23,6 +23,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/declarations.h"
 #include "zenoh-pico/protocol/definitions/network.h"
+#include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/common/lease.h"
 #include "zenoh-pico/transport/common/read.h"
@@ -121,15 +122,20 @@ static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mod
     return ret;
 }
 
-static z_result_t _z_open_inner(_z_session_rc_t *zn, _z_string_t *locator, const _z_id_t *zid, int peer_op) {
+static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const _z_id_t *zid, int peer_op) {
     z_result_t ret = _Z_RES_OK;
+    _z_session_t *zn = _Z_RC_IN_VAL(zs);
 
-    ret = _z_new_transport(&_Z_RC_IN_VAL(zn)->_tp, zid, locator, _Z_RC_IN_VAL(zn)->_mode, peer_op);
+    ret = _z_new_transport(&zn->_tp, zid, locator, zn->_mode, peer_op);
     if (ret != _Z_RES_OK) {
         return ret;
     }
-
-    _z_transport_get_common(&_Z_RC_IN_VAL(zn)->_tp)->_session = zn;
+    _z_transport_get_common(&zn->_tp)->_session = zs;
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 1
+    if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        ret = _z_interest_pull_resource_from_peers(zn);
+    }
+#endif
     return ret;
 }
 
