@@ -44,8 +44,9 @@ z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_
 
     const _z_keyexpr_t *pkeyexpr = _z_keyexpr_intmap_get(&zn->_local_tokens, id);
     if (pkeyexpr != NULL) {
-        _Z_ERROR("Duplicate token id %i", (int)id);
-        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
+        // Already received this token
+        _Z_DEBUG("Duplicate token id %i", (int)id);
+        ret = _Z_RES_OK;
     } else {
         _z_keyexpr_intmap_insert(&zn->_local_tokens, id, _z_keyexpr_clone(keyexpr));
     }
@@ -76,8 +77,9 @@ z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, con
 
     const _z_keyexpr_t *pkeyexpr = _z_keyexpr_intmap_get(&zn->_remote_tokens, id);
     if (pkeyexpr != NULL) {
-        _Z_ERROR("Duplicate token id %i", (int)id);
-        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
+        // Already received this token
+        _Z_DEBUG("Duplicate token id %i", (int)id);
+        ret = _Z_RES_OK;
     } else {
         _z_keyexpr_intmap_insert(&zn->_remote_tokens, id, _z_keyexpr_clone(keyexpr));
     }
