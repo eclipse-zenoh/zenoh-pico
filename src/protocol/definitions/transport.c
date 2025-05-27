@@ -40,7 +40,11 @@ void _z_t_msg_close_clear(_z_t_msg_close_t *msg) { _ZP_UNUSED(msg); }
 
 void _z_t_msg_keep_alive_clear(_z_t_msg_keep_alive_t *msg) { _ZP_UNUSED(msg); }
 
-void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) { _ZP_UNUSED(msg); }
+void _z_t_msg_frame_clear(_z_t_msg_frame_t *msg) {
+    if (msg->_payload != NULL) {
+        _z_zbuf_reset(msg->_payload);
+    }
+}
 
 void _z_t_msg_fragment_clear(_z_t_msg_fragment_t *msg) { _z_slice_clear(&msg->_payload); }
 
