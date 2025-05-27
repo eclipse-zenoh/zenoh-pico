@@ -609,7 +609,7 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
         return 0;
     }
     // Build the interest message to send on the wire (only needed in client mode or multicast transport)
-    if ((zn->_mode == Z_WHATAMI_CLIENT)
+    if (zn->_mode == Z_WHATAMI_CLIENT
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
         || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
 #endif
@@ -634,7 +634,7 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
     // Build the declare message to send on the wire (only needed in client mode or multicast transport)
-    if ((zn->_mode == Z_WHATAMI_CLIENT)
+    if (zn->_mode == Z_WHATAMI_CLIENT
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
         || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
 #endif
