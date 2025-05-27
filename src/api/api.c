@@ -1625,14 +1625,12 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         // Remove wilds
         char *wild_loc = NULL;
-        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc));
-        if (wild_loc != NULL) {
-            printf("Pouet: %s\n", wild_loc);
-        }
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
         // Declare resource if needed
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
         uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
-        final_key = _z_rid_with_suffix(id, wild_loc);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
         _z_keyexpr_clear(&base_key);
     }
 
@@ -1898,11 +1896,12 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
         // Remove wilds
         char *wild_loc = NULL;
-        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc));
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
         // Declare resource if needed
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
         uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
-        final_key = _z_rid_with_suffix(id, wild_loc);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
         _z_keyexpr_clear(&base_key);
     }
 

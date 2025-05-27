@@ -33,6 +33,14 @@ _z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix) {
     };
 }
 
+_z_keyexpr_t _z_rid_with_substr_suffix(uint16_t rid, const char *suffix, size_t suffix_len) {
+    return (_z_keyexpr_t){
+        ._id = rid,
+        ._mapping = _Z_KEYEXPR_MAPPING_LOCAL,
+        ._suffix = (suffix == NULL) ? _z_string_null() : _z_string_alias_substr(suffix, suffix_len),
+    };
+}
+
 int _z_keyexpr_compare(_z_keyexpr_t *first, _z_keyexpr_t *second) {
     // Compare ids only if they are valid and originate from the same location
     if ((first->_id != Z_RESOURCE_ID_NONE) && (second->_id != Z_RESOURCE_ID_NONE)) {
@@ -156,7 +164,7 @@ _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_decla
     }
 }
 
-z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc) {
+z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size_t *wild_suffix_size) {
     // Check suffix
     if (!_z_keyexpr_has_suffix(base_key)) {
         return _Z_RES_OK;
@@ -172,6 +180,7 @@ z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc) {
     wild = _z_ptr_char_offset(wild, -1);
     *wild_loc = wild;
     size_t len = _z_ptr_char_diff(wild, _z_string_data(&base_key->_suffix));
+    *wild_suffix_size = _z_string_len(&base_key->_suffix) - len;
     // Copy non-wild prefix
     _z_string_t new_suffix = _z_string_preallocate(len);
     if (!_z_string_check(&new_suffix)) {

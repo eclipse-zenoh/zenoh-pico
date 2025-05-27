@@ -50,7 +50,7 @@ _z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src);
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.
 _z_keyexpr_t _z_keyexpr_alias_from_user_defined(_z_keyexpr_t src, bool try_declared);
-z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc);
+z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size_t *wild_suffix_size);
 static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
