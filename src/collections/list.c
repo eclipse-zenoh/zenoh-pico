@@ -65,8 +65,6 @@ size_t _z_list_len(const _z_list_t *xs) {
     return len;
 }
 
-bool _z_list_is_empty(const _z_list_t *xs) { return _z_list_len(xs) == (size_t)0; }
-
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x) {
     _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *head = xs;
