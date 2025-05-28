@@ -75,6 +75,9 @@ _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
 }
 
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *p, size_t len) {
+    if (len == 0) {
+        return _z_slice_null();
+    }
     _z_slice_t bs = _z_slice_alias_buf(p, len);
     return _z_slice_duplicate(&bs);
 }

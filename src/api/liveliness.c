@@ -64,9 +64,11 @@ z_result_t z_liveliness_token_options_default(z_liveliness_token_options_t *opti
 z_result_t z_liveliness_declare_token(const z_loaned_session_t *zs, z_owned_liveliness_token_t *token,
                                       const z_loaned_keyexpr_t *keyexpr, const z_liveliness_token_options_t *options) {
     (void)options;
-
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    _z_keyexpr_t key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+#else
     _z_keyexpr_t key = _z_update_keyexpr_to_declared(_Z_RC_IN_VAL(zs), *keyexpr);
-
+#endif
     return _z_declare_liveliness_token(zs, &token->_val, &key);
 }
 
@@ -94,9 +96,11 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
     } else {
         opt = *options;
     }
-
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    _z_keyexpr_t key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+#else
     _z_keyexpr_t key = _z_update_keyexpr_to_declared(_Z_RC_IN_VAL(zs), *keyexpr);
-
+#endif
     _z_subscriber_t int_sub = _z_declare_liveliness_subscriber(zs, &key, callback->_this._val.call,
                                                                callback->_this._val.drop, opt.history, ctx);
 

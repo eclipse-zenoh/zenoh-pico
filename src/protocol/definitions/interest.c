@@ -21,7 +21,7 @@ void _z_interest_clear(_z_interest_t *interest) { _z_keyexpr_clear(&interest->_k
 _z_interest_t _z_make_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint8_t flags) {
     return (_z_interest_t){
         ._id = id,
-        ._keyexpr = _z_keyexpr_steal(key),
+        ._keyexpr = (key == NULL) ? _z_keyexpr_null() : _z_keyexpr_steal(key),
         .flags = flags,
     };
 }

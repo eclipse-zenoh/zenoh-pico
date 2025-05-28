@@ -199,7 +199,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
             _Z_DEBUG("Handling _Z_N_INTEREST");
             _z_n_msg_interest_t *interest = &msg->_body._interest;
             if ((interest->_interest.flags & _Z_INTEREST_NOT_FINAL_MASK) != 0) {
-                _z_interest_process_interest(zn, interest->_interest._keyexpr, interest->_interest._id,
+                _z_interest_process_interest(zn, &interest->_interest._keyexpr, interest->_interest._id,
                                              interest->_interest.flags);
             } else {
                 _z_interest_process_interest_final(zn, interest->_interest._id);

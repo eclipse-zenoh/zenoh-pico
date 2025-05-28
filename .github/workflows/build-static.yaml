@@ -32,7 +32,6 @@ jobs:
           BUILD_TYPE: Debug
           BUILD_SHARED_LIBS: OFF
           BUILD_TESTING: ON
-          BUILD_MULTICAST: ON
           BUILD_INTEGRATION: ON
           BUILD_TOOLS: ON
           ZENOH_LOG: debug
