@@ -139,7 +139,7 @@ static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interes
     _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
         uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
-        _z_keyexpr_t key = *_z_keyexpr_intmap_iterator_value(&iter);
+        _z_keyexpr_t key = _z_keyexpr_alias(_z_keyexpr_intmap_iterator_value(&iter));
         // Check if key is concerned
         if ((restr_key == NULL) || _z_keyexpr_suffix_intersects(restr_key, &key)) {
             // Build the declare message to send on the wire

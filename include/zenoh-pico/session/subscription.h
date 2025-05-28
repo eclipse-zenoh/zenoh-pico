@@ -57,11 +57,11 @@ z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr,
                                         const _z_n_qos_t qos, _z_bytes_t *attachment, z_reliability_t reliability,
                                         _z_source_info_t *source_info, _z_transport_peer_common_t *peer);
 
-z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer);
 
-z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                          const _z_timestamp_t *timestamp,
                                                          _z_transport_peer_common_t *peer);
 
