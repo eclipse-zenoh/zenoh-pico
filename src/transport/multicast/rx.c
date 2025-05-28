@@ -333,6 +333,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
 
         entry->common._remote_zid = msg->_zid;
         entry->common._received = true;
+        entry->common._remote_resources = NULL;
 #if Z_FEATURE_FRAGMENTATION == 1
         entry->common._patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
         entry->common._state_reliable = _Z_DBUF_STATE_NULL;
