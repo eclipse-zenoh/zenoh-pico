@@ -275,10 +275,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 #if Z_FEATURE_UNICAST_PEER == 1
         if (mode == Z_WHATAMI_PEER) {
             // Wait for at least one peer
-            _z_transport_peer_mutex_lock(&ztu->_common);
-            bool peer_list_empty = _z_transport_peer_unicast_list_is_empty(ztu->_peers);
-            _z_transport_peer_mutex_unlock(&ztu->_common);
-            if (peer_list_empty) {
+            if (_z_transport_peer_unicast_list_is_empty(ztu->_peers)) {
                 z_sleep_s(1);
                 continue;
             }
