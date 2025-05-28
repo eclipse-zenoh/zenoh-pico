@@ -551,6 +551,7 @@ if(UNIX OR MSVC)
     add_executable(z_refcount_test ${PROJECT_SOURCE_DIR}/tests/z_refcount_test.c)
     add_executable(z_lru_cache_test ${PROJECT_SOURCE_DIR}/tests/z_lru_cache_test.c)
     add_executable(z_test_peer_unicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_unicast.c)
+    add_executable(z_test_peer_multicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_multicast.c)
 
     target_link_libraries(z_data_struct_test zenohpico::lib)
     target_link_libraries(z_channels_test zenohpico::lib)
@@ -571,6 +572,7 @@ if(UNIX OR MSVC)
     target_link_libraries(z_refcount_test zenohpico::lib)
     target_link_libraries(z_lru_cache_test zenohpico::lib)
     target_link_libraries(z_test_peer_unicast zenohpico::lib)
+    target_link_libraries(z_test_peer_multicast zenohpico::lib)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
@@ -596,20 +598,6 @@ if(UNIX OR MSVC)
     add_test(z_api_encoding_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_api_encoding_test)
     add_test(z_refcount_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_refcount_test)
     add_test(z_lru_cache_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_lru_cache_test)
-  endif()
-
-  if(BUILD_MULTICAST)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
-
-    if(CMAKE_C_STANDARD MATCHES "11")
-      add_executable(z_peer_multicast_test ${PROJECT_SOURCE_DIR}/tests/z_peer_multicast_test.c)
-      target_link_libraries(z_peer_multicast_test zenohpico::lib)
-
-      configure_file(${PROJECT_SOURCE_DIR}/tests/multicast.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh COPYONLY)
-
-      enable_testing()
-      add_test(z_peer_multicast_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/multicast.sh z_peer_multicast_test)
-    endif()
   endif()
 
   if(BUILD_INTEGRATION)
