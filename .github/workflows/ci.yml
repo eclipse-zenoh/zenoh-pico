@@ -44,7 +44,7 @@ jobs:
       - name: Build & run tests
         run: |
           make all
-          .\build\tests\Debug\z_test_unicast.exe
+          .\build\tests\Debug\z_test_peer_unicast.exe
         timeout-minutes: 10
         shell: cmd
         env: 
@@ -400,8 +400,8 @@ jobs:
       - name: Build & test pico
         run: |
           sudo apt install -y ninja-build
-          Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
-          ./build/tests/z_test_unicast
+          CMAKE_GENERATOR=Ninja make
+          ./build/tests/z_test_peer_unicast
         env:
           Z_FEATURE_UNSTABLE_API: 1 
           Z_FEATURE_UNICAST_PEER: 1
