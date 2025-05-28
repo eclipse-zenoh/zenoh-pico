@@ -1022,12 +1022,18 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     _z_keyexpr_t key = keyexpr_aliased;
 
     pub->_val = _z_publisher_null();
-    // Declare if needed
-    _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
-    if (r == NULL) {
-        uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
-        key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    if (_Z_RC_IN_VAL(zs)->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif
+        // Declare if needed
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
+        if (r == NULL) {
+            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
+            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+        }
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     }
+#endif
     // Set options
     z_publisher_options_t opt;
     z_publisher_options_default(&opt);
@@ -1123,7 +1129,11 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
 
         // Check if write filter is active before writing
-        if (!_z_write_filter_active(&pub->_filter)) {
+        if (
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+            session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
+#endif
+            !_z_write_filter_active(&pub->_filter)) {
             // Write value
             ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
@@ -1372,11 +1382,17 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
 
     querier->_val = _z_querier_null();
     // Declare if needed
-    _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
-    if (r == NULL) {
-        uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
-        key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    if (_Z_RC_IN_VAL(zs)->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
+        if (r == NULL) {
+            uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
+            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+        }
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     }
+#endif
     // Set options
     z_querier_options_t opt;
     z_querier_options_default(&opt);
@@ -1455,15 +1471,20 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
 
     if (session != NULL) {
-        if (_z_write_filter_active(&querier->_filter)) {
-            callback->_this._val.drop(ctx);
-        } else {
+        // Check if write filter is active before writing
+        if (
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+            session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
+#endif
+            !_z_write_filter_active(&querier->_filter)) {
             _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = encoding};
 
             ret = _z_query(session, querier_keyexpr, parameters, querier->_target, consolidation_mode, value,
                            callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
                            _z_bytes_from_moved(opt.attachment), querier->_congestion_control, querier->_priority,
                            querier->_is_express);
+        } else {
+            callback->_this._val.drop(ctx);
         }
     } else {
         ret = _Z_ERR_SESSION_CLOSED;
@@ -1608,15 +1629,21 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
-    // Remove wilds
-    char *wild_loc = NULL;
-    size_t wild_suffix_size = 0;
-    _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
-    // Declare resource if needed
-    _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
-    uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
-    final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
-    _z_keyexpr_clear(&base_key);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    if (_Z_RC_IN_VAL(zs)->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif
+        // Remove wilds
+        char *wild_loc = NULL;
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
+        // Declare resource if needed
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
+        uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
+        _z_keyexpr_clear(&base_key);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    }
+#endif
 
     z_queryable_options_t opt;
     z_queryable_options_default(&opt);
@@ -1825,6 +1852,13 @@ z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_
 
 z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
     _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        _Z_WARN(
+            "Declaring a keyexpr without Z_FEATURE_MULTICAST_DECLARATIONS might generate unknown key expression errors "
+            "during communications\n");
+    }
+#endif
     uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &k);
     key->_val = _z_rid_with_suffix(id, NULL);
     // we still need to store the original suffix, for user needs
@@ -1876,15 +1910,21 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
-    // Remove wilds
-    char *wild_loc = NULL;
-    size_t wild_suffix_size = 0;
-    _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
-    // Declare resource if needed
-    _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
-    uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
-    final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
-    _z_keyexpr_clear(&base_key);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    if (_Z_RC_IN_VAL(zs)->_tp._type != _Z_TRANSPORT_MULTICAST_TYPE) {
+#endif
+        // Remove wilds
+        char *wild_loc = NULL;
+        size_t wild_suffix_size = 0;
+        _Z_RETURN_IF_ERR(_z_keyexpr_remove_wilds(&base_key, &wild_loc, &wild_suffix_size));
+        // Declare resource if needed
+        _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &base_key, NULL);
+        uint16_t id = (r != NULL) ? r->_id : _z_declare_resource(_Z_RC_IN_VAL(zs), &base_key);
+        final_key = _z_rid_with_substr_suffix(id, wild_loc, wild_suffix_size);
+        _z_keyexpr_clear(&base_key);
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+    }
+#endif
 
     _z_subscriber_t int_sub =
         _z_declare_subscriber(zs, final_key, callback->_this._val.call, callback->_this._val.drop, ctx);
