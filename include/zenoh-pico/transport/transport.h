@@ -143,8 +143,6 @@ typedef struct {
     uint8_t _batch_holds_tx_mutex : 1;
     uint8_t _batch_holds_peer_mutex : 1;
     size_t _batch_count;
-    size_t _batch_tx_mutex_hold_time_ms;
-    size_t _batch_peer_mutex_hold_time_ms;
 #endif
 } _z_transport_common_t;
 
@@ -207,8 +205,7 @@ void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 
 #if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt, bool hold_tx_mutex, bool hold_peer_mutex,
-                                 size_t tx_mutex_hold_time, size_t peer_mutex_hold_time);
+bool _z_transport_start_batching(_z_transport_t *zt, bool hold_tx_mutex, bool hold_peer_mutex);
 void _z_transport_stop_batching(_z_transport_t *zt);
 #endif
 

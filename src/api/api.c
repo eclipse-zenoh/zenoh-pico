@@ -1964,8 +1964,6 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
 void zp_batch_start_options_default(zp_batch_start_options_t *options) {
     options->hold_tx_mutex = false;
     options->hold_peer_mutex = false;
-    options->tx_mutex_hold_time_ms = 1000;
-    options->peer_mutex_hold_time_ms = 100;
 }
 
 z_result_t zp_batch_start(const z_loaned_session_t *zs, zp_batch_start_options_t *options) {
@@ -1979,10 +1977,8 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs, zp_batch_start_options_t
         opt = *options;
     }
     _z_session_t *session = _Z_RC_IN_VAL(zs);
-    return _z_transport_start_batching(&session->_tp, opt.hold_tx_mutex, opt.hold_peer_mutex, opt.tx_mutex_hold_time_ms,
-                                       opt.peer_mutex_hold_time_ms)
-               ? _Z_RES_OK
-               : _Z_ERR_GENERIC;
+    return _z_transport_start_batching(&session->_tp, opt.hold_tx_mutex, opt.hold_peer_mutex) ? _Z_RES_OK
+                                                                                              : _Z_ERR_GENERIC;
 }
 
 z_result_t zp_batch_flush(const z_loaned_session_t *zs) {

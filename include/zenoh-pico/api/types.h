@@ -421,18 +421,16 @@ typedef struct {
  * All those options works only if Z_FEATURE_MULTI_THREAD is activated
  *
  * Members:
- *   hold_tx_mutex: flag that indicates the batch will hold the tx mutex. WARNING: Will prevent other threads to write
- * on tx buffer, keep alive messages to be sent until batching is stopped. hold_peer_mutex: flag that indicates the
- * batch will hold the peer mutex on multicast transport. WARNING: Will prevent removal/addition of peers and data
- * receiving task until batching is stopped. tx_mutex_hold_time_ms: maximum number of millisecond before giving a change
- * of other threads to get the tx mutex peer_mutex_hold_time_ms: maximum number of millisecond before giving a change of
- * other threads to get the peer mutex
+ *   hold_tx_mutex: flag that indicates the batch will hold the tx mutex.
+ * WARNING: Will prevent other threads to write on tx buffer or keep_alive messages to be sent until batching is
+ * stopped.
+ *
+ *   hold_peer_mutex: flag that indicates the batch will hold the peer mutex, peer mode only.
+ * WARNING: Will prevent removal/addition of peers and data receiving task until batching is stopped.
  */
 typedef struct {
     bool hold_tx_mutex;
     bool hold_peer_mutex;
-    size_t tx_mutex_hold_time_ms;
-    size_t peer_mutex_hold_time_ms;
 } zp_batch_start_options_t;
 
 /**
