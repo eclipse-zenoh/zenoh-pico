@@ -63,7 +63,7 @@ void _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id);
 
 void _z_liveliness_init(_z_session_t *zn);
 void _z_liveliness_clear(_z_session_t *zn);
-#endif // Z_FEATURE_LIVELINESS == 1
+#endif  // Z_FEATURE_LIVELINESS == 1
 
 z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
                                                _z_transport_peer_common_t *peer);

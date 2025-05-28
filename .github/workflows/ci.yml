@@ -62,7 +62,7 @@ jobs:
       - name: Build tests
         run: |
           sudo apt install -y ninja-build
-          MAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
+          CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
 
       - name: Install valgrind
         run: |
@@ -199,6 +199,18 @@ jobs:
         run: |
           sudo apt install -y ninja-build
           Z_FEATURE_INTEREST=0 CMAKE_GENERATOR=Ninja make
+
+  no_liveliness_build:
+    name: Check compilation without liveliness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build without interests
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_LIVELINESS=0 CMAKE_GENERATOR=Ninja make          
 
   st_build:
     needs: zenoh_build
