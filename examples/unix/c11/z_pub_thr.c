@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
     // Send packets
     (void)batch_size;
 #if Z_FEATURE_BATCHING == 1
-    if (batch_size > 0) zp_batch_start(z_loan(s));
+    if (batch_size > 0) zp_batch_start(z_loan(s), NULL);
 #endif
     z_owned_bytes_t p;
     while (!stop_flag) {

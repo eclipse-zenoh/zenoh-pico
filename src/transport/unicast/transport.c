@@ -35,6 +35,10 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
 #if Z_FEATURE_BATCHING == 1
     ztu->_common._batch_state = _Z_BATCHING_IDLE;
     ztu->_common._batch_count = 0;
+    ztu->_common._batch_holds_tx_mutex = false;
+    ztu->_common._batch_holds_peer_mutex = false;
+    ztu->_common._batch_tx_mutex_hold_time_ms = 0;
+    ztu->_common._batch_peer_mutex_hold_time_ms = 0;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1

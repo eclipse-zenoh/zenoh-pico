@@ -85,13 +85,18 @@ void _z_transport_free(_z_transport_t **zt) {
 }
 
 #if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt) {
+bool _z_transport_start_batching(_z_transport_t *zt, bool hold_tx_mutex, bool hold_peer_mutex,
+                                 size_t tx_mutex_hold_time, size_t peer_mutex_hold_time) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
     if (ztc->_batch_state == _Z_BATCHING_ACTIVE) {
         return false;
     }
     ztc->_batch_count = 0;
     ztc->_batch_state = _Z_BATCHING_ACTIVE;
+    ztc->_batch_holds_tx_mutex = hold_tx_mutex;
+    ztc->_batch_holds_peer_mutex = hold_peer_mutex;
+    ztc->_batch_tx_mutex_hold_time_ms = tx_mutex_hold_time;
+    ztc->_batch_peer_mutex_hold_time_ms = peer_mutex_hold_time;
     return true;
 }
 
