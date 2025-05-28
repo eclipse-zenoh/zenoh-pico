@@ -184,7 +184,11 @@ int main(int argc, char **argv) {
     // Send packets
     (void)batch_size;
 #if Z_FEATURE_BATCHING == 1
-    if (batch_size > 0) zp_batch_start(z_loan(s), NULL);
+    zp_batch_start_options_t options;
+    zp_batch_start_options_default(&options);
+    options.hold_tx_mutex = true;
+    options.hold_peer_mutex = true;
+    if (batch_size > 0) zp_batch_start(z_loan(s), &options);
 #endif
     z_owned_bytes_t p;
     while (!stop_flag) {
