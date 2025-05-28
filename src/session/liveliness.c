@@ -89,7 +89,8 @@ z_result_t _z_liveliness_subscription_declare(_z_session_t *zn, uint32_t id, con
     if (ret == _Z_RES_OK) {
         ret = _z_trigger_liveliness_subscriptions_declare(zn, keyexpr, timestamp, peer);
     }
-
+    // Invalidate cache
+    _z_subscription_cache_invalidate(zn);
     return ret;
 }
 
@@ -112,7 +113,8 @@ z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, c
         ret = _z_trigger_liveliness_subscriptions_undeclare(zn, key, timestamp, peer);
         _z_keyexpr_free(&key);
     }
-
+    // Invalidate cache
+    _z_subscription_cache_invalidate(zn);
     return ret;
 }
 

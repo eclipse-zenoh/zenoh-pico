@@ -347,7 +347,7 @@ z_result_t _z_trigger_subscriptions_del(_z_session_t *zn, _z_keyexpr_t *keyexpr,
     return _Z_RES_OK;
 }
 
-z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                        const _z_timestamp_t *timestamp,
                                                        _z_transport_peer_common_t *peer) {
     _ZP_UNUSED(zn);
@@ -357,7 +357,7 @@ z_result_t _z_trigger_liveliness_subscriptions_declare(_z_session_t *zn, _z_keye
     return _Z_RES_OK;
 }
 
-z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                                          const _z_timestamp_t *timestamp,
                                                          _z_transport_peer_common_t *peer) {
     _ZP_UNUSED(zn);
