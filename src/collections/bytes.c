@@ -54,13 +54,6 @@ bool _z_bytes_is_empty(const _z_bytes_t *bs) {
     return true;
 }
 
-size_t _z_bytes_num_slices(const _z_bytes_t *bs) { return _z_arc_slice_svec_len(&bs->_slices); }
-
-_z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
-    if (i >= _z_bytes_num_slices(bs)) return NULL;
-    return _z_arc_slice_svec_get(&bs->_slices, i);
-}
-
 void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
 
 void _z_bytes_free(_z_bytes_t **bs) {

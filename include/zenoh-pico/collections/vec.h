@@ -107,6 +107,13 @@ static inline _z_svec_t _z_svec_alias_element(void *element) {
 }
 static inline size_t _z_svec_len(const _z_svec_t *v) { return v->_len; }
 static inline bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
+static inline void *_z_svec_get(const _z_svec_t *v, size_t i, size_t element_size) {
+    assert(i < v->_len);
+    return (uint8_t *)v->_val + i * element_size;
+}
+static inline void *_z_svec_get_mut(_z_svec_t *v, size_t i, size_t element_size) {
+    return (uint8_t *)v->_val + i * element_size;
+}
 
 void _z_svec_init(_z_svec_t *v, size_t offset, size_t element_size);
 _z_svec_t _z_svec_make(size_t capacity, size_t element_size);
@@ -116,8 +123,7 @@ void _z_svec_move(_z_svec_t *dst, _z_svec_t *src);
 
 z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_size, bool use_elem_f);
 z_result_t _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f m, size_t element_size, bool use_elem_f);
-void *_z_svec_get(const _z_svec_t *v, size_t pos, size_t element_size);
-void *_z_svec_get_mut(_z_svec_t *v, size_t i, size_t element_size);
+
 void _z_svec_set(_z_svec_t *sv, size_t pos, void *e, z_element_clear_f f, size_t element_size);
 void _z_svec_remove(_z_svec_t *sv, size_t pos, z_element_clear_f f, z_element_move_f m, size_t element_size,
                     bool use_elem_f);

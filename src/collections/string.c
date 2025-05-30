@@ -33,30 +33,6 @@ _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
     return s;
 }
 
-_z_string_t _z_string_alias_slice(const _z_slice_t *slice) {
-    _z_string_t s;
-    s._slice = _z_slice_alias(*slice);
-    return s;
-}
-
-_z_string_t _z_string_alias_str(const char *value) {
-    _z_string_t s;
-    s._slice = _z_slice_alias_buf((const uint8_t *)(value), strlen(value));
-    return s;
-}
-
-_z_string_t _z_string_alias_substr(const char *value, size_t len) {
-    _z_string_t s;
-    s._slice = _z_slice_alias_buf((const uint8_t *)(value), len);
-    return s;
-}
-
-_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
-    _z_string_t s;
-    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
-    return s;
-}
-
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value) {
     _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
     *s = _z_string_copy_from_str(value);
@@ -66,8 +42,6 @@ _z_string_t *_z_string_copy_from_str_as_ptr(const char *value) {
     }
     return s;
 }
-
-size_t _z_string_len(const _z_string_t *s) { return s->_slice.len; }
 
 z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src) {
     return _z_slice_copy(&dst->_slice, &src->_slice);
@@ -151,9 +125,6 @@ _z_string_t _z_string_preallocate(size_t len) {
     }
     return s;
 }
-const char *_z_string_data(const _z_string_t *s) { return (const char *)s->_slice.start; }
-
-bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len <= 1; }
 
 const char *_z_string_rchr(_z_string_t *str, char filter) {
     const char *curr_res = NULL;

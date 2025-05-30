@@ -33,7 +33,7 @@ extern "C" {
  * Returns:
  *   Returns the distance between the pointers as an absolute value.
  */
-size_t _z_ptr_u8_diff(const uint8_t *l_ptr, const uint8_t *r_ptr);
+static inline size_t _z_ptr_u8_diff(const uint8_t *l_ptr, const uint8_t *r_ptr) { return (size_t)(l_ptr - r_ptr); }
 
 /**
  * Offsets a ``uint8_t`` pointer by a given distance. Offsets can be both positive and negative values.
@@ -57,7 +57,7 @@ const uint8_t *_z_cptr_u8_offset(const uint8_t *ptr, ptrdiff_t off);
  * Returns:
  *   Returns a ``uint8_t`` pointer, pointing to the offset position.
  */
-uint8_t *_z_ptr_u8_offset(uint8_t *ptr, ptrdiff_t off);
+static inline uint8_t *_z_ptr_u8_offset(uint8_t *ptr, const ptrdiff_t off) { return ptr + off; }
 
 /**
  * Computes the distance between two ``char`` pointers as an absolute value.
@@ -70,7 +70,7 @@ uint8_t *_z_ptr_u8_offset(uint8_t *ptr, ptrdiff_t off);
  * Returns:
  *   Returns the distance between the pointers as an absolute value.
  */
-size_t _z_ptr_char_diff(const char *l_ptr, const char *r_ptr);
+static inline size_t _z_ptr_char_diff(const char *l_ptr, const char *r_ptr) { return (size_t)(l_ptr - r_ptr); }
 
 /**
  * Offsets a ``char`` pointer by a given distance. Offsets can be both positive and negative values.
@@ -94,7 +94,7 @@ const char *_z_cptr_char_offset(const char *ptr, ptrdiff_t off);
  * Returns:
  *   Returns a ``char`` pointer, pointing to the offset position.
  */
-char *_z_ptr_char_offset(char *ptr, ptrdiff_t off);
+static inline char *_z_ptr_char_offset(char *ptr, const ptrdiff_t off) { return ptr + off; }
 
 #ifdef __cplusplus
 }
