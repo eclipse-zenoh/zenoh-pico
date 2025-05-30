@@ -433,7 +433,7 @@ On the host Zenoh, specify the USB CDC device:
 e.g.
 
 ```bash
-zenohd -l serial//dev/ttyACM1#baudrate=115200
+zenohd -l serial//dev/ttyACM1#baudrate=112500
 ```
 
 #### 2.2.7. STM32 Threadx
@@ -466,7 +466,7 @@ zenohd -l serial//dev/ttyACM1#baudrate=115200
 
 11. Set static bytepool size bigger than 25kB.
 
-10. On host compile zenohd with serial support and run with:
+12. On host compile zenohd with serial support and run with:
     ```bash
     zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
