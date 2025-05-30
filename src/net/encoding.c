@@ -55,17 +55,6 @@ z_result_t _z_encoding_copy(_z_encoding_t *dst, const _z_encoding_t *src) {
     return _Z_RES_OK;
 }
 
-_z_encoding_t _z_encoding_alias(const _z_encoding_t *src) {
-    _z_encoding_t dst;
-    dst.id = src->id;
-    if (_z_string_check(&src->schema)) {
-        dst.schema = _z_string_alias(src->schema);
-    } else {
-        dst.schema = _z_string_null();
-    }
-    return dst;
-}
-
 z_result_t _z_encoding_move(_z_encoding_t *dst, _z_encoding_t *src) {
     dst->id = src->id;
     src->id = _Z_ENCODING_ID_DEFAULT;

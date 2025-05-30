@@ -25,7 +25,6 @@
 
 typedef struct {
     _Atomic unsigned long count;
-    size_t pkt_len;
 } z_stats_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_MULTI_THREAD == 1
@@ -33,8 +32,8 @@ typedef struct {
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **ke, unsigned long *freq, bool *is_peer);
 
 void on_sample(z_loaned_sample_t *sample, void *context) {
+    (void)sample;
     z_stats_t *stats = (z_stats_t *)context;
-    stats->pkt_len = z_bytes_len(z_sample_payload(sample));
     atomic_fetch_add_explicit(&stats->count, 1, memory_order_relaxed);
 }
 
@@ -75,7 +74,6 @@ int main(int argc, char **argv) {
 
     z_stats_t *context = malloc(sizeof(z_stats_t));
     atomic_store_explicit(&context->count, 0, memory_order_relaxed);
-    context->pkt_len = 0;
 
     // Open session
     z_owned_session_t s;
@@ -108,7 +106,6 @@ int main(int argc, char **argv) {
         exit(-1);
     }
     bool stop_flag = false;
-    size_t prev_len = 0;
     pthread_t task;
     pthread_create(&task, NULL, stop_task, &stop_flag);
     unsigned long sleep_dur_us = 1000000 / frequency;
@@ -119,9 +116,6 @@ int main(int argc, char **argv) {
         unsigned long elapsed = z_clock_elapsed_us(&start);
         // Clear count
         unsigned long count = cas_loop(context, 0);
-        if (prev_len != context->pkt_len) {
-            prev_len = context->pkt_len;
-        }
         if (count > 0) {
             printf("%.3lf\n", (double)count * 1000000.0 / (double)elapsed);
         }

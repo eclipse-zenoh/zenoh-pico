@@ -40,7 +40,7 @@ typedef struct _z_l_t {
 _z_list_t *_z_list_of(void *x);
 
 size_t _z_list_len(const _z_list_t *xs);
-bool _z_list_is_empty(const _z_list_t *xs);
+static inline bool _z_list_is_empty(const _z_list_t *xs) { return xs == NULL; }
 
 void *_z_list_head(const _z_list_t *xs);
 _z_list_t *_z_list_tail(const _z_list_t *xs);

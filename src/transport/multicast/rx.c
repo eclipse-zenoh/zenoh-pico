@@ -160,9 +160,9 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     }
     // Handle all the zenoh message, one by one
     // From this point, memory cleaning must be handled by the network message layer
+    _z_network_message_t curr_nmsg = {0};
+    _z_arc_slice_t arcs = _z_arc_slice_empty();
     while (_z_zbuf_len(msg->_payload) > 0) {
-        _z_network_message_t curr_nmsg = {0};
-        _z_arc_slice_t arcs = _z_arc_slice_empty();
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs));
         curr_nmsg._reliability = tmsg_reliability;
         _z_msg_fix_mapping(&curr_nmsg, (uintptr_t)&entry->common);

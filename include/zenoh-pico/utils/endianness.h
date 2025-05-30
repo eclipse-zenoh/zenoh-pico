@@ -146,6 +146,16 @@ static inline void _z_host_le_store64(const uint64_t val, uint8_t *dst) {
 #endif
 }
 
+static inline void _z_host_u16_from_le_u16(uint16_t *val) {
+#if defined(ZENOH_ENDIANNNESS_BIG)
+    uint16_t tmp = (uint16_t)((*val & 0x00FF) << 8) + (uint16_t)((*val & 0xFF00) >> 8);
+    *val = tmp;
+#elif defined(ZENOH_ENDIANNNESS_LITTLE)
+    _ZP_UNUSED(val);
+    return;
+#endif
+}
+
 // Return u16 individual bytes
 static inline uint8_t _z_get_u16_lsb(uint_fast16_t val) { return (uint8_t)(val >> 0); }
 static inline uint8_t _z_get_u16_msb(uint_fast16_t val) { return (uint8_t)(val >> 8); }

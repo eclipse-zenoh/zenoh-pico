@@ -102,6 +102,8 @@ int main(int argc, char** argv) {
     for (unsigned int i = 0; i < pkt_size; i++) {
         data[i] = (uint8_t)(i % 10);
     }
+    // Wait for declare to be processed
+    z_sleep_ms(1);
 
     // Create payload
     unsigned long prev_val = sync_tx_rx;

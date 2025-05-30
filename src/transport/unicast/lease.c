@@ -149,7 +149,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     // Send keep alive to all peers
                     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
                     _z_transport_peer_mutex_lock(&ztu->_common);
-                    if (_z_transport_peer_unicast_list_len(ztu->_peers) > 0) {
+                    if (!_z_transport_peer_unicast_list_is_empty(ztu->_peers)) {
                         if (_z_transport_tx_send_t_msg(&ztu->_common, &t_msg, ztu->_peers) != _Z_RES_OK) {
                             _Z_INFO("Send keep alive failed.");
                         }
