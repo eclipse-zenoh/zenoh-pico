@@ -68,27 +68,6 @@ _z_iosli_t *_z_iosli_new(size_t capacity) {
     return pios;
 }
 
-void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t length) {
-    assert(_z_iosli_readable(ios) >= length);
-    uint8_t *w_pos = _z_ptr_u8_offset(dst, (ptrdiff_t)offset);
-    (void)memcpy(w_pos, ios->_buf + ios->_r_pos, length);
-    ios->_r_pos = ios->_r_pos + length;
-}
-
-void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
-    size_t length = _z_iosli_readable(src);
-    assert(dst->_capacity >= length);
-    (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
-    dst->_w_pos += length;
-}
-
-void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
-    assert(_z_iosli_writable(ios) >= length);
-    uint8_t *w_pos = _z_ptr_u8_offset(ios->_buf, (ptrdiff_t)ios->_w_pos);
-    (void)memcpy(w_pos, _z_cptr_u8_offset(bs, (ptrdiff_t)offset), length);
-    ios->_w_pos += length;
-}
-
 _z_slice_t _z_iosli_to_bytes(const _z_iosli_t *ios) {
     _z_slice_t a;
     a.len = _z_iosli_readable(ios);
@@ -336,19 +315,17 @@ z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
 }
 
 z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {
-    z_result_t ret = _Z_RES_OK;
-
-    size_t loffset = offset;
-    size_t llength = length;
-
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
     size_t writable = _z_iosli_writable(ios);
-    if (writable >= llength) {
-        _z_iosli_write_bytes(ios, bs, loffset, llength);
+    if (writable >= length) {
+        _z_iosli_write_bytes(ios, bs, offset, length);
     } else if (wbf->_expansion_step != 0) {
+        // Expand buffer to write all the data
+        size_t llength = length;
+        size_t loffset = offset;
         _z_iosli_write_bytes(ios, bs, loffset, writable);
-        llength = llength - writable;
-        loffset = loffset + writable;
+        llength -= writable;
+        loffset += writable;
         while (llength > (size_t)0) {
             ios = __z_wbuf_new_iosli(wbf->_expansion_step);
             _z_wbuf_add_iosli(wbf, ios);
@@ -357,16 +334,14 @@ z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset,
             if (llength < writable) {
                 writable = llength;
             }
-
             _z_iosli_write_bytes(ios, bs, loffset, writable);
-            llength = llength - writable;
-            loffset = loffset + writable;
+            llength -= writable;
+            loffset += writable;
         }
     } else {
-        ret = _Z_ERR_TRANSPORT_NO_SPACE;
+        return _Z_ERR_TRANSPORT_NO_SPACE;
     }
-
-    return ret;
+    return _Z_RES_OK;
 }
 
 z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, size_t length) {

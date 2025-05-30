@@ -143,10 +143,6 @@ z_result_t _z_zint64_encode(_z_wbuf_t *wbf, uint64_t v) {
     return _z_wbuf_write_bytes(wbf, buf, 0, len);
 }
 
-z_result_t _z_zint16_encode(_z_wbuf_t *wbf, uint16_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
-z_result_t _z_zint32_encode(_z_wbuf_t *wbf, uint32_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
-z_result_t _z_zsize_encode(_z_wbuf_t *wbf, _z_zint_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
-
 z_result_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t reader, void *context) {
     *zint = 0;
 

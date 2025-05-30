@@ -67,17 +67,30 @@ static inline size_t _z_iosli_size(const _z_iosli_t *ios) {
     (void)(ios);
     return sizeof(_z_iosli_t);
 }
+static inline void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t offset, size_t length) {
+    assert(_z_iosli_readable(ios) >= length);
+    uint8_t *w_pos = _z_ptr_u8_offset(dst, (ptrdiff_t)offset);
+    (void)memcpy(w_pos, ios->_buf + ios->_r_pos, length);
+    ios->_r_pos = ios->_r_pos + length;
+}
+static inline void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
+    size_t length = _z_iosli_readable(src);
+    assert(dst->_capacity >= length);
+    (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
+    dst->_w_pos += length;
+}
+static inline void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
+    assert(_z_iosli_writable(ios) >= length);
+    uint8_t *w_pos = _z_ptr_u8_offset(ios->_buf, (ptrdiff_t)ios->_w_pos);
+    (void)memcpy(w_pos, _z_cptr_u8_offset(bs, (ptrdiff_t)offset), length);
+    ios->_w_pos += length;
+}
 
 _z_iosli_t _z_iosli_make(size_t capacity);
 _z_iosli_t *_z_iosli_new(size_t capacity);
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos);
 _z_iosli_t _z_iosli_steal(_z_iosli_t *ios);
-
-void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dest, size_t offset, size_t length);
-void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src);
-void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
 _z_slice_t _z_iosli_to_bytes(const _z_iosli_t *ios);
-
 size_t _z_iosli_size(const _z_iosli_t *ios);
 void _z_iosli_clear(_z_iosli_t *ios);
 void _z_iosli_free(_z_iosli_t **ios);

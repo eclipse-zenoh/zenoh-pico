@@ -51,8 +51,11 @@ uint8_t _z_zint_len(uint64_t v);
 uint8_t _z_zint64_encode_buf(uint8_t *buf, uint64_t v);
 static inline uint8_t _z_zsize_encode_buf(uint8_t *buf, _z_zint_t v) { return _z_zint64_encode_buf(buf, (uint64_t)v); }
 
-z_result_t _z_zsize_encode(_z_wbuf_t *buf, _z_zint_t v);
 z_result_t _z_zint64_encode(_z_wbuf_t *buf, uint64_t v);
+static inline z_result_t _z_zint16_encode(_z_wbuf_t *wbf, uint16_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
+static inline z_result_t _z_zint32_encode(_z_wbuf_t *wbf, uint32_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
+static inline z_result_t _z_zsize_encode(_z_wbuf_t *wbf, _z_zint_t v) { return _z_zint64_encode(wbf, (uint64_t)v); }
+
 z_result_t _z_zint16_decode(uint16_t *zint, _z_zbuf_t *buf);
 z_result_t _z_zint32_decode(uint32_t *zint, _z_zbuf_t *buf);
 z_result_t _z_zint64_decode(uint64_t *zint, _z_zbuf_t *buf);
