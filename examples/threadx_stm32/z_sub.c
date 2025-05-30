@@ -15,7 +15,7 @@
 #define LOGGING                 0
 
 #if LOGGING == 1
-    #define _LOG(...) _LOG(__VA_ARGS__)
+    #define _LOG(...) printf(__VA_ARGS__)
 #else
     #define _LOG(...)
 #endif
@@ -38,21 +38,22 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
 }
 
 VOID start_example_thread(ULONG initial_input) {
-    z_owned_config_t config;
-    z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
-    if (strcmp(MODE, "client") != 0) {
-       zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
-    }
-    else {
-       zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
-    }
-
     z_result_t r = _Z_ERR_GENERIC;
-    _LOG("Opening %s session ...\n", ZENOH_CONFIG_MODE);
     z_owned_session_t s;
+    z_owned_config_t config;
+
     while (r != Z_OK){
         // Wait until router is started
+        z_config_default(&config);
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
+        if (strcmp(MODE, "client") == 0) {
+           zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        }
+        else {
+           zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+        }
+
+        _LOG("Opening %s session ...\n", ZENOH_CONFIG_MODE);
         if ((r =z_open(&s, z_move(config), NULL)) < 0) {
            _LOG("Unable to open session!\n");
         }

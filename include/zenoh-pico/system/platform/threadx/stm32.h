@@ -76,6 +76,7 @@ typedef ULONG z_time_t;
 
 typedef struct {
     union {
+        void* _socket;
     };
 } _z_sys_net_socket_t;
 

@@ -433,29 +433,42 @@ On the host Zenoh, specify the USB CDC device:
 e.g.
 
 ```bash
-zenohd -l serial//dev/ttyACM1#baudrate=112500
+zenohd -l serial//dev/ttyACM1#baudrate=115200
 ```
 
 #### 2.2.7. STM32 Threadx
 
 1. Create a new project using STMCubeIDE for your target MCU.
+
 2. In CubeMX project configuration tool:
     - Add and enable AZURE-RTOS(threadx) Middleware.
     - Enable UART periphery, set up RX DMA in circular mode and enable UART global interrupt.
     - Move HAL_Tick to TIM peripheral for threadx to work with HAL. (SYS - Timebase source configuration)
+
 3. Generate initialization code with CubeMX.
+
 4. Clone zenoh-pico repository to your project folder (or submodule, copy files)
+
 5. Add zenoh-pico/src to project source folders. Exclude any folders in platforms/* except  common and threadx/stm32.
+
 6. Add zenoh-pico/include to project include paths.
+
 7. Edit zenoh-pico/include/config.h to exclude unsuported features or add compile flags
+
 8. Add defines to project:
     - `ZENOH_THREADX_STM32`
     - `ZENOH_HUART=huartx` (huart1 / huar2, etc...)
     - `ZENOH_THREADX_STM32_GEN_IRQ=0` (only if you want to write your own interrupt handler)
+
 9. Exclude from build <project_root>/Core/Src/app_threadx.c and replace with one of the z_*.c* files from zenoh-pico/examples/threadx_stm32/
+
+10. Set `TICK_INT_PRIORITY` in stm32xx_hal_conf.h to higher value than SysTick. (0 works ok for testing).
+
+11. Set static bytepool size bigger than 25kB.
+
 10. On host compile zenohd with serial support and run with:
     ```bash
-    zenohd -l serial/<serial_dev>#baudrate=<baudrate>`
+    zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
 
 

@@ -16,7 +16,7 @@
 #define LOGGING                 0
 
 #if LOGGING == 1
-    #define _LOG(...) _LOG(__VA_ARGS__)
+    #define _LOG(...) printf(__VA_ARGS__)
 #else
     #define _LOG(...)
 #endif
@@ -24,23 +24,22 @@
 
 /* Pointer used by system.c implementation to allocate from pool*/
 TX_BYTE_POOL* pthreadx_byte_pool;
-
 VOID start_example_thread(ULONG initial_input) {
     z_owned_config_t config;
-    z_config_default(&config);
-    zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
-    if (strcmp(MODE, "client") != 0) {
-       zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
-    }
-    else {
-       zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
-    }
-
-    z_result_t r = _Z_ERR_GENERIC;
-    _LOG("Opening %s session ...\n", ZENOH_CONFIG_MODE);
     z_owned_session_t s;
+    z_result_t r = _Z_ERR_GENERIC;
     while (r != Z_OK){
         // Wait until router is started
+        z_config_default(&config);
+        zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
+        if (strcmp(MODE, "client") == 0) {
+           zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        }
+        else {
+           zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+        }
+
+        _LOG("Opening %s session ...\n", ZENOH_CONFIG_MODE);
         if ((r =z_open(&s, z_move(config), NULL)) < 0) {
            _LOG("Unable to open session!\n");
         }
@@ -62,21 +61,23 @@ VOID start_example_thread(ULONG initial_input) {
     }
 
     // Publish data
-    char buf[256];
-    for (int idx = 0; 1; ++idx) {
-       z_sleep_s(1);
-       snprintf(buf, 256, "[%4d] %s", idx, VALUE);
-       _LOG("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
+    for (;;){
+        char buf[256];
+        for (int idx = 0; 1; ++idx) {
+           z_sleep_s(1);
+           snprintf(buf, 256, "[%4d] %s", idx, VALUE);
+           _LOG("Putting Data ('%s': '%s')...\n", KEYEXPR, buf);
 
-       // Create payload
-       z_owned_bytes_t payload;
-       z_bytes_copy_from_str(&payload, buf);
+           // Create payload
+           z_owned_bytes_t payload;
+           z_bytes_copy_from_str(&payload, buf);
 
-       z_publisher_put_options_t options;
-       z_publisher_put_options_default(&options);
-       z_publisher_put(z_loan(pub), z_move(payload), &options);
+           z_publisher_put_options_t options;
+           z_publisher_put_options_default(&options);
+           z_publisher_put(z_loan(pub), z_move(payload), &options);
+        }
+
     }
-
     // Clean-up
     z_drop(z_move(pub));
     z_drop(z_move(s));
