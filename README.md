@@ -455,18 +455,20 @@ zenohd -l serial//dev/ttyACM1#baudrate=112500
 
 7. Edit zenoh-pico/include/config.h to exclude unsuported features or add compile flags
 
-8. Add defines to project:
+8. Add "hal.h" file to your project. This file should include your target hal headers (ex. `#include "stm32f4xx_hal.h"`)
+
+9. Add defines to project:
     - `ZENOH_THREADX_STM32`
     - `ZENOH_HUART=huartx` (huart1 / huar2, etc...)
     - `ZENOH_THREADX_STM32_GEN_IRQ=0` (only if you want to write your own interrupt handler)
 
-9. Exclude from build <project_root>/Core/Src/app_threadx.c and replace with one of the z_*.c* files from zenoh-pico/examples/threadx_stm32/
+10. Exclude from build <project_root>/Core/Src/app_threadx.c and replace with one of the z_*.c* files from zenoh-pico/examples/threadx_stm32/
 
-10. Set `TICK_INT_PRIORITY` in stm32xx_hal_conf.h to higher value than SysTick. (0 works ok for testing).
+11. Set `TICK_INT_PRIORITY` in stm32xx_hal_conf.h to higher value than SysTick. (0 works ok for testing).
 
-11. Set static bytepool size bigger than 25kB.
+12. Set static bytepool size bigger than 25kB.
 
-12. On host compile zenohd with serial support and run with:
+13. On host compile zenohd with serial support and run with:
     ```bash
     zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
