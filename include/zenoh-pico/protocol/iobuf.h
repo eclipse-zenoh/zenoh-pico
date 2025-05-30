@@ -39,6 +39,7 @@ typedef struct {
 } _z_iosli_t;
 
 static inline _z_iosli_t _z_iosli_null(void) { return (_z_iosli_t){0}; }
+static inline size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_w_pos; }
 _z_iosli_t _z_iosli_make(size_t capacity);
 _z_iosli_t *_z_iosli_new(size_t capacity);
 _z_iosli_t _z_iosli_wrap(const uint8_t *buf, size_t length, size_t r_pos, size_t w_pos);
@@ -50,7 +51,6 @@ void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dest, size_t offset, size_t l
 void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src);
 uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos);
 
-size_t _z_iosli_writable(const _z_iosli_t *ios);
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b);
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length);
 void _z_iosli_put(_z_iosli_t *ios, uint8_t b, size_t pos);
@@ -115,6 +115,9 @@ typedef struct {
 } _z_wbuf_t;
 
 static inline _z_wbuf_t _z_wbuf_null(void) { return (_z_wbuf_t){0}; }
+static inline _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) {
+    return _z_iosli_vec_get(&wbf->_ioss, idx);
+}
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
 size_t _z_wbuf_capacity(const _z_wbuf_t *wbf);
@@ -132,7 +135,6 @@ void _z_wbuf_set_rpos(_z_wbuf_t *wbf, size_t r_pos);
 void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t w_pos);
 
 void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios);
-_z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);

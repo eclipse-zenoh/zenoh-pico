@@ -94,12 +94,9 @@ uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos) {
     return ios->_buf[pos];
 }
 
-size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_w_pos; }
-
 void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
     assert(_z_iosli_writable(ios) >= (size_t)1);
-    ios->_buf[ios->_w_pos] = b;
-    ios->_w_pos += 1;
+    ios->_buf[ios->_w_pos++] = b;
 }
 
 void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
@@ -290,8 +287,6 @@ _z_iosli_t *__z_wbuf_new_iosli(size_t capacity) {
     return ios;
 }
 
-_z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) { return _z_iosli_vec_get(&wbf->_ioss, idx); }
-
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_vec_len(&wbf->_ioss); }
 
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
@@ -388,8 +383,7 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
 
 z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
-    size_t writable = _z_iosli_writable(ios);
-    if (writable == (size_t)0) {
+    if (_z_iosli_writable(ios) == (size_t)0) {
         wbf->_w_idx += 1;
         if (wbf->_ioss._len <= wbf->_w_idx) {
             if (wbf->_expansion_step != 0) {

@@ -27,7 +27,7 @@
 
 /*------------------ Transmission helper ------------------*/
 
-static bool _z_transport_tx_get_express_status(const _z_network_message_t *msg) {
+static inline bool _z_transport_tx_get_express_status(const _z_network_message_t *msg) {
     switch (msg->_tag) {
         case _Z_N_DECLARE:
             return _Z_HAS_FLAG(msg->_body._declare._ext_qos._val, _Z_N_QOS_IS_EXPRESS_FLAG);
@@ -179,13 +179,12 @@ static z_result_t _z_transport_tx_batch_overflow(_z_transport_common_t *ztc, con
     _z_transport_message_t t_msg = _z_t_msg_make_frame_header(sn, reliability);
     _Z_RETURN_IF_ERR(_z_transport_message_encode(&ztc->_wbuf, &t_msg));
     // Retry encode
-    bool is_express = _z_transport_tx_get_express_status(n_msg);
     z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret != _Z_RES_OK) {
         // Message still doesn't fit in buffer, send as fragments
         return _z_transport_tx_send_fragment(ztc, n_msg, reliability, sn, peers);
     } else {
-        if (is_express) {
+        if (_z_transport_tx_get_express_status(n_msg)) {
             // Send immediately
             return _z_transport_tx_flush_buffer(ztc, peers);
         } else {
@@ -205,7 +204,7 @@ static z_result_t _z_transport_tx_batch_overflow(_z_transport_common_t *ztc, con
 #endif
 }
 
-static size_t _z_transport_tx_save_wpos(_z_wbuf_t *wbuf) {
+static inline size_t _z_transport_tx_save_wpos(_z_wbuf_t *wbuf) {
 #if Z_FEATURE_BATCHING == 1
     return _z_wbuf_get_wpos(wbuf);
 #else
@@ -228,10 +227,9 @@ static z_result_t _z_transport_tx_send_n_msg_inner(_z_transport_common_t *ztc, c
     }
     // Try encoding the network message
     size_t prev_wpos = _z_transport_tx_save_wpos(&ztc->_wbuf);
-    bool is_express = _z_transport_tx_get_express_status(n_msg);
     z_result_t ret = _z_network_message_encode(&ztc->_wbuf, n_msg);
     if (ret == _Z_RES_OK) {
-        if (is_express) {
+        if (_z_transport_tx_get_express_status(n_msg)) {
             // Send immediately
             return _z_transport_tx_flush_buffer(ztc, peers);
         } else {

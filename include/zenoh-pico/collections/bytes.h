@@ -51,7 +51,11 @@ static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
 static inline void _z_bytes_alias_arc_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
     dst->_slices = _z_arc_slice_svec_alias_element(s);
 }
-_z_bytes_t _z_bytes_alias(const _z_bytes_t *src);
+static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
+    _z_bytes_t dst;
+    dst._slices = src->_slices;
+    return dst;
+}
 bool _z_bytes_check(const _z_bytes_t *bytes);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);

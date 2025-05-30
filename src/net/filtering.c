@@ -152,11 +152,7 @@ z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) 
     return _Z_RES_OK;
 }
 
-bool _z_write_filter_active(const _z_write_filter_t *filter) {
-    return filter->ctx != NULL && filter->ctx->state == WRITE_FILTER_ACTIVE;
-}
-
-#else
+#else  // Z_FEATURE_INTEREST == 0
 z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
                                   uint8_t interest_flag) {
     _ZP_UNUSED(zn);
@@ -170,11 +166,6 @@ z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) 
     _ZP_UNUSED(zn);
     _ZP_UNUSED(filter);
     return _Z_RES_OK;
-}
-
-bool _z_write_filter_active(const _z_write_filter_t *filter) {
-    _ZP_UNUSED(filter);
-    return false;
 }
 
 #endif

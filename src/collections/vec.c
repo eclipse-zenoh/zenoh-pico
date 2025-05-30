@@ -80,10 +80,6 @@ void _z_vec_free(_z_vec_t **v, z_element_free_f free_f) {
     }
 }
 
-size_t _z_vec_len(const _z_vec_t *v) { return v->_len; }
-
-bool _z_vec_is_empty(const _z_vec_t *v) { return v->_len == 0; }
-
 void _z_vec_append(_z_vec_t *v, void *e) {
     if (v->_len == v->_capacity) {
         // Allocate a new vector
@@ -106,12 +102,6 @@ void _z_vec_append(_z_vec_t *v, void *e) {
         v->_val[v->_len] = e;
         v->_len = v->_len + 1;
     }
-}
-
-void *_z_vec_get(const _z_vec_t *v, size_t i) {
-    assert(i < v->_len);
-
-    return v->_val[i];
 }
 
 void _z_vec_set(_z_vec_t *v, size_t i, void *e, z_element_free_f free_f) {
@@ -225,10 +215,6 @@ void _z_svec_free(_z_svec_t **v, z_element_clear_f clear, size_t element_size) {
         *v = NULL;
     }
 }
-
-size_t _z_svec_len(const _z_svec_t *v) { return v->_len; }
-
-bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
 
 z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_size, bool use_elem_f) {
     // Allocate a new vector
