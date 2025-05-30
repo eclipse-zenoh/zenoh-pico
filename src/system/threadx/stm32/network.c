@@ -212,7 +212,13 @@ void zptxstm32_rx_event_cb(UART_HandleTypeDef *huart, uint16_t offset){
 }
 
 void zptxstm32_error_event_cb(UART_HandleTypeDef *huart){
-	_Z_ERROR("UART error!");
+    if (huart != &ZENOH_HUART){
+        // not correct uart
+        return;
+    }
+    _Z_ERROR("UART error!");
+    // restart UART DMA after error
+    HAL_UARTEx_ReceiveToIdle_DMA(&ZENOH_HUART, (uint8_t*)dma_buffer, RX_DMA_BUFFER_SIZE);
 }
 
 
@@ -225,6 +231,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t offset) {
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+    HAL_UART_DMAStop(huart);
+    HAL_UART_Abort(huart);
+    __HAL_UART_CLEAR_IDLEFLAG(huart);
+    __HAL_UART_CLEAR_OREFLAG(huart);
+    __HAL_UART_CLEAR_PEFLAG(huart);
+    __HAL_UART_CLEAR_FEFLAG(huart);
     zptxstm32_error_event_cb(huart);
 }
 #endif
