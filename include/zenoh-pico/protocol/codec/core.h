@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/utils/config.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -59,12 +60,30 @@ z_result_t _z_zint64_decode_with_reader(uint64_t *zint, __z_single_byte_reader_t
 z_result_t _z_zsize_decode_with_reader(_z_zint_t *zint, __z_single_byte_reader_t reader, void *context);
 z_result_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *buf);
 
-z_result_t _z_slice_val_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
-z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *buf);
-z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf);
-
+z_result_t _z_buf_encode(_z_wbuf_t *wbf, const uint8_t *buf, size_t len);
+static inline z_result_t _z_slice_val_encode(_z_wbuf_t *wbf, const _z_slice_t *bs) {
+    return _z_buf_encode(wbf, bs->start, bs->len);
+}
+static inline z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
+    // Check if we have enough bytes to read
+    if (_z_zbuf_len(zbf) < bs->len) {
+        _Z_WARN("Not enough bytes to read");
+        bs->len = 0;
+        bs->start = NULL;
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
+    _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
+    return _Z_RES_OK;
+}
+static inline z_result_t _z_slice_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) {
+    _Z_RETURN_IF_ERR(_z_zsize_decode(&bs->len, zbf));
+    return _z_slice_val_decode_na(bs, zbf);
+}
+static inline z_result_t _z_slice_val_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_val_decode_na(bs, zbf); }
+static inline z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *zbf) { return _z_slice_decode_na(bs, zbf); }
 z_result_t _z_slice_encode(_z_wbuf_t *buf, const _z_slice_t *bs);
-z_result_t _z_slice_decode(_z_slice_t *bs, _z_zbuf_t *buf);
+
 z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs);
 z_result_t _z_bytes_encode(_z_wbuf_t *wbf, const _z_bytes_t *bs);
 z_result_t _z_zbuf_read_exact(_z_zbuf_t *zbf, uint8_t *dest, size_t length);

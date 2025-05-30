@@ -33,11 +33,6 @@
 
 #define _Z_SUBINFOS_VEC_SIZE 4  // Arbitrary initial size
 
-static inline _z_subscription_cache_data_t _z_subscription_cache_data_null(void) {
-    _z_subscription_cache_data_t ret = {0};
-    return ret;
-}
-
 void _z_subscription_cache_invalidate(_z_session_t *zn) {
 #if Z_FEATURE_RX_CACHE == 1
     _z_subscription_lru_cache_clear(&zn->_subscription_cache);
@@ -234,7 +229,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
                                          z_reliability_t reliability, _z_source_info_t *source_info,
                                          _z_transport_peer_common_t *peer) {
     // Retrieve sub infos
-    _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
+    _z_subscription_cache_data_t sub_infos;
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
     _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, peer),
                            _z_keyexpr_clear(&sub_infos.ke_in);
