@@ -94,21 +94,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
             break;
     }
     // Process filter state
-    switch (ctx->state) {
-        default:  // Incorrect values are treated as active
-        case WRITE_FILTER_ACTIVE:
-            // Deactivate filter if no more targets
-            if (ctx->targets != NULL) {
-                ctx->state = WRITE_FILTER_OFF;
-            }
-            break;
-        case WRITE_FILTER_OFF:
-            // Activate filter if no more targets
-            if (ctx->targets == NULL) {
-                ctx->state = WRITE_FILTER_ACTIVE;
-            }
-            break;
-    }
+    ctx->state = (ctx->targets == NULL) ? WRITE_FILTER_ACTIVE : WRITE_FILTER_OFF;
 }
 
 z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
