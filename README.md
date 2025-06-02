@@ -469,6 +469,7 @@ zenohd -l serial//dev/ttyACM1#baudrate=112500
 12. Set static bytepool size bigger than 25kB.
 
 13. On host compile zenohd with serial support and run with:
+
     ```bash
     zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
