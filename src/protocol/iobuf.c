@@ -211,8 +211,6 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     wbf._w_idx = 0;  // This __must__ come after adding ioslices to reset w_idx
     wbf._r_idx = 0;
     wbf._expansion_step = is_expandable ? capacity : 0;
-    wbf._capacity = capacity;
-
     return wbf;
 }
 
@@ -498,7 +496,6 @@ z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
 }
 
 void _z_wbuf_copy(_z_wbuf_t *dst, const _z_wbuf_t *src) {
-    dst->_capacity = src->_capacity;
     dst->_r_idx = src->_r_idx;
     dst->_w_idx = src->_w_idx;
     dst->_expansion_step = src->_expansion_step;

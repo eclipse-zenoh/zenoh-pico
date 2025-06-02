@@ -151,7 +151,6 @@ typedef struct {
     _z_iosli_vec_t _ioss;
     size_t _r_idx;
     size_t _w_idx;
-    size_t _capacity;
     size_t _expansion_step;
 } _z_wbuf_t;
 
