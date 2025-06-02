@@ -240,8 +240,9 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
              (int)_z_string_len(&sub_infos.ke_out._suffix), _z_string_data(&sub_infos.ke_out._suffix));
     // Create sample
     z_result_t ret = _Z_RES_OK;
-    _z_sample_t sample = _z_sample_steal_data(&sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos,
-                                              attachment, reliability, source_info);
+    _z_sample_t sample;
+    _z_sample_steal_data(&sample, &sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos, attachment,
+                         reliability, source_info);
     // Parse subscription infos svec
     if (sub_infos.sub_nb == 1) {
         _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, 0);

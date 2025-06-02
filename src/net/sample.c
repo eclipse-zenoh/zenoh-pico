@@ -16,6 +16,20 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
+void _z_sample_steal_data(_z_sample_t *dst, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
+                          _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos, _z_bytes_t *attachment,
+                          z_reliability_t reliability, _z_source_info_t *source_info) {
+    dst->keyexpr = _z_keyexpr_steal(key);
+    dst->payload = _z_bytes_steal(payload);
+    dst->attachment = _z_bytes_steal(attachment);
+    dst->encoding = _z_encoding_steal(encoding);
+    dst->timestamp = *timestamp;
+    dst->kind = kind;
+    dst->qos = qos;
+    dst->reliability = reliability;
+    dst->source_info = _z_source_info_steal(source_info);
+}
+
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     *dst = _z_sample_null();
     _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->keyexpr, &src->keyexpr));

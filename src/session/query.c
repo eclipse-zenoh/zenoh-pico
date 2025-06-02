@@ -130,8 +130,9 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         return _Z_RES_OK;
     }
     // Build the reply
-    _z_reply_t reply = _z_reply_steal_data(&expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                                           &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
+    _z_reply_t reply;
+    _z_reply_steal_data(&reply, &expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
+                        &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
@@ -213,7 +214,8 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
         return _Z_RES_OK;
     }
     // Trigger the user callback
-    _z_reply_t reply = _z_reply_err_steal_data(&msg->_payload, &msg->_encoding);
+    _z_reply_t reply;
+    _z_reply_err_steal_data(&reply, &msg->_payload, &msg->_encoding);
     pen_qry->_callback(&reply, pen_qry->_arg);
     _z_reply_clear(&reply);
     return _Z_RES_OK;

@@ -54,8 +54,6 @@ bool _z_bytes_is_empty(const _z_bytes_t *bs) {
     return true;
 }
 
-void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
-
 void _z_bytes_free(_z_bytes_t **bs) {
     _z_bytes_t *ptr = *bs;
 
