@@ -4,20 +4,19 @@
  * System implementation for threadx.
  * =============================================================
  */
-
+#if defined(ZENOH_THREADX_STM32)
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "tx_api.h"
-#include "app_threadx.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
-#include "zenoh-pico.h"
+#include "zenoh-pico/utils/logging.h"
 
 /* pointer to threadx byte pool, should be provided by application */
-extern TX_BYTE_POOL* pthreadx_byte_pool;
+extern TX_BYTE_POOL *pthreadx_byte_pool;
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) { return z_random_u32(); }
@@ -25,7 +24,6 @@ uint8_t z_random_u8(void) { return z_random_u32(); }
 uint16_t z_random_u16(void) { return z_random_u32(); }
 
 uint32_t z_random_u32(void) { return random(); }
-
 
 uint64_t z_random_u64(void) {
     uint64_t ret = 0;
@@ -43,14 +41,13 @@ void z_random_fill(void *buf, size_t len) {
 
 /*------------------ Memory ------------------*/
 void *z_malloc(size_t size) {
-	void * ptr = NULL;
+    void *ptr = NULL;
 
-	uint8_t r = tx_byte_allocate(pthreadx_byte_pool, &ptr, size, TX_WAIT_FOREVER);
-	if(r != TX_SUCCESS)
-	{
-		ptr = NULL;
-	}
-	return ptr;
+    uint8_t r = tx_byte_allocate(pthreadx_byte_pool, &ptr, size, TX_WAIT_FOREVER);
+    if (r != TX_SUCCESS) {
+        ptr = NULL;
+    }
+    return ptr;
 }
 
 void *z_realloc(void *ptr, size_t size) {
@@ -58,44 +55,33 @@ void *z_realloc(void *ptr, size_t size) {
     return NULL;
 }
 
-void z_free(void *ptr) {
-        tx_byte_release(ptr);
-}
+void z_free(void *ptr) { tx_byte_release(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
-
 /*------------------ Thread ------------------*/
 z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    _Z_DEBUG("Creating a new task!");
 
-	_Z_DEBUG("Creating a new task!");
+    UINT status = tx_thread_create(&(task->threadx_thread), "ztask", (VOID(*)(ULONG))fun, (ULONG)arg,
+                                   task->threadx_stack, Z_TASK_STACK_SIZE, Z_TASK_PRIORITY, Z_TASK_PREEMPT_THRESHOLD,
+                                   Z_TASK_TIME_SLICE, TX_AUTO_START);
 
-	UINT status = tx_thread_create(&(task->threadx_thread), "ztask", (VOID (*)(ULONG))fun, (ULONG)arg,
-			task->threadx_stack, Z_TASK_STACK_SIZE,
-			Z_TASK_PRIORITY,Z_TASK_PREEMPT_THRESHOLD,Z_TASK_TIME_SLICE,
-			TX_AUTO_START);
-
-	if (status != TX_SUCCESS)
-		return _Z_ERR_GENERIC;
-
+    if (status != TX_SUCCESS) return _Z_ERR_GENERIC;
 
     return _Z_RES_OK;
 }
 
 z_result_t _z_task_join(_z_task_t *task) {
+    while (1) {
+        UINT state;
+        UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (status != TX_SUCCESS) return _Z_ERR_GENERIC;
 
-	while(1)
-	{
-		UINT state;
-		UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
-		if (status !=TX_SUCCESS)
-			return _Z_ERR_GENERIC;
+        if ((state == TX_COMPLETED) || (state == TX_TERMINATED)) break;
 
-		if ( (state==TX_COMPLETED) || (state==TX_TERMINATED) )
-			break;
-
-		tx_thread_sleep(1);
-	}
+        tx_thread_sleep(1);
+    }
 
     return _Z_RES_OK;
 }
@@ -110,7 +96,7 @@ z_result_t _z_task_cancel(_z_task_t *task) {
     return _Z_ERR_GENERIC;
 }
 
-void _z_task_exit(void) { // NEW with new vesion
+void _z_task_exit(void) {  // NEW with new vesion
     // Not implemented
 }
 
@@ -121,31 +107,31 @@ void _z_task_free(_z_task_t **task) {
 
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) {
-	UINT status = tx_mutex_create(m, TX_NULL, TX_INHERIT);
-	if (status == TX_MUTEX_ERROR){
-	    // zenoh-pico reuses mutex if zenoh_init() fails.
-	    status = tx_mutex_delete(m);
-	    if (status == TX_SUCCESS){
-	        status = tx_mutex_create(m, TX_NULL, TX_INHERIT);
-	    }
-	}
+    UINT status = tx_mutex_create(m, TX_NULL, TX_INHERIT);
+    if (status == TX_MUTEX_ERROR) {
+        // zenoh-pico reuses mutex if zenoh_init() fails.
+        status = tx_mutex_delete(m);
+        if (status == TX_SUCCESS) {
+            status = tx_mutex_create(m, TX_NULL, TX_INHERIT);
+        }
+    }
     return (status == TX_SUCCESS) ? 0 : -1;
 }
 z_result_t _z_mutex_drop(_z_mutex_t *m) {
-	UINT status = tx_mutex_delete(m);
-	return (status == TX_SUCCESS) ? 0 : -1;
+    UINT status = tx_mutex_delete(m);
+    return (status == TX_SUCCESS) ? 0 : -1;
 }
 z_result_t _z_mutex_lock(_z_mutex_t *m) {
-	UINT status = tx_mutex_get(m,TX_WAIT_FOREVER);
-	return (status == TX_SUCCESS) ? 0 : -1;
+    UINT status = tx_mutex_get(m, TX_WAIT_FOREVER);
+    return (status == TX_SUCCESS) ? 0 : -1;
 }
 z_result_t _z_mutex_try_lock(_z_mutex_t *m) {
-	UINT status = tx_mutex_get(m,TX_NO_WAIT); // Return immediately even if the mutex was not available
-	return (status == TX_SUCCESS) ? 0 : -1;
+    UINT status = tx_mutex_get(m, TX_NO_WAIT);  // Return immediately even if the mutex was not available
+    return (status == TX_SUCCESS) ? 0 : -1;
 }
 z_result_t _z_mutex_unlock(_z_mutex_t *m) {
-	UINT status = tx_mutex_put(m);
-	return (status == TX_SUCCESS) ? 0 : -1;
+    UINT status = tx_mutex_put(m);
+    return (status == TX_SUCCESS) ? 0 : -1;
 }
 
 z_result_t _z_mutex_rec_init(_z_mutex_rec_t *m) { return _z_mutex_init(m); }
@@ -232,7 +218,7 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
     }
 
     ULONG now = tx_time_get();
-    ULONG target_time = (abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000) * (TX_TIMER_TICKS_PER_SECOND/1000);
+    ULONG target_time = (abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000) * (TX_TIMER_TICKS_PER_SECOND / 1000);
     ULONG block_duration = (target_time > now) ? (target_time - now) : 0;
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
@@ -258,24 +244,24 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 
 /*------------------ Sleep ------------------*/
 z_result_t z_sleep_us(size_t time) {
-	tx_thread_sleep(time*TX_TIMER_TICKS_PER_SECOND/1000000);
+    tx_thread_sleep(time * TX_TIMER_TICKS_PER_SECOND / 1000000);
     return 0;
 }
 
 z_result_t z_sleep_ms(size_t time) {
-	tx_thread_sleep(time*TX_TIMER_TICKS_PER_SECOND/1000);
+    tx_thread_sleep(time * TX_TIMER_TICKS_PER_SECOND / 1000);
     return 0;
 }
 
 z_result_t z_sleep_s(size_t time) {
-	tx_thread_sleep(time*TX_TIMER_TICKS_PER_SECOND);
+    tx_thread_sleep(time * TX_TIMER_TICKS_PER_SECOND);
     return 0;
 }
 
 /*------------------ Clock ------------------*/
 
-void __z_clock_gettime(z_clock_t* ts) {
-    uint64_t ms = tx_time_get() * (TX_TIMER_TICKS_PER_SECOND/1000);
+void __z_clock_gettime(z_clock_t *ts) {
+    uint64_t ms = tx_time_get() * (TX_TIMER_TICKS_PER_SECOND / 1000);
     ts->tv_sec = ms / (uint64_t)1000;
     ts->tv_nsec = (ms % (uint64_t)1000) * (uint64_t)1000;
 }
@@ -286,7 +272,7 @@ z_clock_t z_clock_now(void) {
     return now;
 }
 
-unsigned long z_clock_elapsed_us(z_clock_t* instant) {
+unsigned long z_clock_elapsed_us(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -294,7 +280,7 @@ unsigned long z_clock_elapsed_us(z_clock_t* instant) {
     return elapsed;
 }
 
-unsigned long z_clock_elapsed_ms(z_clock_t* instant) {
+unsigned long z_clock_elapsed_ms(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -302,7 +288,7 @@ unsigned long z_clock_elapsed_ms(z_clock_t* instant) {
     return elapsed;
 }
 
-unsigned long z_clock_elapsed_s(z_clock_t* instant) {
+unsigned long z_clock_elapsed_s(z_clock_t *instant) {
     z_clock_t now;
     __z_clock_gettime(&now);
 
@@ -310,7 +296,7 @@ unsigned long z_clock_elapsed_s(z_clock_t* instant) {
     return elapsed;
 }
 
-void z_clock_advance_us(z_clock_t* clock, unsigned long duration) {
+void z_clock_advance_us(z_clock_t *clock, unsigned long duration) {
     clock->tv_sec += duration / 1000000;
     clock->tv_nsec += (duration % 1000000) * 1000;
 
@@ -320,7 +306,7 @@ void z_clock_advance_us(z_clock_t* clock, unsigned long duration) {
     }
 }
 
-void z_clock_advance_ms(z_clock_t* clock, unsigned long duration) {
+void z_clock_advance_ms(z_clock_t *clock, unsigned long duration) {
     clock->tv_sec += duration / 1000;
     clock->tv_nsec += (duration % 1000) * 1000000;
 
@@ -330,10 +316,10 @@ void z_clock_advance_ms(z_clock_t* clock, unsigned long duration) {
     }
 }
 
-void z_clock_advance_s(z_clock_t* clock, unsigned long duration) { clock->tv_sec += duration; }
+void z_clock_advance_s(z_clock_t *clock, unsigned long duration) { clock->tv_sec += duration; }
 
 /*------------------ Time ------------------*/
-z_time_t z_time_now(void)  { return tx_time_get(); }
+z_time_t z_time_now(void) { return tx_time_get(); }
 
 const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
     snprintf(buf, buflen, "%lu", z_time_now());
@@ -341,22 +327,21 @@ const char *z_time_now_as_str(char *const buf, unsigned long buflen) {
 }
 
 unsigned long z_time_elapsed_us(z_time_t *time) {
-	return (tx_time_get()-*time)*1000000ULL/TX_TIMER_TICKS_PER_SECOND;
+    return (tx_time_get() - *time) * 1000000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
 unsigned long z_time_elapsed_ms(z_time_t *time) {
-	return (tx_time_get()-*time)*1000ULL/TX_TIMER_TICKS_PER_SECOND;
+    return (tx_time_get() - *time) * 1000ULL / TX_TIMER_TICKS_PER_SECOND;
 }
 
-unsigned long z_time_elapsed_s(z_time_t *time) {
-	return (tx_time_get()-*time)*TX_TIMER_TICKS_PER_SECOND;
-}
+unsigned long z_time_elapsed_s(z_time_t *time) { return (tx_time_get() - *time) * TX_TIMER_TICKS_PER_SECOND; }
 
 z_result_t _z_get_time_since_epoch(_z_time_since_epoch *t) {
-	ULONG64 time_ns = tx_time_get()*1000000000ULL/TX_TIMER_TICKS_PER_SECOND;
+    ULONG64 time_ns = tx_time_get() * 1000000000ULL / TX_TIMER_TICKS_PER_SECOND;
 
-	t->secs = time_ns/1000000000ULL;
-	t->nanos = time_ns%1000000000ULL;
+    t->secs = time_ns / 1000000000ULL;
+    t->nanos = time_ns % 1000000000ULL;
 
     return _Z_RES_OK;
 }
+#endif  // ZENOH_THREADX_STM32

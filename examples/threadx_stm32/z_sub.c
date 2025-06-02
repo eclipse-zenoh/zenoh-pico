@@ -5,24 +5,24 @@
  ******************************************************************************
  */
 
-#include "app_threadx.h"
-#include "zenoh-pico.h"
 #include <stdio.h>
 
-#define MODE                    "client"
-#define LOCATOR                 "serial/Serial"
-#define KEYEXPR                 "demo/example/zenoh-pico-pub"
-#define LOGGING                 0
+#include "app_threadx.h"
+#include "zenoh-pico.h"
+
+#define MODE "client"
+#define LOCATOR "serial/Serial"
+#define KEYEXPR "demo/example/zenoh-pico-pub"
+#define LOGGING 0
 
 #if LOGGING == 1
-    #define _LOG(...) printf(__VA_ARGS__)
+#define _LOG(...) printf(__VA_ARGS__)
 #else
-    #define _LOG(...)
+#define _LOG(...)
 #endif
 
-
 /* Pointer used by system.c implementation to allocate from pool*/
-TX_BYTE_POOL* pthreadx_byte_pool;
+TX_BYTE_POOL *pthreadx_byte_pool;
 
 int msg_nb = 0;
 void data_handler(z_loaned_sample_t *sample, void *ctx) {
@@ -32,7 +32,7 @@ void data_handler(z_loaned_sample_t *sample, void *ctx) {
     z_owned_string_t value;
     z_bytes_to_string(z_sample_payload(sample), &value);
     _LOG(">> [Subscriber] Received ('%.*s': '%.*s')\n", (int)z_string_len(z_loan(keystr)),
-           z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(value)), z_string_data(z_loan(value)));
+         z_string_data(z_loan(keystr)), (int)z_string_len(z_loan(value)), z_string_data(z_loan(value)));
     z_drop(z_move(value));
     msg_nb++;
 }
@@ -42,27 +42,26 @@ VOID start_example_thread(ULONG initial_input) {
     z_owned_session_t s;
     z_owned_config_t config;
 
-    while (r != Z_OK){
+    while (r != Z_OK) {
         // Wait until router is started
         z_config_default(&config);
         zp_config_insert(z_loan_mut(config), Z_CONFIG_MODE_KEY, MODE);
         if (strcmp(MODE, "client") == 0) {
-           zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
-        }
-        else {
-           zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_CONNECT_KEY, LOCATOR);
+        } else {
+            zp_config_insert(z_loan_mut(config), Z_CONFIG_LISTEN_KEY, LOCATOR);
         }
 
         _LOG("Opening %s session ...\n", ZENOH_CONFIG_MODE);
-        if ((r =z_open(&s, z_move(config), NULL)) < 0) {
-           _LOG("Unable to open session!\n");
+        if ((r = z_open(&s, z_move(config), NULL)) < 0) {
+            _LOG("Unable to open session!\n");
         }
     }
     // Start read and lease tasks for zenoh-pico
     if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-       _LOG("Unable to start read and lease tasks\n");
-       z_drop(z_move(s));
-       return;
+        _LOG("Unable to start read and lease tasks\n");
+        z_drop(z_move(s));
+        return;
     }
 
     z_owned_closure_sample_t callback;
@@ -72,39 +71,34 @@ VOID start_example_thread(ULONG initial_input) {
     z_view_keyexpr_from_str_unchecked(&ke, KEYEXPR);
     z_owned_subscriber_t sub;
     if (z_declare_subscriber(z_loan(s), &sub, z_loan(ke), z_move(callback), NULL) < 0) {
-       _LOG("Unable to declare subscriber.\n");
-       return;
+        _LOG("Unable to declare subscriber.\n");
+        return;
     }
 
     while (1) {
-       z_sleep_s(1);
+        z_sleep_s(1);
     }
 
     // Clean-up
     z_drop(z_move(sub));
     z_drop(z_move(s));
-
 }
 
 TX_THREAD example_thread;
-UINT App_ThreadX_Init(VOID *memory_ptr)
-{
-  UINT ret = TX_SUCCESS;
-  TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL*)memory_ptr;
+UINT App_ThreadX_Init(VOID *memory_ptr) {
+    UINT ret = TX_SUCCESS;
+    TX_BYTE_POOL *byte_pool = (TX_BYTE_POOL *)memory_ptr;
 
-  pthreadx_byte_pool = (TX_BYTE_POOL*)memory_ptr;
-  void* pointer;
+    pthreadx_byte_pool = (TX_BYTE_POOL *)memory_ptr;
+    void *pointer;
 
-  /* Allocate the stack for the serial thread.  */
-  tx_byte_allocate(byte_pool, &pointer, 4096, TX_NO_WAIT);
-  /* Create the serial thread.  */
-  tx_thread_create(&example_thread, "Zenoh-Pico-Example", start_example_thread,
-          0, pointer, 4096, 15, 15, TX_NO_TIME_SLICE, TX_AUTO_START);
+    /* Allocate the stack for the serial thread.  */
+    tx_byte_allocate(byte_pool, &pointer, 4096, TX_NO_WAIT);
+    /* Create the serial thread.  */
+    tx_thread_create(&example_thread, "Zenoh-Pico-Example", start_example_thread, 0, pointer, 4096, 15, 15,
+                     TX_NO_TIME_SLICE, TX_AUTO_START);
 
-  return ret;
+    return ret;
 }
 
-void MX_ThreadX_Init(void)
-{
-  tx_kernel_enter();
-}
+void MX_ThreadX_Init(void) { tx_kernel_enter(); }

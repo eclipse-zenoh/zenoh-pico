@@ -1,9 +1,9 @@
 #ifndef ZENOH_PICO_SYSTEM_THREADX_TYPES_H
 #define ZENOH_PICO_SYSTEM_THREADX_TYPES_H
 
-#include "zenoh-pico/config.h"
 #include <sys/_timespec.h>
 
+#include "zenoh-pico/config.h"
 /*
  * hal.h needs to be provided by application layer. It should include
  * the necessary stm32 HAL headers for your target (ex. stm32f4xx_hal.h).
@@ -47,20 +47,19 @@ extern "C" {
 #endif
 
 typedef struct {
-	TX_THREAD threadx_thread;
-	uint8_t threadx_stack[Z_TASK_STACK_SIZE];
+    TX_THREAD threadx_thread;
+    uint8_t threadx_stack[Z_TASK_STACK_SIZE];
 } _z_task_t;
-
 
 typedef void *z_task_attr_t;  // Not used
 
 typedef TX_MUTEX _z_mutex_rec_t;
 typedef TX_MUTEX _z_mutex_t;
-typedef struct{
-    TX_MUTEX     mutex;
+typedef struct {
+    TX_MUTEX mutex;
     TX_SEMAPHORE sem;
-    UINT         waiters;
-}_z_condvar_t;
+    UINT waiters;
+} _z_condvar_t;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 typedef struct timespec z_clock_t;
@@ -76,13 +75,12 @@ typedef ULONG z_time_t;
 
 typedef struct {
     union {
-        void* _socket;
+        void *_socket;
     };
 } _z_sys_net_socket_t;
 
 typedef struct {
-    union {
-    };
+    union {};
 } _z_sys_net_endpoint_t;
 
 #if ZENOH_THREADX_STM32_GEN_IRQ == 0
