@@ -474,7 +474,6 @@ zenohd -l serial//dev/ttyACM1#baudrate=112500
     zenohd -l serial//dev/ttyACM0#baudrate=115200
     ```
 
-
 ## 3. Running the Examples
 
 The simplest way to run some of the example is to get a Docker image of the **zenoh** router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
