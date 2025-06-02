@@ -941,9 +941,9 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
     _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
     _z_encoding_t *encoding = opt.encoding == NULL ? NULL : &opt.encoding->_this._val;
-    ret =
-        _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, payload_bytes, encoding, Z_SAMPLE_KIND_PUT, opt.congestion_control,
-                 opt.priority, opt.is_express, opt.timestamp, attachment_bytes, reliability, source_info);
+    ret = _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, encoding, Z_SAMPLE_KIND_PUT,
+                   opt.congestion_control, opt.priority, opt.is_express, opt.timestamp, &attachment_bytes, reliability,
+                   source_info);
 
     // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
@@ -995,9 +995,9 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
     reliability = opt.reliability;
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
-
-    ret = _z_write(_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
-                   opt.priority, opt.is_express, opt.timestamp, _z_bytes_null(), reliability, source_info);
+    _z_bytes_t dummy_payload = _z_bytes_null();
+    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+                   opt.priority, opt.is_express, opt.timestamp, &dummy_payload, reliability, source_info);
 
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
@@ -1135,8 +1135,9 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
 #endif
             !_z_write_filter_active(&pub->_filter)) {
             // Write value
-            ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
-                           pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
+            ret =
+                _z_write(session, &pub_keyexpr, &payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+                         pub->_priority, pub->_is_express, opt.timestamp, &attachment_bytes, reliability, source_info);
         }
 
         // Trigger local subscriptions
@@ -1207,10 +1208,10 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
 #else
     session = _Z_RC_IN_VAL(&pub->_zn);
 #endif
-
+    _z_bytes_t dummy_payload = _z_bytes_null();
     z_result_t ret =
-        _z_write(session, pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
-                 pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null(), reliability, source_info);
+        _z_write(session, &pub_keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
+                 pub->_priority, pub->_is_express, opt.timestamp, &dummy_payload, reliability, source_info);
 
 #if Z_FEATURE_SESSION_CHECK == 1
     // Clean up

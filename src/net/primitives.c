@@ -183,64 +183,28 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t keyexpr, const _z_bytes_t payload,
+z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                     const _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                    const _z_bytes_t attachment, z_reliability_t reliability, const _z_source_info_t *source_info) {
+                    const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info) {
     z_result_t ret = _Z_RES_OK;
     _z_network_message_t msg;
+    _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
-            // TODO(refactor): use z_n_make_push
-            msg = (_z_network_message_t){
-                ._tag = _Z_N_PUSH,
-                ._reliability = Z_RELIABILITY_DEFAULT,
-                ._body._push =
-                    {
-                        ._key = keyexpr,
-                        ._qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
-                        ._timestamp = _z_timestamp_null(),
-                        ._body._is_put = true,
-                        ._body._body._put =
-                            {
-                                ._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
-                                             ._source_info =
-                                                 ((source_info != NULL) ? *source_info : _z_source_info_null())},
-                                ._payload = payload,
-                                ._encoding = encoding == NULL ? _z_encoding_null() : *encoding,
-                                ._attachment = attachment,
-                            },
-                    },
-            };
+            _z_n_msg_make_push_put(&msg, keyexpr, payload, encoding, qos, timestamp, attachment, reliability,
+                                   source_info);
             break;
         case Z_SAMPLE_KIND_DELETE:
-            // TODO(refactor): use z_n_make_push
-            msg = (_z_network_message_t){
-                ._tag = _Z_N_PUSH,
-                ._reliability = Z_RELIABILITY_DEFAULT,
-                ._body._push =
-                    {
-                        ._key = keyexpr,
-                        ._qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority),
-                        ._timestamp = _z_timestamp_null(),
-                        ._body._is_put = false,
-                        ._body._body._del =
-                            {._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
-                                          ._source_info =
-                                              ((source_info != NULL) ? *source_info : _z_source_info_null())}},
-                    },
-            };
+            _z_n_msg_make_push_del(&msg, keyexpr, qos, timestamp, reliability, source_info);
             break;
         default:
             return _Z_ERR_GENERIC;
     }
-
     if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
     }
-
     // Freeing z_msg is unnecessary, as all of its components are aliased
-
     return ret;
 }
 #endif

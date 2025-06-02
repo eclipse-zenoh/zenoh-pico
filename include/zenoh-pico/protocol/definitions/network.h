@@ -315,7 +315,13 @@ _z_network_message_t _z_msg_make_query(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_sli
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
-_z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body);
+void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                            const _z_encoding_t *encoding, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                            const _z_bytes_t *attachment, z_reliability_t reliability,
+                            const _z_source_info_t *source_info);
+void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, _z_n_qos_t qos,
+                            const _z_timestamp_t *timestamp, z_reliability_t reliability,
+                            const _z_source_info_t *source_info);
 _z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
 z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
 _z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);

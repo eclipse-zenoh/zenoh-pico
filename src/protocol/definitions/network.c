@@ -192,13 +192,45 @@ _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool ha
             },
     };
 }
-_z_network_message_t _z_n_msg_make_push(_Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body) {
-    return (_z_network_message_t){
-        ._tag = _Z_N_PUSH,
-        ._reliability = Z_RELIABILITY_DEFAULT,
-        ._body._push = {._key = _z_keyexpr_steal(key), ._body = _z_push_body_steal(body)},
+
+void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                            const _z_encoding_t *encoding, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
+                            const _z_bytes_t *attachment, z_reliability_t reliability,
+                            const _z_source_info_t *source_info) {
+    dst->_tag = _Z_N_PUSH;
+    dst->_reliability = reliability;
+    dst->_body._push = (_z_n_msg_push_t){
+        ._key = *key,
+        ._qos = qos,
+        ._timestamp = _z_timestamp_null(),
+        ._body._is_put = true,
+        ._body._body._put =
+            {
+                ._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
+                             ._source_info = ((source_info != NULL) ? *source_info : _z_source_info_null())},
+                ._payload = *payload,
+                ._encoding = encoding == NULL ? _z_encoding_null() : *encoding,
+                ._attachment = *attachment,
+            },
     };
 }
+
+void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, _z_n_qos_t qos,
+                            const _z_timestamp_t *timestamp, z_reliability_t reliability,
+                            const _z_source_info_t *source_info) {
+    dst->_tag = _Z_N_PUSH;
+    dst->_reliability = reliability;
+    dst->_body._push = (_z_n_msg_push_t){
+        ._key = *key,
+        ._qos = qos,
+        ._timestamp = _z_timestamp_null(),
+        ._body._is_put = false,
+        ._body._body._del = {._commons = {._timestamp = ((timestamp != NULL) ? *timestamp : _z_timestamp_null()),
+                                          ._source_info =
+                                              ((source_info != NULL) ? *source_info : _z_source_info_null())}},
+    };
+}
+
 _z_network_message_t _z_n_msg_make_reply(_z_zint_t rid, _Z_MOVE(_z_keyexpr_t) key, _Z_MOVE(_z_push_body_t) body) {
     return (_z_network_message_t){
         ._tag = _Z_N_RESPONSE,
