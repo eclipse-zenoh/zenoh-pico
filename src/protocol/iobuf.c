@@ -346,14 +346,15 @@ z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, 
     z_result_t ret = _Z_RES_OK;
 
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
-    size_t writable = _z_iosli_writable(ios);
-    ios->_capacity = ios->_w_pos;  // Block writing on this ioslice
-                                   // The remaining space is allocated in a new ioslice
-
+    size_t curr_space = _z_iosli_writable(ios);
+    // Block writing on this ioslice
+    ios->_capacity = ios->_w_pos;
+    // Wrap data
     _z_iosli_t wios = _z_iosli_wrap(bs, length, offset, offset + length);
     _z_wbuf_add_iosli(wbf, _z_iosli_clone(&wios));
-    _z_wbuf_add_iosli(wbf, __z_wbuf_new_iosli(writable));
-
+    // Set remaining space as a new ioslice
+    wios = _z_iosli_wrap(ios->_buf, curr_space, 0, 0);
+    _z_wbuf_add_iosli(wbf, _z_iosli_clone(&wios));
     return ret;
 }
 
