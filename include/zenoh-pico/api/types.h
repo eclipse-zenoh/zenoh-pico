@@ -417,23 +417,6 @@ typedef struct {
 } z_get_options_t;
 
 /**
- * Represents the configuration used to configure a batch started via :c:func:`zp_batch_start`.
- * All those options works only if Z_FEATURE_MULTI_THREAD is activated
- *
- * Members:
- *   hold_tx_mutex: flag that indicates the batch will hold the tx mutex.
- * WARNING: Will prevent other threads to write on tx buffer or keep_alive messages to be sent until batching is
- * stopped.
- *
- *   hold_peer_mutex: flag that indicates the batch will hold the peer mutex, peer mode only.
- * WARNING: Will prevent removal/addition of peers and data receiving task until batching is stopped.
- */
-typedef struct {
-    bool hold_tx_mutex;
-    bool hold_peer_mutex;
-} zp_batch_start_options_t;
-
-/**
  * Represents the configuration used to configure a read task started via :c:func:`zp_start_read_task`.
  */
 typedef struct {

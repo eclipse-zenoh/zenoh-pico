@@ -85,34 +85,32 @@ void _z_transport_free(_z_transport_t **zt) {
 }
 
 #if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt, bool hold_tx_mutex, bool hold_peer_mutex) {
+bool _z_transport_start_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
     if (ztc->_batch_state == _Z_BATCHING_ACTIVE) {
         return false;
     }
     ztc->_batch_count = 0;
     ztc->_batch_state = _Z_BATCHING_ACTIVE;
-    ztc->_batch_holds_tx_mutex = hold_tx_mutex;
-    ztc->_batch_holds_peer_mutex = hold_peer_mutex;
 
-    if (hold_tx_mutex) {
-        _z_transport_tx_mutex_lock(ztc, true);
-    }
-    if (hold_peer_mutex) {
-        _z_transport_peer_mutex_lock(ztc);
-    }
+#if Z_FEATURE_BATCH_TX_MUTEX == 1
+    _z_transport_tx_mutex_lock(ztc, true);
+#endif
+#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+    _z_transport_peer_mutex_lock(ztc);
+#endif
     return true;
 }
 
 void _z_transport_stop_batching(_z_transport_t *zt) {
     _z_transport_common_t *ztc = _z_transport_get_common(zt);
 
-    if (ztc->_batch_holds_tx_mutex) {
-        _z_transport_tx_mutex_unlock(ztc);
-    }
-    if (ztc->_batch_holds_peer_mutex) {
-        _z_transport_peer_mutex_unlock(ztc);
-    }
+#if Z_FEATURE_BATCH_TX_MUTEX == 1
+    _z_transport_tx_mutex_unlock(ztc);
+#endif
+#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+    _z_transport_peer_mutex_unlock(ztc);
+#endif
     ztc->_batch_state = _Z_BATCHING_IDLE;
 }
 #endif

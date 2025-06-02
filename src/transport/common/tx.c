@@ -283,7 +283,7 @@ static z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _
     _Z_DEBUG("Send network message");
 
     // Acquire the lock and drop the message if needed
-    if (!_z_transport_batch_hold_tx_mutex(ztc)) {
+    if (!_z_transport_batch_hold_tx_mutex()) {
         ret = _z_transport_tx_mutex_lock(ztc, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
     }
     if (ret != _Z_RES_OK) {
@@ -292,7 +292,7 @@ static z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _
     }
     // Process message
     ret = _z_transport_tx_send_n_msg_inner(ztc, n_msg, reliability, peers);
-    if (!_z_transport_batch_hold_tx_mutex(ztc)) {
+    if (!_z_transport_batch_hold_tx_mutex()) {
         _z_transport_tx_mutex_unlock(ztc);
     }
     return ret;
@@ -305,7 +305,7 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
     // Check batch size
     if (ztc->_batch_count > 0) {
         // Acquire the lock and drop the message if needed
-        if (!_z_transport_batch_hold_tx_mutex(ztc)) {
+        if (!_z_transport_batch_hold_tx_mutex()) {
             ret = _z_transport_tx_mutex_lock(ztc, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
         }
         if (ret != _Z_RES_OK) {
@@ -315,7 +315,7 @@ static z_result_t _z_transport_tx_send_n_batch(_z_transport_common_t *ztc, z_con
         // Send batch
         _Z_DEBUG("Send network batch");
         ret = _z_transport_tx_flush_buffer(ztc, peers);
-        if (!_z_transport_batch_hold_tx_mutex(ztc)) {
+        if (!_z_transport_batch_hold_tx_mutex()) {
             _z_transport_tx_mutex_unlock(ztc);
         }
         return ret;
@@ -480,7 +480,7 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             if (zn->_mode == Z_WHATAMI_CLIENT) {
                 ret = _z_transport_tx_send_n_msg(ztc, z_msg, reliability, cong_ctrl, NULL);
             } else if (!_z_transport_peer_unicast_list_is_empty(zn->_tp._transport._unicast._peers)) {
-                if (!_z_transport_batch_hold_peer_mutex(ztc)) {
+                if (!_z_transport_batch_hold_peer_mutex()) {
                     _z_transport_peer_mutex_lock(ztc);
                 }
                 if (peer == NULL) {
@@ -496,7 +496,7 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
                         z_free(dst_list);
                     }
                 }
-                if (!_z_transport_batch_hold_peer_mutex(ztc)) {
+                if (!_z_transport_batch_hold_peer_mutex()) {
                     _z_transport_peer_mutex_unlock(ztc);
                 }
             }

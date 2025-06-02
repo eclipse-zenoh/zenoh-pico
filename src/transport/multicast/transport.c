@@ -52,8 +52,6 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
 #if Z_FEATURE_BATCHING == 1
     ztm->_common._batch_state = _Z_BATCHING_IDLE;
     ztm->_common._batch_count = 0;
-    ztm->_common._batch_holds_tx_mutex = false;
-    ztm->_common._batch_holds_peer_mutex = false;
 #endif
 
 #if Z_FEATURE_MULTI_THREAD == 1

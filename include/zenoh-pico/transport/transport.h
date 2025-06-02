@@ -139,9 +139,7 @@ typedef struct {
 #endif
 // Transport batching
 #if Z_FEATURE_BATCHING == 1
-    uint8_t _batch_state : 2;
-    uint8_t _batch_holds_tx_mutex : 1;
-    uint8_t _batch_holds_peer_mutex : 1;
+    uint8_t _batch_state;
     size_t _batch_count;
 #endif
 } _z_transport_common_t;
@@ -205,22 +203,25 @@ void _z_transport_clear(_z_transport_t *zt);
 void _z_transport_free(_z_transport_t **zt);
 
 #if Z_FEATURE_BATCHING == 1
-bool _z_transport_start_batching(_z_transport_t *zt, bool hold_tx_mutex, bool hold_peer_mutex);
+bool _z_transport_start_batching(_z_transport_t *zt);
 void _z_transport_stop_batching(_z_transport_t *zt);
-static inline bool _z_transport_batch_hold_tx_mutex(_z_transport_common_t *ztc) { return ztc->_batch_holds_tx_mutex; }
-static inline bool _z_transport_batch_hold_peer_mutex(_z_transport_common_t *ztc) {
-    return ztc->_batch_holds_peer_mutex;
-}
+
+static inline bool _z_transport_batch_hold_tx_mutex(void) {
+#if Z_FEATURE_BATCH_TX_MUTEX == 1
+    return true;
 #else
-static inline bool _z_transport_batch_hold_tx_mutex(_z_transport_common_t *ztc) {
-    _ZP_UNUSED(ztc);
     return false;
-}
-static in line bool _z_transport_batch_hold_peer_mutex(_z_transport_common_t *ztc) {
-    _ZP_UNUSED(ztc);
-    return false;
-}
 #endif
+}
+
+static inline bool _z_transport_batch_hold_peer_mutex(void) {
+#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+    return true;
+#else
+    return false;
+#endif
+}
+#endif  // Z_FEATURE_BATCHING == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1
 static inline z_result_t _z_transport_tx_mutex_lock(_z_transport_common_t *ztc, bool block) {
