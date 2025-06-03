@@ -103,31 +103,3 @@ _z_declaration_t _z_make_undecl_token(uint32_t id, _Z_OPTIONAL const _z_keyexpr_
 _z_declaration_t _z_make_decl_final(void) {
     return (_z_declaration_t){._tag = _Z_DECL_FINAL, ._body = {._decl_final = {0}}};
 }
-
-void _z_decl_fix_mapping(_z_declaration_t *msg, uintptr_t mapping) {
-    switch (msg->_tag) {
-        case _Z_DECL_KEXPR: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_kexpr._keyexpr, mapping);
-        } break;
-        case _Z_DECL_SUBSCRIBER: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_subscriber._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_SUBSCRIBER: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_subscriber._ext_keyexpr, mapping);
-        } break;
-        case _Z_DECL_QUERYABLE: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_queryable._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_QUERYABLE: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_queryable._ext_keyexpr, mapping);
-        } break;
-        case _Z_DECL_TOKEN: {
-            _z_keyexpr_fix_mapping(&msg->_body._decl_token._keyexpr, mapping);
-        } break;
-        case _Z_UNDECL_TOKEN: {
-            _z_keyexpr_fix_mapping(&msg->_body._undecl_token._ext_keyexpr, mapping);
-        } break;
-        default:
-            break;
-    }
-}

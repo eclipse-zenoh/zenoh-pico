@@ -307,7 +307,6 @@ _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_
 _Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 _Z_LIST_DEFINE(_z_network_message, _z_network_message_t)
 
-void _z_msg_fix_mapping(_z_zenoh_message_t *msg, uintptr_t mapping);
 _z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
 _z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,

@@ -130,10 +130,6 @@ z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn) {
     _z_timestamp_t tm = _z_timestamp_null();
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
         _z_keyexpr_t *key = _z_keyexpr_intmap_iterator_value(&iter);
-        // Can't dereference placeholder value
-        if (key->_mapping == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
-            continue;
-        }
         _z_transport_peer_common_t *peer =
             _z_keyexpr_is_local(key) ? NULL : (_z_transport_peer_common_t *)key->_mapping;
         ret = _z_trigger_liveliness_subscriptions_undeclare(zn, key, &tm, peer);

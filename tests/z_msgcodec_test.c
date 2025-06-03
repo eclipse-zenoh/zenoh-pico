@@ -737,7 +737,7 @@ void keyexpr_field(void) {
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_keyexpr_t d_rk;
-    res = _z_keyexpr_decode(&d_rk, &zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K));
+    res = _z_keyexpr_decode(&d_rk, &zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), false, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -782,7 +782,7 @@ void resource_declaration(void) {
     _z_decl_kexpr_t d_rd;
     uint8_t e_hdr;
     _z_uint8_decode(&e_hdr, &zbf);
-    res = _z_decl_kexpr_decode(&d_rd, &zbf, e_hdr);
+    res = _z_decl_kexpr_decode(&d_rd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -823,7 +823,7 @@ void subscriber_declaration(void) {
     _z_decl_subscriber_t d_sd;
     uint8_t e_hdr;
     _z_uint8_decode(&e_hdr, &zbf);
-    res = _z_decl_subscriber_decode(&d_sd, &zbf, e_hdr);
+    res = _z_decl_subscriber_decode(&d_sd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -872,7 +872,7 @@ void queryable_declaration(void) {
     _z_decl_queryable_t d_qd;
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
-    res = _z_decl_queryable_decode(&d_qd, &zbf, e_hdr);
+    res = _z_decl_queryable_decode(&d_qd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -915,7 +915,7 @@ void token_declaration(void) {
     _z_decl_token_t d_qd;
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
-    res = _z_decl_token_decode(&d_qd, &zbf, e_hdr);
+    res = _z_decl_token_decode(&d_qd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -1001,7 +1001,7 @@ void forget_subscriber_declaration(void) {
     _z_undecl_subscriber_t d_fsd = {._id = 0, ._ext_keyexpr = {0}};
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
-    res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr);
+    res = _z_undecl_subscriber_decode(&d_fsd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
     printf("   ");
     assert_eq_forget_subscriber_declaration(&e_fsd, &d_fsd);
@@ -1042,7 +1042,7 @@ void forget_queryable_declaration(void) {
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
     _z_undecl_queryable_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
-    res = _z_undecl_queryable_decode(&d_fqd, &zbf, e_hdr);
+    res = _z_undecl_queryable_decode(&d_fqd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -1084,7 +1084,7 @@ void forget_token_declaration(void) {
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
     _z_undecl_token_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
-    res = _z_undecl_token_decode(&d_fqd, &zbf, e_hdr);
+    res = _z_undecl_token_decode(&d_fqd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -1207,7 +1207,7 @@ void declare_message(void) {
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     _z_network_message_t d_dcl = {0};
     _z_arc_slice_t arcs = {0};
-    res = _z_network_message_decode(&d_dcl, &zbf, &arcs);
+    res = _z_network_message_decode(&d_dcl, &zbf, &arcs, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     assert_eq_declare_message(&n_msg._body._declare, &d_dcl._body._declare);
@@ -1282,7 +1282,7 @@ void interest_message(void) {
     _z_n_msg_interest_t decoded = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    assert(_z_n_interest_decode(&decoded, &zbf, header) == _Z_RES_OK);
+    assert(_z_n_interest_decode(&decoded, &zbf, header, _Z_KEYEXPR_MAPPING_LOCAL) == _Z_RES_OK);
     // Check
     assert_eq_interest(&expected._body._interest._interest, &decoded._interest);
     // Clean-up
@@ -1474,7 +1474,7 @@ void push_message(void) {
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    assert(_Z_RES_OK == _z_push_decode(&decoded, &zbf, header, &arcs));
+    assert(_Z_RES_OK == _z_push_decode(&decoded, &zbf, header, &arcs, _Z_KEYEXPR_MAPPING_LOCAL));
     assert_eq_push(&expected, &decoded);
     _z_n_msg_push_clear(&decoded);
     _z_n_msg_push_clear(&expected);
@@ -1546,7 +1546,7 @@ void request_message(void) {
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    z_result_t ret = _z_request_decode(&decoded, &zbf, header, &arcs);
+    z_result_t ret = _z_request_decode(&decoded, &zbf, header, &arcs, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(_Z_RES_OK == ret);
     assert_eq_request(&expected, &decoded);
     _z_n_msg_request_clear(&decoded);
@@ -1605,7 +1605,7 @@ void response_message(void) {
     _z_arc_slice_t arcs = {0};
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t header = _z_zbuf_read(&zbf);
-    z_result_t ret = _z_response_decode(&decoded, &zbf, header, &arcs);
+    z_result_t ret = _z_response_decode(&decoded, &zbf, header, &arcs, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(_Z_RES_OK == ret);
     assert_eq_response(&expected, &decoded);
     _z_n_msg_response_clear(&decoded);
@@ -1860,7 +1860,7 @@ void assert_eq_frame(_z_network_message_svec_t *nmsgs, _z_t_msg_frame_t *left, _
         _z_network_message_t *expected = _z_network_message_svec_get(nmsgs, i);
         _z_network_message_t received = {0};
         _z_arc_slice_t arcs = _z_arc_slice_empty();
-        assert(_z_network_message_decode(&received, right->_payload, &arcs) == _Z_RES_OK);
+        assert(_z_network_message_decode(&received, right->_payload, &arcs, _Z_KEYEXPR_MAPPING_LOCAL) == _Z_RES_OK);
         assert_eq_net_msg(expected, &received);
         _z_n_msg_clear(&received);
     }

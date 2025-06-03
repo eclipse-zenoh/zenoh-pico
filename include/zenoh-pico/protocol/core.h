@@ -109,7 +109,6 @@ uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 // distinguish which peer/local id space we are in and should not be dereferenced, just compared. NULL/0 value is used
 // for local declared keyexpr and the address of empty_id as a placeholder.
 #define _Z_KEYEXPR_MAPPING_LOCAL (uintptr_t)0
-#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE (uintptr_t)(&empty_id)
 
 typedef struct {
     uint16_t _id;
@@ -118,11 +117,6 @@ typedef struct {
 } _z_keyexpr_t;
 
 static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) { return key->_mapping == _Z_KEYEXPR_MAPPING_LOCAL; }
-static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uintptr_t mapping) {
-    if (ke->_mapping == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
-        ke->_mapping = mapping;
-    }
-}
 static inline bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
 static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) {
     return (ke->_id != Z_RESOURCE_ID_NONE) || _z_keyexpr_has_suffix(ke);
