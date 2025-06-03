@@ -27,7 +27,7 @@ void _z_sample_steal_data(_z_sample_t *dst, _z_keyexpr_t *key, _z_bytes_t *paylo
     dst->kind = kind;
     dst->qos = qos;
     dst->reliability = reliability;
-    dst->source_info = _z_source_info_steal(source_info);
+    dst->source_info = *source_info;
 }
 
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
@@ -49,7 +49,6 @@ z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
 void _z_sample_clear(_z_sample_t *sample) {
     _z_keyexpr_clear(&sample->keyexpr);
     _z_encoding_clear(&sample->encoding);
-    _z_source_info_clear(&sample->source_info);
     _z_bytes_drop(&sample->payload);
     _z_bytes_drop(&sample->attachment);
 }

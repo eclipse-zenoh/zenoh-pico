@@ -62,9 +62,3 @@ z_result_t _z_arc_slice_move(_z_arc_slice_t* dst, _z_arc_slice_t* src) {
     src->slice = _z_slice_simple_rc_null();
     return _Z_RES_OK;
 }
-
-z_result_t _z_arc_slice_drop(_z_arc_slice_t* s) {
-    _z_slice_simple_rc_drop(&s->slice);
-    s->len = 0;
-    return _Z_RES_OK;
-}

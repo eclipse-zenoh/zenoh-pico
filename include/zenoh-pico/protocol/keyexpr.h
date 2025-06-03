@@ -56,10 +56,12 @@ static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     *src = _z_keyexpr_null();
     return stolen;
 }
-
+static inline void _z_keyexpr_clear(_z_keyexpr_t *rk) {
+    rk->_id = Z_RESOURCE_ID_NONE;
+    _z_string_clear(&rk->_suffix);
+}
 bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src);
-void _z_keyexpr_clear(_z_keyexpr_t *rk);
 void _z_keyexpr_free(_z_keyexpr_t **rk);
 
 #ifdef __cplusplus

@@ -272,7 +272,6 @@ void test_simple_rc_size(void) { assert(_dummy_simple_rc_size(NULL) == sizeof(_d
 
 void test_simple_rc_drop(void) {
     _dummy_simple_rc_t drc = _dummy_simple_rc_null();
-    assert(!_dummy_simple_rc_drop(NULL));
     assert(!_dummy_simple_rc_drop(&drc));
 }
 

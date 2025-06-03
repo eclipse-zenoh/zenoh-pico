@@ -61,10 +61,6 @@ _z_string_t _z_string_steal(_z_string_t *str) {
 
 void _z_string_move_str(_z_string_t *dst, char *src) { *dst = _z_string_alias_str(src); }
 
-void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
-
-void _z_string_clear(_z_string_t *str) { _z_slice_clear(&str->_slice); }
-
 void _z_string_free(_z_string_t **str) {
     _z_string_t *ptr = *str;
     if (ptr != NULL) {

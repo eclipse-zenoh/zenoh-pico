@@ -27,10 +27,6 @@
 extern "C" {
 #endif
 
-inline size_t _z_arc_slice_size(const _z_arc_slice_t *s) {
-    (void)s;
-    return sizeof(_z_arc_slice_t);
-}
 _Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move)
 _Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
 

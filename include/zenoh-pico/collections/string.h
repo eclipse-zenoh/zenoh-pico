@@ -101,6 +101,8 @@ static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_dele
     s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
     return s;
 }
+static inline void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
+static inline void _z_string_clear(_z_string_t *str) { _z_slice_clear(&str->_slice); }
 
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
@@ -113,9 +115,7 @@ z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, si
 z_result_t _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
-void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
-void _z_string_reset(_z_string_t *s);
 int _z_string_compare(const _z_string_t *left, const _z_string_t *right);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);

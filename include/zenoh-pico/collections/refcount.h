@@ -225,7 +225,7 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return (left->_val == right->_val);                                                                   \
     }                                                                                                         \
     static inline bool name##_simple_rc_decr(name##_simple_rc_t *p) {                                         \
-        if ((p == NULL) || (p->_cnt == NULL)) {                                                               \
+        if (p->_cnt == NULL) {                                                                                \
             return false;                                                                                     \
         }                                                                                                     \
         if (_z_simple_rc_decrease(&p->_cnt)) {                                                                \
@@ -234,16 +234,15 @@ size_t _z_simple_rc_strong_count(void *cnt);
         return false;                                                                                         \
     }                                                                                                         \
     static inline bool name##_simple_rc_drop(name##_simple_rc_t *p) {                                         \
-        if (p == NULL) {                                                                                      \
-            return false;                                                                                     \
-        }                                                                                                     \
-        bool res = false;                                                                                     \
-        if (name##_simple_rc_decr(p) && p->_val != NULL) {                                                    \
+        bool res;                                                                                             \
+        if (name##_simple_rc_decr(p) && (p->_val != NULL)) {                                                  \
             type##_clear(p->_val);                                                                            \
             z_free(p->_val);                                                                                  \
             res = true;                                                                                       \
+        } else {                                                                                              \
+            res = false;                                                                                      \
         }                                                                                                     \
-        *p = name##_simple_rc_null();                                                                         \
+        p->_cnt = NULL;                                                                                       \
         return res;                                                                                           \
     }                                                                                                         \
     static inline size_t name##_simple_rc_count(const name##_simple_rc_t *p) {                                \

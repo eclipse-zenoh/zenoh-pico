@@ -114,11 +114,6 @@ z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
     return _z_string_move(&dst->_suffix, &src->_suffix);
 }
 
-void _z_keyexpr_clear(_z_keyexpr_t *rk) {
-    rk->_id = Z_RESOURCE_ID_NONE;
-    _z_string_clear(&rk->_suffix);
-}
-
 void _z_keyexpr_free(_z_keyexpr_t **rk) {
     _z_keyexpr_t *ptr = *rk;
 
