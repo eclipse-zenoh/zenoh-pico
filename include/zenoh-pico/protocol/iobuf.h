@@ -43,12 +43,18 @@ typedef struct {
 static inline _z_iosli_t _z_iosli_null(void) { return (_z_iosli_t){0}; }
 static inline size_t _z_iosli_writable(const _z_iosli_t *ios) { return ios->_capacity - ios->_w_pos; }
 static inline size_t _z_iosli_readable(const _z_iosli_t *ios) { return ios->_w_pos - ios->_r_pos; }
+static inline bool _z_iosli_can_write(const _z_iosli_t *ios) { return ios->_capacity > ios->_w_pos; }
+static inline bool _z_iosli_can_read(const _z_iosli_t *ios) { return ios->_w_pos > ios->_r_pos; }
 static inline uint8_t _z_iosli_read(_z_iosli_t *ios) {
     assert(ios->_r_pos < ios->_w_pos);
     return ios->_buf[ios->_r_pos++];
 }
+static inline uint8_t *_z_iosli_read_as_ref(_z_iosli_t *ios) {
+    assert(ios->_r_pos < ios->_w_pos);
+    return &ios->_buf[ios->_r_pos++];
+}
 static inline void _z_iosli_write(_z_iosli_t *ios, uint8_t b) {
-    assert(_z_iosli_writable(ios) >= (size_t)1);
+    assert(ios->_capacity > ios->_w_pos);
     ios->_buf[ios->_w_pos++] = b;
 }
 static inline uint8_t _z_iosli_get(const _z_iosli_t *ios, size_t pos) {
@@ -117,8 +123,9 @@ static inline size_t _z_zbuf_capacity(const _z_zbuf_t *zbf) { return zbf->_ios._
 static inline size_t _z_zbuf_space_left(const _z_zbuf_t *zbf) { return _z_iosli_writable(&zbf->_ios); }
 
 static inline size_t _z_zbuf_len(const _z_zbuf_t *zbf) { return _z_iosli_readable(&zbf->_ios); }
-static inline bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_zbuf_len(zbf) > (size_t)0; }
+static inline bool _z_zbuf_can_read(const _z_zbuf_t *zbf) { return _z_iosli_can_read(&zbf->_ios); }
 static inline uint8_t _z_zbuf_read(_z_zbuf_t *zbf) { return _z_iosli_read(&zbf->_ios); }
+static inline uint8_t *_z_zbuf_read_as_ref(_z_zbuf_t *zbf) { return _z_iosli_read_as_ref(&zbf->_ios); }
 static inline uint8_t _z_zbuf_get(const _z_zbuf_t *zbf, size_t pos) { return _z_iosli_get(&zbf->_ios, pos); }
 
 static inline size_t _z_zbuf_get_rpos(const _z_zbuf_t *zbf) { return zbf->_ios._r_pos; }

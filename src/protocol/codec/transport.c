@@ -487,79 +487,64 @@ z_result_t _z_extensions_decode(_z_msg_ext_vec_t *v_ext, _z_zbuf_t *zbf, uint8_t
 
 /*------------------ Transport Message ------------------*/
 z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_message_t *msg) {
-    z_result_t ret = _Z_RES_OK;
-
-    uint8_t header = msg->_header;
-
-    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, header))
+    _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, msg->_header))
     switch (_Z_MID(msg->_header)) {
         case _Z_MID_T_FRAME: {
-            ret |= _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
+            return _z_frame_encode(wbf, msg->_header, &msg->_body._frame);
         } break;
         case _Z_MID_T_FRAGMENT: {
-            ret |= _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
+            return _z_fragment_encode(wbf, msg->_header, &msg->_body._fragment);
         } break;
         case _Z_MID_T_KEEP_ALIVE: {
-            ret |= _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
+            return _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
         } break;
         case _Z_MID_T_JOIN: {
-            ret |= _z_join_encode(wbf, msg->_header, &msg->_body._join);
+            return _z_join_encode(wbf, msg->_header, &msg->_body._join);
         } break;
         case _Z_MID_T_INIT: {
-            ret |= _z_init_encode(wbf, msg->_header, &msg->_body._init);
+            return _z_init_encode(wbf, msg->_header, &msg->_body._init);
         } break;
         case _Z_MID_T_OPEN: {
-            ret |= _z_open_encode(wbf, msg->_header, &msg->_body._open);
+            return _z_open_encode(wbf, msg->_header, &msg->_body._open);
         } break;
         case _Z_MID_T_CLOSE: {
-            ret |= _z_close_encode(wbf, msg->_header, &msg->_body._close);
+            return _z_close_encode(wbf, msg->_header, &msg->_body._close);
         } break;
         default: {
             _Z_INFO("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
-            ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+            return _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
         } break;
     }
-
-    return ret;
 }
 
 z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *zbf) {
-    z_result_t ret = _Z_RES_OK;
-
-    ret |= _z_uint8_decode(&msg->_header, zbf);  // Decode the header
-    if (ret == _Z_RES_OK) {
-        uint8_t mid = _Z_MID(msg->_header);
-        switch (mid) {
-            case _Z_MID_T_FRAME: {
-                ret |= _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_FRAGMENT: {
-                ret |= _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_KEEP_ALIVE: {
-                ret |= _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_JOIN: {
-                ret |= _z_join_decode(&msg->_body._join, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_INIT: {
-                ret |= _z_init_decode(&msg->_body._init, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_OPEN: {
-                ret |= _z_open_decode(&msg->_body._open, zbf, msg->_header);
-            } break;
-            case _Z_MID_T_CLOSE: {
-                ret |= _z_close_decode(&msg->_body._close, zbf, msg->_header);
-            } break;
-            default: {
-                _Z_INFO("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid,
-                        msg->_header);
-                ret |= _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
-            } break;
-        }
-    } else {
-        msg->_header = 0xFF;
+    _Z_RETURN_IF_ERR(_z_uint8_decode(&msg->_header, zbf));  // Decode the header
+    uint8_t mid = _Z_MID(msg->_header);
+    switch (mid) {
+        case _Z_MID_T_FRAME: {
+            return _z_frame_decode(&msg->_body._frame, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_FRAGMENT: {
+            return _z_fragment_decode(&msg->_body._fragment, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_KEEP_ALIVE: {
+            return _z_keep_alive_decode(&msg->_body._keep_alive, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_JOIN: {
+            return _z_join_decode(&msg->_body._join, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_INIT: {
+            return _z_init_decode(&msg->_body._init, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_OPEN: {
+            return _z_open_decode(&msg->_body._open, zbf, msg->_header);
+        } break;
+        case _Z_MID_T_CLOSE: {
+            return _z_close_decode(&msg->_body._close, zbf, msg->_header);
+        } break;
+        default: {
+            _Z_INFO("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid, msg->_header);
+            return _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+        } break;
     }
-
-    return ret;
 }

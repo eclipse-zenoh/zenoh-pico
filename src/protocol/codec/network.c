@@ -514,35 +514,35 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
     }
 }
 z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
-    uint8_t header;
-    _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-    switch (_Z_MID(header)) {
+    uint8_t *header;
+    _Z_RETURN_IF_ERR(_z_uint8_decode_as_ref(&header, zbf));
+    switch (_Z_MID(*header)) {
         case _Z_MID_N_DECLARE: {
             msg->_tag = _Z_N_DECLARE;
-            return _z_declare_decode(&msg->_body._declare, zbf, header);
+            return _z_declare_decode(&msg->_body._declare, zbf, *header);
         } break;
         case _Z_MID_N_PUSH: {
             msg->_tag = _Z_N_PUSH;
-            return _z_push_decode(&msg->_body._push, zbf, header, arcs);
+            return _z_push_decode(&msg->_body._push, zbf, *header, arcs);
         } break;
         case _Z_MID_N_REQUEST: {
             msg->_tag = _Z_N_REQUEST;
-            return _z_request_decode(&msg->_body._request, zbf, header, arcs);
+            return _z_request_decode(&msg->_body._request, zbf, *header, arcs);
         } break;
         case _Z_MID_N_RESPONSE: {
             msg->_tag = _Z_N_RESPONSE;
-            return _z_response_decode(&msg->_body._response, zbf, header, arcs);
+            return _z_response_decode(&msg->_body._response, zbf, *header, arcs);
         } break;
         case _Z_MID_N_RESPONSE_FINAL: {
             msg->_tag = _Z_N_RESPONSE_FINAL;
-            return _z_response_final_decode(&msg->_body._response_final, zbf, header);
+            return _z_response_final_decode(&msg->_body._response_final, zbf, *header);
         } break;
         case _Z_MID_N_INTEREST: {
             msg->_tag = _Z_N_INTEREST;
-            return _z_n_interest_decode(&msg->_body._interest, zbf, header);
+            return _z_n_interest_decode(&msg->_body._interest, zbf, *header);
         } break;
         default:
-            _Z_INFO("Unknown message type received: %d", _Z_MID(header));
+            _Z_INFO("Unknown message type received: %d", _Z_MID(*header));
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 }

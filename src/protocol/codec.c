@@ -70,6 +70,15 @@ z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *zbf) {
     return _Z_RES_OK;
 }
 
+z_result_t _z_uint8_decode_as_ref(uint8_t **u8, _z_zbuf_t *zbf) {
+    if (!_z_zbuf_can_read(zbf)) {
+        _Z_WARN("Not enough bytes to read");
+        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+    }
+    *u8 = _z_zbuf_read_as_ref(zbf);
+    return _Z_RES_OK;
+}
+
 z_result_t _z_uint16_encode(_z_wbuf_t *wbf, uint16_t val) {
     _Z_RETURN_IF_ERR(_z_wbuf_write(wbf, _z_get_u16_lsb(val)));
     return _z_wbuf_write(wbf, _z_get_u16_msb(val));

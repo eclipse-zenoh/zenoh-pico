@@ -296,7 +296,7 @@ uint8_t _z_wbuf_get(const _z_wbuf_t *wbf, size_t pos) {
 
 z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
     _z_iosli_t *ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
-    if (_z_iosli_writable(ios) == (size_t)0) {
+    if (!_z_iosli_can_write(ios)) {
         wbf->_w_idx += 1;
         if (wbf->_ioss._len <= wbf->_w_idx) {
             if (wbf->_expansion_step != 0) {

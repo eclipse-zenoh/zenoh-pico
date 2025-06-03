@@ -43,6 +43,7 @@ z_whatami_t _z_whatami_from_uint8(uint8_t b);
 
 z_result_t _z_uint8_encode(_z_wbuf_t *buf, uint8_t v);
 z_result_t _z_uint8_decode(uint8_t *u8, _z_zbuf_t *buf);
+z_result_t _z_uint8_decode_as_ref(uint8_t **u8, _z_zbuf_t *zbf);
 
 z_result_t _z_uint16_encode(_z_wbuf_t *buf, uint16_t v);
 z_result_t _z_uint16_decode(uint16_t *u16, _z_zbuf_t *buf);
