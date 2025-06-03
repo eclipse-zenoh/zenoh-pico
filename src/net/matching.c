@@ -67,7 +67,7 @@ _z_matching_listener_t _z_matching_listener_declare(_z_session_rc_t *zn, const _
         return ret;
     }
     _z_keyexpr_t ke;
-    _z_keyexpr_alias_from_user_defined(&ke, key, true);
+    _z_keyexpr_alias_from_user_defined(&ke, key);
     ret._interest_id = _z_add_interest(_Z_RC_IN_VAL(zn), ke, _z_matching_listener_callback, flags, (void *)ctx);
     if (ret._interest_id == 0) {
         _z_matching_listener_ctx_clear(ctx);

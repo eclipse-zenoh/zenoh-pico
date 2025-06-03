@@ -931,7 +931,7 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     const _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
     const _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     const _z_encoding_t *encoding = _z_encoding_from_moved(opt.encoding);
     ret =
         _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, payload_bytes, encoding, Z_SAMPLE_KIND_PUT, opt.congestion_control,
@@ -1013,7 +1013,7 @@ void z_publisher_options_default(z_publisher_options_t *options) {
 z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options) {
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&keyexpr_aliased);
 
     pub->_val = _z_publisher_null();
@@ -1106,7 +1106,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     }
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr;
-    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key, true);
+    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1193,7 +1193,7 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
 #endif
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr;
-    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key, true);
+    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1321,7 +1321,7 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
 
     z_get_options_t opt;
     z_get_options_default(&opt);
@@ -1378,7 +1378,7 @@ void z_querier_options_default(z_querier_options_t *options) {
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
                              const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options) {
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&keyexpr_aliased);
 
     querier->_val = _z_querier_null();
@@ -1447,7 +1447,7 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     }
     // Remove potentially redundant ke suffix
     _z_keyexpr_t querier_keyexpr;
-    _z_keyexpr_alias_from_user_defined(&querier_keyexpr, &querier->_key, true);
+    _z_keyexpr_alias_from_user_defined(&querier_keyexpr, &querier->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1629,7 +1629,7 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t base_key;
-    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
@@ -1706,7 +1706,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     }
     // Set options
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     z_query_reply_options_t opts;
     if (options == NULL) {
         z_query_reply_options_default(&opts);
@@ -1741,7 +1741,7 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
         return _Z_ERR_SESSION_CLOSED;
     }
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     z_query_reply_del_options_t opts;
     if (options == NULL) {
         z_query_reply_del_options_default(&opts);
@@ -1851,7 +1851,7 @@ z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_
 
 z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
     _z_keyexpr_t k;
-    _z_keyexpr_alias_from_user_defined(&k, keyexpr, false);
+    _z_keyexpr_from_string(&k, Z_RESOURCE_ID_NONE, &keyexpr->_suffix);
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _Z_WARN(
@@ -1908,7 +1908,7 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     callback->_this._val.context = NULL;
 
     _z_keyexpr_t base_key;
-    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0

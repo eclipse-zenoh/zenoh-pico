@@ -137,7 +137,7 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 // It seems also correct for z_declare_queryable and z_declare_publisher, but it need to be verified
 _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexpr) {
     _z_keyexpr_t keyexpr_aliased;
-    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, &keyexpr, true);
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, &keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&keyexpr_aliased);
     _z_resource_t *r = _z_get_resource_by_key(zs, &keyexpr_aliased, NULL);
     if (r != NULL) {

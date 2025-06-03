@@ -148,8 +148,8 @@ bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
     return true;
 }
 
-void _z_keyexpr_alias_from_user_defined(_z_keyexpr_t *dst, const _z_keyexpr_t *src, bool try_declared) {
-    if ((try_declared && src->_id != Z_RESOURCE_ID_NONE) || !_z_keyexpr_has_suffix(src)) {
+void _z_keyexpr_alias_from_user_defined(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+    if ((src->_id != Z_RESOURCE_ID_NONE) || !_z_keyexpr_has_suffix(src)) {
         dst->_id = src->_id;
         dst->_mapping = src->_mapping;
         dst->_suffix = _z_string_null();

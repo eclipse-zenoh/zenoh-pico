@@ -46,10 +46,10 @@ size_t _z_keyexpr_size(_z_keyexpr_t *p);
 z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 _z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
 _z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src);
-/// Returns either keyexpr defined by id + mapping with null suffix if try_declared is true and id is non-zero,
+/// Returns either keyexpr defined by id + mapping with null suffix if id is non-zero,
 /// or keyexpr defined by its suffix only, with 0 id and no mapping. This is to be used only when forwarding
 /// keyexpr in user api to properly separate declared keyexpr from its suffix.
-void _z_keyexpr_alias_from_user_defined(_z_keyexpr_t *dst, const _z_keyexpr_t *src, bool try_declared);
+void _z_keyexpr_alias_from_user_defined(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
 z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size_t *wild_suffix_size);
 static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
