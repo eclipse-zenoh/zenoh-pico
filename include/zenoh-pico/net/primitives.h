@@ -224,9 +224,9 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     attachment: An optional attachment to the reply.
  */
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
-                         const _z_value_t payload, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                         z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                         const _z_bytes_t attachment);
+                         const _z_bytes_t *payload, const _z_encoding_t *encoding, const z_sample_kind_t kind,
+                         const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
+                         const _z_timestamp_t *timestamp, const _z_bytes_t *attachment);
 /**
  * Send a reply error to a query.
  *
@@ -240,7 +240,8 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
  */
-z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_value_t payload);
+z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_bytes_t *payload,
+                             const _z_encoding_t *encoding);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -296,11 +297,10 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     priority: The priority of the query.
  *
  */
-z_result_t _z_query(_z_session_t *zn, _z_keyexpr_t keyexpr, const char *parameters, const z_query_target_t target,
-                    const z_consolidation_mode_t consolidation, const _z_value_t value,
+z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, z_query_target_t target,
+                    z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
                     _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
-                    const _z_bytes_t attachment, z_congestion_control_t cong_ctrl, z_priority_t priority,
-                    bool is_express);
+                    const _z_bytes_t *attachment, _z_n_qos_t qos, z_congestion_control_t cong_ctrl);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

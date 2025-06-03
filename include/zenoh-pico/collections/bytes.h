@@ -52,6 +52,9 @@ static inline void _z_bytes_alias_arc_slice(_z_bytes_t *dst, _z_arc_slice_t *s) 
     dst->_slices = _z_arc_slice_svec_alias_element(s);
 }
 static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
+    if (src == NULL) {
+        return _z_bytes_null();
+    }
     _z_bytes_t dst;
     dst._slices = src->_slices;
     return dst;
