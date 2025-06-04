@@ -45,7 +45,8 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
         if ((restr_key == NULL) || _z_keyexpr_suffix_intersects(restr_key, &key)) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &key);
-            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+            _z_network_message_t n_msg;
+            _z_n_msg_make_declare(&n_msg, declaration, true, interest_id);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer) != _Z_RES_OK) {
                 return _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -71,7 +72,8 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
             // Build the declare message to send on the wire
             _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(sub)->_declared_key);
             _z_declaration_t declaration = _z_make_decl_subscriber(&key, _Z_RC_IN_VAL(sub)->_id);
-            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+            _z_network_message_t n_msg;
+            _z_n_msg_make_declare(&n_msg, declaration, true, interest_id);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer) != _Z_RES_OK) {
                 return _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -108,7 +110,8 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
             _z_keyexpr_t key = _z_keyexpr_alias(&_Z_RC_IN_VAL(qle)->_declared_key);
             _z_declaration_t declaration = _z_make_decl_queryable(
                 &key, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
-            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+            _z_network_message_t n_msg;
+            _z_n_msg_make_declare(&n_msg, declaration, true, interest_id);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer) != _Z_RES_OK) {
                 return _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -144,7 +147,8 @@ static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interes
         if ((restr_key == NULL) || _z_keyexpr_suffix_intersects(restr_key, &key)) {
             // Build the declare message to send on the wire
             _z_declaration_t declaration = _z_make_decl_token(&key, id);
-            _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, true, interest_id);
+            _z_network_message_t n_msg;
+            _z_n_msg_make_declare(&n_msg, declaration, true, interest_id);
             if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer) != _Z_RES_OK) {
                 return _Z_ERR_TRANSPORT_TX_FAILED;
             }
@@ -167,7 +171,8 @@ static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interes
 
 static z_result_t _z_interest_send_declare_final(_z_session_t *zn, uint32_t interest_id, void *peer) {
     _z_declaration_t decl = _z_make_decl_final();
-    _z_network_message_t n_msg = _z_n_msg_make_declare(decl, true, interest_id);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, decl, true, interest_id);
     if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
@@ -190,7 +195,8 @@ z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn) {
     uint8_t flags = _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_CURRENT;
     // Send message on the network
     _z_interest_t interest = _z_make_interest(NULL, eid, flags);
-    _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_interest(&n_msg, interest);
     z_result_t ret = _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
     _z_n_msg_clear(&n_msg);
     return ret;

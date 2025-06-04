@@ -94,7 +94,8 @@ uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {
         // Build the declare message to send on the wire
         _z_keyexpr_t alias = _z_keyexpr_alias(keyexpr);
         _z_declaration_t declaration = _z_make_decl_keyexpr(id, &alias);
-        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        _z_network_message_t n_msg;
+        _z_n_msg_make_declare(&n_msg, declaration, false, 0);
         if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
             ret = id;
             // Invalidate cache
@@ -115,7 +116,8 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
     if (r != NULL) {
         // Build the declare message to send on the wire
         _z_declaration_t declaration = _z_make_undecl_keyexpr(rid);
-        _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+        _z_network_message_t n_msg;
+        _z_n_msg_make_declare(&n_msg, declaration, false, 0);
         if (_z_send_undeclare(zn, &n_msg) == _Z_RES_OK) {
             // Remove local resource
             _z_unregister_resource(zn, rid, NULL);
@@ -232,7 +234,8 @@ _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t ke
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_subscriber(&keyexpr, s._id);
-    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
     if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
         _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sp_s);
         _z_subscriber_clear(&ret);
@@ -264,7 +267,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     } else {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
     }
-    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
     if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
@@ -300,7 +304,8 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
-    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
     if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
         _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), sp_q);
         _z_queryable_clear(&ret);
@@ -331,7 +336,8 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     } else {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
     }
-    _z_network_message_t n_msg = _z_n_msg_make_declare(declaration, false, 0);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
     if (_z_send_undeclare(_Z_RC_IN_VAL(&qle->_zn), &n_msg) != _Z_RES_OK) {
         return _Z_ERR_TRANSPORT_TX_FAILED;
     }
@@ -508,7 +514,8 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
 #endif
     ) {
         _z_interest_t interest = _z_make_interest(&keyexpr, intr._id, intr._flags);
-        _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+        _z_network_message_t n_msg;
+        _z_n_msg_make_interest(&n_msg, interest);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             _z_unregister_interest(zn, sintr);
             return 0;
@@ -533,7 +540,8 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
 #endif
     ) {
         _z_interest_t interest = _z_make_interest_final(_Z_RC_IN_VAL(sintr)->_id);
-        _z_network_message_t n_msg = _z_n_msg_make_interest(interest);
+        _z_network_message_t n_msg;
+        _z_n_msg_make_interest(&n_msg, interest);
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             return _Z_ERR_TRANSPORT_TX_FAILED;
         }

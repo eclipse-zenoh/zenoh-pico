@@ -307,8 +307,9 @@ _Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_
 _Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 _Z_LIST_DEFINE(_z_network_message, _z_network_message_t)
 
-_z_network_message_t _z_n_msg_make_response_final(_z_zint_t rid);
-_z_network_message_t _z_n_msg_make_declare(_z_declaration_t declaration, bool has_interest_id, uint32_t interest_id);
+void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
+void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, bool has_interest_id,
+                           uint32_t interest_id);
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
                          z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
                          uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
@@ -331,7 +332,8 @@ void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _
 void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, z_reliability_t reliability,
                              _z_n_qos_t qos, const _z_bytes_t *payload, const _z_encoding_t *encoding,
                              const _z_source_info_t *source_info);
-_z_network_message_t _z_n_msg_make_interest(_z_interest_t interest);
+void _z_n_msg_make_interest(_z_network_message_t *msg, _z_interest_t interest);
+
 z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
 _z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);
 

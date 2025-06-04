@@ -1178,7 +1178,9 @@ _z_network_message_t gen_declare_message(void) {
     _z_declaration_t declaration = gen_declaration();
     bool has_id = gen_bool();
     uint32_t id = gen_uint32();
-    return _z_n_msg_make_declare(declaration, has_id, id);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, has_id, id);
+    return n_msg;
 }
 
 void assert_eq_declare_message(_z_n_msg_declare_t *left, _z_n_msg_declare_t *right) {
@@ -1258,7 +1260,9 @@ _z_interest_t gen_interest(void) {
 
 _z_network_message_t gen_interest_message(void) {
     _z_interest_t interest = gen_interest();
-    return _z_n_msg_make_interest(interest);
+    _z_network_message_t msg;
+    _z_n_msg_make_interest(&msg, interest);
+    return msg;
 }
 
 void assert_eq_interest(const _z_interest_t *left, const _z_interest_t *right) {
