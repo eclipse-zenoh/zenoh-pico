@@ -57,7 +57,8 @@ static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
 }
 static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
     _z_bytes_t b = *src;
-    *src = _z_bytes_null();
+    src->_slices._len = 0;
+    src->_slices._val = NULL;
     return b;
 }
 static inline size_t _z_bytes_num_slices(const _z_bytes_t *bs) { return _z_arc_slice_svec_len(&bs->_slices); }

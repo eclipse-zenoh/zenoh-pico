@@ -53,7 +53,8 @@ static inline _z_encoding_t _z_encoding_alias(const _z_encoding_t *src) {
 }
 static inline _z_encoding_t _z_encoding_steal(_z_encoding_t *val) {
     _z_encoding_t ret = *val;
-    *val = _z_encoding_null();
+    val->schema._slice.len = 0;
+    val->schema._slice.start = NULL;
     return ret;
 }
 

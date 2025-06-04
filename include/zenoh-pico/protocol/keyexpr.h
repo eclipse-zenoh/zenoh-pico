@@ -53,7 +53,9 @@ void _z_keyexpr_alias_from_user_defined(_z_keyexpr_t *dst, const _z_keyexpr_t *s
 z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size_t *wild_suffix_size);
 static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
-    *src = _z_keyexpr_null();
+    src->_id = Z_RESOURCE_ID_NONE;
+    src->_suffix._slice.len = 0;
+    src->_suffix._slice.start = NULL;
     return stolen;
 }
 static inline void _z_keyexpr_clear(_z_keyexpr_t *rk) {
