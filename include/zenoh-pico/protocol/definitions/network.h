@@ -311,9 +311,9 @@ void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, bool has_interest_id,
                            uint32_t interest_id);
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
-                         z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                         uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                         const _z_source_info_t *source_info);
+                         z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
+                         const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
+                         _z_n_qos_t qos, const _z_source_info_t *source_info);
 void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
                             const _z_encoding_t *encoding, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
                             const _z_bytes_t *attachment, z_reliability_t reliability,

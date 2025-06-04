@@ -161,14 +161,14 @@ void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declarati
 }
 
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
-                         z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                         uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                         const _z_source_info_t *source_info) {
+                         z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
+                         const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
+                         _z_n_qos_t qos, const _z_source_info_t *source_info) {
     msg->_tag = _Z_N_REQUEST;
-    msg->_reliability = Z_RELIABILITY_DEFAULT;
+    msg->_reliability = reliability;
+    msg->_body._request._tag = _Z_REQUEST_QUERY;
     msg->_body._request._rid = qid;
     msg->_body._request._key = *key;
-    msg->_body._request._tag = _Z_REQUEST_QUERY;
     msg->_body._request._body._query._parameters = *parameters;
     msg->_body._request._body._query._consolidation = consolidation;
     msg->_body._request._body._query._ext_value.payload = (payload == NULL) ? _z_bytes_null() : *payload;
@@ -221,9 +221,9 @@ void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _
                                 const _z_bytes_t *attachment) {
     dst->_tag = _Z_N_RESPONSE;
     dst->_reliability = reliability;
-    dst->_body._response._key = *key;
     dst->_body._response._tag = _Z_RESPONSE_BODY_REPLY;
     dst->_body._response._request_id = rid;
+    dst->_body._response._key = *key;
     dst->_body._response._body._reply._consolidation = consolidation;
     dst->_body._response._body._reply._body._is_put = true;
     dst->_body._response._body._reply._body._body._put._commons._timestamp =
@@ -239,15 +239,16 @@ void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _
     dst->_body._response._ext_responder._eid = 0;
     dst->_body._response._ext_responder._zid = *zid;
 }
+
 void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
                                 z_reliability_t reliability, z_consolidation_mode_t consolidation, _z_n_qos_t qos,
                                 const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
                                 const _z_bytes_t *attachment) {
     dst->_tag = _Z_N_RESPONSE;
     dst->_reliability = reliability;
+    dst->_body._response._tag = _Z_RESPONSE_BODY_REPLY;
     dst->_body._response._request_id = rid;
     dst->_body._response._key = *key;
-    dst->_body._response._tag = _Z_RESPONSE_BODY_REPLY;
     dst->_body._response._body._reply._consolidation = consolidation;
     dst->_body._response._body._reply._body._is_put = false;
     dst->_body._response._body._reply._body._body._del._commons._timestamp =
@@ -267,15 +268,16 @@ void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_z
                              const _z_source_info_t *source_info) {
     dst->_tag = _Z_N_RESPONSE;
     dst->_reliability = reliability;
-    dst->_body._response._request_id = rid;
     dst->_body._response._tag = _Z_RESPONSE_BODY_ERR;
+    dst->_body._response._request_id = rid;
+    dst->_body._response._key = _z_keyexpr_null();
     dst->_body._response._body._err._payload = (payload == NULL) ? _z_bytes_null() : *payload;
     dst->_body._response._body._err._encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
     dst->_body._response._body._err._ext_source_info = (source_info == NULL) ? _z_source_info_null() : *source_info;
     dst->_body._response._ext_timestamp = _z_timestamp_null();
     dst->_body._response._ext_qos = qos;
-    dst->_body._response._ext_responder._zid = *zid;
     dst->_body._response._ext_responder._eid = 0;
+    dst->_body._response._ext_responder._zid = *zid;
 }
 
 void _z_n_msg_make_interest(_z_network_message_t *msg, _z_interest_t interest) {

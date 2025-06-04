@@ -475,8 +475,8 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
             _z_slice_t params =
                 (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
             _z_zenoh_message_t z_msg;
-            _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, pq->_consolidation, payload, encoding, timeout_ms,
-                                attachment, qos, &source_info);
+            _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload,
+                                encoding, timeout_ms, attachment, qos, &source_info);
 
             if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
                 _z_unregister_pending_query(zn, pq);
