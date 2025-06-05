@@ -40,9 +40,13 @@ static inline _z_delete_context_t _z_delete_context_create(void (*deleter)(void 
     return ret;
 }
 static inline bool _z_delete_context_is_null(const _z_delete_context_t *c) { return c->deleter == NULL; }
+static inline void _z_delete_context_delete(_z_delete_context_t *c, void *data) {
+    if (!_z_delete_context_is_null(c)) {
+        c->deleter(data, c->context);
+    }
+}
 _z_delete_context_t _z_delete_context_default(void);
 _z_delete_context_t _z_delete_context_static(void);
-void _z_delete_context_delete(_z_delete_context_t *c, void *data);
 
 /*-------- Slice --------*/
 /**
@@ -70,10 +74,26 @@ static inline _z_slice_t _z_slice_alias(const _z_slice_t bs) {
     ret._delete_context = _z_delete_context_null();
     return ret;
 }
+static inline _z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc) {
+    _z_slice_t bs;
+    bs.start = p;
+    bs.len = len;
+    bs._delete_context = dc;
+    return bs;
+}
+static inline _z_slice_t _z_slice_alias_buf(const uint8_t *p, size_t len) {
+    return _z_slice_from_buf_custom_deleter(p, len, _z_delete_context_null());
+}
+static inline void _z_slice_clear(_z_slice_t *bs) {
+    if (bs->start != NULL) {
+        _z_delete_context_delete(&bs->_delete_context, (void *)bs->start);
+        bs->len = 0;
+        bs->start = NULL;
+    }
+}
+
 z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity);
 _z_slice_t _z_slice_make(size_t capacity);
-_z_slice_t _z_slice_alias_buf(const uint8_t *bs, size_t len);
-_z_slice_t _z_slice_from_buf_custom_deleter(const uint8_t *p, size_t len, _z_delete_context_t dc);
 _z_slice_t _z_slice_copy_from_buf(const uint8_t *bs, size_t len);
 _z_slice_t _z_slice_steal(_z_slice_t *b);
 z_result_t _z_slice_copy(_z_slice_t *dst, const _z_slice_t *src);
@@ -81,7 +101,6 @@ z_result_t _z_slice_n_copy(_z_slice_t *dst, const _z_slice_t *src, size_t offset
 _z_slice_t _z_slice_duplicate(const _z_slice_t *src);
 z_result_t _z_slice_move(_z_slice_t *dst, _z_slice_t *src);
 bool _z_slice_eq(const _z_slice_t *left, const _z_slice_t *right);
-void _z_slice_clear(_z_slice_t *bs);
 void _z_slice_free(_z_slice_t **bs);
 bool _z_slice_is_alloced(const _z_slice_t *s);
 

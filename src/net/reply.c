@@ -49,6 +49,20 @@ z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) 
     return _Z_RES_OK;
 }
 
+void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
+                         const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
+                         _z_bytes_t *attachment, _z_source_info_t *source_info) {
+    dst->data.replier_id = id;
+    dst->data._tag = _Z_REPLY_TAG_DATA;
+    _z_sample_steal_data(&dst->data._result.sample, keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
+                         attachment, Z_RELIABILITY_DEFAULT, source_info);
+}
+void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding) {
+    dst->data._tag = _Z_REPLY_TAG_ERROR;
+    dst->data._result.error.payload = _z_bytes_steal(payload);
+    dst->data._result.error.encoding = _z_encoding_steal(encoding);
+}
+
 z_result_t _z_reply_move(_z_reply_t *dst, _z_reply_t *src) {
     dst->data._tag = src->data._tag;
     dst->data.replier_id = src->data.replier_id;

@@ -27,10 +27,6 @@
 extern "C" {
 #endif
 
-inline size_t _z_arc_slice_size(const _z_arc_slice_t *s) {
-    (void)s;
-    return sizeof(_z_arc_slice_t);
-}
 _Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move)
 _Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
 
@@ -51,22 +47,34 @@ static inline _z_bytes_t _z_bytes_null(void) { return (_z_bytes_t){0}; }
 static inline void _z_bytes_alias_arc_slice(_z_bytes_t *dst, _z_arc_slice_t *s) {
     dst->_slices = _z_arc_slice_svec_alias_element(s);
 }
-_z_bytes_t _z_bytes_alias(const _z_bytes_t *src);
+static inline _z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
+    if (src == NULL) {
+        return _z_bytes_null();
+    }
+    _z_bytes_t dst;
+    dst._slices = src->_slices;
+    return dst;
+}
+static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
+    _z_bytes_t b = *src;
+    src->_slices._len = 0;
+    src->_slices._val = NULL;
+    return b;
+}
+static inline size_t _z_bytes_num_slices(const _z_bytes_t *bs) { return _z_arc_slice_svec_len(&bs->_slices); }
+static inline _z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
+    if (i >= _z_bytes_num_slices(bs)) return NULL;
+    return _z_arc_slice_svec_get(&bs->_slices, i);
+}
+static inline void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
+
 bool _z_bytes_check(const _z_bytes_t *bytes);
 z_result_t _z_bytes_append_bytes(_z_bytes_t *dst, _z_bytes_t *src);
 z_result_t _z_bytes_append_slice(_z_bytes_t *dst, _z_arc_slice_t *s);
 z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src);
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src);
 z_result_t _z_bytes_move(_z_bytes_t *dst, _z_bytes_t *src);
-static inline _z_bytes_t _z_bytes_steal(_z_bytes_t *src) {
-    _z_bytes_t b = *src;
-    *src = _z_bytes_null();
-    return b;
-}
-void _z_bytes_drop(_z_bytes_t *bytes);
 void _z_bytes_free(_z_bytes_t **bs);
-size_t _z_bytes_num_slices(const _z_bytes_t *bs);
-_z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i);
 size_t _z_bytes_len(const _z_bytes_t *bs);
 bool _z_bytes_is_empty(const _z_bytes_t *bs);
 z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s);

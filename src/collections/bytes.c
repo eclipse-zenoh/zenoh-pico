@@ -31,12 +31,6 @@ z_result_t _z_bytes_copy(_z_bytes_t *dst, const _z_bytes_t *src) {
     return _z_arc_slice_svec_copy(&dst->_slices, &src->_slices, true);
 }
 
-_z_bytes_t _z_bytes_alias(const _z_bytes_t *src) {
-    _z_bytes_t dst;
-    dst._slices = src->_slices;
-    return dst;
-}
-
 _z_bytes_t _z_bytes_duplicate(const _z_bytes_t *src) {
     _z_bytes_t dst = _z_bytes_null();
     _z_bytes_copy(&dst, src);
@@ -59,15 +53,6 @@ bool _z_bytes_is_empty(const _z_bytes_t *bs) {
     }
     return true;
 }
-
-size_t _z_bytes_num_slices(const _z_bytes_t *bs) { return _z_arc_slice_svec_len(&bs->_slices); }
-
-_z_arc_slice_t *_z_bytes_get_slice(const _z_bytes_t *bs, size_t i) {
-    if (i >= _z_bytes_num_slices(bs)) return NULL;
-    return _z_arc_slice_svec_get(&bs->_slices, i);
-}
-
-void _z_bytes_drop(_z_bytes_t *bytes) { _z_arc_slice_svec_clear(&bytes->_slices); }
 
 void _z_bytes_free(_z_bytes_t **bs) {
     _z_bytes_t *ptr = *bs;

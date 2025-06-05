@@ -110,7 +110,7 @@ _z_hello_list_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsi
                     }
                     _z_s_msg_clear(&s_msg);
 
-                    if ((_z_hello_list_len(ret) > 0) && (exit_on_first == true)) {
+                    if (!_z_hello_list_is_empty(ret) && exit_on_first) {
                         break;
                     }
                 }

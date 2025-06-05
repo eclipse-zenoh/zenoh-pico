@@ -109,7 +109,6 @@ uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 // distinguish which peer/local id space we are in and should not be dereferenced, just compared. NULL/0 value is used
 // for local declared keyexpr and the address of empty_id as a placeholder.
 #define _Z_KEYEXPR_MAPPING_LOCAL (uintptr_t)0
-#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE (uintptr_t)(&empty_id)
 
 typedef struct {
     uint16_t _id;
@@ -118,11 +117,6 @@ typedef struct {
 } _z_keyexpr_t;
 
 static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) { return key->_mapping == _Z_KEYEXPR_MAPPING_LOCAL; }
-static inline void _z_keyexpr_fix_mapping(_z_keyexpr_t *ke, uintptr_t mapping) {
-    if (ke->_mapping == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
-        ke->_mapping = mapping;
-    }
-}
 static inline bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
 static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) {
     return (ke->_id != Z_RESOURCE_ID_NONE) || _z_keyexpr_has_suffix(ke);
@@ -176,9 +170,14 @@ static inline _z_value_t _z_value_null(void) { return (_z_value_t){0}; }
 static inline bool _z_value_check(const _z_value_t *value) {
     return _z_bytes_check(&value->payload) || _z_encoding_check(&value->encoding);
 }
+static inline _z_value_t _z_value_alias(_z_value_t *src) {
+    _z_value_t dst;
+    dst.payload = _z_bytes_alias(&src->payload);
+    dst.encoding = _z_encoding_alias(&src->encoding);
+    return dst;
+}
 _z_value_t _z_value_steal(_z_value_t *value);
 z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src);
-_z_value_t _z_value_alias(_z_value_t *src);
 z_result_t _z_value_move(_z_value_t *dst, _z_value_t *src);
 void _z_value_clear(_z_value_t *src);
 void _z_value_free(_z_value_t **hello);

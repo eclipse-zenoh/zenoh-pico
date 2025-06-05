@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_COLLECTIONS_VECTOR_H
 #define ZENOH_PICO_COLLECTIONS_VECTOR_H
 
+#include <assert.h>
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
@@ -35,15 +36,18 @@ typedef struct {
 
 static inline _z_vec_t _z_vec_null(void) { return (_z_vec_t){0}; }
 static inline _z_vec_t _z_vec_alias(const _z_vec_t *src) { return *src; }
+static inline void *_z_vec_get(const _z_vec_t *v, size_t pos) {
+    assert(pos < v->_len);
+    return v->_val[pos];
+}
+static inline size_t _z_vec_len(const _z_vec_t *v) { return v->_len; }
+static inline bool _z_vec_is_empty(const _z_vec_t *v) { return v->_len == 0; }
+
 _z_vec_t _z_vec_make(size_t capacity);
 void _z_vec_copy(_z_vec_t *dst, const _z_vec_t *src, z_element_clone_f f);
 void _z_vec_move(_z_vec_t *dst, _z_vec_t *src);
 
-size_t _z_vec_len(const _z_vec_t *v);
-bool _z_vec_is_empty(const _z_vec_t *v);
-
 void _z_vec_append(_z_vec_t *v, void *e);
-void *_z_vec_get(const _z_vec_t *v, size_t pos);
 void _z_vec_set(_z_vec_t *sv, size_t pos, void *e, z_element_free_f f);
 void _z_vec_remove(_z_vec_t *sv, size_t pos, z_element_free_f f);
 
@@ -101,19 +105,25 @@ static inline _z_svec_t _z_svec_alias_element(void *element) {
     ret._aliased = true;
     return ret;
 }
+static inline size_t _z_svec_len(const _z_svec_t *v) { return v->_len; }
+static inline bool _z_svec_is_empty(const _z_svec_t *v) { return v->_len == 0; }
+static inline void *_z_svec_get(const _z_svec_t *v, size_t i, size_t element_size) {
+    assert(i < v->_len);
+    return (uint8_t *)v->_val + i * element_size;
+}
+static inline void *_z_svec_get_mut(_z_svec_t *v, size_t i, size_t element_size) {
+    return (uint8_t *)v->_val + i * element_size;
+}
+
 void _z_svec_init(_z_svec_t *v, size_t offset, size_t element_size);
 _z_svec_t _z_svec_make(size_t capacity, size_t element_size);
 z_result_t _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f copy, size_t element_size,
                         bool use_elem_f);
 void _z_svec_move(_z_svec_t *dst, _z_svec_t *src);
 
-size_t _z_svec_len(const _z_svec_t *v);
-bool _z_svec_is_empty(const _z_svec_t *v);
-
 z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_size, bool use_elem_f);
 z_result_t _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f m, size_t element_size, bool use_elem_f);
-void *_z_svec_get(const _z_svec_t *v, size_t pos, size_t element_size);
-void *_z_svec_get_mut(_z_svec_t *v, size_t i, size_t element_size);
+
 void _z_svec_set(_z_svec_t *sv, size_t pos, void *e, z_element_clear_f f, size_t element_size);
 void _z_svec_remove(_z_svec_t *sv, size_t pos, z_element_clear_f f, z_element_move_f m, size_t element_size,
                     bool use_elem_f);

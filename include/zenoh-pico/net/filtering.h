@@ -64,7 +64,17 @@ typedef struct _z_write_filter_t {
 z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
                                   uint8_t interest_flag);
 z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter);
-bool _z_write_filter_active(const _z_write_filter_t *filter);
+
+#if Z_FEATURE_INTEREST == 1
+static inline bool _z_write_filter_active(const _z_write_filter_t *filter) {
+    return filter->ctx != NULL && filter->ctx->state == WRITE_FILTER_ACTIVE;
+}
+#else
+static inline bool _z_write_filter_active(const _z_write_filter_t *filter) {
+    _ZP_UNUSED(filter);
+    return false;
+}
+#endif
 
 #ifdef __cplusplus
 }

@@ -109,7 +109,7 @@ z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *nam
     if (_z_keyexpr_is_canon(name, len) != Z_KEYEXPR_CANON_SUCCESS) {
         return Z_EINVAL;
     }
-    keyexpr->_val = _z_keyexpr_from_substr(0, name, len);
+    _z_keyexpr_from_substr(&keyexpr->_val, 0, name, len);
     return _Z_RES_OK;
 }
 
@@ -120,7 +120,7 @@ z_result_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) 
 
 z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, char *name, size_t *len) {
     _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, len));
-    keyexpr->_val = _z_keyexpr_from_substr(0, name, *len);
+    _z_keyexpr_from_substr(&keyexpr->_val, 0, name, *len);
     return _Z_RES_OK;
 }
 
@@ -130,7 +130,7 @@ z_result_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char 
 }
 
 void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
-    keyexpr->_val = _z_keyexpr_from_substr(0, name, len);
+    _z_keyexpr_from_substr(&keyexpr->_val, 0, name, len);
 }
 
 z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
@@ -583,22 +583,13 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
-static _z_bytes_t _z_bytes_from_moved(const z_moved_bytes_t *bytes) {
-    if (bytes != NULL) {
-        return bytes->_this._val;
-    } else {
-        return _z_bytes_null();
-    }
+static inline const _z_bytes_t *_z_bytes_from_moved(const z_moved_bytes_t *bytes) {
+    return (bytes == NULL) ? NULL : &bytes->_this._val;
 }
-#endif
 
-#if Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
-static _z_encoding_t _z_encoding_from_moved(const z_moved_encoding_t *encoding) {
-    if (encoding == NULL) {
-        return _z_encoding_null();
-    }
-    return encoding->_this._val;
+static inline const _z_encoding_t *_z_encoding_from_moved(const z_moved_encoding_t *encoding) {
+    return (encoding == NULL) ? NULL : &encoding->_this._val;
 }
 #endif
 
@@ -937,12 +928,13 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
 
-    _z_bytes_t payload_bytes = _z_bytes_from_moved(payload);
-    _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_encoding_t *encoding = opt.encoding == NULL ? NULL : &opt.encoding->_this._val;
+    const _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
+    const _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
+    const _z_encoding_t *encoding = _z_encoding_from_moved(opt.encoding);
     ret =
-        _z_write(_Z_RC_IN_VAL(zs), keyexpr_aliased, payload_bytes, encoding, Z_SAMPLE_KIND_PUT, opt.congestion_control,
+        _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, payload_bytes, encoding, Z_SAMPLE_KIND_PUT, opt.congestion_control,
                  opt.priority, opt.is_express, opt.timestamp, attachment_bytes, reliability, source_info);
 
     // Trigger local subscriptions
@@ -950,6 +942,8 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
     _z_encoding_t local_encoding = encoding != NULL ? *encoding : _z_encoding_null();
     _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
+    _z_bytes_t local_payload = (payload_bytes != NULL) ? *payload_bytes : _z_bytes_null();
+    _z_bytes_t local_attachment = (attachment_bytes != NULL) ? *attachment_bytes : _z_bytes_null();
 
     payload->_this._val = _z_bytes_null();
     if (opt.attachment != NULL) {
@@ -965,10 +959,10 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
 #endif
 
     _z_trigger_subscriptions_put(
-        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &payload_bytes, &local_encoding, &local_timestamp,
+        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &local_payload, &local_encoding, &local_timestamp,
         _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        &attachment_bytes, reliability, &local_source_info, NULL);
-#else
+        &local_attachment, reliability, &local_source_info, NULL);
+#else  // Z_FEATURE_LOCAL_SUBSCRIBER == 0
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
 #ifdef Z_FEATURE_UNSTABLE_API
@@ -995,9 +989,9 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
     reliability = opt.reliability;
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
-
-    ret = _z_write(_Z_RC_IN_VAL(zs), *keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
-                   opt.priority, opt.is_express, opt.timestamp, _z_bytes_null(), reliability, source_info);
+    _z_bytes_t dummy_payload = _z_bytes_null();
+    ret = _z_write(_Z_RC_IN_VAL(zs), keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+                   opt.priority, opt.is_express, opt.timestamp, &dummy_payload, reliability, source_info);
 
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
@@ -1018,8 +1012,9 @@ void z_publisher_options_default(z_publisher_options_t *options) {
 
 z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t *pub,
                                const z_loaned_keyexpr_t *keyexpr, const z_publisher_options_t *options) {
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = keyexpr_aliased;
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
+    _z_keyexpr_t final_key = _z_keyexpr_alias(&keyexpr_aliased);
 
     pub->_val = _z_publisher_null();
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
@@ -1029,7 +1024,7 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
-            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+            _z_keyexpr_from_string(&final_key, id, &keyexpr_aliased._suffix);
         }
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     }
@@ -1046,14 +1041,15 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
 #endif
 
     // Set publisher
-    _z_publisher_t int_pub = _z_declare_publisher(zs, key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
-                                                  opt.congestion_control, opt.priority, opt.is_express, reliability);
+    _z_publisher_t int_pub =
+        _z_declare_publisher(zs, final_key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
+                             opt.congestion_control, opt.priority, opt.is_express, reliability);
     // Create write filter
     z_result_t res =
         _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
     if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+        if (final_key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(_Z_RC_IN_VAL(zs), final_key._id);
         }
         return res;
     }
@@ -1109,7 +1105,8 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         encoding = _z_encoding_steal(&opt.encoding->_this._val);
     }
     // Remove potentially redundant ke suffix
-    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
+    _z_keyexpr_t pub_keyexpr;
+    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1125,8 +1122,8 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
 #endif
 
     if (session != NULL) {
-        _z_bytes_t payload_bytes = _z_bytes_from_moved(payload);
-        _z_bytes_t attachment_bytes = _z_bytes_from_moved(opt.attachment);
+        const _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
+        const _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
 
         // Check if write filter is active before writing
         if (
@@ -1135,7 +1132,7 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
 #endif
             !_z_write_filter_active(&pub->_filter)) {
             // Write value
-            ret = _z_write(session, pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+            ret = _z_write(session, &pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
         }
 
@@ -1143,6 +1140,8 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
         _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
         _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
+        _z_bytes_t local_payload = (payload_bytes != NULL) ? *payload_bytes : _z_bytes_null();
+        _z_bytes_t local_attachment = (attachment_bytes != NULL) ? *attachment_bytes : _z_bytes_null();
 
         payload->_this._val = _z_bytes_null();
         if (opt.attachment != NULL) {
@@ -1157,9 +1156,9 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
         }
 #endif
         _z_trigger_subscriptions_put(
-            session, &pub_keyexpr, &payload_bytes, &encoding, &local_timestamp,
+            session, &pub_keyexpr, &local_payload, &encoding, &local_timestamp,
             _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-            &attachment_bytes, reliability, &local_source_info, NULL);
+            &local_attachment, reliability, &local_source_info, NULL);
 #endif
     } else {
         ret = _Z_ERR_SESSION_CLOSED;
@@ -1193,7 +1192,8 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
     // Remove potentially redundant ke suffix
-    _z_keyexpr_t pub_keyexpr = _z_keyexpr_alias_from_user_defined(pub->_key, true);
+    _z_keyexpr_t pub_keyexpr;
+    _z_keyexpr_alias_from_user_defined(&pub_keyexpr, &pub->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1207,10 +1207,10 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
 #else
     session = _Z_RC_IN_VAL(&pub->_zn);
 #endif
-
+    _z_bytes_t dummy_payload = _z_bytes_null();
     z_result_t ret =
-        _z_write(session, pub_keyexpr, _z_bytes_null(), NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
-                 pub->_priority, pub->_is_express, opt.timestamp, _z_bytes_null(), reliability, source_info);
+        _z_write(session, &pub_keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
+                 pub->_priority, pub->_is_express, opt.timestamp, &dummy_payload, reliability, source_info);
 
 #if Z_FEATURE_SESSION_CHECK == 1
     // Clean up
@@ -1320,7 +1320,8 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
 
     z_get_options_t opt;
     z_get_options_default(&opt);
@@ -1336,12 +1337,11 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
             opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
         }
     }
-    // Set value
-    _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = _z_encoding_from_moved(opt.encoding)};
-
-    ret = _z_query(_Z_RC_IN_VAL(zs), keyexpr_aliased, parameters, opt.target, opt.consolidation.mode, value,
-                   callback->_this._val.call, callback->_this._val.drop, ctx, opt.timeout_ms,
-                   _z_bytes_from_moved(opt.attachment), opt.congestion_control, opt.priority, opt.is_express);
+    _z_n_qos_t qos = _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority);
+    ret = _z_query(_Z_RC_IN_VAL(zs), &keyexpr_aliased, parameters, opt.target, opt.consolidation.mode,
+                   _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding), callback->_this._val.call,
+                   callback->_this._val.drop, ctx, opt.timeout_ms, _z_bytes_from_moved(opt.attachment), qos,
+                   opt.congestion_control);
     // Clean-up
     z_bytes_drop(opt.payload);
     z_encoding_drop(opt.encoding);
@@ -1377,8 +1377,9 @@ void z_querier_options_default(z_querier_options_t *options) {
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
                              const z_loaned_keyexpr_t *keyexpr, z_querier_options_t *options) {
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
-    _z_keyexpr_t key = keyexpr_aliased;
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
+    _z_keyexpr_t final_key = _z_keyexpr_alias(&keyexpr_aliased);
 
     querier->_val = _z_querier_null();
     // Declare if needed
@@ -1388,7 +1389,7 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
         _z_resource_t *r = _z_get_resource_by_key(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL);
         if (r == NULL) {
             uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(zs), &keyexpr_aliased);
-            key = _z_keyexpr_from_string(id, &keyexpr_aliased._suffix);
+            _z_keyexpr_from_string(&final_key, id, &keyexpr_aliased._suffix);
         }
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     }
@@ -1402,15 +1403,15 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
 
     // Set querier
-    _z_querier_t int_querier = _z_declare_querier(zs, key, opt.consolidation.mode, opt.congestion_control, opt.target,
-                                                  opt.priority, opt.is_express, opt.timeout_ms,
+    _z_querier_t int_querier = _z_declare_querier(zs, final_key, opt.consolidation.mode, opt.congestion_control,
+                                                  opt.target, opt.priority, opt.is_express, opt.timeout_ms,
                                                   opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
     // Create write filter
     z_result_t res =
         _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
     if (res != _Z_RES_OK) {
-        if (key._id != Z_RESOURCE_ID_NONE) {
-            _z_undeclare_resource(_Z_RC_IN_VAL(zs), key._id);
+        if (final_key._id != Z_RESOURCE_ID_NONE) {
+            _z_undeclare_resource(_Z_RC_IN_VAL(zs), final_key._id);
         }
         return res;
     }
@@ -1445,7 +1446,8 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
         encoding = _z_encoding_steal(&opt.encoding->_this._val);
     }
     // Remove potentially redundant ke suffix
-    _z_keyexpr_t querier_keyexpr = _z_keyexpr_alias_from_user_defined(querier->_key, true);
+    _z_keyexpr_t querier_keyexpr;
+    _z_keyexpr_alias_from_user_defined(&querier_keyexpr, &querier->_key);
 
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
@@ -1477,12 +1479,12 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
             session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
 #endif
             !_z_write_filter_active(&querier->_filter)) {
-            _z_value_t value = {.payload = _z_bytes_from_moved(opt.payload), .encoding = encoding};
-
-            ret = _z_query(session, querier_keyexpr, parameters, querier->_target, consolidation_mode, value,
-                           callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
-                           _z_bytes_from_moved(opt.attachment), querier->_congestion_control, querier->_priority,
-                           querier->_is_express);
+            _z_n_qos_t qos = _z_n_qos_make(
+                querier->_is_express, querier->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, querier->_priority);
+            ret = _z_query(session, &querier_keyexpr, parameters, querier->_target, consolidation_mode,
+                           _z_bytes_from_moved(opt.payload), &encoding, callback->_this._val.call,
+                           callback->_this._val.drop, ctx, querier->_timeout_ms, _z_bytes_from_moved(opt.attachment),
+                           qos, querier->_congestion_control);
         } else {
             callback->_this._val.drop(ctx);
         }
@@ -1626,7 +1628,8 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
-    _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t base_key;
+    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
@@ -1702,19 +1705,18 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
         return _Z_ERR_SESSION_CLOSED;
     }
     // Set options
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     z_query_reply_options_t opts;
     if (options == NULL) {
         z_query_reply_options_default(&opts);
     } else {
         opts = *options;
     }
-    // Set value
-    _z_value_t value = {.payload = _z_bytes_from_moved(payload), .encoding = _z_encoding_from_moved(opts.encoding)};
-
-    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, value, Z_SAMPLE_KIND_PUT,
-                                   opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
-                                   _z_bytes_from_moved(opts.attachment));
+    z_result_t ret =
+        _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, _z_bytes_from_moved(payload),
+                      _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
+                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment));
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1738,17 +1740,15 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
-    _z_keyexpr_t keyexpr_aliased = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t keyexpr_aliased;
+    _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     z_query_reply_del_options_t opts;
     if (options == NULL) {
         z_query_reply_del_options_default(&opts);
     } else {
         opts = *options;
     }
-
-    _z_value_t value = {.payload = _z_bytes_null(), .encoding = _z_encoding_null()};
-
-    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, value, Z_SAMPLE_KIND_DELETE,
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
                                    _z_bytes_from_moved(opts.attachment));
     // Clean-up
@@ -1772,9 +1772,8 @@ z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *pay
     } else {
         opts = *options;
     }
-    // Set value
-    _z_value_t value = {.payload = _z_bytes_from_moved(payload), .encoding = _z_encoding_from_moved(opts.encoding)};
-    z_result_t ret = _z_send_reply_err(_Z_RC_IN_VAL(query), &sess_rc, value);
+    z_result_t ret = _z_send_reply_err(_Z_RC_IN_VAL(query), &sess_rc, _z_bytes_from_moved(payload),
+                                       _z_encoding_from_moved(opts.encoding));
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1851,7 +1850,8 @@ z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_
 }
 
 z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
-    _z_keyexpr_t k = _z_keyexpr_alias_from_user_defined(*keyexpr, false);
+    _z_keyexpr_t k;
+    _z_keyexpr_from_string(&k, Z_RESOURCE_ID_NONE, &keyexpr->_suffix);
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     if (_Z_RC_IN_VAL(zs)->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         _Z_WARN(
@@ -1907,7 +1907,8 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
 
-    _z_keyexpr_t base_key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t base_key;
+    _z_keyexpr_alias_from_user_defined(&base_key, keyexpr);
     _z_keyexpr_t final_key = _z_keyexpr_alias(&base_key);
 
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0

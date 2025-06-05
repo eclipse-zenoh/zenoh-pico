@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 z_result_t _z_interest_encode(_z_wbuf_t *wbf, const _z_interest_t *interest, bool is_final);
-z_result_t _z_interest_decode(_z_interest_t *decl, _z_zbuf_t *zbf, bool is_final, bool has_ext);
+z_result_t _z_interest_decode(_z_interest_t *decl, _z_zbuf_t *zbf, bool is_final, bool has_ext, uintptr_t mapping);
 
 #ifdef __cplusplus
 }

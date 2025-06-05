@@ -31,7 +31,7 @@
 void print_zbuf_overview(_z_zbuf_t *zbf) { printf("    ZBuf => Capacity: %zu\n", zbf->_ios._capacity); }
 
 void print_wbuf_overview(_z_wbuf_t *wbf) {
-    printf("    WBuf => Expandable: %zu, Capacity: %zu\n", wbf->_expansion_step, wbf->_capacity);
+    printf("    WBuf => Expandable: %zu, Capacity: %zu\n", wbf->_expansion_step, _z_wbuf_capacity(wbf));
 }
 
 void print_iosli(_z_iosli_t *ios) {

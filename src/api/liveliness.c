@@ -65,7 +65,8 @@ z_result_t z_liveliness_declare_token(const z_loaned_session_t *zs, z_owned_live
                                       const z_loaned_keyexpr_t *keyexpr, const z_liveliness_token_options_t *options) {
     (void)options;
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
-    _z_keyexpr_t key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key;
+    _z_keyexpr_alias_from_user_defined(&key, keyexpr);
 #else
     _z_keyexpr_t key = _z_update_keyexpr_to_declared(_Z_RC_IN_VAL(zs), *keyexpr);
 #endif
@@ -97,7 +98,8 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
         opt = *options;
     }
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
-    _z_keyexpr_t key = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t key;
+    _z_keyexpr_alias_from_user_defined(&key, keyexpr);
 #else
     _z_keyexpr_t key = _z_update_keyexpr_to_declared(_Z_RC_IN_VAL(zs), *keyexpr);
 #endif
@@ -153,7 +155,8 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
         opt = *options;
     }
 
-    _z_keyexpr_t ke = _z_keyexpr_alias_from_user_defined(*keyexpr, true);
+    _z_keyexpr_t ke;
+    _z_keyexpr_alias_from_user_defined(&ke, keyexpr);
     ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), &ke, callback->_this._val.call, callback->_this._val.drop, ctx,
                               opt.timeout_ms);
 

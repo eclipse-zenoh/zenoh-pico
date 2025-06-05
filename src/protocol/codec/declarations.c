@@ -34,6 +34,9 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 
+// Placeholder value for extension decode
+#define _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE (uintptr_t)(&empty_id)
+
 z_result_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, bool has_next_ext) {
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
@@ -166,11 +169,10 @@ z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
     }
     return ret;
 }
-z_result_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_decl_kexpr_decode(_z_decl_kexpr_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     *decl = _z_decl_kexpr_null();
     _Z_RETURN_IF_ERR(_z_zint16_decode(&decl->_id, zbf));
-    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&decl->_keyexpr, zbf, _Z_HAS_FLAG(header, _Z_DECL_KEXPR_FLAG_N)));
-    decl->_keyexpr._mapping = _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE;
+    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&decl->_keyexpr, zbf, _Z_HAS_FLAG(header, _Z_DECL_KEXPR_FLAG_N), true, mapping));
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x15));
@@ -214,36 +216,23 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-z_result_t _z_undecl_trivial_decode(_z_zbuf_t *zbf, _z_keyexpr_t *_ext_keyexpr, uint32_t *decl_id, uint8_t header) {
+z_result_t _z_undecl_trivial_decode(_z_zbuf_t *zbf, _z_keyexpr_t *_ext_keyexpr, uint32_t *decl_id, uint8_t header,
+                                    uintptr_t mapping) {
     _Z_RETURN_IF_ERR(_z_zint32_decode(decl_id, zbf));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_undecl_decode_extensions, _ext_keyexpr));
+        if (_ext_keyexpr->_mapping == _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE) {
+            _ext_keyexpr->_mapping = mapping;
+        }
     }
     return _Z_RES_OK;
 }
-z_result_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, bool *has_extensions, uint32_t *id,
-                                  _z_keyexpr_t *ke) {
+static z_result_t _z_decl_commons_decode(_z_zbuf_t *zbf, uint8_t header, bool *has_extensions, uint32_t *id,
+                                         _z_keyexpr_t *ke, uintptr_t mapping) {
     *has_extensions = _Z_HAS_FLAG(header, _Z_FLAG_Z_Z);
-    uintptr_t mapping =
-        _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_RETURN_IF_ERR(_z_zint32_decode(id, zbf));
-    _Z_RETURN_IF_ERR(_z_zint16_decode(&ke->_id, zbf));
-    if (_Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_N)) {
-        _z_zint_t len;
-        _Z_RETURN_IF_ERR(_z_zsize_decode(&len, zbf));
-        if (_z_zbuf_len(zbf) < len) {
-            _Z_INFO("Not enough bytes to read");
-            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
-        }
-        ke->_suffix = _z_string_preallocate(len);
-        if (!_z_keyexpr_has_suffix(ke)) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-        }
-        _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
-    } else {
-        ke->_suffix = _z_string_null();
-    }
-    ke->_mapping = mapping;
+    _Z_RETURN_IF_ERR(_z_keyexpr_decode(ke, zbf, _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_N),
+                                       _Z_HAS_FLAG(header, _Z_DECL_SUBSCRIBER_FLAG_M), mapping));
     return _Z_RES_OK;
 }
 z_result_t _z_decl_subscriber_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
@@ -257,18 +246,19 @@ z_result_t _z_decl_subscriber_decode_extensions(_z_msg_ext_t *extension, void *c
     return _Z_RES_OK;
 }
 
-z_result_t _z_decl_subscriber_decode(_z_decl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_decl_subscriber_decode(_z_decl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     bool has_ext;
     *decl = _z_decl_subscriber_null();
-    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr));
+    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr, mapping));
     if (has_ext) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_decl_subscriber_decode_extensions, decl));
     }
     return _Z_RES_OK;
 }
-z_result_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_undecl_subscriber_decode(_z_undecl_subscriber_t *decl, _z_zbuf_t *zbf, uint8_t header,
+                                       uintptr_t mapping) {
     *decl = _z_undecl_subscriber_null();
-    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
+    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header, mapping);
 }
 z_result_t _z_decl_queryable_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_decl_queryable_t *decl = (_z_decl_queryable_t *)ctx;
@@ -285,30 +275,30 @@ z_result_t _z_decl_queryable_decode_extensions(_z_msg_ext_t *extension, void *ct
     }
     return _Z_RES_OK;
 }
-z_result_t _z_decl_queryable_decode(_z_decl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_decl_queryable_decode(_z_decl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     bool has_ext;
     *decl = _z_decl_queryable_null();
-    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr));
+    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr, mapping));
     if (has_ext) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_decl_queryable_decode_extensions, decl));
     }
     return _Z_RES_OK;
 }
-z_result_t _z_undecl_queryable_decode(_z_undecl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_undecl_queryable_decode(_z_undecl_queryable_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     *decl = _z_undecl_queryable_null();
-    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
+    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header, mapping);
 }
-z_result_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_decl_token_decode(_z_decl_token_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     bool has_ext;
     *decl = _z_decl_token_null();
-    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr));
+    _Z_RETURN_IF_ERR(_z_decl_commons_decode(zbf, header, &has_ext, &decl->_id, &decl->_keyexpr, mapping));
     if (has_ext) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, 0x12));
     }
     return _Z_RES_OK;
 }
-z_result_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header) {
-    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header);
+z_result_t _z_undecl_token_decode(_z_undecl_token_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
+    return _z_undecl_trivial_decode(zbf, &decl->_ext_keyexpr, &decl->_id, header, mapping);
 }
 
 z_result_t _z_decl_final_decode(_z_decl_final_t *decl, _z_zbuf_t *zbf, uint8_t header) {
@@ -320,14 +310,14 @@ z_result_t _z_decl_final_decode(_z_decl_final_t *decl, _z_zbuf_t *zbf, uint8_t h
     return _Z_RES_OK;
 }
 
-z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
+z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf, uintptr_t mapping) {
     uint8_t header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
     z_result_t ret;
     switch (_Z_MID(header)) {
         case _Z_DECL_KEXPR_MID: {
             decl->_tag = _Z_DECL_KEXPR;
-            ret = _z_decl_kexpr_decode(&decl->_body._decl_kexpr, zbf, header);
+            ret = _z_decl_kexpr_decode(&decl->_body._decl_kexpr, zbf, header, mapping);
         } break;
         case _Z_UNDECL_KEXPR_MID: {
             decl->_tag = _Z_UNDECL_KEXPR;
@@ -335,27 +325,27 @@ z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf) {
         } break;
         case _Z_DECL_SUBSCRIBER_MID: {
             decl->_tag = _Z_DECL_SUBSCRIBER;
-            ret = _z_decl_subscriber_decode(&decl->_body._decl_subscriber, zbf, header);
+            ret = _z_decl_subscriber_decode(&decl->_body._decl_subscriber, zbf, header, mapping);
         } break;
         case _Z_UNDECL_SUBSCRIBER_MID: {
             decl->_tag = _Z_UNDECL_SUBSCRIBER;
-            ret = _z_undecl_subscriber_decode(&decl->_body._undecl_subscriber, zbf, header);
+            ret = _z_undecl_subscriber_decode(&decl->_body._undecl_subscriber, zbf, header, mapping);
         } break;
         case _Z_DECL_QUERYABLE_MID: {
             decl->_tag = _Z_DECL_QUERYABLE;
-            ret = _z_decl_queryable_decode(&decl->_body._decl_queryable, zbf, header);
+            ret = _z_decl_queryable_decode(&decl->_body._decl_queryable, zbf, header, mapping);
         } break;
         case _Z_UNDECL_QUERYABLE_MID: {
             decl->_tag = _Z_UNDECL_QUERYABLE;
-            ret = _z_undecl_queryable_decode(&decl->_body._undecl_queryable, zbf, header);
+            ret = _z_undecl_queryable_decode(&decl->_body._undecl_queryable, zbf, header, mapping);
         } break;
         case _Z_DECL_TOKEN_MID: {
             decl->_tag = _Z_DECL_TOKEN;
-            ret = _z_decl_token_decode(&decl->_body._decl_token, zbf, header);
+            ret = _z_decl_token_decode(&decl->_body._decl_token, zbf, header, mapping);
         } break;
         case _Z_UNDECL_TOKEN_MID: {
             decl->_tag = _Z_UNDECL_TOKEN;
-            ret = _z_undecl_token_decode(&decl->_body._undecl_token, zbf, header);
+            ret = _z_undecl_token_decode(&decl->_body._undecl_token, zbf, header, mapping);
         } break;
         case _Z_DECL_FINAL_MID: {
             decl->_tag = _Z_DECL_FINAL;

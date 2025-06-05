@@ -78,28 +78,44 @@ static inline _z_string_t _z_string_alias(const _z_string_t str) {
     ret._slice = _z_slice_alias(str._slice);
     return ret;
 }
+static inline size_t _z_string_len(const _z_string_t *s) { return s->_slice.len; }
+static inline const char *_z_string_data(const _z_string_t *s) { return (const char *)s->_slice.start; }
+static inline bool _z_string_is_empty(const _z_string_t *s) { return s->_slice.len == 0; }
+static inline _z_string_t _z_string_alias_slice(const _z_slice_t *slice) {
+    _z_string_t s;
+    s._slice = _z_slice_alias(*slice);
+    return s;
+}
+static inline _z_string_t _z_string_alias_str(const char *value) {
+    _z_string_t s;
+    s._slice = _z_slice_alias_buf((const uint8_t *)(value), strlen(value));
+    return s;
+}
+static inline _z_string_t _z_string_alias_substr(const char *value, size_t len) {
+    _z_string_t s;
+    s._slice = _z_slice_alias_buf((const uint8_t *)(value), len);
+    return s;
+}
+static inline _z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c) {
+    _z_string_t s;
+    s._slice = _z_slice_from_buf_custom_deleter((const uint8_t *)(value), strlen(value), c);
+    return s;
+}
+static inline void _z_string_reset(_z_string_t *str) { _z_slice_reset(&str->_slice); }
+static inline void _z_string_clear(_z_string_t *str) { _z_slice_clear(&str->_slice); }
 
 _z_string_t _z_string_copy_from_str(const char *value);
 _z_string_t _z_string_copy_from_substr(const char *value, size_t len);
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value);
-_z_string_t _z_string_alias_slice(const _z_slice_t *slice);
-_z_string_t _z_string_alias_str(const char *value);
-_z_string_t _z_string_alias_substr(const char *value, size_t len);
-_z_string_t _z_string_from_str_custom_deleter(char *value, _z_delete_context_t c);
-bool _z_string_is_empty(const _z_string_t *s);
 const char *_z_string_rchr(_z_string_t *str, char filter);
 char *_z_string_pbrk(_z_string_t *str, const char *filter);
 
-size_t _z_string_len(const _z_string_t *s);
-const char *_z_string_data(const _z_string_t *s);
 z_result_t _z_string_copy(_z_string_t *dst, const _z_string_t *src);
 z_result_t _z_string_copy_substring(_z_string_t *dst, const _z_string_t *src, size_t offset, size_t len);
 z_result_t _z_string_move(_z_string_t *dst, _z_string_t *src);
 _z_string_t _z_string_steal(_z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
-void _z_string_clear(_z_string_t *s);
 void _z_string_free(_z_string_t **s);
-void _z_string_reset(_z_string_t *s);
 int _z_string_compare(const _z_string_t *left, const _z_string_t *right);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);

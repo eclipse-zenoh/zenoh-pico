@@ -92,8 +92,25 @@ bool _z_transport_start_batching(_z_transport_t *zt) {
     }
     ztc->_batch_count = 0;
     ztc->_batch_state = _Z_BATCHING_ACTIVE;
+
+#if Z_FEATURE_BATCH_TX_MUTEX == 1
+    _z_transport_tx_mutex_lock(ztc, true);
+#endif
+#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+    _z_transport_peer_mutex_lock(ztc);
+#endif
     return true;
 }
 
-void _z_transport_stop_batching(_z_transport_t *zt) { _z_transport_get_common(zt)->_batch_state = _Z_BATCHING_IDLE; }
+void _z_transport_stop_batching(_z_transport_t *zt) {
+    _z_transport_common_t *ztc = _z_transport_get_common(zt);
+
+#if Z_FEATURE_BATCH_TX_MUTEX == 1
+    _z_transport_tx_mutex_unlock(ztc);
+#endif
+#if Z_FEATURE_BATCH_PEER_MUTEX == 1
+    _z_transport_peer_mutex_unlock(ztc);
+#endif
+    ztc->_batch_state = _Z_BATCHING_IDLE;
+}
 #endif

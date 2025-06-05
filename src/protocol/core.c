@@ -62,12 +62,6 @@ z_result_t _z_value_copy(_z_value_t *dst, const _z_value_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_encoding_clear(&dst->encoding));
     return _Z_RES_OK;
 }
-_z_value_t _z_value_alias(_z_value_t *src) {
-    _z_value_t dst;
-    dst.payload = _z_bytes_alias(&src->payload);
-    dst.encoding = _z_encoding_alias(&src->encoding);
-    return dst;
-}
 
 z_result_t _z_hello_copy(_z_hello_t *dst, const _z_hello_t *src) {
     *dst = _z_hello_null();

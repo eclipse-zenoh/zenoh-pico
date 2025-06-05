@@ -92,12 +92,12 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_push_decode(_z_n_msg_push_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs,
+                          uintptr_t mapping) {
     z_result_t ret = _Z_RES_OK;
     msg->_qos = _Z_N_QOS_DEFAULT;
-    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N));
-    msg->_key._mapping =
-        _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
+    ret |= _z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_N),
+                             _Z_HAS_FLAG(header, _Z_FLAG_N_PUSH_M), mapping);
     if ((ret == _Z_RES_OK) && _Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
         ret = _z_msg_ext_decode_iter(zbf, _z_push_decode_ext_cb, msg);
     }
@@ -206,12 +206,12 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint8_t header, _z_arc_slice_t *arcs,
+                             uintptr_t mapping) {
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_rid, zbf));
-    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N)));
-    msg->_key._mapping =
-        _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
+    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_N),
+                                       _Z_HAS_FLAG(header, _Z_FLAG_N_REQUEST_M), mapping));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_request_decode_extensions, msg));
     }
@@ -334,38 +334,34 @@ z_result_t _z_response_decode_extension(_z_msg_ext_t *extension, void *ctx) {
     return ret;
 }
 
-z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs) {
+z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t header, _z_arc_slice_t *arcs,
+                              uintptr_t mapping) {
     _Z_DEBUG("Decoding _Z_MID_N_RESPONSE");
     msg->_ext_qos = _Z_N_QOS_DEFAULT;
-    z_result_t ret = _Z_RES_OK;
-    msg->_key._mapping =
-        _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M) ? _Z_KEYEXPR_MAPPING_UNKNOWN_REMOTE : _Z_KEYEXPR_MAPPING_LOCAL;
     _Z_RETURN_IF_ERR(_z_zsize_decode(&msg->_request_id, zbf));
-    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N)));
+    _Z_RETURN_IF_ERR(_z_keyexpr_decode(&msg->_key, zbf, _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_N),
+                                       _Z_HAS_FLAG(header, _Z_FLAG_N_RESPONSE_M), mapping));
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_response_decode_extension, msg));
     }
-
     uint8_t inner_header;
     _Z_RETURN_IF_ERR(_z_uint8_decode(&inner_header, zbf));
-
     switch (_Z_MID(inner_header)) {
         case _Z_MID_Z_REPLY: {
             msg->_tag = _Z_RESPONSE_BODY_REPLY;
-            ret = _z_reply_decode(&msg->_body._reply, zbf, inner_header, arcs);
+            return _z_reply_decode(&msg->_body._reply, zbf, inner_header, arcs);
             break;
         }
         case _Z_MID_Z_ERR: {
             msg->_tag = _Z_RESPONSE_BODY_ERR;
-            ret = _z_err_decode(&msg->_body._err, zbf, inner_header, arcs);
+            return _z_err_decode(&msg->_body._err, zbf, inner_header, arcs);
             break;
         }
         default: {
             _Z_ERROR("Unknown N_MID: %d", _Z_MID(inner_header));
-            ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
-    return ret;
 }
 
 /*------------------ Response Final Message ------------------*/
@@ -438,7 +434,7 @@ z_result_t _z_declare_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     }
     return _Z_RES_OK;
 }
-z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     decl->_ext_qos = _Z_N_QOS_DEFAULT;
     // Retrieve interest id
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
@@ -450,7 +446,7 @@ z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t h
         _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_declare_decode_extensions, decl))
     }
     // Decode declaration
-    return _z_declaration_decode(&decl->_decl, zbf);
+    return _z_declaration_decode(&decl->_decl, zbf, mapping);
 }
 
 z_result_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest) {
@@ -469,7 +465,7 @@ z_result_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *inter
     return _z_interest_encode(wbf, &interest->_interest, is_final);
 }
 
-z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header) {
+z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping) {
     interest->_interest = _z_interest_null();
     bool is_final = true;
     bool has_ext = false;
@@ -486,7 +482,7 @@ z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, u
     if (_Z_HAS_FLAG(header, _Z_FLAG_Z_Z)) {
         has_ext = true;
     }
-    return _z_interest_decode(&interest->_interest, zbf, is_final, has_ext);
+    return _z_interest_decode(&interest->_interest, zbf, is_final, has_ext, mapping);
 }
 
 z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg) {
@@ -513,36 +509,37 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
             return _Z_ERR_GENERIC;
     }
 }
-z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs) {
-    uint8_t header;
-    _Z_RETURN_IF_ERR(_z_uint8_decode(&header, zbf));
-    switch (_Z_MID(header)) {
+z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs,
+                                     uintptr_t mapping) {
+    uint8_t *header;
+    _Z_RETURN_IF_ERR(_z_uint8_decode_as_ref(&header, zbf));
+    switch (_Z_MID(*header)) {
         case _Z_MID_N_DECLARE: {
             msg->_tag = _Z_N_DECLARE;
-            return _z_declare_decode(&msg->_body._declare, zbf, header);
+            return _z_declare_decode(&msg->_body._declare, zbf, *header, mapping);
         } break;
         case _Z_MID_N_PUSH: {
             msg->_tag = _Z_N_PUSH;
-            return _z_push_decode(&msg->_body._push, zbf, header, arcs);
+            return _z_push_decode(&msg->_body._push, zbf, *header, arcs, mapping);
         } break;
         case _Z_MID_N_REQUEST: {
             msg->_tag = _Z_N_REQUEST;
-            return _z_request_decode(&msg->_body._request, zbf, header, arcs);
+            return _z_request_decode(&msg->_body._request, zbf, *header, arcs, mapping);
         } break;
         case _Z_MID_N_RESPONSE: {
             msg->_tag = _Z_N_RESPONSE;
-            return _z_response_decode(&msg->_body._response, zbf, header, arcs);
+            return _z_response_decode(&msg->_body._response, zbf, *header, arcs, mapping);
         } break;
         case _Z_MID_N_RESPONSE_FINAL: {
             msg->_tag = _Z_N_RESPONSE_FINAL;
-            return _z_response_final_decode(&msg->_body._response_final, zbf, header);
+            return _z_response_final_decode(&msg->_body._response_final, zbf, *header);
         } break;
         case _Z_MID_N_INTEREST: {
             msg->_tag = _Z_N_INTEREST;
-            return _z_n_interest_decode(&msg->_body._interest, zbf, header);
+            return _z_n_interest_decode(&msg->_body._interest, zbf, *header, mapping);
         } break;
         default:
-            _Z_INFO("Unknown message type received: %d", _Z_MID(header));
+            _Z_INFO("Unknown message type received: %d", _Z_MID(*header));
             return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
     }
 }
