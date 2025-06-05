@@ -1,7 +1,7 @@
 /**
  ******************************************************************************
  * @file    z_sub.c
- * @brief   Example zenoh-pico subscriber on STM32 running Threadx
+ * @brief   Example zenoh-pico subscriber on STM32 running ThreadX
  ******************************************************************************
  */
 

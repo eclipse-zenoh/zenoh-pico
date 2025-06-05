@@ -436,7 +436,7 @@ e.g.
 zenohd -l serial//dev/ttyACM1#baudrate=112500
 ```
 
-#### 2.2.7. STM32 Threadx
+#### 2.2.7. STM32 ThreadX
 
 1. Create a new project using STMCubeIDE for your target MCU.
 
@@ -449,7 +449,7 @@ zenohd -l serial//dev/ttyACM1#baudrate=112500
 
 4. Clone zenoh-pico repository to your project folder (or submodule, copy files)
 
-5. Add zenoh-pico/src to project source folders. Exclude any folders in platforms/* except  common and threadx/stm32.
+5. Add zenoh-pico/src to project source folders. Exclude any folders in platforms/* except common and threadx/stm32.
 
 6. Add zenoh-pico/include to project include paths.
 

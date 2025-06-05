@@ -1,7 +1,8 @@
 /**
  ******************************************************************************
  * @file    z_pub.c
- * @brief   Example zenoh-pico publisher on STM32 running Threadx
+ * @brief   Example zenoh-pico publisher on STM32 running ThreadX
+
  ******************************************************************************
  */
 
