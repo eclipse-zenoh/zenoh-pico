@@ -61,7 +61,7 @@ VOID start_example_thread(ULONG initial_input) {
     }
 
     // Publish data
-    while (true) {
+    while (1) {
         char buf[256];
         for (int idx = 0; 1; ++idx) {
             z_sleep_s(1);

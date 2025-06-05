@@ -75,7 +75,7 @@ VOID start_example_thread(ULONG initial_input) {
         return;
     }
 
-    while (true) {
+    while (1) {
         z_sleep_s(1);
     }
 
