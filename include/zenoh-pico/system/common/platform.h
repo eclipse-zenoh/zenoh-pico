@@ -52,6 +52,8 @@
 #include "zenoh-pico/system/platform/rpi_pico.h"
 #elif defined(ZENOH_GENERIC)
 #include "zenoh_generic_platform.h"
+#elif defined(ZENOH_THREADX_STM32)
+#include "zenoh-pico/system/platform/threadx/stm32.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"

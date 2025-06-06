@@ -436,6 +436,44 @@ e.g.
 zenohd -l serial//dev/ttyACM1#baudrate=112500
 ```
 
+#### 2.2.7. STM32 ThreadX
+
+1. Create a new project using STMCubeIDE for your target MCU.
+
+2. In CubeMX project configuration tool:
+    - Add and enable AZURE-RTOS(threadx) Middleware.
+    - Enable UART periphery, set up RX DMA in circular mode and enable UART global interrupt.
+    - Move HAL_Tick to TIM peripheral for threadx to work with HAL. (SYS - Timebase source configuration)
+
+3. Generate initialization code with CubeMX.
+
+4. Clone zenoh-pico repository to your project folder (or submodule, copy files)
+
+5. Add zenoh-pico/src to project source folders. Exclude any folders in platforms/* except common and threadx/stm32.
+
+6. Add zenoh-pico/include to project include paths.
+
+7. Edit zenoh-pico/include/config.h to exclude unsuported features or add compile flags
+
+8. Add "hal.h" file to your project. This file should include your target hal headers (ex. `#include "stm32f4xx_hal.h"`)
+
+9. Add defines to project:
+    - `ZENOH_THREADX_STM32`
+    - `ZENOH_HUART=huartx` (huart1 / huar2, etc...)
+    - `ZENOH_THREADX_STM32_GEN_IRQ=0` (only if you want to write your own interrupt handler)
+
+10. Exclude from build <project_root>/Core/Src/app_threadx.c and replace with one of the z_*.c* files from zenoh-pico/examples/threadx_stm32/
+
+11. Set `TICK_INT_PRIORITY` in stm32xx_hal_conf.h to higher value than SysTick. (0 works ok for testing).
+
+12. Set static bytepool size bigger than 25kB.
+
+13. On host compile zenohd with serial support and run with:
+
+    ```bash
+    zenohd -l serial//dev/ttyACM0#baudrate=115200
+    ```
+
 ## 3. Running the Examples
 
 The simplest way to run some of the example is to get a Docker image of the **zenoh** router (see [http://zenoh.io/docs/getting-started/quick-test/](http://zenoh.io/docs/getting-started/quick-test/)) and then to run the examples on your machine.
