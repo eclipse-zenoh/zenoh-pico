@@ -134,3 +134,24 @@ bool _z_ring_iterator_next(_z_ring_iterator_t *iter) {
 }
 
 void *_z_ring_iterator_value(const _z_ring_iterator_t *iter) { return iter->_val; }
+
+_z_ring_reverse_iterator_t _z_ring_reverse_iterator_make(const _z_ring_t *ring) {
+    _z_ring_reverse_iterator_t iter = {0};
+
+    iter._ring = ring;
+    iter._r_idx = (ring->_w_idx == 0) ? ring->_capacity - 1 : ring->_w_idx - 1;
+    iter._w_idx = (ring->_r_idx == 0) ? ring->_capacity - 1 : ring->_r_idx - 1;
+
+    return iter;
+}
+
+bool _z_ring_reverse_iterator_next(_z_ring_reverse_iterator_t *iter) {
+    if (iter->_r_idx != iter->_w_idx) {
+        iter->_val = iter->_ring->_val[iter->_r_idx];
+        iter->_r_idx = (iter->_r_idx == 0) ? iter->_ring->_capacity - 1 : iter->_r_idx - 1;
+        return true;
+    }
+    return false;
+}
+
+void *_z_ring_reverse_iterator_value(const _z_ring_reverse_iterator_t *iter) { return iter->_val; }

@@ -137,16 +137,23 @@ void ring_test_init_free(void) {
 }
 
 void ring_iterator_test(void) {
-#define TEST_RING(ring, values, n)                                             \
-    {                                                                          \
-        _z_str_ring_iterator_t iter = _z_str_ring_iterator_make(&ring);        \
-                                                                               \
-        for (int i = 0; i < n; i++) {                                          \
-            assert(_z_str_ring_iterator_next(&iter));                          \
-            assert(strcmp(_z_str_ring_iterator_value(&iter), values[i]) == 0); \
-        }                                                                      \
-                                                                               \
-        assert(!_z_str_ring_iterator_next(&iter));                             \
+#define TEST_RING(ring, values, n)                                                              \
+    {                                                                                           \
+        _z_str_ring_iterator_t iter = _z_str_ring_iterator_make(&ring);                         \
+        _z_str_ring_reverse_iterator_t reverse_iter = _z_str_ring_reverse_iterator_make(&ring); \
+                                                                                                \
+        for (int i = 0; i < n; i++) {                                                           \
+            assert(_z_str_ring_iterator_next(&iter));                                           \
+            assert(strcmp(_z_str_ring_iterator_value(&iter), values[i]) == 0);                  \
+        }                                                                                       \
+                                                                                                \
+        for (int i = n - 1; i >= 0; i--) {                                                      \
+            assert(_z_str_ring_reverse_iterator_next(&reverse_iter));                           \
+            assert(strcmp(_z_str_ring_reverse_iterator_value(&reverse_iter), values[i]) == 0);  \
+        }                                                                                       \
+                                                                                                \
+        assert(!_z_str_ring_iterator_next(&iter));                                              \
+        assert(!_z_str_ring_reverse_iterator_next(&reverse_iter));                              \
     }
 
     _z_str_ring_t ring = _z_str_ring_make(4);
