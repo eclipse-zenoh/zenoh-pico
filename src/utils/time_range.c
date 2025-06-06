@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -198,4 +199,51 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
     }
 
     return true;
+}
+
+bool _z_time_range_contains_at_time(const _z_time_range_t *range, const uint64_t timestamp,
+                                    const _z_time_since_epoch *time) {
+    if (range == NULL || time == NULL) {
+        return false;
+    }
+
+    uint64_t now = _z_timestamp_ntp64_from_time(time->secs, time->nanos);
+
+    if (range->start.bound != _Z_TIME_BOUND_UNBOUNDED) {
+        uint64_t start = now + range->start.now_offset;
+        if (range->start.bound == _Z_TIME_BOUND_INCLUSIVE) {
+            if (start > timestamp) {
+                return false;
+            }
+        } else {  // EXCLUSIVE
+            if (start >= timestamp) {
+                return false;
+            }
+        }
+    }
+
+    if (range->end.bound != _Z_TIME_BOUND_UNBOUNDED) {
+        uint64_t end = now + range->end.now_offset;
+        if (range->end.bound == _Z_TIME_BOUND_INCLUSIVE) {
+            if (end < timestamp) {
+                return false;
+            }
+        } else {  // EXCLUSIVE
+            if (end <= timestamp) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool _z_time_range_contains_at_now(const _z_time_range_t *range, const uint64_t timestamp) {
+    _z_time_since_epoch t;
+    z_result_t res = _z_get_time_since_epoch(&t);
+    if (res != _Z_RES_OK) {
+        _Z_ERROR("_z_get_time_since_epoch failed: %i", res);
+        return false;
+    }
+    return _z_time_range_contains_at_time(range, timestamp, &t);
 }

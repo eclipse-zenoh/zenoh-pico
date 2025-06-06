@@ -23,7 +23,7 @@
 #undef NDEBUG
 #include <assert.h>
 
-void test_query_params(void) {
+static void test_query_params(void) {
 #define TEST_PARAMS(str, expected, n)                                 \
     {                                                                 \
         _z_str_se_t params = _z_bstrnew(str);                         \
@@ -102,12 +102,12 @@ void test_query_params(void) {
     TEST_PARAMS(params6, params6_expected, 1);
 }
 
-bool compare_double_result(const double expected, const double result) {
+static bool compare_double_result(const double expected, const double result) {
     static const double EPSILON = 1e-6;
     return (result - expected) < EPSILON;
 }
 
-void test_time_range(void) {
+static void test_time_range(void) {
     _z_time_range_t result;
     const char *range = "";
 
@@ -229,8 +229,112 @@ void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 }
 
+#define STUB_SECS 1000u /*   16-Aug-1970 02:46:40 UTC in Unix time  */
+#define STUB_NANOS 0u
+
+static void test_time_range_contains_null_pointer(void) {
+    _z_time_since_epoch t = {.secs = STUB_SECS, .nanos = STUB_NANOS};
+
+    _z_time_range_t r = {.start = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0},
+                         .end = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0}};
+
+    assert(_z_time_range_contains_at_time(NULL, 12345u, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, 12345u, NULL) == false);
+}
+
+static void test_time_range_contains_unbounded_range(void) {
+    _z_time_range_t r = {.start = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0},
+                         .end = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0}};
+
+    _z_time_since_epoch t = {.secs = STUB_SECS, .nanos = STUB_NANOS};
+
+    uint64_t now = _z_timestamp_ntp64_from_time(STUB_SECS, STUB_NANOS);
+    uint64_t before = now - 42;
+    uint64_t after = now + 42;
+
+    assert(_z_time_range_contains_at_time(&r, before, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, after, &t) == true);
+}
+
+static void test_time_range_contains_lower_bound_inclusive_exclusive(void) {
+    _z_time_since_epoch t = {.secs = STUB_SECS, .nanos = STUB_NANOS};
+
+    _z_time_range_t r = {.start = {.now_offset = 0}, .end = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0}};
+
+    uint64_t now = _z_timestamp_ntp64_from_time(STUB_SECS, STUB_NANOS);
+    uint64_t before = now - 1;
+    uint64_t after = now + 1;
+
+    // Inclusive  [now .. +∞)
+    r.start.bound = _Z_TIME_BOUND_INCLUSIVE;
+    assert(_z_time_range_contains_at_time(&r, now, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, before, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, after, &t) == true);
+
+    // Exclusive  ]now .. +∞)
+    r.start.bound = _Z_TIME_BOUND_EXCLUSIVE;
+    assert(_z_time_range_contains_at_time(&r, now, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, before, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, after, &t) == true);
+}
+
+static void test_time_range_contains_upper_bound_inclusive_exclusive(void) {
+    _z_time_since_epoch t = {.secs = STUB_SECS, .nanos = STUB_NANOS};
+
+    _z_time_range_t r = {.start = {.bound = _Z_TIME_BOUND_UNBOUNDED, .now_offset = 0}, .end = {.now_offset = 0}};
+
+    uint64_t now = _z_timestamp_ntp64_from_time(STUB_SECS, STUB_NANOS);
+    uint64_t before = now - 1;
+    uint64_t after = now + 1;
+
+    // Inclusive  (-∞ .. now]
+    r.end.bound = _Z_TIME_BOUND_INCLUSIVE;
+    assert(_z_time_range_contains_at_time(&r, before, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, after, &t) == false);
+
+    // Exclusive  (-∞ .. now[
+    r.end.bound = _Z_TIME_BOUND_EXCLUSIVE;
+    assert(_z_time_range_contains_at_time(&r, before, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, after, &t) == false);
+}
+
+static void test_time_range_contains_fully_bounded_mixed(void) {
+    _z_time_since_epoch t = {.secs = STUB_SECS, .nanos = STUB_NANOS};
+
+    // [now-5  ..  now+5[   (inclusive start, exclusive end)
+    _z_time_range_t r = {.start = {.bound = _Z_TIME_BOUND_INCLUSIVE, .now_offset = -5},
+                         .end = {.bound = _Z_TIME_BOUND_EXCLUSIVE, .now_offset = 5}};
+
+    uint64_t now = _z_timestamp_ntp64_from_time(STUB_SECS, STUB_NANOS);
+
+    assert(_z_time_range_contains_at_time(&r, now - 6, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, now - 5, &t) == true);  // Inclusive
+    assert(_z_time_range_contains_at_time(&r, now, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now + 4, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now + 5, &t) == false);  // Exclusive
+    assert(_z_time_range_contains_at_time(&r, now + 6, &t) == false);
+
+    // Swap bound types
+    r.start.bound = _Z_TIME_BOUND_EXCLUSIVE;
+    r.end.bound = _Z_TIME_BOUND_INCLUSIVE;
+
+    assert(_z_time_range_contains_at_time(&r, now - 6, &t) == false);
+    assert(_z_time_range_contains_at_time(&r, now - 5, &t) == false);  // Exclusive
+    assert(_z_time_range_contains_at_time(&r, now, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now + 4, &t) == true);
+    assert(_z_time_range_contains_at_time(&r, now + 5, &t) == true);  // Inclusive
+    assert(_z_time_range_contains_at_time(&r, now + 6, &t) == false);
+}
 int main(void) {
     test_query_params();
     test_time_range();
+    test_time_range_contains_null_pointer();
+    test_time_range_contains_unbounded_range();
+    test_time_range_contains_lower_bound_inclusive_exclusive();
+    test_time_range_contains_upper_bound_inclusive_exclusive();
+    test_time_range_contains_fully_bounded_mixed();
     return 0;
 }

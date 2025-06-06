@@ -15,6 +15,7 @@
 #ifndef ZENOH_PICO_UTILS_TIME_RANGE_H
 #define ZENOH_PICO_UTILS_TIME_RANGE_H
 
+#include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/string.h"
 
@@ -39,6 +40,21 @@ typedef struct {
  * If valid range will contain the result.
  */
 bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range);
+
+/**
+ * Checks if a timestamp is contained within a time range at the specified time.
+ *
+ * Returns true if the timestamp is containend in the time range, false otherwise.
+ */
+bool _z_time_range_contains_at_time(const _z_time_range_t *range, const uint64_t timestamp,
+                                    const _z_time_since_epoch *time);
+
+/**
+ * Checks if a timestamp is contained within a time range at the current system time.
+ *
+ * Returns true if the timestamp is containend in the time range, false otherwise.
+ */
+bool _z_time_range_contains_at_now(const _z_time_range_t *range, const uint64_t timestamp);
 
 #ifdef __cplusplus
 }
