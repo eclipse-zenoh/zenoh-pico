@@ -26,7 +26,7 @@ extern "C" {
 
 /*-------- Single-linked List --------*/
 /**
- * A single-linked list.
+ * A single-linked list. Elements are stored as pointers.
  *
  *  Members:
  *   void *lal: The pointer to the inner value.
@@ -37,13 +37,10 @@ typedef struct _z_l_t {
     struct _z_l_t *_tail;
 } _z_list_t;
 
-_z_list_t *_z_list_of(void *x);
-
 size_t _z_list_len(const _z_list_t *xs);
 static inline bool _z_list_is_empty(const _z_list_t *xs) { return xs == NULL; }
-
-void *_z_list_head(const _z_list_t *xs);
-_z_list_t *_z_list_tail(const _z_list_t *xs);
+static inline void *_z_list_head(const _z_list_t *xs) { return xs->_val; }
+static inline _z_list_t *_z_list_tail(const _z_list_t *xs) { return xs->_tail; }
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
 _z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
@@ -79,6 +76,30 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     }                                                                                                                 \
     static inline name##_list_t *name##_list_clone(name##_list_t *l) { return _z_list_clone(l, name##_elem_clone); }  \
     static inline void name##_list_free(name##_list_t **l) { _z_list_free(l, name##_elem_free); }
+
+/*-------- Sized Single-linked List --------*/
+/**
+ * A single-linked list. Elements are stored as value.
+ *
+ *  Members:
+ *   _z_slist_node_t *data: Pointer to internal data
+ */
+
+// Node struct: {next node_address; generic type}
+typedef void _z_slist_t;
+
+static inline bool _z_slist_is_empty(const _z_slist_t *node) { return node == NULL; }
+_z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f);
+_z_slist_t *_z_slist_push_back(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f);
+void *_z_slist_value(const _z_slist_t *node);
+_z_slist_t *_z_slist_next(const _z_slist_t *node);
+size_t _z_slist_len(const _z_slist_t *node);
+_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f, void **value_store);
+_z_slist_t *_z_slist_find(const _z_slist_t *node, z_element_eq_f c_f, const void *target_val);
+_z_slist_t *_z_slist_drop_element(_z_slist_t *list, _z_slist_t *prev, z_element_clear_f f_f);
+_z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_element_eq_f c_f, const void *target_val);
+_z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_copy_f d_f);
+void _z_slist_free(_z_slist_t **node, z_element_clear_f f);
 
 #ifdef __cplusplus
 }
