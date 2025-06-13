@@ -30,7 +30,7 @@ z_result_t _z_config_init(_z_config_t *ps) {
 z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
     z_result_t ret = _Z_RES_OK;
 
-    char *res = "";
+    const char *res = "";
     if (key == Z_CONFIG_CONNECT_KEY) {
         res = _z_str_intmap_insert_push(ps, key, _z_str_clone(value));
     } else {
