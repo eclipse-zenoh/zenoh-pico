@@ -916,6 +916,8 @@ z_id_t z_entity_global_id_zid(const z_entity_global_id_t *gid);
  *
  * Return:
  *   ``0`` if construction is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t z_source_info_new(z_owned_source_info_t *info, const z_entity_global_id_t *source_id, uint32_t source_sn);
 
@@ -927,6 +929,8 @@ z_result_t z_source_info_new(z_owned_source_info_t *info, const z_entity_global_
  *
  * Return:
  *   :c:type:`uint32_t` sequence number.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 uint32_t z_source_info_sn(const z_loaned_source_info_t *info);
 
@@ -938,6 +942,8 @@ uint32_t z_source_info_sn(const z_loaned_source_info_t *info);
  *
  * Return:
  *   Global entity ID as a :c:type:`z_entity_global_id_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_entity_global_id_t z_source_info_id(const z_loaned_source_info_t *info);
 
@@ -1588,6 +1594,8 @@ z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample);
  *
  * Return:
  *   The source info wrapped as a :c:type:`z_loaned_source_info_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_source_info_t *z_sample_source_info(const z_loaned_sample_t *sample);
 #endif
