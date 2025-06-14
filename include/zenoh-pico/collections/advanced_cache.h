@@ -35,7 +35,7 @@ extern "C" {
  *   z_congestion_control_t congestion_control: The congestion control to apply to replies.
  *   z_priority_t priority: The priority of replies.
  *   bool is_express: If set to ``true``, this cache replies will not be batched. This usually
- * has a positive impact on latency but negative impact on throughput.
+ *     has a positive impact on latency but negative impact on throughput.
  */
 typedef struct {
     bool is_enabled;
