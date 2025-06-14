@@ -54,28 +54,33 @@ _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
  * Enumerators:
  *   ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE: Disable heartbeat-based last sample miss detection.
  *   ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC: Allow last sample miss detection through periodic
- * heartbeat. Periodically send the last published Sample's sequence number to allow last sample recovery.
+ *     heartbeat. Periodically send the last published Sample's sequence number to allow last sample recovery.
  *   ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC: Allow last sample miss detection through sporadic
- * heartbeat. Each period, the last published Sample's sequence number is sent with
- * `Z_CONGESTION_CONTROL_DROP` but only if it changed since last period.
+ *     heartbeat. Each period, the last published Sample's sequence number is sent with
+ *     `Z_CONGESTION_CONTROL_DROP` but only if it changed since last period.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef enum ze_advanced_publisher_heartbeat_mode_t {
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE,
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC,
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC,
 } ze_advanced_publisher_heartbeat_mode_t;
+#define ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_DEFAULT ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE
 
 /**
  * Represents the set of options for sample miss detection on an advanced publisher.
  *
  * Members:
  *   bool is_enabled: Must be set to ``true``, to enable sample miss detection by adding
- * sequence numbers.
+ *     sequence numbers.
  *   enum ze_advanced_publisher_heartbeat_mode_t heartbeat_mode: Allow last sample miss
- * detection through sporadic or periodic heartbeat.
+ *     detection through sporadic or periodic heartbeat.
  *   uint64_t heartbeat_period_ms: If heartbeat_mode is not ``NONE``, the publisher will send
- * heartbeats with the specified period, which can be used by Advanced Subscribers for last
- * sample(s) miss detection (if last sample miss detection with zero query period is enabled).
+ *     heartbeats with the specified period, which can be used by Advanced Subscribers for last
+ *     sample(s) miss detection (if last sample miss detection with zero query period is enabled).
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef struct {
     bool is_enabled;
@@ -91,11 +96,13 @@ typedef struct {
  *   z_publisher_options_t publisher_options: Base publisher options.
  *   ze_advanced_publisher_cache_options_t cache: Publisher cache settings.
  *   ze_advanced_publisher_sample_miss_detection_options_t sample_miss_detection: Allow
- * matching Subscribers to detect lost samples and optionally ask for retransimission.
- * Retransmission can only be done if history is enabled on subscriber side.
+ *     matching Subscribers to detect lost samples and optionally ask for retransimission.
+ *     Retransmission can only be done if history is enabled on subscriber side.
  *   bool publisher_detection: Allow this publisher to be detected through liveliness.
  *   z_loaned_keyexpr_t *publisher_detection_metadata: An optional key expression to be added
- * to the liveliness token key expression. It can be used to convey meta data.
+ *     to the liveliness token key expression. It can be used to convey meta data.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef struct {
     z_publisher_options_t publisher_options;
@@ -110,6 +117,8 @@ typedef struct {
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_cache_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_options_t *options);
 
@@ -118,6 +127,8 @@ void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_opt
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_sample_miss_detection_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_sample_miss_detection_options_default(
     ze_advanced_publisher_sample_miss_detection_options_t *options);
@@ -127,6 +138,8 @@ void ze_advanced_publisher_sample_miss_detection_options_default(
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_options_default(ze_advanced_publisher_options_t *options);
 
@@ -144,6 +157,8 @@ void ze_advanced_publisher_options_default(ze_advanced_publisher_options_t *opti
  *
  * Return:
  *   ``0`` if declare is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_advanced_publisher_t *pub,
                                          const z_loaned_keyexpr_t *keyexpr,
@@ -157,6 +172,8 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
  *
  * Return:
  *   ``0`` if undeclare is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_undeclare_advanced_publisher(ze_moved_advanced_publisher_t *pub);
 
@@ -165,6 +182,8 @@ z_result_t ze_undeclare_advanced_publisher(ze_moved_advanced_publisher_t *pub);
  *
  * Members:
  *   z_publisher_put_options_t put_options: Base put options.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef struct {
     z_publisher_put_options_t put_options;
@@ -175,6 +194,8 @@ typedef struct {
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_put_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_put_options_default(ze_advanced_publisher_put_options_t *options);
 
@@ -183,6 +204,8 @@ void ze_advanced_publisher_put_options_default(ze_advanced_publisher_put_options
  *
  * Members:
  *   z_publisher_delete_options_t delete_options: Base delete options.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 typedef struct {
     z_publisher_delete_options_t delete_options;
@@ -193,6 +216,8 @@ typedef struct {
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_delete_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_delete_options_default(ze_advanced_publisher_delete_options_t *options);
 
@@ -206,6 +231,8 @@ void ze_advanced_publisher_delete_options_default(ze_advanced_publisher_delete_o
  *
  * Return:
  *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_advanced_publisher_put(const ze_loaned_advanced_publisher_t *pub, z_moved_bytes_t *payload,
                                      const ze_advanced_publisher_put_options_t *options);
@@ -219,6 +246,8 @@ z_result_t ze_advanced_publisher_put(const ze_loaned_advanced_publisher_t *pub, 
  *
  * Return:
  *   ``0`` if delete operation is successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t ze_advanced_publisher_delete(const ze_loaned_advanced_publisher_t *pub,
                                         const ze_advanced_publisher_delete_options_t *options);
@@ -231,6 +260,8 @@ z_result_t ze_advanced_publisher_delete(const ze_loaned_advanced_publisher_t *pu
  *
  * Return:
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 const z_loaned_keyexpr_t *ze_advanced_publisher_keyexpr(const ze_loaned_advanced_publisher_t *pub);
 
@@ -242,6 +273,8 @@ const z_loaned_keyexpr_t *ze_advanced_publisher_keyexpr(const ze_loaned_advanced
  *
  * Return:
  *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_entity_global_id_t ze_advanced_publisher_id(const ze_loaned_advanced_publisher_t *pub);
 
@@ -250,6 +283,8 @@ z_entity_global_id_t ze_advanced_publisher_id(const ze_loaned_advanced_publisher
  *
  * Parameters:
  *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_cache_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_options_t *options);
 
@@ -272,9 +307,9 @@ z_result_t ze_advanced_publisher_get_matching_status(const ze_loaned_advanced_pu
  * Parameters:
  *   publisher: An advanced publisher to associate with matching listener.
  *   matching_listener: An uninitialized memory location where matching listener will be constructed. The matching
- * listener's callback will be automatically dropped when the publisher is dropped. callback: A closure that will be
- * called every time the matching status of the publisher changes (If last subscriber disconnects or when the first
- * subscriber connects).
+ *     listener's callback will be automatically dropped when the publisher is dropped.
+ *   callback: A closure that will be called every time the matching status of the publisher changes (If last subscriber
+ *     disconnects or when the first subscriber connects).
  *
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.
@@ -292,7 +327,7 @@ z_result_t ze_advanced_publisher_declare_matching_listener(const ze_loaned_advan
  * Parameters:
  *   publisher: An advanced publisher to associate with matching listener.
  *   callback: A closure that will be called every time the matching status of the publisher changes (If last subscriber
- * disconnects or when the first subscriber connects).
+ *     disconnects or when the first subscriber connects).
  *
  * Return:
  *   ``0`` if execution was successful, ``negative value`` otherwise.

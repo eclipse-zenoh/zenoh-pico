@@ -67,7 +67,7 @@ void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_opt
 void ze_advanced_publisher_sample_miss_detection_options_default(
     ze_advanced_publisher_sample_miss_detection_options_t *options) {
     options->is_enabled = true;
-    options->heartbeat_mode = ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE;
+    options->heartbeat_mode = ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_DEFAULT;
     options->heartbeat_period_ms = 0;
 }
 
