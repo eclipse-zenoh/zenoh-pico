@@ -382,19 +382,19 @@ void slist_test(void) {
     assert(_z_slist_len(slist) == 0);
 
     // Add value test
-    slist = _z_slist_push(slist, values[0], strlen(values[0]), _z_noop_copy, false);
+    slist = _z_slist_push(slist, values[0], strlen(values[0]) + 1, _z_noop_copy, false);
     assert(!_z_slist_is_empty(slist));
     assert(_z_slist_len(slist) == 1);
     assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
     assert(_z_slist_next(slist) == NULL);
 
-    slist = _z_slist_push(slist, values[1], strlen(values[1]), _z_noop_copy, false);
+    slist = _z_slist_push(slist, values[1], strlen(values[1]) + 1, _z_noop_copy, false);
     assert(_z_slist_len(slist) == 2);
     assert(strcmp(values[1], (char *)_z_slist_value(slist)) == 0);
     assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
 
     // Push back test
-    slist = _z_slist_push_back(slist, values[2], strlen(values[2]), _z_noop_copy, false);
+    slist = _z_slist_push_back(slist, values[2], strlen(values[2]) + 1, _z_noop_copy, false);
     assert(_z_slist_len(slist) == 3);
     assert(strcmp(values[2], (char *)_z_slist_value(_z_slist_next(_z_slist_next(slist)))) == 0);
 
@@ -411,7 +411,7 @@ void slist_test(void) {
 
     // Drop element test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
-        slist = _z_slist_push(slist, values[i], strlen(values[i]), _z_noop_copy, false);
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
     }
     // Drop second element
     slist = _z_slist_drop_element(slist, slist, _z_noop_clear);
@@ -425,7 +425,7 @@ void slist_test(void) {
 
     // Drop filter test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
-        slist = _z_slist_push(slist, values[i], strlen(values[i]), _z_noop_copy, false);
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
     }
     slist = _z_slist_drop_filter(slist, _z_noop_clear, slist_eq_f, values[1]);
     assert(_z_slist_len(slist) == 2);
@@ -435,7 +435,7 @@ void slist_test(void) {
 
     // Find test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
-        slist = _z_slist_push(slist, values[i], strlen(values[i]), _z_noop_copy, false);
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
     }
     _z_slist_t *elem = NULL;
     elem = _z_slist_find(slist, slist_eq_f, "bob");
@@ -446,7 +446,7 @@ void slist_test(void) {
 
     // Clone test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
-        slist = _z_slist_push(slist, values[i], strlen(values[i]), _z_noop_copy, false);
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
     }
     _z_slist_t *clone = NULL;
     clone = _z_slist_clone(slist, strlen(values[0]), _z_noop_copy, false);
