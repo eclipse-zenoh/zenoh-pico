@@ -45,13 +45,16 @@ typedef struct _z_sample_t {
     _z_source_info_t source_info;
 } _z_sample_t;
 void _z_sample_clear(_z_sample_t *sample);
-size_t _z_sample_size(const _z_sample_t *s);
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_sample_t _z_sample_null(void) { return (_z_sample_t){0}; }
 static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
+}
+inline size_t _z_sample_size(const _z_sample_t *s) {
+    (void)(s);
+    return sizeof(_z_sample_t);
 }
 
 void _z_sample_steal_data(_z_sample_t *dst, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,

@@ -47,39 +47,11 @@ bool _ze_advanced_cache_query_match_key(const char *key_start, size_t key_len, c
     return (key_len == strlen(expected_key) && strncmp(key_start, expected_key, key_len) == 0);
 }
 
-bool _ze_advanced_cache_query_param_to_uint32(const _z_str_se_t *str, uint32_t *result) {
-    uint32_t value = 0;
-    size_t len = _z_ptr_char_diff(str->end, str->start);
-
-    if (len == 0 || len > 10) {
-        return false;
-    }
-
-    const uint32_t threshold = UINT32_MAX / 10;
-    const uint32_t rem_threshold = UINT32_MAX % 10;
-
-    for (size_t i = 0; i < len; i++) {
-        const char c = str->start[i];
-        if (c < '0' || c > '9') {
-            return false;
-        }
-        uint32_t digit = (uint32_t)(c - '0');
-
-        if (value > threshold || (value == threshold && digit > rem_threshold)) {
-            return false;
-        }
-        value = value * 10 + digit;
-    }
-
-    *result = value;
-    return true;
-}
-
 void _ze_advanced_cache_query_parse_max(const _z_str_se_t *str, size_t *max) {
     *max = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_MAX_UNBOUNDED;
     if (_z_ptr_char_diff(str->end, str->start) > 0) {
         uint32_t value;
-        if (_ze_advanced_cache_query_param_to_uint32(str, &value)) {
+        if (_z_str_se_atoui(str, &value)) {
             *max = value;
         }
     }
@@ -94,11 +66,11 @@ void _ze_advanced_cache_query_parse_range(const _z_str_se_t *str, _ze_advanced_c
 
         _z_str_se_t token = _z_splitstr_next(&ss);
         uint32_t value;
-        if (_ze_advanced_cache_query_param_to_uint32(&token, &value)) {
+        if (_z_str_se_atoui(&token, &value)) {
             range->start = value;
         }
         token = _z_splitstr_next(&ss);
-        if (_ze_advanced_cache_query_param_to_uint32(&token, &value)) {
+        if (_z_str_se_atoui(&token, &value)) {
             range->end = value;
         }
     }

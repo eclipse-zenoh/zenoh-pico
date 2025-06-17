@@ -149,3 +149,31 @@ size_t _z_str_startswith(const char *s, const char *needle) {
     }
     return i;
 }
+
+bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result) {
+    uint32_t value = 0;
+    size_t len = _z_ptr_char_diff(str->end, str->start);
+
+    if (len == 0 || len > 10) {
+        return false;
+    }
+
+    const uint32_t threshold = UINT32_MAX / 10;
+    const uint32_t rem_threshold = UINT32_MAX % 10;
+
+    for (size_t i = 0; i < len; i++) {
+        const char c = str->start[i];
+        if (c < '0' || c > '9') {
+            return false;
+        }
+        uint32_t digit = (uint32_t)(c - '0');
+
+        if (value > threshold || (value == threshold && digit > rem_threshold)) {
+            return false;
+        }
+        value = value * 10 + digit;
+    }
+
+    *result = value;
+    return true;
+}
