@@ -184,7 +184,7 @@ static inline void *_z_slist_node_value(const _z_slist_t *node) {
     return (void *)_z_ptr_u8_offset((uint8_t *)node, (ptrdiff_t)NODE_DATA_SIZE);
 }
 
-static _z_slist_t *_z_slist_new(void *value, size_t value_size, z_element_copy_f d_f) {
+static _z_slist_t *_z_slist_new(void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
     size_t node_size = NODE_DATA_SIZE + value_size;
     _z_slist_t *node = (_z_slist_t *)z_malloc(node_size);
     if (node == NULL) {
@@ -192,12 +192,16 @@ static _z_slist_t *_z_slist_new(void *value, size_t value_size, z_element_copy_f
         return node;
     }
     memset(node, 0, NODE_DATA_SIZE);
-    d_f(_z_slist_node_value(node), value);
+    if (use_elem_f) {
+        d_f(_z_slist_node_value(node), value);
+    } else {
+        memcpy(_z_slist_node_value(node), value, value_size);
+    }
     return node;
 }
 
-_z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f) {
-    _z_slist_t *new_node = _z_slist_new(value, value_size, d_f);
+_z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
+    _z_slist_t *new_node = _z_slist_new(value, value_size, d_f, use_elem_f);
     if (new_node == NULL) {
         return node;
     }
@@ -206,15 +210,16 @@ _z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_el
     return new_node;
 }
 
-_z_slist_t *_z_slist_push_back(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f) {
+_z_slist_t *_z_slist_push_back(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f,
+                               bool use_elem_f) {
     if (node == NULL) {
-        return _z_slist_new(value, value_size, d_f);
+        return _z_slist_new(value, value_size, d_f, use_elem_f);
     }
     _z_slist_node_data_t *node_data = _z_slist_node_data(node);
     while (node_data->next != NULL) {
         node_data = _z_slist_node_data(node_data->next);
     }
-    node_data->next = _z_slist_new(value, value_size, d_f);
+    node_data->next = _z_slist_new(value, value_size, d_f, use_elem_f);
     return node;
 }
 
@@ -235,16 +240,12 @@ size_t _z_slist_len(const _z_slist_t *node) {
     return len;
 }
 
-_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f, void **value_store) {
+_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f) {
     if (node == NULL) {
         return node;
     }
     _z_slist_t *next_node = _z_slist_node_data(node)->next;
-    if (value_store != NULL) {
-        *value_store = _z_slist_node_value(node);
-    } else {
-        f_f(_z_slist_node_value(node));
-    }
+    f_f(_z_slist_node_value(node));
     z_free(node);
     return next_node;
 }
@@ -305,12 +306,12 @@ _z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_elem
     return head;
 }
 
-_z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_copy_f d_f) {
+_z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
     _z_slist_t *new_node = NULL;
     _z_slist_t *curr_node = (_z_slist_t *)node;
     while (curr_node != NULL) {
         void *value = _z_slist_node_value(curr_node);
-        new_node = _z_slist_push(new_node, value, value_size, d_f);
+        new_node = _z_slist_push(new_node, value, value_size, d_f, use_elem_f);
         curr_node = _z_slist_node_data(curr_node)->next;
     }
     return new_node;
@@ -319,7 +320,7 @@ _z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_
 void _z_slist_free(_z_slist_t **node, z_element_clear_f f) {
     _z_slist_t *ptr = *node;
     while (ptr != NULL) {
-        ptr = _z_slist_pop(ptr, f, NULL);
+        ptr = _z_slist_pop(ptr, f);
     }
     *node = NULL;
 }
