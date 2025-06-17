@@ -52,7 +52,7 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
-inline size_t _z_sample_size(const _z_sample_t *s) {
+static inline size_t _z_sample_size(const _z_sample_t *s) {
     (void)(s);
     return sizeof(_z_sample_t);
 }
