@@ -68,11 +68,6 @@ void _z_sample_clear(_z_sample_t *sample) {
     _z_bytes_drop(&sample->attachment);
 }
 
-size_t _z_sample_size(const _z_sample_t *s) {
-    (void)(s);
-    return sizeof(_z_sample_t);
-}
-
 void _z_sample_free(_z_sample_t **sample) {
     _z_sample_t *ptr = *sample;
     if (ptr != NULL) {

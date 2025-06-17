@@ -76,6 +76,11 @@ static inline void _z_str_append(char *str, const char c) {
     str[len + 1] = '\0';
 }
 
+/*
+ * Convert a non null terminated `_z_str_se_t` to a uint32_t.
+ */
+bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
+
 #ifdef __cplusplus
 }
 #endif
