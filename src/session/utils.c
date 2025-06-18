@@ -69,7 +69,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_config_init(&zn->_config);
-    zn->_decalaration_cache = NULL;
+    zn->_declaration_cache = NULL;
 #endif
 
     // Initialize the data structs
@@ -117,7 +117,7 @@ void _z_session_clear(_z_session_t *zn) {
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_config_clear(&zn->_config);
-    _z_network_message_list_free(&zn->_decalaration_cache);
+    _z_network_message_slist_free(&zn->_declaration_cache);
 #endif
 
     _z_close(zn);

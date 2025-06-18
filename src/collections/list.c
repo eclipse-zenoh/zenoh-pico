@@ -200,7 +200,8 @@ static _z_slist_t *_z_slist_new(const void *value, size_t value_size, z_element_
     return node;
 }
 
-_z_slist_t *_z_slist_push(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
+_z_slist_t *_z_slist_push(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f,
+                          bool use_elem_f) {
     _z_slist_t *new_node = _z_slist_new(value, value_size, d_f, use_elem_f);
     if (new_node == NULL) {
         return node;
