@@ -79,12 +79,17 @@ static inline bool _z_entity_global_id_check(const _z_entity_global_id_t *info) 
 }
 
 /**
+ * NTP64 time.
+ */
+typedef uint64_t _z_ntp64_t;
+
+/**
  * A zenoh timestamp.
  */
 typedef struct {
     bool valid;
     _z_id_t id;
-    uint64_t time;
+    _z_ntp64_t time;
 } _z_timestamp_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
@@ -95,7 +100,7 @@ void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
-uint64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
+_z_ntp64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
 
 /**
  * A zenoh key-expression.

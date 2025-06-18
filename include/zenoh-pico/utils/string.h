@@ -34,6 +34,11 @@ typedef struct {
 } _z_splitstr_t;
 
 /**
+ * Creates a `_z_str_se_t` from a null-terminated C string.
+ */
+_z_str_se_t _z_bstrnew(const char *start);
+
+/**
  * The reverse equivalent of libc's `strstr`.
  *
  * Returns NULL if the needle is not found.
@@ -62,6 +67,11 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
 size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const char *needle_start);
 
 size_t _z_str_startswith(const char *s, const char *needle);
+
+/*
+ * Convert a non null terminated `_z_str_se_t` to a uint32_t.
+ */
+bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
 
 #ifdef __cplusplus
 }

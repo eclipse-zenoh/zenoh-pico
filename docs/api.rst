@@ -1124,6 +1124,62 @@ See details at :ref:`owned_types_concept`
 .. c:function:: void z_publisher_drop(z_moved_publisher_t * closure) 
 
 
+Advanced Publication
+====================
+
+Represents a Zenoh Advanced Publisher entity.
+
+Types
+-----
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: ze_owned_advanced_publisher_t
+.. c:type:: ze_loaned_advanced_publisher_t
+.. c:type:: ze_moved_advanced_publisher_t
+
+Option Types
+------------
+
+.. autoctype:: advanced_publisher.h::ze_advanced_publisher_put_options_t
+.. autoctype:: advanced_publisher.h::ze_advanced_publisher_delete_options_t
+.. autoctype:: advanced_publisher.h::ze_advanced_publisher_options_t
+.. autoctype:: advanced_cache.h::ze_advanced_publisher_cache_options_t
+.. autoctype:: advanced_publisher.h::ze_advanced_publisher_sample_miss_detection_options_t
+
+Constants
+---------
+
+.. autocenum:: advanced_publisher.h::ze_advanced_publisher_heartbeat_mode_t
+
+Functions
+---------
+.. autocfunction:: advanced_publisher.h::ze_declare_advanced_publisher
+.. autocfunction:: advanced_publisher.h::ze_undeclare_advanced_publisher
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_put
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_delete
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_keyexpr
+
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_options_default
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_cache_options_default
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_sample_miss_detection_options_default
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_put_options_default
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_delete_options_default
+
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_get_matching_status
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_declare_matching_listener
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_declare_background_matching_listener
+.. autocfunction:: advanced_publisher.h::ze_advanced_publisher_id
+
+Ownership Functions
+-------------------
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const ze_loaned_advanced_publisher_t * ze_advanced_publisher_loan(const ze_owned_advanced_publisher_t * closure)
+.. c:function:: void ze_advanced_publisher_drop(ze_moved_advanced_publisher_t * closure) 
+
+
 Subscription
 ============
 
