@@ -30,7 +30,7 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
         pen_qry->_dropper(pen_qry->_arg);
     }
     _z_keyexpr_clear(&pen_qry->_key);
-    _z_pending_reply_list_free(&pen_qry->_pending_replies);
+    _z_pending_reply_slist_free(&pen_qry->_pending_replies);
 }
 
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
@@ -137,12 +137,12 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
         bool drop = false;
-        _z_pending_reply_list_t *pen_rps = pen_qry->_pending_replies;
+        _z_pending_reply_slist_t *curr_node = pen_qry->_pending_replies;
         _z_pending_reply_t *pen_rep = NULL;
 
         // Verify if this is a newer reply, free the old one in case it is
-        while (pen_rps != NULL) {
-            pen_rep = _z_pending_reply_list_head(pen_rps);
+        while (curr_node != NULL) {
+            pen_rep = _z_pending_reply_slist_value(curr_node);
             // Check if this is the same resource key
             if (_z_string_equals(&pen_rep->_reply.data._result.sample.keyexpr._suffix,
                                  &reply.data._result.sample.keyexpr._suffix)) {
@@ -150,35 +150,30 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                     drop = true;
                 } else {
                     pen_qry->_pending_replies =
-                        _z_pending_reply_list_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
+                        _z_pending_reply_slist_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
                 }
                 break;
             }
-            pen_rps = _z_pending_reply_list_tail(pen_rps);
+            curr_node = _z_pending_reply_slist_next(curr_node);
         }
         if (!drop) {
             // Cache most recent reply
-            pen_rep = (_z_pending_reply_t *)z_malloc(sizeof(_z_pending_reply_t));
-            if (pen_rep == NULL) {
-                _z_reply_clear(&reply);
-                _z_session_mutex_unlock(zn);
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            }
+            _z_pending_reply_t tmp_rep;
             if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC) {
                 // No need to store the whole reply in the monotonic mode.
-                pen_rep->_reply = _z_reply_null();
-                pen_rep->_reply.data._tag = _Z_REPLY_TAG_DATA;
+                tmp_rep._reply = _z_reply_null();
+                tmp_rep._reply.data._tag = _Z_REPLY_TAG_DATA;
                 _Z_CLEAN_RETURN_IF_ERR(
                     _z_keyexpr_move(&pen_rep->_reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
                     _z_reply_clear(&reply);
                     _z_session_mutex_unlock(zn));
             } else {
                 // Copy the reply to store it out of context
-                _Z_CLEAN_RETURN_IF_ERR(_z_reply_move(&pen_rep->_reply, &reply), _z_reply_clear(&reply);
+                _Z_CLEAN_RETURN_IF_ERR(_z_reply_move(&tmp_rep._reply, &reply), _z_reply_clear(&reply);
                                        _z_session_mutex_unlock(zn));
             }
-            pen_rep->_tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
-            pen_qry->_pending_replies = _z_pending_reply_list_push(pen_qry->_pending_replies, pen_rep);
+            tmp_rep._tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
+            pen_qry->_pending_replies = _z_pending_reply_slist_push(pen_qry->_pending_replies, &tmp_rep);
         }
     }
     _z_session_mutex_unlock(zn);
@@ -233,11 +228,11 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     // The reply is the final one, apply consolidation if needed
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
         while (pen_qry->_pending_replies != NULL) {
-            _z_pending_reply_t *pen_rep = _z_pending_reply_list_head(pen_qry->_pending_replies);
+            _z_pending_reply_t *pen_rep = _z_pending_reply_slist_value(pen_qry->_pending_replies);
 
             // Trigger the query handler
             pen_qry->_callback(&pen_rep->_reply, pen_qry->_arg);
-            pen_qry->_pending_replies = _z_pending_reply_list_pop(pen_qry->_pending_replies, NULL);
+            pen_qry->_pending_replies = _z_pending_reply_slist_pop(pen_qry->_pending_replies);
         }
     }
     // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL

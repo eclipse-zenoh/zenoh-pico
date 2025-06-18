@@ -120,7 +120,7 @@ _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes
 typedef struct _z_reply_t _z_reply_t;
-typedef _z_list_t _z_pending_reply_list_t;
+typedef _z_slist_t _z_pending_reply_slist_t;
 typedef struct _z_reply_t _z_reply_t;
 
 /**
@@ -136,7 +136,7 @@ typedef struct {
     z_clock_t _start_time;
     uint64_t _timeout;
     void *_arg;
-    _z_pending_reply_list_t *_pending_replies;
+    _z_pending_reply_slist_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;
     bool _anykey;
