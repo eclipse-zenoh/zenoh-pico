@@ -120,7 +120,6 @@ _Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
 
 // Forward declaration to avoid cyclical includes
 typedef struct _z_reply_t _z_reply_t;
-typedef _z_list_t _z_reply_data_list_t;
 typedef _z_list_t _z_pending_reply_list_t;
 typedef struct _z_reply_t _z_reply_t;
 
@@ -148,14 +147,6 @@ void _z_pending_query_clear(_z_pending_query_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy, _z_noop_move)
 _Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
-
-typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex;
-    _z_condvar_t _cond_var;
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-    _z_reply_data_list_t *_replies;
-} _z_pending_query_collect_t;
 
 struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_closure_hello_callback_t
 /**
