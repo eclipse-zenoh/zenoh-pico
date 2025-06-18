@@ -184,7 +184,7 @@ static inline void *_z_slist_node_value(const _z_slist_t *node) {
     return (void *)_z_ptr_u8_offset((uint8_t *)node, (ptrdiff_t)NODE_DATA_SIZE);
 }
 
-static _z_slist_t *_z_slist_new(void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
+static _z_slist_t *_z_slist_new(const void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
     size_t node_size = NODE_DATA_SIZE + value_size;
     _z_slist_t *node = (_z_slist_t *)z_malloc(node_size);
     if (node == NULL) {
@@ -200,7 +200,7 @@ static _z_slist_t *_z_slist_new(void *value, size_t value_size, z_element_copy_f
     return node;
 }
 
-_z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
+_z_slist_t *_z_slist_push(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {
     _z_slist_t *new_node = _z_slist_new(value, value_size, d_f, use_elem_f);
     if (new_node == NULL) {
         return node;
@@ -210,7 +210,7 @@ _z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_el
     return new_node;
 }
 
-_z_slist_t *_z_slist_push_back(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f,
+_z_slist_t *_z_slist_push_back(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f,
                                bool use_elem_f) {
     if (node == NULL) {
         return _z_slist_new(value, value_size, d_f, use_elem_f);

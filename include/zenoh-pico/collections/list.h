@@ -89,8 +89,10 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
 typedef void _z_slist_t;
 
 static inline bool _z_slist_is_empty(const _z_slist_t *node) { return node == NULL; }
-_z_slist_t *_z_slist_push(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f);
-_z_slist_t *_z_slist_push_back(_z_slist_t *node, void *value, size_t value_size, z_element_copy_f d_f, bool use_elem_f);
+_z_slist_t *_z_slist_push(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f,
+                          bool use_elem_f);
+_z_slist_t *_z_slist_push_back(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f,
+                               bool use_elem_f);
 void *_z_slist_value(const _z_slist_t *node);
 _z_slist_t *_z_slist_next(const _z_slist_t *node);
 size_t _z_slist_len(const _z_slist_t *node);
@@ -108,10 +110,10 @@ void _z_slist_free(_z_slist_t **node, z_element_clear_f f);
     static inline bool name##_slist_is_empty(const name##_slist_t *l) { return _z_slist_is_empty(l); }               \
     static inline type *name##_slist_next(const name##_slist_t *l) { return (type *)_z_slist_next(l); }              \
     static inline name##_slist_t *name##_slist_value(const name##_slist_t *l) { return _z_slist_value(l); }          \
-    static inline name##_slist_t *name##_slist_push(name##_slist_t *l, type *e) {                                    \
+    static inline name##_slist_t *name##_slist_push(name##_slist_t *l, const type *e) {                              \
         return _z_slist_push(l, e, sizeof(type), name##_elem_copy, use_elem_f);                                      \
     }                                                                                                                \
-    static inline name##_slist_t *name##_slist_push_back(name##_slist_t *l, type *e) {                               \
+    static inline name##_slist_t *name##_slist_push_back(name##_slist_t *l, const type *e) {                         \
         return _z_slist_push_back(l, e, sizeof(type), name##_elem_copy, use_elem_f);                                 \
     }                                                                                                                \
     static inline name##_slist_t *name##_slist_pop(name##_slist_t *l) { return _z_slist_pop(l, name##_elem_clear); } \
