@@ -399,18 +399,16 @@ void slist_test(void) {
     assert(strcmp(values[2], (char *)_z_slist_value(_z_slist_next(_z_slist_next(slist)))) == 0);
 
     // Pop test
-    slist = _z_slist_pop(slist, _z_noop_clear, NULL, 0);
+    slist = _z_slist_pop(slist, _z_noop_clear);
     assert(_z_slist_len(slist) == 2);
     assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
     assert(strcmp(values[2], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
-    slist = _z_slist_pop(slist, _z_noop_clear, NULL, 0);
+    slist = _z_slist_pop(slist, _z_noop_clear);
     assert(_z_slist_len(slist) == 1);
     assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
     assert(strlen(values[2]) == 5);
-    char pop_val[6] = "";
-    slist = _z_slist_pop(slist, _z_noop_clear, pop_val, strlen(values[2]) + 1);
+    slist = _z_slist_pop(slist, _z_noop_clear);
     assert(_z_slist_is_empty(slist));
-    assert(strcmp(values[2], pop_val) == 0);
 
     // Drop element test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
@@ -427,9 +425,9 @@ void slist_test(void) {
     assert(_z_slist_is_empty(slist));
 
     // Push empty test
-    slist = _z_slist_push_empty(slist, strlen(values[0] + 1));
+    slist = _z_slist_push_empty(slist, strlen(values[0]) + 1);
     assert(_z_slist_len(slist) == 1);
-    char *val = _z_slist_value(slist);
+    char *val = (char *)_z_slist_value(slist);
     strcpy(val, values[0]);
     assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
     _z_slist_free(&slist, _z_noop_clear);

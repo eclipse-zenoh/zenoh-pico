@@ -262,16 +262,12 @@ size_t _z_slist_len(const _z_slist_t *node) {
     return len;
 }
 
-_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f, void *val_storage, size_t val_size) {
+_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f) {
     if (node == NULL) {
         return node;
     }
     _z_slist_t *next_node = _z_slist_node_data(node)->next;
-    if (val_storage != NULL) {
-        memcpy(val_storage, _z_slist_node_value(node), val_size);
-    } else {
-        f_f(_z_slist_node_value(node));
-    }
+    f_f(_z_slist_node_value(node));
     z_free(node);
     return next_node;
 }
@@ -344,7 +340,7 @@ _z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_
 void _z_slist_free(_z_slist_t **node, z_element_clear_f f) {
     _z_slist_t *ptr = *node;
     while (ptr != NULL) {
-        ptr = _z_slist_pop(ptr, f, NULL, 0);
+        ptr = _z_slist_pop(ptr, f);
     }
     *node = NULL;
 }

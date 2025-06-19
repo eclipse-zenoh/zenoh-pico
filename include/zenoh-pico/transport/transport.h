@@ -41,12 +41,12 @@ enum _z_batching_state_e {
 };
 
 // Forward declaration to avoid cyclical include
-typedef _z_list_t _z_resource_list_t;
+typedef _z_slist_t _z_resource_slist_t;
 
 typedef struct {
     _z_id_t _remote_zid;
     volatile bool _received;
-    _z_resource_list_t *_remote_resources;
+    _z_resource_slist_t *_remote_resources;
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
     uint8_t _state_reliable;

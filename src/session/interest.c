@@ -35,11 +35,11 @@
 static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t interest_id, void *peer,
                                                  _z_keyexpr_t *restr_key) {
     _z_session_mutex_lock(zn);
-    _z_resource_list_t *res_list = _z_resource_list_clone(zn->_local_resources);
+    _z_resource_slist_t *res_list = _z_resource_slist_clone(zn->_local_resources);
     _z_session_mutex_unlock(zn);
-    _z_resource_list_t *xs = res_list;
+    _z_resource_slist_t *xs = res_list;
     while (xs != NULL) {
-        _z_resource_t *res = _z_resource_list_head(xs);
+        _z_resource_t *res = _z_resource_slist_value(xs);
         _z_keyexpr_t key = _z_keyexpr_alias(&res->_key);
         // Check if key is concerned
         if ((restr_key == NULL) || _z_keyexpr_suffix_intersects(restr_key, &key)) {
@@ -52,9 +52,9 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
             }
             _z_n_msg_clear(&n_msg);
         }
-        xs = _z_resource_list_tail(xs);
+        xs = _z_resource_slist_next(xs);
     }
-    _z_resource_list_free(&res_list);
+    _z_resource_slist_free(&res_list);
     return _Z_RES_OK;
 }
 

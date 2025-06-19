@@ -59,40 +59,40 @@ uint32_t _z_get_entity_id(_z_session_t *zn) { return zn->_entity_id++; }
 uint16_t _z_get_resource_id(_z_session_t *zn) { return zn->_resource_id++; }
 
 /*------------------ Resource ------------------*/
-_z_resource_t *__z_get_resource_by_id(_z_resource_list_t *rl, uintptr_t mapping, const _z_zint_t id) {
+_z_resource_t *__z_get_resource_by_id(_z_resource_slist_t *rl, uintptr_t mapping, const _z_zint_t id) {
     _z_resource_t *ret = NULL;
 
-    _z_resource_list_t *xs = rl;
+    _z_resource_slist_t *xs = rl;
     while (xs != NULL) {
-        _z_resource_t *r = _z_resource_list_head(xs);
+        _z_resource_t *r = _z_resource_slist_value(xs);
         if (r->_id == id && r->_key._mapping == mapping) {
             ret = r;
             break;
         }
 
-        xs = _z_resource_list_tail(xs);
+        xs = _z_resource_slist_next(xs);
     }
 
     return ret;
 }
 
-_z_resource_t *__z_get_resource_by_key(_z_resource_list_t *rl, const _z_keyexpr_t *keyexpr) {
+_z_resource_t *__z_get_resource_by_key(_z_resource_slist_t *rl, const _z_keyexpr_t *keyexpr) {
     _z_resource_t *ret = NULL;
-    _z_resource_list_t *xs = rl;
+    _z_resource_slist_t *xs = rl;
     while (xs != NULL) {
-        _z_resource_t *r = _z_resource_list_head(xs);
+        _z_resource_t *r = _z_resource_slist_value(xs);
         if (_z_keyexpr_equals(&r->_key, keyexpr)) {
             ret = r;
             break;
         }
 
-        xs = _z_resource_list_tail(xs);
+        xs = _z_resource_slist_next(xs);
     }
 
     return ret;
 }
 
-static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const _z_keyexpr_t *keyexpr,
+static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_slist_t *xs, const _z_keyexpr_t *keyexpr,
                                                   bool force_alias) {
     _z_zint_t id = keyexpr->_id;
 
@@ -160,7 +160,7 @@ static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_list_t *xs, const 
  *  - zn->_mutex_inner
  */
 static _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, _z_zint_t id, _z_transport_peer_common_t *peer) {
-    _z_resource_list_t *decls = zn->_local_resources;
+    _z_resource_slist_t *decls = zn->_local_resources;
     uintptr_t mapping = _Z_KEYEXPR_MAPPING_LOCAL;
     if (peer != NULL) {
         decls = peer->_remote_resources;
@@ -176,7 +176,7 @@ static _z_resource_t *__unsafe_z_get_resource_by_id(_z_session_t *zn, _z_zint_t 
  */
 _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr,
                                               _z_transport_peer_common_t *peer) {
-    _z_resource_list_t *decls = _z_keyexpr_is_local(keyexpr) ? zn->_local_resources : peer->_remote_resources;
+    _z_resource_slist_t *decls = _z_keyexpr_is_local(keyexpr) ? zn->_local_resources : peer->_remote_resources;
     return __z_get_resource_by_key(decls, keyexpr);
 }
 
@@ -187,7 +187,7 @@ _z_resource_t *__unsafe_z_get_resource_by_key(_z_session_t *zn, const _z_keyexpr
  */
 _z_keyexpr_t __unsafe_z_get_expanded_key_from_key(_z_session_t *zn, const _z_keyexpr_t *keyexpr, bool force_alias,
                                                   _z_transport_peer_common_t *peer) {
-    _z_resource_list_t *decls =
+    _z_resource_slist_t *decls =
         (_z_keyexpr_is_local(keyexpr) || (peer == NULL)) ? zn->_local_resources : peer->_remote_resources;
     return __z_get_expanded_key_from_key(decls, keyexpr, force_alias);
 }
@@ -243,21 +243,19 @@ uint16_t _z_register_resource(_z_session_t *zn, const _z_keyexpr_t *key, uint16_
     }
     ret = full_ke._id;
     if (_z_keyexpr_has_suffix(&full_ke)) {
-        _z_resource_t *res = (_z_resource_t *)z_malloc(sizeof(_z_resource_t));
-        if (res == NULL) {
-            ret = Z_RESOURCE_ID_NONE;
+        _z_resource_t *res = NULL;
+        // Register the resource
+        if ((peer != NULL) && (mapping != _Z_KEYEXPR_MAPPING_LOCAL)) {
+            peer->_remote_resources = _z_resource_slist_push_empty(peer->_remote_resources);
+            res = _z_resource_slist_value(peer->_remote_resources);
         } else {
-            res->_refcount = 1;
-            res->_key = _z_keyexpr_duplicate(&full_ke);
-            ret = (id == Z_RESOURCE_ID_NONE) ? _z_get_resource_id(zn) : id;
-            res->_id = ret;
-            // Register the resource
-            if ((peer != NULL) && (mapping != _Z_KEYEXPR_MAPPING_LOCAL)) {
-                peer->_remote_resources = _z_resource_list_push(peer->_remote_resources, res);
-            } else {
-                zn->_local_resources = _z_resource_list_push(zn->_local_resources, res);
-            }
+            zn->_local_resources = _z_resource_slist_push_empty(zn->_local_resources);
+            res = _z_resource_slist_value(zn->_local_resources);
         }
+        res->_refcount = 1;
+        _z_keyexpr_copy(&res->_key, &full_ke);
+        ret = (id == Z_RESOURCE_ID_NONE) ? _z_get_resource_id(zn) : id;
+        res->_id = ret;
     }
     _z_session_mutex_unlock(zn);
 
@@ -273,24 +271,24 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_com
     }
     _Z_DEBUG("unregistering: id %d, mapping: %d", id, (unsigned int)mapping);
     _z_session_mutex_lock(zn);
-    _z_resource_list_t **parent_mut = is_local ? &zn->_local_resources : &peer->_remote_resources;
+    _z_resource_slist_t **parent_mut = is_local ? &zn->_local_resources : &peer->_remote_resources;
     while (id != 0) {
-        _z_resource_list_t *parent = *parent_mut;
+        _z_resource_slist_t *parent = *parent_mut;
         while (parent != NULL) {
-            _z_resource_t *head = _z_resource_list_head(parent);
+            _z_resource_t *head = _z_resource_slist_value(parent);
             if ((head != NULL) && (head->_id == id) && (head->_key._mapping == mapping)) {
                 head->_refcount--;
                 if (head->_refcount == 0) {
-                    *parent_mut = _z_resource_list_pop(parent, &head);
+                    head = _z_resource_slist_value(parent);
                     id = head->_key._id;
                     mapping = head->_key._mapping;
-                    _z_resource_free(&head);
+                    *parent_mut = _z_resource_slist_pop(parent);
                 } else {
                     id = 0;
                 }
                 break;
             }
-            parent_mut = &parent->_tail;
+            *parent_mut = _z_resource_slist_next(parent);
             parent = *parent_mut;
         }
     }
@@ -299,6 +297,6 @@ void _z_unregister_resource(_z_session_t *zn, uint16_t id, _z_transport_peer_com
 
 void _z_flush_local_resources(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
-    _z_resource_list_free(&zn->_local_resources);
+    _z_resource_slist_free(&zn->_local_resources);
     _z_session_mutex_unlock(zn);
 }
