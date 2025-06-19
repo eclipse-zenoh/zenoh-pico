@@ -171,9 +171,6 @@ typedef struct {
     enum { _Z_TRANSPORT_UNICAST_TYPE, _Z_TRANSPORT_MULTICAST_TYPE, _Z_TRANSPORT_RAWETH_TYPE, _Z_TRANSPORT_NONE } _type;
 } _z_transport_t;
 
-_Z_ELEM_DEFINE(_z_transport, _z_transport_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_transport, _z_transport_t)
-
 typedef struct {
     _z_id_t _remote_zid;
     uint16_t _batch_size;

@@ -176,7 +176,7 @@ typedef struct _z_slist_node_data_t {
     _z_slist_t *next;
 } _z_slist_node_data_t;
 
-#define NODE_DATA_SIZE sizeof(_z_slist_t *)
+#define NODE_DATA_SIZE sizeof(_z_slist_node_data_t)
 
 static inline _z_slist_node_data_t *_z_slist_node_data(const _z_slist_t *list) { return (_z_slist_node_data_t *)list; }
 
@@ -255,8 +255,7 @@ _z_slist_t *_z_slist_find(const _z_slist_t *node, z_element_eq_f c_f, const void
     _z_slist_t *curr_node = (_z_slist_t *)node;
     _z_slist_node_data_t *node_data = _z_slist_node_data(curr_node);
     while (node_data != NULL) {
-        void *value = _z_slist_node_value(curr_node);
-        if (c_f(target_val, value)) {
+        if (c_f(target_val, _z_slist_node_value(curr_node))) {
             return curr_node;
         }
         curr_node = node_data->next;
@@ -288,16 +287,15 @@ _z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_elem
     _z_slist_t *current = head;
     while (current != NULL) {
         if (c_f(target_val, _z_slist_node_value(current))) {
-            _z_slist_t *this_ = current;
-            if (this_ == head) {  // head removal
+            if (current == head) {  // head removal
                 head = _z_slist_node_data(head)->next;
-            } else if (_z_slist_node_data(this_)->next == NULL) {  // tail removal
+            } else if (_z_slist_node_data(current)->next == NULL) {  // tail removal
                 _z_slist_node_data(previous)->next = NULL;
             } else {  // middle removal
-                _z_slist_node_data(previous)->next = _z_slist_node_data(this_)->next;
+                _z_slist_node_data(previous)->next = _z_slist_node_data(current)->next;
             }
-            f_f(_z_slist_node_data(this_));
-            z_free(this_);
+            f_f(_z_slist_node_value(current));
+            z_free(current);
             break;
         } else {
             previous = current;
