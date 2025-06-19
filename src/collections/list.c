@@ -200,6 +200,27 @@ static _z_slist_t *_z_slist_new(const void *value, size_t value_size, z_element_
     return node;
 }
 
+static _z_slist_t *_z_slist_new_empty(size_t value_size) {
+    size_t node_size = NODE_DATA_SIZE + value_size;
+    _z_slist_t *node = (_z_slist_t *)z_malloc(node_size);
+    if (node == NULL) {
+        _Z_ERROR("Failed to allocate list element.");
+        return node;
+    }
+    memset(node, 0, NODE_DATA_SIZE);
+    return node;
+}
+
+_z_slist_t *_z_slist_push_empty(_z_slist_t *node, size_t value_size) {
+    _z_slist_t *new_node = _z_slist_new_empty(value_size);
+    if (new_node == NULL) {
+        return node;
+    }
+    _z_slist_node_data_t *node_data = _z_slist_node_data(new_node);
+    node_data->next = node;
+    return new_node;
+}
+
 _z_slist_t *_z_slist_push(_z_slist_t *node, const void *value, size_t value_size, z_element_copy_f d_f,
                           bool use_elem_f) {
     _z_slist_t *new_node = _z_slist_new(value, value_size, d_f, use_elem_f);
@@ -241,12 +262,16 @@ size_t _z_slist_len(const _z_slist_t *node) {
     return len;
 }
 
-_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f) {
+_z_slist_t *_z_slist_pop(_z_slist_t *node, z_element_clear_f f_f, void *val_storage, size_t val_size) {
     if (node == NULL) {
         return node;
     }
     _z_slist_t *next_node = _z_slist_node_data(node)->next;
-    f_f(_z_slist_node_value(node));
+    if (val_storage != NULL) {
+        memcpy(val_storage, _z_slist_node_value(node), val_size);
+    } else {
+        f_f(_z_slist_node_value(node));
+    }
     z_free(node);
     return next_node;
 }
@@ -319,7 +344,7 @@ _z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_
 void _z_slist_free(_z_slist_t **node, z_element_clear_f f) {
     _z_slist_t *ptr = *node;
     while (ptr != NULL) {
-        ptr = _z_slist_pop(ptr, f);
+        ptr = _z_slist_pop(ptr, f, NULL, 0);
     }
     *node = NULL;
 }
