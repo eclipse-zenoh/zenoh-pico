@@ -1675,14 +1675,14 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
         return NULL;
     }
     const z_loaned_keyexpr_t *ret = NULL;
-    _z_session_queryable_rc_list_t *tail = _Z_RC_IN_VAL(&s)->_local_queryable;
-    while (tail != NULL) {
-        _z_session_queryable_rc_t *head = _z_session_queryable_rc_list_head(tail);
-        if (_Z_RC_IN_VAL(head)->_id == lookup) {
-            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(head)->_key;
+    _z_session_queryable_rc_slist_t *node = _Z_RC_IN_VAL(&s)->_local_queryable;
+    while (node != NULL) {
+        _z_session_queryable_rc_t *val = _z_session_queryable_rc_slist_value(node);
+        if (_Z_RC_IN_VAL(val)->_id == lookup) {
+            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(val)->_key;
             break;
         }
-        tail = _z_session_queryable_rc_list_tail(tail);
+        node = _z_session_queryable_rc_slist_next(node);
     }
     _z_session_rc_drop(&s);
     return ret;

@@ -116,7 +116,7 @@ _Z_ELEM_DEFINE(_z_session_queryable, _z_session_queryable_t, _z_noop_size, _z_se
                _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, _z_session_queryable_rc_size,
                _z_session_queryable_rc_drop, _z_session_queryable_rc_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
+_Z_SLIST_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t, true)
 
 // Forward declaration to avoid cyclical includes
 typedef struct _z_reply_t _z_reply_t;
