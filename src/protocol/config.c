@@ -60,11 +60,11 @@ char *_z_config_get(const _z_config_t *ps, uint8_t key) { return _z_str_intmap_g
 z_result_t _z_config_get_all(const _z_config_t *ps, _z_string_svec_t *locators, uint8_t key) {
     _z_list_t *cfg_list = _z_str_intmap_get_all(ps, key);
     while (cfg_list != NULL) {
-        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_head(cfg_list);
+        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)_z_list_value(cfg_list);
         char *val = (char *)entry->_val;
         _z_string_t s = _z_string_copy_from_str(val);
         _Z_RETURN_IF_ERR(_z_string_svec_append(locators, &s, true));
-        cfg_list = _z_list_tail(cfg_list);
+        cfg_list = _z_list_next(cfg_list);
     }
     return _Z_RES_OK;
 }

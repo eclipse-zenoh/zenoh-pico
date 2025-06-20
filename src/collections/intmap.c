@@ -141,7 +141,7 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
 
         _z_list_t *xs = _z_list_find(map->_vals[idx], _z_int_void_map_entry_key_eq, &e);
         if (xs != NULL) {
-            _z_int_void_map_entry_t *h = (_z_int_void_map_entry_t *)_z_list_head(xs);
+            _z_int_void_map_entry_t *h = (_z_int_void_map_entry_t *)_z_list_value(xs);
             ret = h->_val;
         }
     }
@@ -179,7 +179,7 @@ bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter) {
         if (iter->_list_ptr == NULL) {
             iter->_list_ptr = iter->_map->_vals[iter->_idx];
         } else {
-            iter->_list_ptr = _z_list_tail(iter->_list_ptr);
+            iter->_list_ptr = _z_list_next(iter->_list_ptr);
         }
         if (iter->_list_ptr == NULL) {
             iter->_idx++;

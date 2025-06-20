@@ -66,7 +66,7 @@ void str_vec_list_intmap_test(void) {
         snprintf(s, 64, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
 
-        char *e = _z_str_list_head(list);
+        char *e = _z_str_list_value(list);
         printf("push(%zu) = %s\r\n", i, e);
         assert(_z_str_eq(s, e) == true);
 
@@ -84,7 +84,7 @@ void str_vec_list_intmap_test(void) {
     for (size_t i = 0; i < len; i++) {
         snprintf(s, 64, "%zu", i);
         list = _z_str_list_push(list, _z_str_clone(s));
-        assert(_z_str_eq(s, _z_str_list_head(list)) == true);
+        assert(_z_str_eq(s, _z_str_list_value(list)) == true);
     }
     assert(_z_str_list_len(list) == len);
     _z_str_list_free(&list);

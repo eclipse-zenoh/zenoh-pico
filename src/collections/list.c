@@ -29,7 +29,7 @@ static _z_list_t *_z_list_new(void *x) {
         return NULL;
     }
     xs->_val = x;
-    xs->_tail = NULL;
+    xs->_next = NULL;
     return xs;
 }
 
@@ -38,7 +38,7 @@ _z_list_t *_z_list_push(_z_list_t *xs, void *x) {
     if (lst == NULL) {
         return xs;
     }
-    lst->_tail = xs;
+    lst->_next = xs;
     return lst;
 }
 
@@ -47,10 +47,10 @@ _z_list_t *_z_list_push_back(_z_list_t *xs, void *x) {
         return _z_list_new(x);
     }
     _z_list_t *l = xs;
-    while (l->_tail != NULL) {
-        l = l->_tail;
+    while (l->_next != NULL) {
+        l = l->_next;
     }
-    l->_tail = _z_list_new(x);
+    l->_next = _z_list_new(x);
     return xs;
 }
 
@@ -59,7 +59,7 @@ size_t _z_list_len(const _z_list_t *xs) {
     _z_list_t *l = (_z_list_t *)xs;
     while (l != NULL) {
         len = len + (size_t)1;
-        l = _z_list_tail(l);
+        l = _z_list_next(l);
     }
     return len;
 }
@@ -69,7 +69,7 @@ _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x) {
         return xs;
     }
     _z_list_t *head = xs;
-    _z_list_t *l = head->_tail;
+    _z_list_t *l = head->_next;
     if (x != NULL) {
         *x = head->_val;
     } else {
@@ -83,12 +83,12 @@ _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f c_f, const void *e) 
     _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *ret = NULL;
     while (l != NULL) {
-        void *head = _z_list_head(l);
+        void *head = _z_list_value(l);
         if (c_f(e, head)) {
             ret = l;
             break;
         }
-        l = _z_list_tail(l);
+        l = _z_list_next(l);
     }
     return ret;
 }
@@ -97,11 +97,11 @@ _z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free
     _z_list_t *dropped = NULL;
     if (prev == NULL) {  // Head removal
         dropped = list;
-        list = list->_tail;
+        list = list->_next;
     } else {  // Other cases
-        dropped = prev->_tail;
+        dropped = prev->_next;
         if (dropped != NULL) {
-            prev->_tail = dropped->_tail;
+            prev->_next = dropped->_next;
         }
     }
     if (dropped != NULL) {
@@ -122,15 +122,15 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
             // head removal
             if (this_ == l) {
-                l = l->_tail;
+                l = l->_next;
             }
             // tail removal
-            else if (this_->_tail == NULL) {
-                previous->_tail = NULL;
+            else if (this_->_next == NULL) {
+                previous->_next = NULL;
             }
             // middle removal
             else {
-                previous->_tail = this_->_tail;
+                previous->_next = this_->_next;
             }
 
             f_f(&this_->_val);
@@ -138,7 +138,7 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
             break;
         } else {
             previous = current;
-            current = current->_tail;
+            current = current->_next;
         }
     }
 
@@ -150,9 +150,9 @@ _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
 
     _z_list_t *head = (_z_list_t *)xs;
     while (head != NULL) {
-        void *x = d_f(_z_list_head(head));
+        void *x = d_f(_z_list_value(head));
         new = _z_list_push(new, x);
-        head = _z_list_tail(head);
+        head = _z_list_next(head);
     }
 
     return new;

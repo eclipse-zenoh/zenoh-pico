@@ -142,10 +142,10 @@ static _z_keyexpr_t __z_get_expanded_key_from_key(_z_resource_slist_t *xs, const
             // Concatenate all the partial resource names
             _z_string_list_t *xstr = strs;
             while (xstr != NULL) {
-                _z_string_t *s = _z_string_list_head(xstr);
+                _z_string_t *s = _z_string_list_value(xstr);
                 memcpy(curr_ptr, _z_string_data(s), _z_string_len(s));
                 curr_ptr = _z_ptr_char_offset(curr_ptr, (ptrdiff_t)_z_string_len(s));
-                xstr = _z_string_list_tail(xstr);
+                xstr = _z_string_list_next(xstr);
             }
         }
     }

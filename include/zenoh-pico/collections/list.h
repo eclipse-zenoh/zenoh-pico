@@ -34,13 +34,13 @@ extern "C" {
  */
 typedef struct _z_l_t {
     void *_val;
-    struct _z_l_t *_tail;
+    struct _z_l_t *_next;
 } _z_list_t;
 
 size_t _z_list_len(const _z_list_t *xs);
 static inline bool _z_list_is_empty(const _z_list_t *xs) { return xs == NULL; }
-static inline void *_z_list_head(const _z_list_t *xs) { return xs->_val; }
-static inline _z_list_t *_z_list_tail(const _z_list_t *xs) { return xs->_tail; }
+static inline void *_z_list_value(const _z_list_t *xs) { return xs->_val; }
+static inline _z_list_t *_z_list_next(const _z_list_t *xs) { return xs->_next; }
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
 _z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
@@ -58,8 +58,8 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline name##_list_t *name##_list_new(void) { return NULL; }                                               \
     static inline size_t name##_list_len(const name##_list_t *l) { return _z_list_len(l); }                           \
     static inline bool name##_list_is_empty(const name##_list_t *l) { return _z_list_is_empty(l); }                   \
-    static inline type *name##_list_head(const name##_list_t *l) { return (type *)_z_list_head(l); }                  \
-    static inline name##_list_t *name##_list_tail(const name##_list_t *l) { return _z_list_tail(l); }                 \
+    static inline type *name##_list_value(const name##_list_t *l) { return (type *)_z_list_value(l); }                \
+    static inline name##_list_t *name##_list_next(const name##_list_t *l) { return _z_list_next(l); }                 \
     static inline name##_list_t *name##_list_push(name##_list_t *l, type *e) { return _z_list_push(l, e); }           \
     static inline name##_list_t *name##_list_push_back(name##_list_t *l, type *e) { return _z_list_push_back(l, e); } \
     static inline name##_list_t *name##_list_pop(name##_list_t *l, type **x) {                                        \
