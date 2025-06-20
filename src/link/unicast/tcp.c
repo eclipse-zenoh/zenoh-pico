@@ -174,7 +174,7 @@ uint16_t _z_get_link_mtu_tcp(void) {
 }
 
 z_result_t _z_new_peer_tcp(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket) {
-    _z_sys_net_endpoint_t sys_endpoint = {0};
+    _z_sys_net_endpoint_t sys_endpoint = {};
     char *s_address = __z_parse_address_segment_tcp(&endpoint->_locator._address);
     char *s_port = __z_parse_port_segment_tcp(&endpoint->_locator._address);
     z_result_t ret = _z_create_endpoint_tcp(&sys_endpoint, s_address, s_port);
