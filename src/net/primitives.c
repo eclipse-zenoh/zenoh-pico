@@ -71,19 +71,17 @@ z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg
 /*------------------ Scouting ------------------*/
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
-    _z_hello_list_t *hellos = _z_scout_inner(what, zid, locator, timeout, false);
+    _z_hello_slist_t *hellos = _z_scout_inner(what, zid, locator, timeout, false);
 
     while (hellos != NULL) {
-        _z_hello_t *hello = NULL;
-        hellos = _z_hello_list_pop(hellos, &hello);
+        _z_hello_t *hello = _z_hello_slist_value(hellos);
         (*callback)(hello, arg_call);
-        _z_hello_free(&hello);
+        hellos = _z_hello_slist_pop(hellos);
     }
-
     if (dropper != NULL) {
         (*dropper)(arg_drop);
     }
-    _z_hello_list_free(&hellos);
+    _z_hello_slist_free(&hellos);
 }
 
 /*------------------ Resource Declaration ------------------*/

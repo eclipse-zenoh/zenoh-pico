@@ -63,12 +63,12 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
     uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
     // Scout and return upon the first result
-    _z_hello_list_t *hellos = _z_scout_inner(what, *zid, &mcast_locator, timeout, true);
+    _z_hello_slist_t *hellos = _z_scout_inner(what, *zid, &mcast_locator, timeout, true);
     if (hellos != NULL) {
-        _z_hello_t *hello = _z_hello_list_head(hellos);
+        _z_hello_t *hello = _z_hello_slist_value(hellos);
         _z_string_svec_copy(locators, &hello->_locators, true);
     }
-    _z_hello_list_free(&hellos);
+    _z_hello_slist_free(&hellos);
     return ret;
 }
 
