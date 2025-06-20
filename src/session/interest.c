@@ -62,11 +62,11 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
 static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t interest_id, void *peer,
                                                    _z_keyexpr_t *restr_key) {
     _z_session_mutex_lock(zn);
-    _z_subscription_rc_list_t *sub_list = _z_subscription_rc_list_clone(zn->_subscriptions);
+    _z_subscription_rc_slist_t *sub_list = _z_subscription_rc_slist_clone(zn->_subscriptions);
     _z_session_mutex_unlock(zn);
-    _z_subscription_rc_list_t *xs = sub_list;
+    _z_subscription_rc_slist_t *xs = sub_list;
     while (xs != NULL) {
-        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
         // Check if key is concerned
         if ((restr_key == NULL) || _z_keyexpr_suffix_intersects(restr_key, &_Z_RC_IN_VAL(sub)->_key)) {
             // Build the declare message to send on the wire
@@ -79,9 +79,9 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
             }
             _z_n_msg_clear(&n_msg);
         }
-        xs = _z_subscription_rc_list_tail(xs);
+        xs = _z_subscription_rc_slist_next(xs);
     }
-    _z_subscription_rc_list_free(&sub_list);
+    _z_subscription_rc_slist_free(&sub_list);
     return _Z_RES_OK;
 }
 #else
@@ -117,7 +117,7 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
             }
             _z_n_msg_clear(&n_msg);
         }
-        xs = _z_subscription_rc_list_tail(xs);
+        xs = _z_session_queryable_rc_list_tail(xs);
     }
     _z_session_queryable_rc_list_free(&qle_list);
     return _Z_RES_OK;

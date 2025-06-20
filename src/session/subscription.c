@@ -67,18 +67,17 @@ void _z_subscription_clear(_z_subscription_t *sub) {
     _z_keyexpr_clear(&sub->_declared_key);
 }
 
-_z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs, const _z_zint_t id) {
+_z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_slist_t *subs, const _z_zint_t id) {
     _z_subscription_rc_t *ret = NULL;
 
-    _z_subscription_rc_list_t *xs = subs;
+    _z_subscription_rc_slist_t *xs = subs;
     while (xs != NULL) {
-        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
         if (id == _Z_RC_IN_VAL(sub)->_id) {
             ret = sub;
             break;
         }
-
-        xs = _z_subscription_rc_list_tail(xs);
+        xs = _z_subscription_rc_slist_next(xs);
     }
 
     return ret;
@@ -91,7 +90,7 @@ _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_list_t *subs
  */
 _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_kind_t kind,
                                                         const _z_zint_t id) {
-    _z_subscription_rc_list_t *subs =
+    _z_subscription_rc_slist_t *subs =
         (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
     return __z_get_subscription_by_id(subs, id);
 }
@@ -104,20 +103,20 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_sub
 static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
                                                       const _z_keyexpr_t *key,
                                                       _z_subscription_infos_svec_t *sub_infos) {
-    _z_subscription_rc_list_t *subs =
+    _z_subscription_rc_slist_t *subs =
         (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
 
     *sub_infos = _z_subscription_infos_svec_make(_Z_SUBINFOS_VEC_SIZE);
-    _z_subscription_rc_list_t *xs = subs;
+    _z_subscription_rc_slist_t *xs = subs;
     while (xs != NULL) {
         // Parse subscription list
-        _z_subscription_rc_t *sub = _z_subscription_rc_list_head(xs);
+        _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
         if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
             _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
                                                     .callback = _Z_RC_IN_VAL(sub)->_callback};
             _Z_RETURN_IF_ERR(_z_subscription_infos_svec_append(sub_infos, &new_sub_info, false));
         }
-        xs = _z_subscription_rc_list_tail(xs);
+        xs = _z_subscription_rc_slist_next(xs);
     }
     return _Z_RES_OK;
 }
@@ -135,20 +134,17 @@ _z_subscription_rc_t *_z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_
 _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *s) {
     _Z_DEBUG(">>> Allocating sub decl for (%ju:%.*s)", (uintmax_t)s->_key._id, (int)_z_string_len(&s->_key._suffix),
              _z_string_data(&s->_key._suffix));
+
     _z_subscription_rc_t *ret = NULL;
-
     _z_session_mutex_lock(zn);
-
-    ret = (_z_subscription_rc_t *)z_malloc(sizeof(_z_subscription_rc_t));
-    if (ret != NULL) {
-        *ret = _z_subscription_rc_new_from_val(s);
-        if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
-            zn->_subscriptions = _z_subscription_rc_list_push(zn->_subscriptions, ret);
-        } else {
-            zn->_liveliness_subscriptions = _z_subscription_rc_list_push(zn->_liveliness_subscriptions, ret);
-        }
+    if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
+        zn->_subscriptions = _z_subscription_rc_slist_push_empty(zn->_subscriptions);
+        ret = _z_subscription_rc_slist_value(zn->_subscriptions);
+    } else {
+        zn->_liveliness_subscriptions = _z_subscription_rc_slist_push_empty(zn->_liveliness_subscriptions);
+        ret = _z_subscription_rc_slist_value(zn->_liveliness_subscriptions);
     }
-
+    *ret = _z_subscription_rc_new_from_val(s);
     _z_session_mutex_unlock(zn);
 
     return ret;
@@ -275,10 +271,10 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
     _z_session_mutex_lock(zn);
 
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
-        zn->_subscriptions = _z_subscription_rc_list_drop_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
+        zn->_subscriptions = _z_subscription_rc_slist_drop_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
     } else {
         zn->_liveliness_subscriptions =
-            _z_subscription_rc_list_drop_filter(zn->_liveliness_subscriptions, _z_subscription_rc_eq, sub);
+            _z_subscription_rc_slist_drop_filter(zn->_liveliness_subscriptions, _z_subscription_rc_eq, sub);
     }
 
     _z_session_mutex_unlock(zn);
@@ -287,8 +283,8 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
 void _z_flush_subscriptions(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
 
-    _z_subscription_rc_list_free(&zn->_subscriptions);
-    _z_subscription_rc_list_free(&zn->_liveliness_subscriptions);
+    _z_subscription_rc_slist_free(&zn->_subscriptions);
+    _z_subscription_rc_slist_free(&zn->_liveliness_subscriptions);
 
     _z_session_mutex_unlock(zn);
 }
