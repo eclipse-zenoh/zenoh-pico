@@ -63,12 +63,12 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
     uint32_t timeout = (uint32_t)strtoul(opt_as_str, NULL, 10);
 
     // Scout and return upon the first result
-    _z_hello_list_t *hellos = _z_scout_inner(what, *zid, &mcast_locator, timeout, true);
+    _z_hello_slist_t *hellos = _z_scout_inner(what, *zid, &mcast_locator, timeout, true);
     if (hellos != NULL) {
-        _z_hello_t *hello = _z_hello_list_head(hellos);
+        _z_hello_t *hello = _z_hello_slist_value(hellos);
         _z_string_svec_copy(locators, &hello->_locators, true);
     }
-    _z_hello_list_free(&hellos);
+    _z_hello_slist_free(&hellos);
     return ret;
 }
 
@@ -225,17 +225,17 @@ z_result_t _z_reopen(_z_session_rc_t *zn) {
         }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
-        if (ret == _Z_RES_OK && !_z_network_message_list_is_empty(zs->_decalaration_cache)) {
-            _z_network_message_list_t *iter = zs->_decalaration_cache;
+        if (ret == _Z_RES_OK && !_z_network_message_slist_is_empty(zs->_declaration_cache)) {
+            _z_network_message_slist_t *iter = zs->_declaration_cache;
             while (iter != NULL) {
-                _z_network_message_t *n_msg = _z_network_message_list_head(iter);
+                _z_network_message_t *n_msg = _z_network_message_slist_value(iter);
                 ret = _z_send_n_msg(zs, n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
                 if (ret != _Z_RES_OK) {
                     _Z_DEBUG("Send message during reopen failed: %i", ret);
                     continue;
                 }
 
-                iter = _z_network_message_list_tail(iter);
+                iter = _z_network_message_slist_next(iter);
             }
         }
     } while (ret != _Z_RES_OK);
@@ -247,7 +247,7 @@ void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
     if (_z_config_is_empty(&zs->_config)) {
         return;
     }
-    zs->_decalaration_cache = _z_network_message_list_push_back(zs->_decalaration_cache, _z_n_msg_clone(n_msg));
+    zs->_declaration_cache = _z_network_message_slist_push_back(zs->_declaration_cache, n_msg);
 }
 
 #define _Z_CACHE_DECLARATION_UNDECLARE_FILTER(tp)                                                                     \
@@ -266,31 +266,31 @@ void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
         return;
     }
 #ifdef Z_BUILD_DEBUG
-    size_t cnt_before = _z_network_message_list_len(zs->_decalaration_cache);
+    size_t cnt_before = _z_network_message_slist_len(zs->_declaration_cache);
 #endif
     const _z_declaration_t *decl = &n_msg->_body._declare._decl;
     switch (decl->_tag) {
         case _Z_UNDECL_KEXPR:
-            zs->_decalaration_cache = _z_network_message_list_drop_filter(
-                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_kexpr, n_msg);
+            zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                zs->_declaration_cache, _z_cache_declaration_undeclare_filter_kexpr, n_msg);
             break;
         case _Z_UNDECL_SUBSCRIBER:
-            zs->_decalaration_cache = _z_network_message_list_drop_filter(
-                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_subscriber, n_msg);
+            zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                zs->_declaration_cache, _z_cache_declaration_undeclare_filter_subscriber, n_msg);
             break;
         case _Z_UNDECL_QUERYABLE:
-            zs->_decalaration_cache = _z_network_message_list_drop_filter(
-                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_queryable, n_msg);
+            zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                zs->_declaration_cache, _z_cache_declaration_undeclare_filter_queryable, n_msg);
             break;
         case _Z_UNDECL_TOKEN:
-            zs->_decalaration_cache = _z_network_message_list_drop_filter(
-                zs->_decalaration_cache, _z_cache_declaration_undeclare_filter_token, n_msg);
+            zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                zs->_declaration_cache, _z_cache_declaration_undeclare_filter_token, n_msg);
             break;
         default:
             _Z_ERROR("Invalid decl for _z_prune_declaration: %i", decl->_tag);
     };
 #ifdef Z_BUILD_DEBUG
-    size_t cnt_after = _z_network_message_list_len(zs->_decalaration_cache);
+    size_t cnt_after = _z_network_message_slist_len(zs->_declaration_cache);
     assert(cnt_before == cnt_after + 1);
 #endif
 }

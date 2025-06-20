@@ -174,7 +174,9 @@ static int parse_args(int argc, char **argv, z_owned_config_t *config, unsigned 
 
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_PUBLICATION but this example requires it.\n");
+    printf(
+        "ERROR: Zenoh pico was compiled without Z_FEATURE_QUERY, Z_FEATURE_MULTI_THREAD or Z_FEATURE_UNSTABLE_API but "
+        "this example requires it.\n");
     return -2;
 }
 #endif

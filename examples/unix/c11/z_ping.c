@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         data[i] = (uint8_t)(i % 10);
     }
     // Wait for declare to be processed
-    z_sleep_ms(1);
+    z_sleep_ms(50);
 
     // Create payload
     unsigned long prev_val = sync_tx_rx;

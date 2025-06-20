@@ -23,7 +23,7 @@ void _z_transport_peer_common_clear(_z_transport_peer_common_t *src) {
     _z_wbuf_clear(&src->_dbuf_best_effort);
 #endif
     src->_remote_zid = _z_id_empty();
-    _z_resource_list_free(&src->_remote_resources);
+    _z_resource_slist_free(&src->_remote_resources);
 }
 void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_transport_peer_common_t *src) {
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -89,12 +89,14 @@ bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const
 
 z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transport_unicast_establish_param_t *param,
                                          _z_sys_net_socket_t socket, _z_transport_peer_unicast_t **output_peer) {
+    _z_transport_peer_mutex_lock(&ztu->_common);
     // Create peer
-    _z_transport_peer_unicast_t *peer = (_z_transport_peer_unicast_t *)z_malloc(sizeof(_z_transport_peer_unicast_t));
-    if (peer == NULL) {
+    ztu->_peers = _z_transport_peer_unicast_slist_push_empty(ztu->_peers);
+    if (ztu->_peers == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill peer data
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     peer->flow_state = _Z_FLOW_STATE_INACTIVE;
     peer->flow_curr_size = 0;
     peer->flow_buff = _z_zbuf_null();
@@ -114,13 +116,8 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
     peer->common._dbuf_reliable = _z_wbuf_null();
     peer->common._dbuf_best_effort = _z_wbuf_null();
 #endif
-    // Insert peer
-    _z_transport_peer_mutex_lock(&ztu->_common);
-    ztu->_peers = _z_transport_peer_unicast_list_push(ztu->_peers, peer);
     _z_transport_peer_mutex_unlock(&ztu->_common);
-    if (ztu->_peers == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+
     if (output_peer != NULL) {
         *output_peer = peer;
     }

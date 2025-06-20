@@ -55,20 +55,20 @@ typedef struct _z_session_t {
     _z_zint_t _interest_id;
 
     // Session declarations
-    _z_resource_list_t *_local_resources;
+    _z_resource_slist_t *_local_resources;
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
     // Information for session restoring
     _z_config_t _config;
-    _z_network_message_list_t *_decalaration_cache;
+    _z_network_message_slist_t *_declaration_cache;
     z_task_attr_t *_lease_task_attr;
     z_task_attr_t *_read_task_attr;
 #endif
 
     // Session subscriptions
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_subscription_rc_list_t *_subscriptions;
-    _z_subscription_rc_list_t *_liveliness_subscriptions;
+    _z_subscription_rc_slist_t *_subscriptions;
+    _z_subscription_rc_slist_t *_liveliness_subscriptions;
 #if Z_FEATURE_RX_CACHE == 1
     _z_subscription_lru_cache_t _subscription_cache;
 #endif
@@ -85,13 +85,13 @@ typedef struct _z_session_t {
 
     // Session queryables
 #if Z_FEATURE_QUERYABLE == 1
-    _z_session_queryable_rc_list_t *_local_queryable;
+    _z_session_queryable_rc_slist_t *_local_queryable;
 #if Z_FEATURE_RX_CACHE == 1
     _z_queryable_lru_cache_t _queryable_cache;
 #endif
 #endif
 #if Z_FEATURE_QUERY == 1
-    _z_pending_query_list_t *_pending_queries;
+    _z_pending_query_slist_t *_pending_queries;
 #endif
 
 #if Z_FEATURE_MATCHING == 1
@@ -100,8 +100,8 @@ typedef struct _z_session_t {
 
     // Session interests
 #if Z_FEATURE_INTEREST == 1
-    _z_session_interest_rc_list_t *_local_interests;
-    _z_declare_data_list_t *_remote_declares;
+    _z_session_interest_rc_slist_t *_local_interests;
+    _z_declare_data_slist_t *_remote_declares;
 #endif
 } _z_session_t;
 

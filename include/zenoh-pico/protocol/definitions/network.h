@@ -303,9 +303,12 @@ void _z_n_msg_clear(_z_network_message_t *m);
 void _z_n_msg_free(_z_network_message_t **m);
 inline static void _z_msg_clear(_z_zenoh_message_t *msg) { _z_n_msg_clear(msg); }
 inline static void _z_msg_free(_z_zenoh_message_t **msg) { _z_n_msg_free(msg); }
-_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_noop_copy, _z_noop_move)
+z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
+_z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);
+
+_Z_ELEM_DEFINE(_z_network_message, _z_network_message_t, _z_noop_size, _z_n_msg_clear, _z_n_msg_copy, _z_noop_move)
 _Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
-_Z_LIST_DEFINE(_z_network_message, _z_network_message_t)
+_Z_SLIST_DEFINE(_z_network_message, _z_network_message_t, true)
 
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, bool has_interest_id,
@@ -333,9 +336,6 @@ void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_z
                              _z_n_qos_t qos, const _z_bytes_t *payload, const _z_encoding_t *encoding,
                              const _z_source_info_t *source_info);
 void _z_n_msg_make_interest(_z_network_message_t *msg, _z_interest_t interest);
-
-z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *src);
-_z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src);
 
 #ifdef __cplusplus
 }

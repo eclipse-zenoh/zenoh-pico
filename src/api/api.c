@@ -1675,14 +1675,14 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
         return NULL;
     }
     const z_loaned_keyexpr_t *ret = NULL;
-    _z_session_queryable_rc_list_t *tail = _Z_RC_IN_VAL(&s)->_local_queryable;
-    while (tail != NULL) {
-        _z_session_queryable_rc_t *head = _z_session_queryable_rc_list_head(tail);
-        if (_Z_RC_IN_VAL(head)->_id == lookup) {
-            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(head)->_key;
+    _z_session_queryable_rc_slist_t *node = _Z_RC_IN_VAL(&s)->_local_queryable;
+    while (node != NULL) {
+        _z_session_queryable_rc_t *val = _z_session_queryable_rc_slist_value(node);
+        if (_Z_RC_IN_VAL(val)->_id == lookup) {
+            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(val)->_key;
             break;
         }
-        tail = _z_session_queryable_rc_list_tail(tail);
+        node = _z_session_queryable_rc_slist_next(node);
     }
     _z_session_rc_drop(&s);
     return ret;
@@ -1949,13 +1949,13 @@ z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
     // Retrieve keyexpr from session
     uint32_t lookup = sub->_entity_id;
-    _z_subscription_rc_list_t *tail = _Z_RC_IN_VAL(&sub->_zn)->_subscriptions;
-    while (tail != NULL) {
-        _z_subscription_rc_t *head = _z_subscription_rc_list_head(tail);
-        if (_Z_RC_IN_VAL(head)->_id == lookup) {
-            return (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(head)->_key;
+    _z_subscription_rc_slist_t *node = _Z_RC_IN_VAL(&sub->_zn)->_subscriptions;
+    while (node != NULL) {
+        _z_subscription_rc_t *val = _z_subscription_rc_slist_value(node);
+        if (_Z_RC_IN_VAL(val)->_id == lookup) {
+            return (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(val)->_key;
         }
-        tail = _z_subscription_rc_list_tail(tail);
+        node = _z_subscription_rc_slist_next(node);
     }
     return NULL;
 }

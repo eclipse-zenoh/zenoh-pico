@@ -30,15 +30,9 @@ typedef struct {
 } _z_filter_target_t;
 
 typedef z_element_eq_f _z_filter_target_eq_f;
-static inline void *_z_filter_target_elem_clone(const void *src) {
-    uint32_t *dst = (uint32_t *)z_malloc(sizeof(uint32_t));
-    if (dst != NULL) {
-        *dst = *(uint32_t *)src;
-    }
-    return dst;
-}
-void _z_filter_target_elem_free(void **elem);
-_Z_LIST_DEFINE(_z_filter_target, _z_filter_target_t)
+#define _z_filter_target_elem_copy _z_noop_copy
+#define _z_filter_target_elem_clear _z_noop_clear
+_Z_SLIST_DEFINE(_z_filter_target, _z_filter_target_t, false)
 
 typedef enum {
     WRITE_FILTER_ACTIVE = 0,
@@ -49,7 +43,7 @@ typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t mutex;
 #endif
-    _z_filter_target_list_t *targets;
+    _z_filter_target_slist_t *targets;
     uint8_t state;
 } _z_writer_filter_ctx_t;
 

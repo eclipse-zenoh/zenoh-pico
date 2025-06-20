@@ -72,7 +72,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
-        curr_peer = _z_transport_peer_unicast_list_head(ztu->_peers);
+        curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
         assert(curr_peer != NULL);
     }
     while (ztu->_common._lease_task_running) {
@@ -111,13 +111,13 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 #if Z_FEATURE_UNICAST_PEER == 1
         else {  // Peer lease
             if (next_lease <= 0) {
-                _z_transport_peer_unicast_list_t *prev = NULL;
-                _z_transport_peer_unicast_list_t *prev_drop = NULL;
+                _z_transport_peer_unicast_slist_t *prev = NULL;
+                _z_transport_peer_unicast_slist_t *prev_drop = NULL;
                 _z_transport_peer_mutex_lock(&ztu->_common);
-                _z_transport_peer_unicast_list_t *curr_list = ztu->_peers;
+                _z_transport_peer_unicast_slist_t *curr_list = ztu->_peers;
                 while (curr_list != NULL) {
                     bool drop_peer = false;
-                    curr_peer = _z_transport_peer_unicast_list_head(curr_list);
+                    curr_peer = _z_transport_peer_unicast_slist_value(curr_list);
                     // Check if peer received data
                     if (curr_peer->common._received) {
                         curr_peer->common._received = false;
@@ -131,13 +131,13 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                         prev = curr_list;
                     }
                     // Progress list
-                    curr_list = _z_transport_peer_unicast_list_tail(curr_list);
+                    curr_list = _z_transport_peer_unicast_slist_next(curr_list);
                     // Drop if needed
                     if (drop_peer) {
                         _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
                         _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
                         _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
-                        ztu->_peers = _z_transport_peer_unicast_list_drop_element(ztu->_peers, prev_drop);
+                        ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
                     }
                 }
                 _z_transport_peer_mutex_unlock(&ztu->_common);
@@ -149,7 +149,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     // Send keep alive to all peers
                     _z_transport_message_t t_msg = _z_t_msg_make_keep_alive();
                     _z_transport_peer_mutex_lock(&ztu->_common);
-                    if (!_z_transport_peer_unicast_list_is_empty(ztu->_peers)) {
+                    if (!_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
                         if (_z_transport_tx_send_t_msg(&ztu->_common, &t_msg, ztu->_peers) != _Z_RES_OK) {
                             _Z_INFO("Send keep alive failed.");
                         }

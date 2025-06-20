@@ -97,17 +97,16 @@ z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_m
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
 
-static _z_transport_peer_multicast_t *_z_find_peer_entry(_z_transport_peer_multicast_list_t *l,
+static _z_transport_peer_multicast_t *_z_find_peer_entry(_z_transport_peer_multicast_slist_t *l,
                                                          _z_slice_t *remote_addr) {
     _z_transport_peer_multicast_t *ret = NULL;
 
-    _z_transport_peer_multicast_list_t *xs = l;
-    for (; xs != NULL; xs = _z_transport_peer_multicast_list_tail(xs)) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_list_head(xs);
+    _z_transport_peer_multicast_slist_t *xs = l;
+    for (; xs != NULL; xs = _z_transport_peer_multicast_slist_next(xs)) {
+        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(xs);
         if (val->_remote_addr.len != remote_addr->len) {
             continue;
         }
-
         if (memcmp(val->_remote_addr.start, remote_addr->start, remote_addr->len) == 0) {
             ret = val;
         }
@@ -311,16 +310,14 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
     }
     // Check peer
     if (entry == NULL) {  // New peer
-        // If the new node has less representing capabilities then it is incompatible to communication
+        // If the new node has less representing capabilities then we can't communicate
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
             return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
         // Initialize entry
-        entry = (_z_transport_peer_multicast_t *)z_malloc(sizeof(_z_transport_peer_multicast_t));
-        if (entry == NULL) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-        }
+        ztm->_peers = _z_transport_peer_multicast_slist_push_empty(ztm->_peers);
+        entry = _z_transport_peer_multicast_slist_value(ztm->_peers);
         entry->_sn_res = _z_sn_max(msg->_seq_num_res);
         entry->_remote_addr = _z_slice_duplicate(addr);
         _z_conduit_sn_list_copy(&entry->_sn_rx_sns, &msg->_next_sn);
@@ -328,7 +325,6 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         // Update lease time (set as ms during)
         entry->_lease = msg->_lease;
         entry->_next_lease = entry->_lease;
-
         entry->common._remote_zid = msg->_zid;
         entry->common._received = true;
         entry->common._remote_resources = NULL;
@@ -339,7 +335,6 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         entry->common._dbuf_reliable = _z_wbuf_null();
         entry->common._dbuf_best_effort = _z_wbuf_null();
 #endif
-        ztm->_peers = _z_transport_peer_multicast_list_push(ztm->_peers, entry);
     } else {  // Existing peer
         // Note that we receive data from the peer
         entry->common._received = true;
@@ -348,7 +343,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
             // TODO: cleanup here should also be done on mappings/subs/etc...
-            _z_transport_peer_multicast_list_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
+            _z_transport_peer_multicast_slist_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             return _Z_RES_OK;
         }
         // Update SNs
@@ -416,7 +411,7 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
             _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
                 ztm->_peers =
-                    _z_transport_peer_multicast_list_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
+                    _z_transport_peer_multicast_slist_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             }
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;

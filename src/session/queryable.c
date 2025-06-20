@@ -72,19 +72,18 @@ void _z_session_queryable_clear(_z_session_queryable_t *qle) {
 }
 
 /*------------------ Queryable ------------------*/
-static _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_queryable_rc_list_t *qles,
+static _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_queryable_rc_slist_t *qles,
                                                                   const _z_zint_t id) {
     _z_session_queryable_rc_t *ret = NULL;
 
-    _z_session_queryable_rc_list_t *xs = qles;
+    _z_session_queryable_rc_slist_t *xs = qles;
     while (xs != NULL) {
-        _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
+        _z_session_queryable_rc_t *qle = _z_session_queryable_rc_slist_value(xs);
         if (id == _Z_RC_IN_VAL(qle)->_id) {
             ret = qle;
             break;
         }
-
-        xs = _z_session_queryable_rc_list_tail(xs);
+        xs = _z_session_queryable_rc_slist_next(xs);
     }
 
     return ret;
@@ -96,7 +95,7 @@ static _z_session_queryable_rc_t *__z_get_session_queryable_by_id(_z_session_que
  *  - zn->_mutex_inner
  */
 static _z_session_queryable_rc_t *__unsafe_z_get_session_queryable_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _z_session_queryable_rc_list_t *qles = zn->_local_queryable;
+    _z_session_queryable_rc_slist_t *qles = zn->_local_queryable;
     return __z_get_session_queryable_by_id(qles, id);
 }
 
@@ -107,19 +106,19 @@ static _z_session_queryable_rc_t *__unsafe_z_get_session_queryable_by_id(_z_sess
  */
 static z_result_t __unsafe_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *key,
                                                           _z_queryable_infos_svec_t *qle_infos) {
-    _z_session_queryable_rc_list_t *qles = zn->_local_queryable;
+    _z_session_queryable_rc_slist_t *qles = zn->_local_queryable;
 
     *qle_infos = _z_queryable_infos_svec_make(_Z_QLEINFOS_VEC_SIZE);
-    _z_session_queryable_rc_list_t *xs = qles;
+    _z_session_queryable_rc_slist_t *xs = qles;
     while (xs != NULL) {
         // Parse queryable list
-        _z_session_queryable_rc_t *qle = _z_session_queryable_rc_list_head(xs);
+        _z_session_queryable_rc_t *qle = _z_session_queryable_rc_slist_value(xs);
         if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(qle)->_key, key)) {
             _z_queryable_infos_t new_qle_info = {.arg = _Z_RC_IN_VAL(qle)->_arg,
                                                  .callback = _Z_RC_IN_VAL(qle)->_callback};
             _Z_RETURN_IF_ERR(_z_queryable_infos_svec_append(qle_infos, &new_qle_info, false));
         }
-        xs = _z_session_queryable_rc_list_tail(xs);
+        xs = _z_session_queryable_rc_slist_next(xs);
     }
     return _Z_RES_OK;
 }
@@ -137,16 +136,12 @@ _z_session_queryable_rc_t *_z_get_session_queryable_by_id(_z_session_t *zn, cons
 _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_session_queryable_t *q) {
     _Z_DEBUG(">>> Allocating queryable for (%ju:%.*s)", (uintmax_t)q->_key._id, (int)_z_string_len(&q->_key._suffix),
              _z_string_data(&q->_key._suffix));
+
     _z_session_queryable_rc_t *ret = NULL;
-
     _z_session_mutex_lock(zn);
-
-    ret = (_z_session_queryable_rc_t *)z_malloc(sizeof(_z_session_queryable_rc_t));
-    if (ret != NULL) {
-        *ret = _z_session_queryable_rc_new_from_val(q);
-        zn->_local_queryable = _z_session_queryable_rc_list_push(zn->_local_queryable, ret);
-    }
-
+    zn->_local_queryable = _z_session_queryable_rc_slist_push_empty(zn->_local_queryable);
+    ret = _z_session_queryable_rc_slist_value(zn->_local_queryable);
+    *ret = _z_session_queryable_rc_new_from_val(q);
     _z_session_mutex_unlock(zn);
 
     return ret;
@@ -272,7 +267,7 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
     _z_session_mutex_lock(zn);
 
     zn->_local_queryable =
-        _z_session_queryable_rc_list_drop_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
+        _z_session_queryable_rc_slist_drop_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
     _z_session_mutex_unlock(zn);
 }
@@ -280,7 +275,7 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
 void _z_flush_session_queryable(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
 
-    _z_session_queryable_rc_list_free(&zn->_local_queryable);
+    _z_session_queryable_rc_slist_free(&zn->_local_queryable);
 
     _z_session_mutex_unlock(zn);
 }

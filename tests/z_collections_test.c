@@ -372,6 +372,101 @@ void int_map_iterator_deletion_test(void) {
     _z_str_intmap_clear(&map);
 }
 
+static bool slist_eq_f(const void *left, const void *right) { return strcmp((char *)left, (char *)right) == 0; }
+
+void slist_test(void) {
+    char *values[] = {"test1", "test2", "test3"};
+    _z_slist_t *slist = NULL;
+    // Test empty
+    assert(_z_slist_is_empty(slist));
+    assert(_z_slist_len(slist) == 0);
+
+    // Add value test
+    slist = _z_slist_push(slist, values[0], strlen(values[0]) + 1, _z_noop_copy, false);
+    assert(!_z_slist_is_empty(slist));
+    assert(_z_slist_len(slist) == 1);
+    assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
+    assert(_z_slist_next(slist) == NULL);
+
+    slist = _z_slist_push(slist, values[1], strlen(values[1]) + 1, _z_noop_copy, false);
+    assert(_z_slist_len(slist) == 2);
+    assert(strcmp(values[1], (char *)_z_slist_value(slist)) == 0);
+    assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
+
+    // Push back test
+    slist = _z_slist_push_back(slist, values[2], strlen(values[2]) + 1, _z_noop_copy, false);
+    assert(_z_slist_len(slist) == 3);
+    assert(strcmp(values[2], (char *)_z_slist_value(_z_slist_next(_z_slist_next(slist)))) == 0);
+
+    // Pop test
+    slist = _z_slist_pop(slist, _z_noop_clear);
+    assert(_z_slist_len(slist) == 2);
+    assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
+    assert(strcmp(values[2], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
+    slist = _z_slist_pop(slist, _z_noop_clear);
+    assert(_z_slist_len(slist) == 1);
+    assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
+    assert(strlen(values[2]) == 5);
+    slist = _z_slist_pop(slist, _z_noop_clear);
+    assert(_z_slist_is_empty(slist));
+
+    // Drop element test
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
+    }
+    // Drop second element
+    slist = _z_slist_drop_element(slist, slist, _z_noop_clear);
+    assert(_z_slist_len(slist) == 2);
+    assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
+    assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
+
+    // Free test
+    _z_slist_free(&slist, _z_noop_clear);
+    assert(_z_slist_is_empty(slist));
+
+    // Push empty test
+    slist = _z_slist_push_empty(slist, strlen(values[0]) + 1);
+    assert(_z_slist_len(slist) == 1);
+    char *val = (char *)_z_slist_value(slist);
+    strcpy(val, values[0]);
+    assert(strcmp(values[0], (char *)_z_slist_value(slist)) == 0);
+    _z_slist_free(&slist, _z_noop_clear);
+
+    // Drop filter test
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
+    }
+    slist = _z_slist_drop_filter(slist, _z_noop_clear, slist_eq_f, values[1]);
+    assert(_z_slist_len(slist) == 2);
+    assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
+    assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
+    _z_slist_free(&slist, _z_noop_clear);
+
+    // Find test
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
+    }
+    _z_slist_t *elem = NULL;
+    elem = _z_slist_find(slist, slist_eq_f, "bob");
+    assert(elem == NULL);
+    elem = _z_slist_find(slist, slist_eq_f, values[2]);
+    assert(elem != NULL);
+    _z_slist_free(&slist, _z_noop_clear);
+
+    // Clone test
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
+        slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
+    }
+    _z_slist_t *clone = NULL;
+    clone = _z_slist_clone(slist, strlen(values[0]), _z_noop_copy, false);
+    assert(_z_slist_len(slist) == 3);
+    assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
+    assert(strcmp(values[1], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
+    assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(_z_slist_next(slist)))) == 0);
+    _z_slist_free(&slist, _z_noop_clear);
+    _z_slist_free(&clone, _z_noop_clear);
+}
+
 int main(void) {
     ring_test();
     ring_test_init_free();
@@ -382,4 +477,5 @@ int main(void) {
 
     int_map_iterator_test();
     int_map_iterator_deletion_test();
+    slist_test();
 }

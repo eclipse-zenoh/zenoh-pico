@@ -346,7 +346,7 @@ int main(int argc, char **argv) {
 
     // Undeclare publishers on first session
     while (pubs1) {
-        z_owned_publisher_t *pub = _z_list_head(pubs1);
+        z_owned_publisher_t *pub = _z_list_value(pubs1);
         printf("Undeclared publisher on session 2: %zu\n", z_loan(*pub)->_id);
         z_drop(z_move(*pub));
         pubs1 = _z_list_pop(pubs1, _z_noop_elem_free, NULL);
@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
 
     // Undeclare subscribers and queryables on second session
     while (subs2) {
-        z_owned_subscriber_t *sub = _z_list_head(subs2);
+        z_owned_subscriber_t *sub = _z_list_value(subs2);
         printf("Undeclared subscriber on session 2: %ju\n", (uintmax_t)sub->_val._entity_id);
         z_drop(z_move(*sub));
         subs2 = _z_list_pop(subs2, _z_noop_elem_free, NULL);
@@ -365,7 +365,7 @@ int main(int argc, char **argv) {
     z_sleep_s(SLEEP);
 
     while (qles2) {
-        z_owned_queryable_t *qle = _z_list_head(qles2);
+        z_owned_queryable_t *qle = _z_list_value(qles2);
         printf("Undeclared queryable on session 2: %ju\n", (uintmax_t)qle->_val._entity_id);
         z_drop(z_move(*qle));
         qles2 = _z_list_pop(qles2, _z_noop_elem_free, NULL);
