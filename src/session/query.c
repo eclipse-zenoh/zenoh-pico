@@ -48,25 +48,25 @@ void _z_pending_query_process_timeout(_z_session_t *zn) {
     // Lock session
     _z_session_mutex_lock(zn);
     // Drop all queries with timeout elapsed
-    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
+    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
     _z_session_mutex_unlock(zn);
 }
 
 /*------------------ Query ------------------*/
 _z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
 
-_z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_list_t *pqls, const _z_zint_t id) {
+_z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_slist_t *pqls, const _z_zint_t id) {
     _z_pending_query_t *ret = NULL;
 
-    _z_pending_query_list_t *xs = pqls;
+    _z_pending_query_slist_t *xs = pqls;
     while (xs != NULL) {
-        _z_pending_query_t *pql = _z_pending_query_list_head(xs);
+        _z_pending_query_t *pql = _z_pending_query_slist_value(xs);
         if (pql->_id == id) {
             ret = pql;
             break;
         }
 
-        xs = _z_pending_query_list_tail(xs);
+        xs = _z_pending_query_slist_next(xs);
     }
 
     return ret;
@@ -78,7 +78,7 @@ _z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_list_t *pqls, c
  *  - zn->_mutex_inner
  */
 _z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _z_pending_query_list_t *pqls = zn->_pending_queries;
+    _z_pending_query_slist_t *pqls = zn->_pending_queries;
     return __z_get_pending_query_by_id(pqls, id);
 }
 
@@ -91,21 +91,16 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
     return pql;
 }
 
-z_result_t _z_register_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
+z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id) {
     z_result_t ret = _Z_RES_OK;
 
-    _Z_DEBUG(">>> Allocating query for (%ju:%.*s)", (uintmax_t)pen_qry->_key._id,
-             (int)_z_string_len(&pen_qry->_key._suffix), _z_string_data(&pen_qry->_key._suffix));
-
     _z_session_mutex_lock(zn);
-
-    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, pen_qry->_id);
+    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
-        zn->_pending_queries = _z_pending_query_list_push(zn->_pending_queries, pen_qry);
+        zn->_pending_queries = _z_pending_query_slist_push_empty(zn->_pending_queries);
     } else {
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
-
     _z_session_mutex_unlock(zn);
 
     return ret;
@@ -236,7 +231,7 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
         }
     }
     // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
-    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     _z_session_mutex_unlock(zn);
     return _Z_RES_OK;
 }
@@ -244,16 +239,14 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
     _z_session_mutex_lock(zn);
 
-    zn->_pending_queries = _z_pending_query_list_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
     _z_session_mutex_unlock(zn);
 }
 
 void _z_flush_pending_queries(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
-
-    _z_pending_query_list_free(&zn->_pending_queries);
-
+    _z_pending_query_slist_free(&zn->_pending_queries);
     _z_session_mutex_unlock(zn);
 }
 #else

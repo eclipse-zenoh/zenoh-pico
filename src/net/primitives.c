@@ -450,42 +450,36 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
                     z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
                     _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
                     const _z_bytes_t *attachment, _z_n_qos_t qos, z_congestion_control_t cong_ctrl) {
-    z_result_t ret = _Z_RES_OK;
-
+    // Add the pending query to the current session
+    _z_zint_t qid = _z_get_query_id(zn);
+    _Z_RETURN_IF_ERR(_z_register_pending_query(zn, qid));
     // Create the pending query object
-    _z_pending_query_t *pq = (_z_pending_query_t *)z_malloc(sizeof(_z_pending_query_t));
-    if (pq != NULL) {
-        pq->_id = _z_get_query_id(zn);
-        pq->_key = _z_get_expanded_key_from_key(zn, keyexpr, NULL);
-        pq->_target = target;
-        pq->_consolidation = consolidation;
-        pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
-        pq->_callback = callback;
-        pq->_dropper = dropper;
-        pq->_pending_replies = NULL;
-        pq->_arg = arg;
-        pq->_timeout = timeout_ms;
-        pq->_start_time = z_clock_now();
+    _z_pending_query_t *pq = _z_pending_query_slist_value(zn->_pending_queries);
+    pq->_id = qid;
+    pq->_key = _z_get_expanded_key_from_key(zn, keyexpr, NULL);
+    pq->_target = target;
+    pq->_consolidation = consolidation;
+    pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+    pq->_callback = callback;
+    pq->_dropper = dropper;
+    pq->_pending_replies = NULL;
+    pq->_arg = arg;
+    pq->_timeout = timeout_ms;
+    pq->_start_time = z_clock_now();
 
-        ret = _z_register_pending_query(zn, pq);  // Add the pending query to the current session
-        if (ret == _Z_RES_OK) {
-            _z_source_info_t source_info = _z_source_info_null();
-            _z_slice_t params =
-                (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
-            _z_zenoh_message_t z_msg;
-            _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload,
-                                encoding, timeout_ms, attachment, qos, &source_info);
+    // Send query message
+    _z_source_info_t source_info = _z_source_info_null();
+    _z_slice_t params =
+        (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
+    _z_zenoh_message_t z_msg;
+    _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
+                        timeout_ms, attachment, qos, &source_info);
 
-            if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
-                _z_unregister_pending_query(zn, pq);
-                ret = _Z_ERR_TRANSPORT_TX_FAILED;
-            }
-        } else {
-            _z_pending_query_clear(pq);
-        }
+    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
+        _z_unregister_pending_query(zn, pq);
+        return _Z_ERR_TRANSPORT_TX_FAILED;
     }
-
-    return ret;
+    return _Z_RES_OK;
 }
 #endif
 

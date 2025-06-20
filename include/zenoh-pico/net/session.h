@@ -91,7 +91,7 @@ typedef struct _z_session_t {
 #endif
 #endif
 #if Z_FEATURE_QUERY == 1
-    _z_pending_query_list_t *_pending_queries;
+    _z_pending_query_slist_t *_pending_queries;
 #endif
 
 #if Z_FEATURE_MATCHING == 1

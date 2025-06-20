@@ -146,7 +146,7 @@ bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t
 void _z_pending_query_clear(_z_pending_query_t *res);
 
 _Z_ELEM_DEFINE(_z_pending_query, _z_pending_query_t, _z_noop_size, _z_pending_query_clear, _z_noop_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_pending_query, _z_pending_query_t)
+_Z_SLIST_DEFINE(_z_pending_query, _z_pending_query_t, false)
 
 struct __z_hello_handler_wrapper_t;  // Forward declaration to be used in _z_closure_hello_callback_t
 /**
