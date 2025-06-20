@@ -100,7 +100,7 @@ typedef struct _z_session_t {
 
     // Session interests
 #if Z_FEATURE_INTEREST == 1
-    _z_session_interest_rc_list_t *_local_interests;
+    _z_session_interest_rc_slist_t *_local_interests;
     _z_declare_data_list_t *_remote_declares;
 #endif
 } _z_session_t;

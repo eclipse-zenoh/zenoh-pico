@@ -193,7 +193,7 @@ _Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_sess
                _z_noop_move)
 _Z_ELEM_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, _z_session_interest_rc_size,
                _z_session_interest_rc_drop, _z_session_interest_rc_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t)
+_Z_SLIST_DEFINE(_z_session_interest_rc, _z_session_interest_rc_t, true)
 
 typedef enum {
     _Z_DECLARE_TYPE_SUBSCRIBER = 0,
