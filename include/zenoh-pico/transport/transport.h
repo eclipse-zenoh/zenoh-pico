@@ -79,7 +79,7 @@ bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
                                     const _z_transport_peer_multicast_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, _z_transport_peer_multicast_size,
                _z_transport_peer_multicast_clear, _z_transport_peer_multicast_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t)
+_Z_SLIST_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, true)
 
 typedef enum _z_unicast_peer_flow_state_e {
     _Z_FLOW_STATE_INACTIVE = 0,
@@ -156,7 +156,7 @@ typedef struct {
 typedef struct _z_transport_multicast_t {
     _z_transport_common_t _common;
     // Known valid peers
-    _z_transport_peer_multicast_list_t *_peers;
+    _z_transport_peer_multicast_slist_t *_peers;
     // T message send function
     _zp_f_send_tmsg _send_f;
 } _z_transport_multicast_t;

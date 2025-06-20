@@ -69,35 +69,35 @@ static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
 #endif
 }
 
-static _z_zint_t _z_get_minimum_lease(_z_transport_peer_multicast_list_t *peers, _z_zint_t local_lease) {
+static _z_zint_t _z_get_minimum_lease(_z_transport_peer_multicast_slist_t *peers, _z_zint_t local_lease) {
     _z_zint_t ret = local_lease;
 
-    _z_transport_peer_multicast_list_t *it = peers;
+    _z_transport_peer_multicast_slist_t *it = peers;
     while (it != NULL) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_list_head(it);
+        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(it);
         _z_zint_t lease = val->_lease;
         if (lease < ret) {
             ret = lease;
         }
 
-        it = _z_transport_peer_multicast_list_tail(it);
+        it = _z_transport_peer_multicast_slist_next(it);
     }
 
     return ret;
 }
 
-static _z_zint_t _z_get_next_lease(_z_transport_peer_multicast_list_t *peers) {
+static _z_zint_t _z_get_next_lease(_z_transport_peer_multicast_slist_t *peers) {
     _z_zint_t ret = SIZE_MAX;
 
-    _z_transport_peer_multicast_list_t *it = peers;
+    _z_transport_peer_multicast_slist_t *it = peers;
     while (it != NULL) {
-        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_list_head(it);
+        _z_transport_peer_multicast_t *val = _z_transport_peer_multicast_slist_value(it);
         _z_zint_t next_lease = val->_next_lease;
         if (next_lease < ret) {
             ret = next_lease;
         }
 
-        it = _z_transport_peer_multicast_list_tail(it);
+        it = _z_transport_peer_multicast_slist_next(it);
     }
 
     return ret;
@@ -114,13 +114,13 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
     while (ztm->_common._lease_task_running) {
         if (next_lease <= 0) {
-            _z_transport_peer_multicast_list_t *prev = NULL;
-            _z_transport_peer_multicast_list_t *prev_drop = NULL;
+            _z_transport_peer_multicast_slist_t *prev = NULL;
+            _z_transport_peer_multicast_slist_t *prev_drop = NULL;
             _z_transport_peer_mutex_lock(&ztm->_common);
-            _z_transport_peer_multicast_list_t *curr_list = ztm->_peers;
+            _z_transport_peer_multicast_slist_t *curr_list = ztm->_peers;
             while (curr_list != NULL) {
                 bool drop_peer = false;
-                _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_list_head(curr_list);
+                _z_transport_peer_multicast_t *curr_peer = _z_transport_peer_multicast_slist_value(curr_list);
                 if (curr_peer->common._received) {
                     // Reset the lease parameters
                     curr_peer->common._received = false;
@@ -135,13 +135,13 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                     prev = curr_list;
                 }
                 // Progress list
-                curr_list = _z_transport_peer_unicast_list_tail(curr_list);
+                curr_list = _z_transport_peer_multicast_slist_next(curr_list);
                 // Drop if needed
                 if (drop_peer) {
                     _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
                     _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
                     _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztm->_common._session), &curr_peer->common);
-                    ztm->_peers = _z_transport_peer_multicast_list_drop_element(ztm->_peers, prev_drop);
+                    ztm->_peers = _z_transport_peer_multicast_slist_drop_element(ztm->_peers, prev_drop);
                 }
             }
             _z_transport_peer_mutex_unlock(&ztm->_common);
@@ -194,9 +194,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
 
         // Decrement all intervals
         _z_transport_peer_mutex_lock(&ztm->_common);
-        _z_transport_peer_multicast_list_t *curr_list = ztm->_peers;
+        _z_transport_peer_multicast_slist_t *curr_list = ztm->_peers;
         while (curr_list != NULL) {
-            _z_transport_peer_multicast_t *entry = _z_transport_peer_multicast_list_head(curr_list);
+            _z_transport_peer_multicast_t *entry = _z_transport_peer_multicast_slist_value(curr_list);
             int entry_next_lease = (int)entry->_next_lease - interval;
             if (entry_next_lease >= 0) {
                 entry->_next_lease = (size_t)entry_next_lease;
@@ -204,7 +204,7 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                 _Z_ERROR("Negative next lease value");
                 entry->_next_lease = 0;
             }
-            curr_list = _z_transport_peer_multicast_list_tail(curr_list);
+            curr_list = _z_transport_peer_multicast_slist_next(curr_list);
         }
         next_lease = (int)_z_get_next_lease(ztm->_peers);
         _z_transport_peer_mutex_unlock(&ztm->_common);
