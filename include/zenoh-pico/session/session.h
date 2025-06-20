@@ -212,7 +212,7 @@ size_t _z_declare_data_size(_z_declare_data_t *data);
 void _z_declare_data_copy(_z_declare_data_t *dst, const _z_declare_data_t *src);
 _Z_ELEM_DEFINE(_z_declare_data, _z_declare_data_t, _z_declare_data_size, _z_declare_data_clear, _z_declare_data_copy,
                _z_noop_move)
-_Z_LIST_DEFINE(_z_declare_data, _z_declare_data_t)
+_Z_SLIST_DEFINE(_z_declare_data, _z_declare_data_t, true)
 
 #ifdef __cplusplus
 }

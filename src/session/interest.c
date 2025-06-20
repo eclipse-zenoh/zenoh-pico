@@ -299,31 +299,27 @@ _z_session_interest_rc_t *_z_register_interest(_z_session_t *zn, _z_session_inte
 }
 
 static z_result_t _unsafe_z_register_declare(_z_session_t *zn, const _z_keyexpr_t *key, uint32_t id, uint8_t type) {
-    _z_declare_data_t *decl = NULL;
-    decl = (_z_declare_data_t *)z_malloc(sizeof(_z_declare_data_t));
-    if (decl == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
+    zn->_remote_declares = _z_declare_data_slist_push_empty(zn->_remote_declares);
+    _z_declare_data_t *decl = _z_declare_data_slist_value(zn->_remote_declares);
     _z_keyexpr_copy(&decl->_key, key);
     decl->_id = id;
     decl->_type = type;
-    zn->_remote_declares = _z_declare_data_list_push(zn->_remote_declares, decl);
     return _Z_RES_OK;
 }
 
 static _z_keyexpr_t _unsafe_z_get_key_from_declare(_z_session_t *zn, uint32_t id, uint8_t type) {
-    _z_declare_data_list_t *xs = zn->_remote_declares;
+    _z_declare_data_slist_t *xs = zn->_remote_declares;
     _z_declare_data_t comp = {
         ._key = _z_keyexpr_null(),
         ._id = id,
         ._type = type,
     };
     while (xs != NULL) {
-        _z_declare_data_t *decl = _z_declare_data_list_head(xs);
+        _z_declare_data_t *decl = _z_declare_data_slist_value(xs);
         if (_z_declare_data_eq(&comp, decl)) {
             return _z_keyexpr_duplicate(&decl->_key);
         }
-        xs = _z_declare_data_list_tail(xs);
+        xs = _z_declare_data_slist_next(xs);
     }
     return _z_keyexpr_null();
 }
@@ -334,7 +330,7 @@ static z_result_t _unsafe_z_unregister_declare(_z_session_t *zn, uint32_t id, ui
         ._id = id,
         ._type = type,
     };
-    zn->_remote_declares = _z_declare_data_list_drop_filter(zn->_remote_declares, _z_declare_data_eq, &decl);
+    zn->_remote_declares = _z_declare_data_slist_drop_filter(zn->_remote_declares, _z_declare_data_eq, &decl);
     return _Z_RES_OK;
 }
 
@@ -467,7 +463,7 @@ void _z_interest_init(_z_session_t *zn) {
 void _z_flush_interest(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
     _z_session_interest_rc_slist_free(&zn->_local_interests);
-    _z_declare_data_list_free(&zn->_remote_declares);
+    _z_declare_data_slist_free(&zn->_remote_declares);
     _z_session_mutex_unlock(zn);
 }
 
@@ -549,12 +545,12 @@ void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t 
 
 void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interest) {
     _z_session_mutex_lock(zn);
-    _z_declare_data_list_t *res_list = _z_declare_data_list_clone(zn->_remote_declares);
+    _z_declare_data_slist_t *res_list = _z_declare_data_slist_clone(zn->_remote_declares);
     _z_session_mutex_unlock(zn);
 
-    _z_declare_data_list_t *xs = res_list;
+    _z_declare_data_slist_t *xs = res_list;
     while (xs != NULL) {
-        _z_declare_data_t *res = _z_declare_data_list_head(xs);
+        _z_declare_data_t *res = _z_declare_data_slist_value(xs);
         if (_z_keyexpr_suffix_intersects(&interest->_key, &res->_key)) {
             _z_interest_msg_t msg = {0};
             switch (res->_type) {
@@ -572,9 +568,9 @@ void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interes
             }
             interest->_callback(&msg, (_z_transport_peer_common_t *)res->_key._mapping, interest->_arg);
         }
-        xs = _z_declare_data_list_tail(xs);
+        xs = _z_declare_data_slist_next(xs);
     }
-    _z_declare_data_list_free(&res_list);
+    _z_declare_data_slist_free(&res_list);
 }
 
 #else
