@@ -109,8 +109,8 @@ void _z_slist_free(_z_slist_t **node, z_element_clear_f f);
     static inline name##_slist_t *name##_slist_new(void) { return NULL; }                                            \
     static inline size_t name##_slist_len(const name##_slist_t *l) { return _z_slist_len(l); }                       \
     static inline bool name##_slist_is_empty(const name##_slist_t *l) { return _z_slist_is_empty(l); }               \
-    static inline type *name##_slist_next(const name##_slist_t *l) { return (type *)_z_slist_next(l); }              \
-    static inline name##_slist_t *name##_slist_value(const name##_slist_t *l) { return _z_slist_value(l); }          \
+    static inline name##_slist_t *name##_slist_next(const name##_slist_t *l) { return _z_slist_next(l); }            \
+    static inline type *name##_slist_value(const name##_slist_t *l) { return (type *)_z_slist_value(l); }            \
     static inline name##_slist_t *name##_slist_push_empty(name##_slist_t *l) {                                       \
         return _z_slist_push_empty(l, sizeof(type));                                                                 \
     }                                                                                                                \
