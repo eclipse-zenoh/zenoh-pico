@@ -34,7 +34,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
     z_result_t ret = _Z_RES_OK;
     _z_transport_rx_mutex_lock(&ztu->_common);
     size_t to_read = 0;
-    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(ztu->_peers);
+    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     do {
         switch (ztu->_common._link._cap._flow) {
             // Stream capable links

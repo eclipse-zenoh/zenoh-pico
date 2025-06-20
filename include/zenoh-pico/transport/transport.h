@@ -106,7 +106,7 @@ size_t _z_transport_peer_unicast_size(const _z_transport_peer_unicast_t *src);
 bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const _z_transport_peer_unicast_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transport_peer_unicast_size,
                _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move)
-_Z_LIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t)
+_Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
 // Forward type declaration to avoid cyclical include
 typedef struct _z_session_rc_t _z_session_rc_ref_t;
@@ -150,7 +150,7 @@ typedef z_result_t (*_zp_f_send_tmsg)(_z_transport_common_t *self, const _z_tran
 typedef struct {
     _z_transport_common_t _common;
     // Known valid peers
-    _z_transport_peer_unicast_list_t *_peers;
+    _z_transport_peer_unicast_slist_t *_peers;
 } _z_transport_unicast_t;
 
 typedef struct _z_transport_multicast_t {

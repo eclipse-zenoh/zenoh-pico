@@ -32,9 +32,9 @@
 #if Z_FEATURE_UNICAST_TRANSPORT == 1
 void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback) {
     void *ctx = callback->context;
-    _z_transport_peer_unicast_list_t *l = zt->_transport._unicast._peers;
-    for (; l != NULL; l = _z_transport_peer_unicast_list_tail(l)) {
-        _z_transport_peer_unicast_t *val = _z_transport_peer_unicast_list_head(l);
+    _z_transport_peer_unicast_slist_t *l = zt->_transport._unicast._peers;
+    for (; l != NULL; l = _z_transport_peer_unicast_slist_next(l)) {
+        _z_transport_peer_unicast_t *val = _z_transport_peer_unicast_slist_value(l);
         z_id_t id = val->common._remote_zid;
         callback->call(&id, ctx);
     }
@@ -42,13 +42,13 @@ void _zp_unicast_fetch_zid(const _z_transport_t *zt, _z_closure_zid_t *callback)
 
 void _zp_unicast_info_session(const _z_transport_t *zt, _z_config_t *ps, int mode) {
     uint_fast8_t config_entry = (mode == Z_WHATAMI_CLIENT) ? Z_INFO_ROUTER_PID_KEY : Z_INFO_PEER_PID_KEY;
-    _z_transport_peer_unicast_list_t *xs = zt->_transport._unicast._peers;
+    _z_transport_peer_unicast_slist_t *xs = zt->_transport._unicast._peers;
     while (xs != NULL) {
-        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_list_head(xs);
+        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(xs);
         _z_string_t remote_zid_str = _z_id_to_string(&peer->common._remote_zid);
         _zp_config_insert_string(ps, config_entry, &remote_zid_str);
         _z_string_clear(&remote_zid_str);
-        xs = _z_transport_peer_unicast_list_tail(xs);
+        xs = _z_transport_peer_unicast_slist_next(xs);
     }
 }
 
