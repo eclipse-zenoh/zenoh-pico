@@ -5,13 +5,9 @@ config ZENOH_PICO
 
 if ZENOH_PICO
 
-config ZENOH_PICO_LINK_SERIAL
-	bool "Serial Link"
-	help
-	  Use serial link
-
 config ZENOH_PICO_MULTI_THREAD
 	bool "Multithreading support"
+	default y
 	help
 	  Multithreading support
 
@@ -35,10 +31,15 @@ config ZENOH_PICO_QUERYABLE
 	help
 	  Queryable Support
 
-config ZENOH_PICO_RAWETH_TRANSPORT
-	bool "Raw Ethernet Support"
+config ZENOH_PICO_MUTLICAST_TRANSPORT
+	bool "Multicast Transort Support"
 	help
-	  Raw Ethernet Support
+	  Multicast Transport Support
+
+config ZENOH_PICO_UNICAST_TRANSPORT
+	bool "Unicast Transport Support"
+	help
+	  Unicast Transport Support
 
 config ZENOH_PICO_LINK_TCP
 	bool "TCP Link"
@@ -55,15 +56,25 @@ config ZENOH_PICO_LINK_UDP_MULTICAST
 	help
 	  UDP Multicast
 
+config ZENOH_PICO_LINK_SERIAL
+	bool "Serial Link"
+	help
+	  Serial Link
+
 config ZENOH_PICO_SCOUTING_UDP
 	bool "Scouting UDP"
 	help
 	  Scouting UDP
 
-config ZENOH_PICO_LINK_WS
-	bool "WS Link"
+config ZENOH_PICO_UNICAST_PEER_MODE
+	bool "Unicat Peer Mode"
 	help
-	  WS Link
+	  Unicast Peer Mode
+
+config ZENOH_PICO_AUTO_RECONNECT
+    bool "Autoreconnect"
+	help
+	  Autoreconnect
 
 endif
 
