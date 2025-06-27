@@ -104,7 +104,7 @@ void _z_iosli_copy(_z_iosli_t *dst, const _z_iosli_t *src);
 _z_iosli_t *_z_iosli_clone(const _z_iosli_t *src);
 
 _Z_ELEM_DEFINE(_z_iosli, _z_iosli_t, _z_iosli_size, _z_iosli_clear, _z_iosli_copy, _z_noop_move)
-_Z_VEC_DEFINE(_z_iosli, _z_iosli_t)
+_Z_SVEC_DEFINE(_z_iosli, _z_iosli_t)
 
 /*------------------ ZBuf ------------------*/
 typedef struct {
@@ -155,7 +155,7 @@ void _z_zbuf_free(_z_zbuf_t **zbf);
 
 /*------------------ WBuf ------------------*/
 typedef struct {
-    _z_iosli_vec_t _ioss;
+    _z_iosli_svec_t _ioss;
     size_t _r_idx;
     size_t _w_idx;
     size_t _expansion_step;
@@ -163,7 +163,7 @@ typedef struct {
 
 static inline _z_wbuf_t _z_wbuf_null(void) { return (_z_wbuf_t){0}; }
 static inline _z_iosli_t *_z_wbuf_get_iosli(const _z_wbuf_t *wbf, size_t idx) {
-    return _z_iosli_vec_get(&wbf->_ioss, idx);
+    return _z_iosli_svec_get(&wbf->_ioss, idx);
 }
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable);
 
@@ -181,7 +181,6 @@ size_t _z_wbuf_get_wpos(const _z_wbuf_t *wbf);
 void _z_wbuf_set_rpos(_z_wbuf_t *wbf, size_t r_pos);
 void _z_wbuf_set_wpos(_z_wbuf_t *wbf, size_t w_pos);
 
-void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios);
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf);
 
 _z_zbuf_t _z_wbuf_to_zbuf(const _z_wbuf_t *wbf);
