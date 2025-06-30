@@ -264,7 +264,6 @@ _Z_SIMPLE_REFCOUNT_DEFINE(_dummy, _dummy)
 
 void test_simple_rc_null(void) {
     _dummy_simple_rc_t drc = _dummy_simple_rc_null();
-    assert(drc._cnt == NULL);
     assert(drc._val == NULL);
 }
 
@@ -275,25 +274,13 @@ void test_simple_rc_drop(void) {
     assert(!_dummy_simple_rc_drop(&drc));
 }
 
-void test_simple_rc_new(void) {
-    _dummy_t *val = (_dummy_t *)z_malloc(sizeof(_dummy_t));
-    val->foo = 42;
-    _dummy_simple_rc_t drc = _dummy_simple_rc_new(val);
-    assert(!_Z_RC_IS_NULL(&drc));
-    assert(_z_simple_rc_strong_count(drc._cnt) == 1);
-    assert(drc._val->foo == 42);
-    drc._val->foo = 0;
-    assert(val->foo == 0);
-    assert(_dummy_simple_rc_drop(&drc));
-}
-
 void test_simple_rc_new_from_val(void) {
     _dummy_t val = {.foo = 42};
     _dummy_simple_rc_t drc = _dummy_simple_rc_new_from_val(&val);
-    assert(!_Z_RC_IS_NULL(&drc));
-    assert(_z_simple_rc_strong_count(drc._cnt) == 1);
-    assert(drc._val->foo == 42);
-    drc._val->foo = 0;
+    assert(!_dummy_simple_rc_is_null(&drc));
+    assert(_z_simple_rc_strong_count(drc._val) == 1);
+    assert(_dummy_simple_rc_value(&drc)->foo == 42);
+    _dummy_simple_rc_value(&drc)->foo = 0;
     assert(val.foo == 42);
     assert(_dummy_simple_rc_drop(&drc));
 }
@@ -301,17 +288,17 @@ void test_simple_rc_new_from_val(void) {
 void test_simple_rc_clone(void) {
     _dummy_t val = {.foo = 42};
     _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
-    assert(_z_simple_rc_strong_count(drc1._cnt) == 1);
+    assert(_z_simple_rc_strong_count(drc1._val) == 1);
 
     _dummy_simple_rc_t drc2 = _dummy_simple_rc_clone(&drc1);
-    assert(!_Z_RC_IS_NULL(&drc2));
-    assert(_z_simple_rc_strong_count(drc2._cnt) == 2);
-    assert(_z_simple_rc_strong_count(drc2._cnt) == _z_simple_rc_strong_count(drc1._cnt));
-    assert(drc2._val->foo == drc1._val->foo);
+    assert(!_dummy_simple_rc_is_null(&drc2));
+    assert(_z_simple_rc_strong_count(drc2._val) == 2);
+    assert(_z_simple_rc_strong_count(drc2._val) == _z_simple_rc_strong_count(drc1._val));
+    assert(_dummy_simple_rc_value(&drc2)->foo == _dummy_simple_rc_value(&drc1)->foo);
 
     assert(!_dummy_simple_rc_drop(&drc1));
-    assert(_z_simple_rc_strong_count(drc2._cnt) == 1);
-    assert(drc2._val->foo == 42);
+    assert(_z_simple_rc_strong_count(drc2._val) == 1);
+    assert(_dummy_simple_rc_value(&drc2)->foo == 42);
     assert(_dummy_simple_rc_drop(&drc2));
 }
 
@@ -329,7 +316,7 @@ void test_simple_rc_clone_as_ptr(void) {
     _dummy_simple_rc_t drc1 = _dummy_simple_rc_new_from_val(&val);
     _dummy_simple_rc_t *drc2 = _dummy_simple_rc_clone_as_ptr(&drc1);
     assert(drc2->_val != NULL);
-    assert(!_Z_RC_IS_NULL(drc2));
+    assert(!_dummy_simple_rc_is_null(drc2));
     assert(_dummy_simple_rc_count(drc2) == 2);
     assert(_dummy_simple_rc_eq(&drc1, drc2));
     assert(!_dummy_simple_rc_drop(&drc1));
@@ -382,7 +369,6 @@ int main(void) {
     test_simple_rc_null();
     test_simple_rc_size();
     test_simple_rc_drop();
-    test_simple_rc_new();
     test_simple_rc_new_from_val();
     test_simple_rc_clone();
     test_simple_rc_eq();

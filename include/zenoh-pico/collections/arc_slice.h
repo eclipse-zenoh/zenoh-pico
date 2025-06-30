@@ -51,7 +51,7 @@ static inline _z_arc_slice_t _z_arc_slice_empty(void) { return (_z_arc_slice_t){
 static inline size_t _z_arc_slice_len(const _z_arc_slice_t* s) { return s->len; }
 static inline bool _z_arc_slice_is_empty(const _z_arc_slice_t* s) { return _z_arc_slice_len(s) == 0; }
 static inline _z_arc_slice_t _z_arc_slice_wrap_slice_rc(_z_slice_simple_rc_t* slice_rc, size_t offset, size_t len) {
-    assert(offset + len <= _Z_RC_IN_VAL(slice_rc)->len);
+    assert(offset + len <= _z_slice_simple_rc_value(slice_rc)->len);
     _z_arc_slice_t arc_s;
     arc_s.slice = _z_slice_simple_rc_clone(slice_rc);
     arc_s.len = len;
@@ -59,7 +59,7 @@ static inline _z_arc_slice_t _z_arc_slice_wrap_slice_rc(_z_slice_simple_rc_t* sl
     return arc_s;
 }
 static inline const uint8_t* _z_arc_slice_data(const _z_arc_slice_t* s) {
-    return _Z_RC_IN_VAL(&s->slice)->start + s->start;
+    return _z_slice_simple_rc_value(&s->slice)->start + s->start;
 }
 static inline z_result_t _z_arc_slice_drop(_z_arc_slice_t* s) {
     _z_slice_simple_rc_drop(&s->slice);

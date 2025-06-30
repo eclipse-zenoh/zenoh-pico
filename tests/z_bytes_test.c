@@ -41,7 +41,7 @@ void test_slice(void) {
     assert(!_z_bytes_is_empty(&b));
     assert(_z_bytes_check(&b));
     assert(_z_bytes_num_slices(&b) == 1);
-    assert(_z_slice_eq(_Z_RC_IN_VAL(&_z_bytes_get_slice(&b, 0)->slice), &s));
+    assert(_z_slice_eq(_z_slice_simple_rc_value(&_z_bytes_get_slice(&b, 0)->slice), &s));
 
     assert(_z_bytes_to_buf(&b, data_out, 5) == 5);
     assert(memcmp(data, data_out, 5) == 0);
@@ -73,9 +73,12 @@ void test_append(void) {
     assert(!_z_bytes_is_empty(&b));
     assert(_z_bytes_check(&b));
     assert(_z_bytes_num_slices(&b) == 3);
-    assert(_z_slice_eq(_Z_RC_IN_VAL(&_z_bytes_get_slice(&b, 0)->slice), _Z_RC_IN_VAL(&s1.slice)));
-    assert(_z_slice_eq(_Z_RC_IN_VAL(&_z_bytes_get_slice(&b, 1)->slice), _Z_RC_IN_VAL(&s2.slice)));
-    assert(_z_slice_eq(_Z_RC_IN_VAL(&_z_bytes_get_slice(&b, 2)->slice), _Z_RC_IN_VAL(&s3.slice)));
+    assert(
+        _z_slice_eq(_z_slice_simple_rc_value(&_z_bytes_get_slice(&b, 0)->slice), _z_slice_simple_rc_value(&s1.slice)));
+    assert(
+        _z_slice_eq(_z_slice_simple_rc_value(&_z_bytes_get_slice(&b, 1)->slice), _z_slice_simple_rc_value(&s2.slice)));
+    assert(
+        _z_slice_eq(_z_slice_simple_rc_value(&_z_bytes_get_slice(&b, 2)->slice), _z_slice_simple_rc_value(&s3.slice)));
 
     assert(_z_bytes_to_buf(&b, data_out, 15) == 10);
     assert(memcmp(data_in, data_out, 10) == 0);

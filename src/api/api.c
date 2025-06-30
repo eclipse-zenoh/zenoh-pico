@@ -382,7 +382,8 @@ bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t 
         return false;
     }
     const _z_arc_slice_t *arc_slice = _z_bytes_get_slice(iter->_bytes, iter->_slice_idx);
-    out->_val = _z_slice_alias_buf(_Z_RC_IN_VAL(&arc_slice->slice)->start + arc_slice->start, arc_slice->len);
+    out->_val =
+        _z_slice_alias_buf(_z_slice_simple_rc_value(&arc_slice->slice)->start + arc_slice->start, arc_slice->len);
     iter->_slice_idx++;
     return true;
 }

@@ -24,7 +24,7 @@ _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t* s, size_t offset, size_t len) {
     _z_arc_slice_t arc_s;
 
     arc_s.slice = _z_slice_simple_rc_new_from_val(s);
-    if (_Z_RC_IS_NULL(&arc_s.slice)) {
+    if (_z_slice_simple_rc_is_null(&arc_s.slice)) {
         return _z_arc_slice_empty();
     }
     arc_s.len = len;
@@ -34,11 +34,8 @@ _z_arc_slice_t _z_arc_slice_wrap(_z_slice_t* s, size_t offset, size_t len) {
 
 _z_arc_slice_t _z_arc_slice_get_subslice(const _z_arc_slice_t* s, size_t offset, size_t len) {
     assert(offset + len <= s->len);
-    assert(!_Z_RC_IS_NULL(&s->slice) || (len == 0 && offset == 0));
+    assert(!_z_slice_simple_rc_is_null(&s->slice) || (len == 0 && offset == 0));
 
-    if (_Z_RC_IS_NULL(&s->slice)) {
-        return _z_arc_slice_empty();
-    }
     _z_arc_slice_t out;
     out.slice = _z_slice_simple_rc_clone(&s->slice);
     out.len = len;

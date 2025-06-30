@@ -287,7 +287,7 @@ z_result_t _z_bytes_reader_read_slices(_z_bytes_reader_t *reader, size_t len, _z
             reader->in_slice_idx = 0;
         }
 
-        if (_Z_RC_IS_NULL(&ss.slice)) {
+        if (_z_slice_simple_rc_is_null(&ss.slice)) {
             res = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             break;
         }
@@ -327,14 +327,14 @@ bool _z_bytes_writer_check(const _z_bytes_writer_t *writer) { return !_z_bytes_w
 z_result_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
     assert(writer->cache != NULL);
 
-    if (_Z_RC_IN_VAL(&writer->cache->slice)->len > writer->cache->len) {
+    if (_z_slice_simple_rc_value(&writer->cache->slice)->len > writer->cache->len) {
         return _Z_RES_OK;
     }
     // otherwise we allocate a new cache
     _z_slice_t s = _z_slice_make(writer->cache->len * 2);
     if (s.start == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     _z_arc_slice_t cache = _z_arc_slice_wrap(&s, 0, 0);
-    if (_Z_RC_IS_NULL(&cache.slice)) {
+    if (_z_slice_simple_rc_is_null(&cache.slice)) {
         _z_slice_clear(&s);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -350,7 +350,7 @@ z_result_t _z_bytes_writer_init_cache(_z_bytes_writer_t *writer, const uint8_t *
     _z_slice_t s = _z_slice_copy_from_buf(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     _z_arc_slice_t arc_s = _z_arc_slice_wrap(&s, 0, len);
-    if (_Z_RC_IS_NULL(&arc_s.slice)) {
+    if (_z_slice_simple_rc_is_null(&arc_s.slice)) {
         _z_slice_clear(&s);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -367,9 +367,9 @@ z_result_t _z_bytes_writer_write_all(_z_bytes_writer_t *writer, const uint8_t *s
 
     while (len > 0) {
         _Z_RETURN_IF_ERR(_z_bytes_writer_ensure_cache(writer));
-        size_t remaining_in_cache = _Z_RC_IN_VAL(&writer->cache->slice)->len - writer->cache->len;
+        size_t remaining_in_cache = _z_slice_simple_rc_value(&writer->cache->slice)->len - writer->cache->len;
         size_t to_copy = remaining_in_cache < len ? remaining_in_cache : len;
-        uint8_t *buffer_start = (uint8_t *)_Z_RC_IN_VAL(&writer->cache->slice)->start + writer->cache->len;
+        uint8_t *buffer_start = (uint8_t *)_z_slice_simple_rc_value(&writer->cache->slice)->start + writer->cache->len;
         memcpy(buffer_start, src, to_copy);
         len -= to_copy;
         writer->cache->len += to_copy;

@@ -125,7 +125,7 @@ _z_zbuf_t _z_zbuf_make(size_t capacity) {
     }
     _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
-    if (_Z_RC_IS_NULL(&zbf._slice)) {
+    if (_z_slice_simple_rc_is_null(&zbf._slice)) {
         _Z_ERROR("slice rc creation failed");
         _z_iosli_clear(&zbf._ios);
     }
@@ -459,7 +459,7 @@ _z_zbuf_t _z_wbuf_moved_as_zbuf(_z_wbuf_t *wbf) {
     zbf._ios = _z_iosli_steal(ios);
     _z_slice_t s = _z_slice_from_buf_custom_deleter(zbf._ios._buf, zbf._ios._capacity, _z_delete_context_default());
     zbf._slice = _z_slice_simple_rc_new_from_val(&s);
-    if (_Z_RC_IS_NULL(&zbf._slice)) {
+    if (_z_slice_simple_rc_is_null(&zbf._slice)) {
         _Z_ERROR("slice rc creation failed");
     }
     zbf._ios._is_alloc = false;
