@@ -273,7 +273,7 @@ z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s)
 z_result_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice) {
     z_bytes_empty(bytes);
     _z_slice_t s = _z_slice_steal(&slice->_this._val);
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, s), _z_slice_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, &s), _z_slice_clear(&s));
     return _Z_RES_OK;
 }
 

@@ -186,7 +186,7 @@ _z_slice_t gen_slice(size_t len) {
 _z_bytes_t gen_payload(size_t len) {
     _z_slice_t pld = gen_slice(len);
     _z_bytes_t b;
-    _z_bytes_from_slice(&b, pld);
+    _z_bytes_from_slice(&b, &pld);
 
     return b;
 }
@@ -194,7 +194,7 @@ _z_bytes_t gen_payload(size_t len) {
 _z_bytes_t gen_bytes(size_t len) {
     _z_slice_t s = gen_slice(len);
     _z_bytes_t b;
-    _z_bytes_from_slice(&b, s);
+    _z_bytes_from_slice(&b, &s);
     return b;
 }
 

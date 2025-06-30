@@ -19,11 +19,11 @@
 #include <stdio.h>
 #include <string.h>
 
-_z_arc_slice_t _z_arc_slice_wrap(_z_slice_t s, size_t offset, size_t len) {
-    assert(offset + len <= s.len);
+_z_arc_slice_t _z_arc_slice_wrap(_z_slice_t* s, size_t offset, size_t len) {
+    assert(offset + len <= s->len);
     _z_arc_slice_t arc_s;
 
-    arc_s.slice = _z_slice_simple_rc_new_from_val(&s);
+    arc_s.slice = _z_slice_simple_rc_new_from_val(s);
     if (_Z_RC_IS_NULL(&arc_s.slice)) {
         return _z_arc_slice_empty();
     }

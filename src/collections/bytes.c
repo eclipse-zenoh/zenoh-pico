@@ -80,10 +80,10 @@ size_t _z_bytes_to_buf(const _z_bytes_t *bytes, uint8_t *dst, size_t len) {
 
     return len - remaining;
 }
-z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t s) {
+z_result_t _z_bytes_from_slice(_z_bytes_t *b, _z_slice_t *s) {
     *b = _z_bytes_null();
-    _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, s.len);
-    if (_z_arc_slice_len(&arc_s) != s.len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, s->len);
+    if (_z_arc_slice_len(&arc_s) != s->len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     return _z_arc_slice_svec_append(&b->_slices, &arc_s, true);
 }
 
@@ -92,7 +92,7 @@ z_result_t _z_bytes_from_buf(_z_bytes_t *b, const uint8_t *src, size_t len) {
     if (len == 0) return _Z_RES_OK;
     _z_slice_t s = _z_slice_copy_from_buf(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    return _z_bytes_from_slice(b, s);
+    return _z_bytes_from_slice(b, &s);
 }
 
 z_result_t _z_bytes_to_slice(const _z_bytes_t *bytes, _z_slice_t *s) {
@@ -333,7 +333,7 @@ z_result_t _z_bytes_writer_ensure_cache(_z_bytes_writer_t *writer) {
     // otherwise we allocate a new cache
     _z_slice_t s = _z_slice_make(writer->cache->len * 2);
     if (s.start == NULL) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _z_arc_slice_t cache = _z_arc_slice_wrap(s, 0, 0);
+    _z_arc_slice_t cache = _z_arc_slice_wrap(&s, 0, 0);
     if (_Z_RC_IS_NULL(&cache.slice)) {
         _z_slice_clear(&s);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -349,7 +349,7 @@ z_result_t _z_bytes_writer_init_cache(_z_bytes_writer_t *writer, const uint8_t *
 
     _z_slice_t s = _z_slice_copy_from_buf(src, len);
     if (s.len != len) return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _z_arc_slice_t arc_s = _z_arc_slice_wrap(s, 0, len);
+    _z_arc_slice_t arc_s = _z_arc_slice_wrap(&s, 0, len);
     if (_Z_RC_IS_NULL(&arc_s.slice)) {
         _z_slice_clear(&s);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
