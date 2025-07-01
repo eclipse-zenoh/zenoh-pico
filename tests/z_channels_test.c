@@ -21,20 +21,21 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define SEND(closure, v)                                                                            \
-    do {                                                                                            \
-        _z_bytes_t payload;                                                                         \
-        _z_bytes_from_slice(&payload, (_z_slice_t){.start = (const uint8_t *)v, .len = strlen(v)}); \
-        z_loaned_sample_t sample = {                                                                \
-            .keyexpr = _z_rname("key"),                                                             \
-            .payload = payload,                                                                     \
-            .timestamp = _z_timestamp_null(),                                                       \
-            .encoding = _z_encoding_null(),                                                         \
-            .kind = 0,                                                                              \
-            .qos = {0},                                                                             \
-            .attachment = _z_bytes_null(),                                                          \
-        };                                                                                          \
-        z_call(*z_loan(closure), &sample);                                                          \
+#define SEND(closure, v)                                                    \
+    do {                                                                    \
+        _z_bytes_t payload;                                                 \
+        _z_slice_t slice = {.start = (const uint8_t *)v, .len = strlen(v)}; \
+        _z_bytes_from_slice(&payload, &slice);                              \
+        z_loaned_sample_t sample = {                                        \
+            .keyexpr = _z_rname("key"),                                     \
+            .payload = payload,                                             \
+            .timestamp = _z_timestamp_null(),                               \
+            .encoding = _z_encoding_null(),                                 \
+            .kind = 0,                                                      \
+            .qos = {0},                                                     \
+            .attachment = _z_bytes_null(),                                  \
+        };                                                                  \
+        z_call(*z_loan(closure), &sample);                                  \
     } while (0);
 
 #define _RECV(handler, method, buf)                                             \

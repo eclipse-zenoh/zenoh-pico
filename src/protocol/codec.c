@@ -253,7 +253,7 @@ z_result_t _z_bytes_decode(_z_bytes_t *bs, _z_zbuf_t *zbf, _z_arc_slice_t *arcs)
     _z_slice_t s;
     _Z_RETURN_IF_ERR(_z_slice_decode(&s, zbf));
     // Calc offset
-    size_t offset = _z_ptr_u8_diff(s.start, _Z_RC_IN_VAL(&zbf->_slice)->start);
+    size_t offset = _z_ptr_u8_diff(s.start, _z_slice_simple_rc_value(&zbf->_slice)->start);
     // Get ownership of subslice
     *arcs = _z_arc_slice_wrap_slice_rc(&zbf->_slice, offset, s.len);
     _z_bytes_alias_arc_slice(bs, arcs);

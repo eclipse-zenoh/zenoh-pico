@@ -14,7 +14,10 @@
 
 #include "zenoh-pico/collections/refcount.h"
 
+#include <string.h>
+
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/pointers.h"
 
 #define _Z_RC_MAX_COUNT INT32_MAX  // Based on Rust lazy overflow check
 
@@ -233,28 +236,34 @@ typedef struct {
     _ZP_RC_CNT_TYPE _strong_cnt;
 } _z_inner_simple_rc_t;
 
-z_result_t _z_simple_rc_init(void** cnt) {
-    *cnt = z_malloc(sizeof(_z_inner_simple_rc_t));
-    if ((*cnt) == NULL) {
+#define RC_CNT_SIZE sizeof(_z_inner_simple_rc_t)
+
+static inline _z_inner_simple_rc_t* _z_simple_rc_inner(void* rc) { return (_z_inner_simple_rc_t*)rc; }
+
+void* _z_simple_rc_value(void* rc) { return (void*)_z_ptr_u8_offset((uint8_t*)rc, (ptrdiff_t)RC_CNT_SIZE); }
+
+z_result_t _z_simple_rc_init(void** rc, const void* val, size_t val_size) {
+    *rc = z_malloc(RC_CNT_SIZE + val_size);
+    if ((*rc) == NULL) {
+        _Z_ERROR("Failed to allocate rc");
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _ZP_RC_OP_INIT_STRONG_CNT((_z_inner_simple_rc_t*)*cnt)
+    _ZP_RC_OP_INIT_STRONG_CNT(_z_simple_rc_inner(*rc))
+    memcpy(_z_simple_rc_value(*rc), val, val_size);
     return _Z_RES_OK;
 }
 
-z_result_t _z_simple_rc_increase(void* cnt) {
-    _z_inner_simple_rc_t* c = (_z_inner_simple_rc_t*)cnt;
+void _z_simple_rc_increase(void* rc) {
+    _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
     _ZP_RC_OP_INCR_STRONG_CNT(c);
-    return _Z_RES_OK;
 }
 
-bool _z_simple_rc_decrease(void** cnt) {
-    _z_inner_simple_rc_t* c = (_z_inner_simple_rc_t*)*cnt;
+bool _z_simple_rc_decrease(void* rc) {
+    _z_inner_simple_rc_t* c = _z_simple_rc_inner(rc);
     if (_ZP_RC_OP_DECR_AND_CMP_STRONG(c, 1)) {
         return false;
     }
-    z_free(*cnt);
     return true;
 }
 
-size_t _z_simple_rc_strong_count(void* cnt) { return ((_z_inner_simple_rc_t*)cnt)->_strong_cnt; }
+size_t _z_simple_rc_strong_count(void* rc) { return (_z_simple_rc_inner(rc))->_strong_cnt; }

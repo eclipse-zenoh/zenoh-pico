@@ -273,7 +273,7 @@ z_result_t z_bytes_to_string(const z_loaned_bytes_t *bytes, z_owned_string_t *s)
 z_result_t z_bytes_from_slice(z_owned_bytes_t *bytes, z_moved_slice_t *slice) {
     z_bytes_empty(bytes);
     _z_slice_t s = _z_slice_steal(&slice->_this._val);
-    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, s), _z_slice_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_from_slice(&bytes->_val, &s), _z_slice_clear(&s));
     return _Z_RES_OK;
 }
 
@@ -382,7 +382,8 @@ bool z_bytes_slice_iterator_next(z_bytes_slice_iterator_t *iter, z_view_slice_t 
         return false;
     }
     const _z_arc_slice_t *arc_slice = _z_bytes_get_slice(iter->_bytes, iter->_slice_idx);
-    out->_val = _z_slice_alias_buf(_Z_RC_IN_VAL(&arc_slice->slice)->start + arc_slice->start, arc_slice->len);
+    out->_val =
+        _z_slice_alias_buf(_z_slice_simple_rc_value(&arc_slice->slice)->start + arc_slice->start, arc_slice->len);
     iter->_slice_idx++;
     return true;
 }
