@@ -16,7 +16,7 @@
 #include <randLIB.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 uint8_t zid_len(z_id_t id) {
     uint8_t len = 16;
     while (len > 0) {
@@ -108,7 +108,7 @@ int main(void) {
 }
 #else
 int main(void) {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING_UDP but this example requires it.\n");
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING but this example requires it.\n");
     return -2;
 }
 #endif

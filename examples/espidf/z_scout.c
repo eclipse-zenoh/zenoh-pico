@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 #define ESP_WIFI_SSID "SSID"
 #define ESP_WIFI_PASS "PASS"
 #define ESP_MAXIMUM_RETRY 5
@@ -173,7 +173,5 @@ void app_main() {
     z_scout(z_config_move(&config), z_closure_hello_move(&closure), NULL);
 }
 #else
-void app_main() {
-    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING_UDP but this example requires it.\n");
-}
+void app_main() { printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING but this example requires it.\n"); }
 #endif

@@ -41,7 +41,7 @@
 #include "zenoh-pico/utils/result.h"
 #include "zenoh-pico/utils/uuid.h"
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t *zid, _z_string_svec_t *locators) {
     z_result_t ret = _Z_RES_OK;
 
@@ -77,7 +77,7 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
     _ZP_UNUSED(config);
     _ZP_UNUSED(zid);
     _ZP_UNUSED(locators);
-    _Z_ERROR("Cannot scout as Z_FEATURE_SCOUTING_UDP was deactivated");
+    _Z_ERROR("Cannot scout as Z_FEATURE_SCOUTING was deactivated");
     return _Z_ERR_SCOUT_NO_RESULTS;
 }
 #endif

@@ -79,7 +79,7 @@ if (NOT WIFI_SUPPORT_ENABLED)
   declare_cache_var(Z_FEATURE_LINK_TCP 0 STRING "TCP support")
   declare_cache_var(Z_FEATURE_LINK_UDP_MULTICAST 0 STRING "UDP multicast support")
   declare_cache_var(Z_FEATURE_LINK_UDP_UNICAST 0 STRING "UDP unicast support")
-  declare_cache_var(Z_FEATURE_SCOUTING_UDP 0 STRING "Scouting support")
+  declare_cache_var(Z_FEATURE_SCOUTING 0 STRING "Scouting support")
 endif()
 
 declare_cache_var(Z_FEATURE_LINK_SERIAL 1 STRING "Serial support")

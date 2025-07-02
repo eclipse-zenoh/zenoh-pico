@@ -24,7 +24,7 @@ configure_zenoh_feature(CONFIG_ZENOH_PICO_RAWETH_TRANSPORT)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_TCP)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_UDP_UNICAST)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_UDP_MULTICAST)
-configure_zenoh_feature(CONFIG_ZENOH_PICO_SCOUTING_UDP)
+configure_zenoh_feature(CONFIG_ZENOH_PICO_SCOUTING)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_WS)
 
 

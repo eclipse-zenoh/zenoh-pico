@@ -578,7 +578,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_sta
                                 z_closure_drop_callback_t)
 
 /************* Primitives **************/
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
 
 z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello) { return hello->_whatami; }

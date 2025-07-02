@@ -16,7 +16,7 @@
 #include <WiFi.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 // WiFi-specific parameters
 #define SSID "SSID"
 #define PASS "PASS"
@@ -121,7 +121,7 @@ void loop() {
 }
 #else
 void setup() {
-    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING_UDP but this example requires it.");
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING but this example requires it.");
     return;
 }
 void loop() {}

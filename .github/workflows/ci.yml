@@ -188,6 +188,18 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 CMAKE_GENERATOR=Ninja make
 
+  no_scouting_build:
+    name: Check compilation without scouting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build without scouting
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_SCOUTING=0 CMAKE_GENERATOR=Ninja make      
+
   no_interest_build:
     name: Check compilation without interests
     runs-on: ubuntu-latest

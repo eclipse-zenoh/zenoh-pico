@@ -1353,7 +1353,7 @@ const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str);
  */
 z_priority_t z_priority_default(void);
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
 /**
  * Returns id of Zenoh entity that transmitted hello message.
  *
