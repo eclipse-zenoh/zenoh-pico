@@ -34,7 +34,7 @@ z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg);
 z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg);
 
 /*------------------ Discovery ------------------*/
-
+#if Z_FEATURE_SCOUTING_UDP == 1
 /**
  * Scout for routers and/or peers.
  *
@@ -46,7 +46,7 @@ z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg
  */
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop);
-
+#endif
 /*------------------ Declarations ------------------*/
 
 /**

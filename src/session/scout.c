@@ -28,7 +28,8 @@
 
 #define SCOUT_BUFFER_SIZE 32
 
-_z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, bool exit_on_first) {
+static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period,
+                                        bool exit_on_first) {
     // Define an empty array
     _z_hello_slist_t *ret = NULL;
     z_result_t err = _Z_RES_OK;
