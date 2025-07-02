@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#if Z_FEATURE_SCOUTING_UDP == 1
 void fprintzid(FILE *stream, z_id_t zid) {
     unsigned int zidlen = _z_id_len(zid);
     if (zidlen == 0) {
@@ -92,3 +93,8 @@ void app_main(void) {
         z_sleep_s(1);
     }
 }
+#else
+void app_main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING_UDP but this example requires it.\n");
+}
+#endif
