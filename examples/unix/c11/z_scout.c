@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_SCOUTING == 1
 void fprintzid(FILE *stream, z_id_t zid) {
     unsigned int zidlen = _z_id_len(zid);
     if (zidlen == 0) {
@@ -92,3 +93,9 @@ int main(int argc, char **argv) {
     sleep(1);
     return 0;
 }
+#else
+int main(void) {
+    printf("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING but this example requires it.\n");
+    return -2;
+}
+#endif

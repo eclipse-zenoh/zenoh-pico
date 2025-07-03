@@ -1353,6 +1353,7 @@ const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str);
  */
 z_priority_t z_priority_default(void);
 
+#if Z_FEATURE_SCOUTING == 1
 /**
  * Returns id of Zenoh entity that transmitted hello message.
  *
@@ -1413,6 +1414,7 @@ void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *loc
 z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out);
 
 /************* Primitives **************/
+
 /**
  * Scouts for other Zenoh entities like routers and/or peers.
  *
@@ -1425,6 +1427,15 @@ z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_ou
  *   ``0`` if scouting was successfully triggered, ``negative value`` otherwise.
  */
 z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, const z_scout_options_t *options);
+
+/**
+ * Builds a :c:type:`z_scout_options_t` with default value.
+ *
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`z_scout_options_t`.
+ */
+void z_scout_options_default(z_scout_options_t *options);
+#endif
 
 /**
  * Opens a Zenoh session.
@@ -2585,14 +2596,6 @@ z_result_t zp_send_keep_alive(const z_loaned_session_t *zs, const zp_send_keep_a
  *   options: Pointer to an uninitialized :c:type:`zp_send_join_options_t`.
  */
 void zp_send_join_options_default(zp_send_join_options_t *options);
-
-/**
- * Builds a :c:type:`z_scout_options_t` with default value.
- *
- * Parameters:
- *   options: Pointer to an uninitialized :c:type:`z_scout_options_t`.
- */
-void z_scout_options_default(z_scout_options_t *options);
 
 /**
  * Executes a single send join procedure.

@@ -69,6 +69,7 @@ z_result_t _z_send_undeclare(_z_session_t *zn, const _z_network_message_t *n_msg
     return ret;
 }
 /*------------------ Scouting ------------------*/
+#if Z_FEATURE_SCOUTING == 1
 void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, const uint32_t timeout,
               _z_closure_hello_callback_t callback, void *arg_call, _z_drop_handler_t dropper, void *arg_drop) {
     _z_hello_slist_t *hellos = _z_scout_inner(what, zid, locator, timeout, false);
@@ -83,6 +84,7 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
     }
     _z_hello_slist_free(&hellos);
 }
+#endif
 
 /*------------------ Resource Declaration ------------------*/
 uint16_t _z_declare_resource(_z_session_t *zn, const _z_keyexpr_t *keyexpr) {

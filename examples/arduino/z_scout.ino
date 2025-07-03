@@ -16,6 +16,7 @@
 #include <WiFi.h>
 #include <zenoh-pico.h>
 
+#if Z_FEATURE_SCOUTING == 1
 // WiFi-specific parameters
 #define SSID "SSID"
 #define PASS "PASS"
@@ -118,3 +119,10 @@ void loop() {
     printf("Scouting...\n");
     z_scout(z_config_move(&config), z_closure_hello_move(&closure), NULL);
 }
+#else
+void setup() {
+    Serial.println("ERROR: Zenoh pico was compiled without Z_FEATURE_SCOUTING but this example requires it.");
+    return;
+}
+void loop() {}
+#endif

@@ -55,7 +55,7 @@ config ZENOH_PICO_LINK_UDP_MULTICAST
 	help
 	  UDP Multicast
 
-config ZENOH_PICO_SCOUTING_UDP
+config ZENOH_PICO_SCOUTING
 	bool "Scouting UDP"
 	help
 	  Scouting UDP

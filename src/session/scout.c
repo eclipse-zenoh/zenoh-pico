@@ -22,13 +22,14 @@
 #include "zenoh-pico/transport/multicast.h"
 #include "zenoh-pico/utils/logging.h"
 
-#if Z_FEATURE_SCOUTING_UDP == 1 && Z_FEATURE_LINK_UDP_UNICAST == 0
+#if Z_FEATURE_SCOUTING == 1 && Z_FEATURE_LINK_UDP_UNICAST == 0
 #error "Scouting UDP requires UDP unicast links to be enabled (Z_FEATURE_LINK_UDP_UNICAST = 1 in config.h)"
 #endif
 
 #define SCOUT_BUFFER_SIZE 32
 
-_z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period, bool exit_on_first) {
+static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, unsigned long period,
+                                        bool exit_on_first) {
     // Define an empty array
     _z_hello_slist_t *ret = NULL;
     z_result_t err = _Z_RES_OK;
@@ -36,7 +37,7 @@ _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locator, uns
     _z_endpoint_t ep;
     err = _z_endpoint_from_string(&ep, locator);
 
-#if Z_FEATURE_SCOUTING_UDP == 1
+#if Z_FEATURE_SCOUTING == 1
     _z_string_t cmp_str = _z_string_alias_str(UDP_SCHEMA);
     if ((err == _Z_RES_OK) && _z_string_equals(&ep._locator._protocol, &cmp_str)) {
         _z_endpoint_clear(&ep);

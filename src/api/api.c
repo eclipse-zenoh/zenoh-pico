@@ -537,38 +537,6 @@ _Z_VIEW_FUNCTIONS_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_null)
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_hello_t, hello, _z_hello_check, _z_hello_null, _z_hello_copy, _z_hello_move,
                               _z_hello_clear)
 
-z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
-
-z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello) { return hello->_whatami; }
-
-const z_loaned_string_array_t *zp_hello_locators(const z_loaned_hello_t *hello) { return &hello->_locators; }
-
-void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *locators_out) {
-    z_string_array_clone(locators_out, &hello->_locators);
-}
-
-static const char *WHAT_AM_I_TO_STRING_MAP[8] = {
-    "Other",              // 0
-    "Router",             // 0b1
-    "Peer",               // 0b01
-    "Router|Peer",        // 0b11,
-    "Client",             // 0b100
-    "Router|Client",      // 0b101
-    "Peer|Client",        // 0b110
-    "Router|Peer|Client"  // 0b111
-};
-
-z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out) {
-    uint8_t idx = (uint8_t)whatami;
-    if (idx >= _ZP_ARRAY_SIZE(WHAT_AM_I_TO_STRING_MAP) || idx == 0) {
-        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[0]);
-        return _Z_ERR_INVALID;
-    } else {
-        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[idx]);
-    }
-    return _Z_RES_OK;
-}
-
 bool _z_string_array_check(const _z_string_svec_t *val) { return !_z_string_svec_is_empty(val); }
 z_result_t _z_string_array_copy(_z_string_svec_t *dst, const _z_string_svec_t *src) {
     return _z_string_svec_copy(dst, src, true);
@@ -610,6 +578,39 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_sta
                                 z_closure_drop_callback_t)
 
 /************* Primitives **************/
+#if Z_FEATURE_SCOUTING == 1
+z_id_t z_hello_zid(const z_loaned_hello_t *hello) { return hello->_zid; }
+
+z_whatami_t z_hello_whatami(const z_loaned_hello_t *hello) { return hello->_whatami; }
+
+const z_loaned_string_array_t *zp_hello_locators(const z_loaned_hello_t *hello) { return &hello->_locators; }
+
+void z_hello_locators(const z_loaned_hello_t *hello, z_owned_string_array_t *locators_out) {
+    z_string_array_clone(locators_out, &hello->_locators);
+}
+
+static const char *WHAT_AM_I_TO_STRING_MAP[8] = {
+    "Other",              // 0
+    "Router",             // 0b1
+    "Peer",               // 0b01
+    "Router|Peer",        // 0b11,
+    "Client",             // 0b100
+    "Router|Client",      // 0b101
+    "Peer|Client",        // 0b110
+    "Router|Peer|Client"  // 0b111
+};
+
+z_result_t z_whatami_to_view_string(z_whatami_t whatami, z_view_string_t *str_out) {
+    uint8_t idx = (uint8_t)whatami;
+    if (idx >= _ZP_ARRAY_SIZE(WHAT_AM_I_TO_STRING_MAP) || idx == 0) {
+        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[0]);
+        return _Z_ERR_INVALID;
+    } else {
+        z_view_string_from_str(str_out, WHAT_AM_I_TO_STRING_MAP[idx]);
+    }
+    return _Z_RES_OK;
+}
+
 typedef struct __z_hello_handler_wrapper_t {
     z_closure_hello_callback_t user_call;
     void *ctx;
@@ -678,6 +679,7 @@ z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, 
 
     return ret;
 }
+#endif
 
 void z_open_options_default(z_open_options_t *options) { options->__dummy = 0; }
 
