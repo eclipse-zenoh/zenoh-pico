@@ -146,6 +146,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         // If the new node has less representing capabilities then it is incompatible to communication
         if ((iam._body._init._seq_num_res < param->_seq_num_res) ||
             (iam._body._init._req_id_res < param->_req_id_res) || (iam._body._init._batch_size < param->_batch_size)) {
+            _Z_INFO("Couldn't open session because distant node is incompatible config wise.");
             ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
     }
