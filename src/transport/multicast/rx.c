@@ -313,6 +313,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         // If the new node has less representing capabilities then we can't communicate
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
+            _Z_INFO("Couldn't accept peer because distant node is incompatible config wise.");
             return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
         // Initialize entry

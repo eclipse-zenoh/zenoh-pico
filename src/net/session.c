@@ -189,6 +189,8 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         if (len == 0) {
             return _Z_ERR_SCOUT_NO_RESULTS;
         }
+        // We can only open on scout locators
+        peer_op = _Z_PEER_OP_OPEN;
         // Loop on locators until we successfully open one
         for (size_t i = 0; i < len; i++) {
             _z_string_t *locator = _z_string_svec_get(&locators, i);
