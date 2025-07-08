@@ -600,6 +600,7 @@ void test_wbuf_wrap_bytes(void) {
     for (size_t i = 0; i < _z_iosli_readable(ios); i++) {
         assert(ios->_buf[i] == 0x55);
     }
+    _z_wbuf_clear(&wbf);
     printf("Ok\n");
 }
 
