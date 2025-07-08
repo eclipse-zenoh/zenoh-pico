@@ -554,6 +554,56 @@ void wbuf_add_iosli(void) {
     _z_wbuf_clear(&wbf);
 }
 
+#define VAL_SIZE 20
+#define PAYLOAD_SIZE 32
+
+void test_wbuf_wrap_bytes(void) {
+    printf("Testing wbuf_wrap_bytes... ");
+    // Emulate eclipse-zenoh/zenoh-pico issue #979
+    uint8_t val[VAL_SIZE];
+    memset(val, 0xaa, sizeof(val));
+    uint8_t payload[PAYLOAD_SIZE];
+    memset(payload, 0x55, sizeof(payload));
+    uint16_t payload_size = _ZP_ARRAY_SIZE(payload);
+    _z_wbuf_t wbf = _z_wbuf_make(PAYLOAD_SIZE, true);
+    // Write header
+    _z_wbuf_write_bytes(&wbf, val, 0, sizeof(val));
+    // Write attachment
+    _z_wbuf_write_bytes(&wbf, (uint8_t *)&payload_size, 0, sizeof(payload_size));
+    _z_wbuf_wrap_bytes(&wbf, payload, 0, sizeof(payload));
+    // Write payload
+    _z_wbuf_write_bytes(&wbf, (uint8_t *)&payload_size, 0, sizeof(payload_size));
+    _z_wbuf_wrap_bytes(&wbf, payload, 0, sizeof(payload));
+    assert(_z_iosli_svec_len(&wbf._ioss) == 5);
+    // Check header + attachment size
+    _z_iosli_t *ios = _z_wbuf_get_iosli(&wbf, 0);
+    assert(_z_iosli_readable(ios) == VAL_SIZE + sizeof(payload_size));
+    for (size_t i = 0; i < _z_iosli_readable(ios) - sizeof(payload_size); i++) {
+        assert(ios->_buf[i] == 0xaa);
+    }
+    assert(ios->_buf[_z_iosli_readable(ios) - 2] == (payload_size & 0xff));
+    assert(ios->_buf[_z_iosli_readable(ios) - 1] == (payload_size >> 8));
+    // Check attachment
+    ios = _z_wbuf_get_iosli(&wbf, 1);
+    assert(_z_iosli_readable(ios) == PAYLOAD_SIZE);
+    for (size_t i = 0; i < _z_iosli_readable(ios); i++) {
+        assert(ios->_buf[i] == 0x55);
+    }
+    // Check payload size
+    ios = _z_wbuf_get_iosli(&wbf, 2);
+    assert(_z_iosli_readable(ios) == sizeof(payload_size));
+    assert(ios->_buf[0] == (payload_size & 0xff));
+    assert(ios->_buf[1] == (payload_size >> 8));
+    // Check payload
+    ios = _z_wbuf_get_iosli(&wbf, 3);
+    assert(_z_iosli_readable(ios) == PAYLOAD_SIZE);
+    for (size_t i = 0; i < _z_iosli_readable(ios); i++) {
+        assert(ios->_buf[i] == 0x55);
+    }
+    _z_wbuf_clear(&wbf);
+    printf("Ok\n");
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -578,4 +628,5 @@ int main(void) {
         // Reusable WBuf
         wbuf_reusable_write_zbuf_read();
     }
+    test_wbuf_wrap_bytes();
 }
