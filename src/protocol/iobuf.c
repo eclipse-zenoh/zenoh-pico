@@ -199,7 +199,7 @@ size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_svec_len(&wbf->
 _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
     _z_wbuf_t wbf;
     if (is_expandable) {
-        wbf._ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, payload, misc, attachment, misc
+        wbf._ioss = _z_iosli_svec_make(5);  // Dfrag buffer layout: misc, attachment, misc, payload, misc
         wbf._expansion_step = capacity;
     } else {
         wbf._ioss = _z_iosli_svec_make(1);
@@ -355,7 +355,7 @@ z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, 
     // If svec expanded, ios is invalid, refresh pointer.
     ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx - 1);
     // Set remaining space as a new ioslice
-    wios = _z_iosli_wrap(ios->_buf, curr_space, 0, 0);
+    wios = _z_iosli_wrap(_z_ptr_u8_offset(ios->_buf, (ptrdiff_t)ios->_w_pos), curr_space, 0, 0);
     _z_wbuf_add_iosli(wbf, &wios);
     return ret;
 }
