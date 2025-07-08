@@ -190,6 +190,68 @@ z_result_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *le
 z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
+ * Appends a key expression to another key expression (automatically inserting '/'). The resulting key expression is
+ * automatically canonized.
+ *
+ * Parameters:
+ *   prefix: Pointer to :c:type:`z_owned_keyexpr_t` to the key expression to append to.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the key expression to append.
+ *
+ * Return:
+ *   ``0`` if append successful, ``negative value`` otherwise.
+ */
+z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right);
+
+/**
+ * Appends a string segment to a key expression (automatically inserting '/'). The resulting key expression is
+ * automatically canonized.
+ *
+ * Parameters:
+ *   prefix: Pointer to :c:type:`z_owned_keyexpr_t` to the key expression to append to.
+ *   right: Pointer to a character array representing the string to append.
+ *   len: Length of the string segment in ``right`` to append.
+ *
+ * Return:
+ *   ``0`` if append successful, ``negative value`` otherwise.
+ */
+z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len);
+
+/**
+ * Appends a null-terminated string to a key expression (automatically inserting '/'). The resulting key expression is
+ * automatically canonized.
+ *
+ * Parameters:
+ *   prefix: Pointer to :c:type:`z_owned_keyexpr_t` to the key expression to append to.
+ *   right: Pointer to a null-terminated string to append.
+ *
+ * Return:
+ *   ``0`` if append successful, ``negative value`` otherwise.
+ */
+static inline z_result_t _z_keyexpr_append_str(z_owned_keyexpr_t *prefix, const char *right) {
+    // SAFETY: right is documented to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
+    return _z_keyexpr_append_substr(prefix, right, right ? strlen(right) : 0);
+}
+
+/**
+ * Appends multiple null-terminated strings to a key expression (automatically inserting '/' between each component).
+ * The resulting key expression is automatically canonized.
+ *
+ * Parameters:
+ *   prefix: Pointer to :c:type:`z_owned_keyexpr_t` representing the key expression to append to.
+ *   strs: Array of ``count`` null-terminated strings to append, in order.
+ *   count: Number of strings in the array.
+ *
+ * Return:
+ *   ``0`` if all appends were successful, ``negative value`` if any append failed.
+ */
+z_result_t _z_keyexpr_append_str_array(z_owned_keyexpr_t *prefix, const char *strs[], size_t count);
+
+#define _Z_KEYEXPR_APPEND_STR_ARRAY(prefix, ...)                       \
+    _z_keyexpr_append_str_array(prefix, (const char *[]){__VA_ARGS__}, \
+                                sizeof((const char *[]){__VA_ARGS__}) / sizeof(const char *))
+
+/**
  * Returns the relation between `left` and `right` from the `left`'s point of view.
  *
  * Note that this is slower than `z_keyexpr_intersects` and `keyexpr_includes`, so you should favor these methods for
@@ -1815,6 +1877,8 @@ const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publis
  *
  * Return:
  *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher);
 #endif
@@ -2465,6 +2529,21 @@ z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
  */
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
+
+#if defined(Z_FEATURE_UNSTABLE_API)
+/**
+ * Gets the entity global Id from a subscriber.
+ *
+ * Parameters:
+ *   subscriber: Pointer to a :c:type:`z_loaned_subscriber_t` to get the entity global Id from.
+ *
+ * Return:
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_entity_global_id_t z_subscriber_id(const z_loaned_subscriber_t *subscriber);
+#endif
 #endif
 
 #if Z_FEATURE_BATCHING == 1

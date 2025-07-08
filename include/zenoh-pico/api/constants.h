@@ -101,6 +101,16 @@ typedef enum {
 } z_keyexpr_intersection_level_t;
 
 /**
+ * Key expression constant strings.
+ */
+#define _Z_KEYEXPR_ADV_PREFIX "@adv"
+#define _Z_KEYEXPR_PUB "pub"
+#define _Z_KEYEXPR_SUB "sub"
+#define _Z_KEYEXPR_UHLC "uhlc"
+#define _Z_KEYEXPR_EMPTY "_"
+#define _Z_KEYEXPR_STARSTAR "**"
+
+/**
  * Sample kind values.
  *
  * Enumerators:

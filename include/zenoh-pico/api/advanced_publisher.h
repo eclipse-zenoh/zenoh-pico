@@ -35,6 +35,7 @@ typedef enum {
 typedef struct {
     z_owned_publisher_t _publisher;
     _ze_advanced_cache_t *_cache;
+    bool _has_liveliness;
     z_owned_liveliness_token_t _liveliness;
     _ze_advanced_publisher_sequencing_t _sequencing;
     _z_seqnumber_t _seqnumber;
@@ -61,7 +62,7 @@ _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
-typedef enum ze_advanced_publisher_heartbeat_mode_t {
+typedef enum {
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE,
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC,
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC,
@@ -84,7 +85,7 @@ typedef enum ze_advanced_publisher_heartbeat_mode_t {
  */
 typedef struct {
     bool is_enabled;
-    enum ze_advanced_publisher_heartbeat_mode_t heartbeat_mode;
+    ze_advanced_publisher_heartbeat_mode_t heartbeat_mode;
     uint64_t heartbeat_period_ms;
 } ze_advanced_publisher_sample_miss_detection_options_t;
 

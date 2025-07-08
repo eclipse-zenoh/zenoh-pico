@@ -43,6 +43,7 @@ static inline void *_z_list_value(const _z_list_t *xs) { return xs->_val; }
 static inline _z_list_t *_z_list_next(const _z_list_t *xs) { return xs->_next; }
 
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
+_z_list_t *_z_list_push_after(_z_list_t *xs, void *x);
 _z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x);
 

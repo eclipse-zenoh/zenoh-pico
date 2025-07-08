@@ -23,6 +23,13 @@
 extern "C" {
 #endif
 
+static const double _Z_TIME_RANGE_U_TO_SECS = 0.000001;
+static const double _Z_TIME_RANGE_MS_TO_SECS = 0.001;
+static const double _Z_TIME_RANGE_M_TO_SECS = 60.0;
+static const double _Z_TIME_RANGE_H_TO_SECS = 3600.0;
+static const double _Z_TIME_RANGE_D_TO_SECS = 86400.0;
+static const double _Z_TIME_RANGE_W_TO_SECS = 604800.0;
+
 typedef struct {
     enum { _Z_TIME_BOUND_INCLUSIVE, _Z_TIME_BOUND_EXCLUSIVE, _Z_TIME_BOUND_UNBOUNDED } bound;
     double now_offset;
@@ -40,6 +47,22 @@ typedef struct {
  * If valid range will contain the result.
  */
 bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range);
+
+/**
+ * Converts a time bound into a string.
+ *
+ * Returns true if the time bound was successfully converted, false otherwise.
+ * If valid buf will contain the result.
+ */
+bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_len);
+
+/**
+ * Converts a time range into a string.
+ *
+ * Returns true if the time range was successfully converted, false otherwise.
+ * If valid buf will contain the result.
+ */
+bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_len);
 
 /**
  * Resolves an offset to a base time.

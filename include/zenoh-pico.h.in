@@ -24,6 +24,7 @@
 #define ZENOH_PICO_TWEAK @ZENOH_PICO_TWEAK@
 
 #include "zenoh-pico/api/advanced_publisher.h"
+#include "zenoh-pico/api/advanced_subscriber.h"
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/encoding.h"
 #include "zenoh-pico/api/handlers.h"
