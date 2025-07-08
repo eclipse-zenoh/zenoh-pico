@@ -23,6 +23,9 @@
 // Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc._val)
 
+// Checks if simple refcounted type is initialized
+#define _Z_SIMPLE_RC_IS_NULL(arg) ((arg)->_val == NULL)
+
 // Owned/Loaned/View type macros
 //
 // !!! FOR INTERNAL USAGE ONLY !!!

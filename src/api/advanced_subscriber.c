@@ -101,14 +101,14 @@ static bool _ze_advanced_subscriber_handle_sample(_ze_advanced_subscriber_state_
 
 void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void *ctx) {
     _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_state)) {
-        _ze_advanced_subscriber_handle_sample(rc_state->_val, sample);
+    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
+        _ze_advanced_subscriber_handle_sample(_ze_advanced_subscriber_state_simple_rc_value(rc_state), sample);
     }
 }
 
 void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
     _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_state)) {
+    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
         _ze_advanced_subscriber_state_t *state = rc_state->_val;
         if (state->_dropper != NULL) {
             state->_dropper(state->_ctx);
@@ -125,7 +125,7 @@ void _ze_advanced_subscriber_reply_handler(z_loaned_reply_t *reply, void *ctx) {
 
 void _ze_advanced_subscriber_reply_drop_handler(void *ctx) {
     _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_state)) {
+    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
         _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
         z_free(ctx);
     }
@@ -138,7 +138,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 
 void _ze_advanced_subscriber_liveliness_drop_handler(void *ctx) {
     _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_state)) {
+    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
         _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
         z_free(ctx);
     }
@@ -151,7 +151,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
 
 void _ze_advanced_subscriber_heartbeat_drop_handler(void *ctx) {
     _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_state)) {
+    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
         _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
         z_free(ctx);
     }
@@ -200,23 +200,21 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
     }
 
     // Create Advanced Subscriber state
-    _ze_advanced_subscriber_state_t *state = z_malloc((sizeof(_ze_advanced_subscriber_state_t)));
-    *state = _ze_advanced_subscriber_state_null();
-    state->_callback = callback->_this._val.call;
-    state->_dropper = callback->_this._val.drop;
-    state->_ctx = callback->_this._val.context;
+    _ze_advanced_subscriber_state_t state = _ze_advanced_subscriber_state_null();
+    state._callback = callback->_this._val.call;
+    state._dropper = callback->_this._val.drop;
+    state._ctx = callback->_this._val.context;
     z_internal_closure_sample_null(&callback->_this);
 
-    sub->_val._state = _ze_advanced_subscriber_state_simple_rc_new(state);
-    if (_Z_RC_IS_NULL(&sub->_val._state)) {
-        z_free(state);
+    sub->_val._state = _ze_advanced_subscriber_state_simple_rc_new_from_val(&state);
+    if (_Z_SIMPLE_RC_IS_NULL(&sub->_val._state)) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     // Declare subscriber
     _ze_advanced_subscriber_state_simple_rc_t *sub_state =
         _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-    if (_Z_RC_IS_NULL(sub_state)) {
+    if (_Z_SIMPLE_RC_IS_NULL(sub_state)) {
         _ze_advanced_subscriber_state_simple_rc_drop(&sub->_val._state);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -250,7 +248,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
 
             _ze_advanced_subscriber_state_simple_rc_t *liveliness_sub_state =
                 _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-            if (_Z_RC_IS_NULL(sub_state)) {
+            if (_Z_SIMPLE_RC_IS_NULL(sub_state)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                 _ze_advanced_subscriber_drop(&sub->_val);
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -278,7 +276,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         opt.recovery.last_sample_miss_detection.periodic_queries_period_ms == 0) {
         _ze_advanced_subscriber_state_simple_rc_t *heartbeat_sub_state =
             _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-        if (_Z_RC_IS_NULL(heartbeat_sub_state)) {
+        if (_Z_SIMPLE_RC_IS_NULL(heartbeat_sub_state)) {
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
             _ze_advanced_subscriber_drop(&sub->_val);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -309,11 +307,11 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_join(&ke, keyexpr, z_keyexpr_loan(&suffix)),
                                z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_subscriber_drop(&sub->_val));
-        _Z_CLEAN_RETURN_IF_ERR(z_liveliness_declare_token(zs, &state->_token, z_keyexpr_loan(&ke), NULL),
+        _Z_CLEAN_RETURN_IF_ERR(z_liveliness_declare_token(zs, &state._token, z_keyexpr_loan(&ke), NULL),
                                z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); z_keyexpr_drop(z_keyexpr_move(&ke));
                                _ze_advanced_subscriber_drop(&sub->_val));
-        state->_has_token = true;
+        state._has_token = true;
         z_keyexpr_drop(z_keyexpr_move(&ke));
         z_keyexpr_drop(z_keyexpr_move(&suffix));
     }
