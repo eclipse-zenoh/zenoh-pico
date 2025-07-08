@@ -78,7 +78,8 @@ void _z_transport_peer_multicast_copy(_z_transport_peer_multicast_t *dst, const 
 bool _z_transport_peer_multicast_eq(const _z_transport_peer_multicast_t *left,
                                     const _z_transport_peer_multicast_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, _z_transport_peer_multicast_size,
-               _z_transport_peer_multicast_clear, _z_transport_peer_multicast_copy, _z_noop_move)
+               _z_transport_peer_multicast_clear, _z_transport_peer_multicast_copy, _z_noop_move,
+               _z_transport_peer_multicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_multicast, _z_transport_peer_multicast_t, true)
 
 typedef enum _z_unicast_peer_flow_state_e {
@@ -105,7 +106,8 @@ void _z_transport_peer_unicast_copy(_z_transport_peer_unicast_t *dst, const _z_t
 size_t _z_transport_peer_unicast_size(const _z_transport_peer_unicast_t *src);
 bool _z_transport_peer_unicast_eq(const _z_transport_peer_unicast_t *left, const _z_transport_peer_unicast_t *right);
 _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transport_peer_unicast_size,
-               _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move)
+               _z_transport_peer_unicast_clear, _z_transport_peer_unicast_copy, _z_noop_move,
+               _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
 // Forward type declaration to avoid cyclical include

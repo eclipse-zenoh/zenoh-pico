@@ -236,6 +236,18 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 CMAKE_GENERATOR=Ninja make
 
+  advanced_subscriber_build:
+    name: Check compilation with advanced subscriber
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with advanced subscriber
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
+
   st_build:
     needs: zenoh_build
     name: Build and test in single thread on ubuntu-latest

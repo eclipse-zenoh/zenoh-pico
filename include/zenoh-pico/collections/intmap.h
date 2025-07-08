@@ -19,84 +19,102 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/hashmap.h"
 #include "zenoh-pico/collections/list.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*-------- int-void map --------*/
 #define _Z_DEFAULT_INT_MAP_CAPACITY 16
 
-/**
- * An entry of a hashmap with integer keys.
- *
- * Members:
- *   size_t key: the hashed key of the value
- *   void *value: the value
- */
-typedef struct {
-    size_t _key;
-    void *_val;
-} _z_int_void_map_entry_t;
+typedef _z_hashmap_t _z_int_void_map_t;
+typedef _z_hashmap_entry_t _z_int_void_map_entry_t;
+typedef _z_hashmap_iterator_t _z_int_void_map_iterator_t;
 
-/**
- * An hashmap with integer keys.
- *
- * Members:
- *   z_intmap_t **vals: the linked intmap containing the values
- *   size_t capacity: the capacity of the hashmap
- *   size_t len: the actual length of the hashmap
- */
-typedef struct {
-    size_t _capacity;
-    _z_list_t **_vals;
-} _z_int_void_map_t;
+static inline size_t _z_int_void_map_hash(const void *key) { return *(const size_t *)key; }
 
-/**
- * An iterator of an hashmap with integer keys.
- */
-typedef struct {
-    _z_int_void_map_entry_t *_entry;
-
-    const _z_int_void_map_t *_map;
-    size_t _idx;
-    _z_list_t *_list_ptr;
-} _z_int_void_map_iterator_t;
-
-void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity);
-_z_int_void_map_t _z_int_void_map_make(size_t capacity);
-
-void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f, bool replace);
-void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k);
-_z_list_t *_z_int_void_map_get_all(const _z_int_void_map_t *map, size_t k);
-void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f);
-
-size_t _z_int_void_map_capacity(const _z_int_void_map_t *map);
-size_t _z_int_void_map_len(const _z_int_void_map_t *map);
-bool _z_int_void_map_is_empty(const _z_int_void_map_t *map);
-
-z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c);
-_z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f);
-
-void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f);
-void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f);
-static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_t *src) {
-    *dst = *src;
-    *src = _z_int_void_map_make(src->_capacity);
+static inline bool _z_int_void_map_eq(const void *left, const void *right) {
+    const _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
+    const _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
+    return *(size_t *)l->_key == *(size_t *)r->_key;
 }
 
-_z_int_void_map_iterator_t _z_int_void_map_iterator_make(const _z_int_void_map_t *map);
-bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter);
-size_t _z_int_void_map_iterator_key(const _z_int_void_map_iterator_t *iter);
-void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter);
+static inline void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity) {
+    _z_hashmap_init(map, capacity, _z_int_void_map_hash, _z_int_void_map_eq);
+}
+
+static inline _z_int_void_map_t _z_int_void_map_make(size_t capacity) {
+    return _z_hashmap_make(capacity, _z_int_void_map_hash, _z_int_void_map_eq);
+}
+
+static inline void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f,
+                                           bool replace) {
+    size_t *key = (size_t *)z_malloc(sizeof(size_t));
+    if (key == NULL) {
+        _Z_ERROR("Failed to allocate key for intmap.");
+        return NULL;
+    }
+    *key = k;
+    return _z_hashmap_insert(map, key, v, f, replace);
+}
+
+static inline void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) { return _z_hashmap_get(map, &k); }
+
+static inline _z_list_t *_z_int_void_map_get_all(const _z_int_void_map_t *map, size_t k) {
+    return _z_hashmap_get_all(map, &k);
+}
+
+static inline void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f) {
+    _z_hashmap_remove(map, &k, f);
+}
+
+static inline size_t _z_int_void_map_capacity(const _z_int_void_map_t *map) { return _z_hashmap_capacity(map); }
+
+static inline size_t _z_int_void_map_len(const _z_int_void_map_t *map) { return _z_hashmap_len(map); }
+
+static inline bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_hashmap_is_empty(map); }
+
+static inline z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src,
+                                              z_element_clone_f f_c) {
+    return _z_hashmap_copy(dst, src, f_c);
+}
+
+static inline _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c,
+                                                      z_element_free_f f_f) {
+    return _z_hashmap_clone(src, f_c, f_f);
+}
+
+static inline void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f) { _z_hashmap_clear(map, f); }
+
+static inline void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f) { _z_hashmap_free(map, f); }
+
+static inline void _z_int_void_map_move(_z_int_void_map_t *dst, _z_int_void_map_t *src) { _z_hashmap_move(dst, src); }
+
+static inline _z_int_void_map_iterator_t _z_int_void_map_iterator_make(const _z_int_void_map_t *map) {
+    return _z_hashmap_iterator_make(map);
+}
+
+static inline bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter) {
+    return _z_hashmap_iterator_next(iter);
+}
+
+static inline size_t _z_int_void_map_iterator_key(const _z_int_void_map_iterator_t *iter) {
+    return *((size_t *)_z_hashmap_iterator_key(iter));
+}
+
+static inline void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter) {
+    return _z_hashmap_iterator_value(iter);
+}
 
 #define _Z_INT_MAP_DEFINE(name, type)                                                                           \
     typedef _z_int_void_map_entry_t name##_intmap_entry_t;                                                      \
     static inline void name##_intmap_entry_elem_free(void **e) {                                                \
         name##_intmap_entry_t *ptr = (name##_intmap_entry_t *)*e;                                               \
         if (ptr != NULL) {                                                                                      \
+            z_free(ptr->_key);                                                                                  \
             name##_elem_free(&ptr->_val);                                                                       \
             z_free(ptr);                                                                                        \
             *e = NULL;                                                                                          \
@@ -105,7 +123,17 @@ void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter);
     static inline void *name##_intmap_entry_elem_clone(const void *e) {                                         \
         const name##_intmap_entry_t *src = (name##_intmap_entry_t *)e;                                          \
         name##_intmap_entry_t *dst = (name##_intmap_entry_t *)z_malloc(sizeof(name##_intmap_entry_t));          \
-        dst->_key = src->_key;                                                                                  \
+        if (dst == NULL) {                                                                                      \
+            _Z_ERROR("Failed to allocate intmap entry clone.");                                                 \
+            return NULL;                                                                                        \
+        }                                                                                                       \
+        dst->_key = z_malloc(sizeof(size_t));                                                                   \
+        if (dst->_key == NULL) {                                                                                \
+            _Z_ERROR("Failed to allocate key for intmap entry clone.");                                         \
+            z_free(dst);                                                                                        \
+            return NULL;                                                                                        \
+        }                                                                                                       \
+        *((size_t *)dst->_key) = *((size_t *)src->_key);                                                        \
         dst->_val = name##_elem_clone(src->_val);                                                               \
         return dst;                                                                                             \
     }                                                                                                           \

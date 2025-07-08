@@ -33,11 +33,12 @@ char *_z_str_n_clone(const char *src, size_t len);
 void _z_str_clear(char *src);
 void _z_str_free(char **src);
 bool _z_str_eq(const char *left, const char *right);
+int _z_str_cmp(const char *left, const char *right);
 
 size_t _z_str_size(const char *src);
 void _z_str_copy(char *dst, const char *src);
 void _z_str_n_copy(char *dst, const char *src, size_t size);
-_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_str, char, _z_str_size, _z_noop_clear, _z_str_copy, _z_noop_move, _z_str_eq, _z_str_cmp, _z_noop_hash)
 
 _Z_VEC_DEFINE(_z_str, char)
 _Z_LIST_DEFINE(_z_str, char)
@@ -123,7 +124,8 @@ _z_string_t _z_string_preallocate(const size_t len);
 
 char *_z_str_from_string_clone(const _z_string_t *str);
 
-_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move)
+_Z_ELEM_DEFINE(_z_string, _z_string_t, _z_string_len, _z_string_clear, _z_string_copy, _z_string_move, _z_string_equals,
+               _z_string_compare, _z_noop_hash)
 _Z_SVEC_DEFINE(_z_string, _z_string_t)
 _Z_LIST_DEFINE(_z_string, _z_string_t)
 _Z_INT_MAP_DEFINE(_z_string, _z_string_t)

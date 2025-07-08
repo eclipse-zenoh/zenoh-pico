@@ -27,7 +27,8 @@
 extern "C" {
 #endif
 
-_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move)
+_Z_ELEM_DEFINE(_z_arc_slice, _z_arc_slice_t, _z_arc_slice_size, _z_arc_slice_drop, _z_arc_slice_copy, _z_arc_slice_move,
+               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SVEC_DEFINE(_z_arc_slice, _z_arc_slice_t)
 
 /*-------- Bytes --------*/

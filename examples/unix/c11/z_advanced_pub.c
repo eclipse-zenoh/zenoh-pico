@@ -24,8 +24,8 @@
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **keyexpr, char **value, size_t *history);
 
 int main(int argc, char **argv) {
-    char *keyexpr = "demo/example/zenoh-c-pub";
-    char *const default_value = "Pub from C!";
+    char *keyexpr = "demo/example/zenoh-pico-pub";
+    char *const default_value = "Pub from Pico!";
     char *value = default_value;
     size_t history = 1;
 
