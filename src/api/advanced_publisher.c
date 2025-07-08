@@ -16,34 +16,36 @@
 
 #include <stdio.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
 
-/**************** Advanced Publisher ****************/
-
-static const char *KE_ADV_PREFIX = "@adv";
-static const char *KE_PUB = "pub";
-static const char *KE_UHLC = "uhlc";
-static const char *KE_EMPTY = "_";
-
 bool _ze_advanced_publisher_check(const _ze_advanced_publisher_t *pub) {
-    return z_internal_publisher_check(&pub->_publisher) && z_internal_liveliness_token_check(&pub->_liveliness);
+    return z_internal_publisher_check(&pub->_publisher) &&
+           (!pub->_has_liveliness || z_internal_liveliness_token_check(&pub->_liveliness));
 }
 
 _ze_advanced_publisher_t _ze_advanced_publisher_null(void) {
     _ze_advanced_publisher_t publisher = {0};
     z_internal_publisher_null(&publisher._publisher);
     z_internal_liveliness_token_null(&publisher._liveliness);
-    publisher._cache = NULL;
 
     return publisher;
 }
 
-z_result_t _ze_undeclare_advanced_clear(_ze_advanced_publisher_t *pub) {
+z_result_t _ze_undeclare_advanced_publisher_clear(_ze_advanced_publisher_t *pub) {
+    if (pub == NULL || !_ze_advanced_publisher_check(pub)) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+
     z_result_t ret = z_undeclare_publisher(z_publisher_move(&pub->_publisher));
-    z_liveliness_token_drop(z_liveliness_token_move(&pub->_liveliness));
+
+    if (pub->_has_liveliness) {
+        z_liveliness_token_drop(z_liveliness_token_move(&pub->_liveliness));
+    }
+
     if (pub->_cache != NULL) {
         _ze_advanced_cache_free(&pub->_cache);
     }
@@ -53,7 +55,7 @@ z_result_t _ze_undeclare_advanced_clear(_ze_advanced_publisher_t *pub) {
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX(ze, _ze_advanced_publisher_t, advanced_publisher,
                                                      _ze_advanced_publisher_check, _ze_advanced_publisher_null,
-                                                     _ze_undeclare_advanced_clear)
+                                                     _ze_undeclare_advanced_publisher_clear)
 
 void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_options_t *options) {
     options->is_enabled = true;
@@ -89,64 +91,38 @@ void ze_advanced_publisher_delete_options_default(ze_advanced_publisher_delete_o
     z_publisher_delete_options_default(&options->delete_options);
 }
 
-static z_result_t _ze_advanced_publisher_ke_append_ke(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
-    z_owned_keyexpr_t tmp;
-    z_result_t res = z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right);
-    if (res == _Z_RES_OK) {
-        z_keyexpr_drop(z_keyexpr_move(prefix));
-        z_keyexpr_take(prefix, z_keyexpr_move(&tmp));
-    }
-    return res;
-}
-
-static z_result_t _ze_advanced_publisher_ke_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len) {
-    z_view_keyexpr_t ke_right;
-    z_view_keyexpr_from_substr_unchecked(&ke_right, right, len);
-    return _ze_advanced_publisher_ke_append_ke(prefix, z_view_keyexpr_loan(&ke_right));
-}
-
-static inline z_result_t _ze_advanced_publisher_ke_append_str(z_owned_keyexpr_t *prefix, const char *right) {
-    return _ze_advanced_publisher_ke_append_substr(prefix, right, strlen(right));
-}
-
 // suffix = KE_ADV_PREFIX / KE_PUB / ZID / [ EID | KE_UHLC ] / [ meta | KE_EMPTY]
 static z_result_t _ze_advanced_publisher_ke_suffix(z_owned_keyexpr_t *suffix, const z_entity_global_id_t id,
                                                    const _ze_advanced_publisher_sequencing_t sequencing,
                                                    const z_loaned_keyexpr_t *metadata) {
     z_internal_keyexpr_null(suffix);
-    _Z_RETURN_IF_ERR(z_keyexpr_from_str(suffix, KE_ADV_PREFIX));
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_publisher_ke_append_str(suffix, KE_PUB),
-                           z_keyexpr_drop(z_keyexpr_move(suffix)));
+    _Z_RETURN_IF_ERR(_Z_KEYEXPR_APPEND_STR_ARRAY(suffix, _Z_KEYEXPR_ADV_PREFIX, _Z_KEYEXPR_PUB));
+
+    fflush(stdout);
 
     z_id_t zid = z_entity_global_id_zid(&id);
     z_owned_string_t zid_str;
     _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(&zid, &zid_str), z_keyexpr_drop(z_keyexpr_move(suffix)));
 
-    z_result_t res = _ze_advanced_publisher_ke_append_substr(suffix, z_string_data(z_string_loan(&zid_str)),
-                                                             z_string_len(z_string_loan(&zid_str)));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_keyexpr_append_substr(suffix, z_string_data(z_string_loan(&zid_str)), z_string_len(z_string_loan(&zid_str))),
+        z_string_drop(z_string_move(&zid_str));
+        z_keyexpr_drop(z_keyexpr_move(suffix)));
     z_string_drop(z_string_move(&zid_str));
-    if (res != _Z_RES_OK) {
-        z_keyexpr_drop(z_keyexpr_move(suffix));
-        return res;
-    }
 
     if (sequencing == _ZE_ADVANCED_PUBLISHER_SEQUENCING_SEQUENCE_NUMBER) {
         char buffer[21];
         uint32_t eid = z_entity_global_id_eid(&id);
         snprintf(buffer, sizeof(buffer), "%u", eid);
-        _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_publisher_ke_append_str(suffix, buffer),
-                               z_keyexpr_drop(z_keyexpr_move(suffix)));
+        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, buffer), z_keyexpr_drop(z_keyexpr_move(suffix)));
     } else {
-        _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_publisher_ke_append_str(suffix, KE_UHLC),
-                               z_keyexpr_drop(z_keyexpr_move(suffix)));
+        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, _Z_KEYEXPR_UHLC), z_keyexpr_drop(z_keyexpr_move(suffix)));
     }
 
     if (metadata != NULL) {
-        _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_publisher_ke_append_ke(suffix, metadata),
-                               z_keyexpr_drop(z_keyexpr_move(suffix)));
+        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append(suffix, metadata), z_keyexpr_drop(z_keyexpr_move(suffix)));
     } else {
-        _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_publisher_ke_append_str(suffix, KE_EMPTY),
-                               z_keyexpr_drop(z_keyexpr_move(suffix)));
+        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, _Z_KEYEXPR_EMPTY), z_keyexpr_drop(z_keyexpr_move(suffix)));
     }
     return _Z_RES_OK;
 }
@@ -163,10 +139,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
         opt = *options;
     }
 
-    z_result_t res = z_declare_publisher(zs, &pub->_val._publisher, keyexpr, &opt.publisher_options);
-    if (res != _Z_RES_OK) {
-        return res;
-    }
+    _Z_RETURN_IF_ERR(z_declare_publisher(zs, &pub->_val._publisher, keyexpr, &opt.publisher_options));
 
     z_entity_global_id_t id = z_publisher_id(z_publisher_loan(&pub->_val._publisher));
 
@@ -178,7 +151,6 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
     }
 
     z_owned_keyexpr_t suffix;
-
     _Z_CLEAN_RETURN_IF_ERR(
         _ze_advanced_publisher_ke_suffix(&suffix, id, pub->_val._sequencing, opt.publisher_detection_metadata),
         z_publisher_drop(z_publisher_move(&pub->_val._publisher)));
@@ -194,7 +166,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
         pub->_val._cache = cache;
     }
 
-    // Declare liveliness token on key_expr/suffix
+    // Declare liveliness token on keyexpr/suffix
     if (opt.publisher_detection) {
         z_owned_keyexpr_t ke;
         _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_join(&ke, keyexpr, z_keyexpr_loan(&suffix)),
@@ -205,11 +177,13 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
                                z_keyexpr_drop(z_keyexpr_move(&ke));
                                z_publisher_drop(z_publisher_move(&pub->_val._publisher));
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_cache_free(&pub->_val._cache));
+        pub->_val._has_liveliness = true;
         z_keyexpr_drop(z_keyexpr_move(&ke));
     }
 
     // TODO: State publisher
 
+    z_keyexpr_drop(z_keyexpr_move(&suffix));
     return _Z_RES_OK;
 }
 
@@ -222,7 +196,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
 
     const z_loaned_publisher_t *publisher = z_publisher_loan(&pub->_publisher);
 
-    // Set sequence number is required
+    // Set sequence number if required
     if (pub->_sequencing == _ZE_ADVANCED_PUBLISHER_SEQUENCING_SEQUENCE_NUMBER) {
         z_entity_global_id_t publisher_id = z_publisher_id(publisher);
         uint32_t seqnumber = 0;
@@ -230,7 +204,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
         (void)z_source_info_new(source_info, &publisher_id, seqnumber);
     }
 
-// Set timestamp
+    // Set timestamp
 #if Z_FEATURE_SESSION_CHECK == 1
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
 #else
@@ -246,7 +220,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
 }
 
 z_result_t ze_undeclare_advanced_publisher(ze_moved_advanced_publisher_t *pub) {
-    return _ze_undeclare_advanced_clear(&pub->_this._val);
+    return _ze_undeclare_advanced_publisher_clear(&pub->_this._val);
 }
 
 z_result_t ze_advanced_publisher_put(const ze_loaned_advanced_publisher_t *pub, z_moved_bytes_t *payload,
