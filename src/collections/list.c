@@ -42,6 +42,18 @@ _z_list_t *_z_list_push(_z_list_t *xs, void *x) {
     return lst;
 }
 
+_z_list_t *_z_list_push_after(_z_list_t *xs, void *x) {
+    _z_list_t *l = _z_list_new(x);
+    if (l == NULL || xs == NULL) {
+        return l;
+    }
+
+    l->_next = xs->_next;
+    xs->_next = l;
+
+    return xs;
+}
+
 _z_list_t *_z_list_push_back(_z_list_t *xs, void *x) {
     if (xs == NULL) {
         return _z_list_new(x);
@@ -148,11 +160,11 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
     _z_list_t *new = NULL;
 
-    _z_list_t *head = (_z_list_t *)xs;
-    while (head != NULL) {
-        void *x = d_f(_z_list_value(head));
-        new = _z_list_push(new, x);
-        head = _z_list_next(head);
+    const _z_list_t *curr = xs;
+    while (curr != NULL) {
+        void *x = d_f(_z_list_value(curr));
+        new = _z_list_push_back(new, x);
+        curr = _z_list_next(curr);
     }
 
     return new;

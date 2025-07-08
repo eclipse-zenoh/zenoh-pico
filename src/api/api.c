@@ -186,6 +186,37 @@ z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left
     return _Z_RES_OK;
 }
 
+z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
+    if (_z_string_len(&prefix->_val._suffix) == 0) {
+        if (_z_string_len(&right->_suffix) == 0) {
+            return _Z_ERR_INVALID;
+        }
+        return z_keyexpr_clone(prefix, right);
+    } else {
+        z_owned_keyexpr_t tmp;
+        z_result_t res = z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right);
+        if (res == _Z_RES_OK) {
+            z_keyexpr_drop(z_keyexpr_move(prefix));
+            z_keyexpr_take(prefix, z_keyexpr_move(&tmp));
+        }
+        return res;
+    }
+}
+
+z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len) {
+    z_view_keyexpr_t ke_right;
+    z_view_keyexpr_from_substr_unchecked(&ke_right, right, len);
+    return _z_keyexpr_append(prefix, z_view_keyexpr_loan(&ke_right));
+}
+
+z_result_t _z_keyexpr_append_str_array(z_owned_keyexpr_t *prefix, const char *strs[], size_t count) {
+    for (size_t i = 0; i < count; ++i) {
+        fflush(stdout);
+        _Z_RETURN_IF_ERR(_z_keyexpr_append_str(prefix, strs[i]));
+    }
+    return _Z_RES_OK;
+}
+
 z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
     if (z_keyexpr_equals(left, right)) {
         return Z_KEYEXPR_INTERSECTION_LEVEL_EQUALS;
@@ -1829,6 +1860,7 @@ z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_s
                                    sample->kind, opts.congestion_control, opts.priority, opts.is_express,
                                    &sample->timestamp, &sample->attachment, &sample->source_info);
     // Clean-up
+    _z_keyexpr_clear(&local_keyexpr);
     _z_session_rc_drop(&sess_rc);
     return ret;
 }
@@ -2074,6 +2106,36 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
     }
     return NULL;
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_subscriber_id(const z_loaned_subscriber_t *subscriber) {
+    z_entity_global_id_t egid;
+    _z_session_t *session = NULL;
+#if Z_FEATURE_SESSION_CHECK == 1
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&subscriber->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+#else
+    session = _Z_RC_IN_VAL(&subscriber->_zn);
+#endif
+
+    if (session != NULL) {
+        egid.zid = session->_local_zid;
+        egid.eid = subscriber->_entity_id;
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return egid;
+}
+#endif
 #endif
 
 #if Z_FEATURE_BATCHING == 1

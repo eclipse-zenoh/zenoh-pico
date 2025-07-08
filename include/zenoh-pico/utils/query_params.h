@@ -21,12 +21,31 @@
 extern "C" {
 #endif
 
-extern const char *_Z_QUERY_PARAMS_KEY_TIME;
+#define _Z_QUERY_PARAMS_KEY_TIME "_time"
+#define _Z_QUERY_PARAMS_KEY_TIME_LEN (sizeof(_Z_QUERY_PARAMS_KEY_TIME) - 1)
+#define _Z_QUERY_PARAMS_KEY_RANGE "_sn"
+#define _Z_QUERY_PARAMS_KEY_RANGE_LEN (sizeof(_Z_QUERY_PARAMS_KEY_RANGE) - 1)
+#define _Z_QUERY_PARAMS_KEY_MAX "_max"
+#define _Z_QUERY_PARAMS_KEY_MAX_LEN (sizeof(_Z_QUERY_PARAMS_KEY_MAX) - 1)
+#define _Z_QUERY_PARAMS_KEY_ANYKE "_anyke"
+#define _Z_QUERY_PARAMS_KEY_ANYKE_LEN (sizeof(_Z_QUERY_PARAMS_KEY_ANYKE) - 1)
+
+#define _Z_QUERY_PARAMS_LIST_SEPARATOR ";"
+#define _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN (sizeof(_Z_QUERY_PARAMS_LIST_SEPARATOR) - 1)
+#define _Z_QUERY_PARAMS_FIELD_SEPARATOR "="
+#define _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN (sizeof(_Z_QUERY_PARAMS_FIELD_SEPARATOR) - 1)
 
 typedef struct {
     _z_str_se_t key;
     _z_str_se_t value;
 } _z_query_param_t;
+
+typedef struct {
+    bool _has_start;
+    uint32_t _start;
+    bool _has_end;
+    uint32_t _end;
+} _z_query_param_range_t;
 
 /**
  * Extracts the next query parameter from a `_z_str_se_t` string.

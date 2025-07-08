@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include <math.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,7 +105,29 @@ static void test_query_params(void) {
 
 static bool compare_double_result(const double expected, const double result) {
     static const double EPSILON = 1e-6;
-    return (result - expected) < EPSILON;
+    return fabs(result - expected) < EPSILON;
+}
+
+static bool compare_time_range(const _z_time_range_t *a, const _z_time_range_t *b) {
+    return a->start.bound == b->start.bound && compare_double_result(a->start.now_offset, b->start.now_offset) &&
+           a->end.bound == b->end.bound && compare_double_result(a->end.now_offset, b->end.now_offset);
+}
+
+static void test_time_range_roundtrip(const char *input) {
+    _z_time_range_t parsed1 = {0}, parsed2 = {0};
+    char buf[128];
+
+    // SAFETY: input should be a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
+    assert(_z_time_range_from_str(input, strlen(input), &parsed1));
+    assert(_z_time_range_to_str(&parsed1, buf, sizeof(buf)));
+    // SAFETY: _z_time_range_to_str() creates a null-terminated string if successful.
+    // Flawfinder: ignore [CWE-126]
+    assert(_z_time_range_from_str(buf, strlen(buf), &parsed2));
+
+    printf("Round-trip: input='%s' → output='%s'\n", input, buf);
+
+    assert(compare_time_range(&parsed1, &parsed2));
 }
 
 static void test_time_range(void) {
@@ -113,119 +136,173 @@ static void test_time_range(void) {
 
     // Range tests
     range = "[..]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_UNBOUNDED);
     assert(result.end.bound == _Z_TIME_BOUND_UNBOUNDED);
+    test_time_range_roundtrip(range);
 
     range = "[now()..now(5)]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(5.0, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now(-999.9u)..now(100.5ms)]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-0.0009999, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.1005, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "]now(-87.6s)..now(1.5m)[";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_EXCLUSIVE);
     assert(compare_double_result(-87.6, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
     assert(compare_double_result(90.0, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now(-24.5h)..now(6.75d)]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-88200.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(583200.0, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now(-1.75w)..now()]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-1058400.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     // Duration tests
     range = "[now();7.3]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(7.3, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();97.4u]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0000974, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();568.4ms]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.5684, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();9.4s]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(9.4, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();6.89m]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(413.4, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();1.567h]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(5641.2, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();2.7894d]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(241004.16, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     range = "[now();5.9457w]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(3595959.36, result.end.now_offset));
+    test_time_range_roundtrip(range);
 
     // Error cases
     range = "";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 
     range = "[;]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 
     range = "[now();]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 
     range = "[now()..5.6]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 
     range = "[now();s]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 
     range = "[now();one]";
+    // SAFETY: range is a null-terminated string.
+    // Flawfinder: ignore [CWE-126]
     assert(_z_time_range_from_str(range, strlen(range), &result) == false);
 }
 
@@ -315,6 +392,7 @@ static void test_time_range_contains_fully_bounded_mixed(void) {
     assert(_z_time_range_contains_at_time(&r, _z_time_range_resolve_offset(now, 5.0), now) == true);  // Inclusive
     assert(_z_time_range_contains_at_time(&r, _z_time_range_resolve_offset(now, 6.0), now) == false);
 }
+
 int main(void) {
     test_query_params();
     test_time_range();

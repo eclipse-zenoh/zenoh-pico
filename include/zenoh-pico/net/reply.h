@@ -99,7 +99,8 @@ typedef struct _z_pending_reply_t {
 bool _z_pending_reply_eq(const _z_pending_reply_t *one, const _z_pending_reply_t *two);
 void _z_pending_reply_clear(_z_pending_reply_t *res);
 
-_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_pending_reply, _z_pending_reply_t, _z_noop_size, _z_pending_reply_clear, _z_noop_copy, _z_noop_move,
+               _z_pending_reply_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_pending_reply, _z_pending_reply_t, false)
 
 #ifdef __cplusplus

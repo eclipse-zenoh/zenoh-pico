@@ -81,6 +81,31 @@ static inline void _z_str_append(char *str, const char c) {
  */
 bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
 
+/*
+ * Safely copies a block of memory into a destination buffer at a given offset, if bounds allow.
+ *
+ * Parameters:
+ *   dest       - Pointer to the destination buffer.
+ *   dest_len   - Total size of the destination buffer.
+ *   offset     - Pointer to the current write offset; will be updated if the copy succeeds.
+ *   src        - Pointer to the source data.
+ *   len        - Number of bytes to copy.
+ *
+ * Returns:
+ *   true  - If the copy succeeds (bounds are respected and pointers are valid).
+ *   false - If the copy would overflow the buffer, or any pointer is NULL.
+ */
+static inline bool _z_memcpy_checked(void *dest, size_t dest_len, size_t *offset, const void *src, size_t len) {
+    if (dest == NULL || src == NULL || len > dest_len - *offset) {
+        return false;
+    }
+    // SAFETY: Copy is bounds-checked above.
+    // Flawfinder: ignore [CWE-120]
+    memcpy((char *)dest + *offset, src, len);
+    *offset += len;
+    return true;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -46,9 +46,6 @@ typedef struct {
     bool _liveness;  // TODO: Private as not yet exposed in Zenoh implementation.
 } ze_advanced_publisher_cache_options_t;
 
-_Z_ELEM_DEFINE(_z_sample, _z_sample_t, _z_sample_size, _z_sample_clear, _z_sample_copy, _z_sample_move)
-_Z_RING_DEFINE(_z_sample, _z_sample_t)
-
 typedef struct {
     _z_sample_ring_t _cache;
     _z_sample_t **_query_reply_buffer;
