@@ -498,9 +498,11 @@ z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_messag
         case _Z_MID_T_KEEP_ALIVE: {
             return _z_keep_alive_encode(wbf, msg->_header, &msg->_body._keep_alive);
         } break;
+#if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
         case _Z_MID_T_JOIN: {
             return _z_join_encode(wbf, msg->_header, &msg->_body._join);
         } break;
+#endif
         case _Z_MID_T_INIT: {
             return _z_init_encode(wbf, msg->_header, &msg->_body._init);
         } break;
