@@ -145,24 +145,30 @@ z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         case _Z_UNDECL_KEXPR: {
             ret = _z_undecl_kexpr_encode(wbf, &decl->_body._undecl_kexpr);
         } break;
+#if Z_FEATURE_SUBSCRIPTION == 1
         case _Z_DECL_SUBSCRIBER: {
             ret = _z_decl_subscriber_encode(wbf, &decl->_body._decl_subscriber);
         } break;
         case _Z_UNDECL_SUBSCRIBER: {
             ret = _z_undecl_subscriber_encode(wbf, &decl->_body._undecl_subscriber);
         } break;
+#endif
+#if Z_FEATURE_QUERYABLE == 1
         case _Z_DECL_QUERYABLE: {
             ret = _z_decl_queryable_encode(wbf, &decl->_body._decl_queryable);
         } break;
         case _Z_UNDECL_QUERYABLE: {
             ret = _z_undecl_queryable_encode(wbf, &decl->_body._undecl_queryable);
         } break;
+#endif
+#if Z_FEATURE_LIVELINESS == 1
         case _Z_DECL_TOKEN: {
             ret = _z_decl_token_encode(wbf, &decl->_body._decl_token);
         } break;
         case _Z_UNDECL_TOKEN: {
             ret = _z_undecl_token_encode(wbf, &decl->_body._undecl_token);
         } break;
+#endif
         case _Z_DECL_FINAL: {
             ret = _z_decl_final_encode(wbf);
         } break;

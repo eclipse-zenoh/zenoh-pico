@@ -110,11 +110,10 @@ static z_result_t _z_transport_tx_send_fragment(_z_transport_common_t *ztc, cons
                                                 z_reliability_t reliability, _z_zint_t first_sn,
                                                 _z_transport_peer_unicast_slist_t *peers) {
     _ZP_UNUSED(ztc);
-    _ZP_UNUSED(fbf);
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(first_sn);
-    _ZP_UNUSED(peers)
+    _ZP_UNUSED(peers);
     _Z_INFO("Sending the message required fragmentation feature that is deactivated.");
     return _Z_RES_OK;
 }

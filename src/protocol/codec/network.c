@@ -490,21 +490,29 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
         case _Z_N_DECLARE: {
             return _z_declare_encode(wbf, &msg->_body._declare);
         } break;
+#if Z_FEATURE_PUBLICATION == 1
         case _Z_N_PUSH: {
             return _z_push_encode(wbf, &msg->_body._push);
         } break;
+#endif
+#if Z_FEATURE_QUERY == 1
         case _Z_N_REQUEST: {
             return _z_request_encode(wbf, &msg->_body._request);
         } break;
+#endif
+#if Z_FEATURE_QUERYABLE == 1
         case _Z_N_RESPONSE: {
             return _z_response_encode(wbf, &msg->_body._response);
         } break;
         case _Z_N_RESPONSE_FINAL: {
             return _z_response_final_encode(wbf, &msg->_body._response_final);
         } break;
+#endif
+#if Z_FEATURE_INTEREST == 1
         case _Z_N_INTEREST: {
             return _z_n_interest_encode(wbf, &msg->_body._interest);
         } break;
+#endif
         default:
             return _Z_ERR_GENERIC;
     }

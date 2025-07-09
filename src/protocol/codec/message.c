@@ -251,8 +251,6 @@ z_result_t _z_source_info_encode_ext(_z_wbuf_t *wbf, const _z_source_info_t *inf
 
 /*------------------ Push Body Field ------------------*/
 z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
-    (void)(wbf);
-    (void)(pshb);
     uint8_t header = pshb->_is_put ? _Z_MID_Z_PUT : _Z_MID_Z_DEL;
     bool has_source_info = _z_id_check(pshb->_body._put._commons._source_info._source_id.zid) ||
                            pshb->_body._put._commons._source_info._source_sn != 0 ||
@@ -298,7 +296,7 @@ z_result_t _z_push_body_encode(_z_wbuf_t *wbf, const _z_push_body_t *pshb) {
         _Z_RETURN_IF_ERR(_z_bytes_encode(wbf, &pshb->_body._put._payload));
     }
 
-    return 0;
+    return _Z_RES_OK;
 }
 z_result_t _z_push_body_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
     _z_push_body_t *pshb = (_z_push_body_t *)ctx;

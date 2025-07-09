@@ -369,7 +369,7 @@ z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reaso
 }
 
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {
-    _ZP_UNUSED(zt);
+    _ZP_UNUSED(ztu);
     _ZP_UNUSED(detach_tasks);
 }
 
