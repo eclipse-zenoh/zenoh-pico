@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +63,12 @@ _z_str_se_t _z_splitstr_nextback(_z_splitstr_t *str);
 size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const char *needle_start);
 
 size_t _z_str_startswith(const char *s, const char *needle);
+
+static inline void _z_str_append(char *str, const char c) {
+    size_t len = strlen(str);
+    str[len] = c;
+    str[len + 1] = '\0';
+}
 
 #ifdef __cplusplus
 }

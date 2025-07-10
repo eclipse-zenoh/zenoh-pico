@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "zenoh-pico.h"
+#include "zenoh-pico/utils/string.h"
 
 #if Z_FEATURE_ENCODING_VALUES == 1
 #define ENCODING_SCHEMA_SEPARATOR ';'
@@ -196,11 +197,10 @@ static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *enc
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Copy prefix
-    char sep = ENCODING_SCHEMA_SEPARATOR;
     (void)strncpy(value, prefix, prefix_len);
     // Copy schema and separator
     if (has_schema) {
-        (void)strncat(value, &sep, 1);
+        _z_str_append(value, ENCODING_SCHEMA_SEPARATOR);
         (void)strncat(value, _z_string_data(&encoding->schema), _z_string_len(&encoding->schema));
     }
     // Fill container
