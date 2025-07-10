@@ -172,6 +172,10 @@ z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         case _Z_DECL_FINAL: {
             ret = _z_decl_final_encode(wbf);
         } break;
+
+        default:
+            ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+            break;
     }
     return ret;
 }

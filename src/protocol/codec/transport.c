@@ -219,11 +219,12 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
 }
 
 z_result_t _z_init_decode_ext(_z_msg_ext_t *extension, void *ctx) {
+    _ZP_UNUSED(ctx);
     z_result_t ret = _Z_RES_OK;
-    _z_t_msg_init_t *msg = (_z_t_msg_init_t *)ctx;
     if (false) {
 #if Z_FEATURE_FRAGMENTATION == 1
     } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_INIT_PATCH) {
+        _z_t_msg_init_t *msg = (_z_t_msg_init_t *)ctx;
         msg->_patch = (uint8_t)extension->_body._zint._val;
 #endif
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
