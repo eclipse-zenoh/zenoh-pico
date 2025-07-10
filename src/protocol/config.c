@@ -159,15 +159,15 @@ size_t _z_str_intmap_strlen(const _z_str_intmap_t *s, uint8_t argc, _z_str_intma
 void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s, uint8_t argc,
                             _z_str_intmapping_t argv[]) {
     size_t len = dst_len;
-    const char lsep = INT_STR_MAP_LIST_SEPARATOR;
-    const char ksep = INT_STR_MAP_KEYVALUE_SEPARATOR;
+    const char *lsep = INT_STR_MAP_LIST_SEPARATOR_STR;
+    const char *ksep = INT_STR_MAP_KEYVALUE_SEPARATOR_STR;
 
     dst[0] = '\0';
     for (size_t i = 0; i < argc; i++) {
         char *v = _z_str_intmap_get(s, argv[i]._key);
         if (v != NULL) {
             if (len > (size_t)0) {
-                (void)strncat(dst, &lsep, 1);  // List separator
+                (void)strncat(dst, lsep, 1);  // List separator
                 len = len - (size_t)1;
             }
 
@@ -176,7 +176,7 @@ void _z_str_intmap_onto_str(char *dst, size_t dst_len, const _z_str_intmap_t *s,
                 len = len - strlen(argv[i]._str);
             }
             if (len > (size_t)0) {
-                (void)strncat(dst, &ksep, 1);  // KeyValue separator
+                (void)strncat(dst, ksep, 1);  // KeyValue separator
                 len = len - (size_t)1;
             }
             if (len > (size_t)0) {

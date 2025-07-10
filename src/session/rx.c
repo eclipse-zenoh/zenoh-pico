@@ -94,6 +94,9 @@ static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, 
 
 static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_n_msg_request_t *req,
                                     z_reliability_t reliability, _z_transport_peer_common_t *peer) {
+    _ZP_UNUSED(reliability);
+    _ZP_UNUSED(zsrc);
+    _ZP_UNUSED(peer);
     switch (req->_tag) {
         case _Z_REQUEST_QUERY:
 #if Z_FEATURE_QUERYABLE == 1
@@ -162,6 +165,8 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     }
 #else
     _z_n_msg_response_clear(resp);
+    _ZP_UNUSED(zn);
+    _ZP_UNUSED(peer);
 #endif
     return _Z_RES_OK;
 }

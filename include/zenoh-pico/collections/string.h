@@ -45,6 +45,8 @@ _Z_INT_MAP_DEFINE(_z_str, char)
 
 #define INT_STR_MAP_KEYVALUE_SEPARATOR '='
 #define INT_STR_MAP_LIST_SEPARATOR ';'
+#define INT_STR_MAP_KEYVALUE_SEPARATOR_STR "="
+#define INT_STR_MAP_LIST_SEPARATOR_STR ";"
 
 typedef struct {
     char *_str;

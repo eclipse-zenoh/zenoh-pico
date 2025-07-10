@@ -246,6 +246,10 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
         *dbuf_state = _Z_DBUF_STATE_NULL;
     }
 #else
+    _ZP_UNUSED(ztu);
+    _ZP_UNUSED(header);
+    _ZP_UNUSED(msg);
+    _ZP_UNUSED(peer);
     _Z_INFO("Fragment dropped because fragmentation feature is deactivated");
 #endif
     return ret;
