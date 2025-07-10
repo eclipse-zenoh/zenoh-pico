@@ -119,10 +119,6 @@ static bool _ze_advanced_cache_range_contains(const _ze_advanced_cache_range_t *
             (range->end == _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED || sn <= range->end));
 }
 
-static bool _ze_advanced_cache_sample_has_source_sn(const _z_sample_t *sample) {
-    return sample->source_info._source_sn != 0;
-}
-
 void _ze_advanced_cache_query_handler(z_loaned_query_t *query, void *ctx) {
     _ze_advanced_cache_t *cache = (_ze_advanced_cache_t *)ctx;
 
@@ -160,7 +156,7 @@ void _ze_advanced_cache_query_handler(z_loaned_query_t *query, void *ctx) {
         _z_sample_t *sample = _z_sample_ring_reverse_iterator_value(&iter);
         if ((params.range.start == _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED &&
              params.range.end == _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED) ||
-            (_ze_advanced_cache_sample_has_source_sn(sample) &&
+            (_z_source_info_check(&sample->source_info) &&
              _ze_advanced_cache_range_contains(&params.range, sample->source_info._source_sn))) {
             if ((params.time.start.bound != _Z_TIME_BOUND_UNBOUNDED ||
                  params.time.end.bound != _Z_TIME_BOUND_UNBOUNDED) &&
@@ -298,6 +294,9 @@ void _ze_advanced_cache_free(_ze_advanced_cache_t **cache) {
     if (ptr != NULL) {
         z_liveliness_token_drop(z_liveliness_token_move(&ptr->_liveliness));
         z_queryable_drop(z_queryable_move(&ptr->_queryable));
+#if Z_FEATURE_MULTI_THREAD == 1
+        _z_mutex_drop(&ptr->_mutex);
+#endif
         _z_sample_ring_clear(&ptr->_cache);
         z_free(ptr->_query_reply_buffer);
         z_free(ptr);
