@@ -64,6 +64,7 @@ size_t _z_strcnt(char const *haystack_start, const char *harstack_end, const cha
 
 size_t _z_str_startswith(const char *s, const char *needle);
 
+// Must be used on a null terminated string with str[strlen(str) + 1] being valid memory.
 static inline void _z_str_append(char *str, const char c) {
     size_t len = strlen(str);
     str[len] = c;
