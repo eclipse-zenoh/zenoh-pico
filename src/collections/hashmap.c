@@ -59,11 +59,14 @@ z_result_t _z_hashmap_copy(_z_hashmap_t *dst, const _z_hashmap_t *src, z_element
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     }
+    dst->_f_hash = src->_f_hash;
+    dst->_f_equals = src->_f_equals;
     return _Z_RES_OK;
 }
 
 _z_hashmap_t _z_hashmap_clone(const _z_hashmap_t *src, z_element_clone_f f_c, z_element_free_f f_f) {
-    _z_hashmap_t dst = {._capacity = src->_capacity, ._vals = NULL};
+    _z_hashmap_t dst = {
+        ._capacity = src->_capacity, ._vals = NULL, ._f_hash = src->_f_hash, ._f_equals = src->_f_equals};
     if (src->_vals == NULL) {
         return dst;
     }

@@ -36,8 +36,8 @@ typedef bool (*_z_hashmap_equals_f)(const void *left, const void *right);
  * A hashmap entry with generic keys.
  *
  * Members:
- *   void *key: the key of the entry
- *   void *val: the value of the entry
+ *   void *_key: the key of the entry
+ *   void *_val: the value of the entry
  */
 typedef struct {
     void *_key;
@@ -48,10 +48,10 @@ typedef struct {
  * A hashmap with generic keys.
  *
  * Members:
- *    size_t capacity: the number of buckets available in the hashmap
- *   _z_list_t **vals: the linked list containing the values
- *   _z_hashmap_hash_f hash: the hash function used to hash keys
- *   _z_hashmap_equals_f equals: the function used to compare keys for equality
+ *    size_t _capacity: the number of buckets available in the hashmap
+ *   _z_list_t **_vals: the linked list containing the values
+ *   _z_hashmap_hash_f _f_hash: the hash function used to hash keys
+ *   _z_hashmap_equals_f _f_equals: the function used to compare keys for equality
  */
 typedef struct {
     size_t _capacity;
