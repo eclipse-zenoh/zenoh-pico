@@ -29,9 +29,6 @@ extern "C" {
 
 #define _Z_DEFAULT_HASHMAP_CAPACITY 16
 
-typedef size_t (*_z_hashmap_hash_f)(const void *key);
-typedef bool (*_z_hashmap_equals_f)(const void *left, const void *right);
-
 /**
  * A hashmap entry with generic keys.
  *
@@ -50,14 +47,14 @@ typedef struct {
  * Members:
  *    size_t _capacity: the number of buckets available in the hashmap
  *   _z_list_t **_vals: the linked list containing the values
- *   _z_hashmap_hash_f _f_hash: the hash function used to hash keys
- *   _z_hashmap_equals_f _f_equals: the function used to compare keys for equality
+ *   z_element_hash_f _f_hash: the hash function used to hash keys
+ *   z_element_eq_f _f_equals: the function used to compare keys for equality
  */
 typedef struct {
     size_t _capacity;
     _z_list_t **_vals;
-    _z_hashmap_hash_f _f_hash;
-    _z_hashmap_equals_f _f_equals;
+    z_element_hash_f _f_hash;
+    z_element_eq_f _f_equals;
 } _z_hashmap_t;
 
 /**
@@ -70,8 +67,8 @@ typedef struct {
     _z_list_t *_list_ptr;
 } _z_hashmap_iterator_t;
 
-void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, _z_hashmap_hash_f f_hash, _z_hashmap_equals_f f_equals);
-_z_hashmap_t _z_hashmap_make(size_t capacity, _z_hashmap_hash_f f_hash, _z_hashmap_equals_f f_equals);
+void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals);
+_z_hashmap_t _z_hashmap_make(size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals);
 
 void *_z_hashmap_insert(_z_hashmap_t *map, void *key, void *val, z_element_free_f f, bool replace);
 void *_z_hashmap_get(const _z_hashmap_t *map, const void *key);

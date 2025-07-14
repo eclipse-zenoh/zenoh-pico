@@ -19,14 +19,14 @@
 #include <string.h>
 
 /*-------- hashmap --------*/
-void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, _z_hashmap_hash_f f_hash, _z_hashmap_equals_f f_equals) {
+void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals) {
     map->_capacity = capacity;
     map->_vals = NULL;
     map->_f_hash = f_hash;
     map->_f_equals = f_equals;
 }
 
-_z_hashmap_t _z_hashmap_make(size_t capacity, _z_hashmap_hash_f f_hash, _z_hashmap_equals_f f_equals) {
+_z_hashmap_t _z_hashmap_make(size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals) {
     _z_hashmap_t map;
     _z_hashmap_init(&map, capacity, f_hash, f_equals);
     return map;

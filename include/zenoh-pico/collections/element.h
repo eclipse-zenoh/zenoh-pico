@@ -33,6 +33,8 @@ typedef void (*z_element_copy_f)(void *dst, const void *src);
 typedef void (*z_element_move_f)(void *dst, void *src);
 typedef void *(*z_element_clone_f)(const void *e);
 typedef bool (*z_element_eq_f)(const void *left, const void *right);
+typedef int (*z_element_cmp_f)(const void *left, const void *right);
+typedef size_t (*z_element_hash_f)(const void *e);
 
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f, elem_move_f)                        \
     typedef bool (*name##_eq_f)(const type *left, const type *right);                                          \
