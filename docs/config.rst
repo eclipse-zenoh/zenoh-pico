@@ -52,7 +52,7 @@ Defines a single endpoint a node will listen on.
 Scouting
 -----------
 
-Scouting is used when a node isn't provided without connect or listen endpoint.
+Scouting is used when a node isn't provided with a connect or listen endpoint.
 
 Defines if and how the node will do the scouting.
 
@@ -108,38 +108,38 @@ All the generated options must be changed in zenoh-pico's CMake (beware of CMake
 * `Z_BATCH_MULTICAST_SIZE`: Size of the multicast packet buffers, in bytes. Any packet bigger than this will be fragmented if possible.
 * `Z_CONFIG_SOCKET_TIMEOUT`: Timeout for socket options, if applicable, in milliseconds.
 * `Z_TRANSPORT_LEASE`: Maximum time without receiving messages from a connection before closing it, in milliseconds.
-* `Z_FEATURE_TCP_NODELAY`: Toggle the `TCP_NODELAY` socket option that disables Nagle's algorithm as it can cause latency spikes.
-* `Z_FEATURE_MULTICAST_DECLARATIONS`: Toggle multicast declarations. It lets nodes declare key expressions and activate write filtering but requires each node to send all the declarations every time a new node join the network. 
-* `Z_FEATURE_AUTO_RECONNECT`: Toggle the auto reconnection feature.
-* `Z_FEATURE_RX_CACHE`: Toggle LRU cache on the Rx side, improves throughput at the cost of heap memory.
-* `Z_FEATURE_BATCH_TX_MUTEX`: Toggle tx mutex lock at a batch level instead of at a message level. Improves throughput at the risk of losing connection as it prevents session to send keep alive messages.
-* `Z_FEATURE_BATCH_PEER_MUTEX`: Toggle peer mutex lock at a batch level instead of at a message level. Prevents reception of messages from peers while batching is active, may also trigger loss of connection.
+* `Z_FEATURE_TCP_NODELAY`: (DEFAULT: ON) Toggle the `TCP_NODELAY` socket option that disables Nagle's algorithm as it can cause latency spikes.
+* `Z_FEATURE_AUTO_RECONNECT`: (DEFAULT: ON) Toggle the auto reconnection feature.
+* `Z_FEATURE_MULTICAST_DECLARATIONS`: (DEFAULT: OFF) Toggle multicast declarations. It lets nodes declare key expressions and activate write filtering but requires each node to send all the declarations every time a new node join the network. 
+* `Z_FEATURE_RX_CACHE`: (DEFAULT: OFF) Toggle LRU cache on the Rx side, improves throughput at the cost of heap memory.
+* `Z_FEATURE_BATCH_TX_MUTEX`: (DEFAULT: OFF) Toggle tx mutex lock at a batch level instead of at a message level. Improves throughput at the risk of losing connection as it prevents session to send keep alive messages.
+* `Z_FEATURE_BATCH_PEER_MUTEX`: (DEFAULT: OFF) Toggle peer mutex lock at a batch level instead of at a message level. Prevents reception of messages from peers while batching is active, may also trigger loss of connection.
 
 The following options are here to reduce binary sizes for users that don't need those features but need the extra memory. 
 
-* `Z_FEATURE_UNSTABLE_API`: Toggle compilation of unstable API functions.
-* `Z_FEATURE_MULTI_THREAD`: Toggle compilation of multi thread capabilities. Will limit the library to single thread only without this.
-* `Z_FEATURE_PUBLICATION`: Toggle compilation of publication API functions, the library can't publish without this.
-* `Z_FEATURE_SUBSCRIPTION`: Toggle compilation of subscription API functions, the library can't subscribe without this.
-* `Z_FEATURE_QUERY`: Toggle compilation of query API functions, the library can't get/query without this.
-* `Z_FEATURE_QUERYABLE`: Toggle compilation of queryable API functions, the library can't reply to queries without this.
-* `Z_FEATURE_SCOUTING`: Toggle compilation of scouting API functions, the library can't scout without this.
-* `Z_FEATURE_LIVELINESS`: Toggle compilation of liveliness API functions, the library can't declare liveliness tokens without this.
-* `Z_FEATURE_BATCHING`: Toggle compilation of batching API functions, the library can't batch messages without this.
-* `Z_FEATURE_MATCHING`: Toggle compilation of matching API functions,the library can't do matching without this.
-* `Z_FEATURE_INTEREST`: Toggle compilation of interest protocol, the library can't do write filtering without this.
-* `Z_FEATURE_ENCODING_VALUES`: Toggle compilation of encoding values constants, the library will not provide encoding constants without this.
-* `Z_FEATURE_SESSION_CHECK`: Toggle session reference check. Dangerous if entities like publishers or queriers are used after a session is closed.
-* `Z_FEATURE_LOCAL_SUBSCRIBER`: Toggle local subscriber feature, subscribers will not be triggered by local publications without this.
-* `Z_FEATURE_FRAGMENTATION`: Toggle fragmentation feature, the library can't send or receive fragmented messages without this.
-* `Z_FEATURE_MULTICAST_TRANSPORT`: Toggle multicast transport feature, the library can't handle multicast connections without this.
-* `Z_FEATURE_UNICAST_TRANSPORT`: Toggle unicast transport feature, the library can't handle unicast connections without this.
-* `Z_FEATURE_RAWETH_TRANSPORT`:  Toggle compilation of raw ethernet transport, the library can't handle raw ethernet connections without this.
-* `Z_FEATURE_UNICAST_PEER`: Toggle unicast peer feature, the library can't do peer to peer unicast without this.
-* `Z_FEATURE_LINK_TCP`: Toggle compilation of TCP link support.
-* `Z_FEATURE_LINK_BLUETOOTH`: Toggle compilation of Bluetooth link support.
-* `Z_FEATURE_LINK_WS`: Toggle compilation of WebSocket link support.
-* `Z_FEATURE_LINK_SERIAL`: Toggle compilation of Serial link support.
-* `Z_FEATURE_LINK_SERIAL_USB`: Toggle compilation of Serial USB link support.
-* `Z_FEATURE_LINK_UDP_MULTICAST`: Toggle compilation of UDP multicast link support.
-* `Z_FEATURE_LINK_UDP_UNICAST`: Toggle compilation of UDP unicast link support.
+* `Z_FEATURE_UNSTABLE_API`: (DEFAULT: OFF) Toggle compilation of unstable API functions.
+* `Z_FEATURE_MULTI_THREAD`: (DEFAULT: ON) Toggle compilation of multi thread capabilities. Will limit the library to single thread only without this.
+* `Z_FEATURE_PUBLICATION`: (DEFAULT: ON) Toggle compilation of publication API functions, the library can't publish without this.
+* `Z_FEATURE_SUBSCRIPTION`: (DEFAULT: ON) Toggle compilation of subscription API functions, the library can't subscribe without this.
+* `Z_FEATURE_QUERY`: (DEFAULT: ON) Toggle compilation of query API functions, the library can't get/query without this.
+* `Z_FEATURE_QUERYABLE`: (DEFAULT: ON) Toggle compilation of queryable API functions, the library can't reply to queries without this.
+* `Z_FEATURE_SCOUTING`: (DEFAULT: ON) Toggle compilation of scouting API functions, the library can't scout without this.
+* `Z_FEATURE_LIVELINESS`: (DEFAULT: ON) Toggle compilation of liveliness API functions, the library can't declare liveliness tokens without this.
+* `Z_FEATURE_BATCHING`: (DEFAULT: ON) Toggle compilation of batching API functions, the library can't batch messages without this.
+* `Z_FEATURE_MATCHING`: (DEFAULT: ON) Toggle compilation of matching API functions,the library can't do matching without this.
+* `Z_FEATURE_INTEREST`: (DEFAULT: ON) Toggle compilation of interest protocol, the library can't do write filtering without this.
+* `Z_FEATURE_ENCODING_VALUES`: (DEFAULT: ON) Toggle compilation of encoding values constants, the library will not provide encoding constants without this.
+* `Z_FEATURE_SESSION_CHECK`: (DEFAULT: ON) Toggle session reference check. Dangerous if entities like publishers or queriers are used after a session is closed.
+* `Z_FEATURE_LOCAL_SUBSCRIBER`: (DEFAULT: ON) Toggle local subscriber feature, subscribers will not be triggered by local publications without this.
+* `Z_FEATURE_FRAGMENTATION`: (DEFAULT: ON) Toggle fragmentation feature, the library can't send or receive fragmented messages without this.
+* `Z_FEATURE_MULTICAST_TRANSPORT`: (DEFAULT: ON) Toggle multicast transport feature, the library can't handle multicast connections without this.
+* `Z_FEATURE_UNICAST_TRANSPORT`: (DEFAULT: ON) Toggle unicast transport feature, the library can't handle unicast connections without this.
+* `Z_FEATURE_RAWETH_TRANSPORT`:  (DEFAULT: OFF) Toggle compilation of raw ethernet transport, the library can't handle raw ethernet connections without this.
+* `Z_FEATURE_UNICAST_PEER`: (DEFAULT: ON) Toggle unicast peer feature, the library can't do peer to peer unicast without this.
+* `Z_FEATURE_LINK_TCP`: (DEFAULT: ON) Toggle compilation of TCP link support. 
+* `Z_FEATURE_LINK_UDP_MULTICAST`: (DEFAULT: ON) Toggle compilation of UDP multicast link support.
+* `Z_FEATURE_LINK_UDP_UNICAST`: (DEFAULT: ON) Toggle compilation of UDP unicast link support.
+* `Z_FEATURE_LINK_BLUETOOTH`: (DEFAULT: OFF) Toggle compilation of Bluetooth link support.
+* `Z_FEATURE_LINK_WS`: (DEFAULT: OFF) Toggle compilation of WebSocket link support.
+* `Z_FEATURE_LINK_SERIAL`: (DEFAULT: OFF) Toggle compilation of Serial link support.
+* `Z_FEATURE_LINK_SERIAL_USB`: (DEFAULT: OFF) Toggle compilation of Serial USB link support.
