@@ -96,7 +96,7 @@ void *_z_hashmap_iterator_value(const _z_hashmap_iterator_t *iter);
 
 #define _Z_HASHMAP_DEFINE_INNER(map_name, key_name, val_name, key_type, val_type)                                     \
     typedef _z_hashmap_entry_t map_name##_hashmap_entry_t;                                                            \
-    static inline void map_name##_elem_free(void **e) {                                                               \
+    static inline void map_name##_hashmap_entry_elem_free(void **e) {                                                 \
         map_name##_hashmap_entry_t *ptr = (map_name##_hashmap_entry_t *)*e;                                           \
         if (ptr != NULL) {                                                                                            \
             key_name##_elem_free(&ptr->_key);                                                                         \
@@ -115,15 +115,15 @@ void *_z_hashmap_iterator_value(const _z_hashmap_iterator_t *iter);
     static inline bool map_name##_hashmap_entry_key_eq(const void *left, const void *right) {                         \
         const map_name##_hashmap_entry_t *l = (const map_name##_hashmap_entry_t *)left;                               \
         const map_name##_hashmap_entry_t *r = (const map_name##_hashmap_entry_t *)right;                              \
-        return key_name##_equals(l->_key, r->_key);                                                                   \
+        return key_name##_elem_eq(l->_key, r->_key);                                                                  \
     }                                                                                                                 \
     typedef _z_hashmap_t map_name##_hashmap_t;                                                                        \
     typedef _z_hashmap_iterator_t map_name##_hashmap_iterator_t;                                                      \
     static inline void map_name##_hashmap_init(map_name##_hashmap_t *m) {                                             \
-        _z_hashmap_init(m, _Z_DEFAULT_HASHMAP_CAPACITY, key_name##_hash, key_name##_equals);                          \
+        _z_hashmap_init(m, _Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, key_name##_elem_eq);                    \
     }                                                                                                                 \
     static inline map_name##_hashmap_t map_name##_hashmap_make(void) {                                                \
-        return _z_hashmap_make(_Z_DEFAULT_HASHMAP_CAPACITY, key_name##_hash, key_name##_equals);                      \
+        return _z_hashmap_make(_Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, key_name##_elem_eq);                \
     }                                                                                                                 \
     static inline val_type *map_name##_hashmap_insert(map_name##_hashmap_t *m, key_type *k, val_type *v) {            \
         return (val_type *)_z_hashmap_insert(m, k, v, map_name##_hashmap_entry_elem_free, true);                      \

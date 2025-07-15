@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_SAMPLE_NETAPI_H
 #define ZENOH_PICO_SAMPLE_NETAPI_H
 
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -76,6 +78,10 @@ void _z_sample_free(_z_sample_t **sample);
 
 z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
+
+_Z_ELEM_DEFINE(_z_sample, _z_sample_t, _z_sample_size, _z_sample_clear, _z_sample_copy, _z_sample_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
+_Z_RING_DEFINE(_z_sample, _z_sample_t)
 
 #ifdef __cplusplus
 }

@@ -36,18 +36,18 @@ typedef _z_hashmap_iterator_t _z_int_void_map_iterator_t;
 
 static inline size_t _z_int_void_map_hash(const void *key) { return *(const size_t *)key; }
 
-static inline bool _z_int_void_map_equals(const void *left, const void *right) {
+static inline bool _z_int_void_map_eq(const void *left, const void *right) {
     const _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
     const _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
     return *(size_t *)l->_key == *(size_t *)r->_key;
 }
 
 static inline void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity) {
-    _z_hashmap_init(map, capacity, _z_int_void_map_hash, _z_int_void_map_equals);
+    _z_hashmap_init(map, capacity, _z_int_void_map_hash, _z_int_void_map_eq);
 }
 
 static inline _z_int_void_map_t _z_int_void_map_make(size_t capacity) {
-    return _z_hashmap_make(capacity, _z_int_void_map_hash, _z_int_void_map_equals);
+    return _z_hashmap_make(capacity, _z_int_void_map_hash, _z_int_void_map_eq);
 }
 
 static inline void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f,
