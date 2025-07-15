@@ -120,10 +120,10 @@ void *_z_hashmap_iterator_value(const _z_hashmap_iterator_t *iter);
     typedef _z_hashmap_t map_name##_hashmap_t;                                                                        \
     typedef _z_hashmap_iterator_t map_name##_hashmap_iterator_t;                                                      \
     static inline void map_name##_hashmap_init(map_name##_hashmap_t *m) {                                             \
-        _z_hashmap_init(m, _Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, key_name##_elem_eq);                    \
+        _z_hashmap_init(m, _Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, map_name##_hashmap_entry_key_eq);       \
     }                                                                                                                 \
     static inline map_name##_hashmap_t map_name##_hashmap_make(void) {                                                \
-        return _z_hashmap_make(_Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, key_name##_elem_eq);                \
+        return _z_hashmap_make(_Z_DEFAULT_HASHMAP_CAPACITY, key_name##_elem_hash, map_name##_hashmap_entry_key_eq);   \
     }                                                                                                                 \
     static inline val_type *map_name##_hashmap_insert(map_name##_hashmap_t *m, key_type *k, val_type *v) {            \
         return (val_type *)_z_hashmap_insert(m, k, v, map_name##_hashmap_entry_elem_free, true);                      \
