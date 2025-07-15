@@ -22,4 +22,5 @@ The *libzenoh-pico* library provides a C client API for the `Zenoh protocol <htt
     :maxdepth: 10
 
     concepts
+    config
     api
