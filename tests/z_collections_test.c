@@ -34,11 +34,6 @@ char *d = "d";
 _Z_RING_DEFINE(_z_str, char)
 
 // SORTED MAP
-int _z_str_cmp(const void *left, const void *right) {
-    const char *l = (const char *)left;
-    const char *r = (const char *)right;
-    return strcmp(l, r);
-}
 _Z_SORTEDMAP_DEFINE(_z_str, _z_str, char, char)
 
 void print_ring(_z_str_ring_t *r) {
