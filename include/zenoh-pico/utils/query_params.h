@@ -22,6 +22,11 @@ extern "C" {
 #endif
 
 extern const char *_Z_QUERY_PARAMS_KEY_TIME;
+extern const char *_Z_QUERY_PARAMS_KEY_RANGE;
+extern const char *_Z_QUERY_PARAMS_KEY_MAX;
+
+extern const char *_Z_QUERY_PARAMS_LIST_SEPARATOR;
+extern const char *_Z_QUERY_PARAMS_FIELD_SEPARATOR;
 
 typedef struct {
     _z_str_se_t key;

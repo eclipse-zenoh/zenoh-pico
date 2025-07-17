@@ -120,6 +120,10 @@ void *_z_sortedmap_iterator_value(const _z_sortedmap_iterator_t *iter);
     static inline val_type *map_name##_sortedmap_get(const map_name##_sortedmap_t *m, const key_type *k) {         \
         return (val_type *)_z_sortedmap_get(m, k);                                                                 \
     }                                                                                                              \
+    static inline z_result_t map_name##_sortedmap_copy(map_name##_sortedmap_t *dst,                                \
+                                                       const map_name##_sortedmap_t *src) {                        \
+        return _z_sortedmap_copy(dst, src, map_name##_sortedmap_entry_elem_clone);                                 \
+    }                                                                                                              \
     static inline map_name##_sortedmap_t map_name##_sortedmap_clone(const map_name##_sortedmap_t *m) {             \
         return _z_sortedmap_clone(m, map_name##_sortedmap_entry_elem_clone, map_name##_sortedmap_entry_elem_free); \
     }                                                                                                              \

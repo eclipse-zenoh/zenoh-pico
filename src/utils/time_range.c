@@ -22,13 +22,6 @@
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
 
-static const double _Z_TIME_RANGE_U_TO_SECS = 0.000001;
-static const double _Z_TIME_RANGE_MS_TO_SECS = 0.001;
-static const double _Z_TIME_RANGE_M_TO_SECS = 60.0;
-static const double _Z_TIME_RANGE_H_TO_SECS = 3600.0;
-static const double _Z_TIME_RANGE_D_TO_SECS = 86400.0;
-static const double _Z_TIME_RANGE_W_TO_SECS = 604800.0;
-
 /**
  * Parses a _z_str_se_t as a duration.
  * Expected format is a double in seconds, or "<double><unit>" where <unit> is:
@@ -198,6 +191,125 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
         range->end.bound = inclusive_end ? _Z_TIME_BOUND_INCLUSIVE : _Z_TIME_BOUND_EXCLUSIVE;
         range->end.now_offset = range->start.now_offset + duration;
     }
+
+    return true;
+}
+
+static bool _z_time_bound_delim_to_char(const _z_time_bound_t *bound, bool is_start, char *delim) {
+    if (bound == NULL || delim == NULL) {
+        return false;
+    }
+    switch (bound->bound) {
+        case _Z_TIME_BOUND_INCLUSIVE:
+            *delim = is_start ? '[' : ']';
+            break;
+        case _Z_TIME_BOUND_EXCLUSIVE:
+            *delim = is_start ? ']' : '[';
+            break;
+        case _Z_TIME_BOUND_UNBOUNDED:
+            *delim = is_start ? '[' : ']';
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_len) {
+    if (bound == NULL || buf == NULL || buf_len < 1) {
+        return false;  // Not enough space for at least '\0'
+    }
+
+    if (bound->bound == _Z_TIME_BOUND_UNBOUNDED) {
+        buf[0] = '\0';
+        return true;
+    }
+
+    size_t pos = 0;
+
+    // Ensure enough space for "now("
+    if (buf_len < 4) {
+        return false;
+    }
+    buf[pos++] = 'n';
+    buf[pos++] = 'o';
+    buf[pos++] = 'w';
+    buf[pos++] = '(';
+
+    if (bound->now_offset != 0.0) {
+        int len = snprintf(&buf[pos], buf_len - pos, "%.17f", bound->now_offset);
+        if (len < 0 || (size_t)len >= buf_len - pos) {
+            return false;  // Not enough space for the formatted string
+        }
+
+        // Trim trailing zeros and decimal point if no fractions remain
+        char *start = &buf[pos];
+        char *dot = strchr(start, '.');
+        if (dot != NULL) {
+            char *end = start + strlen(start) - 1;
+            while (end > dot && *end == '0') {
+                *end-- = '\0';
+            }
+            if (end == dot) {
+                *end = '\0';  // remove trailing '.'
+            }
+        }
+
+        pos += strlen(start);
+
+        if (buf_len - pos < 1) {
+            return false;  // Not enough space for 's'
+        }
+        buf[pos++] = 's';
+    }
+
+    if (buf_len - pos < 2) {
+        return false;  // Not enough space for ")\0"
+    }
+
+    buf[pos++] = ')';
+    buf[pos++] = '\0';
+    return true;
+}
+
+bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_len) {
+    size_t pos = 0;
+
+    if (range == NULL || buf == NULL || buf_len < 3) {
+        return false;  // Not enough space for at least "[]"
+    }
+
+    if (!_z_time_bound_delim_to_char(&range->start, true, &buf[pos++])) {
+        return false;  // Invalid bound delimiter
+    }
+
+    if (range->start.bound == _Z_TIME_BOUND_INCLUSIVE || range->start.bound == _Z_TIME_BOUND_EXCLUSIVE) {
+        if (!_z_time_bound_to_str(&range->start, &buf[pos], buf_len - pos)) {
+            return false;
+        }
+        pos += strlen(&buf[pos]);
+    }
+
+    if (buf_len - pos < 2) {
+        return false;  // Not enough space for ".."
+    }
+    buf[pos++] = '.';
+    buf[pos++] = '.';
+
+    if (range->end.bound == _Z_TIME_BOUND_INCLUSIVE || range->end.bound == _Z_TIME_BOUND_EXCLUSIVE) {
+        if (!_z_time_bound_to_str(&range->end, &buf[pos], buf_len - pos)) {
+            return false;
+        }
+        pos += strlen(&buf[pos]);
+    }
+
+    if (buf_len - pos < 2) {
+        return false;  // Not enough space for end delimiter and '\0'
+    }
+    if (!_z_time_bound_delim_to_char(&range->end, false, &buf[pos++])) {
+        return false;  // Invalid bound delimiter
+    }
+    buf[pos] = '\0';
 
     return true;
 }

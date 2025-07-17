@@ -29,9 +29,6 @@
 
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
 
-static const char *_ZE_ADVANCED_CACHE_QUERY_PARAMS_KEY_RANGE = "_sn";
-static const char *_ZE_ADVANCED_CACHE_QUERY_PARAMS_KEY_MAX = "_max";
-
 typedef struct {
     int64_t start;
     int64_t end;
@@ -101,11 +98,9 @@ void _ze_advanced_cache_query_parse_parameters(_ze_advanced_cache_query_paramete
         _z_query_param_t param = _z_query_params_next(&str);
         if (param.key.start != NULL) {
             size_t key_len = _z_ptr_char_diff(param.key.end, param.key.start) + 1;
-            if (_ze_advanced_cache_query_match_key(param.key.start, key_len,
-                                                   _ZE_ADVANCED_CACHE_QUERY_PARAMS_KEY_RANGE)) {
+            if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_RANGE)) {
                 _ze_advanced_cache_query_parse_range(&param.value, &params->range);
-            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len,
-                                                          _ZE_ADVANCED_CACHE_QUERY_PARAMS_KEY_MAX)) {
+            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_MAX)) {
                 _ze_advanced_cache_query_parse_max(&param.value, &params->max);
             } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_TIME)) {
                 _ze_advanced_cache_query_parse_time(&param.value, &params->time);
