@@ -235,7 +235,7 @@ z_result_t _z_zsize_decode(_z_zint_t *zint, _z_zbuf_t *zbf) {
 z_result_t _z_buf_encode(_z_wbuf_t *wbf, const uint8_t *buf, size_t len) {
     z_result_t ret = _Z_RES_OK;
 
-    if ((wbf->_expansion_step != 0) && (len > Z_TSID_LENGTH)) {
+    if ((wbf->_expansion_step != 0) && (len > Z_ZID_LENGTH)) {
         ret |= _z_wbuf_wrap_bytes(wbf, buf, 0, len);
     } else {
         ret |= _z_wbuf_write_bytes(wbf, buf, 0, len);
