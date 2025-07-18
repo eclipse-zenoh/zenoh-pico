@@ -406,6 +406,8 @@ z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *
 
 _z_network_message_t *_z_n_msg_clone(const _z_network_message_t *src) {
     _z_network_message_t *dst = (_z_network_message_t *)z_malloc(sizeof(_z_network_message_t));
-    _z_n_msg_copy(dst, src);
+    if (dst != NULL) {
+        _z_n_msg_copy(dst, src);
+    }
     return dst;
 }

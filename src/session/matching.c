@@ -17,10 +17,10 @@
 #if Z_FEATURE_MATCHING == 1
 _z_matching_listener_ctx_t *_z_matching_listener_ctx_new(_z_closure_matching_status_t callback) {
     _z_matching_listener_ctx_t *ctx = (_z_matching_listener_ctx_t *)z_malloc(sizeof(_z_matching_listener_ctx_t));
-
-    ctx->decl_id = _Z_MATCHING_LISTENER_CTX_NULL_ID;
-    ctx->callback = callback;
-
+    if (ctx != NULL) {
+        ctx->decl_id = _Z_MATCHING_LISTENER_CTX_NULL_ID;
+        ctx->callback = callback;
+    }
     return ctx;
 }
 
@@ -34,11 +34,11 @@ _z_matching_listener_state_t *_z_matching_listener_state_new(uint32_t interest_i
                                                              _z_matching_listener_ctx_t *ctx) {
     _z_matching_listener_state_t *state =
         (_z_matching_listener_state_t *)z_malloc(sizeof(_z_matching_listener_state_t));
-
-    state->interest_id = interest_id;
-    state->entity_id = entity_id;
-    state->ctx = ctx;
-
+    if (state != NULL) {
+        state->interest_id = interest_id;
+        state->entity_id = entity_id;
+        state->ctx = ctx;
+    }
     return state;
 }
 
