@@ -41,7 +41,7 @@ jobs:
           export PICO_SDK_PATH=$HOME/work/pico-sdk
           mkdir -p $PICO_SDK_PATH
           cd $PICO_SDK_PATH
-          git clone https://github.com/raspberrypi/pico-sdk.git --branch 2.1.0 .
+          git clone https://github.com/raspberrypi/pico-sdk.git --branch 2.1.1-correct-picotool .
           git submodule update --init
           
       - name: Install FreeRTOS SDK 
