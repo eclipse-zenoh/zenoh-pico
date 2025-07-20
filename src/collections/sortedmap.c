@@ -58,9 +58,9 @@ _z_sortedmap_t _z_sortedmap_clone(const _z_sortedmap_t *src, z_element_clone_f f
     return dst;
 }
 
-bool _z_sortedmap_insert(_z_sortedmap_t *map, void *k, void *v, z_element_free_f f_f, bool replace) {
+void *_z_sortedmap_insert(_z_sortedmap_t *map, void *k, void *v, z_element_free_f f_f, bool replace) {
     if (map == NULL) {
-        return false;
+        return NULL;
     }
 
     _z_list_t *prev = NULL;
@@ -72,7 +72,7 @@ bool _z_sortedmap_insert(_z_sortedmap_t *map, void *k, void *v, z_element_free_f
 
         if (cmp == 0) {
             if (!replace) {
-                return false;
+                return NULL;
             }
             map->_vals = _z_list_drop_element(map->_vals, prev, f_f);
             break;
@@ -86,7 +86,7 @@ bool _z_sortedmap_insert(_z_sortedmap_t *map, void *k, void *v, z_element_free_f
 
     _z_sortedmap_entry_t *entry = (_z_sortedmap_entry_t *)z_malloc(sizeof(_z_sortedmap_entry_t));
     if (entry == NULL) {
-        return false;
+        return NULL;
     }
     entry->_key = k;
     entry->_val = v;
@@ -95,17 +95,17 @@ bool _z_sortedmap_insert(_z_sortedmap_t *map, void *k, void *v, z_element_free_f
         map->_vals = _z_list_push(map->_vals, entry);
         if (map->_vals == NULL) {
             z_free(entry);
-            return false;
+            return NULL;
         }
     } else {
         _z_list_t *list = _z_list_push_after(prev, entry);
         if (list == NULL) {
             z_free(entry);
-            return false;
+            return NULL;
         }
     }
 
-    return true;
+    return v;
 }
 
 void *_z_sortedmap_get(const _z_sortedmap_t *map, const void *k) {
@@ -121,6 +121,19 @@ void *_z_sortedmap_get(const _z_sortedmap_t *map, const void *k) {
                 break;
             }
             l = _z_list_next(l);
+        }
+    }
+    return ret;
+}
+
+_z_sortedmap_entry_t *_z_sortedmap_pop_first(_z_sortedmap_t *map) {
+    _z_sortedmap_entry_t *ret = NULL;
+
+    if (map->_vals != NULL) {
+        _z_list_t *l = map->_vals;
+        if (l != NULL) {
+            ret = (_z_sortedmap_entry_t *)_z_list_value(l);
+            map->_vals = _z_list_drop_element(map->_vals, NULL, _z_noop_free);
         }
     }
     return ret;

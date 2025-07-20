@@ -17,16 +17,95 @@
 #include "olv_macros.h"
 #include "zenoh-pico/api/liveliness.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/hashmap.h"
 #include "zenoh-pico/collections/refcount.h"
+#include "zenoh-pico/collections/sortedmap.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+static inline size_t _z_uint32_size(const uint32_t *e) {
+    _ZP_UNUSED(e);
+    return sizeof(uint32_t);
+}
+static inline void _z_uint32_copy(uint32_t *dst, const uint32_t *src) { *dst = *src; }
+static inline int _z_uint32_cmp(const uint32_t *left, const uint32_t *right) {
+    if (*left < *right) return -1;
+    if (*left > *right) return 1;
+    return 0;
+}
+_Z_ELEM_DEFINE(_z_uint32, uint32_t, _z_uint32_size, _z_noop_clear, _z_uint32_copy, _z_noop_move, _z_noop_eq,
+               _z_uint32_cmp, _z_noop_hash)
+
+_Z_SORTEDMAP_DEFINE(_z_uint32, _z_sample, uint32_t, _z_sample_t)
+
+// TODO: Going to need an init function for this
 typedef struct {
+    bool _has_last_delivered;
+    uint32_t _last_delivered;
+    uint64_t _pending_queries;
+    _z_uint32__z_sample_sortedmap_t _pending_samples;
+} _ze_advanced_subscriber_sequenced_state_t;
+
+static inline size_t _ze_advanced_subscriber_sequenced_state_size(_ze_advanced_subscriber_sequenced_state_t *s) {
+    _ZP_UNUSED(s);
+    return sizeof(_ze_advanced_subscriber_sequenced_state_t);
+}
+void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_sequenced_state_t *s);
+void _ze_advanced_subscriber_sequenced_state_copy(_ze_advanced_subscriber_sequenced_state_t *dst,
+                                                  const _ze_advanced_subscriber_sequenced_state_t *src);
+
+_Z_ELEM_DEFINE(_ze_advanced_subscriber_sequenced_state, _ze_advanced_subscriber_sequenced_state_t,
+               _ze_advanced_subscriber_sequenced_state_size, _ze_advanced_subscriber_sequenced_state_clear,
+               _ze_advanced_subscriber_sequenced_state_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+
+_Z_SORTEDMAP_DEFINE(_z_timestamp, _z_sample, _z_timestamp_t, _z_sample_t)
+
+typedef struct {
+    bool _has_last_delivered;
+    _z_timestamp_t _last_delivered;
+    uint64_t _pending_queries;
+    _z_timestamp__z_sample_sortedmap_t _pending_samples;
+} _ze_advanced_subscriber_timestamped_state_t;
+
+static inline size_t _ze_advanced_subscriber_timestamped_state_size(_ze_advanced_subscriber_timestamped_state_t *s) {
+    _ZP_UNUSED(s);
+    return sizeof(_ze_advanced_subscriber_timestamped_state_t);
+}
+void _ze_advanced_subscriber_timestamped_state_clear(_ze_advanced_subscriber_timestamped_state_t *s);
+void _ze_advanced_subscriber_timestamped_state_copy(_ze_advanced_subscriber_timestamped_state_t *dst,
+                                                    const _ze_advanced_subscriber_timestamped_state_t *src);
+
+_Z_ELEM_DEFINE(_ze_advanced_subscriber_timestamped_state, _ze_advanced_subscriber_timestamped_state_t,
+               _ze_advanced_subscriber_timestamped_state_size, _ze_advanced_subscriber_timestamped_state_clear,
+               _ze_advanced_subscriber_timestamped_state_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+
+_Z_HASHMAP_DEFINE(_z_entity_global_id, _ze_advanced_subscriber_sequenced_state, _z_entity_global_id_t,
+                  _ze_advanced_subscriber_sequenced_state_t)
+_Z_HASHMAP_DEFINE(_z_id, _ze_advanced_subscriber_timestamped_state, z_id_t, _ze_advanced_subscriber_timestamped_state_t)
+
+typedef struct {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_t _mutex;
+#endif
+    size_t _next_id;
+    uint64_t _global_pending_queries;
+    _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_t _sequenced_states;
+    _z_id__ze_advanced_subscriber_timestamped_state_hashmap_t _timestamped_states;
+    _z_session_rc_t _session;
+    z_owned_keyexpr_t _key_expr;
+    z_owned_keyexpr_t _query_key_expr;
+    bool _retransmission;
+    bool _has_period;
+    // Period _period;
+    size_t _history_depth;
+    z_query_target_t _query_target;
+    uint64_t _query_timeout;
     _z_closure_sample_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_ctx;
+    // HashMap<size_t, Callback<Miss>> _miss_handlers;
     bool _has_token;
     z_owned_liveliness_token_t _token;
 } _ze_advanced_subscriber_state_t;

@@ -550,10 +550,10 @@ void sorted_map_iterator_test(void) {
     _z_str__z_str_sortedmap_t map;
 
     map = _z_str__z_str_sortedmap_make();
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("4"), _z_str_clone("D"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("1"), _z_str_clone("A"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("3"), _z_str_clone("C"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("2"), _z_str_clone("B"), false);
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("4"), _z_str_clone("D"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("1"), _z_str_clone("A"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("3"), _z_str_clone("C"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("2"), _z_str_clone("B"));
 
 #define TEST_SORTEDMAP(map)                                                                    \
     {                                                                                          \
@@ -595,10 +595,10 @@ void sorted_map_iterator_deletion_test(void) {
     _z_str__z_str_sortedmap_t map;
 
     map = _z_str__z_str_sortedmap_make();
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("4"), _z_str_clone("D"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("1"), _z_str_clone("A"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("3"), _z_str_clone("C"), false);
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("2"), _z_str_clone("B"), false);
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("4"), _z_str_clone("D"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("1"), _z_str_clone("A"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("3"), _z_str_clone("C"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("2"), _z_str_clone("B"));
 
     _z_str__z_str_sortedmap_iterator_t iter = _z_str__z_str_sortedmap_iterator_make(&map);
     _z_str__z_str_sortedmap_iterator_next(&iter);
@@ -614,27 +614,12 @@ void sorted_map_iterator_deletion_test(void) {
 
 void sorted_map_replace_test(void) {
     _z_str__z_str_sortedmap_t map = _z_str__z_str_sortedmap_make();
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("key"), _z_str_clone("old"), false);
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("key"), _z_str_clone("old"));
     assert(strcmp(_z_str__z_str_sortedmap_get(&map, "key"), "old") == 0);
 
-    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("key"), _z_str_clone("new"), true);
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("key"), _z_str_clone("new"));
     assert(strcmp(_z_str__z_str_sortedmap_get(&map, "key"), "new") == 0);
 
-    _z_str__z_str_sortedmap_clear(&map);
-}
-
-void sorted_map_no_replace_test(void) {
-    _z_str__z_str_sortedmap_t map = _z_str__z_str_sortedmap_make();
-    char *key = _z_str_clone("key");
-    char *value = _z_str_clone("first");
-    _z_str__z_str_sortedmap_insert(&map, key, value, false);
-    key = _z_str_clone("key");
-    value = _z_str_clone("second");
-    bool inserted = _z_str__z_str_sortedmap_insert(&map, key, value, false);
-    assert(inserted == false);
-    z_free(key);
-    z_free(value);
-    assert(strcmp(_z_str__z_str_sortedmap_get(&map, "key"), "first") == 0);
     _z_str__z_str_sortedmap_clear(&map);
 }
 
@@ -661,7 +646,7 @@ void sorted_map_stress_test(void) {
     for (int i = 100; i >= 1; i--) {
         snprintf(key, sizeof(key), "%03d", i);
         snprintf(val, sizeof(val), "val%d", i);
-        _z_str__z_str_sortedmap_insert(&map, _z_str_clone(key), _z_str_clone(val), false);
+        _z_str__z_str_sortedmap_insert(&map, _z_str_clone(key), _z_str_clone(val));
     }
 
     _z_str__z_str_sortedmap_iterator_t iter = _z_str__z_str_sortedmap_iterator_make(&map);
@@ -692,7 +677,6 @@ int main(void) {
     sorted_map_iterator_test();
     sorted_map_iterator_deletion_test();
     sorted_map_replace_test();
-    sorted_map_no_replace_test();
     sorted_map_missing_key_test();
     sorted_map_empty_test();
     sorted_map_stress_test();

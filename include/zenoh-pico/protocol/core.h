@@ -62,10 +62,19 @@ typedef struct {
 extern const _z_id_t empty_id;
 uint8_t _z_id_len(_z_id_t id);
 static inline bool _z_id_check(_z_id_t id) { return memcmp(&id, &empty_id, sizeof(id)) != 0; }
+static inline size_t _z_id_size(_z_id_t *id) {
+    _ZP_UNUSED(id);
+    return sizeof(_z_id_t);
+}
+static inline void _z_id_copy(_z_id_t *dst, const _z_id_t *src) { memcpy(dst, src, sizeof(_z_id_t)); }
 static inline bool _z_id_eq(const _z_id_t *left, const _z_id_t *right) {
     return memcmp(left->id, right->id, ZENOH_ID_SIZE) == 0;
 }
+int _z_id_cmp(const _z_id_t *left, const _z_id_t *right);
+size_t _z_id_hash(const _z_id_t *id);
 static inline _z_id_t _z_id_empty(void) { return (_z_id_t){0}; }
+
+_Z_ELEM_DEFINE(_z_id, _z_id_t, _z_id_size, _z_noop_clear, _z_id_copy, _z_noop_move, _z_id_eq, _z_id_cmp, _z_id_hash)
 
 typedef struct {
     _z_id_t zid;
@@ -77,6 +86,20 @@ static inline _z_entity_global_id_t _z_entity_global_id_null(void) { return (_z_
 static inline bool _z_entity_global_id_check(const _z_entity_global_id_t *info) {
     return _z_id_check(info->zid) || info->eid != 0;
 }
+static inline size_t _z_entity_global_id_size(_z_entity_global_id_t *id) {
+    _ZP_UNUSED(id);
+    return sizeof(_z_entity_global_id_t);
+}
+static inline void _z_entity_global_id_copy(_z_entity_global_id_t *dst, const _z_entity_global_id_t *src) {
+    *dst = *src;
+}
+static inline bool _z_entity_global_id_eq(const _z_entity_global_id_t *left, const _z_entity_global_id_t *right) {
+    return memcmp(left, right, sizeof(_z_entity_global_id_t)) == 0;
+}
+size_t _z_entity_global_id_hash(const _z_entity_global_id_t *id);
+
+_Z_ELEM_DEFINE(_z_entity_global_id, _z_entity_global_id_t, _z_entity_global_id_size, _z_noop_clear,
+               _z_entity_global_id_copy, _z_noop_move, _z_entity_global_id_eq, _z_noop_cmp, _z_entity_global_id_hash)
 
 /**
  * NTP64 time.
@@ -100,7 +123,15 @@ void _z_timestamp_copy(_z_timestamp_t *dst, const _z_timestamp_t *src);
 _z_timestamp_t _z_timestamp_duplicate(const _z_timestamp_t *tstamp);
 void _z_timestamp_clear(_z_timestamp_t *tstamp);
 void _z_timestamp_move(_z_timestamp_t *dst, _z_timestamp_t *src);
+static inline size_t _z_timestamp_size(const _z_timestamp_t *ts) {
+    (void)(ts);
+    return sizeof(_z_timestamp_t);
+}
+int _z_timestamp_cmp(const _z_timestamp_t *left, const _z_timestamp_t *right);
 _z_ntp64_t _z_timestamp_ntp64_from_time(uint32_t seconds, uint32_t nanos);
+
+_Z_ELEM_DEFINE(_z_timestamp, _z_timestamp_t, _z_timestamp_size, _z_timestamp_clear, _z_timestamp_copy, _z_noop_move,
+               _z_noop_eq, _z_timestamp_cmp, _z_noop_hash)
 
 /**
  * A zenoh key-expression.

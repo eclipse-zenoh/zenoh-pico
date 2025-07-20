@@ -64,8 +64,9 @@ typedef struct {
 void _z_sortedmap_init(_z_sortedmap_t *map, z_element_cmp_f f_cmp);
 _z_sortedmap_t _z_sortedmap_make(z_element_cmp_f f_cmp);
 
-bool _z_sortedmap_insert(_z_sortedmap_t *map, void *key, void *val, z_element_free_f f, bool replace);
+void *_z_sortedmap_insert(_z_sortedmap_t *map, void *key, void *val, z_element_free_f f, bool replace);
 void *_z_sortedmap_get(const _z_sortedmap_t *map, const void *key);
+_z_sortedmap_entry_t *_z_sortedmap_pop_first(_z_sortedmap_t *map);
 void _z_sortedmap_remove(_z_sortedmap_t *map, const void *key, z_element_free_f f);
 
 size_t _z_sortedmap_len(const _z_sortedmap_t *map);
@@ -88,14 +89,23 @@ void *_z_sortedmap_iterator_value(const _z_sortedmap_iterator_t *iter);
 
 #define _Z_SORTEDMAP_DEFINE_INNER(map_name, key_name, val_name, key_type, val_type)                                \
     typedef _z_sortedmap_entry_t map_name##_sortedmap_entry_t;                                                     \
-    static inline void map_name##_sortedmap_entry_elem_free(void **e) {                                            \
-        map_name##_sortedmap_entry_t *ptr = (map_name##_sortedmap_entry_t *)*e;                                    \
+    static inline key_type *map_name##_sortedmap_entry_key(const map_name##_sortedmap_entry_t *entry) {            \
+        return (key_type *)entry->_key;                                                                            \
+    }                                                                                                              \
+    static inline val_type *map_name##_sortedmap_entry_val(const map_name##_sortedmap_entry_t *entry) {            \
+        return (val_type *)entry->_val;                                                                            \
+    }                                                                                                              \
+    static inline void map_name##_sortedmap_entry_free(map_name##_sortedmap_entry_t **entry) {                     \
+        map_name##_sortedmap_entry_t *ptr = *entry;                                                                \
         if (ptr != NULL) {                                                                                         \
             key_name##_elem_free(&ptr->_key);                                                                      \
             val_name##_elem_free(&ptr->_val);                                                                      \
             z_free(ptr);                                                                                           \
-            *e = NULL;                                                                                             \
+            *entry = NULL;                                                                                         \
         }                                                                                                          \
+    }                                                                                                              \
+    static inline void map_name##_sortedmap_entry_elem_free(void **e) {                                            \
+        map_name##_sortedmap_entry_free((map_name##_sortedmap_entry_t **)e);                                       \
     }                                                                                                              \
     static inline void *map_name##_sortedmap_entry_elem_clone(const void *e) {                                     \
         const map_name##_sortedmap_entry_t *src = (map_name##_sortedmap_entry_t *)e;                               \
@@ -113,12 +123,14 @@ void *_z_sortedmap_iterator_value(const _z_sortedmap_iterator_t *iter);
     static inline map_name##_sortedmap_t map_name##_sortedmap_make(void) {                                         \
         return _z_sortedmap_make(key_name##_elem_cmp);                                                             \
     }                                                                                                              \
-    static inline bool map_name##_sortedmap_insert(map_name##_sortedmap_t *m, key_type *k, val_type *v,            \
-                                                   bool replace) {                                                 \
-        return _z_sortedmap_insert(m, k, v, map_name##_sortedmap_entry_elem_free, replace);                        \
+    static inline val_type *map_name##_sortedmap_insert(map_name##_sortedmap_t *m, key_type *k, val_type *v) {     \
+        return (val_type *)_z_sortedmap_insert(m, k, v, map_name##_sortedmap_entry_elem_free, true);               \
     }                                                                                                              \
     static inline val_type *map_name##_sortedmap_get(const map_name##_sortedmap_t *m, const key_type *k) {         \
         return (val_type *)_z_sortedmap_get(m, k);                                                                 \
+    }                                                                                                              \
+    static inline map_name##_sortedmap_entry_t *map_name##_sortedmap_pop_first(map_name##_sortedmap_t *m) {        \
+        return (map_name##_sortedmap_entry_t *)_z_sortedmap_pop_first(m);                                          \
     }                                                                                                              \
     static inline z_result_t map_name##_sortedmap_copy(map_name##_sortedmap_t *dst,                                \
                                                        const map_name##_sortedmap_t *src) {                        \
