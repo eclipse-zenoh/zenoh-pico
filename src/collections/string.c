@@ -35,6 +35,9 @@ _z_string_t _z_string_copy_from_substr(const char *value, size_t len) {
 
 _z_string_t *_z_string_copy_from_str_as_ptr(const char *value) {
     _z_string_t *s = (_z_string_t *)z_malloc(sizeof(_z_string_t));
+    if (s == NULL) {
+        return NULL;
+    }
     *s = _z_string_copy_from_str(value);
     if (_z_slice_is_empty(&s->_slice) && value != NULL) {
         z_free(s);

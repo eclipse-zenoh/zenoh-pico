@@ -192,10 +192,10 @@ static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *enc
     }
     // Allocate string
     char *value = (char *)z_malloc(sizeof(char) * total_len);
-    memset(value, 0, total_len);
     if (value == NULL) {
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    memset(value, 0, total_len);
     // Copy prefix
     (void)strncpy(value, prefix, prefix_len);
     // Copy schema and separator
