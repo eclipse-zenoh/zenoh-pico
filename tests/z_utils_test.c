@@ -110,7 +110,7 @@ static bool compare_double_result(const double expected, const double result) {
 
 static bool compare_time_range(const _z_time_range_t *a, const _z_time_range_t *b) {
     return a->start.bound == b->start.bound && compare_double_result(a->start.now_offset, b->start.now_offset) &&
-           b->end.bound == b->end.bound && compare_double_result(a->end.now_offset, b->end.now_offset);
+           a->end.bound == b->end.bound && compare_double_result(a->end.now_offset, b->end.now_offset);
 }
 
 static void test_time_range_roundtrip(const char *input) {
