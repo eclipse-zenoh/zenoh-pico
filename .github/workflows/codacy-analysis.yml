@@ -17,7 +17,7 @@ on:
 
 jobs:
   codacy-security-scan:
-    name: Codacy Security Scan
+    name: Codacy Security Scan with ${{ matrix.tool }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,7 +25,6 @@ jobs:
         tool: [
             cppcheck, # static analysis of C/C++ code
             flawfinder, # a static analysis tool for finding vulnerabilities in C/C++ source code
-            pmd, # includes CPD, the copy-paste-detector. CPD finds duplicated code in C/C++, etc
             markdownlint, # A Node.js style checker and lint tool for Markdown/CommonMark files
             shellcheck, # a static analysis tool for shell scripts
             pylintpython3, # a static code analyser for Python 3
@@ -36,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
-      - name: Run Codacy Analysis CLI
+      - name: Run Codacy Analysis CLI for ${{ matrix.tool }}
         uses: codacy/codacy-analysis-cli-action@v4.4.7
         with:
           verbose: true
@@ -47,10 +46,70 @@ jobs:
           # Force 0 exit code to allow SARIF file generation
           # This will handover control about PR rejection to the GitHub side
           max-allowed-issues: 2147483647
-          tool: cppcheck
+          tool: ${{ matrix.tool }}
 
-      # Upload the SARIF file generated in the previous step
-      - name: Upload SARIF results file
+      - name: Split SARIF into per-run files
+        run: |
+            mkdir -p sarif-splits
+            total_runs=$(jq '.runs | length' results-${{ matrix.tool }}.sarif)
+            echo "Found $total_runs runs"
+
+            schema=$(jq -r '.["$schema"]' results-${{ matrix.tool }}.sarif)
+            version=$(jq -r '.version' results-${{ matrix.tool }}.sarif)
+
+            if [[ -z "$version" || "$version" == "null" ]]; then
+              echo "Error: Missing SARIF version"
+              exit 1
+            fi
+
+            for ((i=0; i<total_runs; i++)); do
+              jq ".runs[$i]" results-${{ matrix.tool }}.sarif > tmp-run.json
+
+              echo "{ \"\$schema\": \"$schema\", \"version\": \"$version\", \"runs\": [$(cat tmp-run.json)] }" \
+                > sarif-splits/${{ matrix.tool }}-${i}.sarif
+              
+            done
+
+            rm -f tmp-run.json
+
+      - name: Validate SARIF files
+        run: |
+          for f in sarif-splits/*.sarif; do
+            echo "Validating $f..."
+            jq empty "$f" || { echo "::error ::Invalid JSON in $f"; exit 1; }
+          done
+
+      # Pre-upload: detect how many files exist
+      - name: Set SARIF file count
+        id: sarif-count
+        run: |
+          count=$(ls sarif-splits/${{ matrix.tool }}-*.sarif | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Fail if SARIF run count exceeds 3
+        if: steps.sarif-count.outputs.count > '3'
+        run: |
+          echo "::error ::Too many SARIF runs detected (${COUNT}). Maximum allowed is 3."
+          exit 1
+
+      # Upload SARIF files (max 3 supported here)
+      - name: Upload SARIF run 0
+        if: steps.sarif-count.outputs.count != '0'
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: results-${{ matrix.tool }}.sarif
+          sarif_file: sarif-splits/${{ matrix.tool }}-0.sarif
+          category: ${{ matrix.tool }}-0
+
+      - name: Upload SARIF run 1
+        if: steps.sarif-count.outputs.count > '1'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sarif-splits/${{ matrix.tool }}-1.sarif
+          category: ${{ matrix.tool }}-1
+
+      - name: Upload SARIF run 2
+        if: steps.sarif-count.outputs.count > '2'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sarif-splits/${{ matrix.tool }}-2.sarif
+          category: ${{ matrix.tool }}-2
