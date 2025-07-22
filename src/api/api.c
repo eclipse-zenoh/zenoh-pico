@@ -1361,7 +1361,6 @@ void _z_querier_drop(_z_querier_t *querier) {
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
 
-#ifdef Z_FEATURE_UNSTABLE_API
 void z_querier_get_options_default(z_querier_get_options_t *options) {
     options->encoding = NULL;
     options->attachment = NULL;
@@ -1571,8 +1570,6 @@ z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_ma
 }
 
 #endif  // Z_FEATURE_MATCHING == 1
-
-#endif  // Z_FEATURE_UNSTABLE_API
 
 bool z_reply_is_ok(const z_loaned_reply_t *reply) { return reply->data._tag != _Z_REPLY_TAG_ERROR; }
 

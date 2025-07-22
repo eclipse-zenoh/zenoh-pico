@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
-#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config, char **selector, char **value, int *n,
                       int *timeout_ms, bool *add_matching_listener);
