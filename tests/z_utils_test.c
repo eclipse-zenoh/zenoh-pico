@@ -141,7 +141,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(5.0, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -149,7 +149,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-0.0009999, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.1005, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -157,7 +157,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_EXCLUSIVE);
     assert(compare_double_result(-87.6, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
     assert(compare_double_result(90.0, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -165,7 +165,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-88200.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(583200.0, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -173,7 +173,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(-1058400.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -182,7 +182,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(7.3, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -190,7 +190,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0000974, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -198,7 +198,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.5684, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -206,7 +206,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(9.4, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -214,7 +214,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(413.4, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -222,7 +222,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(5641.2, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -230,7 +230,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(241004.16, result.end.now_offset));
     test_time_range_roundtrip(range);
 
@@ -238,7 +238,7 @@ static void test_time_range(void) {
     assert(_z_time_range_from_str(range, strlen(range), &result) == true);
     assert(result.start.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(0.0, result.start.now_offset));
-    assert(result.end.bound == _Z_TIME_BOUND_EXCLUSIVE);
+    assert(result.end.bound == _Z_TIME_BOUND_INCLUSIVE);
     assert(compare_double_result(3595959.36, result.end.now_offset));
     test_time_range_roundtrip(range);
 

@@ -147,10 +147,10 @@ bool _z_time_range_from_str(const char *str, size_t len, _z_time_range_t *range)
     bool inclusive_end;
     switch (str[len - 1]) {
         case '[':
-            inclusive_end = true;
+            inclusive_end = false;
             break;
         case ']':
-            inclusive_end = false;
+            inclusive_end = true;
             break;
         default:
             return false;
