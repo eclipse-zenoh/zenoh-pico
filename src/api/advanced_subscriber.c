@@ -25,6 +25,12 @@ void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss
     }
 }
 
+#if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
+
+#define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
+
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
+
 static void _ze_advanced_subscriber_sequenced_state_init(_ze_advanced_subscriber_sequenced_state_t *state) {
     state->_has_last_delivered = false;
     state->_last_delivered = 0;
@@ -68,12 +74,6 @@ void _ze_advanced_subscriber_timestamped_state_copy(_ze_advanced_subscriber_time
     dst->_pending_queries = src->_pending_queries;
     _z_timestamp__z_sample_sortedmap_copy(&dst->_pending_samples, &src->_pending_samples);
 }
-
-#if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
-
-#define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
-
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 // TODO: Populate state
 static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_state_t *state, const _z_session_rc_t *zn,
