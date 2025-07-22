@@ -640,6 +640,39 @@ void sorted_map_empty_test(void) {
     _z_str__z_str_sortedmap_clear(&map);
 }
 
+void sorted_map_pop_first_test(void) {
+    _z_str__z_str_sortedmap_t map;
+    _z_str__z_str_sortedmap_init(&map);
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("3"), _z_str_clone("three"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("1"), _z_str_clone("one"));
+    _z_str__z_str_sortedmap_insert(&map, _z_str_clone("2"), _z_str_clone("two"));
+
+    _z_str__z_str_sortedmap_entry_t *entry = _z_str__z_str_sortedmap_pop_first(&map);
+    assert(entry != NULL);
+    assert(strcmp(_z_str__z_str_sortedmap_entry_key(entry), "1") == 0);
+    assert(strcmp(_z_str__z_str_sortedmap_entry_val(entry), "one") == 0);
+    _z_str__z_str_sortedmap_entry_free(&entry);
+
+    assert(_z_str__z_str_sortedmap_len(&map) == 2);
+
+    _z_str__z_str_sortedmap_clear(&map);
+}
+
+void sorted_map_copy_move_test(void) {
+    _z_str__z_str_sortedmap_t src = _z_str__z_str_sortedmap_make();
+    _z_str__z_str_sortedmap_insert(&src, _z_str_clone("key"), _z_str_clone("value"));
+
+    _z_str__z_str_sortedmap_t dst = _z_str__z_str_sortedmap_make();
+    assert(_z_str__z_str_sortedmap_copy(&dst, &src) == _Z_RES_OK);
+    assert(strcmp(_z_str__z_str_sortedmap_get(&dst, "key"), "value") == 0);
+
+    _z_str__z_str_sortedmap_clear(&src);
+    assert(_z_str__z_str_sortedmap_move(&src, &dst) == _Z_RES_OK);
+    assert(strcmp(_z_str__z_str_sortedmap_get(&src, "key"), "value") == 0);
+
+    _z_str__z_str_sortedmap_clear(&src);
+}
+
 void sorted_map_stress_test(void) {
     _z_str__z_str_sortedmap_t map = _z_str__z_str_sortedmap_make();
     char key[16], val[16];
@@ -679,5 +712,7 @@ int main(void) {
     sorted_map_replace_test();
     sorted_map_missing_key_test();
     sorted_map_empty_test();
+    sorted_map_pop_first_test();
+    sorted_map_copy_move_test();
     sorted_map_stress_test();
 }
