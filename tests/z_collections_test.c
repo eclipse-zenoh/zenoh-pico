@@ -673,6 +673,17 @@ void sorted_map_copy_move_test(void) {
     _z_str__z_str_sortedmap_clear(&src);
 }
 
+void sorted_map_free_test(void) {
+    _z_str__z_str_sortedmap_t *map_ptr = z_malloc(sizeof(_z_str__z_str_sortedmap_t));
+    assert(map_ptr != NULL);
+
+    *map_ptr = _z_str__z_str_sortedmap_make();
+    _z_str__z_str_sortedmap_insert(map_ptr, _z_str_clone("K"), _z_str_clone("V"));
+
+    _z_str__z_str_sortedmap_free(&map_ptr);
+    assert(map_ptr == NULL);  // should be nullified after free
+}
+
 void sorted_map_stress_test(void) {
     _z_str__z_str_sortedmap_t map = _z_str__z_str_sortedmap_make();
     char key[16], val[16];
@@ -714,5 +725,6 @@ int main(void) {
     sorted_map_empty_test();
     sorted_map_pop_first_test();
     sorted_map_copy_move_test();
+    sorted_map_free_test();
     sorted_map_stress_test();
 }
