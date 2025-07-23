@@ -1318,6 +1318,13 @@ void z_get_options_default(z_get_options_t *options) {
 
 z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr, const char *parameters,
                  z_moved_closure_reply_t *callback, z_get_options_t *options) {
+    return z_get_with_parameters_substr(zs, keyexpr, parameters, parameters == NULL ? 0 : strlen(parameters), callback,
+                                        options);
+}
+
+z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                        const char *parameters, size_t parameters_len,
+                                        z_moved_closure_reply_t *callback, z_get_options_t *options) {
     z_result_t ret = _Z_RES_OK;
 
     void *ctx = callback->_this._val.context;
@@ -1327,21 +1334,14 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
 
     z_get_options_t opt;
-    z_get_options_default(&opt);
     if (options != NULL) {
         opt = *options;
+    } else {
+        z_get_options_default(&opt);
     }
 
-    if (opt.consolidation.mode == Z_CONSOLIDATION_MODE_AUTO) {
-        const char *lp = (parameters == NULL) ? "" : parameters;
-        if (strstr(lp, Z_SELECTOR_TIME) != NULL) {
-            opt.consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
-        } else {
-            opt.consolidation.mode = Z_CONSOLIDATION_MODE_LATEST;
-        }
-    }
     _z_n_qos_t qos = _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority);
-    ret = _z_query(_Z_RC_IN_VAL(zs), &keyexpr_aliased, parameters, opt.target, opt.consolidation.mode,
+    ret = _z_query(_Z_RC_IN_VAL(zs), &keyexpr_aliased, parameters, parameters_len, opt.target, opt.consolidation.mode,
                    _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding), callback->_this._val.call,
                    callback->_this._val.drop, ctx, opt.timeout_ms, _z_bytes_from_moved(opt.attachment), qos,
                    opt.congestion_control);
@@ -1429,6 +1429,13 @@ z_result_t z_undeclare_querier(z_moved_querier_t *querier) {
 
 z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
                          z_querier_get_options_t *options) {
+    return z_querier_get_with_parameters_substr(querier, parameters, parameters == NULL ? 0 : strlen(parameters),
+                                                callback, options);
+}
+
+z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querier, const char *parameters,
+                                                size_t parameters_len, z_moved_closure_reply_t *callback,
+                                                z_querier_get_options_t *options) {
     z_result_t ret = _Z_RES_OK;
 
     void *ctx = callback->_this._val.context;
@@ -1464,16 +1471,6 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
     session = _Z_RC_IN_VAL(&querier->_zn);
 #endif
 
-    z_consolidation_mode_t consolidation_mode = querier->_consolidation_mode;
-    if (consolidation_mode == Z_CONSOLIDATION_MODE_AUTO) {
-        const char *lp = (parameters == NULL) ? "" : parameters;
-        if (strstr(lp, Z_SELECTOR_TIME) != NULL) {
-            consolidation_mode = Z_CONSOLIDATION_MODE_NONE;
-        } else {
-            consolidation_mode = Z_CONSOLIDATION_MODE_LATEST;
-        }
-    }
-
     if (session != NULL) {
         // Check if write filter is active before writing
         if (
@@ -1483,10 +1480,10 @@ z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *paramete
             !_z_write_filter_active(&querier->_filter)) {
             _z_n_qos_t qos = _z_n_qos_make(
                 querier->_is_express, querier->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, querier->_priority);
-            ret = _z_query(session, &querier_keyexpr, parameters, querier->_target, consolidation_mode,
-                           _z_bytes_from_moved(opt.payload), &encoding, callback->_this._val.call,
-                           callback->_this._val.drop, ctx, querier->_timeout_ms, _z_bytes_from_moved(opt.attachment),
-                           qos, querier->_congestion_control);
+            ret = _z_query(session, &querier_keyexpr, parameters, parameters_len, querier->_target,
+                           querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
+                           callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
+                           _z_bytes_from_moved(opt.attachment), qos, querier->_congestion_control);
         } else {
             callback->_this._val.drop(ctx);
         }
