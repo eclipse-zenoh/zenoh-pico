@@ -78,13 +78,13 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
         return false;
     }
 
-    // SAFETY: Allocation is followed by null check and all uses are bounds-checked.
-    // Flawfinder: ignore [CWE-120]
     char *buf = z_malloc(len + 1);
     if (buf == NULL) {
         _Z_ERROR("Failed to allocate buffer.");
         return false;
     }
+    // SAFETY: Allocation is followed by null check and all uses are bounds-checked.
+    // Flawfinder: ignore [CWE-120]
     memcpy(buf, bound->start, len);
     buf[len] = '\0';
     char *err;
