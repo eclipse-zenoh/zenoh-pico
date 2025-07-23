@@ -228,6 +228,8 @@ z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right
  *   ``0`` if append successful, ``negative value`` otherwise.
  */
 static inline z_result_t _z_keyexpr_append_str(z_owned_keyexpr_t *prefix, const char *right) {
+    // SAFETY: right is documented to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
     return _z_keyexpr_append_substr(prefix, right, right ? strlen(right) : 0);
 }
 

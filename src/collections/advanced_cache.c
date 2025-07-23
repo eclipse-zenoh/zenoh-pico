@@ -40,11 +40,12 @@ typedef struct {
     _z_time_range_t time;
 } _ze_advanced_cache_query_parameters_t;
 
-bool _ze_advanced_cache_query_match_key(const char *key_start, size_t key_len, const char *expected_key) {
-    return (key_len == strlen(expected_key) && strncmp(key_start, expected_key, key_len) == 0);
+static bool _ze_advanced_cache_query_match_key(const char *key_start, size_t key_len, const char *expected_key,
+                                               size_t expected_key_len) {
+    return (key_len == expected_key_len && strncmp(key_start, expected_key, key_len) == 0);
 }
 
-void _ze_advanced_cache_query_parse_max(const _z_str_se_t *str, size_t *max) {
+static void _ze_advanced_cache_query_parse_max(const _z_str_se_t *str, size_t *max) {
     *max = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_MAX_UNBOUNDED;
     if (_z_ptr_char_diff(str->end, str->start) > 0) {
         uint32_t value;
@@ -54,7 +55,7 @@ void _ze_advanced_cache_query_parse_max(const _z_str_se_t *str, size_t *max) {
     }
 }
 
-void _ze_advanced_cache_query_parse_range(const _z_str_se_t *str, _ze_advanced_cache_range_t *range) {
+static void _ze_advanced_cache_query_parse_range(const _z_str_se_t *str, _ze_advanced_cache_range_t *range) {
     range->start = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED;
     range->end = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED;
 
@@ -73,7 +74,7 @@ void _ze_advanced_cache_query_parse_range(const _z_str_se_t *str, _ze_advanced_c
     }
 }
 
-void _ze_advanced_cache_query_parse_time(const _z_str_se_t *str, _z_time_range_t *time) {
+static void _ze_advanced_cache_query_parse_time(const _z_str_se_t *str, _z_time_range_t *time) {
     _z_time_range_t range;
     if (_z_time_range_from_str(str->start, _z_ptr_char_diff(str->end, str->start), &range)) {
         *time = range;
@@ -83,8 +84,8 @@ void _ze_advanced_cache_query_parse_time(const _z_str_se_t *str, _z_time_range_t
     }
 }
 
-void _ze_advanced_cache_query_parse_parameters(_ze_advanced_cache_query_parameters_t *params,
-                                               const z_loaned_string_t *raw_params) {
+static void _ze_advanced_cache_query_parse_parameters(_ze_advanced_cache_query_parameters_t *params,
+                                                      const z_loaned_string_t *raw_params) {
     params->range.start = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED;
     params->range.end = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED;
     params->max = _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_MAX_UNBOUNDED;
@@ -98,11 +99,14 @@ void _ze_advanced_cache_query_parse_parameters(_ze_advanced_cache_query_paramete
         _z_query_param_t param = _z_query_params_next(&str);
         if (param.key.start != NULL) {
             size_t key_len = _z_ptr_char_diff(param.key.end, param.key.start) + 1;
-            if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_RANGE)) {
+            if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_RANGE,
+                                                   _Z_QUERY_PARAMS_KEY_RANGE_LEN)) {
                 _ze_advanced_cache_query_parse_range(&param.value, &params->range);
-            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_MAX)) {
+            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_MAX,
+                                                          _Z_QUERY_PARAMS_KEY_MAX_LEN)) {
                 _ze_advanced_cache_query_parse_max(&param.value, &params->max);
-            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_TIME)) {
+            } else if (_ze_advanced_cache_query_match_key(param.key.start, key_len, _Z_QUERY_PARAMS_KEY_TIME,
+                                                          _Z_QUERY_PARAMS_KEY_TIME_LEN)) {
                 _ze_advanced_cache_query_parse_time(&param.value, &params->time);
             }
         }
@@ -114,7 +118,7 @@ static bool _ze_advanced_cache_range_contains(const _ze_advanced_cache_range_t *
             (range->end == _ZE_ADVANCED_CACHE_QUERY_PARAMETERS_RANGE_UNBOUNDED || sn <= range->end));
 }
 
-void _ze_advanced_cache_query_handler(z_loaned_query_t *query, void *ctx) {
+static void _ze_advanced_cache_query_handler(z_loaned_query_t *query, void *ctx) {
     _ze_advanced_cache_t *cache = (_ze_advanced_cache_t *)ctx;
 
     z_view_string_t keystr;

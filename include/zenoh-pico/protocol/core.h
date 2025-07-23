@@ -66,7 +66,11 @@ static inline size_t _z_id_size(_z_id_t *id) {
     _ZP_UNUSED(id);
     return sizeof(_z_id_t);
 }
-static inline void _z_id_copy(_z_id_t *dst, const _z_id_t *src) { memcpy(dst, src, sizeof(_z_id_t)); }
+static inline void _z_id_copy(_z_id_t *dst, const _z_id_t *src) {
+    // SAFETY: copying between same-sized _z_id_t structs.
+    // Flawfinder: ignore [CWE-120]
+    memcpy(dst, src, sizeof(_z_id_t));
+}
 static inline bool _z_id_eq(const _z_id_t *left, const _z_id_t *right) {
     return memcmp(left->id, right->id, ZENOH_ID_SIZE) == 0;
 }

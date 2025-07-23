@@ -605,6 +605,8 @@ void sorted_map_iterator_deletion_test(void) {
     for (size_t s = 4; s != 0; s--) {
         assert(s == _z_str__z_str_sortedmap_len(&map));
         char *key = _z_str__z_str_sortedmap_iterator_key(&iter);
+        // SAFETY: returned _z_str_t should be null-terminated.
+        // Flawfinder: ignore [CWE-126]
         assert(strlen(_z_str__z_str_sortedmap_iterator_value(&iter)) == 1);
         _z_str__z_str_sortedmap_iterator_next(&iter);
         _z_str__z_str_sortedmap_remove(&map, key);

@@ -191,8 +191,12 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         if (buf_len - pos < _Z_QUERY_PARAMS_KEY_MAX_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
             return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_MAX and _Z_QUERY_PARAMS_FIELD_SEPARATOR
         }
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_MAX, _Z_QUERY_PARAMS_KEY_MAX_LEN);
         pos += _Z_QUERY_PARAMS_KEY_MAX_LEN;
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
         pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
 
@@ -207,6 +211,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
             if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
                 return false;  // Not enough space for _Z_QUERY_PARAMS_LIST_SEPARATOR
             }
+            // SAFETY: previously checked that buffer has the required space.
+            // Flawfinder: ignore [CWE-120]
             memcpy(&buf[pos], _Z_QUERY_PARAMS_LIST_SEPARATOR, _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN);
             pos += _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN;
         }
@@ -214,8 +220,12 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         if (buf_len - pos < _Z_QUERY_PARAMS_KEY_TIME_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
             return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_TIME and _Z_QUERY_PARAMS_FIELD_SEPARATOR
         }
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_TIME, _Z_QUERY_PARAMS_KEY_TIME_LEN);
         pos += _Z_QUERY_PARAMS_KEY_TIME_LEN;
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
         pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
 
@@ -225,6 +235,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         if (!_z_time_range_to_str(&range, &buf[pos], buf_len - pos)) {
             return false;  // Not enough space or invalid range
         }
+        // SAFETY: string returned by _z_time_range_to_str() is null-terminated.
+        // Flawfinder: ignore [CWE-126]
         pos += strlen(&buf[pos]);
     }
     if (seq_range != NULL) {
@@ -232,6 +244,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
             if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
                 return false;  // Not enough space for _Z_QUERY_PARAMS_LIST_SEPARATOR
             }
+            // SAFETY: previously checked that buffer has the required space.
+            // Flawfinder: ignore [CWE-120]
             memcpy(&buf[pos], _Z_QUERY_PARAMS_LIST_SEPARATOR, _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN);
             pos += _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN;
         }
@@ -241,6 +255,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         }
         memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_RANGE, _Z_QUERY_PARAMS_KEY_RANGE_LEN);
         pos += _Z_QUERY_PARAMS_KEY_RANGE_LEN;
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
         pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
 

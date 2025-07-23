@@ -79,6 +79,10 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
     }
 
     char *buf = z_malloc(len + 1);
+    if (buf == NULL) {
+        _Z_ERROR("Failed to allocate buffer.");
+        return false;
+    }
     memcpy(buf, bound->start, len);
     buf[len] = '\0';
     char *err;
@@ -246,6 +250,8 @@ bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_le
         char *start = &buf[pos];
         char *dot = strchr(start, '.');
         if (dot != NULL) {
+            // SAFETY: snprintf and previous checks ensure start is null-terminated.
+            // Flawfinder: ignore [CWE-126]
             char *end = start + strlen(start) - 1;
             while (end > dot && *end == '0') {
                 *end-- = '\0';
@@ -255,6 +261,8 @@ bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_le
             }
         }
 
+        // SAFETY: snprintf and previous checks ensure start is null-terminated.
+        // Flawfinder: ignore [CWE-126]
         pos += strlen(start);
 
         if (buf_len - pos < 1) {
@@ -287,6 +295,8 @@ bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_le
         if (!_z_time_bound_to_str(&range->start, &buf[pos], buf_len - pos)) {
             return false;
         }
+        // SAFETY: _z_time_bound_to_str() creates a null-terminated string.
+        // Flawfinder: ignore [CWE-126]
         pos += strlen(&buf[pos]);
     }
 
@@ -300,6 +310,8 @@ bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_le
         if (!_z_time_bound_to_str(&range->end, &buf[pos], buf_len - pos)) {
             return false;
         }
+        // SAFETY: _z_time_bound_to_str() creates a null-terminated string.
+        // Flawfinder: ignore [CWE-126]
         pos += strlen(&buf[pos]);
     }
 
