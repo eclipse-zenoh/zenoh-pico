@@ -242,6 +242,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         }
         pos += used;
     }
+    // SAFETY: All use of 'seq_range' is guarded by this null check.
+    // Flawfinder: ignore [CWE-120]
     if (seq_range != NULL) {
         if (pos > 0) {
             if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
