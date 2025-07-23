@@ -235,9 +235,12 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         if (!_z_time_range_to_str(&range, &buf[pos], buf_len - pos)) {
             return false;  // Not enough space or invalid range
         }
-        // SAFETY: string returned by _z_time_range_to_str() is null-terminated.
-        // Flawfinder: ignore [CWE-126]
-        pos += strlen(&buf[pos]);
+        size_t used = strnlen(&buf[pos], buf_len - pos);
+        if (used == buf_len - pos) {
+            // Null terminator not found in remaining space
+            return false;
+        }
+        pos += used;
     }
     if (seq_range != NULL) {
         if (pos > 0) {
