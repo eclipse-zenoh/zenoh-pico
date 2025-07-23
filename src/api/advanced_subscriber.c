@@ -242,8 +242,6 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         }
         pos += used;
     }
-    // SAFETY: All use of 'seq_range' is guarded by this null check.
-    // Flawfinder: ignore [CWE-120]
     if (seq_range != NULL) {
         if (pos > 0) {
             if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
@@ -258,6 +256,8 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
         if (buf_len - pos < _Z_QUERY_PARAMS_KEY_RANGE_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
             return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_RANGE and _Z_QUERY_PARAMS_FIELD_SEPARATOR
         }
+        // SAFETY: previously checked that buffer has the required space.
+        // Flawfinder: ignore [CWE-120]
         memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_RANGE, _Z_QUERY_PARAMS_KEY_RANGE_LEN);
         pos += _Z_QUERY_PARAMS_KEY_RANGE_LEN;
         // SAFETY: previously checked that buffer has the required space.
