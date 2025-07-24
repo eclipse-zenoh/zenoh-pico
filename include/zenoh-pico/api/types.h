@@ -271,6 +271,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -279,6 +280,9 @@ typedef struct {
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_source_info_t *source_info;
+#endif
 } z_query_reply_options_t;
 
 /**
@@ -290,6 +294,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
+ *   z_moved_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
@@ -297,6 +302,9 @@ typedef struct {
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_source_info_t *source_info;
+#endif
 } z_query_reply_del_options_t;
 
 /**
