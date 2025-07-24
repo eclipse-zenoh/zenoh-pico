@@ -1692,6 +1692,9 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
     options->timestamp = NULL;
     options->is_express = false;
     options->attachment = NULL;
+#ifdef Z_FEATURE_UNSTABLE_API
+    options->source_info = NULL;
+#endif
 }
 
 z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
@@ -1710,10 +1713,14 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     } else {
         opts = *options;
     }
+    _z_source_info_t *source_info = NULL;
+#ifdef Z_FEATURE_UNSTABLE_API
+    source_info = opts.source_info == NULL ? NULL : &opts.source_info->_this._val;
+#endif
     z_result_t ret =
         _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, _z_bytes_from_moved(payload),
                       _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
-                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment));
+                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment), source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1728,6 +1735,9 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
     options->timestamp = NULL;
     options->is_express = false;
     options->attachment = NULL;
+#ifdef Z_FEATURE_UNSTABLE_API
+    options->source_info = NULL;
+#endif
 }
 
 z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
@@ -1745,9 +1755,13 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     } else {
         opts = *options;
     }
+    _z_source_info_t *source_info = NULL;
+#ifdef Z_FEATURE_UNSTABLE_API
+    source_info = opts.source_info == NULL ? NULL : &opts.source_info->_this._val;
+#endif
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
-                                   _z_bytes_from_moved(opts.attachment));
+                                   _z_bytes_from_moved(opts.attachment), source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);

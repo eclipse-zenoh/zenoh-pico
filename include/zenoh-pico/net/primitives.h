@@ -222,11 +222,17 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     payload: The value of this reply, the caller keeps ownership.
  *     kind: The type of operation.
  *     attachment: An optional attachment to the reply.
+ *     cong_ctrl: The congestion control to apply when routing the reply.
+ *     priority: The priority of the reply.
+ *     is_express: If true, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
+ *     timestamp: The timestamp of this reply. The API level timestamp (e.g. of the data when it was created).
+ *     source_info: The message source info.
  */
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          const _z_bytes_t *payload, const _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
-                         const _z_timestamp_t *timestamp, const _z_bytes_t *attachment);
+                         const _z_timestamp_t *timestamp, const _z_bytes_t *attachment,
+                         const _z_source_info_t *source_info);
 /**
  * Send a reply error to a query.
  *
