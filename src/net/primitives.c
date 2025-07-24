@@ -41,6 +41,7 @@
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
+#include "zenoh-pico/utils/string.h"
 
 /*------------------ Declaration Helpers ------------------*/
 z_result_t _z_send_declare(_z_session_t *zn, const _z_network_message_t *n_msg) {
@@ -448,10 +449,23 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 }
 
 /*------------------ Query ------------------*/
-z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, z_query_target_t target,
-                    z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
-                    const _z_bytes_t *attachment, _z_n_qos_t qos, z_congestion_control_t cong_ctrl) {
+z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
+                    z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
+                    const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
+                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
+                    z_congestion_control_t cong_ctrl) {
+    if (parameters == NULL && parameters_len > 0) {
+        _Z_ERROR("Non-zero length string should not be NULL");
+        return Z_EINVAL;
+    }
+
+    if (consolidation == Z_CONSOLIDATION_MODE_AUTO) {
+        if (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_TIME) != NULL) {
+            consolidation = Z_CONSOLIDATION_MODE_NONE;
+        } else {
+            consolidation = Z_CONSOLIDATION_MODE_LATEST;
+        }
+    }
     // Add the pending query to the current session
     _z_zint_t qid = _z_get_query_id(zn);
     _Z_RETURN_IF_ERR(_z_register_pending_query(zn, qid));
@@ -461,7 +475,8 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     pq->_key = _z_get_expanded_key_from_key(zn, keyexpr, NULL);
     pq->_target = target;
     pq->_consolidation = consolidation;
-    pq->_anykey = (parameters == NULL || strstr(parameters, Z_SELECTOR_QUERY_MATCH) == NULL) ? false : true;
+    pq->_anykey =
+        (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_QUERY_MATCH) != NULL);
     pq->_callback = callback;
     pq->_dropper = dropper;
     pq->_pending_replies = NULL;
@@ -472,7 +487,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     // Send query message
     _z_source_info_t source_info = _z_source_info_null();
     _z_slice_t params =
-        (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, strlen(parameters));
+        (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
     _z_zenoh_message_t z_msg;
     _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
                         timeout_ms, attachment, qos, &source_info);

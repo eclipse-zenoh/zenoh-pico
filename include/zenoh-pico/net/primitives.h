@@ -285,6 +285,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     keyexpr: The resource key to query. The callee gets the ownership of any
  *              allocated value.
  *     parameters: An indication to matching queryables about the queried data.
+ *     parameters_len: Length of the parameters string.
  *     target: The kind of queryables that should be target of this query.
  *     consolidation: The kind of consolidation that should be applied on replies.
  *     value: The payload of the query.
@@ -297,10 +298,11 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     priority: The priority of the query.
  *
  */
-z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, z_query_target_t target,
-                    z_consolidation_mode_t consolidation, const _z_bytes_t *payload, const _z_encoding_t *encoding,
-                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
-                    const _z_bytes_t *attachment, _z_n_qos_t qos, z_congestion_control_t cong_ctrl);
+z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
+                    z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
+                    const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
+                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
+                    z_congestion_control_t cong_ctrl);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

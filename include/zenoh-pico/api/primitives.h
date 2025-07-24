@@ -1883,6 +1883,24 @@ z_result_t z_get(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
                  z_moved_closure_reply_t *callback, z_get_options_t *options);
 
 /**
+ * Sends a distributed query for a given keyexpr.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to send the query through.
+ *   keyexpr: Pointer to a  :c:type:`z_loaned_keyexpr_t` to send the query for.
+ *   parameters: Pointer to the parameters string.
+ *   parameters_len: Length of the parameters string.
+ *   callback: Moved :c:type:`z_owned_closure_reply_t` callback.
+ *   options: Pointer to a :c:type:`z_get_options_t` to configure the operation.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ */
+z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
+                                        const char *parameters, size_t parameters_len,
+                                        z_moved_closure_reply_t *callback, z_get_options_t *options);
+
+/**
  *  Constructs the default value for :c:type:`z_querier_get_options_t`.
  */
 void z_querier_get_options_default(z_querier_get_options_t *options);
@@ -1922,7 +1940,7 @@ z_result_t z_undeclare_querier(z_moved_querier_t *querier);
  *
  * Parameters:
  *   querier: The querier to make query from.
- *   parameters: The query's parameters, similar to a url's query segment.
+ *   parameters: The query's parameters null-terminated string, similar to a url's query segment.
  *   callback: The callback function that will be called on reception of replies for this query. It will be
  * 				automatically dropped once all replies are processed.
  *   options: Additional options for the get. All owned fields will be consumed.
@@ -1932,6 +1950,26 @@ z_result_t z_undeclare_querier(z_moved_querier_t *querier);
  */
 z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
                          z_querier_get_options_t *options);
+
+/**
+ * Query data from the matching queryables in the system.
+ *
+ * Replies are provided through a callback function.
+ *
+ * Parameters:
+ *   querier: The querier to make query from.
+ *   parameters: The query's parameters string, similar to a url's query segment.
+ *   parameters_len: Length of the parameters string
+ *   callback: The callback function that will be called on reception of replies for this query. It will be
+ * 				automatically dropped once all replies are processed.
+ *   options: Additional options for the get. All owned fields will be consumed.
+ *
+ * Return:
+ *   ``0`` if put operation is successful, ``negative value`` otherwise.
+ */
+z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querier, const char *parameters,
+                                                size_t parameters_len, z_moved_closure_reply_t *callback,
+                                                z_querier_get_options_t *options);
 
 /**
  *  Returns the key expression of the querier.

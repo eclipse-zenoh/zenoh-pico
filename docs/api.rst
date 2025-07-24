@@ -1250,6 +1250,7 @@ Functions
 ---------
 
 .. autocfunction:: primitives.h::z_get
+.. autocfunction:: primitives.h::z_get_with_parameters_substr
 .. autocfunction:: primitives.h::z_get_options_default
 
 .. autocfunction:: primitives.h::z_query_consolidation_default
@@ -1302,6 +1303,7 @@ Functions
 .. autocfunction:: primitives.h::z_declare_querier
 .. autocfunction:: primitives.h::z_undeclare_querier
 .. autocfunction:: primitives.h::z_querier_get
+.. autocfunction:: primitives.h::z_querier_get_with_parameters_substr
 .. autocfunction:: primitives.h::z_querier_keyexpr
 .. autocfunction:: primitives.h::z_querier_get_matching_status
 .. autocfunction:: primitives.h::z_querier_declare_matching_listener
