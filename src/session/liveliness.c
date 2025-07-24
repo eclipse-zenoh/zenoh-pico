@@ -252,8 +252,8 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
             _z_bytes_t attachment = _z_bytes_null();
             _z_source_info_t source_info = _z_source_info_null();
             _z_reply_t reply;
-            _z_reply_steal_data(&reply, &expanded_ke, zn->_local_zid, &payload, timestamp, &encoding, Z_SAMPLE_KIND_PUT,
-                                &attachment, &source_info);
+            _z_reply_steal_data(&reply, &expanded_ke, _z_entity_global_id_null(), &payload, timestamp, &encoding,
+                                Z_SAMPLE_KIND_PUT, &attachment, &source_info);
 
             pq->_callback(&reply, pq->_arg);
             _z_reply_clear(&reply);

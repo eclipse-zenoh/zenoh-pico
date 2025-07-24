@@ -27,9 +27,9 @@ extern "C" {
 #define ZENOH_PICO_SESSION_REPLY_H
 
 z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t *key, _z_msg_reply_t *reply,
-                                    _z_transport_peer_common_t *peer);
+                                    _z_entity_global_id_t *replier_id, _z_transport_peer_common_t *peer);
 
-z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error);
+z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *error, _z_entity_global_id_t *replier_id);
 
 z_result_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *final);
 

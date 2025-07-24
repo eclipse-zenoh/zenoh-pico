@@ -108,7 +108,8 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id) {
 
 static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id,
                                                        const _z_keyexpr_t *keyexpr, _z_msg_put_t *msg,
-                                                       z_sample_kind_t kind, _z_transport_peer_common_t *peer) {
+                                                       z_sample_kind_t kind, _z_entity_global_id_t *replier_id,
+                                                       _z_transport_peer_common_t *peer) {
     _z_session_mutex_lock(zn);
 
     // Get query infos
@@ -126,8 +127,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     }
     // Build the reply
     _z_reply_t reply;
-    _z_reply_steal_data(&reply, &expanded_ke, zn->_local_zid, &msg->_payload, &msg->_commons._timestamp,
-                        &msg->_encoding, kind, &msg->_attachment, &msg->_commons._source_info);
+    _z_reply_steal_data(&reply, &expanded_ke, *replier_id, &msg->_payload, &msg->_commons._timestamp, &msg->_encoding,
+                        kind, &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
@@ -182,8 +183,9 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
 }
 
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
-                                          _z_msg_put_t *msg, z_sample_kind_t kind, _z_transport_peer_common_t *peer) {
-    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind, peer);
+                                          _z_msg_put_t *msg, z_sample_kind_t kind, _z_entity_global_id_t *replier_id,
+                                          _z_transport_peer_common_t *peer) {
+    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind, replier_id, peer);
     // Clean up
     _z_keyexpr_clear(keyexpr);
     _z_bytes_drop(&msg->_payload);
@@ -192,7 +194,8 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
     return ret;
 }
 
-z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg) {
+z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg,
+                                      _z_entity_global_id_t *replier_id) {
     // Retrieve query
     _z_session_mutex_lock(zn);
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);

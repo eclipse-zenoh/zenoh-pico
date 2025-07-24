@@ -151,13 +151,14 @@ static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_
 
 static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp, _z_transport_peer_common_t *peer) {
 #if Z_FEATURE_QUERY == 1
+    _z_entity_global_id_t replier_id = {.zid = resp->_ext_responder._zid, .eid = resp->_ext_responder._eid};
     switch (resp->_tag) {
         case _Z_RESPONSE_BODY_REPLY:
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, peer);
+            return _z_trigger_reply_partial(zn, resp->_request_id, &resp->_key, &resp->_body._reply, &replier_id, peer);
         case _Z_RESPONSE_BODY_ERR:
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err);
+            return _z_trigger_reply_err(zn, resp->_request_id, &resp->_body._err, &replier_id);
         default:
             _Z_INFO("Received unknown response tag: %d\n", resp->_tag);
             _z_n_msg_response_clear(resp);

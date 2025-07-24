@@ -25,7 +25,7 @@ void _z_reply_data_clear(_z_reply_data_t *reply_data) {
         _z_value_clear(&reply_data->_result.error);
     }
     reply_data->_tag = _Z_REPLY_TAG_NONE;
-    reply_data->replier_id = _z_id_empty();
+    reply_data->replier_id = _z_entity_global_id_null();
 }
 
 void _z_reply_data_free(_z_reply_data_t **reply_data) {
@@ -49,10 +49,10 @@ z_result_t _z_reply_data_copy(_z_reply_data_t *dst, const _z_reply_data_t *src) 
     return _Z_RES_OK;
 }
 
-void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_id_t id, _z_bytes_t *payload,
+void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_entity_global_id_t replier_id, _z_bytes_t *payload,
                          const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
                          _z_bytes_t *attachment, _z_source_info_t *source_info) {
-    dst->data.replier_id = id;
+    dst->data.replier_id = replier_id;
     dst->data._tag = _Z_REPLY_TAG_DATA;
     _z_sample_steal_data(&dst->data._result.sample, keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
                          attachment, Z_RELIABILITY_DEFAULT, source_info);
