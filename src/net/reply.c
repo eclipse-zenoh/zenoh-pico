@@ -57,7 +57,9 @@ void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_entity_globa
     _z_sample_steal_data(&dst->data._result.sample, keyexpr, payload, timestamp, encoding, kind, _Z_N_QOS_DEFAULT,
                          attachment, Z_RELIABILITY_DEFAULT, source_info);
 }
-void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding) {
+void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding,
+                             _z_entity_global_id_t replier_id) {
+    dst->data.replier_id = replier_id;
     dst->data._tag = _Z_REPLY_TAG_ERROR;
     dst->data._result.error.payload = _z_bytes_steal(payload);
     dst->data._result.error.encoding = _z_encoding_steal(encoding);

@@ -208,7 +208,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
     }
     // Trigger the user callback
     _z_reply_t reply;
-    _z_reply_err_steal_data(&reply, &msg->_payload, &msg->_encoding);
+    _z_reply_err_steal_data(&reply, &msg->_payload, &msg->_encoding, *replier_id);
     pen_qry->_callback(&reply, pen_qry->_arg);
     _z_reply_clear(&reply);
     return _Z_RES_OK;

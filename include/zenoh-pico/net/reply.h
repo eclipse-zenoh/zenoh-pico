@@ -84,7 +84,8 @@ static inline _z_reply_t _z_reply_null(void) { return (_z_reply_t){0}; }
 void _z_reply_steal_data(_z_reply_t *dst, _z_keyexpr_t *keyexpr, _z_entity_global_id_t replier_id, _z_bytes_t *payload,
                          const _z_timestamp_t *timestamp, _z_encoding_t *encoding, z_sample_kind_t kind,
                          _z_bytes_t *attachment, _z_source_info_t *source_info);
-void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding);
+void _z_reply_err_steal_data(_z_reply_t *dst, _z_bytes_t *payload, _z_encoding_t *encoding,
+                             _z_entity_global_id_t replier_id);
 z_result_t _z_reply_move(_z_reply_t *dst, _z_reply_t *src);
 void _z_reply_clear(_z_reply_t *src);
 void _z_reply_free(_z_reply_t **hello);
