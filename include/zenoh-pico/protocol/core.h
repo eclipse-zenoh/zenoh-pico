@@ -28,6 +28,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/string.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,9 +68,8 @@ static inline size_t _z_id_size(_z_id_t *id) {
     return sizeof(_z_id_t);
 }
 static inline void _z_id_copy(_z_id_t *dst, const _z_id_t *src) {
-    // SAFETY: copying between same-sized _z_id_t structs.
-    // Flawfinder: ignore [CWE-120]
-    memcpy(dst, src, sizeof(_z_id_t));
+    size_t offset = 0;
+    (void)_z_memcpy_checked(dst, sizeof(_z_id_t), &offset, src, sizeof(_z_id_t));
 }
 static inline bool _z_id_eq(const _z_id_t *left, const _z_id_t *right) {
     return memcmp(left->id, right->id, ZENOH_ID_SIZE) == 0;

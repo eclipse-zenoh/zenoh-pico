@@ -83,9 +83,10 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
         _Z_ERROR("Failed to allocate buffer.");
         return false;
     }
-    // SAFETY: Allocation is followed by null check and all uses are bounds-checked.
-    // Flawfinder: ignore [CWE-120]
-    memcpy(buf, bound->start, len);
+    size_t offset = 0;
+    if (_z_memcpy_checked(buf, len + 1, &offset, bound->start, len)) {
+        return false;
+    }
     buf[len] = '\0';
     char *err;
     double value = strtod(bound->start, &err);
@@ -252,9 +253,13 @@ bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_le
         char *start = &buf[pos];
         char *dot = strchr(start, '.');
         if (dot != NULL) {
-            // SAFETY: snprintf and previous checks ensure start is null-terminated.
-            // Flawfinder: ignore [CWE-126]
-            char *end = start + strlen(start) - 1;
+            size_t remaining = buf_len - pos;
+            size_t str_len = strnlen(start, remaining);
+            if (str_len == remaining) {
+                // Null terminator not found within bounds
+                return false;
+            }
+            char *end = start + str_len - 1;
             while (end > dot && *end == '0') {
                 *end-- = '\0';
             }
@@ -263,9 +268,13 @@ bool _z_time_bound_to_str(const _z_time_bound_t *bound, char *buf, size_t buf_le
             }
         }
 
-        // SAFETY: snprintf and previous checks ensure start is null-terminated.
-        // Flawfinder: ignore [CWE-126]
-        pos += strlen(start);
+        size_t remaining = buf_len - pos;
+        size_t str_len = strnlen(start, remaining);
+        if (str_len == remaining) {
+            // Null terminator not found within bounds
+            return false;
+        }
+        pos += str_len;
 
         if (buf_len - pos < 1) {
             return false;  // Not enough space for 's'
@@ -297,9 +306,13 @@ bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_le
         if (!_z_time_bound_to_str(&range->start, &buf[pos], buf_len - pos)) {
             return false;
         }
-        // SAFETY: _z_time_bound_to_str() creates a null-terminated string.
-        // Flawfinder: ignore [CWE-126]
-        pos += strlen(&buf[pos]);
+        size_t remaining = buf_len - pos;
+        size_t str_len = strnlen(&buf[pos], remaining);
+        if (str_len == remaining) {
+            // Null terminator not found within bounds
+            return false;
+        }
+        pos += str_len;
     }
 
     if (buf_len - pos < 2) {
@@ -312,9 +325,13 @@ bool _z_time_range_to_str(const _z_time_range_t *range, char *buf, size_t buf_le
         if (!_z_time_bound_to_str(&range->end, &buf[pos], buf_len - pos)) {
             return false;
         }
-        // SAFETY: _z_time_bound_to_str() creates a null-terminated string.
-        // Flawfinder: ignore [CWE-126]
-        pos += strlen(&buf[pos]);
+        size_t remaining = buf_len - pos;
+        size_t str_len = strnlen(&buf[pos], remaining);
+        if (str_len == remaining) {
+            // Null terminator not found within bounds
+            return false;
+        }
+        pos += str_len;
     }
 
     if (buf_len - pos < 2) {

@@ -40,7 +40,6 @@ _Z_ELEM_DEFINE(_z_uint32, uint32_t, _z_uint32_size, _z_noop_clear, _z_uint32_cop
 
 _Z_SORTEDMAP_DEFINE(_z_uint32, _z_sample, uint32_t, _z_sample_t)
 
-// TODO: Going to need an init function for this
 typedef struct {
     bool _has_last_delivered;
     uint32_t _last_delivered;
@@ -98,14 +97,14 @@ typedef struct {
     z_owned_keyexpr_t _query_key_expr;
     bool _retransmission;
     bool _has_period;
-    // Period _period;
+    // TODO: Period _period;
     size_t _history_depth;
     z_query_target_t _query_target;
     uint64_t _query_timeout;
     _z_closure_sample_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_ctx;
-    // HashMap<size_t, Callback<Miss>> _miss_handlers;
+    // TODO: HashMap<size_t, Callback<Miss>> _miss_handlers;
     bool _has_token;
     z_owned_liveliness_token_t _token;
 } _ze_advanced_subscriber_state_t;
@@ -340,7 +339,7 @@ const z_loaned_keyexpr_t *ze_advanced_subscriber_keyexpr(const ze_loaned_advance
  */
 z_entity_global_id_t ze_advanced_subscriber_id(const ze_loaned_advanced_subscriber_t *subscriber);
 
-// TODO: temporary
+// TODO: temporary place holder
 typedef void ze_owned_sample_miss_listener_t;
 /**
  * Declares a sample miss listener, registering a callback for notifying subscriber about missed samples.

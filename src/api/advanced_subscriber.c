@@ -17,6 +17,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/utils/query_params.h"
+#include "zenoh-pico/utils/string.h"
 #include "zenoh-pico/utils/time_range.h"
 
 void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss) {
@@ -75,12 +76,11 @@ void _ze_advanced_subscriber_timestamped_state_copy(_ze_advanced_subscriber_time
     _z_timestamp__z_sample_sortedmap_copy(&dst->_pending_samples, &src->_pending_samples);
 }
 
-// TODO: Populate state
 static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_state_t *state, const _z_session_rc_t *zn,
                                                      z_moved_closure_sample_t *callback,
                                                      const z_loaned_keyexpr_t *keyexpr,
                                                      const z_loaned_keyexpr_t *query_keyexpr,
-                                                     ze_advanced_subscriber_options_t *options) {
+                                                     const ze_advanced_subscriber_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&state->_mutex));
 #endif
@@ -97,6 +97,7 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
                            _z_mutex_drop(&state->_mutex));
     state->_retransmission = options->recovery.is_enabled;
     state->_has_period = options->recovery.last_sample_miss_detection.periodic_queries_period_ms != 0;
+    // TODO: Set Period
     state->_history_depth = 0;
     state->_query_target = Z_QUERY_TARGET_DEFAULT;
     state->_query_timeout = 0;
@@ -104,6 +105,7 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
     state->_dropper = callback->_this._val.drop;
     state->_ctx = callback->_this._val.context;
     z_internal_closure_sample_null(&callback->_this);
+    // TODO: Init miss hander map
     state->_has_token = false;
     z_internal_liveliness_token_null(&state->_token);
 
@@ -112,29 +114,42 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
 
 _ze_advanced_subscriber_state_t _ze_advanced_subscriber_state_null(void) {
     _ze_advanced_subscriber_state_t state = {0};
+    state._session = _z_session_rc_null();
+    z_internal_keyexpr_null(&state._key_expr);
+    z_internal_keyexpr_null(&state._query_key_expr);
     z_internal_liveliness_token_null(&state._token);
-
     return state;
 }
 
 void _ze_advanced_subscriber_state_clear(_ze_advanced_subscriber_state_t *state) {
+    _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
+    _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
+    _z_session_rc_drop(&state->_session);
+    z_keyexpr_drop(z_keyexpr_move(&state->_key_expr));
+    z_keyexpr_drop(z_keyexpr_move(&state->_query_key_expr));
     if (state->_has_token) {
         z_liveliness_token_drop(z_liveliness_token_move(&state->_token));
     }
+
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_drop(&state->_mutex);
 #endif
+
+    *state = _ze_advanced_subscriber_state_null();
 }
 
 static bool _ze_advanced_subscriber_state_check(const _ze_advanced_subscriber_state_t *state) {
-    return (!state->_has_token || z_internal_liveliness_token_check(&state->_token));
+    return (!_Z_RC_IS_NULL(&state->_session) && z_internal_keyexpr_check(&state->_key_expr) &&
+            z_internal_keyexpr_check(&state->_query_key_expr) &&
+            (!state->_has_token || z_internal_liveliness_token_check(&state->_token)));
 }
 
 bool _ze_advanced_subscriber_check(const _ze_advanced_subscriber_t *sub) {
     return (z_internal_subscriber_check(&sub->_subscriber) &&
             (!sub->_has_liveliness_subscriber || z_internal_subscriber_check(&sub->_liveliness_subscriber)) &&
             (!sub->_has_heartbeat_subscriber || z_internal_subscriber_check(&sub->_heartbeat_subscriber)) &&
-            _ze_advanced_subscriber_state_check(sub->_state._val));
+            !_ze_advanced_subscriber_state_simple_rc_is_null(&sub->_state) &&
+            _ze_advanced_subscriber_state_check(_ze_advanced_subscriber_state_simple_rc_value(&sub->_state)));
 }
 
 _ze_advanced_subscriber_t _ze_advanced_subscriber_null(void) {
@@ -188,17 +203,13 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
 
     size_t pos = 0;
     if (max_samples > 0) {
-        if (buf_len - pos < _Z_QUERY_PARAMS_KEY_MAX_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
-            return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_MAX and _Z_QUERY_PARAMS_FIELD_SEPARATOR
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_KEY_MAX, _Z_QUERY_PARAMS_KEY_MAX_LEN)) {
+            return false;  // Not enough space
         }
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_MAX, _Z_QUERY_PARAMS_KEY_MAX_LEN);
-        pos += _Z_QUERY_PARAMS_KEY_MAX_LEN;
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
-        pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_FIELD_SEPARATOR,
+                               _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN)) {
+            return false;  // Not enough space
+        }
 
         int written = snprintf(&buf[pos], buf_len - pos, "%zu", max_samples);
         if (written < 0 || (size_t)written >= buf_len - pos) {
@@ -208,26 +219,19 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
     }
     if (max_age_ms > 0) {
         if (pos > 0) {
-            if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
-                return false;  // Not enough space for _Z_QUERY_PARAMS_LIST_SEPARATOR
+            if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_LIST_SEPARATOR,
+                                   _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN)) {
+                return false;  // Not enough space
             }
-            // SAFETY: previously checked that buffer has the required space.
-            // Flawfinder: ignore [CWE-120]
-            memcpy(&buf[pos], _Z_QUERY_PARAMS_LIST_SEPARATOR, _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN);
-            pos += _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN;
         }
 
-        if (buf_len - pos < _Z_QUERY_PARAMS_KEY_TIME_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
-            return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_TIME and _Z_QUERY_PARAMS_FIELD_SEPARATOR
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_KEY_TIME, _Z_QUERY_PARAMS_KEY_TIME_LEN)) {
+            return false;  // Not enough space
         }
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_TIME, _Z_QUERY_PARAMS_KEY_TIME_LEN);
-        pos += _Z_QUERY_PARAMS_KEY_TIME_LEN;
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
-        pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_FIELD_SEPARATOR,
+                               _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN)) {
+            return false;  // Not enough space
+        }
 
         double max_age_s = (double)max_age_ms * _Z_TIME_RANGE_MS_TO_SECS;
         _z_time_range_t range = {.start = {.bound = _Z_TIME_BOUND_INCLUSIVE, .now_offset = -max_age_s},
@@ -244,26 +248,19 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
     }
     if (seq_range != NULL) {
         if (pos > 0) {
-            if (buf_len - pos < _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN) {
-                return false;  // Not enough space for _Z_QUERY_PARAMS_LIST_SEPARATOR
+            if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_LIST_SEPARATOR,
+                                   _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN)) {
+                return false;  // Not enough space
             }
-            // SAFETY: previously checked that buffer has the required space.
-            // Flawfinder: ignore [CWE-120]
-            memcpy(&buf[pos], _Z_QUERY_PARAMS_LIST_SEPARATOR, _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN);
-            pos += _Z_QUERY_PARAMS_LIST_SEPARATOR_LEN;
         }
 
-        if (buf_len - pos < _Z_QUERY_PARAMS_KEY_RANGE_LEN + _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN) {
-            return false;  // Not enough space for _Z_QUERY_PARAMS_KEY_RANGE and _Z_QUERY_PARAMS_FIELD_SEPARATOR
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_KEY_RANGE, _Z_QUERY_PARAMS_KEY_RANGE_LEN)) {
+            return false;  // Not enough space
         }
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_KEY_RANGE, _Z_QUERY_PARAMS_KEY_RANGE_LEN);
-        pos += _Z_QUERY_PARAMS_KEY_RANGE_LEN;
-        // SAFETY: previously checked that buffer has the required space.
-        // Flawfinder: ignore [CWE-120]
-        memcpy(&buf[pos], _Z_QUERY_PARAMS_FIELD_SEPARATOR, _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN);
-        pos += _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN;
+        if (!_z_memcpy_checked(buf, buf_len, &pos, _Z_QUERY_PARAMS_FIELD_SEPARATOR,
+                               _Z_QUERY_PARAMS_FIELD_SEPARATOR_LEN)) {
+            return false;  // Not enough space
+        }
 
         if (seq_range->_has_start) {
             int written = snprintf(&buf[pos], buf_len - pos, "%u", seq_range->_start);
