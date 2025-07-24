@@ -2078,7 +2078,7 @@ const z_loaned_reply_err_t *z_reply_err(const z_loaned_reply_t *reply);
  * Return:
  * 	 `true` if id is present
  */
-bool z_reply_replier_id(const z_loaned_reply_t *reply, z_id_t *out_id);
+bool z_reply_replier_id(const z_loaned_reply_t *reply, z_entity_global_id_t *out_id);
 #endif  // Z_FEATURE_UNSTABLE_API
 
 #endif  // Z_FEATURE_QUERY == 1
