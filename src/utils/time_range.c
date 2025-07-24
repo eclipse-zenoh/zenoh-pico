@@ -84,7 +84,8 @@ static bool _z_time_range_parse_duration(const _z_str_se_t *bound, double *durat
         return false;
     }
     size_t offset = 0;
-    if (_z_memcpy_checked(buf, len + 1, &offset, bound->start, len)) {
+    if (!_z_memcpy_checked(buf, len + 1, &offset, bound->start, len)) {
+        z_free(buf);
         return false;
     }
     buf[len] = '\0';
