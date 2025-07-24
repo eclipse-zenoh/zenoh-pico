@@ -1710,10 +1710,11 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     } else {
         opts = *options;
     }
+    _z_source_info_t source_info = _z_source_info_null();
     z_result_t ret =
         _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, _z_bytes_from_moved(payload),
                       _z_encoding_from_moved(opts.encoding), Z_SAMPLE_KIND_PUT, opts.congestion_control, opts.priority,
-                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment));
+                      opts.is_express, opts.timestamp, _z_bytes_from_moved(opts.attachment), &source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_encoding_drop(opts.encoding);
@@ -1745,9 +1746,10 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     } else {
         opts = *options;
     }
+    _z_source_info_t source_info = _z_source_info_null();
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,
-                                   _z_bytes_from_moved(opts.attachment));
+                                   _z_bytes_from_moved(opts.attachment), &source_info);
     // Clean-up
     _z_session_rc_drop(&sess_rc);
     z_bytes_drop(opts.attachment);
