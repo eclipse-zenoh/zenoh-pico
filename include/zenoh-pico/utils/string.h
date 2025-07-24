@@ -96,9 +96,11 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
  *   false - If the copy would overflow the buffer, or any pointer is NULL.
  */
 static inline bool _z_memcpy_checked(void *dest, size_t dest_len, size_t *offset, const void *src, size_t len) {
-    if (dest == NULL || src == NULL || *offset + len > dest_len) {
+    if (dest == NULL || src == NULL || len > dest_len - *offset) {
         return false;
     }
+    // SAFETY: Copy is bounds-checked above.
+    // Flawfinder: ignore [CWE-120]
     memcpy((char *)dest + *offset, src, len);
     *offset += len;
     return true;
