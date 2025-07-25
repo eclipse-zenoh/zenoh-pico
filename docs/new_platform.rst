@@ -31,7 +31,7 @@ The include files contain the platform-dependent definitions of our wrapper type
 * _z_sys_net_socket_t: A network type to store socket information.
 * _z_sys_net_endpoint_t: A network type to store endpoint information (e.g: ip address, port).
 
-Additionally, if your platform support multi thread you'll have to define:
+Additionally, if your platform supports multi thread you'll have to define:
 
 * _z_task_t: A multi-thread type to store thread/task information.
 * z_task_attr_t: A multi-thread type to store thread/task attributes information.
@@ -133,7 +133,7 @@ Here are the functions needed for peer-to-peer unicast:
 * `_z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out)`: Accept an incoming connection to a listen socket.
 * `_z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex)`: Use io multiplexing to wait an event on a list of sockets.
 
-Then, you must decide which link you want to add support for on your platform, with the possible list being:
+Then, you must decide which links you want to add support for on your platform, with the possible list being:
 
 * TCP unicast
 * UDP unicast
@@ -143,16 +143,16 @@ Then, you must decide which link you want to add support for on your platform, w
 * WebSocket
 * Raw Ethernet
 
-For each of these link you'll have to implement the functions that are defined in `include/zenoh-pico/system/link/`, for example for tcp:
+For each of these links you'll have to implement the functions that are defined in `include/zenoh-pico/system/link/`, for example for TCP:
 
-* `_z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port)`: Create the network endpoint structure necessary to open a tcp connection.
+* `_z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_address, const char *s_port)`: Create the network endpoint structure necessary to open a TCP connection.
 * `_z_free_endpoint_tcp(_z_sys_net_endpoint_t *ep)`: Free the network endpoint.
-* `_z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout)`: Open a tcp connection based on endpoint information.
-* `_z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep)`: Listen on a tcp socket based on endpoint information (requires peer-to-peer unicast functions).
-* `_z_close_tcp(_z_sys_net_socket_t *sock)`: Close a tcp connection/socket.
-* `_z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len)`: Read available bytes on a tcp socket.
-* `_z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len)`: Read an exact amount of bytes on a tcp socket
-* `_z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len)`: Send bytes on a tcp socket.
+* `_z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep, uint32_t tout)`: Open a TCP connection based on endpoint information.
+* `_z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t rep)`: Listen on a TCP socket based on endpoint information (requires peer-to-peer unicast functions).
+* `_z_close_tcp(_z_sys_net_socket_t *sock)`: Close a TCP connection/socket.
+* `_z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len)`: Read available bytes on a TCP socket.
+* `_z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len)`: Read an exact amount of bytes on a TCP socket
+* `_z_send_tcp(const _z_sys_net_socket_t sock, const uint8_t *ptr, size_t len)`: Send bytes on a TCP socket.
 
 Build system registration
 ====================
