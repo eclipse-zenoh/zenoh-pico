@@ -18,7 +18,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 
 #include "zenoh-pico/protocol/codec.h"
 #include "zenoh-pico/protocol/codec/core.h"
