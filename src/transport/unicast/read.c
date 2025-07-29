@@ -109,6 +109,43 @@ static bool _z_unicast_client_read(_z_transport_unicast_t *ztu, _z_transport_pee
     return true;
 }
 
+z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
+    _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+    if (curr_peer == NULL) {
+        _Z_ERROR("Invalid router endpoint\n");
+        return _Z_ERR_TRANSPORT_RX_FAILED;
+    }
+    // Read & process a single message
+    if (single_read) {
+        _z_transport_message_t t_msg;
+        _Z_RETURN_IF_ERR(_z_unicast_recv_t_msg(ztu, &t_msg));
+        _Z_CLEAN_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, curr_peer), _z_t_msg_clear(&t_msg));
+        _z_t_msg_clear(&t_msg);
+        // Update buffer
+        _Z_RETURN_IF_ERR(_z_unicast_update_rx_buffer(ztu));
+    } else {
+        // Prepare buffer
+        _z_zbuf_reset(&ztu->_common._zbuf);
+        size_t to_read = 0;
+        // Retrieve data if any
+        if (_z_unicast_client_read(ztu, curr_peer, &to_read)) {
+            // Process data
+            _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read))
+        }
+    }
+    return _Z_RES_OK;
+}
+#else
+
+z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
+    _ZP_UNUSED(ztu);
+    _ZP_UNUSED(single_read);
+    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+}
+#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
+
+#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
+
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
@@ -283,71 +320,6 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
     _z_transport_peer_mutex_unlock(&ztu->_common);
     return _Z_RES_OK;
 }
-
-z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
-    // Read & process a single message
-    if (single_read) {
-        _z_transport_message_t t_msg;
-        _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-        if (peer == NULL) {
-            _Z_ERROR("Invalid router endpoint\n");
-            return _Z_ERR_TRANSPORT_RX_FAILED;
-        }
-        _Z_RETURN_IF_ERR(_z_unicast_recv_t_msg(ztu, &t_msg));
-        _Z_CLEAN_RETURN_IF_ERR(_z_unicast_handle_transport_message(ztu, &t_msg, peer), _z_t_msg_clear(&t_msg));
-        // Update buffer
-        _Z_RETURN_IF_ERR(_z_unicast_update_rx_buffer(ztu));
-    } else {
-        // Lock mutex
-        _z_mutex_lock(&ztu->_common._mutex_rx);
-
-        // Prepare buffer
-        _z_zbuf_reset(&ztu->_common._zbuf);
-        z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
-#if Z_FEATURE_UNICAST_PEER == 1
-        if (mode == Z_WHATAMI_PEER) {
-            // No peer connected
-            if (_z_transport_peer_unicast_slist_is_empty(ztu->_peers)) {
-                _Z_INFO("Currently no peer connected\n");
-                _z_mutex_unlock(&ztu->_common._mutex_rx);
-                return _Z_RES_OK;
-            }
-            // Wait for events on sockets
-            _Z_CLEAN_RETURN_IF_ERR(_z_socket_wait_event(&ztu->_peers, &ztu->_common._mutex_peer),
-                                   _z_mutex_unlock(&ztu->_common._mutex_rx));
-            // Process events for all peers
-            _Z_CLEAN_RETURN_IF_ERR(_zp_unicast_process_peer_event(ztu), _z_mutex_unlock(&ztu->_common._mutex_rx));
-        } else
-#endif
-        {
-            _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
-            if (curr_peer == NULL) {
-                _Z_ERROR("Invalid router endpoint\n");
-                _z_mutex_unlock(&ztu->_common._mutex_rx);
-                return _Z_ERR_TRANSPORT_RX_FAILED;
-            }
-            size_t to_read = 0;
-            // Retrieve data if any
-            if (_z_unicast_client_read(ztu, curr_peer, &to_read)) {
-                // Process data
-                _Z_CLEAN_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read),
-                                       _z_mutex_unlock(&ztu->_common._mutex_rx))
-            }
-        }
-        _z_mutex_unlock(&ztu->_common._mutex_rx);
-    }
-    return _Z_RES_OK;
-}
-#else
-
-z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
-    _ZP_UNUSED(ztu);
-    _ZP_UNUSED(single_read);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
-}
-#endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
-
-#if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
 void *_zp_unicast_read_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;

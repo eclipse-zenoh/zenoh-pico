@@ -92,7 +92,6 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
 }
 
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
-    z_result_t ret = _Z_RES_OK;
     // Prepare address slice
     static uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
     _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
@@ -100,21 +99,13 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
     // Read & process a single message
     if (single_read) {
         _z_transport_message_t t_msg;
-        ret = _z_multicast_recv_t_msg(ztm, &t_msg, &addr);
-        if (ret == _Z_RES_OK) {
-            ret = _z_multicast_handle_transport_message(ztm, &t_msg, &addr);
-            _z_t_msg_clear(&t_msg);
-        }
-        ret = _z_multicast_update_rx_buffer(ztm);
-        if (ret != _Z_RES_OK) {
-            _Z_ERROR("Failed to allocate rx buffer");
-        }
+        _Z_RETURN_IF_ERR(_z_multicast_recv_t_msg(ztm, &t_msg, &addr));
+        _Z_CLEAN_RETURN_IF_ERR(_z_multicast_handle_transport_message(ztm, &t_msg, &addr), _z_t_msg_clear(&t_msg));
+        _z_t_msg_clear(&t_msg);
+        return _z_multicast_update_rx_buffer(ztm);
     } else {
-        _z_mutex_lock(&ztm->_common._mutex_rx);
-        ret = _zp_multicast_process_messages(ztm, &addr);
-        _z_mutex_unlock(&ztm->_common._mutex_rx);
+        return _zp_multicast_process_messages(ztm, &addr);
     }
-    return ret;
 }
 #else
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
