@@ -26,8 +26,9 @@
 
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
 
-z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
+z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm, bool single_read) {
     z_result_t ret = _Z_RES_OK;
+    _ZP_UNUSED(single_read);
 
     _z_slice_t addr;
     _z_transport_message_t t_msg;
@@ -45,8 +46,9 @@ z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
 }
 #else
 
-z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm) {
+z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm, bool single_read) {
     _ZP_UNUSED(ztm);
+    _ZP_UNUSED(single_read);
     return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
 }
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1

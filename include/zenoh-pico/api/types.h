@@ -450,7 +450,7 @@ typedef struct {
  * Represents the configuration used to configure a read operation started via :c:func:`zp_read`.
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+    bool single_read;  // Read a single packet instead of the whole buffer
 } zp_read_options_t;
 
 /**

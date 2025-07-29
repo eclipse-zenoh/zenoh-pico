@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu);
+z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read);
 z_result_t _zp_unicast_stop_read_task(_z_transport_t *zt);
 void *_zp_unicast_read_task(void *ztu_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 

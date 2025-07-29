@@ -2082,11 +2082,16 @@ z_result_t zp_stop_lease_task(z_loaned_session_t *zs) {
 #endif
 }
 
-void zp_read_options_default(zp_read_options_t *options) { options->__dummy = 0; }
+void zp_read_options_default(zp_read_options_t *options) { options->single_read = false; }
 
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options) {
-    (void)(options);
-    return _zp_read(_Z_RC_IN_VAL(zs));
+    zp_read_options_t opt;
+    if (options != NULL) {
+        opt = *options;
+    } else {
+        zp_read_options_default(&opt);
+    }
+    return _zp_read(_Z_RC_IN_VAL(zs), opt.single_read);
 }
 
 void zp_send_keep_alive_options_default(zp_send_keep_alive_options_t *options) { options->__dummy = 0; }

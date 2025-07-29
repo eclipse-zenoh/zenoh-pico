@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm);
+z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read);
 z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt);
 void *_zp_multicast_read_task(void *ztm_arg);  // The argument is void* to avoid incompatible pointer types in tasks
 

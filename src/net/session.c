@@ -344,7 +344,7 @@ _z_config_t *_z_info(const _z_session_t *zn) {
     return ps;
 }
 
-z_result_t _zp_read(_z_session_t *zn) { return _z_read(&zn->_tp); }
+z_result_t _zp_read(_z_session_t *zn, bool single_read) { return _z_read(&zn->_tp, single_read); }
 
 z_result_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn->_tp); }
 
