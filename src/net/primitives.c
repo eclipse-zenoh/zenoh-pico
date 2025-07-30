@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/filtering.h"
+#include "zenoh-pico/net/liveliness.h"
 #include "zenoh-pico/net/logger.h"
 #include "zenoh-pico/net/matching.h"
 #include "zenoh-pico/net/sample.h"
@@ -259,7 +260,12 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     _z_subscription_rc_t *s =
         _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sub->_entity_id);
     if (s == NULL) {
+#if Z_FEATURE_LIVELINESS == 1
+        // Not found, treat it as a liveliness subscriber
+        return _z_undeclare_liveliness_subscriber(sub);
+#else
         return _Z_ERR_ENTITY_UNKNOWN;
+#endif
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
