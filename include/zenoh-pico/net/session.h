@@ -187,10 +187,11 @@ _z_config_t *_z_info(const _z_session_t *session);
  *
  * Parameters:
  *     session: The zenoh-net session. The caller keeps its ownership.
+ *     single_read: Read a single packet from the buffer instead of the whole buffer
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-z_result_t _zp_read(_z_session_t *z);
+z_result_t _zp_read(_z_session_t *z, bool single_read);
 
 /**
  * Send a KeepAlive message.

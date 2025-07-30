@@ -20,17 +20,17 @@
 #include "zenoh-pico/transport/raweth/read.h"
 #include "zenoh-pico/transport/unicast/read.h"
 
-z_result_t _z_read(_z_transport_t *zt) {
+z_result_t _z_read(_z_transport_t *zt, bool single_read) {
     z_result_t ret = _Z_RES_OK;
     switch (zt->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            ret = _zp_unicast_read(&zt->_transport._unicast);
+            ret = _zp_unicast_read(&zt->_transport._unicast, single_read);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            ret = _zp_multicast_read(&zt->_transport._multicast);
+            ret = _zp_multicast_read(&zt->_transport._multicast, single_read);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            ret = _zp_raweth_read(&zt->_transport._raweth);
+            ret = _zp_raweth_read(&zt->_transport._raweth, single_read);
             break;
         default:
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
