@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_SAMPLE_NETAPI_H
 #define ZENOH_PICO_SAMPLE_NETAPI_H
 
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/ring.h"
 #include "zenoh-pico/net/encoding.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/session.h"
@@ -52,10 +54,18 @@ static inline bool _z_sample_check(const _z_sample_t *sample) {
     return _z_keyexpr_check(&sample->keyexpr) || _z_encoding_check(&sample->encoding) ||
            _z_bytes_check(&sample->payload) || _z_bytes_check(&sample->attachment);
 }
+static inline size_t _z_sample_size(const _z_sample_t *s) {
+    (void)(s);
+    return sizeof(_z_sample_t);
+}
 
 void _z_sample_steal_data(_z_sample_t *dst, _z_keyexpr_t *key, _z_bytes_t *payload, const _z_timestamp_t *timestamp,
                           _z_encoding_t *encoding, z_sample_kind_t kind, _z_qos_t qos, _z_bytes_t *attachment,
                           z_reliability_t reliability, _z_source_info_t *source_info);
+z_result_t _z_sample_copy_data(_z_sample_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+                               const _z_timestamp_t *timestamp, const _z_encoding_t *encoding, z_sample_kind_t kind,
+                               _z_qos_t qos, const _z_bytes_t *attachment, z_reliability_t reliability,
+                               const _z_source_info_t *source_info);
 z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src);
 
 /**
@@ -68,6 +78,10 @@ void _z_sample_free(_z_sample_t **sample);
 
 z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src);
 _z_sample_t _z_sample_duplicate(const _z_sample_t *src);
+
+_Z_ELEM_DEFINE(_z_sample, _z_sample_t, _z_sample_size, _z_sample_clear, _z_sample_copy, _z_sample_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
+_Z_RING_DEFINE(_z_sample, _z_sample_t)
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,8 @@ typedef struct {
     void *arg;
 } _z_subscription_infos_t;
 
-_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move,
+               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t)
 
 typedef struct {
@@ -60,7 +61,7 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
 
 #if Z_FEATURE_RX_CACHE == 1
 _Z_ELEM_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_noop_size, _z_subscription_cache_data_clear,
-               _z_noop_copy, _z_noop_move)
+               _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_LRU_CACHE_DEFINE(_z_subscription, _z_subscription_cache_data_t, _z_subscription_cache_data_compare)
 #endif
 
