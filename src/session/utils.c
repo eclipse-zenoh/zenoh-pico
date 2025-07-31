@@ -99,6 +99,18 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     zn->_matching_listeners = _z_matching_listener_intmap_make();
 #endif
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+#if Z_FEATURE_MULTI_THREAD == 1
+    zn->_periodic_scheduler_task = NULL;
+#endif
+    ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR_RETURN(ret);
+    }
+#endif
+#endif
+
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
@@ -113,6 +125,17 @@ void _z_session_clear(_z_session_t *zn) {
 #if Z_FEATURE_MULTI_THREAD == 1
     _zp_stop_read_task(zn);
     _zp_stop_lease_task(zn);
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    _zp_stop_periodic_scheduler_task(zn);
+#endif
+#endif
+#endif
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    _zp_periodic_scheduler_clear(&zn->_periodic_scheduler);
+#endif
 #endif
 
 #if Z_FEATURE_AUTO_RECONNECT == 1

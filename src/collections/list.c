@@ -66,6 +66,34 @@ _z_list_t *_z_list_push_back(_z_list_t *xs, void *x) {
     return xs;
 }
 
+_z_list_t *_z_list_push_sorted(_z_list_t *xs, z_element_cmp_f c_f, void *x) {
+    if (xs == NULL) {
+        return _z_list_new(x);
+    }
+
+    _z_list_t *l = xs;
+    _z_list_t *prev = NULL;
+
+    while (l != NULL && c_f(l->_val, x) <= 0) {
+        prev = l;
+        l = l->_next;
+    }
+
+    _z_list_t *new_elem = _z_list_new(x);
+    if (new_elem == NULL) {
+        return xs;
+    }
+
+    if (prev == NULL) {
+        new_elem->_next = xs;
+        return new_elem;
+    } else {
+        new_elem->_next = l;
+        prev->_next = new_elem;
+        return xs;
+    }
+}
+
 size_t _z_list_len(const _z_list_t *xs) {
     size_t len = 0;
     _z_list_t *l = (_z_list_t *)xs;

@@ -87,7 +87,8 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
  * Parameters:
  *   dest       - Pointer to the destination buffer.
  *   dest_len   - Total size of the destination buffer.
- *   offset     - Pointer to the current write offset; will be updated if the copy succeeds.
+ *   offset     - Pointer to the current write offset; may be NULL to use offset 0 without updating, otherwise will be
+ * updated if the copy succeeds.
  *   src        - Pointer to the source data.
  *   len        - Number of bytes to copy.
  *
@@ -96,11 +97,16 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
  *   false - If the copy would overflow the buffer, or any pointer is NULL.
  */
 static inline bool _z_memcpy_checked(void *dest, size_t dest_len, size_t *offset, const void *src, size_t len) {
-    if (dest == NULL || src == NULL || len > dest_len - *offset) {
+    if (dest == NULL || src == NULL) {
         return false;
     }
 
-    char *d_start = (char *)dest + *offset;
+    size_t local_offset = (offset != NULL) ? *offset : 0;
+    if (len > dest_len - local_offset) {
+        return false;
+    }
+
+    char *d_start = (char *)dest + local_offset;
     char *d_end = d_start + len;
     const char *s_start = (const char *)src;
     const char *s_end = s_start + len;
@@ -113,7 +119,9 @@ static inline bool _z_memcpy_checked(void *dest, size_t dest_len, size_t *offset
     // SAFETY: Copy is bounds-checked above.
     // Flawfinder: ignore [CWE-120]
     memcpy(d_start, src, len);
-    *offset += len;
+    if (offset != NULL) {
+        *offset += len;
+    }
     return true;
 }
 

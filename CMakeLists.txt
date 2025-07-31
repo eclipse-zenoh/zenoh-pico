@@ -238,6 +238,7 @@ set(BATCH_UNICAST_SIZE 2048 CACHE STRING "Use this to override the maximum unica
 set(BATCH_MULTICAST_SIZE 2048 CACHE STRING "Use this to override the maximum multicast batch size")
 set(Z_CONFIG_SOCKET_TIMEOUT 100 CACHE STRING "Default socket timeout in milliseconds")
 set(Z_TRANSPORT_LEASE 10000 CACHE STRING "Link lease duration in milliseconds to announce to other zenoh nodes")
+set(ZP_PERIODIC_SCHEDULER_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in the periodic scheduler")
 
 set(Z_FEATURE_UNSTABLE_API 0 CACHE STRING "Toggle unstable Zenoh-C API")
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
@@ -274,6 +275,7 @@ set(Z_FEATURE_RX_CACHE 0 CACHE STRING "Toggle RX_CACHE")
 set(Z_FEATURE_UNICAST_PEER 1 CACHE STRING "Toggle Unicast peer mode")
 set(Z_FEATURE_AUTO_RECONNECT 1 CACHE STRING "Toggle automatic reconnection")
 set(Z_FEATURE_MULTICAST_DECLARATIONS 0 CACHE STRING "Toggle multicast resource declarations")
+set(Z_FEATURE_PERIODIC_TASKS 0 CACHE STRING "Toggle periodic task support")
 
 # Add a warning message if someone tries to enable Z_FEATURE_LINK_SERIAL_USB directly
 if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
@@ -305,6 +307,16 @@ if(Z_FEATURE_ADVANCED_SUBSCRIPTION AND (NOT Z_FEATURE_UNSTABLE_API OR NOT Z_FEAT
   message(WARNING "Z_FEATURE_ADVANCED_SUBSCRIPTION can only be enabled when Z_FEATURE_UNSTABLE_API, Z_FEATURE_SUBSCRIPTION, Z_FEATURE_LIVELINESS and Z_FEATURE_MULTI_THREAD is also enabled. Disabling Z_FEATURE_ADVANCED_SUBSCRIPTION.")
   set(Z_FEATURE_ADVANCED_SUBSCRIPTION 0 CACHE STRING "Toggle advanced subscription feature" FORCE)
 endif()
+
+if(Z_FEATURE_PERIODIC_TASKS AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_PERIODIC_TASKS can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_PERIODIC_TASKS.")
+  set(Z_FEATURE_PERIODIC_TASKS 0 CACHE STRING "Toggle periodic task support" FORCE)
+endif()
+
+if(Z_FEATURE_ADVANCED_PUBLICATION OR Z_FEATURE_ADVANCED_SUBSCRIPTION)
+  set(Z_FEATURE_PERIODIC_TASKS 1 CACHE STRING "Toggle periodic task support" FORCE)
+endif()
+
 
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\

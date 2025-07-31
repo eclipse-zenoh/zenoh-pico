@@ -39,6 +39,7 @@ typedef size_t (*z_element_hash_f)(const void *e);
 #define _Z_ELEM_DEFINE(name, type, elem_size_f, elem_clear_f, elem_copy_f, elem_move_f, elem_eq_f, elem_cmp_f, \
                        elem_hash_f)                                                                            \
     typedef bool (*name##_eq_f)(const type *left, const type *right);                                          \
+    typedef int (*name##_cmp_f)(const type *left, const type *right);                                          \
     static inline void name##_elem_clear(void *e) { elem_clear_f((type *)e); }                                 \
     static inline void name##_elem_free(void **e) {                                                            \
         type *ptr = (type *)*e;                                                                                \

@@ -43,14 +43,16 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     bool is_express;
-    bool _liveness;  // TODO: Private as not yet exposed in Zenoh implementation.
+    bool _liveliness;  // TODO: Private as not yet exposed in Zenoh implementation.
 } ze_advanced_publisher_cache_options_t;
 
 typedef struct {
     _z_sample_ring_t _cache;
-    _z_sample_t **_query_reply_buffer;
+    _z_sample_t *_outbox;
+    size_t _outbox_cap;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
+    _z_mutex_t _outbox_mutex;
 #endif
     z_owned_queryable_t _queryable;
     z_owned_liveliness_token_t _liveliness;
@@ -61,9 +63,6 @@ typedef struct {
 
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
 
-z_result_t _ze_advanced_cache_init(_ze_advanced_cache_t *cache, const z_loaned_session_t *zs,
-                                   const z_loaned_keyexpr_t *keyexpr, const z_loaned_keyexpr_t *suffix,
-                                   const ze_advanced_publisher_cache_options_t options);
 _ze_advanced_cache_t *_ze_advanced_cache_new(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                              const z_loaned_keyexpr_t *suffix,
                                              const ze_advanced_publisher_cache_options_t options);

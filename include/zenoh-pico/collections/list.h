@@ -45,6 +45,7 @@ static inline _z_list_t *_z_list_next(const _z_list_t *xs) { return xs->_next; }
 _z_list_t *_z_list_push(_z_list_t *xs, void *x);
 _z_list_t *_z_list_push_after(_z_list_t *xs, void *x);
 _z_list_t *_z_list_push_back(_z_list_t *xs, void *x);
+_z_list_t *_z_list_push_sorted(_z_list_t *xs, z_element_cmp_f c_f, void *x);
 _z_list_t *_z_list_pop(_z_list_t *xs, z_element_free_f f_f, void **x);
 
 _z_list_t *_z_list_find(const _z_list_t *xs, z_element_eq_f f_f, const void *e);
@@ -62,7 +63,13 @@ void _z_list_free(_z_list_t **xs, z_element_free_f f_f);
     static inline type *name##_list_value(const name##_list_t *l) { return (type *)_z_list_value(l); }                \
     static inline name##_list_t *name##_list_next(const name##_list_t *l) { return _z_list_next(l); }                 \
     static inline name##_list_t *name##_list_push(name##_list_t *l, type *e) { return _z_list_push(l, e); }           \
+    static inline name##_list_t *name##_list_push_after(name##_list_t *l, type *e) {                                  \
+        return _z_list_push_after(l, e);                                                                              \
+    }                                                                                                                 \
     static inline name##_list_t *name##_list_push_back(name##_list_t *l, type *e) { return _z_list_push_back(l, e); } \
+    static inline name##_list_t *name##_list_push_sorted(name##_list_t *l, type *e) {                                 \
+        return _z_list_push_sorted(l, name##_elem_cmp, e);                                                            \
+    }                                                                                                                 \
     static inline name##_list_t *name##_list_pop(name##_list_t *l, type **x) {                                        \
         return _z_list_pop(l, name##_elem_free, (void **)x);                                                          \
     }                                                                                                                 \
