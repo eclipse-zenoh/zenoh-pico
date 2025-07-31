@@ -32,23 +32,6 @@ typedef enum {
     _ZE_ADVANCED_PUBLISHER_SEQUENCING_SEQUENCE_NUMBER = 2
 } _ze_advanced_publisher_sequencing_t;
 
-typedef struct {
-    z_owned_publisher_t _publisher;
-    _ze_advanced_cache_t *_cache;
-    bool _has_liveliness;
-    z_owned_liveliness_token_t _liveliness;
-    _ze_advanced_publisher_sequencing_t _sequencing;
-    _z_seqnumber_t _seqnumber;
-} _ze_advanced_publisher_t;
-
-_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_publisher_t, advanced_publisher)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
-
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_ADVANCED_PUBLICATION == 1
-
-/**************** Advanced Publisher ****************/
-
 /**
  * Whatami values, defined as a bitmask.
  *
@@ -68,6 +51,36 @@ typedef enum {
     ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_SPORADIC,
 } ze_advanced_publisher_heartbeat_mode_t;
 #define ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_DEFAULT ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE
+
+typedef struct {
+    _z_seqnumber_t _seqnumber;
+    ze_advanced_publisher_heartbeat_mode_t _heartbeat_mode;
+    _z_session_weak_t _zn;
+    z_owned_publisher_t _publisher;
+    uint32_t _state_publisher_task_id;
+    uint32_t _last_published_sn;
+} _ze_advanced_publisher_state_t;
+
+void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state);
+
+_Z_REFCOUNT_DEFINE_NO_FROM_VAL(_ze_advanced_publisher_state, _ze_advanced_publisher_state)
+
+typedef struct {
+    z_owned_publisher_t _publisher;
+    _ze_advanced_cache_t *_cache;
+    bool _has_liveliness;
+    z_owned_liveliness_token_t _liveliness;
+    _ze_advanced_publisher_sequencing_t _sequencing;
+    _ze_advanced_publisher_state_rc_t _state;
+} _ze_advanced_publisher_t;
+
+_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_publisher_t, advanced_publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+
+/**************** Advanced Publisher ****************/
 
 /**
  * Represents the set of options for sample miss detection on an advanced publisher.

@@ -186,14 +186,16 @@ z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left
     return _Z_RES_OK;
 }
 
-z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
+z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
     if (_z_string_len(&prefix->_val._suffix) == 0) {
         if (_z_string_len(&right->_suffix) == 0) {
-            return _Z_ERR_INVALID;
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);
         }
         return z_keyexpr_clone(prefix, right);
     } else {
         z_owned_keyexpr_t tmp;
+        tmp._val._id = prefix->_val._id;
+        tmp._val._mapping = prefix->_val._mapping;
         z_result_t res = z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right);
         if (res == _Z_RES_OK) {
             z_keyexpr_drop(z_keyexpr_move(prefix));
@@ -206,7 +208,7 @@ z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t
 z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len) {
     z_view_keyexpr_t ke_right;
     z_view_keyexpr_from_substr_unchecked(&ke_right, right, len);
-    return _z_keyexpr_append(prefix, z_view_keyexpr_loan(&ke_right));
+    return _z_keyexpr_append_suffix(prefix, z_view_keyexpr_loan(&ke_right));
 }
 
 z_result_t _z_keyexpr_append_str_array(z_owned_keyexpr_t *prefix, const char *strs[], size_t count) {
@@ -1843,7 +1845,7 @@ z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_s
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_SESSION_CLOSED;
+        _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     // Set options
     z_query_reply_options_t opts;
@@ -2250,6 +2252,43 @@ z_result_t zp_stop_lease_task(z_loaned_session_t *zs) {
 #endif
 }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+void zp_task_periodic_scheduler_options_default(zp_task_periodic_scheduler_options_t *options) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    options->task_attributes = NULL;
+#else
+    options->__dummy = 0;
+#endif
+}
+
+z_result_t zp_start_periodic_scheduler_task(z_loaned_session_t *zs,
+                                            const zp_task_periodic_scheduler_options_t *options) {
+    (void)(options);
+#if Z_FEATURE_MULTI_THREAD == 1
+    zp_task_periodic_scheduler_options_t opt;
+    zp_task_periodic_scheduler_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+    return _zp_start_periodic_scheduler_task(_Z_RC_IN_VAL(zs), opt.task_attributes);
+#else
+    (void)(zs);
+    return -1;
+#endif
+}
+
+z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    return _zp_stop_periodic_scheduler_task(_Z_RC_IN_VAL(zs));
+#else
+    (void)(zs);
+    return -1;
+#endif
+}
+#endif  // Z_FEATURE_PERIODIC_TASKS == 1
+#endif  // Z_FEATURE_UNSTABLE_API
+
 void zp_read_options_default(zp_read_options_t *options) { options->single_read = false; }
 
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options) {
@@ -2275,6 +2314,14 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     (void)(options);
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs) {
+    return _zp_process_periodic_tasks(_Z_RC_IN_VAL(zs));
+}
+#endif
+#endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_reliability_default(void) { return Z_RELIABILITY_DEFAULT; }

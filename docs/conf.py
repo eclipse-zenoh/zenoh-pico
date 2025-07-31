@@ -42,6 +42,7 @@ c_autodoc_compilation_args = [
     "-DZ_FEATURE_LIVELINESS=1",
     "-DZ_FEATURE_MATCHING=1",
     "-DZ_FEATURE_SCOUTING=1",
+    "-DZ_FEATURE_PERIODIC_TASKS=1",
 ]
 
 # -- Options for HTML output -------------------------------------------------
