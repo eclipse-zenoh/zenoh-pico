@@ -190,17 +190,20 @@ z_result_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *le
 z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right);
 
 /**
- * Appends a key expression to another key expression (automatically inserting '/'). The resulting key expression is
- * automatically canonized.
+ * Appends the suffix portion of a key expression to another key expression (automatically inserting '/').
+ *
+ * Only the suffix portion of the key expression is preserved. All other components of the resulting key
+ * expression will be discarded.
+ * The resulting key expression is automatically canonized.
  *
  * Parameters:
  *   prefix: Pointer to :c:type:`z_owned_keyexpr_t` to the key expression to append to.
- *   right: Pointer to :c:type:`z_loaned_keyexpr_t` to the key expression to append.
+ *   right: Pointer to :c:type:`z_loaned_keyexpr_t` whose suffix will be appended.
  *
  * Return:
- *   ``0`` if append successful, ``negative value`` otherwise.
+ *   ``0`` if the append was successful; a ``negative value`` otherwise.
  */
-z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right);
+z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right);
 
 /**
  * Appends a string segment to a key expression (automatically inserting '/'). The resulting key expression is

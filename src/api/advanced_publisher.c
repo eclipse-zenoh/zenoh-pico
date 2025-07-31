@@ -120,7 +120,7 @@ static z_result_t _ze_advanced_publisher_ke_suffix(z_owned_keyexpr_t *suffix, co
     }
 
     if (metadata != NULL) {
-        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append(suffix, metadata), z_keyexpr_drop(z_keyexpr_move(suffix)));
+        _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_suffix(suffix, metadata), z_keyexpr_drop(z_keyexpr_move(suffix)));
     } else {
         _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, _Z_KEYEXPR_EMPTY), z_keyexpr_drop(z_keyexpr_move(suffix)));
     }

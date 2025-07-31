@@ -186,7 +186,7 @@ z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left
     return _Z_RES_OK;
 }
 
-z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
+z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
     if (_z_string_len(&prefix->_val._suffix) == 0) {
         if (_z_string_len(&right->_suffix) == 0) {
             return _Z_ERR_INVALID;
@@ -194,6 +194,8 @@ z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t
         return z_keyexpr_clone(prefix, right);
     } else {
         z_owned_keyexpr_t tmp;
+        tmp._val._id = prefix->_val._id;
+        tmp._val._mapping = prefix->_val._mapping;
         z_result_t res = z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right);
         if (res == _Z_RES_OK) {
             z_keyexpr_drop(z_keyexpr_move(prefix));
@@ -206,7 +208,7 @@ z_result_t _z_keyexpr_append(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t
 z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len) {
     z_view_keyexpr_t ke_right;
     z_view_keyexpr_from_substr_unchecked(&ke_right, right, len);
-    return _z_keyexpr_append(prefix, z_view_keyexpr_loan(&ke_right));
+    return _z_keyexpr_append_suffix(prefix, z_view_keyexpr_loan(&ke_right));
 }
 
 z_result_t _z_keyexpr_append_str_array(z_owned_keyexpr_t *prefix, const char *strs[], size_t count) {
