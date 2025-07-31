@@ -1129,6 +1129,9 @@ Advanced Publication
 
 Represents a Zenoh Advanced Publisher entity.
 
+In addition to publishing the data, it also maintains the storage, allowing matching
+subscribers to retrive missed samples.
+
 Types
 -----
 
@@ -1207,6 +1210,7 @@ Functions
 
 .. autocfunction:: primitives.h::z_subscriber_options_default
 .. autocfunction:: primitives.h::z_subscriber_keyexpr
+.. autocfunction:: primitives.h::z_subscriber_id
 
 Ownership Functions
 -------------------
@@ -1215,6 +1219,59 @@ See details at :ref:`owned_types_concept`
 
 .. c:function:: const z_loaned_subscriber_t * z_subscriber_loan(const z_owned_subscriber_t * closure)
 .. c:function:: void z_subscriber_drop(z_moved_subscriber_t * closure) 
+
+
+Advanced Subscriber
+===================
+
+Represents a Zenoh Advanced Subscriber entity.
+
+In addition to receiving the data it is subscribed to, it is also able to receive notifications
+regarding missed samples and/or automatically recover them.
+
+Types
+-----
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: ze_owned_advanced_subscriber_t
+.. c:type:: ze_loaned_advanced_subscriber_t
+.. c:type:: ze_moved_advanced_subscriber_t
+
+Option Types
+------------
+
+.. autoctype:: advanced_subscriber.h::ze_advanced_subscriber_history_options_t
+.. autoctype:: advanced_subscriber.h::ze_advanced_subscriber_recovery_options_t
+.. autoctype:: advanced_subscriber.h::ze_advanced_subscriber_last_sample_miss_detection_options_t
+.. autoctype:: advanced_subscriber.h::ze_advanced_subscriber_options_t
+
+Functions
+---------
+
+.. autocfunction:: advanced_subscriber.h::ze_declare_advanced_subscriber
+.. autocfunction:: advanced_subscriber.h::ze_declare_background_advanced_subscriber
+.. autocfunction:: advanced_subscriber.h::ze_undeclare_advanced_subscriber
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_keyexpr
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_id
+
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_declare_sample_miss_listener
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_declare_background_sample_miss_listener
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_detect_publishers
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_detect_publishers_background
+
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_history_options_default
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_recovery_options_default
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_last_sample_miss_detection_options_default
+.. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_options_default
+
+Ownership Functions
+-------------------
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_advanced_subscriber_t * z_advanced_subscriber_loan(const z_owned_advanced_subscriber_t * closure)
+.. c:function:: void z_advanced_subscriber_drop(z_moved_advanced_subscriber_t * closure) 
 
 
 Queryable

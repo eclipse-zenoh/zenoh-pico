@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2022 ZettaScale Technology
+// Copyright (c) 2025 ZettaScale Technology
 //
 // This program and the accompanying materials are made available under the
 // terms of the Eclipse Public License 2.0 which is available at
@@ -12,33 +12,29 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/collections/intmap.h"
+#include "zenoh-pico/collections/hashmap.h"
 
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
-/*-------- int-void map --------*/
-bool _z_int_void_map_entry_key_eq(const void *left, const void *right) {
-    _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
-    _z_int_void_map_entry_t *r = (_z_int_void_map_entry_t *)right;
-    return l->_key == r->_key;
-}
-
-void _z_int_void_map_init(_z_int_void_map_t *map, size_t capacity) {
+/*-------- hashmap --------*/
+void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals) {
     map->_capacity = capacity;
     map->_vals = NULL;
+    map->_f_hash = f_hash;
+    map->_f_equals = f_equals;
 }
 
-_z_int_void_map_t _z_int_void_map_make(size_t capacity) {
-    _z_int_void_map_t map;
-    _z_int_void_map_init(&map, capacity);
+_z_hashmap_t _z_hashmap_make(size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals) {
+    _z_hashmap_t map;
+    _z_hashmap_init(&map, capacity, f_hash, f_equals);
     return map;
 }
 
-size_t _z_int_void_map_capacity(const _z_int_void_map_t *map) { return map->_capacity; }
+size_t _z_hashmap_capacity(const _z_hashmap_t *map) { return map->_capacity; }
 
-size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
+size_t _z_hashmap_len(const _z_hashmap_t *map) {
     size_t len = 0;
 
     if (map->_vals != NULL) {
@@ -50,7 +46,7 @@ size_t _z_int_void_map_len(const _z_int_void_map_t *map) {
     return len;
 }
 
-z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t *src, z_element_clone_f f_c) {
+z_result_t _z_hashmap_copy(_z_hashmap_t *dst, const _z_hashmap_t *src, z_element_clone_f f_c) {
     assert((dst != NULL) && (src != NULL) && (dst->_capacity == src->_capacity));
     for (size_t idx = 0; idx < src->_capacity; idx++) {
         const _z_list_t *src_list = src->_vals[idx];
@@ -63,11 +59,14 @@ z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t 
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         }
     }
+    dst->_f_hash = src->_f_hash;
+    dst->_f_equals = src->_f_equals;
     return _Z_RES_OK;
 }
 
-_z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_clone_f f_c, z_element_free_f f_f) {
-    _z_int_void_map_t dst = {._capacity = src->_capacity, ._vals = NULL};
+_z_hashmap_t _z_hashmap_clone(const _z_hashmap_t *src, z_element_clone_f f_c, z_element_free_f f_f) {
+    _z_hashmap_t dst = {
+        ._capacity = src->_capacity, ._vals = NULL, ._f_hash = src->_f_hash, ._f_equals = src->_f_equals};
     if (src->_vals == NULL) {
         return dst;
     }
@@ -79,27 +78,27 @@ _z_int_void_map_t _z_int_void_map_clone(const _z_int_void_map_t *src, z_element_
     }
     (void)memset(dst._vals, 0, len);
     // Copy elements
-    if (_z_int_void_map_copy(&dst, src, f_c) != _Z_RES_OK) {
+    if (_z_hashmap_copy(&dst, src, f_c) != _Z_RES_OK) {
         // Free the map
-        _z_int_void_map_clear(&dst, f_f);
+        _z_hashmap_clear(&dst, f_f);
     }
     return dst;
 }
 
-bool _z_int_void_map_is_empty(const _z_int_void_map_t *map) { return _z_int_void_map_len(map) == (size_t)0; }
+bool _z_hashmap_is_empty(const _z_hashmap_t *map) { return _z_hashmap_len(map) == (size_t)0; }
 
-void _z_int_void_map_remove(_z_int_void_map_t *map, size_t k, z_element_free_f f) {
+void _z_hashmap_remove(_z_hashmap_t *map, const void *k, z_element_free_f f) {
     if (map->_vals != NULL) {
-        size_t idx = k % map->_capacity;
-        _z_int_void_map_entry_t e;
-        e._key = k;
+        size_t idx = map->_f_hash(k) % map->_capacity;
+        _z_hashmap_entry_t e;
+        e._key = (void *)k;  // k will not be mutated by this operation
         e._val = NULL;
 
-        map->_vals[idx] = _z_list_drop_filter(map->_vals[idx], f, _z_int_void_map_entry_key_eq, &e);
+        map->_vals[idx] = _z_list_drop_filter(map->_vals[idx], f, map->_f_equals, &e);
     }
 }
 
-void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_element_free_f f_f, bool replace) {
+void *_z_hashmap_insert(_z_hashmap_t *map, void *k, void *v, z_element_free_f f_f, bool replace) {
     if (map->_vals == NULL) {
         // Lazily allocate and initialize to NULL all the pointers
         size_t len = map->_capacity * sizeof(_z_list_t *);
@@ -112,16 +111,16 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     if (map->_vals != NULL) {
         if (replace) {
             // Free any old value
-            _z_int_void_map_remove(map, k, f_f);
+            _z_hashmap_remove(map, k, f_f);
         }
 
         // Insert the element
-        _z_int_void_map_entry_t *entry = (_z_int_void_map_entry_t *)z_malloc(sizeof(_z_int_void_map_entry_t));
+        _z_hashmap_entry_t *entry = (_z_hashmap_entry_t *)z_malloc(sizeof(_z_hashmap_entry_t));
         if (entry != NULL) {
             entry->_key = k;
             entry->_val = v;
 
-            size_t idx = k % map->_capacity;
+            size_t idx = map->_f_hash(k) % map->_capacity;
             map->_vals[idx] = _z_list_push(map->_vals[idx], entry);
         }
     }
@@ -129,19 +128,19 @@ void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, void *v, z_elemen
     return v;
 }
 
-void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
+void *_z_hashmap_get(const _z_hashmap_t *map, const void *k) {
     void *ret = NULL;
 
     if (map->_vals != NULL) {
-        size_t idx = k % map->_capacity;
+        size_t idx = map->_f_hash(k) % map->_capacity;
 
-        _z_int_void_map_entry_t e;
-        e._key = k;
+        _z_hashmap_entry_t e;
+        e._key = (void *)k;  // k will not be mutated by this operation
         e._val = NULL;
 
-        _z_list_t *xs = _z_list_find(map->_vals[idx], _z_int_void_map_entry_key_eq, &e);
+        _z_list_t *xs = _z_list_find(map->_vals[idx], map->_f_equals, &e);
         if (xs != NULL) {
-            _z_int_void_map_entry_t *h = (_z_int_void_map_entry_t *)_z_list_value(xs);
+            _z_hashmap_entry_t *h = (_z_hashmap_entry_t *)_z_list_value(xs);
             ret = h->_val;
         }
     }
@@ -149,28 +148,28 @@ void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) {
     return ret;
 }
 
-_z_list_t *_z_int_void_map_get_all(const _z_int_void_map_t *map, size_t k) {
+_z_list_t *_z_hashmap_get_all(const _z_hashmap_t *map, const void *k) {
     if (map->_vals != NULL) {
-        size_t idx = k % map->_capacity;
+        size_t idx = map->_f_hash(k) % map->_capacity;
 
-        _z_int_void_map_entry_t e;
-        e._key = k;
+        _z_hashmap_entry_t e;
+        e._key = (void *)k;  // k will not be mutated by this operation
         e._val = NULL;
 
-        return _z_list_find(map->_vals[idx], _z_int_void_map_entry_key_eq, &e);
+        return _z_list_find(map->_vals[idx], map->_f_equals, &e);
     }
     return NULL;
 }
 
-_z_int_void_map_iterator_t _z_int_void_map_iterator_make(const _z_int_void_map_t *map) {
-    _z_int_void_map_iterator_t iter = {0};
+_z_hashmap_iterator_t _z_hashmap_iterator_make(const _z_hashmap_t *map) {
+    _z_hashmap_iterator_t iter = {0};
 
     iter._map = map;
 
     return iter;
 }
 
-bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter) {
+bool _z_hashmap_iterator_next(_z_hashmap_iterator_t *iter) {
     if (iter->_map->_vals == NULL) {
         return false;
     }
@@ -193,11 +192,11 @@ bool _z_int_void_map_iterator_next(_z_int_void_map_iterator_t *iter) {
     return false;
 }
 
-size_t _z_int_void_map_iterator_key(const _z_int_void_map_iterator_t *iter) { return iter->_entry->_key; }
+void *_z_hashmap_iterator_key(const _z_hashmap_iterator_t *iter) { return iter->_entry->_key; }
 
-void *_z_int_void_map_iterator_value(const _z_int_void_map_iterator_t *iter) { return iter->_entry->_val; }
+void *_z_hashmap_iterator_value(const _z_hashmap_iterator_t *iter) { return iter->_entry->_val; }
 
-void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
+void _z_hashmap_clear(_z_hashmap_t *map, z_element_free_f f_f) {
     if (map->_vals != NULL) {
         for (size_t idx = 0; idx < map->_capacity; idx++) {
             _z_list_free(&map->_vals[idx], f_f);
@@ -208,10 +207,10 @@ void _z_int_void_map_clear(_z_int_void_map_t *map, z_element_free_f f_f) {
     }
 }
 
-void _z_int_void_map_free(_z_int_void_map_t **map, z_element_free_f f) {
-    _z_int_void_map_t *ptr = *map;
+void _z_hashmap_free(_z_hashmap_t **map, z_element_free_f f) {
+    _z_hashmap_t *ptr = *map;
     if (ptr != NULL) {
-        _z_int_void_map_clear(ptr, f);
+        _z_hashmap_clear(ptr, f);
 
         z_free(ptr);
         *map = NULL;

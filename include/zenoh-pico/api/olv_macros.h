@@ -23,6 +23,9 @@
 // Gets internal value from refcounted owned type (e.g. z_owned_session_t, z_owned_query_t)
 #define _Z_OWNED_RC_IN_VAL(arg) ((arg)->_rc._val)
 
+// Checks if simple refcounted type is initialized
+#define _Z_SIMPLE_RC_IS_NULL(arg) ((arg)->_val == NULL)
+
 // Owned/Loaned/View type macros
 //
 // !!! FOR INTERNAL USAGE ONLY !!!
@@ -105,6 +108,9 @@
     }
 
 #define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name) _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(z, name, _ZP_NOTHING)
+
+#define _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX(prefix, name) \
+    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(prefix, name, _ZP_NOTHING)
 
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX_INNER(prefix, type, name, f_check, f_null, f_drop, \
                                                                    attribute)                                   \
@@ -198,37 +204,52 @@
     z_loaned_##name##_t *z_view_##name##_loan_mut(z_view_##name##_t *obj) { return &obj->_val; }         \
     void z_view_##name##_empty(z_view_##name##_t *obj) { obj->_val = f_null(); }
 
-#define _Z_OWNED_FUNCTIONS_CLOSURE_DEF(name)                                \
-    void z_internal_##name##_null(z_owned_##name##_t *name);                \
-    bool z_internal_##name##_check(const z_owned_##name##_t *val);          \
-    z_moved_##name##_t *z_##name##_move(z_owned_##name##_t *val);           \
-    void z_##name##_take(z_owned_##name##_t *obj, z_moved_##name##_t *src); \
-    void z_##name##_drop(z_moved_##name##_t *obj);                          \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val);
+#define _Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(prefix, name)                                      \
+    void prefix##_internal_##name##_null(prefix##_owned_##name##_t *name);                       \
+    bool prefix##_internal_##name##_check(const prefix##_owned_##name##_t *val);                 \
+    prefix##_moved_##name##_t *prefix##_##name##_move(prefix##_owned_##name##_t *val);           \
+    void prefix##_##name##_take(prefix##_owned_##name##_t *obj, prefix##_moved_##name##_t *src); \
+    void prefix##_##name##_drop(prefix##_moved_##name##_t *obj);                                 \
+    const prefix##_loaned_##name##_t *prefix##_##name##_loan(const prefix##_owned_##name##_t *val);
 
-#define _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(name, f_call, f_drop)                                        \
-    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
-    void z_internal_##name##_null(z_owned_##name##_t *val) {                                         \
-        val->_val.call = NULL;                                                                       \
-        val->_val.drop = NULL;                                                                       \
-        val->_val.context = NULL;                                                                    \
-    }                                                                                                \
-    bool z_internal_##name##_check(const z_owned_##name##_t *val) { return val->_val.call != NULL; } \
-    void z_##name##_drop(z_moved_##name##_t *obj) {                                                  \
-        if (obj->_this._val.drop != NULL) {                                                          \
-            (obj->_this._val.drop)(obj->_this._val.context);                                         \
-            obj->_this._val.drop = NULL;                                                             \
-        }                                                                                            \
-        obj->_this._val.call = NULL;                                                                 \
-        obj->_this._val.context = NULL;                                                              \
-    }                                                                                                \
-    const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_val; } \
-    z_result_t z_##name(z_owned_##name##_t *closure, f_call call, f_drop drop, void *context) {      \
-        closure->_val.call = call;                                                                   \
-        closure->_val.drop = drop;                                                                   \
-        closure->_val.context = context;                                                             \
-                                                                                                     \
-        return _Z_RES_OK;                                                                            \
+#define _Z_OWNED_FUNCTIONS_CLOSURE_DEF(name) _Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(z, name)
+
+// For value types
+#define _Z_OWNED_TYPE_VALUE_PREFIX(prefix, type, name) \
+    typedef struct {                                   \
+        type _val;                                     \
+    } prefix##_owned_##name##_t;                       \
+    _Z_LOANED_TYPE_PREFIX(prefix, type, name)          \
+    _Z_MOVED_TYPE_PREFIX(prefix, name)
+
+#define _Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(prefix, name, f_call, f_drop)                                       \
+    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX(prefix, name)                                                         \
+    void prefix##_internal_##name##_null(prefix##_owned_##name##_t *val) {                                         \
+        val->_val.call = NULL;                                                                                     \
+        val->_val.drop = NULL;                                                                                     \
+        val->_val.context = NULL;                                                                                  \
+    }                                                                                                              \
+    bool prefix##_internal_##name##_check(const prefix##_owned_##name##_t *val) { return val->_val.call != NULL; } \
+    void prefix##_##name##_drop(prefix##_moved_##name##_t *obj) {                                                  \
+        if (obj->_this._val.drop != NULL) {                                                                        \
+            (obj->_this._val.drop)(obj->_this._val.context);                                                       \
+            obj->_this._val.drop = NULL;                                                                           \
+        }                                                                                                          \
+        obj->_this._val.call = NULL;                                                                               \
+        obj->_this._val.context = NULL;                                                                            \
+    }                                                                                                              \
+    const prefix##_loaned_##name##_t *prefix##_##name##_loan(const prefix##_owned_##name##_t *val) {               \
+        return &val->_val;                                                                                         \
+    }                                                                                                              \
+    z_result_t prefix##_##name(prefix##_owned_##name##_t *closure, f_call call, f_drop drop, void *context) {      \
+        closure->_val.call = call;                                                                                 \
+        closure->_val.drop = drop;                                                                                 \
+        closure->_val.context = context;                                                                           \
+                                                                                                                   \
+        return _Z_RES_OK;                                                                                          \
     }
+
+#define _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(name, f_call, f_drop) \
+    _Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(z, name, f_call, f_drop)
 
 #endif /* INCLUDE_ZENOH_PICO_API_OLV_MACROS_H */

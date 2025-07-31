@@ -16,11 +16,6 @@
 
 #include "zenoh-pico/utils/pointers.h"
 
-const char *_Z_QUERY_PARAMS_KEY_TIME = "_time";
-
-static const char *_Z_QUERY_PARAMS_LIST_SEPARATOR = ";";
-static const char *_Z_QUERY_PARAMS_FIELD_SEPARATOR = "=";
-
 _z_query_param_t _z_query_params_next(_z_str_se_t *str) {
     _z_query_param_t result = {0};
 
