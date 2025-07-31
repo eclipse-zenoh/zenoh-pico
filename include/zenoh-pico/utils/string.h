@@ -99,9 +99,20 @@ static inline bool _z_memcpy_checked(void *dest, size_t dest_len, size_t *offset
     if (dest == NULL || src == NULL || len > dest_len - *offset) {
         return false;
     }
+
+    char *d_start = (char *)dest + *offset;
+    char *d_end = d_start + len;
+    const char *s_start = (const char *)src;
+    const char *s_end = s_start + len;
+
+    // Check for overlap: if src and dest ranges intersect
+    if ((s_start < d_end && s_end > d_start)) {
+        return false;  // Overlap detected
+    }
+
     // SAFETY: Copy is bounds-checked above.
     // Flawfinder: ignore [CWE-120]
-    memcpy((char *)dest + *offset, src, len);
+    memcpy(d_start, src, len);
     *offset += len;
     return true;
 }
