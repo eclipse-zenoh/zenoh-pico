@@ -43,7 +43,7 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
         case _Z_DECL_KEXPR:
             if (_z_register_resource(zn, &decl->_decl._body._decl_kexpr._keyexpr, decl->_decl._body._decl_kexpr._id,
                                      peer) == 0) {
-                return _Z_ERR_ENTITY_DECLARATION_FAILED;
+                _Z_ERROR_RETURN(_Z_ERR_ENTITY_DECLARATION_FAILED);
             }
             break;
 
@@ -75,7 +75,7 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             _Z_RETURN_IF_ERR(_z_liveliness_process_declare_final(zn, decl));
             // Check that interest id is valid
             if (!decl->has_interest_id) {
-                return _Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN;
+                _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
             }
             return _z_interest_process_declare_final(zn, decl->_interest_id, peer);
 

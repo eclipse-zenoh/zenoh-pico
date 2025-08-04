@@ -78,7 +78,7 @@ static z_result_t _z_locators_by_scout(const _z_config_t *config, const _z_id_t 
     _ZP_UNUSED(zid);
     _ZP_UNUSED(locators);
     _Z_ERROR("Cannot scout as Z_FEATURE_SCOUTING was deactivated");
-    return _Z_ERR_SCOUT_NO_RESULTS;
+    _Z_ERROR_RETURN(_Z_ERR_SCOUT_NO_RESULTS);
 }
 #endif
 
@@ -106,7 +106,7 @@ static z_result_t _z_locators_by_config(_z_config_t *config, _z_string_svec_t *l
             key = Z_CONFIG_LISTEN_KEY;
             _zp_config_insert(config, Z_CONFIG_MODE_KEY, Z_CONFIG_MODE_PEER);
         } else {
-            return _Z_ERR_GENERIC;
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
         }
     } else {
         *peer_op = _Z_PEER_OP_OPEN;
@@ -126,6 +126,7 @@ static z_result_t _z_config_get_mode(const _z_config_t *config, z_whatami_t *mod
             *mode = Z_WHATAMI_PEER;
         } else {
             _Z_ERROR("Trying to configure an invalid mode: %s", s_mode);
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_INVALID_MODE);
             ret = _Z_ERR_CONFIG_INVALID_MODE;
         }
     }
@@ -187,7 +188,7 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         _Z_RETURN_IF_ERR(_z_locators_by_scout(config, zid, &locators));
         len = _z_string_svec_len(&locators);
         if (len == 0) {
-            return _Z_ERR_SCOUT_NO_RESULTS;
+            _Z_ERROR_RETURN(_Z_ERR_SCOUT_NO_RESULTS);
         }
         // We can only open on scout locators
         peer_op = _Z_PEER_OP_OPEN;
@@ -371,6 +372,7 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     // Allocate task
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
+        _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Call transport function
@@ -385,6 +387,7 @@ z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
             ret = _zp_raweth_start_read_task(&zn->_tp, attr, task);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -404,6 +407,7 @@ z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     // Allocate task
     _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
     if (task == NULL) {
+        _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Call transport function
@@ -418,6 +422,7 @@ z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
             ret = _zp_multicast_start_lease_task(&zn->_tp._transport._raweth, attr, task);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -446,6 +451,7 @@ z_result_t _zp_stop_read_task(_z_session_t *zn) {
             ret = _zp_raweth_stop_read_task(&zn->_tp);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -466,6 +472,7 @@ z_result_t _zp_stop_lease_task(_z_session_t *zn) {
             ret = _zp_multicast_stop_lease_task(&zn->_tp._transport._raweth);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }

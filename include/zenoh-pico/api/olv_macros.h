@@ -172,6 +172,7 @@
         z_result_t ret = _Z_RES_OK;                                                                               \
         obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                              \
         if (_Z_RC_IS_NULL(&obj->_rc)) {                                                                           \
+            _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                                            \
             ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                    \
         }                                                                                                         \
         return ret;                                                                                               \

@@ -118,7 +118,7 @@ z_result_t z_liveliness_declare_subscriber(const z_loaned_session_t *zs, z_owned
     sub->_val = int_sub;
 
     if (!_z_subscriber_check(&sub->_val)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 
     if (opt.history) {

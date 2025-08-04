@@ -69,7 +69,7 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
 
     if (_z_unicast_update_rx_buffer(ztu) != _Z_RES_OK) {
         _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     return _Z_RES_OK;
 }
@@ -113,7 +113,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     if (curr_peer == NULL) {
         _Z_ERROR("Invalid router endpoint\n");
-        return _Z_ERR_TRANSPORT_RX_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
     }
     // Read & process a single message
     if (single_read) {
@@ -140,7 +140,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
 z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(single_read);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1
 
@@ -162,7 +162,7 @@ static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, 
         peer->flow_buff = _z_zbuf_make(peer->flow_curr_size);
         if (_z_zbuf_capacity(&peer->flow_buff) != peer->flow_curr_size) {
             _Z_ERROR("Not enough memory to allocate flow state buffer");
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         _z_zbuf_copy_bytes(&peer->flow_buff, &ztu->_common._zbuf);
         return _Z_RES_OK;
@@ -298,7 +298,7 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
                 drop_peer = true;
                 prev_drop = prev;
             } else if (res == _Z_UNICAST_PEER_READ_STATUS_CRITICAL_ERROR) {
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
         }
         // Update previous only if current node is not dropped
@@ -378,7 +378,7 @@ z_result_t _zp_unicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, 
     // Init task
     if (_z_task_init(task, attr, _zp_unicast_read_task, &zt->_transport._unicast) != _Z_RES_OK) {
         zt->_transport._unicast._common._read_task_running = false;
-        return _Z_ERR_SYSTEM_TASK_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
     }
     // Attach task
     zt->_transport._unicast._common._read_task = task;
@@ -401,11 +401,11 @@ z_result_t _zp_unicast_start_read_task(_z_transport_t *zt, void *attr, void *tas
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _zp_unicast_stop_read_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  //  Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1

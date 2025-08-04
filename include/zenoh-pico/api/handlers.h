@@ -85,19 +85,19 @@ extern "C" {
     static inline z_result_t handler_new_f_name(callback_type *callback, z_owned_##handler_name##_t *handler,        \
                                                 size_t capacity) {                                                   \
         if (capacity < 1) {                                                                                          \
-            return _Z_ERR_INVALID;                                                                                   \
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);                                                                         \
         }                                                                                                            \
         _z_##handler_name##_t h;                                                                                     \
         _Z_RETURN_IF_ERR(collection_new_f(&h.collection, capacity));                                                 \
         handler->_rc = _z_##handler_name##_rc_new_from_val(&h);                                                      \
         if (_Z_RC_IS_NULL(&handler->_rc)) {                                                                          \
             _z_##handler_name##_clear(&h);                                                                           \
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                      \
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                                            \
         }                                                                                                            \
         _z_##handler_name##_rc_t *h_copy = _z_##handler_name##_rc_clone_as_ptr(&handler->_rc);                       \
         if (h_copy == NULL) {                                                                                        \
             _z_##handler_name##_rc_drop(&handler->_rc);                                                              \
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                      \
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                                            \
         }                                                                                                            \
         callback_new_f(callback, _z_##handler_name##_send, _z_##handler_name##_close, h_copy);                       \
         return _Z_RES_OK;                                                                                            \

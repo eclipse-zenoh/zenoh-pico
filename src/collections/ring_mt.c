@@ -63,7 +63,7 @@ void _z_ring_mt_free(_z_ring_mt_t *ring, z_element_free_f free_f) {
 
 z_result_t _z_ring_mt_push(const void *elem, void *context, z_element_free_f element_free) {
     if (elem == NULL || context == NULL) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     _z_ring_mt_t *r = (_z_ring_mt_t *)context;

@@ -47,7 +47,7 @@ static z_result_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_s
     z_result_t ret = _Z_RES_OK;
 
     if (_zp_raweth_mapping_array_len(&sock->_mapping) < 1) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     if (keyexpr == NULL) {
         // Store default value into socket
@@ -154,7 +154,7 @@ static z_result_t _z_raweth_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t 
             // Retrieve addr from config + vlan tag above (locator)
             size_t wb = _z_send_raweth(&zl->_socket._raweth._sock, bs.start, n);  // Unix
             if (wb == SIZE_MAX) {
-                return _Z_ERR_TRANSPORT_TX_FAILED;
+                _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
             }
             n = n - wb;
             bs.start = bs.start + (bs.len - n);
@@ -306,12 +306,12 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
 z_result_t _z_raweth_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(zl);
     _ZP_UNUSED(t_msg);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 z_result_t _z_raweth_send_t_msg(_z_transport_common_t *ztc, const _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztc);
     _ZP_UNUSED(t_msg);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_msg, z_reliability_t reliability,
@@ -320,6 +320,6 @@ z_result_t _z_raweth_send_n_msg(_z_session_t *zn, const _z_network_message_t *n_
     _ZP_UNUSED(n_msg);
     _ZP_UNUSED(reliability);
     _ZP_UNUSED(cong_ctrl);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1

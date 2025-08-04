@@ -113,7 +113,10 @@ size_t _z_simple_rc_strong_count(void *rc);
     }                                                                                                                \
     static inline z_result_t name##_rc_copy(name##_rc_t *dst, const name##_rc_t *p) {                                \
         *dst = name##_rc_clone(p);                                                                                   \
-        return (dst->_cnt == NULL) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;                                        \
+        if (dst->_cnt == NULL) {                                                                                     \
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                                            \
+        }                                                                                                            \
+        return _Z_RES_OK;                                                                                            \
     }                                                                                                                \
     static inline bool name##_rc_eq(const name##_rc_t *left, const name##_rc_t *right) {                             \
         return (left->_val == right->_val);                                                                          \

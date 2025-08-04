@@ -63,7 +63,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Check if a buffer failed to allocate
     if ((_z_wbuf_capacity(&ztu->_common._wbuf) != wbuf_size) || (_z_zbuf_capacity(&ztu->_common._zbuf) != zbuf_size)) {
         _Z_ERROR("Not enough memory to allocate transport buffers!");
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     // Set default SN resolution
     ztu->_common._sn_res = _z_sn_max(param->_seq_num_res);
@@ -120,7 +120,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&iam, zl, socket));
     if ((_Z_MID(iam._header) != _Z_MID_T_INIT) || !_Z_HAS_FLAG(iam._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&iam);
-        return _Z_ERR_MESSAGE_UNEXPECTED;
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_INIT(Ack)");
     if (mode == Z_WHATAMI_CLIENT) {
@@ -130,16 +130,19 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         if (iam._body._init._seq_num_res <= param->_seq_num_res) {
             param->_seq_num_res = iam._body._init._seq_num_res;
         } else {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
             ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
         if (iam._body._init._req_id_res <= param->_req_id_res) {
             param->_req_id_res = iam._body._init._req_id_res;
         } else {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
             ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
         if (iam._body._init._batch_size <= param->_batch_size) {
             param->_batch_size = iam._body._init._batch_size;
         } else {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
             ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
     } else {
@@ -147,6 +150,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         if ((iam._body._init._seq_num_res < param->_seq_num_res) ||
             (iam._body._init._req_id_res < param->_req_id_res) || (iam._body._init._batch_size < param->_batch_size)) {
             _Z_INFO("Couldn't open session because distant node is incompatible config wise.");
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
             ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
         }
     }
@@ -155,6 +159,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         param->_patch = iam._body._init._patch;
     } else {
         // TODO: Use a better error code?
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 #endif
@@ -196,6 +201,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
     _Z_RETURN_IF_ERR(_z_link_recv_t_msg(&oam, zl, socket));
     if ((_Z_MID(oam._header) != _Z_MID_T_OPEN) || !_Z_HAS_FLAG(oam._header, _Z_FLAG_T_OPEN_A)) {
         _z_t_msg_clear(&oam);
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
         ret = _Z_ERR_MESSAGE_UNEXPECTED;
     }
     // THIS LOG STRING USED IN TEST, change with caution
@@ -220,7 +226,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     // Receive InitSyn
     if (_Z_MID(tmsg._header) != _Z_MID_T_INIT || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&tmsg);
-        return _Z_ERR_MESSAGE_UNEXPECTED;
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_INIT(Syn)");
     // Encode InitAck
@@ -232,7 +238,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
         (tmsg._body._init._req_id_res < iam._body._init._req_id_res) ||
         (tmsg._body._init._batch_size < iam._body._init._batch_size)) {
         _z_t_msg_clear(&tmsg);
-        return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     if (iam._body._init._patch > tmsg._body._init._patch) {
@@ -261,7 +267,7 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     // Receive OpenSyn
     if (_Z_MID(tmsg._header) != _Z_MID_T_OPEN || _Z_HAS_FLAG(tmsg._header, _Z_FLAG_T_INIT_A)) {
         _z_t_msg_clear(&tmsg);
-        return _Z_ERR_MESSAGE_UNEXPECTED;
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_OPEN(Syn)");
     // Process message
@@ -334,7 +340,7 @@ z_result_t _z_unicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
     _ZP_UNUSED(zt);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(param);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
@@ -342,7 +348,7 @@ z_result_t _z_unicast_open_client(_z_transport_unicast_establish_param_t *param,
     _ZP_UNUSED(param);
     _ZP_UNUSED(zl);
     _ZP_UNUSED(local_zid);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, const _z_link_t *zl,
@@ -352,20 +358,20 @@ z_result_t _z_unicast_open_peer(_z_transport_unicast_establish_param_t *param, c
     _ZP_UNUSED(local_zid);
     _ZP_UNUSED(peer_op);
     _ZP_UNUSED(socket);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_unicast_send_close(_z_transport_unicast_t *ztu, uint8_t reason, bool link_only) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(reason);
     _ZP_UNUSED(link_only);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_unicast_transport_close(_z_transport_unicast_t *ztu, uint8_t reason) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(reason);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 void _z_unicast_transport_clear(_z_transport_unicast_t *ztu, bool detach_tasks) {

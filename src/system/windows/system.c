@@ -65,6 +65,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     z_result_t ret = _Z_RES_OK;
     *task = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)fun, arg, 0, NULL);
     if (*task == NULL) {
+        _Z_ERROR_LOG(_Z_ERR_SYSTEM_TASK_FAILED);
         ret = _Z_ERR_SYSTEM_TASK_FAILED;
     }
     return ret;
@@ -122,6 +123,7 @@ z_result_t _z_mutex_lock(_z_mutex_t *m) {
 z_result_t _z_mutex_try_lock(_z_mutex_t *m) {
     z_result_t ret = _Z_RES_OK;
     if (!TryAcquireSRWLockExclusive(m)) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
     return ret;
@@ -150,7 +152,7 @@ z_result_t _z_mutex_rec_lock(_z_mutex_rec_t *m) {
 
 z_result_t _z_mutex_rec_try_lock(_z_mutex_rec_t *m) {
     if (!TryEnterCriticalSection(m)) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }
@@ -198,7 +200,7 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
 
     // Hardware not supporting QueryPerformanceFrequency
     if (frequency.QuadPart == 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     double remaining = (double)(abstime->QuadPart - now.QuadPart) / frequency.QuadPart * 1000.0;
@@ -208,7 +210,7 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
         if (GetLastError() == ERROR_TIMEOUT) {
             return Z_ETIMEDOUT;
         } else {
-            return _Z_ERR_GENERIC;
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
         }
     }
 

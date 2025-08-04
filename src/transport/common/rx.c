@@ -52,21 +52,26 @@ z_result_t _z_link_recv_t_msg(_z_transport_message_t *t_msg, const _z_link_t *zl
                 if (writable >= len) {
                     // Read enough bytes to decode the message
                     if (_z_link_recv_exact_zbuf(zl, &zbf, len, NULL, socket) != len) {
+                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                         ret = _Z_ERR_TRANSPORT_RX_FAILED;
                     }
                 } else {
+                    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NO_SPACE);
                     ret = _Z_ERR_TRANSPORT_NO_SPACE;
                 }
             } else {
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
             break;
         case Z_LINK_CAP_FLOW_DATAGRAM:
             if (_z_link_recv_zbuf(zl, &zbf, NULL) == SIZE_MAX) {
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;
     }

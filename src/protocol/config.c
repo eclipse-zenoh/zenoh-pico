@@ -38,6 +38,7 @@ z_result_t _zp_config_insert(_z_config_t *ps, uint8_t key, const char *value) {
         res = _z_str_intmap_insert(ps, key, _z_str_clone(value));
     }
     if (strcmp(res, value) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_FAILED_INSERT);
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
 
@@ -49,6 +50,7 @@ z_result_t _zp_config_insert_string(_z_config_t *ps, uint8_t key, const _z_strin
     char *str = _z_str_from_string_clone(value);
     char *res = _z_str_intmap_insert(ps, key, str);
     if (strcmp(res, str) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_FAILED_INSERT);
         ret = _Z_ERR_CONFIG_FAILED_INSERT;
     }
     z_free(str);
@@ -127,6 +129,7 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
                 start = _z_cptr_char_offset(p_value_end, 1);
                 curr_len -= _z_ptr_char_diff(start, s);
             } else {
+                _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                 ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
         }

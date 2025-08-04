@@ -77,12 +77,12 @@ z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     _z_task_t task = {0};
     ztu->_common._accept_task_running = (bool *)z_malloc(sizeof(bool));
     if (ztu->_common._accept_task_running == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     *ztu->_common._accept_task_running = true;  // Init first for concurrency issues
     // Init task
     if (_z_task_init(&task, NULL, _zp_unicast_accept_task, ztu) != _Z_RES_OK) {
-        return _Z_ERR_SYSTEM_TASK_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
     }
     // Detach the thread
     _z_task_detach(&task);
@@ -99,7 +99,7 @@ void _zp_unicast_stop_accept_task(_z_transport_common_t *ztc) {
 
 z_result_t _zp_unicast_start_accept_task(_z_transport_unicast_t *ztu) {
     _ZP_UNUSED(ztu);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 void _zp_unicast_stop_accept_task(_z_transport_common_t *ztc) { _ZP_UNUSED(ztc); }

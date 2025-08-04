@@ -50,14 +50,14 @@ z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
     // Open a raw network socket in promiscuous mode
     sock->_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock->_fd == -1) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Get the index of the interface to send on
     struct ifreq if_idx;
     memset(&if_idx, 0, sizeof(struct ifreq));
     strncpy(if_idx.ifr_name, interface, strlen(interface));
     if (ioctl(sock->_fd, SIOCGIFINDEX, &if_idx) < 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Bind the socket
     struct sockaddr_ll addr;
@@ -69,6 +69,7 @@ z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
 
     if (bind(sock->_fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         close(sock->_fd);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
     return ret;
@@ -77,6 +78,7 @@ z_result_t _z_open_raweth(_z_sys_net_socket_t *sock, const char *interface) {
 z_result_t _z_close_raweth(_z_sys_net_socket_t *sock) {
     z_result_t ret = _Z_RES_OK;
     if (close(sock->_fd) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
     return ret;

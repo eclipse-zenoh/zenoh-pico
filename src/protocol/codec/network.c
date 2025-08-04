@@ -74,7 +74,7 @@ z_result_t _z_push_decode_ext_cb(_z_msg_ext_t *extension, void *ctx) {
         case _Z_MSG_EXT_ENC_ZINT | 0x01: {  // QOS ext
             if (extension->_body._zint._val > UINT32_MAX) {
                 _Z_INFO("Invalid value decoded");
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+                _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             }
             msg->_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
             break;
@@ -173,7 +173,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
         case 0x01 | _Z_MSG_EXT_ENC_ZINT: {  // QOS ext
             if (extension->_body._zint._val > UINT8_MAX) {
                 _Z_INFO("Invalid value decoded");
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+                _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             }
             msg->_ext_qos = (_z_n_qos_t){._val = (uint8_t)extension->_body._zint._val};
             break;
@@ -187,7 +187,7 @@ z_result_t _z_request_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
             msg->_ext_target = (uint8_t)extension->_body._zint._val;
             if (msg->_ext_target > 2) {
                 _Z_INFO("Invalid value decoded");
-                return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+                _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             }
         } break;
         case 0x05 | _Z_MSG_EXT_ENC_ZINT: {
@@ -232,7 +232,7 @@ z_result_t _z_request_decode(_z_n_msg_request_t *msg, _z_zbuf_t *zbf, const uint
         } break;
         default:
             _Z_INFO("Unknown request type received: %d", _Z_MID(zheader));
-            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
     return _Z_RES_OK;
 }
@@ -359,7 +359,7 @@ z_result_t _z_response_decode(_z_n_msg_response_t *msg, _z_zbuf_t *zbf, uint8_t 
         }
         default: {
             _Z_ERROR("Unknown N_MID: %d", _Z_MID(inner_header));
-            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
         }
     }
 }
@@ -514,7 +514,7 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
         } break;
 #endif
         default:
-            return _Z_ERR_GENERIC;
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 }
 z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs,
@@ -548,6 +548,6 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, 
         } break;
         default:
             _Z_INFO("Unknown message type received: %d", _Z_MID(*header));
-            return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
 }

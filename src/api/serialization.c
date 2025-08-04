@@ -49,7 +49,10 @@ ze_deserializer_t ze_deserializer_from_bytes(const z_loaned_bytes_t *bytes) {
 
 z_result_t __read_single_byte(uint8_t *b, void *context) {
     z_bytes_reader_t *reader = (z_bytes_reader_t *)context;
-    return _z_bytes_reader_read(reader, b, 1) == 1 ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
+    if (_z_bytes_reader_read(reader, b, 1) != 1) {
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
+    }
+    return _Z_RES_OK;
 }
 
 z_result_t __read_zint(z_bytes_reader_t *reader, _z_zint_t *zint) {
@@ -82,7 +85,7 @@ z_result_t ze_deserializer_deserialize_slice(ze_deserializer_t *deserializer, z_
     _Z_RETURN_IF_ERR(_z_slice_init(&val->_val, len));
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val->_val.start, len) != len) {
         _z_slice_clear(&val->_val);
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     };
     return Z_OK;
 }

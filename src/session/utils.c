@@ -158,6 +158,7 @@ void _z_session_clear(_z_session_t *zn) {
 }
 
 z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
     z_result_t ret = _Z_ERR_GENERIC;
 
     if (zn != NULL) {

@@ -164,7 +164,7 @@ z_result_t _z_svec_copy(_z_svec_t *dst, const _z_svec_t *src, z_element_copy_f c
     *dst = _z_svec_null();
     dst->_val = z_malloc(element_size * src->_capacity);
     if (dst->_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     dst->_capacity = src->_capacity;
     dst->_len = src->_len;
@@ -221,7 +221,7 @@ z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_si
     size_t _capacity = v->_capacity << 1;
     void *_val = (void *)z_malloc(_capacity * element_size);
     if (_val == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     // Move and clear old data
     __z_svec_move_inner(_val, v->_val, move, v->_len, element_size, use_elem_f);

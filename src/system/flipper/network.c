@@ -20,14 +20,14 @@
 z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t* sock) {
     _ZP_UNUSED(sock);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t* sock_in, _z_sys_net_socket_t* sock_out) {
     _ZP_UNUSED(sock_in);
     _ZP_UNUSED(sock_out);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_socket_close(_z_sys_net_socket_t* sock) { _ZP_UNUSED(sock); }
@@ -36,7 +36,7 @@ z_result_t _z_socket_wait_event(void* peers, _z_mutex_rec_t* mutex) {
     _ZP_UNUSED(peers);
     _ZP_UNUSED(mutex);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 #if Z_FEATURE_LINK_TCP == 1
@@ -64,13 +64,13 @@ static void _z_serial_received_byte_callback(FuriHalSerialHandle* handle, FuriHa
 }
 
 z_result_t _z_open_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin, uint32_t rxpin, uint32_t baudrate) {
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
     if (furi_hal_serial_control_is_busy(FuriHalSerialIdUsart)) {
         _Z_ERROR("Serial port is busy");
-        return _Z_ERR_TRANSPORT_OPEN_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_FAILED);
     }
 
     FuriHalSerialId sid;
@@ -80,13 +80,13 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_
         sid = FuriHalSerialIdLpuart;
     } else {
         _Z_ERROR("Unknown serial port device: %s", dev);
-        return _Z_ERR_TRANSPORT_OPEN_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_FAILED);
     }
 
     sock->_serial = furi_hal_serial_control_acquire(sid);
     if (!sock->_serial) {
         _Z_ERROR("Serial port control acquire failed");
-        return _Z_ERR_TRANSPORT_OPEN_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_FAILED);
     };
     furi_hal_serial_init(sock->_serial, baudrate);
 
@@ -94,7 +94,7 @@ z_result_t _z_open_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_
         furi_stream_buffer_alloc(FLIPPER_SERIAL_STREAM_BUFFER_SIZE, FLIPPER_SERIAL_STREAM_TRIGGERED_LEVEL);
     if (!sock->_rx_stream) {
         _Z_ERROR("Serial stream buffer allocation failed");
-        return _Z_ERR_TRANSPORT_NO_SPACE;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NO_SPACE);
     };
     furi_hal_serial_async_rx_start(sock->_serial, _z_serial_received_byte_callback, sock->_rx_stream, false);
 
@@ -109,7 +109,7 @@ z_result_t _z_listen_serial_from_pins(_z_sys_net_socket_t* sock, uint32_t txpin,
     (void)(rxpin);
     (void)(baudrate);
 
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint32_t baudrate) {
@@ -119,7 +119,7 @@ z_result_t _z_listen_serial_from_dev(_z_sys_net_socket_t* sock, char* dev, uint3
 
     // @TODO: To be implemented
 
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_close_serial(_z_sys_net_socket_t* sock) {

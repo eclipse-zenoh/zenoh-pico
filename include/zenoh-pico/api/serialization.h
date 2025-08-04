@@ -251,7 +251,10 @@ static inline z_result_t ze_serializer_serialize_int64(ze_loaned_serializer_t *s
  *   ``0`` if deserialization successful, or a ``negative value`` otherwise.
  */
 static inline z_result_t ze_deserializer_deserialize_uint8(ze_deserializer_t *deserializer, uint8_t *val) {
-    return z_bytes_reader_read(&deserializer->_reader, val, 1) == 1 ? _Z_RES_OK : _Z_ERR_DID_NOT_READ;
+    if (z_bytes_reader_read(&deserializer->_reader, val, 1) != 1) {
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
+    }
+    return _Z_RES_OK;
 }
 
 /**
@@ -266,7 +269,7 @@ static inline z_result_t ze_deserializer_deserialize_uint8(ze_deserializer_t *de
  */
 static inline z_result_t ze_deserializer_deserialize_uint16(ze_deserializer_t *deserializer, uint16_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint16_t)) != sizeof(uint16_t)) {
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     }
     *val = _z_host_le_load16((const uint8_t *)val);
     return _Z_RES_OK;
@@ -284,7 +287,7 @@ static inline z_result_t ze_deserializer_deserialize_uint16(ze_deserializer_t *d
  */
 static inline z_result_t ze_deserializer_deserialize_uint32(ze_deserializer_t *deserializer, uint32_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint32_t)) != sizeof(uint32_t)) {
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     }
     *val = _z_host_le_load32((uint8_t *)val);
     return _Z_RES_OK;
@@ -302,7 +305,7 @@ static inline z_result_t ze_deserializer_deserialize_uint32(ze_deserializer_t *d
  */
 static inline z_result_t ze_deserializer_deserialize_uint64(ze_deserializer_t *deserializer, uint64_t *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(uint64_t)) != sizeof(uint64_t)) {
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     }
     *val = _z_host_le_load64((uint8_t *)val);
     return _Z_RES_OK;
@@ -320,7 +323,7 @@ static inline z_result_t ze_deserializer_deserialize_uint64(ze_deserializer_t *d
  */
 static inline z_result_t ze_deserializer_deserialize_float(ze_deserializer_t *deserializer, float *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(float)) != sizeof(float)) {
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     }
     return _Z_RES_OK;
 }
@@ -337,7 +340,7 @@ static inline z_result_t ze_deserializer_deserialize_float(ze_deserializer_t *de
  */
 static inline z_result_t ze_deserializer_deserialize_double(ze_deserializer_t *deserializer, double *val) {
     if (z_bytes_reader_read(&deserializer->_reader, (uint8_t *)val, sizeof(double)) != sizeof(double)) {
-        return _Z_ERR_DID_NOT_READ;
+        _Z_ERROR_RETURN(_Z_ERR_DID_NOT_READ);
     }
     return _Z_RES_OK;
 }

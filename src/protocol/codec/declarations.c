@@ -173,6 +173,7 @@ z_result_t _z_declaration_encode(_z_wbuf_t *wbf, const _z_declaration_t *decl) {
         } break;
 
         default:
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_SERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
             break;
     }
@@ -212,7 +213,7 @@ z_result_t _z_undecl_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
                 size_t len = _z_zbuf_len(zbf);
                 ke->_suffix = _z_string_preallocate(len);
                 if (!_z_keyexpr_has_suffix(ke)) {
-                    return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                    _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                 }
                 _z_zbuf_read_bytes(zbf, (uint8_t *)_z_string_data(&ke->_suffix), 0, len);
             }
@@ -362,6 +363,7 @@ z_result_t _z_declaration_decode(_z_declaration_t *decl, _z_zbuf_t *zbf, uintptr
         } break;
         default: {
             _Z_INFO("Unknown token type");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }

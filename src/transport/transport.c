@@ -50,6 +50,7 @@ z_result_t _z_send_close(_z_transport_t *zt, uint8_t reason, bool link_only) {
             ret = _z_multicast_send_close(&zt->_transport._multicast, reason, link_only);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }

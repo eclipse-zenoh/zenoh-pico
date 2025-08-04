@@ -33,6 +33,7 @@ z_result_t _z_read(_z_transport_t *zt, bool single_read) {
             ret = _zp_raweth_read(&zt->_transport._raweth, single_read);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }

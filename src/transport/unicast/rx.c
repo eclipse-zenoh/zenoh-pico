@@ -43,6 +43,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
                     _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztu->_common._zbuf);
+                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         continue;
                     }
@@ -56,6 +57,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
                         _z_zbuf_set_rpos(&ztu->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                         _z_zbuf_compact(&ztu->_common._zbuf);
+                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         continue;
                     }
@@ -66,6 +68,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
                 _z_zbuf_compact(&ztu->_common._zbuf);
                 to_read = _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
                 if (to_read == SIZE_MAX) {
+                    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
                 break;
@@ -198,7 +201,7 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
         *dbuf = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
         if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
             _Z_ERROR("Not enough memory to allocate transport defragmentation buffer");
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         *dbuf_state = _Z_DBUF_STATE_INIT;
     }
@@ -227,7 +230,7 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
             _Z_ERROR("Failed to convert defragmentation buffer into a decoding buffer!");
             _z_wbuf_clear(dbuf);
             *dbuf_state = _Z_DBUF_STATE_NULL;
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Decode message
         _z_zenoh_message_t zm = {0};
@@ -239,6 +242,7 @@ static z_result_t _z_unicast_handle_fragment_inner(_z_transport_unicast_t *ztu, 
             _z_handle_network_message(ztu->_common._session, &zm, &peer->common);
         } else {
             _Z_INFO("Failed to decode defragmented message");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
         // Free the decoding buffer
@@ -298,6 +302,7 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing session as requested by the remote peer");
             // Peer will be dropped thanks to the error
+            _Z_ERROR_LOG(_Z_ERR_CONNECTION_CLOSED);
             ret = _Z_ERR_CONNECTION_CLOSED;
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;
@@ -319,7 +324,7 @@ z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu) {
         size_t buff_capacity = _z_zbuf_capacity(&ztu->_common._zbuf);
         _z_zbuf_t new_zbuf = _z_zbuf_make(buff_capacity);
         if (_z_zbuf_capacity(&new_zbuf) != buff_capacity) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Recopy leftover bytes
         size_t leftovers = _z_zbuf_len(&ztu->_common._zbuf);
@@ -337,7 +342,7 @@ z_result_t _z_unicast_update_rx_buffer(_z_transport_unicast_t *ztu) {
 z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg) {
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_transport_message_t *t_msg,
@@ -345,6 +350,6 @@ z_result_t _z_unicast_handle_transport_message(_z_transport_unicast_t *ztu, _z_t
     _ZP_UNUSED(ztu);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(peer);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_UNICAST_TRANSPORT == 1

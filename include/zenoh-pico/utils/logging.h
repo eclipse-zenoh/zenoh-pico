@@ -107,6 +107,19 @@ extern "C" {
 #define _Z_ERROR(...) (void)(0)
 #endif
 
+// Error logging macros
+// Potentially add a function call to a logger if needs arise
+#define _Z_ERROR_RETURN(err_code)                                                \
+    do {                                                                         \
+        _Z_TRACE("Error generated: %d, at %s:%d", err_code, __FILE__, __LINE__); \
+        return err_code;                                                         \
+    } while (false)
+
+#define _Z_ERROR_LOG(err_code)                                                   \
+    do {                                                                         \
+        _Z_TRACE("Error generated: %d, at %s:%d", err_code, __FILE__, __LINE__); \
+    } while (false)
+
 #ifdef __cplusplus
 }
 #endif

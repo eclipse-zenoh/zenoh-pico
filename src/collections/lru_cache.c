@@ -239,7 +239,7 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
     if (cache->slist == NULL) {
         cache->slist = (_z_lru_cache_node_t **)z_malloc(cache->capacity * sizeof(void *));
         if (cache->slist == NULL) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         memset(cache->slist, 0, cache->capacity * sizeof(void *));
     }
@@ -248,7 +248,7 @@ z_result_t _z_lru_cache_insert(_z_lru_cache_t *cache, void *value, size_t value_
     size_t *del_idx_addr = NULL;
     size_t del_idx = 0;
     if (node == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     // Check capacity
     if (cache->len == cache->capacity) {

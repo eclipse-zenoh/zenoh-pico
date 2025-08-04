@@ -74,7 +74,7 @@ static inline z_result_t _z_slice_val_decode_na(_z_slice_t *bs, _z_zbuf_t *zbf) 
         _Z_WARN("Not enough bytes to read");
         bs->len = 0;
         bs->start = NULL;
-        return _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
     }
     *bs = _z_slice_alias_buf(_z_zbuf_get_rptr(zbf), bs->len);  // Decode without allocating
     _z_zbuf_set_rpos(zbf, _z_zbuf_get_rpos(zbf) + bs->len);    // Move the read position
