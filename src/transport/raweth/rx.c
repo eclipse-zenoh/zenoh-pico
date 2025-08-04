@@ -89,11 +89,13 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
             // Read from link
             size_t to_read = _z_raweth_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
             if (to_read == SIZE_MAX) {
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;
             }
             break;
         }
         default:
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;
     }
@@ -116,7 +118,7 @@ z_result_t _z_raweth_update_rx_buff(_z_transport_multicast_t *ztm) {
         // Allocate a new buffer
         _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
         if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Recopy leftover bytes
         size_t leftovers = _z_zbuf_len(&ztm->_common._zbuf);
@@ -135,6 +137,6 @@ z_result_t _z_raweth_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_mess
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1

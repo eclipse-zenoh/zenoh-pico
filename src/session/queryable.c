@@ -168,7 +168,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 
         if (!_z_keyexpr_has_suffix(&infos->ke_out)) {
             _z_session_mutex_unlock(zn);
-            return _Z_ERR_KEYEXPR_UNKNOWN;
+            _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
         }
         // Get queryable list
         z_result_t ret = __unsafe_z_get_session_queryable_by_key(zn, &infos->ke_out, &infos->infos);
@@ -231,11 +231,11 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z
     // Build the z_query
     _z_query_t *q = (_z_query_t *)z_malloc(sizeof(_z_query_t));
     if (q == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _z_query_rc_t query = _z_query_rc_new(q);
     if (_Z_RC_IS_NULL(&query)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _z_queryable_query_steal_data(q, zsrc, msgq, &qle_infos.ke_out, qid, anyke);
 

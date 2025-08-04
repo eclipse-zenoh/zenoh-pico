@@ -50,7 +50,7 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
 
 z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
     if (token == NULL || _Z_RC_IS_NULL(&token->_zn)) {
-        return _Z_ERR_ENTITY_UNKNOWN;
+        _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 
     z_result_t ret;
@@ -110,20 +110,20 @@ _z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_k
 
 z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
     if (sub == NULL || _Z_RC_IS_NULL(&sub->_zn)) {
-        return _Z_ERR_ENTITY_UNKNOWN;
+        _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 
     _z_subscription_rc_t *s =
         _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, sub->_entity_id);
     if (s == NULL) {
-        return _Z_ERR_ENTITY_UNKNOWN;
+        _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 
     _z_interest_t interest = _z_make_interest_final(s->_val->_id);
     _z_network_message_t n_msg;
     _z_n_msg_make_interest(&n_msg, interest);
     if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
-        return _Z_ERR_TRANSPORT_TX_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
     _z_n_msg_clear(&n_msg);
 
@@ -162,6 +162,7 @@ z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z
             _z_n_msg_make_interest(&n_msg, interest);
             if (_z_send_declare(zn, &n_msg) != _Z_RES_OK) {
                 _z_liveliness_unregister_pending_query(zn, id);
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
                 ret = _Z_ERR_TRANSPORT_TX_FAILED;
             }
 

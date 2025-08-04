@@ -93,7 +93,7 @@ z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _
     _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
 
     if (ctx == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&ctx->mutex));
@@ -105,7 +105,7 @@ z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _
     filter->_interest_id = _z_add_interest(zn, keyexpr, _z_write_filter_callback, flags, (void *)ctx);
     if (filter->_interest_id == 0) {
         z_free(ctx);
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }

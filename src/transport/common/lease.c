@@ -32,6 +32,7 @@ z_result_t _z_send_keep_alive(_z_transport_t *zt) {
             ret = _zp_multicast_send_keep_alive(&zt->_transport._raweth);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -50,6 +51,7 @@ z_result_t _z_send_join(_z_transport_t *zt) {
             break;
         default:
             _ZP_UNUSED(zt);
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }

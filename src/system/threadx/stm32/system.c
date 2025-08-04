@@ -67,7 +67,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
                                    task->threadx_stack, Z_TASK_STACK_SIZE, Z_TASK_PRIORITY, Z_TASK_PREEMPT_THRESHOLD,
                                    Z_TASK_TIME_SLICE, TX_AUTO_START);
 
-    if (status != TX_SUCCESS) return _Z_ERR_GENERIC;
+    if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 
     return _Z_RES_OK;
 }
@@ -76,7 +76,7 @@ z_result_t _z_task_join(_z_task_t *task) {
     while (1) {
         UINT state;
         UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
-        if (status != TX_SUCCESS) return _Z_ERR_GENERIC;
+        if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 
         if ((state == TX_COMPLETED) || (state == TX_TERMINATED)) break;
 
@@ -88,12 +88,12 @@ z_result_t _z_task_join(_z_task_t *task) {
 
 z_result_t _z_task_detach(_z_task_t *task) {
     // Not implemented
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
     // Not implemented
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_task_exit(void) {  // NEW with new vesion
@@ -144,21 +144,21 @@ z_result_t _z_mutex_rec_unlock(_z_mutex_rec_t *m) { return _z_mutex_unlock(m); }
 
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     UINT m_status = tx_mutex_create(&cv->mutex, TX_NULL, TX_INHERIT);
     UINT s_status = tx_semaphore_create(&cv->sem, TX_NULL, 0);
     cv->waiters = 0;
 
     if (m_status != TX_SUCCESS || s_status != TX_SUCCESS) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     tx_mutex_delete(&cv->mutex);
     tx_semaphore_delete(&cv->sem);
@@ -167,7 +167,7 @@ z_result_t _z_condvar_drop(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
@@ -182,7 +182,7 @@ z_result_t _z_condvar_signal(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
@@ -197,7 +197,7 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     if (!cv || !m) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     tx_mutex_get(&cv->mutex, TX_WAIT_FOREVER);
@@ -214,7 +214,7 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
 z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
     if (!cv || !m) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     ULONG now = tx_time_get();

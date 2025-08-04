@@ -49,7 +49,7 @@ z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm, bool single_read) {
 z_result_t _zp_raweth_read(_z_transport_multicast_t *ztm, bool single_read) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(single_read);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_RAWETH_TRANSPORT == 1
 
@@ -106,7 +106,7 @@ z_result_t _zp_raweth_start_read_task(_z_transport_t *zt, z_task_attr_t *attr, _
     // Init task
     if (_z_task_init(task, attr, _zp_raweth_read_task, &zt->_transport._raweth) != _Z_RES_OK) {
         zt->_transport._unicast._common._lease_task_running = false;
-        return _Z_ERR_SYSTEM_TASK_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
     }
     // Attach task
     zt->_transport._raweth._common._read_task = task;
@@ -127,11 +127,11 @@ z_result_t _zp_raweth_start_read_task(_z_transport_t *zt, void *attr, void *task
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _zp_raweth_stop_read_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif

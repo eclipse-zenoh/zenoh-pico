@@ -64,6 +64,7 @@ z_result_t _z_id_encode_as_slice(_z_wbuf_t *wbf, const _z_id_t *id) {
         ret = _z_slice_encode(wbf, &buf);
     } else {
         _Z_DEBUG("Attempted to encode invalid ID 0");
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_ZENOH_UNKNOWN);
         ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
     }
     return ret;
@@ -203,6 +204,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
             _z_zbuf_read_bytes(zbf, info->_source_id.zid.id, 0, zidlen);
         } else {
             _Z_INFO("Not enough bytes to read");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -212,6 +214,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
             info->_source_id.eid = (uint32_t)intbuf;
         } else {
             _Z_INFO("Invalid value decoded");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -221,6 +224,7 @@ z_result_t _z_source_info_decode(_z_source_info_t *info, _z_zbuf_t *zbf) {
             info->_source_sn = (uint32_t)intbuf;
         } else {
             _Z_INFO("Invalid value decoded");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -355,6 +359,7 @@ z_result_t _z_push_body_decode(_z_push_body_t *pshb, _z_zbuf_t *zbf, uint8_t hea
             break;
         }
         default: {
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_ZENOH_UNKNOWN);
             ret = _Z_ERR_MESSAGE_ZENOH_UNKNOWN;
         }
     }

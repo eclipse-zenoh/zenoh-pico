@@ -35,7 +35,7 @@ z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
         uint8_t tmp;
         size_t ret = _z_read_serial_internal(sock, &header, &tmp, sizeof(tmp));
         if (ret == SIZE_MAX) {
-            return _Z_ERR_TRANSPORT_RX_FAILED;
+            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
         }
 
         if (_Z_HAS_FLAG(header, _Z_FLAG_SERIAL_ACK) && _Z_HAS_FLAG(header, _Z_FLAG_SERIAL_INIT)) {
@@ -47,7 +47,7 @@ z_result_t _z_connect_serial(const _z_sys_net_socket_t sock) {
             continue;
         } else {
             _Z_ERROR("unknown header received: %02X", header);
-            return _Z_ERR_TRANSPORT_RX_FAILED;
+            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_RX_FAILED);
         }
     }
 

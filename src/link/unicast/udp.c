@@ -84,12 +84,14 @@ z_result_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
 
     _z_string_t udp_str = _z_string_alias_str(UDP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &udp_str)) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
         char *s_address = __z_parse_address_segment_udp_unicast(&endpoint->_locator._address);
         if (s_address == NULL) {
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
             z_free(s_address);
@@ -99,10 +101,12 @@ z_result_t _z_endpoint_udp_unicast_valid(_z_endpoint_t *endpoint) {
     if (ret == _Z_RES_OK) {
         char *s_port = __z_parse_port_segment_udp_unicast(&endpoint->_locator._address);
         if (s_port == NULL) {
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
             uint32_t port = (uint32_t)strtoul(s_port, NULL, 10);
             if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+                _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
             z_free(s_port);

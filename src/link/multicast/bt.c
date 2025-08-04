@@ -30,11 +30,13 @@ z_result_t _z_endpoint_bt_valid(_z_endpoint_t *ep) {
 
     _z_string_t bt_str = _z_string_alias_str(BT_SCHEMA);
     if (!_z_string_equals(&ep->_locator._protocol, &bt_str)) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
         if (_z_string_len(&ep->_locator._address) == (size_t)0) {
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         }
     }

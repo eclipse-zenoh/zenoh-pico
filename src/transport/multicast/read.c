@@ -86,7 +86,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
     _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) + to_read);
     if (_z_multicast_update_rx_buffer(ztm) != _Z_RES_OK) {
         _Z_ERROR("Connection closed due to lack of memory to allocate rx buffer");
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     return _Z_RES_OK;
 }
@@ -111,7 +111,7 @@ z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
 z_result_t _zp_multicast_read(_z_transport_multicast_t *ztm, bool single_read) {
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(single_read);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
@@ -144,7 +144,7 @@ z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, z_task_attr_t *attr
     // Init task
     if (_z_task_init(task, attr, _zp_multicast_read_task, &zt->_transport._multicast) != _Z_RES_OK) {
         zt->_transport._multicast._common._read_task_running = false;
-        return _Z_ERR_SYSTEM_TASK_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_TASK_FAILED);
     }
     // Attach task
     zt->_transport._multicast._common._read_task = task;
@@ -166,11 +166,11 @@ z_result_t _zp_multicast_start_read_task(_z_transport_t *zt, void *attr, void *t
     _ZP_UNUSED(zt);
     _ZP_UNUSED(attr);
     _ZP_UNUSED(task);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _zp_multicast_stop_read_task(_z_transport_t *zt) {
     _ZP_UNUSED(zt);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif

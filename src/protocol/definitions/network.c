@@ -400,7 +400,7 @@ z_result_t _z_n_msg_copy(_z_network_message_t *dst, const _z_network_message_t *
         case _Z_N_INTEREST:
             return _z_n_msg_interest_copy(dst, src);
         default:
-            return _Z_ERR_ENTITY_UNKNOWN;
+            _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 }
 

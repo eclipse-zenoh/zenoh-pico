@@ -64,6 +64,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
             break;
         }
         default:
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;
     }
@@ -107,6 +108,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                 }
             }
 #else
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             ret = _Z_ERR_TRANSPORT_OPEN_FAILED;
 #endif
             break;
@@ -123,6 +125,7 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
             break;
         }
         default:
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;
     }

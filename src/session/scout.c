@@ -43,6 +43,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
 #endif
         if (err == _Z_RES_OK) {
         _z_endpoint_clear(&ep);
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
         err = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
     }
 
@@ -81,6 +82,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                             _Z_DEBUG("Received _Z_HELLO message");
                             ret = _z_hello_slist_push_empty(ret);
                             if (ret == NULL) {
+                                _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                                 err = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
                                 break;
                             }
@@ -104,6 +106,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                             break;
                         }
                         default: {
+                            _Z_ERROR_LOG(_Z_ERR_MESSAGE_UNEXPECTED);
                             err = _Z_ERR_MESSAGE_UNEXPECTED;
                             _Z_ERROR("Scouting loop received unexpected message");
                             break;
@@ -119,10 +122,12 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
                 _z_link_clear(&zl);
                 _z_zbuf_clear(&zbf);
             } else {
+                _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
                 err = _Z_ERR_TRANSPORT_TX_FAILED;
                 _z_link_clear(&zl);
             }
         } else {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_FAILED);
             err = _Z_ERR_TRANSPORT_OPEN_FAILED;
         }
     }

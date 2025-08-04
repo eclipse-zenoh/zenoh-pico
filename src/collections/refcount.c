@@ -68,7 +68,7 @@
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                                                    \
     z_result_t _upgrade(_z_inner_rc_t* cnt) {                                                                         \
         if (cnt == NULL) {                                                                                            \
-            return _Z_ERR_INVALID;                                                                                    \
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);                                                                          \
         }                                                                                                             \
         unsigned int prev = _z_atomic_load_explicit(&cnt->_strong_cnt, _z_memory_order_relaxed);                      \
         while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                                                             \
@@ -76,12 +76,12 @@
                                                          _z_memory_order_relaxed)) {                                  \
                 if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {                                              \
                     _Z_ERROR("Rc weak count overflow");                                                               \
-                    return _Z_ERR_OVERFLOW;                                                                           \
+                    _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                                                 \
                 }                                                                                                     \
                 return _Z_RES_OK;                                                                                     \
             }                                                                                                         \
         }                                                                                                             \
-        return _Z_ERR_INVALID;                                                                                        \
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);                                                                              \
     }
 
 #else  // ZENOH_C_STANDARD == 99
@@ -108,7 +108,7 @@
             if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {    \
                 if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {              \
                     _Z_ERROR("Rc weak count overflow");                               \
-                    return _Z_ERR_OVERFLOW;                                           \
+                    _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                 \
                 }                                                                     \
                                                                                       \
                 return _Z_RES_OK;                                                     \
@@ -116,7 +116,7 @@
                 prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0);      \
             }                                                                         \
         }                                                                             \
-        return _Z_ERR_INVALID;                                                        \
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);                                              \
     }
 
 #else  // !ZENOH_COMPILER_GCC
@@ -135,7 +135,7 @@
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP            \
     z_result_t _upgrade(_z_inner_rc_t* cnt) { \
         (void)cnt;                            \
-        return _Z_ERR_INVALID;                \
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);      \
     }
 
 #endif  // ZENOH_COMPILER_GCC
@@ -157,12 +157,12 @@
         if ((cnt->_strong_cnt != 0) && (cnt->_strong_cnt < _Z_RC_MAX_COUNT)) { \
             if (_ZP_RC_OP_INCR_AND_CMP_WEAK(cnt, _Z_RC_MAX_COUNT)) {           \
                 _Z_ERROR("Rc weak count overflow");                            \
-                return _Z_ERR_OVERFLOW;                                        \
+                _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                              \
             }                                                                  \
             _ZP_RC_OP_INCR_STRONG_CNT(cnt)                                     \
             return _Z_RES_OK;                                                  \
         }                                                                      \
-        return _Z_ERR_OVERFLOW;                                                \
+        _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);                                      \
     }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
@@ -175,7 +175,7 @@ typedef struct {
 z_result_t _z_rc_init(void** cnt) {
     *cnt = z_malloc(sizeof(_z_inner_rc_t));
     if ((*cnt) == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _ZP_RC_OP_INIT_STRONG_CNT((_z_inner_rc_t*)*cnt)
     _ZP_RC_OP_INIT_WEAK_CNT((_z_inner_rc_t*)*cnt)
@@ -186,7 +186,7 @@ z_result_t _z_rc_increase_strong(void* cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
     if (_ZP_RC_OP_INCR_AND_CMP_WEAK(c, _Z_RC_MAX_COUNT)) {
         _Z_ERROR("Rc weak count overflow");
-        return _Z_ERR_OVERFLOW;
+        _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
     _ZP_RC_OP_INCR_STRONG_CNT(c);
     return _Z_RES_OK;
@@ -195,11 +195,11 @@ z_result_t _z_rc_increase_strong(void* cnt) {
 z_result_t _z_rc_increase_weak(void* cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
     if (c == NULL) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     if (_ZP_RC_OP_INCR_AND_CMP_WEAK(c, _Z_RC_MAX_COUNT)) {
         _Z_ERROR("Rc weak count overflow");
-        return _Z_ERR_OVERFLOW;
+        _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
     return _Z_RES_OK;
 }
@@ -246,7 +246,7 @@ z_result_t _z_simple_rc_init(void** rc, const void* val, size_t val_size) {
     *rc = z_malloc(RC_CNT_SIZE + val_size);
     if ((*rc) == NULL) {
         _Z_ERROR("Failed to allocate rc");
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _ZP_RC_OP_INIT_STRONG_CNT(_z_simple_rc_inner(*rc))
     memcpy(_z_simple_rc_value(*rc), val, val_size);

@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 /*-------- int-void map --------*/
 bool _z_int_void_map_entry_key_eq(const void *left, const void *right) {
     _z_int_void_map_entry_t *l = (_z_int_void_map_entry_t *)left;
@@ -60,7 +62,7 @@ z_result_t _z_int_void_map_copy(_z_int_void_map_t *dst, const _z_int_void_map_t 
         // Allocate entry
         dst->_vals[idx] = _z_list_clone(src_list, f_c);
         if (dst->_vals[idx] == NULL) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
     }
     return _Z_RES_OK;

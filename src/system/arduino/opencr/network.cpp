@@ -29,14 +29,14 @@ extern "C" {
 z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     _ZP_UNUSED(sock);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     _ZP_UNUSED(sock_in);
     _ZP_UNUSED(sock_out);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) { _ZP_UNUSED(sock); }
@@ -45,7 +45,7 @@ z_result_t _z_socket_wait_event(void *peers, _z_mutex_rec_t *mutex) {
     _ZP_UNUSED(peers);
     _ZP_UNUSED(mutex);
     _Z_ERROR("Function not yet supported on this system");
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 #if Z_FEATURE_LINK_TCP == 1
@@ -57,6 +57,7 @@ z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addre
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
     if (!ep->_iptcp._addr->fromString(s_address)) {
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -64,6 +65,7 @@ z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addre
     ep->_iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep->_iptcp._port < (uint32_t)1) ||
         (ep->_iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -81,6 +83,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
     sock->_tcp = new WiFiClient();
     if (!sock->_tcp->connect(*rep._iptcp._addr, rep._iptcp._port)) {
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -97,6 +100,7 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     (void)lep;
 
     // @TODO: To be implemented
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
     ret = _Z_ERR_GENERIC;
 
     return ret;
@@ -149,6 +153,7 @@ z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addre
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
     if (!ep->_iptcp._addr->fromString(s_address)) {
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -156,6 +161,7 @@ z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addre
     ep->_iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep->_iptcp._port < (uint32_t)1) ||
         (ep->_iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -179,6 +185,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     // FIXME: make it random
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->begin(7447)) {
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -196,6 +203,7 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     (void)tout;
 
     // @TODO: To be implemented
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
     ret = _Z_ERR_GENERIC;
 
     return ret;
@@ -259,6 +267,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
 
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->begin(55555)) {  // FIXME: make port to be random
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -280,6 +289,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port)) {
+_Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 

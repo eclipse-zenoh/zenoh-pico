@@ -109,7 +109,7 @@ z_result_t _z_task_join(_z_task_t *task) {
 
 z_result_t _z_task_detach(_z_task_t *task) {
     _ZP_UNUSED(task);
-    return _Z_ERR_GENERIC;
+    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
@@ -158,21 +158,21 @@ static UBaseType_t CONDVAR_MAX_WAITERS_COUNT = UINT_MAX;
 
 z_result_t _z_condvar_init(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     cv->mutex = xSemaphoreCreateMutex();
     cv->sem = xSemaphoreCreateCounting(CONDVAR_MAX_WAITERS_COUNT, 0);
     cv->waiters = 0;
 
     if (!cv->mutex || !cv->sem) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }
 
 z_result_t _z_condvar_drop(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     vSemaphoreDelete(cv->sem);
     vSemaphoreDelete(cv->mutex);
@@ -181,7 +181,7 @@ z_result_t _z_condvar_drop(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_signal(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     xSemaphoreTake(cv->mutex, portMAX_DELAY);
@@ -196,7 +196,7 @@ z_result_t _z_condvar_signal(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
     if (!cv) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     xSemaphoreTake(cv->mutex, portMAX_DELAY);
@@ -211,7 +211,7 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) {
 
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
     if (!cv || !m) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     xSemaphoreTake(cv->mutex, portMAX_DELAY);
@@ -227,7 +227,7 @@ z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) {
 
 z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
     if (!cv || !m) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     TickType_t now = xTaskGetTickCount();

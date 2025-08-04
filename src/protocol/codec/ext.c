@@ -162,7 +162,7 @@ z_result_t _z_msg_ext_vec_encode(_z_wbuf_t *wbf, const _z_msg_ext_vec_t *extensi
 z_result_t _z_msg_ext_vec_push_callback(_z_msg_ext_t *extension, _z_msg_ext_vec_t *extensions) {
     _z_msg_ext_t *ext = (_z_msg_ext_t *)z_malloc(sizeof(_z_msg_ext_t));
     if (ext == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     *ext = *extension;
     *extension = _z_msg_ext_make_unit(0);
@@ -192,7 +192,7 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
             _z_slice_t buf = extension->_body._zbuf._val;
             char *hex = (char *)z_malloc(buf.len * 2 + 1);
             if (hex == NULL) {
-                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+                _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
             for (size_t i = 0; i < buf.len; ++i) {
                 snprintf(hex + 2 * i, 3, "%02x", buf.start[i]);
@@ -211,7 +211,7 @@ z_result_t _z_msg_ext_unknown_error(_z_msg_ext_t *extension, uint8_t trace_id) {
     _ZP_UNUSED(extension);
     _ZP_UNUSED(trace_id);
 #endif
-    return _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
+    _Z_ERROR_RETURN(_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN);
 }
 
 z_result_t _z_msg_ext_skip_non_mandatory(_z_msg_ext_t *extension, void *ctx) {

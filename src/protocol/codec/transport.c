@@ -117,6 +117,7 @@ z_result_t _z_join_decode_ext(_z_msg_ext_t *extension, void *ctx) {
         msg->_patch = (uint8_t)extension->_body._zint._val;
 #endif
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN);
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
     return ret;
@@ -140,6 +141,7 @@ z_result_t _z_join_decode(_z_t_msg_join_t *msg, _z_zbuf_t *zbf, uint8_t header) 
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -228,6 +230,7 @@ z_result_t _z_init_decode_ext(_z_msg_ext_t *extension, void *ctx) {
         msg->_patch = (uint8_t)extension->_body._zint._val;
 #endif
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN);
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
     return ret;
@@ -251,6 +254,7 @@ z_result_t _z_init_decode(_z_t_msg_init_t *msg, _z_zbuf_t *zbf, uint8_t header) 
             _z_zbuf_read_bytes(zbf, msg->_zid.id, 0, zidlen);
         } else {
             _Z_INFO("Invalid zid length received");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
     }
@@ -384,7 +388,7 @@ z_result_t _z_keep_alive_decode(_z_t_msg_keep_alive_t *msg, _z_zbuf_t *zbf, uint
 z_result_t _z_frame_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_frame_t *msg) {
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_sn))
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_Z)) {
-        return _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
+        _Z_ERROR_RETURN(_Z_ERR_MESSAGE_SERIALIZATION_FAILED);
     }
     if (msg->_payload != NULL) {
         _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, _z_zbuf_get_rptr(msg->_payload), 0, _z_zbuf_len(msg->_payload)));
@@ -439,6 +443,7 @@ z_result_t _z_fragment_decode_ext(_z_msg_ext_t *extension, void *ctx) {
     } else if (_Z_EXT_FULL_ID(extension->_header) == _Z_MSG_EXT_ID_FRAGMENT_DROP) {
         msg->drop = true;
     } else if (_Z_MSG_EXT_IS_MANDATORY(extension->_header)) {
+        _Z_ERROR_LOG(_Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN);
         ret = _Z_ERR_MESSAGE_EXTENSION_MANDATORY_AND_UNKNOWN;
     }
     return ret;
@@ -518,7 +523,7 @@ z_result_t _z_transport_message_encode(_z_wbuf_t *wbf, const _z_transport_messag
         } break;
         default: {
             _Z_INFO("WARNING: Trying to encode session message with unknown ID(%d)", _Z_MID(msg->_header));
-            return _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_TRANSPORT_UNKNOWN);
         } break;
     }
 }
@@ -550,7 +555,7 @@ z_result_t _z_transport_message_decode(_z_transport_message_t *msg, _z_zbuf_t *z
         } break;
         default: {
             _Z_INFO("WARNING: Trying to decode session message with unknown ID(0x%x) (header=0x%x)", mid, msg->_header);
-            return _Z_ERR_MESSAGE_TRANSPORT_UNKNOWN;
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_TRANSPORT_UNKNOWN);
         } break;
     }
 }

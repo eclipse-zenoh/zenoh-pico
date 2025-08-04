@@ -105,6 +105,7 @@ z_result_t _z_liveliness_subscription_undeclare(_z_session_t *zn, uint32_t id, c
         key = _z_keyexpr_clone(keyexpr);
         _z_keyexpr_intmap_remove(&zn->_remote_tokens, id);
     } else {
+        _Z_ERROR_LOG(_Z_ERR_ENTITY_UNKNOWN);
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
     _z_session_mutex_unlock(zn);
@@ -211,6 +212,7 @@ z_result_t _z_liveliness_register_pending_query(_z_session_t *zn, uint32_t id, _
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, id);
     if (pq != NULL) {
         _Z_ERROR("Duplicate liveliness query id %i", (int)id);
+        _Z_ERROR_LOG(_Z_ERR_ENTITY_DECLARATION_FAILED);
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     } else {
         _z_liveliness_pending_query_intmap_insert(&zn->_liveliness_pending_queries, id, pen_qry);
@@ -230,6 +232,7 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);
     if (pq == NULL) {
+        _Z_ERROR_LOG(_Z_ERR_ENTITY_UNKNOWN);
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 
@@ -243,6 +246,7 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
                  _z_string_data(&expanded_ke._suffix));
 
         if (!_z_keyexpr_suffix_intersects(&pq->_key, &expanded_ke)) {
+            _Z_ERROR_LOG(_Z_ERR_QUERY_NOT_MATCH);
             ret = _Z_ERR_QUERY_NOT_MATCH;
         }
 
@@ -273,6 +277,7 @@ z_result_t _z_liveliness_pending_query_drop(_z_session_t *zn, uint32_t interest_
     const _z_liveliness_pending_query_t *pq =
         _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);
     if (pq == NULL) {
+        _Z_ERROR_LOG(_Z_ERR_ENTITY_UNKNOWN);
         ret = _Z_ERR_ENTITY_UNKNOWN;
     }
 

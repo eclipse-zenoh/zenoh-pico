@@ -33,6 +33,7 @@ z_result_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
 
     _z_string_t ser_str = _z_string_alias_str(SERIAL_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &ser_str)) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
@@ -44,10 +45,12 @@ z_result_t _z_endpoint_serial_valid(_z_endpoint_t *endpoint) {
             size_t dot_loc = _z_ptr_char_diff(p_dot, p_start);
             // Check if dot is first or last character
             if ((dot_loc == 0) || (dot_loc == addr_len)) {
+                _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
         } else {
             if (_z_string_len(&endpoint->_locator._address) == (size_t)0) {
+                _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
         }

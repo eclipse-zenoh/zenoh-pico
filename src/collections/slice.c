@@ -20,6 +20,7 @@
 
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/endianness.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -41,7 +42,7 @@ z_result_t _z_slice_init(_z_slice_t *bs, size_t capacity) {
     if (bs->start == NULL) {
         bs->len = 0;
         bs->_delete_context = _z_delete_context_null();
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     bs->len = capacity;
     bs->_delete_context = _z_delete_context_default();

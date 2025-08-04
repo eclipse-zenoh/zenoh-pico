@@ -23,6 +23,7 @@
 
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 #if defined(ZENOH_LINUX) || defined(ZENOH_MACOS) || defined(ZENOH_BSD)
@@ -65,23 +66,23 @@ extern "C" {
 
 void _z_report_system_error(int errcode);
 
-#define _Z_CHECK_SYS_ERR(expr)             \
-    do {                                   \
-        int __res = expr;                  \
-        if (__res != 0) {                  \
-            _z_report_system_error(__res); \
-            return _Z_ERR_SYSTEM_GENERIC;  \
-        }                                  \
-        return _Z_RES_OK;                  \
+#define _Z_CHECK_SYS_ERR(expr)                      \
+    do {                                            \
+        int __res = expr;                           \
+        if (__res != 0) {                           \
+            _z_report_system_error(__res);          \
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC); \
+        }                                           \
+        return _Z_RES_OK;                           \
     } while (false)
 
-#define _Z_RETURN_IF_SYS_ERR(expr)         \
-    do {                                   \
-        int __res = expr;                  \
-        if (__res != 0) {                  \
-            _z_report_system_error(__res); \
-            return _Z_ERR_SYSTEM_GENERIC;  \
-        }                                  \
+#define _Z_RETURN_IF_SYS_ERR(expr)                  \
+    do {                                            \
+        int __res = expr;                           \
+        if (__res != 0) {                           \
+            _z_report_system_error(__res);          \
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_GENERIC); \
+        }                                           \
     } while (false)
 
 /*------------------ Random ------------------*/

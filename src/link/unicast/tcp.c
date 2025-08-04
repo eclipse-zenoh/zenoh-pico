@@ -83,12 +83,14 @@ z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
 
     _z_string_t tcp_str = _z_string_alias_str(TCP_SCHEMA);
     if (!_z_string_equals(&endpoint->_locator._protocol, &tcp_str)) {
+        _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
         ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
     }
 
     if (ret == _Z_RES_OK) {
         char *s_address = __z_parse_address_segment_tcp(&endpoint->_locator._address);
         if (s_address == NULL) {
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
             z_free(s_address);
@@ -98,10 +100,12 @@ z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
     if (ret == _Z_RES_OK) {
         char *s_port = __z_parse_port_segment_tcp(&endpoint->_locator._address);
         if (s_port == NULL) {
+            _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
             ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
         } else {
             uint32_t port = (uint32_t)strtoul(s_port, NULL, 10);
             if ((port < (uint32_t)1) || (port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
+                _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_INVALID);
                 ret = _Z_ERR_CONFIG_LOCATOR_INVALID;
             }
             z_free(s_port);
@@ -218,18 +222,18 @@ z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
 #else
 z_result_t _z_endpoint_tcp_valid(_z_endpoint_t *endpoint) {
     _ZP_UNUSED(endpoint);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_new_peer_tcp(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket) {
     _ZP_UNUSED(endpoint);
     _ZP_UNUSED(socket);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 
 z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
     _ZP_UNUSED(zl);
     _ZP_UNUSED(endpoint);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif

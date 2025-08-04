@@ -193,7 +193,7 @@ static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *enc
     // Allocate string
     char *value = (char *)z_malloc(sizeof(char) * total_len);
     if (value == NULL) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     memset(value, 0, total_len);
     // Copy prefix
@@ -245,11 +245,11 @@ z_result_t z_encoding_set_schema_from_str(z_loaned_encoding_t *encoding, const c
 z_result_t z_encoding_set_schema_from_substr(z_loaned_encoding_t *encoding, const char *schema, size_t len) {
     _z_string_clear(&encoding->schema);
     if (schema == NULL && len > 0) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     encoding->schema = _z_string_copy_from_substr(schema, len);
     if (_z_string_len(&encoding->schema) != len) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     return _Z_RES_OK;
 }

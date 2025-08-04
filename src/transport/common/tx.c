@@ -386,6 +386,7 @@ z_result_t _z_send_t_msg(_z_transport_t *zt, const _z_transport_message_t *t_msg
             ret = _z_raweth_send_t_msg(&zt->_transport._raweth._common, t_msg);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -409,6 +410,7 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
         case Z_LINK_CAP_FLOW_DATAGRAM:
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
             break;
     }
@@ -427,6 +429,7 @@ z_result_t _z_link_send_t_msg(const _z_link_t *zl, const _z_transport_message_t 
             case Z_LINK_CAP_FLOW_DATAGRAM:
                 break;
             default:
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
                 break;
         }
@@ -509,6 +512,7 @@ z_result_t _z_send_n_msg(_z_session_t *zn, const _z_network_message_t *z_msg, z_
             ret = _z_raweth_send_n_msg(zn, z_msg, reliability, cong_ctrl);
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }
@@ -535,9 +539,11 @@ z_result_t _z_send_n_batch(_z_session_t *zn, z_congestion_control_t cong_ctrl) {
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
             _Z_INFO("Batching not yet supported on raweth transport");
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
             break;
         default:
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
             ret = _Z_ERR_TRANSPORT_NOT_AVAILABLE;
             break;
     }

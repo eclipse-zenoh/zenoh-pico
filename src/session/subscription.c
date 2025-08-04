@@ -196,7 +196,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
 
         if (!_z_keyexpr_has_suffix(&infos->ke_out)) {
             _z_session_mutex_unlock(zn);
-            return _Z_ERR_KEYEXPR_UNKNOWN;
+            _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
         }
         // Get subscription list
         z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, kind, &infos->ke_out, &infos->infos);

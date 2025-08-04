@@ -31,7 +31,7 @@ z_result_t _z_encoding_make(_z_encoding_t *encoding, uint16_t id, const char *sc
     if (schema != NULL) {
         encoding->schema = _z_string_copy_from_substr(schema, len);
         if (_z_string_len(&encoding->schema) != len) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
     } else {
         encoding->schema = _z_string_null();

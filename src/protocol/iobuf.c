@@ -298,7 +298,7 @@ z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
         // Check if we need to allocate new buffer
         if (wbf->_ioss._len <= wbf->_w_idx + 1) {
             if (wbf->_expansion_step == 0) {
-                return _Z_ERR_TRANSPORT_NO_SPACE;
+                _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NO_SPACE);
             }
             _z_iosli_t tmp = _z_iosli_make(wbf->_expansion_step);
             _z_wbuf_add_iosli(wbf, &tmp);
@@ -337,7 +337,7 @@ z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset,
             loffset += writable;
         }
     } else {
-        return _Z_ERR_TRANSPORT_NO_SPACE;
+        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NO_SPACE);
     }
     return _Z_RES_OK;
 }
@@ -493,6 +493,7 @@ z_result_t _z_wbuf_siphon(_z_wbuf_t *dst, _z_wbuf_t *src, size_t length) {
             }
         } while (llength > (size_t)0);
     } else {
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NO_SPACE);
         ret = _Z_ERR_TRANSPORT_NO_SPACE;
     }
     return ret;

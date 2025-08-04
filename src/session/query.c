@@ -99,6 +99,7 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id) {
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
         zn->_pending_queries = _z_pending_query_slist_push_empty(zn->_pending_queries);
     } else {
+        _Z_ERROR_LOG(_Z_ERR_ENTITY_DECLARATION_FAILED);
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
     _z_session_mutex_unlock(zn);

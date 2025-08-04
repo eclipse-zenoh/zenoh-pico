@@ -163,7 +163,7 @@ z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size
     if (wild == NULL) {
         return _Z_RES_OK;
     } else if (wild == _z_string_data(&base_key->_suffix)) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     // Remove wildcards from suffix
     wild = _z_ptr_char_offset(wild, -1);
@@ -173,7 +173,7 @@ z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size
     // Copy non-wild prefix
     _z_string_t new_suffix = _z_string_preallocate(len);
     if (!_z_string_check(&new_suffix)) {
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     memcpy((char *)_z_string_data(&new_suffix), _z_string_data(&base_key->_suffix), len);
     base_key->_suffix = new_suffix;

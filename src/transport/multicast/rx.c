@@ -44,6 +44,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
                     _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
                     if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztm->_common._zbuf);
+                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         break;
                     }
@@ -57,6 +58,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
                         _z_zbuf_set_rpos(&ztm->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                         _z_zbuf_compact(&ztm->_common._zbuf);
+                        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
                         ret = _Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES;
                         break;
                     }
@@ -67,6 +69,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
                 _z_zbuf_compact(&ztm->_common._zbuf);
                 to_read = _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
                 if (to_read == SIZE_MAX) {
+                    _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;
                 }
                 break;
@@ -91,7 +94,7 @@ z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_m
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
@@ -242,7 +245,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         *dbuf = _z_wbuf_make(Z_FRAG_MAX_SIZE, false);
         if (_z_wbuf_capacity(dbuf) != Z_FRAG_MAX_SIZE) {
             _Z_ERROR("Not enough memory to allocate peer defragmentation buffer");
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         *dbuf_state = _Z_DBUF_STATE_INIT;
     }
@@ -271,7 +274,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
             _Z_ERROR("Failed to convert defragmentation buffer into a decoding buffer!");
             _z_wbuf_clear(dbuf);
             *dbuf_state = _Z_DBUF_STATE_NULL;
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Decode message
         _z_zenoh_message_t zm = {0};
@@ -283,6 +286,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
             _z_handle_network_message(ztm->_common._session, &zm, &entry->common);
         } else {
             _Z_INFO("Failed to decode defragmented message");
+            _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
             ret = _Z_ERR_MESSAGE_DESERIALIZATION_FAILED;
         }
         // Free the decoding buffer
@@ -318,7 +322,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
             _Z_INFO("Couldn't accept peer because distant node is incompatible config wise.");
-            return _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
         }
         // Initialize entry
         ztm->_peers = _z_transport_peer_multicast_slist_push_empty(ztm->_peers);
@@ -438,7 +442,7 @@ z_result_t _z_multicast_update_rx_buffer(_z_transport_multicast_t *ztm) {
         // Allocate a new buffer
         _z_zbuf_t new_zbuf = _z_zbuf_make(Z_BATCH_MULTICAST_SIZE);
         if (_z_zbuf_capacity(&new_zbuf) != Z_BATCH_MULTICAST_SIZE) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
         // Recopy leftover bytes
         size_t leftovers = _z_zbuf_len(&ztm->_common._zbuf);
@@ -458,6 +462,6 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
     _ZP_UNUSED(ztm);
     _ZP_UNUSED(t_msg);
     _ZP_UNUSED(addr);
-    return _Z_ERR_TRANSPORT_NOT_AVAILABLE;
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
 }
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1

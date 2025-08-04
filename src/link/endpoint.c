@@ -91,7 +91,7 @@ static z_result_t _z_locator_protocol_from_string(_z_string_t *protocol, const _
     const char *p_start = _z_string_data(str);
     const char *p_end = (char *)memchr(p_start, (int)LOCATOR_PROTOCOL_SEPARATOR, _z_string_len(str));
     if ((p_end == NULL) || (p_start == p_end)) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     size_t p_len = _z_ptr_char_diff(p_end, p_start);
     return _z_string_copy_substring(protocol, str, 0, p_len);
@@ -103,13 +103,13 @@ static z_result_t _z_locator_address_from_string(_z_string_t *address, const _z_
     // Find protocol separator
     const char *p_start = (char *)memchr(_z_string_data(str), (int)LOCATOR_PROTOCOL_SEPARATOR, _z_string_len(str));
     if (p_start == NULL) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     // Skip protocol separator
     p_start = _z_cptr_char_offset(p_start, 1);
     size_t start_offset = _z_ptr_char_diff(p_start, _z_string_data(str));
     if (start_offset >= _z_string_len(str)) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     // Find metadata separator
     size_t curr_len = _z_string_len(str) - start_offset;
@@ -123,7 +123,7 @@ static z_result_t _z_locator_address_from_string(_z_string_t *address, const _z_
         p_end = _z_cptr_char_offset(_z_string_data(str), (ptrdiff_t)_z_string_len(str));
     }
     if (p_start >= p_end) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     // Copy data
     size_t addr_len = _z_ptr_char_diff(p_end, p_start);
@@ -141,7 +141,7 @@ z_result_t _z_locator_metadata_from_string(_z_str_intmap_t *strint, const _z_str
     p_start = _z_cptr_char_offset(p_start, 1);
     size_t start_offset = _z_ptr_char_diff(p_start, _z_string_data(str));
     if (start_offset > _z_string_len(str)) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     if (start_offset == _z_string_len(str)) {
         return _Z_RES_OK;
@@ -171,7 +171,7 @@ void _z_locator_metadata_onto_str(char *dst, size_t dst_len, const _z_str_intmap
 
 z_result_t _z_locator_from_string(_z_locator_t *lc, const _z_string_t *str) {
     if (str == NULL || !_z_string_check(str)) {
-        return _Z_ERR_CONFIG_LOCATOR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_CONFIG_LOCATOR_INVALID);
     }
     // Parse protocol
     _Z_RETURN_IF_ERR(_z_locator_protocol_from_string(&lc->_protocol, str));

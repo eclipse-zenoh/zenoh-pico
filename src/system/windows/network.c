@@ -29,7 +29,7 @@ WSADATA wsaData;
 z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
     u_long mode = 1;  // 1 for non-blocking mode
     if (ioctlsocket(sock->_sock._fd, FIONBIO, &mode) != 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }
@@ -39,27 +39,27 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     int nlen = sizeof(naddr);
     SOCKET con_socket = accept(sock_in->_sock._fd, &naddr, &nlen);
     if (con_socket == INVALID_SOCKET) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Set socket options
     DWORD tv = Z_CONFIG_SOCKET_TIMEOUT;
     if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     int flags = 1;
     if (setsockopt(con_socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #if Z_FEATURE_TCP_NODELAY == 1
     if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
     struct linger ling;
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Note socket
     sock_out->_sock._fd = con_socket;
@@ -91,7 +91,7 @@ z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
     timeout.tv_usec = (Z_CONFIG_SOCKET_TIMEOUT % 1000) * 1000;
     int result = select(0, &read_fds, NULL, NULL, &timeout);
     if (result <= 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Mark sockets that are pending
     _z_mutex_rec_lock(mutex);
@@ -129,9 +129,11 @@ z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addre
         hints.ai_protocol = IPPROTO_TCP;
 
         if (getaddrinfo(s_address, s_port, &hints, &ep->_ep._iptcp) != 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -148,6 +150,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
     z_result_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -155,18 +158,21 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
     if (sock->_sock._fd != INVALID_SOCKET) {
         DWORD tv = tout;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 
         int flags = 1;
         if ((ret == _Z_RES_OK) &&
             (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 
 #if Z_FEATURE_TCP_NODELAY == 1
         if ((ret == _Z_RES_OK) &&
             (setsockopt(sock->_sock._fd, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 #endif
@@ -176,6 +182,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         ling.l_linger = Z_TRANSPORT_LEASE / 1000;
         if ((ret == _Z_RES_OK) &&
             (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 
@@ -187,6 +194,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
         for (it = rep._ep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_sock._fd, it->ai_addr, (int)it->ai_addrlen) < 0)) {
                 if (it->ai_next == NULL) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                     break;
                 }
@@ -200,6 +208,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
             WSACleanup();
         }
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -211,32 +220,35 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
 
     // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     // Open socket
     sock->_sock._fd = socket(lep._ep._iptcp->ai_family, lep._ep._iptcp->ai_socktype, lep._ep._iptcp->ai_protocol);
     if (sock->_sock._fd == INVALID_SOCKET) {
         WSACleanup();
-        return _Z_ERR_GENERIC;
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
     // Set options
     int value = true;
     if ((ret == _Z_RES_OK) &&
         (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_REUSEADDR, (const char *)&value, sizeof(value)) < 0)) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
     int flags = 1;
     if ((ret == _Z_RES_OK) &&
         (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_KEEPALIVE, (const char *)&flags, sizeof(flags)) < 0)) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
 #if Z_FEATURE_TCP_NODELAY == 1
     if ((ret == _Z_RES_OK) &&
         (setsockopt(sock->_sock._fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&flags, sizeof(flags)) < 0)) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 #endif
@@ -246,6 +258,7 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if ((ret == _Z_RES_OK) &&
         (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_LINGER, (const char *)&ling, sizeof(struct linger)) < 0)) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -259,12 +272,14 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     for (it = lep._ep._iptcp; it != NULL; it = it->ai_next) {
         if (bind(sock->_sock._fd, it->ai_addr, (int)it->ai_addrlen) < 0) {
             if (it->ai_next == NULL) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
                 break;
             }
         }
         if (listen(sock->_sock._fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
             if (it->ai_next == NULL) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
                 break;
             }
@@ -332,9 +347,11 @@ z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addre
         hints.ai_protocol = IPPROTO_UDP;
 
         if (getaddrinfo(s_address, s_port, &hints, &ep->_ep._iptcp) != 0) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -352,6 +369,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     z_result_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -359,6 +377,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     if (sock->_sock._fd != INVALID_SOCKET) {
         DWORD tv = tout;
         if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
         if (ret != _Z_RES_OK) {
@@ -366,6 +385,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
             WSACleanup();
         }
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -379,6 +399,7 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     z_result_t ret = _Z_RES_OK;
 
     // @TODO: To be implemented
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
     ret = _Z_ERR_GENERIC;
 
     return ret;
@@ -472,6 +493,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     z_result_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -483,6 +505,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             DWORD tv = tout;
             if ((ret == _Z_RES_OK) &&
                 (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -491,20 +514,24 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                     .sin_family = AF_INET, .sin_port = htons(0), .sin_addr.s_addr = htonl(INADDR_ANY), .sin_zero = {0}};
                 if ((ret == _Z_RES_OK) &&
                     (bind(sock->_sock._fd, (SOCKADDR *)&address, sizeof(SOCKADDR_IN)) == SOCKET_ERROR)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (rep._ep._iptcp->ai_family == AF_INET6) {
                 SOCKADDR_IN6 address = {.sin6_family = AF_INET6, .sin6_port = htons(0), 0, .sin6_addr = {{{0}}}, 0};
                 if ((ret == _Z_RES_OK) &&
                     (bind(sock->_sock._fd, (SOCKADDR *)&address, sizeof(SOCKADDR_IN6)) == SOCKET_ERROR)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
             // Get the randomly assigned port used to discard loopback messages
             if ((ret == _Z_RES_OK) && (getsockname(sock->_sock._fd, lsockaddr, (int *)&addrlen) < 0)) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -512,15 +539,18 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                 if ((ret == _Z_RES_OK) &&
                     (setsockopt(sock->_sock._fd, IPPROTO_IP, IP_MULTICAST_IF,
                                 (const char *)&((SOCKADDR_IN *)lsockaddr)->sin_addr.s_addr, addrlen) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (rep._ep._iptcp->ai_family == AF_INET6) {
                 if ((ret == _Z_RES_OK) &&
                     (setsockopt(sock->_sock._fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
                                 (const char *)&((SOCKADDR_IN6 *)lsockaddr)->sin6_scope_id, sizeof(ULONG)) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -546,6 +576,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                     //    z_free(lsockaddr);
                     // #endif
                 } else {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             }
@@ -555,6 +586,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
                 WSACleanup();
             }
         } else {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 
@@ -562,6 +594,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
             z_free(lsockaddr);
         }
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -574,6 +607,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
     z_result_t ret = _Z_RES_OK;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -585,12 +619,14 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             DWORD tv = tout;
             if ((ret == _Z_RES_OK) &&
                 (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0)) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
             int optflag = 1;
             if ((ret == _Z_RES_OK) &&
                 (setsockopt(sock->_sock._fd, SOL_SOCKET, SO_REUSEADDR, (char *)&optflag, sizeof(optflag)) < 0)) {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -600,6 +636,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                                        .sin_addr = {0},
                                        .sin_zero = {0}};
                 if ((ret == _Z_RES_OK) && (bind(sock->_sock._fd, (SOCKADDR *)&address, sizeof address) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (rep._ep._iptcp->ai_family == AF_INET6) {
@@ -609,9 +646,11 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                                         .sin6_addr = {{{0}}},
                                         0};
                 if ((ret == _Z_RES_OK) && (bind(sock->_sock._fd, (SOCKADDR *)&address, sizeof address) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -623,6 +662,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 mreq.imr_interface.s_addr = ((SOCKADDR_IN *)lsockaddr)->sin_addr.s_addr;
                 if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                                                       (const char *)&mreq, sizeof(mreq)) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else if (rep._ep._iptcp->ai_family == AF_INET6) {
@@ -633,9 +673,11 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 mreq.ipv6mr_interface = if_nametoindex(iface);
                 if ((ret == _Z_RES_OK) && (setsockopt(sock->_sock._fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
                                                       (const char *)&mreq, sizeof(mreq)) < 0)) {
+                    _Z_ERROR_LOG(_Z_ERR_GENERIC);
                     ret = _Z_ERR_GENERIC;
                 }
             } else {
+                _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
             }
 
@@ -644,11 +686,13 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
                 WSACleanup();
             }
         } else {
+            _Z_ERROR_LOG(_Z_ERR_GENERIC);
             ret = _Z_ERR_GENERIC;
         }
 
         z_free(lsockaddr);
     } else {
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
