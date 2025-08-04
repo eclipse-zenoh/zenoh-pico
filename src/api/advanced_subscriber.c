@@ -15,6 +15,7 @@
 #include "zenoh-pico/api/advanced_subscriber.h"
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/api/liveliness.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/string.h"
@@ -31,6 +32,31 @@ void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss
 #define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
 
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
+
+void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
+    _ze_advanced_subscriber_state_weak_drop(&listener->_statesref);
+    *listener = _ze_sample_miss_listener_null();
+}
+
+void _ze_sample_miss_listener_drop(_ze_sample_miss_listener_t *listener) {
+    if (listener != NULL) {
+        _ze_advanced_subscriber_state_rc_t state_rc = _ze_advanced_subscriber_state_weak_upgrade(&listener->_statesref);
+        if (!_Z_RC_IS_NULL(&state_rc)) {
+            _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&state_rc);
+
+            if (_z_mutex_lock(&state->_mutex) == _Z_RES_OK) {
+                _ze_closure_miss_intmap_remove(&state->_miss_handlers, listener->_id);
+                _z_mutex_unlock(&state->_mutex);
+            }
+            _ze_advanced_subscriber_state_rc_drop(&state_rc);
+            _ze_sample_miss_listener_clear(listener);
+        }
+    }
+}
+
+_Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX(ze, _ze_sample_miss_listener_t, sample_miss_listener,
+                                                     _ze_sample_miss_listener_check, _ze_sample_miss_listener_null,
+                                                     _ze_sample_miss_listener_drop)
 
 static void _ze_advanced_subscriber_sequenced_state_init(_ze_advanced_subscriber_sequenced_state_t *state) {
     state->_has_last_delivered = false;
@@ -113,14 +139,14 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
     state->_dropper = callback->_this._val.drop;
     state->_ctx = callback->_this._val.context;
     z_internal_closure_sample_null(&callback->_this);
-    // TODO: Init miss hander map
+    _ze_closure_miss_intmap_init(&state->_miss_handlers);
     state->_has_token = false;
     z_internal_liveliness_token_null(&state->_token);
 
     return _Z_RES_OK;
 }
 
-static z_result_t _ze_advanced_subscriber_state_new(_ze_advanced_subscriber_state_simple_rc_t *rc_state,
+static z_result_t _ze_advanced_subscriber_state_new(_ze_advanced_subscriber_state_rc_t *rc_state,
                                                     const _z_session_rc_t *zn, z_moved_closure_sample_t *callback,
                                                     const z_loaned_keyexpr_t *keyexpr,
                                                     const z_loaned_keyexpr_t *query_keyexpr,
@@ -128,8 +154,8 @@ static z_result_t _ze_advanced_subscriber_state_new(_ze_advanced_subscriber_stat
     _ze_advanced_subscriber_state_t state;
     _Z_RETURN_IF_ERR(_ze_advanced_subscriber_state_init(&state, zn, callback, keyexpr, query_keyexpr, options));
 
-    *rc_state = _ze_advanced_subscriber_state_simple_rc_new_from_val(&state);
-    if (_Z_SIMPLE_RC_IS_NULL(rc_state)) {
+    *rc_state = _ze_advanced_subscriber_state_rc_new_from_val(&state);
+    if (_Z_RC_IS_NULL(rc_state)) {
         _ze_advanced_subscriber_state_clear(&state);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -140,6 +166,7 @@ static z_result_t _ze_advanced_subscriber_state_new(_ze_advanced_subscriber_stat
 void _ze_advanced_subscriber_state_clear(_ze_advanced_subscriber_state_t *state) {
     _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
     _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
+    _ze_closure_miss_intmap_clear(&state->_miss_handlers);
     z_keyexpr_drop(z_keyexpr_move(&state->_key_expr));
     z_keyexpr_drop(z_keyexpr_move(&state->_query_key_expr));
     if (state->_has_token) {
@@ -161,8 +188,7 @@ bool _ze_advanced_subscriber_check(const _ze_advanced_subscriber_t *sub) {
     return (z_internal_subscriber_check(&sub->_subscriber) &&
             (!sub->_has_liveliness_subscriber || z_internal_subscriber_check(&sub->_liveliness_subscriber)) &&
             (!sub->_has_heartbeat_subscriber || z_internal_subscriber_check(&sub->_heartbeat_subscriber)) &&
-            !_Z_SIMPLE_RC_IS_NULL(&sub->_state) &&
-            _ze_advanced_subscriber_state_check(_ze_advanced_subscriber_state_simple_rc_value(&sub->_state)));
+            !_Z_RC_IS_NULL(&sub->_state) && _ze_advanced_subscriber_state_check(_Z_RC_IN_VAL(&sub->_state)));
 }
 
 _ze_advanced_subscriber_t _ze_advanced_subscriber_null(void) {
@@ -170,7 +196,7 @@ _ze_advanced_subscriber_t _ze_advanced_subscriber_null(void) {
     z_internal_subscriber_null(&subscriber._subscriber);
     z_internal_subscriber_null(&subscriber._liveliness_subscriber);
     z_internal_subscriber_null(&subscriber._heartbeat_subscriber);
-    subscriber._state = _ze_advanced_subscriber_state_simple_rc_null();
+    subscriber._state = _ze_advanced_subscriber_state_rc_null();
 
     return subscriber;
 }
@@ -179,7 +205,7 @@ z_result_t _ze_advanced_subscriber_clear(_ze_advanced_subscriber_t *sub) {
     _z_subscriber_clear(&sub->_subscriber._val);
     _z_subscriber_clear(&sub->_liveliness_subscriber._val);
     _z_subscriber_clear(&sub->_heartbeat_subscriber._val);
-    _ze_advanced_subscriber_state_simple_rc_drop(&sub->_state);
+    _ze_advanced_subscriber_state_rc_drop(&sub->_state);
 
     *sub = _ze_advanced_subscriber_null();
     return _Z_RES_OK;
@@ -197,7 +223,7 @@ z_result_t _ze_advanced_subscriber_drop(_ze_advanced_subscriber_t *sub) {
     if (sub->_has_heartbeat_subscriber) {
         z_undeclare_subscriber(z_subscriber_move(&sub->_heartbeat_subscriber));
     }
-    _ze_advanced_subscriber_state_simple_rc_drop(&sub->_state);
+    _ze_advanced_subscriber_state_rc_drop(&sub->_state);
 
     *sub = _ze_advanced_subscriber_null();
     return ret;
@@ -331,11 +357,25 @@ static inline void __unsafe_ze_advanced_subscriber_deliver_and_flush(_z_sample_t
 }
 
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
+// FIXME: Need to supply arg
+static inline void __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(
+    const _ze_closure_miss_intmap_t *miss_handlers, const z_entity_global_id_t *source_id, uint32_t nb) {
+    _ze_closure_miss_intmap_iterator_t it = _ze_closure_miss_intmap_iterator_make(miss_handlers);
+
+    ze_miss_t miss = {.source = *source_id, .nb = nb};
+
+    while (_ze_closure_miss_intmap_iterator_next(&it)) {
+        _ze_closure_miss_t *closure = _ze_closure_miss_intmap_iterator_value(&it);
+        if (closure != NULL && closure->call != NULL) {
+            (closure->call)(&miss, closure->context);
+        }
+    }
+}
+
+// SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
 static inline void __unsafe_ze_advanced_subscriber_flush_sequenced_source(
     _ze_advanced_subscriber_sequenced_state_t *state, _z_closure_sample_callback_t callback, void *ctx,
-    const _z_entity_global_id_t *source_id) {
-    (void)(source_id);
-
+    const _z_entity_global_id_t *source_id, _ze_closure_miss_intmap_t *miss_handlers) {
     if (state->_pending_queries == 0 && !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
         _z_uint32__z_sample_sortedmap_iterator_t it =
             _z_uint32__z_sample_sortedmap_iterator_make(&state->_pending_samples);
@@ -357,11 +397,15 @@ static inline void __unsafe_ze_advanced_subscriber_flush_sequenced_source(
                         callback(sample, ctx);
                     }
                 } else if (*source_sn > state->_last_delivered + 1) {
-                    // TODO: Call miss handlers
-                    state->_last_delivered = *source_sn;
+                    // Trigger missed sample callbacks
+                    uint32_t nb = *source_sn - state->_last_delivered - 1;
+                    __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(miss_handlers, source_id, nb);
+
+                    // Trigger sample callback
                     if (callback != NULL) {
                         callback(sample, ctx);
                     }
+                    state->_last_delivered = *source_sn;
                 }  // else duplicate sample
             }
         }
@@ -514,7 +558,11 @@ static bool __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_subscribe
                         return false;
                     }
                 } else {
-                    // TODO: Trigger missed sample callbacks
+                    // Trigger missed sample callbacks
+                    uint32_t nb = source_sn - state->_last_delivered - 1;
+                    __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(&states->_miss_handlers, &id, nb);
+
+                    // Trigger sample callbacks
                     if (states->_callback != NULL) {
                         states->_callback(sample, states->_ctx);
                     }
@@ -614,7 +662,7 @@ typedef enum {
 } _ze_advanced_subscriber_query_ctx_kind_t;
 
 typedef struct {
-    _ze_advanced_subscriber_state_simple_rc_t _statesref;
+    _ze_advanced_subscriber_state_rc_t _statesref;
     _z_condvar_t _condvar;
     _ze_advanced_subscriber_query_ctx_kind_t _kind;
 
@@ -626,7 +674,7 @@ typedef struct {
 
 static inline _ze_advanced_subscriber_query_ctx_t _ze_advanced_subscriber_query_ctx_null(void) {
     _ze_advanced_subscriber_query_ctx_t ctx = {0};
-    ctx._statesref = _ze_advanced_subscriber_state_simple_rc_null();
+    ctx._statesref = _ze_advanced_subscriber_state_rc_null();
     return ctx;
 }
 
@@ -643,8 +691,8 @@ void _ze_advanced_subscriber_query_reply_handler(z_loaned_reply_t *reply, void *
 
     _ze_advanced_subscriber_query_ctx_t *query_ctx = (_ze_advanced_subscriber_query_ctx_t *)ctx;
 
-    if (!_Z_SIMPLE_RC_IS_NULL(&query_ctx->_statesref)) {
-        _ze_advanced_subscriber_state_t *states = _ze_advanced_subscriber_state_simple_rc_value(&query_ctx->_statesref);
+    if (!_Z_RC_IS_NULL(&query_ctx->_statesref)) {
+        _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
 
         const z_loaned_sample_t *sample = z_reply_ok(reply);
         const z_loaned_keyexpr_t *keyexpr = z_sample_keyexpr(sample);
@@ -681,7 +729,7 @@ void __unsafe_ze_advanced_subscriber_initial_query_drop_handler(_ze_advanced_sub
                 _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_iterator_value(&it);
 
             __unsafe_ze_advanced_subscriber_flush_sequenced_source(sequenced_state, states->_callback, states->_ctx,
-                                                                   source_id);
+                                                                   source_id, &states->_miss_handlers);
             // TODO: Spawn periodic queries
         }
         for (_z_id__ze_advanced_subscriber_timestamped_state_hashmap_iterator_t it =
@@ -704,7 +752,8 @@ void __unsafe_ze_advanced_subscriber_sequenced_query_drop_handler(_ze_advanced_s
     if (state != NULL) {
         state->_pending_queries = (state->_pending_queries > 0) ? (state->_pending_queries - 1) : 0;
         if (states->_global_pending_queries == 0) {
-            __unsafe_ze_advanced_subscriber_flush_sequenced_source(state, states->_callback, states->_ctx, source_id);
+            __unsafe_ze_advanced_subscriber_flush_sequenced_source(state, states->_callback, states->_ctx, source_id,
+                                                                   &states->_miss_handlers);
         }
     }
 }
@@ -725,8 +774,8 @@ void __unsafe_ze_advanced_subscriber_timestamped_query_drop_handler(_ze_advanced
 void _ze_advanced_subscriber_query_drop_handler(void *ctx) {
     _ze_advanced_subscriber_query_ctx_t *query_ctx = (_ze_advanced_subscriber_query_ctx_t *)ctx;
 
-    if (!_Z_SIMPLE_RC_IS_NULL(&query_ctx->_statesref)) {
-        _ze_advanced_subscriber_state_t *states = _ze_advanced_subscriber_state_simple_rc_value(&query_ctx->_statesref);
+    if (!_Z_RC_IS_NULL(&query_ctx->_statesref)) {
+        _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
         if (_z_mutex_lock(&states->_mutex) == _Z_RES_OK) {
             switch (query_ctx->_kind) {
                 case _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_INITIAL:
@@ -744,29 +793,27 @@ void _ze_advanced_subscriber_query_drop_handler(void *ctx) {
             _z_condvar_signal(&query_ctx->_condvar);
             _z_mutex_unlock(&states->_mutex);
         }
-        _ze_advanced_subscriber_state_simple_rc_drop(&query_ctx->_statesref);
+        _ze_advanced_subscriber_state_rc_drop(&query_ctx->_statesref);
     }
 }
 
 static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_query_ctx_t *ctx,
-                                                    _ze_advanced_subscriber_state_simple_rc_t *rc_state,
+                                                    _ze_advanced_subscriber_state_rc_t *rc_state,
                                                     const z_loaned_keyexpr_t *keyexpr, const char *params) {
-    if (_Z_SIMPLE_RC_IS_NULL(rc_state)) {
+    if (_Z_RC_IS_NULL(rc_state)) {
         _Z_ERROR("Failed to run query - state is NULL");
         return _Z_ERR_GENERIC;
     }
-    _ze_advanced_subscriber_state_t *state = _ze_advanced_subscriber_state_simple_rc_value(rc_state);
-    _ze_advanced_subscriber_state_simple_rc_copy(&ctx->_statesref, rc_state);
+    _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(rc_state);
+    _ze_advanced_subscriber_state_rc_copy(&ctx->_statesref, rc_state);
 
-    _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&ctx->_condvar),
-                           _ze_advanced_subscriber_state_simple_rc_drop(&ctx->_statesref));
+    _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&ctx->_condvar), _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref));
 
     z_owned_closure_reply_t callback;
     z_closure_reply(&callback, _ze_advanced_subscriber_query_reply_handler, _ze_advanced_subscriber_query_drop_handler,
                     ctx);
 
-    _Z_CLEAN_RETURN_IF_ERR(_z_mutex_lock(&state->_mutex),
-                           _ze_advanced_subscriber_state_simple_rc_drop(&ctx->_statesref);
+    _Z_CLEAN_RETURN_IF_ERR(_z_mutex_lock(&state->_mutex), _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
                            _z_condvar_drop(&ctx->_condvar));
 
     z_get_options_t get_opts;
@@ -782,7 +829,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
 #endif
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _z_mutex_unlock(&state->_mutex);
-        _ze_advanced_subscriber_state_simple_rc_drop(&ctx->_statesref);
+        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
         _z_condvar_drop(&ctx->_condvar);
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -790,7 +837,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     _z_session_rc_drop(&sess_rc);
     if (res != _Z_RES_OK) {
         _z_mutex_unlock(&state->_mutex);
-        _ze_advanced_subscriber_state_simple_rc_drop(&ctx->_statesref);
+        _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
         _z_condvar_drop(&ctx->_condvar);
         return res;
     }
@@ -801,7 +848,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     return res;
 }
 
-static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subscriber_state_simple_rc_t *state,
+static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subscriber_state_rc_t *state,
                                                                const z_loaned_keyexpr_t *keyexpr, const char *params) {
     _ze_advanced_subscriber_query_ctx_t ctx = _ze_advanced_subscriber_query_ctx_null();
     ctx._kind = _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_INITIAL;
@@ -809,7 +856,7 @@ static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subs
     return _ze_advanced_subscriber_run_query(&ctx, state, keyexpr, params);
 }
 
-static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_subscriber_state_simple_rc_t *state,
+static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_subscriber_state_rc_t *state,
                                                                  const z_loaned_keyexpr_t *keyexpr, const char *params,
                                                                  const z_entity_global_id_t *source_id) {
     _ze_advanced_subscriber_query_ctx_t ctx = _ze_advanced_subscriber_query_ctx_null();
@@ -819,7 +866,7 @@ static inline z_result_t _ze_advanced_subscriber_sequenced_query(_ze_advanced_su
     return _ze_advanced_subscriber_run_query(&ctx, state, keyexpr, params);
 }
 
-static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_subscriber_state_simple_rc_t *state,
+static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_subscriber_state_rc_t *state,
                                                                    const z_loaned_keyexpr_t *keyexpr,
                                                                    const char *params, const z_id_t *id) {
     _ze_advanced_subscriber_query_ctx_t ctx = _ze_advanced_subscriber_query_ctx_null();
@@ -830,9 +877,9 @@ static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_
 }
 
 void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void *ctx) {
-    _ze_advanced_subscriber_state_simple_rc_t *rc_states = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_SIMPLE_RC_IS_NULL(rc_states)) {
-        _ze_advanced_subscriber_state_t *states = _ze_advanced_subscriber_state_simple_rc_value(rc_states);
+    _ze_advanced_subscriber_state_rc_t *rc_states = (_ze_advanced_subscriber_state_rc_t *)ctx;
+    if (!_Z_RC_IS_NULL(rc_states)) {
+        _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
         if (_z_mutex_lock(&states->_mutex) != _Z_RES_OK) {
             _Z_ERROR("Failed to lock mutex when processing received sample");
             return;
@@ -878,13 +925,13 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
 }
 
 void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
-    _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
-        _ze_advanced_subscriber_state_t *state = _ze_advanced_subscriber_state_simple_rc_value(rc_state);
+    _ze_advanced_subscriber_state_rc_t *rc_state = (_ze_advanced_subscriber_state_rc_t *)ctx;
+    if (!_Z_RC_IS_NULL(rc_state)) {
+        _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(rc_state);
         if (state->_dropper != NULL) {
             state->_dropper(state->_ctx);
         }
-        _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
+        _ze_advanced_subscriber_state_rc_drop(rc_state);
         z_free(ctx);
     }
 }
@@ -896,9 +943,9 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 }
 
 void _ze_advanced_subscriber_liveliness_drop_handler(void *ctx) {
-    _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
-        _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
+    _ze_advanced_subscriber_state_rc_t *rc_state = (_ze_advanced_subscriber_state_rc_t *)ctx;
+    if (!_Z_RC_IS_NULL(rc_state)) {
+        _ze_advanced_subscriber_state_rc_drop(rc_state);
         z_free(ctx);
     }
 }
@@ -910,9 +957,9 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
 }
 
 void _ze_advanced_subscriber_heartbeat_drop_handler(void *ctx) {
-    _ze_advanced_subscriber_state_simple_rc_t *rc_state = (_ze_advanced_subscriber_state_simple_rc_t *)ctx;
-    if (!_Z_SIMPLE_RC_IS_NULL(rc_state)) {
-        _ze_advanced_subscriber_state_simple_rc_drop(rc_state);
+    _ze_advanced_subscriber_state_rc_t *rc_state = (_ze_advanced_subscriber_state_rc_t *)ctx;
+    if (!_Z_RC_IS_NULL(rc_state)) {
+        _ze_advanced_subscriber_state_rc_drop(rc_state);
         z_free(ctx);
     }
 }
@@ -972,10 +1019,9 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         z_keyexpr_drop(z_keyexpr_move(&ke_pub)));
 
     // Declare subscriber
-    _ze_advanced_subscriber_state_simple_rc_t *sub_state =
-        _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-    if (_Z_SIMPLE_RC_IS_NULL(sub_state)) {
-        _ze_advanced_subscriber_state_simple_rc_drop(&sub->_val._state);
+    _ze_advanced_subscriber_state_rc_t *sub_state = _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
+    if (_Z_RC_IS_NULL(sub_state)) {
+        _ze_advanced_subscriber_state_rc_drop(&sub->_val._state);
         z_keyexpr_drop(z_keyexpr_move(&ke_pub));
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
@@ -984,13 +1030,13 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
     _Z_CLEAN_RETURN_IF_ERR(z_closure_sample(&subcriber_callback, _ze_advanced_subscriber_subscriber_callback,
                                             _ze_advanced_subscriber_subscriber_drop_handler, sub_state),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                           _ze_advanced_subscriber_state_simple_rc_drop(sub_state); z_free(sub_state);
-                           _ze_advanced_subscriber_state_simple_rc_drop(&sub->_val._state));
+                           _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
+                           _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
     _Z_CLEAN_RETURN_IF_ERR(z_declare_subscriber(zs, &sub->_val._subscriber, keyexpr,
                                                 z_closure_sample_move(&subcriber_callback), &opt.subscriber_options),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                           _ze_advanced_subscriber_state_simple_rc_drop(sub_state); z_free(sub_state);
-                           _ze_advanced_subscriber_state_simple_rc_drop(&sub->_val._state));
+                           _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
+                           _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
 
     if (opt.history.is_enabled) {
         // Query initial history
@@ -1013,9 +1059,9 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
             z_liveliness_subscriber_options_default(&liveliness_options);
             liveliness_options.history = true;
 
-            _ze_advanced_subscriber_state_simple_rc_t *liveliness_sub_state =
-                _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-            if (_Z_SIMPLE_RC_IS_NULL(sub_state)) {
+            _ze_advanced_subscriber_state_rc_t *liveliness_sub_state =
+                _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
+            if (_Z_RC_IS_NULL(sub_state)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                 _ze_advanced_subscriber_drop(&sub->_val);
                 return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -1025,13 +1071,13 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
             _Z_CLEAN_RETURN_IF_ERR(
                 z_closure_sample(&liveliness_callback, _ze_advanced_subscriber_liveliness_callback,
                                  _ze_advanced_subscriber_liveliness_drop_handler, liveliness_sub_state),
-                _ze_advanced_subscriber_state_simple_rc_drop(liveliness_sub_state);
+                _ze_advanced_subscriber_state_rc_drop(liveliness_sub_state);
                 z_free(liveliness_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                 _ze_advanced_subscriber_drop(&sub->_val));
             _Z_CLEAN_RETURN_IF_ERR(
                 z_liveliness_declare_subscriber(zs, &sub->_val._liveliness_subscriber, z_keyexpr_loan(&ke_pub),
                                                 z_closure_sample_move(&liveliness_callback), &liveliness_options),
-                _ze_advanced_subscriber_state_simple_rc_drop(liveliness_sub_state);
+                _ze_advanced_subscriber_state_rc_drop(liveliness_sub_state);
                 z_free(liveliness_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                 _ze_advanced_subscriber_drop(&sub->_val));
             sub->_val._has_liveliness_subscriber = true;
@@ -1041,9 +1087,9 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
     // Heartbeat subscriber
     if (opt.recovery.is_enabled && opt.recovery.last_sample_miss_detection.is_enabled &&
         opt.recovery.last_sample_miss_detection.periodic_queries_period_ms == 0) {
-        _ze_advanced_subscriber_state_simple_rc_t *heartbeat_sub_state =
-            _ze_advanced_subscriber_state_simple_rc_clone_as_ptr(&sub->_val._state);
-        if (_Z_SIMPLE_RC_IS_NULL(heartbeat_sub_state)) {
+        _ze_advanced_subscriber_state_rc_t *heartbeat_sub_state =
+            _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
+        if (_Z_RC_IS_NULL(heartbeat_sub_state)) {
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
             _ze_advanced_subscriber_drop(&sub->_val);
             return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
@@ -1052,12 +1098,12 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         z_owned_closure_sample_t heartbeat_callback;
         _Z_CLEAN_RETURN_IF_ERR(z_closure_sample(&heartbeat_callback, _ze_advanced_subscriber_heartbeat_callback,
                                                 _ze_advanced_subscriber_heartbeat_drop_handler, heartbeat_sub_state),
-                               _ze_advanced_subscriber_state_simple_rc_drop(heartbeat_sub_state);
+                               _ze_advanced_subscriber_state_rc_drop(heartbeat_sub_state);
                                z_free(heartbeat_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                _ze_advanced_subscriber_drop(&sub->_val));
         _Z_CLEAN_RETURN_IF_ERR(z_declare_subscriber(zs, &sub->_val._heartbeat_subscriber, z_keyexpr_loan(&ke_pub),
                                                     z_closure_sample_move(&heartbeat_callback), NULL),
-                               _ze_advanced_subscriber_state_simple_rc_drop(heartbeat_sub_state);
+                               _ze_advanced_subscriber_state_rc_drop(heartbeat_sub_state);
                                z_free(heartbeat_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                _ze_advanced_subscriber_drop(&sub->_val));
         sub->_val._has_heartbeat_subscriber = true;
@@ -1065,7 +1111,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
 
     // Declare liveliness token on keyexpr/suffix
     if (opt.subscriber_detection) {
-        _ze_advanced_subscriber_state_t *state = _ze_advanced_subscriber_state_simple_rc_value(&sub->_val._state);
+        _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&sub->_val._state);
 
         z_entity_global_id_t id = z_subscriber_id(z_subscriber_loan(&sub->_val._subscriber));
         z_owned_keyexpr_t suffix;
@@ -1114,44 +1160,89 @@ z_entity_global_id_t ze_advanced_subscriber_id(const ze_loaned_advanced_subscrib
     return z_subscriber_id(z_subscriber_loan(&sub->_subscriber));
 }
 
-// TODO
 z_result_t ze_advanced_subscriber_declare_sample_miss_listener(const ze_loaned_advanced_subscriber_t *subscriber,
                                                                ze_owned_sample_miss_listener_t *sample_miss_listener,
                                                                ze_moved_closure_miss_t *callback) {
-    (void)(subscriber);
-    (void)(sample_miss_listener);
-    (void)(callback);
-    return _Z_ERR_GENERIC;
+    if (subscriber == NULL || _Z_RC_IS_NULL(&subscriber->_state)) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+
+    ze_internal_sample_miss_listener_null(sample_miss_listener);
+
+    _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&subscriber->_state);
+
+    _Z_RETURN_IF_ERR(z_mutex_lock(&state->_mutex));
+
+    sample_miss_listener->_val._statesref = _ze_advanced_subscriber_state_rc_clone_as_weak(&subscriber->_state);
+    if (_Z_RC_IS_NULL(&sample_miss_listener->_val._statesref)) {
+        _z_mutex_unlock(&state->_mutex);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    sample_miss_listener->_val._id = state->_next_id++;
+
+    _ze_closure_miss_t *closure = z_malloc(sizeof(_ze_closure_miss_t));
+    if (closure == NULL) {
+        _ze_sample_miss_listener_clear(&sample_miss_listener->_val);
+        _z_mutex_unlock(&state->_mutex);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _ze_closure_miss_copy(closure, &callback->_this._val);
+    if (_ze_closure_miss_intmap_insert(&state->_miss_handlers, sample_miss_listener->_val._id, closure) == NULL) {
+        z_free(closure);
+        _ze_sample_miss_listener_clear(&sample_miss_listener->_val);
+        _z_mutex_unlock(&state->_mutex);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    _z_mutex_unlock(&state->_mutex);
+    return _Z_RES_OK;
 }
 
-// TODO
 z_result_t ze_advanced_subscriber_declare_background_sample_miss_listener(
     const ze_loaned_advanced_subscriber_t *subscriber, ze_moved_closure_miss_t *callback) {
-    (void)(subscriber);
-    (void)(callback);
-    return _Z_ERR_GENERIC;
+    ze_owned_sample_miss_listener_t listener;
+    _Z_RETURN_IF_ERR(ze_advanced_subscriber_declare_sample_miss_listener(subscriber, &listener, callback));
+    _ze_sample_miss_listener_clear(&listener._val);
+    return _Z_RES_OK;
 }
 
-// TODO
 z_result_t ze_advanced_subscriber_detect_publishers(const ze_loaned_advanced_subscriber_t *subscriber,
                                                     z_owned_subscriber_t *liveliness_subscriber,
                                                     z_moved_closure_sample_t *callback,
                                                     z_liveliness_subscriber_options_t *options) {
-    (void)(subscriber);
-    (void)(liveliness_subscriber);
-    (void)(callback);
-    (void)(options);
-    return _Z_ERR_GENERIC;
+    // Set options
+    z_liveliness_subscriber_options_t opt;
+    z_liveliness_subscriber_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+
+    if (subscriber == NULL || _Z_RC_IS_NULL(&subscriber->_state)) {
+        return _Z_ERR_ENTITY_UNKNOWN;
+    }
+
+    _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&subscriber->_state);
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
+#else
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
+#endif
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    z_result_t ret = z_liveliness_declare_subscriber(&sess_rc, liveliness_subscriber,
+                                                     z_keyexpr_loan(&state->_query_key_expr), callback, &opt);
+    _z_session_rc_drop(&sess_rc);
+    return ret;
 }
 
-// TODO
 z_result_t ze_advanced_subscriber_detect_publishers_background(const ze_loaned_advanced_subscriber_t *subscriber,
                                                                z_moved_closure_sample_t *callback,
                                                                z_liveliness_subscriber_options_t *options) {
-    (void)(subscriber);
-    (void)(callback);
-    (void)(options);
-    return _Z_ERR_GENERIC;
+    z_owned_subscriber_t liveliness_subscriber;
+    _Z_RETURN_IF_ERR(ze_advanced_subscriber_detect_publishers(subscriber, &liveliness_subscriber, callback, options));
+    _z_subscriber_clear(&liveliness_subscriber._val);
+    return _Z_RES_OK;
 }
 
 void ze_advanced_subscriber_history_options_default(ze_advanced_subscriber_history_options_t *options) {
@@ -1180,7 +1271,7 @@ void ze_advanced_subscriber_options_default(ze_advanced_subscriber_options_t *op
     options->history.is_enabled = false;
 
     ze_advanced_subscriber_recovery_options_default(&options->recovery);
-    options->history.is_enabled = false;
+    options->recovery.is_enabled = false;
 
     options->query_timeout_ms = 0;
     options->subscriber_detection = false;
