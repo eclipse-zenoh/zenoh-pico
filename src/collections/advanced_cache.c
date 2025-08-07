@@ -259,12 +259,12 @@ _ze_advanced_cache_t *_ze_advanced_cache_new(const z_loaned_session_t *zs, const
 z_result_t _ze_advanced_cache_add(_ze_advanced_cache_t *cache, _z_sample_t *sample) {
     if (cache == NULL || sample == NULL) {
         _Z_ERROR("Invalid cache or sample");
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     _z_sample_t *s = (_z_sample_t *)z_malloc(sizeof(_z_sample_t));
     if (s == NULL) {
         _Z_ERROR("Out of memory");
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 
     z_result_t res = _z_sample_move(s, sample);

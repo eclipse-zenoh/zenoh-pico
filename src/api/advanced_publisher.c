@@ -37,7 +37,7 @@ _ze_advanced_publisher_t _ze_advanced_publisher_null(void) {
 
 z_result_t _ze_undeclare_advanced_publisher_clear(_ze_advanced_publisher_t *pub) {
     if (pub == NULL || !_ze_advanced_publisher_check(pub)) {
-        return _Z_ERR_ENTITY_UNKNOWN;
+        _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 
     z_result_t ret = z_undeclare_publisher(z_publisher_move(&pub->_publisher));
@@ -161,7 +161,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
         if (cache == NULL) {
             z_publisher_drop(z_publisher_move(&pub->_val._publisher));
             z_keyexpr_drop(z_keyexpr_move(&suffix));
-            return _Z_ERR_GENERIC;
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
         }
         pub->_val._cache = cache;
     }
@@ -191,7 +191,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
                                                             z_owned_source_info_t *source_info,
                                                             z_timestamp_t *timestamp) {
     if (source_info == NULL || timestamp == NULL) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
 
     const z_loaned_publisher_t *publisher = z_publisher_loan(&pub->_publisher);
@@ -214,7 +214,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
         _Z_CLEAN_RETURN_IF_ERR(z_timestamp_new(timestamp, &sess_rc), _z_session_rc_drop(&sess_rc));
         _z_session_rc_drop(&sess_rc);
     } else {
-        return _Z_ERR_SESSION_CLOSED;
+        _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     return _Z_RES_OK;
 }

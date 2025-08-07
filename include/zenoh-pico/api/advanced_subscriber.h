@@ -46,6 +46,7 @@ typedef struct {
     uint32_t _last_delivered;
     uint64_t _pending_queries;
     _z_uint32__z_sample_sortedmap_t _pending_samples;
+    z_owned_keyexpr_t _query_keyexpr;
 } _ze_advanced_subscriber_sequenced_state_t;
 
 static inline size_t _ze_advanced_subscriber_sequenced_state_size(_ze_advanced_subscriber_sequenced_state_t *s) {
@@ -129,12 +130,12 @@ typedef struct {
     _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_t _sequenced_states;
     _z_id__ze_advanced_subscriber_timestamped_state_hashmap_t _timestamped_states;
     _z_session_weak_t _zn;
-    z_owned_keyexpr_t _key_expr;
-    z_owned_keyexpr_t _query_key_expr;
+    z_owned_keyexpr_t _keyexpr;
     bool _retransmission;
     bool _has_period;
     // TODO: _period;
     size_t _history_depth;
+    uint64_t _history_age;
     z_query_target_t _query_target;
     uint64_t _query_timeout;
     _z_closure_sample_callback_t _callback;

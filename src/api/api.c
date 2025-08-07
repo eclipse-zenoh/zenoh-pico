@@ -189,7 +189,7 @@ z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left
 z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
     if (_z_string_len(&prefix->_val._suffix) == 0) {
         if (_z_string_len(&right->_suffix) == 0) {
-            return _Z_ERR_INVALID;
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);
         }
         return z_keyexpr_clone(prefix, right);
     } else {
@@ -1845,7 +1845,7 @@ z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_s
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        return _Z_ERR_SESSION_CLOSED;
+        _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     // Set options
     z_query_reply_options_t opts;
