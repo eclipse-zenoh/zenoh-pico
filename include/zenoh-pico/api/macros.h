@@ -601,7 +601,7 @@ inline void z_internal_null(z_owned_publisher_t* v) { z_internal_publisher_null(
 inline void z_internal_null(ze_owned_advanced_publisher_t* v) { ze_internal_advanced_publisher_null(v); }
 inline void z_internal_null(z_owned_querier_t* v) { z_internal_querier_null(v); }
 inline void z_internal_null(z_owned_matching_listener_t* v) { z_internal_matching_listener_null(v); }
-inline void z_internal_null(ze_owned_sample_miss_listener_t* v) { ze_internal_sample_miss_null(v); }
+inline void z_internal_null(ze_owned_sample_miss_listener_t* v) { ze_internal_sample_miss_listener_null(v); }
 inline void z_internal_null(z_owned_keyexpr_t* v) { z_internal_keyexpr_null(v); }
 inline void z_internal_null(z_owned_config_t* v) { z_internal_config_null(v); }
 inline void z_internal_null(z_owned_subscriber_t* v) { z_internal_subscriber_null(v); }
