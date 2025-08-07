@@ -63,7 +63,7 @@ elif FRAMEWORK == 'arduino':
             "-<system/windows/>",
             "-<system/zephyr/>",
         ]
-        CPPDEFINES = ["ZENOH_ARDUINO_ESP32", "ZENOH_C_STANDARD=99"]
+        CPPDEFINES = ["ZENOH_ARDUINO_ESP32", "ZENOH_COMPILER_GCC", "ZENOH_C_STANDARD=99"]
     if PLATFORM == 'ststm32':
         BOARD = env.get("PIOENV")
         if BOARD == 'opencr':
