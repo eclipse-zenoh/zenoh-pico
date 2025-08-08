@@ -123,7 +123,7 @@ _Z_INT_MAP_DEFINE(_ze_closure_miss, _ze_closure_miss_t)
 
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex;
+    z_owned_mutex_t _mutex;
 #endif
     size_t _next_id;
     uint64_t _global_pending_queries;
@@ -133,7 +133,7 @@ typedef struct {
     z_owned_keyexpr_t _keyexpr;
     bool _retransmission;
     bool _has_period;
-    // TODO: _period;
+    uint64_t _period_ms;
     size_t _history_depth;
     uint64_t _history_age;
     z_query_target_t _query_target;
