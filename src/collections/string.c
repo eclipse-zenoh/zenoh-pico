@@ -208,3 +208,5 @@ char *_z_str_from_string_clone(const _z_string_t *str) {
 }
 
 bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
+
+int _z_str_cmp(const char *left, const char *right) { return strcmp(left, right); }
