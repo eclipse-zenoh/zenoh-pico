@@ -20,6 +20,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/liveliness.h"
 #include "zenoh-pico/api/primitives.h"
+#include "zenoh-pico/api/serialization.h"
 #include "zenoh-pico/utils/query_params.h"
 #include "zenoh-pico/utils/string.h"
 #include "zenoh-pico/utils/time_range.h"
@@ -929,7 +930,7 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
                 !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
                 char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
                 _z_query_param_range_t range = {._has_start = state->_has_last_delivered,
-                                                ._start = state->_last_delivered,
+                                                ._start = state->_has_last_delivered ? state->_last_delivered + 1 : 0,
                                                 ._has_end = false,
                                                 ._end = 0};
 
@@ -1211,10 +1212,118 @@ void _ze_advanced_subscriber_liveliness_drop_handler(void *ctx) {
     }
 }
 
-// TODO
 void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void *ctx) {
-    (void)(ctx);
-    (void)(sample);
+    if (z_sample_kind(sample) != Z_SAMPLE_KIND_PUT) {
+        return;
+    }
+
+    _ze_advanced_subscriber_state_rc_t *rc_states = (_ze_advanced_subscriber_state_rc_t *)ctx;
+    if (_Z_RC_IS_NULL(rc_states)) {
+        _Z_ERROR("Heartbeat subscriber callback called with NULL state reference");
+        return;
+    }
+    _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
+
+    const z_loaned_keyexpr_t *ke = z_sample_keyexpr(sample);
+    z_entity_global_id_t id = _z_entity_global_id_null();
+    // Parse key expression to extract ZID and EID
+    if (!_ze_advanced_subscriber_parse_liveliness_keyexpr(ke, &id)) {
+        z_view_string_t kestr;
+        z_keyexpr_as_view_string(ke, &kestr);
+        _Z_WARN("Received malformed heatbeat key expression: '%.*s'\n", (int)z_string_len(z_view_string_loan(&kestr)),
+                z_string_data(z_view_string_loan(&kestr)));
+        return;
+    }
+
+    const z_loaned_bytes_t *payload = z_sample_payload(sample);
+    if (payload == NULL || z_bytes_len(payload) < 4) {
+        _Z_WARN("Received heartbeat with invalid payload length: %zu", z_bytes_len(payload));
+        return;
+    }
+
+    ze_deserializer_t deserializer = ze_deserializer_from_bytes(payload);
+    uint32_t heartbeat_sn;
+    if (ze_deserializer_deserialize_uint32(&deserializer, &heartbeat_sn) != _Z_RES_OK) {
+        _Z_WARN("Failed to deserialize heartbeat sequence number");
+        return;
+    }
+    if (!ze_deserializer_is_done(&deserializer)) {
+        _Z_WARN("Heartbeat payload contains unexpected data after sequence number");
+        return;
+    }
+
+    if (_z_mutex_lock(&states->_mutex) != _Z_RES_OK) {
+        _Z_ERROR("Failed to lock heartbeat subscriber callback mutex");
+        return;
+    }
+
+    _ze_advanced_subscriber_sequenced_state_t *state =
+        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states, &id);
+    if (state == NULL) {
+        if (states->_global_pending_queries > 0) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_TRACE("Skipping heatbeat due to pending global query");
+            return;
+        }
+
+        z_entity_global_id_t *new_id = z_malloc(sizeof(z_entity_global_id_t));
+        if (new_id == NULL) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_ERROR("Failed to allocate memory for new sequenced state ID");
+            return;
+        }
+        *new_id = id;
+
+        _ze_advanced_subscriber_sequenced_state_t *new_state =
+            z_malloc(sizeof(_ze_advanced_subscriber_sequenced_state_t));
+        if (new_state == NULL) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_ERROR("Failed to allocate memory for new sequenced state");
+            z_free(new_id);
+            return;
+        }
+        z_result_t res =
+            _ze_advanced_subscriber_sequenced_state_init(new_state, z_keyexpr_loan(&states->_keyexpr), &id);
+        if (res != _Z_RES_OK) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_ERROR("Failed to initialize new sequenced state: %i", res);
+            z_free(new_id);
+            z_free(new_state);
+            return;
+        }
+        state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_insert(&states->_sequenced_states,
+                                                                                           new_id, new_state);
+        if (state == NULL) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_ERROR("Failed to insert new sequenced state into hashmap");
+            z_free(new_id);
+            z_free(new_state);
+            return;
+        }
+    }
+
+    if (!state->_has_last_delivered || (heartbeat_sn > state->_last_delivered && state->_pending_queries == 0)) {
+        char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
+        _z_query_param_range_t range = {._has_start = state->_has_last_delivered,
+                                        ._start = state->_has_last_delivered ? state->_last_delivered + 1 : 0,
+                                        ._has_end = true,
+                                        ._end = heartbeat_sn};
+
+        if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
+            _z_mutex_unlock(&states->_mutex);
+            _Z_ERROR("Failed to prepare query for missing samples");
+            return;
+        } else {
+            state->_pending_queries++;
+            if (_ze_advanced_subscriber_sequenced_query(rc_states, ke, params, &id) != _Z_RES_OK) {
+                state->_pending_queries--;
+                _z_mutex_unlock(&states->_mutex);
+                _Z_ERROR("Failed to query for missing samples");
+                return;
+            }
+        }
+    }
+    _z_mutex_unlock(&states->_mutex);
 }
 
 void _ze_advanced_subscriber_heartbeat_drop_handler(void *ctx) {
@@ -1275,7 +1384,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         z_keyexpr_drop(z_keyexpr_move(&ke_pub)));
 
     // Create Advanced Subscriber state
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_new(&sub->_val._state, zs, callback, keyexpr, options),
+    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_new(&sub->_val._state, zs, callback, keyexpr, &opt),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub)));
 
     // Declare subscriber
@@ -1330,7 +1439,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
 
             _ze_advanced_subscriber_state_rc_t *liveliness_sub_state =
                 _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
-            if (_Z_RC_IS_NULL(sub_state)) {
+            if (_Z_RC_IS_NULL(liveliness_sub_state)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                 _ze_advanced_subscriber_drop(&sub->_val);
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
