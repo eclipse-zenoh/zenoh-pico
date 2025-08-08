@@ -88,7 +88,9 @@ bool _z_str_se_atoui(const _z_str_se_t *str, uint32_t *result);
  *   dest       - Pointer to the destination buffer.
  *   dest_len   - Total size of the destination buffer.
  *   offset     - Pointer to the current write offset; may be NULL to use offset 0 without updating, otherwise will be
- * updated if the copy succeeds. src        - Pointer to the source data. len        - Number of bytes to copy.
+ * updated if the copy succeeds.
+ *   src        - Pointer to the source data.
+ *   len        - Number of bytes to copy.
  *
  * Returns:
  *   true  - If the copy succeeds (bounds are respected and pointers are valid).

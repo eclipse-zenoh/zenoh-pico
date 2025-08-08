@@ -363,28 +363,6 @@ static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_
 }
 
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
-static inline void __unsafe_ze_advanced_subscriber_deliver_and_flush(_z_sample_t *sample, uint32_t source_sn,
-                                                                     _z_closure_sample_callback_t callback, void *ctx,
-                                                                     _ze_advanced_subscriber_sequenced_state_t *state) {
-    if (callback != NULL) {
-        callback(sample, ctx);
-    }
-    state->_last_delivered = source_sn;
-    state->_has_last_delivered = true;
-
-    uint32_t next_source_sn = source_sn + 1;
-    _z_sample_t *next_sample = _z_uint32__z_sample_sortedmap_get(&state->_pending_samples, &next_source_sn);
-    while (next_sample != NULL) {
-        if (callback != NULL) {
-            callback(next_sample, ctx);
-        }
-        _z_uint32__z_sample_sortedmap_remove(&state->_pending_samples, &next_source_sn);
-        state->_last_delivered = next_source_sn++;
-        next_sample = _z_uint32__z_sample_sortedmap_get(&state->_pending_samples, &next_source_sn);
-    }
-}
-
-// SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
 static inline void __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(
     const _ze_closure_miss_intmap_t *miss_handlers, const z_entity_global_id_t *source_id, uint32_t nb) {
     _ze_closure_miss_intmap_iterator_t it = _ze_closure_miss_intmap_iterator_make(miss_handlers);
@@ -399,45 +377,90 @@ static inline void __unsafe_ze_advanced_subscriber_trigger_miss_handler_callback
     }
 }
 
+/*
+ * Compute the next sequence number after `last` in 32-bit serial number space.
+ * Wraps from UINT32_MAX back to 0.
+ */
+static inline uint32_t _ze_advanced_subscriber_sn_next(uint32_t last) {
+    return (last == UINT32_MAX) ? 0u : (last + 1u);
+}
+
+/*
+ * Test whether `current` is the immediate successor of `last` in
+ * 32-bit serial number space (wrap-safe).
+ */
+static inline bool _ze_advanced_subscriber_sn_is_next(uint32_t last, uint32_t current) {
+    return (current == _ze_advanced_subscriber_sn_next(last));
+}
+
+/*
+ * Compute signed wrap-safe difference between two 32-bit sequence numbers.
+ * Positive if 'a' is newer than 'b', negative if older, zero if equal.
+ * Follows RFC 1982 serial number arithmetic.
+ *
+ * Range: [-2^31+1, 2^31-1]
+ */
+static inline int64_t _ze_advanced_subscriber_sn_diff(uint32_t a, uint32_t b) { return (int64_t)((int32_t)(a - b)); }
+
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
+static inline void __unsafe_ze_advanced_subscriber_deliver_and_flush(_z_sample_t *sample, uint32_t source_sn,
+                                                                     _z_closure_sample_callback_t callback, void *ctx,
+                                                                     _ze_advanced_subscriber_sequenced_state_t *state) {
+    if (callback != NULL) {
+        callback(sample, ctx);
+    }
+    state->_last_delivered = source_sn;
+    state->_has_last_delivered = true;
+
+    uint32_t next_sn = _ze_advanced_subscriber_sn_next(source_sn);
+    _z_sample_t *next_sample = _z_uint32__z_sample_sortedmap_get(&state->_pending_samples, &next_sn);
+    while (next_sample != NULL) {
+        if (callback != NULL) {
+            callback(next_sample, ctx);
+        }
+        _z_uint32__z_sample_sortedmap_remove(&state->_pending_samples, &next_sn);
+        state->_last_delivered = next_sn;
+        next_sn = _ze_advanced_subscriber_sn_next(next_sn);
+        next_sample = _z_uint32__z_sample_sortedmap_get(&state->_pending_samples, &next_sn);
+    }
+}
+
+// SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
+// FIXME: Ordered map - this doesn't handle sn wrap
 static inline void __unsafe_ze_advanced_subscriber_flush_sequenced_source(
     _ze_advanced_subscriber_sequenced_state_t *state, _z_closure_sample_callback_t callback, void *ctx,
     const _z_entity_global_id_t *source_id, _ze_closure_miss_intmap_t *miss_handlers) {
-    if (state->_pending_queries == 0 && !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
-        _z_uint32__z_sample_sortedmap_iterator_t it =
-            _z_uint32__z_sample_sortedmap_iterator_make(&state->_pending_samples);
+    if (state->_pending_queries != 0 || _z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
+        return;  // Pending queries or no samples to deliver
+    }
 
-        while (_z_uint32__z_sample_sortedmap_iterator_next(&it)) {
-            uint32_t *source_sn = _z_uint32__z_sample_sortedmap_iterator_key(&it);
-            _z_sample_t *sample = _z_uint32__z_sample_sortedmap_iterator_value(&it);
+    _z_uint32__z_sample_sortedmap_iterator_t it = _z_uint32__z_sample_sortedmap_iterator_make(&state->_pending_samples);
+    while (_z_uint32__z_sample_sortedmap_iterator_next(&it)) {
+        const uint32_t *source_sn = _z_uint32__z_sample_sortedmap_iterator_key(&it);
+        _z_sample_t *sample = _z_uint32__z_sample_sortedmap_iterator_value(&it);
 
-            if (!state->_has_last_delivered) {
+        if (!state->_has_last_delivered) {
+            state->_last_delivered = *source_sn;
+            state->_has_last_delivered = true;
+            if (callback != NULL) {
+                callback(sample, ctx);
+            }
+        } else {
+            uint32_t next_sn = _ze_advanced_subscriber_sn_next(state->_last_delivered);
+            int64_t diff = _ze_advanced_subscriber_sn_diff(*source_sn, next_sn);
+            if (diff >= 0) {
+                if (diff > 0) {
+                    __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(miss_handlers, source_id,
+                                                                                   (uint32_t)diff);
+                }
                 state->_last_delivered = *source_sn;
-                state->_has_last_delivered = true;
                 if (callback != NULL) {
                     callback(sample, ctx);
                 }
-            } else {
-                if (*source_sn == state->_last_delivered + 1) {
-                    state->_last_delivered = *source_sn;
-                    if (callback != NULL) {
-                        callback(sample, ctx);
-                    }
-                } else if (*source_sn > state->_last_delivered + 1) {
-                    // Trigger missed sample callbacks
-                    uint32_t nb = *source_sn - state->_last_delivered - 1;
-                    __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(miss_handlers, source_id, nb);
-
-                    // Trigger sample callback
-                    if (callback != NULL) {
-                        callback(sample, ctx);
-                    }
-                    state->_last_delivered = *source_sn;
-                }  // else duplicate sample
-            }
+            }  // else older or duplicate sample
         }
-        _z_uint32__z_sample_sortedmap_clear(&state->_pending_samples);
     }
+    _z_uint32__z_sample_sortedmap_clear(&state->_pending_samples);
 }
 
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
@@ -464,14 +487,14 @@ static inline void __unsafe_ze_advanced_subscriber_flush_timestamped_source(
 }
 
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
-// Sets new_source to true for new sequenced sources, false otherwise
+// Sets new_sequenced_source to true for new sequenced sources, false otherwise
 static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_subscriber_state_t *states,
-                                                                z_loaned_sample_t *sample, bool *new_source) {
-    if (states == NULL || sample == NULL || new_source == NULL) {
+                                                                z_loaned_sample_t *sample, bool *new_sequenced_source) {
+    if (states == NULL || sample == NULL || new_sequenced_source == NULL) {
         _Z_ERROR("Invalid arguments to __unsafe_ze_advanced_subscriber_handle_sample");
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
-    *new_source = false;
+    *new_sequenced_source = false;
 
     const z_loaned_source_info_t *source_info = z_sample_source_info(sample);
     const z_timestamp_t *timestamp = z_sample_timestamp(sample);
@@ -482,7 +505,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
         _ze_advanced_subscriber_sequenced_state_t *state =
             _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states, &id);
         if (state == NULL) {
-            *new_source = true;
+            *new_sequenced_source = true;
 
             z_entity_global_id_t *new_id = z_malloc(sizeof(z_entity_global_id_t));
             if (new_id == NULL) {
@@ -556,8 +579,12 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
                     }
                 }
             }
-        } else if (state->_has_last_delivered && source_sn != state->_last_delivered + 1) {
-            if (source_sn > state->_last_delivered) {
+        } else if (state->_has_last_delivered) {
+            uint32_t next_sn = _ze_advanced_subscriber_sn_next(state->_last_delivered);
+            if (source_sn == next_sn) {
+                __unsafe_ze_advanced_subscriber_deliver_and_flush(sample, source_sn, states->_callback, states->_ctx,
+                                                                  state);
+            } else if (_ze_advanced_subscriber_sn_diff(source_sn, next_sn) > 0) {
                 if (states->_retransmission) {
                     uint32_t *new_source_sn = z_malloc(sizeof(uint32_t));
                     if (new_source_sn == NULL) {
@@ -584,15 +611,15 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
                         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                     }
                 } else {
-                    // Trigger missed sample callbacks
-                    uint32_t nb = source_sn - state->_last_delivered - 1;
-                    __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(&states->_miss_handlers, &id, nb);
-
-                    // Trigger sample callbacks
+                    uint32_t nb = (uint32_t)_ze_advanced_subscriber_sn_diff(source_sn, next_sn);
+                    if (nb > 0) {
+                        __unsafe_ze_advanced_subscriber_trigger_miss_handler_callbacks(&states->_miss_handlers, &id,
+                                                                                       nb);
+                    }
+                    state->_last_delivered = source_sn;
                     if (states->_callback != NULL) {
                         states->_callback(sample, states->_ctx);
                     }
-                    state->_last_delivered = source_sn;
                 }
             }
         } else {
@@ -929,10 +956,11 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
             if (state != NULL && states->_retransmission && state->_pending_queries == 0 &&
                 !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
                 char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
-                _z_query_param_range_t range = {._has_start = state->_has_last_delivered,
-                                                ._start = state->_has_last_delivered ? state->_last_delivered + 1 : 0,
-                                                ._has_end = false,
-                                                ._end = 0};
+                _z_query_param_range_t range = {
+                    ._has_start = state->_has_last_delivered,
+                    ._start = state->_has_last_delivered ? _ze_advanced_subscriber_sn_next(state->_last_delivered) : 0u,
+                    ._has_end = false,
+                    ._end = 0};
 
                 if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
                     _z_mutex_unlock(&states->_mutex);
@@ -1021,7 +1049,7 @@ static bool _ze_advanced_subscriber_parse_liveliness_keyexpr(const z_loaned_keye
                                                                                      &id->eid)) {
                         // Invalid EID
                         *id = _z_entity_global_id_null();
-                        printf("Invalid EID\n");
+                        _Z_TRACE("Received liveliness key expression with invalid EID");
                         return false;
                     }
                     break;
@@ -1033,7 +1061,7 @@ static bool _ze_advanced_subscriber_parse_liveliness_keyexpr(const z_loaned_keye
                     if (!_z_id_check(id->zid)) {
                         // Invalid Zenoh ID
                         *id = _z_entity_global_id_null();
-                        printf("Invalid ZID\n");
+                        _Z_TRACE("Received liveliness key expression with invalid ZID");
                         return false;
                     }
                     break;
@@ -1043,7 +1071,7 @@ static bool _ze_advanced_subscriber_parse_liveliness_keyexpr(const z_loaned_keye
                     if (segment_len != _Z_KEYEXPR_ADV_PREFIX_LEN ||
                         strncmp(segment.start, _Z_KEYEXPR_ADV_PREFIX, _Z_KEYEXPR_ADV_PREFIX_LEN) != 0) {
                         *id = _z_entity_global_id_null();
-                        printf("Invalid _Z_KEYEXPR_ADV_PREFIX\n");
+                        _Z_TRACE("Received liveliness key expression with invalid segment");
                         return false;
                     }
                     break;
@@ -1230,7 +1258,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
     if (!_ze_advanced_subscriber_parse_liveliness_keyexpr(ke, &id)) {
         z_view_string_t kestr;
         z_keyexpr_as_view_string(ke, &kestr);
-        _Z_WARN("Received malformed heatbeat key expression: '%.*s'\n", (int)z_string_len(z_view_string_loan(&kestr)),
+        _Z_WARN("Received malformed heartbeat key expression: '%.*s'\n", (int)z_string_len(z_view_string_loan(&kestr)),
                 z_string_data(z_view_string_loan(&kestr)));
         return;
     }
@@ -1262,7 +1290,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
     if (state == NULL) {
         if (states->_global_pending_queries > 0) {
             _z_mutex_unlock(&states->_mutex);
-            _Z_TRACE("Skipping heatbeat due to pending global query");
+            _Z_TRACE("Skipping heartbeat due to pending global query");
             return;
         }
 
@@ -1302,12 +1330,14 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
         }
     }
 
-    if (!state->_has_last_delivered || (heartbeat_sn > state->_last_delivered && state->_pending_queries == 0)) {
+    if (!state->_has_last_delivered ||
+        (_ze_advanced_subscriber_sn_diff(heartbeat_sn, state->_last_delivered) > 0 && state->_pending_queries == 0)) {
         char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
-        _z_query_param_range_t range = {._has_start = state->_has_last_delivered,
-                                        ._start = state->_has_last_delivered ? state->_last_delivered + 1 : 0,
-                                        ._has_end = true,
-                                        ._end = heartbeat_sn};
+        _z_query_param_range_t range = {
+            ._has_start = state->_has_last_delivered,
+            ._start = state->_has_last_delivered ? _ze_advanced_subscriber_sn_next(state->_last_delivered) : 0u,
+            ._has_end = true,
+            ._end = heartbeat_sn};
 
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
             _z_mutex_unlock(&states->_mutex);
@@ -1395,14 +1425,14 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 
-    z_owned_closure_sample_t subcriber_callback;
-    _Z_CLEAN_RETURN_IF_ERR(z_closure_sample(&subcriber_callback, _ze_advanced_subscriber_subscriber_callback,
+    z_owned_closure_sample_t subscriber_callback;
+    _Z_CLEAN_RETURN_IF_ERR(z_closure_sample(&subscriber_callback, _ze_advanced_subscriber_subscriber_callback,
                                             _ze_advanced_subscriber_subscriber_drop_handler, sub_state),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                            _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
                            _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
     _Z_CLEAN_RETURN_IF_ERR(z_declare_subscriber(zs, &sub->_val._subscriber, keyexpr,
-                                                z_closure_sample_move(&subcriber_callback), &opt.subscriber_options),
+                                                z_closure_sample_move(&subscriber_callback), &opt.subscriber_options),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                            _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
                            _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
