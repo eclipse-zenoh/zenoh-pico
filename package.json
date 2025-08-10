@@ -1,0 +1,46 @@
+{
+    "name": "zenoh-pico",
+    "description": "Eclipse zenoh C client library for RT-Thread",
+    "description_zh": "Eclipse zenoh C客户端库的RT-Thread适配版本",
+    "keywords": [
+        "iot",
+        "zenoh",
+        "pub-sub",
+        "query",
+        "networking",
+        "communication"
+    ],
+    "category": "IoT",
+    "author": {
+        "name": "ZettaScale Technology",
+        "email": "zenoh@zettascale.tech"
+    },
+    "license": "EPL-2.0 OR Apache-2.0",
+    "repository": "https://github.com/eclipse-zenoh/zenoh-pico.git",
+    "version": "1.0.0",
+    "VER_SHA": "fill_in_by_script",
+    "site": [
+        {
+            "version": "v1.0.0",
+            "URL": "https://github.com/eclipse-zenoh/zenoh-pico/archive/refs/tags/1.0.0.zip",
+            "filename": "zenoh-pico-1.0.0.zip",
+            "VER_SHA": "fill_in_by_script"
+        },
+        {
+            "version": "latest",
+            "URL": "https://github.com/eclipse-zenoh/zenoh-pico.git",
+            "filename": "Null for git"
+        }
+    ],
+    "example": [
+        "examples/rtthread/z_pub.c",
+        "examples/rtthread/z_sub.c",
+        "examples/rtthread/z_get.c",
+        "examples/rtthread/z_put.c",
+        "examples/rtthread/z_test.c"
+    ],
+    "docs": [
+        "README_RTTHREAD.md",
+        "README.md"
+    ]
+}
