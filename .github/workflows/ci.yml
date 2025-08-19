@@ -462,6 +462,42 @@ jobs:
     name: Run integration tests
     uses: ./.github/workflows/integration.yaml
 
+  arduino_esp32:
+    name: Build Arduino ESP32
+    uses: ./.github/workflows/arduino_esp32.yaml
+
+  emscripten:
+    name: Build Emscripten
+    uses: ./.github/workflows/emscripten.yaml
+
+  espidf:
+    name: Build ESP-IDF
+    uses: ./.github/workflows/espidf.yaml
+
+  freertos:
+    name: Build FreeRTOS
+    uses: ./.github/workflows/freertos_plus_tcp.yaml
+
+  mbed:
+    name: Build Mbed
+    uses: ./.github/workflows/mbed.yaml
+
+  rpi_pico:
+    name: Build Raspberry Pi Pico
+    uses: ./.github/workflows/rpi_pico.yaml
+
+  zephyr:
+    name: Build Zephyr
+    uses: ./.github/workflows/zephyr.yaml
+
+  codacy-security-scan:
+    name: Codacy Security Scan
+    uses: ./.github/workflows/codacy-analysis.yml
+
+  cpp_check:
+    name: CppCheck
+    uses: ./.github/workflows/cpp-check.yaml
+
   # NOTE: In GitHub repository settings, the "Require status checks to pass
   # before merging" branch protection rule ensures that commits are only merged
   # from branches where specific status checks have passed. These checks are
@@ -470,7 +506,7 @@ jobs:
   ci:
     name: CI status checks
     runs-on: ubuntu-latest
-    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, no_interest_build, no_liveliness_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, memory_leak_unit_tests, unicast_peer_test, multicast_peer_test]
+    needs: [run_tests, check_format, c99_build, raweth_build, zenoh_build, modular_build, unstable_build, no_interest_build, no_liveliness_build, st_build, fragment_test, attachment_test, memory_leak_test, no_router, connection_restore_test, markdown_lint, build_shared, build_static, integration, memory_leak_unit_tests, unicast_peer_test, multicast_peer_test, arduino_esp32, emscripten, espidf, freertos, mbed, rpi_pico, zephyr, codacy-security-scan, cpp_check]
     if: always()
     steps:
       - name: Check whether all jobs pass
