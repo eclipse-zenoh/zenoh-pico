@@ -14,18 +14,19 @@
 name: cpp-check
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       zenoh_cpp_branch:
         description: 'Branch of zenoh-cpp to use'
         required: false
         default: 'main'
+  workflow_call:
+    inputs:
+      zenoh_cpp_branch:
+        description: 'Branch of zenoh-cpp to use'
+        required: false
+        default: 'main'
+        type: string
 
 jobs:
   build-and-test:
