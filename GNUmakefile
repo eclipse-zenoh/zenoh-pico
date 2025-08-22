@@ -112,7 +112,11 @@ install: $(BUILD_DIR)/Makefile
 	cmake --install $(BUILD_DIR)
 
 test: make
-	ctest --verbose --test-dir build
+	if [ "$(shell uname -s)" = "Darwin" ]; then \
+		sudo ctest --verbose --test-dir build; \
+	else \
+		ctest --verbose --test-dir build; \
+	fi
 
 crossbuilds: $(CROSSBUILD_TARGETS)
 

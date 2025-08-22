@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         unstable: [0, 1]
 
     steps:
@@ -79,6 +79,12 @@ jobs:
         cmake --build . --target tests --config Release
 
     - name: run tests
+      shell: bash
       run: |
         cd zenoh-cpp/build
-        ctest -C Release --output-on-failure
+        # On macOS, sudo is required to run tests due to LAN access permissions
+        if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+          sudo ctest -C Release --output-on-failure
+        else
+          ctest -C Release --output-on-failure
+        fi
