@@ -33,6 +33,8 @@ c_autodoc_compilation_args = [
     "-DSPHINX_DOCS",
     "-DZ_FEATURE_UNSTABLE_API=1",
     "-DZ_FEATURE_PUBLICATION=1",
+    "-DZ_FEATURE_ADVANCED_PUBLICATION=1",
+    "-DZ_FEATURE_ADVANCED_SUBSCRIPTION=1",
     "-DZ_FEATURE_SUBSCRIPTION=1",
     "-DZ_FEATURE_QUERY=1",
     "-DZ_FEATURE_QUERYABLE=1",
@@ -40,6 +42,7 @@ c_autodoc_compilation_args = [
     "-DZ_FEATURE_LIVELINESS=1",
     "-DZ_FEATURE_MATCHING=1",
     "-DZ_FEATURE_SCOUTING=1",
+    "-DZ_FEATURE_PERIODIC_TASKS=1",
 ]
 
 # -- Options for HTML output -------------------------------------------------
