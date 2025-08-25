@@ -27,28 +27,27 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install requirements
-        run: |
-          echo "No requirements need to be installed"
-
-      - name: Install PlatformIO
-        run: |
-          curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
-          python3 get-platformio.py
-          . $HOME/.platformio/penv/bin/activate
-          platformio update
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
 
       - name: Set up project
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           mkdir -p $ARDUINO_BASE
           cd $ARDUINO_BASE
-          platformio init -b esp32thing_plus -O "-DZ_FEATURE_LINK_BLUETOOTH=1 -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG" -O "lib_ldf_mode=deep+"
+          pio init -b esp32thing_plus -O "-DZ_FEATURE_LINK_BLUETOOTH=1 -DZ_FEATURE_LINK_SERIAL=1" -O "build_flags=-DZENOH_COMPILER_GCC -DZENOH_LOG_DEBUG" -O "lib_ldf_mode=deep+"
 
           cd $ARDUINO_BASE/lib
           ln -s $ZENOH_PICO_BASE
@@ -60,81 +59,75 @@ jobs:
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_pub.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
 
       - name: Build z_sub example
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_sub.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
 
       - name: Build z_pull example
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_pull.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
 
       - name: Build z_get example
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_get.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
 
       - name: Build z_queryable example
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_queryable.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
 
       - name: Build z_scout example
         run: |
           cd $HOME
           export ARDUINO_BASE=$HOME/work/arduino_esp32project/
           export ZENOH_PICO_BASE=$HOME/work/zenoh-pico/zenoh-pico/
-          . $HOME/.platformio/penv/bin/activate
 
           rm -rf $ARDUINO_BASE/src/*
           cd $ARDUINO_BASE/src
           ln -s $ZENOH_PICO_BASE/examples/arduino/z_scout.ino
 
           cd $ARDUINO_BASE
-          platformio run
+          pio run
