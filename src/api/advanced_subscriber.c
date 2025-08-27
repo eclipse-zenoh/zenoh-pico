@@ -27,20 +27,12 @@
 #include "zenoh-pico/utils/time_range.h"
 #include "zenoh-pico/utils/uuid.h"
 
-void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss) {
-    if (closure->call != NULL) {
-        (closure->call)(miss, closure->context);
-    }
-}
-
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
 
 #define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
 
 // Space for 10 digits + NULL
 #define ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN 11
-
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
     _ze_advanced_subscriber_state_weak_drop(&listener->_statesref);
@@ -124,7 +116,7 @@ void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_seque
         if (!_Z_RC_IS_NULL(&sess_rc)) {
             z_result_t res = _zp_periodic_task_remove(_Z_RC_IN_VAL(&sess_rc), state->_periodic_query_id);
             if (res != _Z_RES_OK) {
-                _Z_WARN("Failed to remove periodic task - id: %d, res: %d", state->_periodic_query_id, res);
+                _Z_WARN("Failed to remove periodic task - id: %u, res: %d", state->_periodic_query_id, res);
             }
             state->_periodic_query_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
             _z_session_rc_drop(&sess_rc);
@@ -558,7 +550,9 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
                     _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                 }
 
-                if (_z_uint32__z_sample_sortedmap_len(&state->_pending_samples) >= states->_history_depth) {
+                // _history_depth = 0 = wait for all global queries to complete
+                if (states->_history_depth > 0 &&
+                    _z_uint32__z_sample_sortedmap_len(&state->_pending_samples) >= states->_history_depth) {
                     _z_uint32__z_sample_sortedmap_entry_t *first_entry =
                         _z_uint32__z_sample_sortedmap_pop_first(&state->_pending_samples);
                     if (first_entry != NULL) {
@@ -680,7 +674,9 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
                         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                     }
                 }
-                if (_z_timestamp__z_sample_sortedmap_len(&state->_pending_samples) >= states->_history_depth) {
+                // _history_depth = 0 = query all history
+                if (states->_history_depth > 0 &&
+                    _z_timestamp__z_sample_sortedmap_len(&state->_pending_samples) >= states->_history_depth) {
                     __unsafe_ze_advanced_subscriber_flush_timestamped_source(state, states->_callback, states->_ctx);
                 }
             }
@@ -952,11 +948,26 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         }
 #endif
 
+        // Global history still running? Don’t schedule a per-source query yet.
+        if (states->_global_pending_queries != 0) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+            return;
+        }
+
         _ze_advanced_subscriber_sequenced_state_t *state =
             _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                     &query_ctx->source_id);
         if (state != NULL) {
-            state->_pending_queries++;
+            // Don’t pile up queries; wait until the previous one finishes.
+            if (state->_pending_queries != 0) {
+                // Nothing to do this tick.
+#if Z_FEATURE_MULTI_THREAD == 1
+                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+                return;
+            }
 
             char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
             _z_query_param_range_t range = {
@@ -1004,7 +1015,13 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     if (_Z_RC_IS_NULL(rc_states)) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
+
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
+
+    // Don’t schedule while already running or while a global history query is pending.
+    if (state->_periodic_query_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID || states->_global_pending_queries != 0) {
+        return _Z_RES_OK;
+    }
 
     // Don't post periodic query if period is not set
     if (!states->_has_period) {
@@ -1371,11 +1388,12 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 #if Z_FEATURE_MULTI_THREAD == 1
             z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
-            _Z_ERROR("Failed to prepare query for timestamped samples");
+            _Z_ERROR("Failed to prepare query for sequenced samples");
             return;
         } else {
             state->_pending_queries++;
-            if (_ze_advanced_subscriber_sequenced_query(rc_states, ke, params, &id) != _Z_RES_OK) {
+            if (_ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params,
+                                                        &id) != _Z_RES_OK) {
                 state->_pending_queries--;
 #if Z_FEATURE_MULTI_THREAD == 1
                 z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
@@ -1426,7 +1444,11 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
     }
 
     const z_loaned_bytes_t *payload = z_sample_payload(sample);
-    if (payload == NULL || z_bytes_len(payload) < 4) {
+    if (payload == NULL) {
+        _Z_WARN("Received heartbeat with no payload");
+        return;
+    }
+    if (z_bytes_len(payload) < 4) {
         _Z_WARN("Received heartbeat with invalid payload length: %zu", z_bytes_len(payload));
         return;
     }
@@ -1521,7 +1543,8 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
             return;
         } else {
             state->_pending_queries++;
-            if (_ze_advanced_subscriber_sequenced_query(rc_states, ke, params, &id) != _Z_RES_OK) {
+            if (_ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params,
+                                                        &id) != _Z_RES_OK) {
                 state->_pending_queries--;
 #if Z_FEATURE_MULTI_THREAD == 1
                 z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
