@@ -37,6 +37,9 @@ void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss
 
 #define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
 
+// Space for 10 digits + NULL
+#define ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN 11
+
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
@@ -84,7 +87,7 @@ static z_result_t _ze_advanced_subscriber_sequenced_state_init(_ze_advanced_subs
     z_owned_string_t zid_str;
     _Z_RETURN_IF_ERR(z_id_to_string(&zid, &zid_str));
 
-    char buffer[11];
+    char buffer[ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN];
     uint32_t eid = z_entity_global_id_eid(id);
     snprintf(buffer, sizeof(buffer), "%u", eid);
 
@@ -1127,7 +1130,7 @@ static bool _ze_advanced_subscriber_parse_liveliness_keyexpr_u32(const char *sta
         return false;  // 10 digits max + '\0'
     }
 
-    char buf[11];  // Enough for 10 digits + null
+    char buf[ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN];
     if (!_z_memcpy_checked(buf, sizeof(buf) - 1, NULL, start, len)) {
         return false;
     }
@@ -1557,7 +1560,7 @@ static z_result_t _ze_advanced_subscriber_ke_suffix(z_owned_keyexpr_t *suffix, c
         z_keyexpr_drop(z_keyexpr_move(suffix)));
     z_string_drop(z_string_move(&zid_str));
 
-    char buffer[11];
+    char buffer[ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN];
     uint32_t eid = z_entity_global_id_eid(&id);
     snprintf(buffer, sizeof(buffer), "%u", eid);
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, buffer), z_keyexpr_drop(z_keyexpr_move(suffix)));

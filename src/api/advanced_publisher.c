@@ -23,6 +23,9 @@
 
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
 
+// Space for 10 digits + NULL
+#define ZE_ADVANCED_PUBLISHER_UINT32_STR_BUF_LEN 11
+
 static _ze_advanced_publisher_state_t _ze_advanced_publisher_state_null(void) {
     _ze_advanced_publisher_state_t state = {0};
     state._zn = _z_session_weak_null();
@@ -151,7 +154,7 @@ static z_result_t _ze_advanced_publisher_ke_suffix(z_owned_keyexpr_t *suffix, co
     z_string_drop(z_string_move(&zid_str));
 
     if (sequencing == _ZE_ADVANCED_PUBLISHER_SEQUENCING_SEQUENCE_NUMBER) {
-        char buffer[11];
+        char buffer[ZE_ADVANCED_PUBLISHER_UINT32_STR_BUF_LEN];
         uint32_t eid = z_entity_global_id_eid(id);
         snprintf(buffer, sizeof(buffer), "%u", eid);
         _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(suffix, buffer), z_keyexpr_drop(z_keyexpr_move(suffix)));
@@ -308,7 +311,6 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
             pub->_val._has_liveliness = true;
         }
 
-        // TODO: State publisher
         // Declare state publisher on keyexpr/suffix
         if (opt.sample_miss_detection.is_enabled &&
             opt.sample_miss_detection.heartbeat_mode != ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE) {
