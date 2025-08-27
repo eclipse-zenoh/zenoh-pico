@@ -32,6 +32,7 @@ z_result_t _z_trigger_reply_partial(_z_session_t *zn, _z_zint_t id, _z_keyexpr_t
     _ZP_UNUSED(id);
     _ZP_UNUSED(key);
     _ZP_UNUSED(reply);
+    _ZP_UNUSED(replier_id);
     _ZP_UNUSED(peer);
 #endif
     return ret;
@@ -47,6 +48,7 @@ z_result_t _z_trigger_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *er
     _ZP_UNUSED(zn);
     _ZP_UNUSED(id);
     _ZP_UNUSED(error);
+    _ZP_UNUSED(replier_id);
 #endif
     return ret;
 }

@@ -713,6 +713,42 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const z_loaned_closure_matching_status_t * z_closure_matching_status_loan(const z_owned_closure_matching_status_t * closure)
 .. c:function:: void z_closure_matching_status_drop(z_moved_closure_matching_status_t * closure) 
 
+Sample miss closure
+-------------------
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: ze_owned_closure_miss_t
+.. c:type:: ze_loaned_closure_miss_t
+.. c:type:: ze_moved_closure_miss_t
+
+.. c:type:: void (* ze_closure_miss_callback_t)(const ze_miss_t * miss, void *arg);
+
+    Function pointer type for handling sample misses.
+    Represents a callback function that is invoked when an advanced subscriber detects a missed sample.
+
+    Parameters:
+      - **miss** - Pointer to a :c:type:`ze_miss_t` representing the missed sample.
+      - **arg** - A user-defined pointer to additional data that can be used during the processing of the missed sample.
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::ze_closure_miss
+.. autocfunction:: primitives.h::ze_closure_miss_call
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const ze_loaned_closure_miss_t * ze_closure_miss_loan(const ze_owned_closure_miss_t * closure)
+.. c:function:: void ze_closure_miss_drop(ze_moved_closure_miss_t * closure) 
+
 
 .. _channels_concept:
 

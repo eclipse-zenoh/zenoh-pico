@@ -27,20 +27,12 @@
 #include "zenoh-pico/utils/time_range.h"
 #include "zenoh-pico/utils/uuid.h"
 
-void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss) {
-    if (closure->call != NULL) {
-        (closure->call)(miss, closure->context);
-    }
-}
-
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
 
 #define ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE 256
 
 // Space for 10 digits + NULL
 #define ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN 11
-
-_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
     _ze_advanced_subscriber_state_weak_drop(&listener->_statesref);

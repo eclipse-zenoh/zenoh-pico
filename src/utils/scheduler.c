@@ -21,7 +21,17 @@
 
 #define _ZP_PERIODIC_SCHEDULER_DEFAULT_WAIT_MS 1000u
 
+// Default time provider: use this scheduler's epoch and the platform clock
+static uint64_t _zp_periodic_scheduler_default_now_ms(void *ctx) {
+    _zp_periodic_scheduler_t *scheduler = (_zp_periodic_scheduler_t *)ctx;
+    return (uint64_t)z_clock_elapsed_ms(&scheduler->_epoch);
+}
+
 static inline uint64_t __unsafe_zp_periodic_scheduler_now_ms(const _zp_periodic_scheduler_t *scheduler) {
+    if (scheduler->_time.now_ms) {
+        return scheduler->_time.now_ms(scheduler->_time.ctx);
+    }
+    // Fallback if not initialized (should not happen after init)
     return (uint64_t)z_clock_elapsed_ms((z_clock_t *)&scheduler->_epoch);
 }
 
@@ -37,7 +47,7 @@ static inline uint64_t __unsafe_zp_periodic_scheduler_compute_wait_ms(_zp_period
     uint64_t wait_ms = _ZP_PERIODIC_SCHEDULER_DEFAULT_WAIT_MS;
     if (!_zp_periodic_task_list_is_empty(scheduler->_tasks)) {
         _zp_periodic_task_t *head = _zp_periodic_task_list_value(scheduler->_tasks);
-        uint64_t now = (uint64_t)z_clock_elapsed_ms(&scheduler->_epoch);
+        uint64_t now = __unsafe_zp_periodic_scheduler_now_ms(scheduler);
         wait_ms = (head->_next_due_ms > now) ? (head->_next_due_ms - now) : 0u;
     }
     return wait_ms;
@@ -61,6 +71,8 @@ z_result_t _zp_periodic_scheduler_init(_zp_periodic_scheduler_t *scheduler) {
 #endif
     scheduler->_tasks = _zp_periodic_task_list_new();
     scheduler->_epoch = z_clock_now();
+    scheduler->_time.now_ms = _zp_periodic_scheduler_default_now_ms;
+    scheduler->_time.ctx = scheduler;
     scheduler->_next_id = 1;
     scheduler->_inflight_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
     return _Z_RES_OK;
@@ -291,6 +303,22 @@ z_result_t _zp_periodic_scheduler_process_tasks(_zp_periodic_scheduler_t *schedu
 #endif
 
     return res;
+}
+
+z_result_t _zp_periodic_scheduler_set_time_source(_zp_periodic_scheduler_t *scheduler, uint64_t (*now_ms)(void *ctx),
+                                                  void *ctx) {
+    if (scheduler == NULL) {
+        return _Z_ERR_INVALID;
+    }
+#if Z_FEATURE_MULTI_THREAD == 1
+    _Z_RETURN_IF_ERR(_z_mutex_lock(&scheduler->_mutex));
+#endif
+    scheduler->_time.now_ms = now_ms ? now_ms : _zp_periodic_scheduler_default_now_ms;
+    scheduler->_time.ctx = now_ms ? ctx : scheduler;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_unlock(&scheduler->_mutex);
+#endif
+    return _Z_RES_OK;
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1

@@ -494,6 +494,20 @@ typedef struct {
 } z_scout_options_t;
 
 /**
+ * Represents missed samples.
+ *
+ * Members:
+ *   source: The source of missed samples.
+ *   nb: The number of missed samples.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+typedef struct {
+    z_entity_global_id_t source;
+    uint32_t nb;
+} ze_miss_t;
+
+/**
  * Represents a data sample.
  */
 _Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
@@ -585,6 +599,19 @@ typedef _z_closure_matching_status_t z_closure_matching_status_t;
  * Represents the matching status callback closure.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_matching_status_t, closure_matching_status)
+
+typedef void (*ze_closure_miss_callback_t)(const ze_miss_t *miss, void *arg);
+
+typedef struct {
+    void *context;
+    ze_closure_miss_callback_t call;
+    z_closure_drop_callback_t drop;
+} _ze_closure_miss_t;
+
+/**
+ * Represents the sample miss callback closure.
+ */
+_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_closure_miss_t, closure_miss)
 
 #ifdef __cplusplus
 }

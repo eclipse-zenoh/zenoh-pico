@@ -82,38 +82,7 @@ _Z_HASHMAP_DEFINE(_z_entity_global_id, _ze_advanced_subscriber_sequenced_state, 
                   _ze_advanced_subscriber_sequenced_state_t)
 _Z_HASHMAP_DEFINE(_z_id, _ze_advanced_subscriber_timestamped_state, z_id_t, _ze_advanced_subscriber_timestamped_state_t)
 
-/**
- * Represents missed samples.
- *
- * Members:
- *   source: The source of missed samples.
- *   nb: The number of missed samples.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
- */
-typedef struct {
-    z_entity_global_id_t source;
-    uint32_t nb;
-} ze_miss_t;
-
-/**
- * The callback signature of the function handling sample miss processing.
- */
-typedef void (*ze_closure_miss_callback_t)(const ze_miss_t *miss, void *arg);
-
-typedef struct {
-    void *context;
-    ze_closure_miss_callback_t call;
-    z_closure_drop_callback_t drop;
-} _ze_closure_miss_t;
-
 static void _ze_closure_miss_copy(_ze_closure_miss_t *dst, const _ze_closure_miss_t *src) { *dst = *src; }
-
-/**
- * Represents the Zenoh miss callback closure.
- */
-_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_closure_miss_t, closure_miss)
-_Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(ze, closure_miss)
 
 _Z_ELEM_DEFINE(_ze_closure_miss, _ze_closure_miss_t, _z_noop_size, _z_noop_clear, _ze_closure_miss_copy, _z_noop_move,
                _z_noop_eq, _z_noop_cmp, _z_noop_hash)
@@ -173,15 +142,6 @@ static inline bool _ze_sample_miss_listener_check(const _ze_sample_miss_listener
 
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_sample_miss_listener_t, sample_miss_listener)
 _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, sample_miss_listener)
-
-/**
- * Calls a sample miss closure.
- *
- * Parameters:
- *   closure: Pointer to the :c:type:`ze_loaned_closure_miss_t` to call.
- *   miss: Pointer to the :c:type:`ze_miss_t` to pass to the closure.
- */
-void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss);
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1

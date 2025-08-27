@@ -74,6 +74,12 @@ _Z_ELEM_DEFINE(_zp_periodic_task, _zp_periodic_task_t, _z_noop_size, _zp_periodi
                _z_noop_move, _zp_periodic_task_eq, _zp_periodic_task_cmp, _z_noop_hash)
 _Z_LIST_DEFINE(_zp_periodic_task, _zp_periodic_task_t)
 
+// Time source used by the scheduler (to allow tests to inject a fake clock)
+typedef struct {
+    uint64_t (*now_ms)(void *ctx);
+    void *ctx;
+} _zp_periodic_scheduler_time_source_t;
+
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
@@ -84,6 +90,7 @@ typedef struct {
     size_t _task_count;
     uint32_t _next_id;
     volatile bool _task_running;
+    _zp_periodic_scheduler_time_source_t _time;
     _zp_periodic_task_t *_inflight;
     uint32_t _inflight_id;
 } _zp_periodic_scheduler_t;
@@ -97,6 +104,10 @@ z_result_t _zp_periodic_scheduler_remove(_zp_periodic_scheduler_t *scheduler, ui
 z_result_t _zp_periodic_scheduler_start_task(_zp_periodic_scheduler_t *scheduler, z_task_attr_t *attr, _z_task_t *task);
 z_result_t _zp_periodic_scheduler_stop_task(_zp_periodic_scheduler_t *scheduler);
 z_result_t _zp_periodic_scheduler_process_tasks(_zp_periodic_scheduler_t *scheduler);
+
+// Set/override the time source used by the scheduler. Passing NULL resets to default
+z_result_t _zp_periodic_scheduler_set_time_source(_zp_periodic_scheduler_t *scheduler, uint64_t (*now_ms)(void *ctx),
+                                                  void *ctx);
 
 #endif  // Z_FEATURE_PERIODIC_TASKS == 1
 #endif  // Z_FEATURE_UNSTABLE_API
