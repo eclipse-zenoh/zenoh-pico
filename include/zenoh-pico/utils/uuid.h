@@ -44,6 +44,17 @@ void _z_uuid_to_bytes(uint8_t *bytes, const char *uuid_str);
  */
 _z_string_t _z_id_to_string(const _z_id_t *id);
 
+/**
+ * Parses a string to a Zenoh ID.
+ *
+ * Parameters:
+ *   str - Pointer to the string to parse.
+ *
+ * Returns:
+ *   The parsed Zenoh ID if successful, or an empty ID on failure.
+ */
+_z_id_t _z_id_from_string(const _z_string_t *str);
+
 #ifdef __cplusplus
 }
 #endif

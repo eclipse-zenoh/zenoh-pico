@@ -34,6 +34,22 @@ void data_handler(z_loaned_sample_t* sample, void* ctx) {
     z_drop(z_move(value));
 }
 
+void liveliness_handler(z_loaned_sample_t* sample, void* ctx) {
+    (void)(ctx);
+    z_view_string_t key_string;
+    z_keyexpr_as_view_string(z_sample_keyexpr(sample), &key_string);
+    switch (z_sample_kind(sample)) {
+        case Z_SAMPLE_KIND_PUT:
+            printf(">> [Liveliness Subscriber] New alive token ('%.*s')\n", (int)z_string_len(z_loan(key_string)),
+                   z_string_data(z_loan(key_string)));
+            break;
+        case Z_SAMPLE_KIND_DELETE:
+            printf(">> [Liveliness Subscriber] Dropped token ('%.*s')\n", (int)z_string_len(z_loan(key_string)),
+                   z_string_data(z_loan(key_string)));
+            break;
+    }
+}
+
 void miss_handler(const ze_miss_t* miss, void* arg) {
     (void)(arg);
     z_id_t id = z_entity_global_id_zid(&miss->source);
@@ -62,18 +78,27 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
+    // Start read, lease and periodic scheduler tasks for zenoh-pico
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0 ||
+        zp_start_periodic_scheduler_task(z_loan_mut(s), NULL) < 0) {
+        printf("Unable to start read, lease and periodic scheduler tasks\n");
         z_drop(z_move(s));
         return -1;
     }
 
     ze_advanced_subscriber_options_t sub_opts;
     ze_advanced_subscriber_options_default(&sub_opts);
+    ze_advanced_subscriber_history_options_default(&sub_opts.history);
+    // or sub_opts.history.is_enabled = true;
     sub_opts.history.detect_late_publishers = true;
+    ze_advanced_subscriber_recovery_options_default(&sub_opts.recovery);
+    // or sub_opts.recovery.is_enabled = true;
+    ze_advanced_subscriber_last_sample_miss_detection_options_default(&sub_opts.recovery.last_sample_miss_detection);
+    // or sub_opts.recovery.last_sample_miss_detection.is_enabled = true;
+    sub_opts.recovery.last_sample_miss_detection.periodic_queries_period_ms = 0;
+    // use publisher heartbeats by default, otherwise enable periodic queries as follows:
+    // sub_opts.recovery.last_sample_miss_detection.periodic_queries_period_ms = 1000;
     sub_opts.subscriber_detection = true;
-    sub_opts.history.is_enabled = true;
 
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler, NULL, NULL);
@@ -90,8 +115,22 @@ int main(int argc, char** argv) {
     }
 
     ze_owned_closure_miss_t miss_callback;
+    ze_owned_sample_miss_listener_t miss_listener;
     z_closure(&miss_callback, miss_handler, NULL, NULL);
-    ze_advanced_subscriber_declare_background_sample_miss_listener(z_loan(sub), z_move(miss_callback));
+    ze_advanced_subscriber_declare_sample_miss_listener(z_loan(sub), &miss_listener, z_move(miss_callback));
+
+    z_owned_closure_sample_t liveliness_callback;
+    z_closure(&liveliness_callback, liveliness_handler, NULL, NULL);
+
+    z_liveliness_subscriber_options_t liveliness_sub_opt;
+    z_liveliness_subscriber_options_default(&liveliness_sub_opt);
+
+    z_owned_subscriber_t liveliness_sub;
+    if (ze_advanced_subscriber_detect_publishers(z_loan(sub), &liveliness_sub, z_move(liveliness_callback),
+                                                 &liveliness_sub_opt) < 0) {
+        printf("Unable to declare liveliness subscriber.\n");
+        exit(-1);
+    }
 
     printf("Press CTRL-C to quit...\n");
     while (1) {
@@ -99,6 +138,8 @@ int main(int argc, char** argv) {
     }
 
     // Clean up
+    z_drop(z_move(miss_listener));
+    z_drop(z_move(liveliness_sub));
     z_drop(z_move(sub));
     z_drop(z_move(s));
     return 0;

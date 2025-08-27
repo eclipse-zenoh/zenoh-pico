@@ -2671,6 +2671,58 @@ z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
  */
 void zp_read_options_default(zp_read_options_t *options);
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+/**
+ * Builds a :c:type:`zp_task_periodic_scheduler_options_t` with default value.
+ *
+ * Parameters:
+ *   options: Pointer to an uninitialized :c:type:`zp_task_periodic_scheduler_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+void zp_task_periodic_scheduler_options_default(zp_task_periodic_scheduler_options_t *options);
+
+/**
+ * Starts the periodic scheduler task for a session.
+ *
+ * The periodic scheduler task executes registered periodic jobs according
+ * to their configured intervals. Jobs are added and removed via the scheduler API.
+ *
+ * The scheduler runs in a background task (thread, process, or equivalent)
+ * whose implementation is platform-dependent.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` whose scheduler to start.
+ *   options: Pointer to a :c:type:`zp_task_periodic_scheduler_options_t` structure
+ *            used to configure the scheduler task.
+ *
+ * Return:
+ *   ``0`` if the scheduler task started successfully, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t zp_start_periodic_scheduler_task(z_loaned_session_t *zs,
+                                            const zp_task_periodic_scheduler_options_t *options);
+
+/**
+ * Stops the periodic scheduler task for a session.
+ *
+ * This halts execution of all registered periodic jobs. Depending on the target
+ * platform, this may involve stopping a thread, process, or equivalent.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` whose scheduler to stop.
+ *
+ * Return:
+ *   ``0`` if the scheduler task stopped successfully, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs);
+#endif
+#endif
+
 /**
  * Executes a single read from the network and process received messages.
  *
@@ -2724,6 +2776,21 @@ void zp_send_join_options_default(zp_send_join_options_t *options);
 z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options_t *options);
 
 #ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+
+/**
+ * Process outstanding periodic tasks.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to process tasks for.
+ *
+ * Return:
+ *   ``0`` if execution was successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs);
+#endif
 /**
  * Gets the default reliability value (unstable).
  *

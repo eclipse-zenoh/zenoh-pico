@@ -37,14 +37,18 @@ static inline int _z_uint32_cmp(const uint32_t *left, const uint32_t *right) {
 }
 _Z_ELEM_DEFINE(_z_uint32, uint32_t, _z_uint32_size, _z_noop_clear, _z_uint32_copy, _z_noop_move, _z_noop_eq,
                _z_uint32_cmp, _z_noop_hash)
-
 _Z_SORTEDMAP_DEFINE(_z_uint32, _z_sample, uint32_t, _z_sample_t)
 
+_Z_SORTEDMAP_DEFINE(_z_timestamp, _z_sample, _z_timestamp_t, _z_sample_t)
+
 typedef struct {
+    _z_session_weak_t _zn;
     bool _has_last_delivered;
     uint32_t _last_delivered;
     uint64_t _pending_queries;
     _z_uint32__z_sample_sortedmap_t _pending_samples;
+    uint32_t _periodic_query_id;
+    z_owned_keyexpr_t _query_keyexpr;
 } _ze_advanced_subscriber_sequenced_state_t;
 
 static inline size_t _ze_advanced_subscriber_sequenced_state_size(_ze_advanced_subscriber_sequenced_state_t *s) {
@@ -52,14 +56,10 @@ static inline size_t _ze_advanced_subscriber_sequenced_state_size(_ze_advanced_s
     return sizeof(_ze_advanced_subscriber_sequenced_state_t);
 }
 void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_sequenced_state_t *s);
-void _ze_advanced_subscriber_sequenced_state_copy(_ze_advanced_subscriber_sequenced_state_t *dst,
-                                                  const _ze_advanced_subscriber_sequenced_state_t *src);
 
 _Z_ELEM_DEFINE(_ze_advanced_subscriber_sequenced_state, _ze_advanced_subscriber_sequenced_state_t,
                _ze_advanced_subscriber_sequenced_state_size, _ze_advanced_subscriber_sequenced_state_clear,
-               _ze_advanced_subscriber_sequenced_state_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-
-_Z_SORTEDMAP_DEFINE(_z_timestamp, _z_sample, _z_timestamp_t, _z_sample_t)
+               _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 
 typedef struct {
     bool _has_last_delivered;
@@ -73,58 +73,14 @@ static inline size_t _ze_advanced_subscriber_timestamped_state_size(_ze_advanced
     return sizeof(_ze_advanced_subscriber_timestamped_state_t);
 }
 void _ze_advanced_subscriber_timestamped_state_clear(_ze_advanced_subscriber_timestamped_state_t *s);
-void _ze_advanced_subscriber_timestamped_state_copy(_ze_advanced_subscriber_timestamped_state_t *dst,
-                                                    const _ze_advanced_subscriber_timestamped_state_t *src);
 
 _Z_ELEM_DEFINE(_ze_advanced_subscriber_timestamped_state, _ze_advanced_subscriber_timestamped_state_t,
                _ze_advanced_subscriber_timestamped_state_size, _ze_advanced_subscriber_timestamped_state_clear,
-               _ze_advanced_subscriber_timestamped_state_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+               _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 
 _Z_HASHMAP_DEFINE(_z_entity_global_id, _ze_advanced_subscriber_sequenced_state, _z_entity_global_id_t,
                   _ze_advanced_subscriber_sequenced_state_t)
 _Z_HASHMAP_DEFINE(_z_id, _ze_advanced_subscriber_timestamped_state, z_id_t, _ze_advanced_subscriber_timestamped_state_t)
-
-typedef struct {
-#if Z_FEATURE_MULTI_THREAD == 1
-    _z_mutex_t _mutex;
-#endif
-    size_t _next_id;
-    uint64_t _global_pending_queries;
-    _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_t _sequenced_states;
-    _z_id__ze_advanced_subscriber_timestamped_state_hashmap_t _timestamped_states;
-    _z_session_weak_t _zn;
-    z_owned_keyexpr_t _key_expr;
-    z_owned_keyexpr_t _query_key_expr;
-    bool _retransmission;
-    bool _has_period;
-    // TODO: _period;
-    size_t _history_depth;
-    z_query_target_t _query_target;
-    uint64_t _query_timeout;
-    _z_closure_sample_callback_t _callback;
-    _z_drop_handler_t _dropper;
-    void *_ctx;
-    // TODO: _miss_handlers;
-    bool _has_token;
-    z_owned_liveliness_token_t _token;
-} _ze_advanced_subscriber_state_t;
-
-_ze_advanced_subscriber_state_t _ze_advanced_subscriber_state_null(void);
-void _ze_advanced_subscriber_state_clear(_ze_advanced_subscriber_state_t *state);
-
-_Z_SIMPLE_REFCOUNT_DEFINE(_ze_advanced_subscriber_state, _ze_advanced_subscriber_state)
-
-typedef struct {
-    z_owned_subscriber_t _subscriber;
-    bool _has_liveliness_subscriber;
-    z_owned_subscriber_t _liveliness_subscriber;
-    bool _has_heartbeat_subscriber;
-    z_owned_subscriber_t _heartbeat_subscriber;
-    _ze_advanced_subscriber_state_simple_rc_t _state;
-} _ze_advanced_subscriber_t;
-
-_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_subscriber_t, advanced_subscriber)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_subscriber)
 
 /**
  * Represents missed samples.
@@ -151,11 +107,72 @@ typedef struct {
     z_closure_drop_callback_t drop;
 } _ze_closure_miss_t;
 
+static void _ze_closure_miss_copy(_ze_closure_miss_t *dst, const _ze_closure_miss_t *src) { *dst = *src; }
+
 /**
  * Represents the Zenoh miss callback closure.
  */
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_closure_miss_t, closure_miss)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(ze, closure_miss)
+
+_Z_ELEM_DEFINE(_ze_closure_miss, _ze_closure_miss_t, _z_noop_size, _z_noop_clear, _ze_closure_miss_copy, _z_noop_move,
+               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_INT_MAP_DEFINE(_ze_closure_miss, _ze_closure_miss_t)
+
+typedef struct {
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_owned_mutex_t _mutex;
+#endif
+    size_t _next_id;
+    uint64_t _global_pending_queries;
+    _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_t _sequenced_states;
+    _z_id__ze_advanced_subscriber_timestamped_state_hashmap_t _timestamped_states;
+    _z_session_weak_t _zn;
+    z_owned_keyexpr_t _keyexpr;
+    bool _retransmission;
+    bool _has_period;
+    uint64_t _period_ms;
+    size_t _history_depth;
+    uint64_t _history_age;
+    z_query_target_t _query_target;
+    uint64_t _query_timeout;
+    _z_closure_sample_callback_t _callback;
+    _z_drop_handler_t _dropper;
+    void *_ctx;
+    _ze_closure_miss_intmap_t _miss_handlers;
+    bool _has_token;
+    z_owned_liveliness_token_t _token;
+} _ze_advanced_subscriber_state_t;
+
+_ze_advanced_subscriber_state_t _ze_advanced_subscriber_state_null(void);
+void _ze_advanced_subscriber_state_clear(_ze_advanced_subscriber_state_t *state);
+
+_Z_REFCOUNT_DEFINE(_ze_advanced_subscriber_state, _ze_advanced_subscriber_state)
+
+typedef struct {
+    z_owned_subscriber_t _subscriber;
+    bool _has_liveliness_subscriber;
+    z_owned_subscriber_t _liveliness_subscriber;
+    bool _has_heartbeat_subscriber;
+    z_owned_subscriber_t _heartbeat_subscriber;
+    _ze_advanced_subscriber_state_rc_t _state;
+} _ze_advanced_subscriber_t;
+
+_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_subscriber_t, advanced_subscriber)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_subscriber)
+
+typedef struct {
+    size_t _id;
+    _ze_advanced_subscriber_state_weak_t _statesref;
+} _ze_sample_miss_listener_t;
+
+static inline _ze_sample_miss_listener_t _ze_sample_miss_listener_null(void) { return (_ze_sample_miss_listener_t){0}; }
+static inline bool _ze_sample_miss_listener_check(const _ze_sample_miss_listener_t *miss_listener) {
+    return !_Z_SIMPLE_RC_IS_NULL(&miss_listener->_statesref);
+}
+
+_Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_sample_miss_listener_t, sample_miss_listener)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, sample_miss_listener)
 
 /**
  * Calls a sample miss closure.
@@ -203,6 +220,8 @@ typedef struct {
  *     So it is useful for sporadic publications but useless for periodic publications with
  *     a period smaller or equal to this period. If set to 0, the last sample(s) miss detection
  *     will be performed based on publisher's heartbeat if the latter is enabled.
+ *
+ * Note: periodic queries require the periodic scheduler to be started via :c:func:`zp_start_periodic_scheduler_task`.
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
@@ -339,8 +358,6 @@ const z_loaned_keyexpr_t *ze_advanced_subscriber_keyexpr(const ze_loaned_advance
  */
 z_entity_global_id_t ze_advanced_subscriber_id(const ze_loaned_advanced_subscriber_t *subscriber);
 
-// TODO: temporary place holder
-typedef void ze_owned_sample_miss_listener_t;
 /**
  * Declares a sample miss listener, registering a callback for notifying subscriber about missed samples.
  *

@@ -44,9 +44,10 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // Start read and lease tasks for zenoh-pico
-    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0) {
-        printf("Unable to start read and lease tasks\n");
+    // Start read, lease and periodic scheduler tasks for zenoh-pico
+    if (zp_start_read_task(z_loan_mut(s), NULL) < 0 || zp_start_lease_task(z_loan_mut(s), NULL) < 0 ||
+        zp_start_periodic_scheduler_task(z_loan_mut(s), NULL) < 0) {
+        printf("Unable to start read, lease and periodic scheduler tasks\n");
         z_drop(z_move(s));
         return -1;
     }
@@ -65,12 +66,15 @@ int main(int argc, char **argv) {
     pub_opts.cache.max_samples = history;
     pub_opts.cache.is_enabled = true;
     pub_opts.publisher_detection = true;
+    ze_advanced_publisher_sample_miss_detection_options_default(&pub_opts.sample_miss_detection);
+    // or pub_opts.sample_miss_detection.is_enabled = true
     pub_opts.sample_miss_detection.is_enabled = true;
     pub_opts.sample_miss_detection.heartbeat_period_ms = 500;
     pub_opts.sample_miss_detection.heartbeat_mode = ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_PERIODIC;
+    // if not set, publisher will retransmit samples based on periodic queries from advanced subscriber
 
     if (ze_declare_advanced_publisher(z_loan(s), &pub, z_loan(ke), &pub_opts) < 0) {
-        printf("Unable to declare advanced publisher for key expression!\n");
+        printf("Unable to declare AdvancedPublisher for key expression!\n");
         return -1;
     }
 
@@ -81,8 +85,6 @@ int main(int argc, char **argv) {
         z_sleep_s(1);
         sprintf(buf, "[%4d] %s", idx, value);
         printf("Putting Data ('%s': '%s')...\n", keyexpr, buf);
-
-        // Create payload
         z_owned_bytes_t payload;
         z_bytes_copy_from_str(&payload, buf);
         ze_advanced_publisher_put(z_loan(pub), z_move(payload), NULL);

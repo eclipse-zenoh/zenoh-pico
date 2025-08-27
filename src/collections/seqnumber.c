@@ -18,7 +18,7 @@
 
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq) {
     if (seq == NULL) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
@@ -34,7 +34,7 @@ z_result_t _z_seqnumber_init(_z_seqnumber_t *seq) {
 
 z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value) {
     if (seq == NULL || value == NULL) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
@@ -58,7 +58,7 @@ z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value) {
 
 z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value) {
     if (seq == NULL || value == NULL) {
-        return _Z_ERR_INVALID;
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)

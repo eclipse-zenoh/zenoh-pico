@@ -39,7 +39,7 @@ z_result_t _z_sortedmap_copy(_z_sortedmap_t *dst, const _z_sortedmap_t *src, z_e
     if (src->_vals != NULL) {
         dst->_vals = _z_list_clone(src->_vals, f_c);
         if (dst->_vals == NULL) {
-            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
     }
     dst->_f_cmp = src->_f_cmp;

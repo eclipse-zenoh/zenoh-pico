@@ -446,6 +446,20 @@ typedef struct {
 #endif
 } zp_task_lease_options_t;
 
+#if Z_FEATURE_PERIODIC_TASKS == 1
+/**
+ * Represents the configuration used to configure a periodic scheduler task started via
+ * :c:func:`zp_start_periodic_scheduler_task`.
+ */
+typedef struct {
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_task_attr_t *task_attributes;
+#else
+    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#endif
+} zp_task_periodic_scheduler_options_t;
+#endif
+
 /**
  * Represents the configuration used to configure a read operation started via :c:func:`zp_read`.
  */
