@@ -22,6 +22,7 @@
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/advanced_cache.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
@@ -182,6 +183,39 @@ z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left
     curr_ptr[left_len] = '/';
     memcpy(curr_ptr + left_len + 1, _z_string_data(&right->_suffix), right_len);
     _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_canonize((char *)curr_ptr, &key->_val._suffix._slice.len), z_free(curr_ptr));
+    return _Z_RES_OK;
+}
+
+z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
+    if (_z_string_len(&prefix->_val._suffix) == 0) {
+        if (_z_string_len(&right->_suffix) == 0) {
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);
+        }
+        return z_keyexpr_clone(prefix, right);
+    } else {
+        z_owned_keyexpr_t tmp;
+        tmp._val._id = prefix->_val._id;
+        tmp._val._mapping = prefix->_val._mapping;
+        z_result_t res = z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right);
+        if (res == _Z_RES_OK) {
+            z_keyexpr_drop(z_keyexpr_move(prefix));
+            z_keyexpr_take(prefix, z_keyexpr_move(&tmp));
+        }
+        return res;
+    }
+}
+
+z_result_t _z_keyexpr_append_substr(z_owned_keyexpr_t *prefix, const char *right, size_t len) {
+    z_view_keyexpr_t ke_right;
+    z_view_keyexpr_from_substr_unchecked(&ke_right, right, len);
+    return _z_keyexpr_append_suffix(prefix, z_view_keyexpr_loan(&ke_right));
+}
+
+z_result_t _z_keyexpr_append_str_array(z_owned_keyexpr_t *prefix, const char *strs[], size_t count) {
+    for (size_t i = 0; i < count; ++i) {
+        fflush(stdout);
+        _Z_RETURN_IF_ERR(_z_keyexpr_append_str(prefix, strs[i]));
+    }
     return _Z_RES_OK;
 }
 
@@ -512,6 +546,12 @@ void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *cl
     }
 }
 
+void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss) {
+    if (closure->call != NULL) {
+        (closure->call)(miss, closure->context);
+    }
+}
+
 bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
 _z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
 z_result_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
@@ -576,6 +616,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_closure_hello_callback_t, z_clo
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_status_callback_t,
                                 z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 /************* Primitives **************/
 #if Z_FEATURE_SCOUTING == 1
@@ -1080,8 +1121,13 @@ void z_publisher_delete_options_default(z_publisher_delete_options_t *options) {
 #endif
 }
 
-z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
-                           const z_publisher_put_options_t *options) {
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                                 const z_publisher_put_options_t *options, _ze_advanced_cache_t *cache) {
+#else
+z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                                 const z_publisher_put_options_t *options) {
+#endif
     z_result_t ret = 0;
     // Build options
     z_publisher_put_options_t opt;
@@ -1138,6 +1184,30 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
                            pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info);
         }
 
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+        if (cache != NULL) {
+            _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
+            _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
+            _z_bytes_t local_payload = (payload_bytes != NULL) ? *payload_bytes : _z_bytes_null();
+            _z_bytes_t local_attachment = (attachment_bytes != NULL) ? *attachment_bytes : _z_bytes_null();
+
+            _z_sample_t sample;
+            z_result_t res = _z_sample_copy_data(
+                &sample, &pub->_key, &local_payload, &local_timestamp, &encoding, Z_SAMPLE_KIND_PUT,
+                _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
+                &local_attachment, reliability, &local_source_info);
+            if (res == _Z_RES_OK) {
+                res = _ze_advanced_cache_add(cache, &sample);
+                if (res != _Z_RES_OK) {
+                    _Z_ERROR("Failed to add sample to advanced publisher cache: %i", res);
+                    _z_sample_clear(&sample);
+                }
+            } else {
+                _Z_ERROR("Failed to create sample from data: %i", res);
+            }
+        }
+#endif
+
         // Trigger local subscriptions
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
         _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
@@ -1181,7 +1251,21 @@ z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *pay
     return ret;
 }
 
-z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
+z_result_t z_publisher_put(const z_loaned_publisher_t *pub, z_moved_bytes_t *payload,
+                           const z_publisher_put_options_t *options) {
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+    return _z_publisher_put_impl(pub, payload, options, NULL);
+#else
+    return _z_publisher_put_impl(pub, payload, options);
+#endif
+}
+
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options,
+                                    _ze_advanced_cache_t *cache) {
+#else
+z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
+#endif
     // Build options
     z_publisher_delete_options_t opt;
     z_publisher_delete_options_default(&opt);
@@ -1215,6 +1299,30 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
         _z_write(session, &pub_keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
                  pub->_priority, pub->_is_express, opt.timestamp, &dummy_payload, reliability, source_info);
 
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+    if (cache != NULL) {
+        _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
+        _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
+        _z_bytes_t payload_bytes = _z_bytes_null();
+        _z_bytes_t attachment_bytes = _z_bytes_null();
+
+        _z_sample_t sample;
+        z_result_t res = _z_sample_copy_data(
+            &sample, &pub_keyexpr, &payload_bytes, &local_timestamp, NULL, Z_SAMPLE_KIND_DELETE,
+            _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
+            &attachment_bytes, reliability, &local_source_info);
+        if (res == _Z_RES_OK) {
+            res = _ze_advanced_cache_add(cache, &sample);
+            if (res != _Z_RES_OK) {
+                _Z_ERROR("Failed to add sample to advanced publisher cache: %i", res);
+                _z_sample_clear(&sample);
+            }
+        } else {
+            _Z_ERROR("Failed to create sample from data: %i", res);
+        }
+    }
+#endif
+
 #if Z_FEATURE_SESSION_CHECK == 1
     // Clean up
     _z_session_rc_drop(&sess_rc);
@@ -1223,6 +1331,14 @@ z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher
     z_source_info_drop(opt.source_info);
 #endif
     return ret;
+}
+
+z_result_t z_publisher_delete(const z_loaned_publisher_t *pub, const z_publisher_delete_options_t *options) {
+#if Z_FEATURE_ADVANCED_PUBLICATION == 1
+    return _z_publisher_delete_impl(pub, options, NULL);
+#else
+    return _z_publisher_delete_impl(pub, options);
+#endif
 }
 
 const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publisher) {
@@ -1731,6 +1847,35 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     return ret;
 }
 
+z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_sample_t *sample,
+                                 const z_query_reply_options_t *options) {
+    // Try upgrading session weak to rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
+    }
+    // Set options
+    z_query_reply_options_t opts;
+    if (options == NULL) {
+        z_query_reply_options_default(&opts);
+    } else {
+        opts = *options;
+    }
+
+    _z_keyexpr_t local_keyexpr;
+    _z_keyexpr_copy(&local_keyexpr, &sample->keyexpr);
+    local_keyexpr._id = 0;
+    local_keyexpr._mapping = _Z_KEYEXPR_MAPPING_LOCAL;
+
+    z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &local_keyexpr, &sample->payload, &sample->encoding,
+                                   sample->kind, opts.congestion_control, opts.priority, opts.is_express,
+                                   &sample->timestamp, &sample->attachment, &sample->source_info);
+    // Clean-up
+    _z_keyexpr_clear(&local_keyexpr);
+    _z_session_rc_drop(&sess_rc);
+    return ret;
+}
+
 void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
     options->congestion_control = z_internal_congestion_control_default_response();
     options->priority = Z_PRIORITY_DEFAULT;
@@ -1972,6 +2117,36 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
     }
     return NULL;
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_subscriber_id(const z_loaned_subscriber_t *subscriber) {
+    z_entity_global_id_t egid;
+    _z_session_t *session = NULL;
+#if Z_FEATURE_SESSION_CHECK == 1
+    // Try to upgrade session rc
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&subscriber->_zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        session = _Z_RC_IN_VAL(&sess_rc);
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+#else
+    session = _Z_RC_IN_VAL(&subscriber->_zn);
+#endif
+
+    if (session != NULL) {
+        egid.zid = session->_local_zid;
+        egid.eid = subscriber->_entity_id;
+    } else {
+        egid = _z_entity_global_id_null();
+    }
+
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return egid;
+}
+#endif
 #endif
 
 #if Z_FEATURE_BATCHING == 1
@@ -2084,6 +2259,43 @@ z_result_t zp_stop_lease_task(z_loaned_session_t *zs) {
 #endif
 }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+void zp_task_periodic_scheduler_options_default(zp_task_periodic_scheduler_options_t *options) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    options->task_attributes = NULL;
+#else
+    options->__dummy = 0;
+#endif
+}
+
+z_result_t zp_start_periodic_scheduler_task(z_loaned_session_t *zs,
+                                            const zp_task_periodic_scheduler_options_t *options) {
+    (void)(options);
+#if Z_FEATURE_MULTI_THREAD == 1
+    zp_task_periodic_scheduler_options_t opt;
+    zp_task_periodic_scheduler_options_default(&opt);
+    if (options != NULL) {
+        opt = *options;
+    }
+    return _zp_start_periodic_scheduler_task(_Z_RC_IN_VAL(zs), opt.task_attributes);
+#else
+    (void)(zs);
+    return -1;
+#endif
+}
+
+z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    return _zp_stop_periodic_scheduler_task(_Z_RC_IN_VAL(zs));
+#else
+    (void)(zs);
+    return -1;
+#endif
+}
+#endif  // Z_FEATURE_PERIODIC_TASKS == 1
+#endif  // Z_FEATURE_UNSTABLE_API
+
 void zp_read_options_default(zp_read_options_t *options) { options->single_read = false; }
 
 z_result_t zp_read(const z_loaned_session_t *zs, const zp_read_options_t *options) {
@@ -2109,6 +2321,14 @@ z_result_t zp_send_join(const z_loaned_session_t *zs, const zp_send_join_options
     (void)(options);
     return _zp_send_join(_Z_RC_IN_VAL(zs));
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs) {
+    return _zp_process_periodic_tasks(_Z_RC_IN_VAL(zs));
+}
+#endif
+#endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_reliability_default(void) { return Z_RELIABILITY_DEFAULT; }

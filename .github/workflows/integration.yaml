@@ -37,6 +37,9 @@ jobs:
           BUILD_INTEGRATION: ON
           Z_FEATURE_UNSTABLE_API: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          Z_FEATURE_PERIODIC_TASKS: 1
+          Z_FEATURE_ADVANCED_PUBLICATION: 1
+          Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
 
       - name: Test debug
         run: make test

@@ -366,6 +366,23 @@ z_result_t _zp_send_keep_alive(_z_session_t *zn) { return _z_send_keep_alive(&zn
 
 z_result_t _zp_send_join(_z_session_t *zn) { return _z_send_join(&zn->_tp); }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+z_result_t _zp_process_periodic_tasks(_z_session_t *zn) {
+    return _zp_periodic_scheduler_process_tasks(&zn->_periodic_scheduler);
+}
+
+z_result_t _zp_periodic_task_add(_z_session_t *zn, const _zp_closure_periodic_task_t *closure, uint64_t period_ms,
+                                 uint32_t *id) {
+    return _zp_periodic_scheduler_add(&zn->_periodic_scheduler, closure, period_ms, id);
+}
+
+z_result_t _zp_periodic_task_remove(_z_session_t *zn, uint32_t id) {
+    return _zp_periodic_scheduler_remove(&zn->_periodic_scheduler, id);
+}
+#endif
+#endif
+
 #if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _zp_start_read_task(_z_session_t *zn, z_task_attr_t *attr) {
     z_result_t ret = _Z_RES_OK;
@@ -437,6 +454,31 @@ z_result_t _zp_start_lease_task(_z_session_t *zn, z_task_attr_t *attr) {
     return ret;
 }
 
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+z_result_t _zp_start_periodic_scheduler_task(_z_session_t *zn, z_task_attr_t *attr) {
+    // Allocate task
+    _z_task_t *task = (_z_task_t *)z_malloc(sizeof(_z_task_t));
+    if (task == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    z_result_t ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
+    if (ret != _Z_RES_OK) {
+        z_free(task);
+        _Z_ERROR_RETURN(ret);
+    }
+    ret = _zp_periodic_scheduler_start_task(&zn->_periodic_scheduler, attr, task);
+    if (ret != _Z_RES_OK) {
+        z_free(task);
+        _Z_ERROR_RETURN(ret);
+    }
+    // Attach task
+    zn->_periodic_scheduler_task = task;
+    return ret;
+}
+#endif  // Z_FEATURE_PERIODIC_TASKS == 1
+#endif  // Z_FEATURE_UNSTABLE_API
+
 z_result_t _zp_stop_read_task(_z_session_t *zn) {
     z_result_t ret = _Z_RES_OK;
     // Call transport function
@@ -478,4 +520,30 @@ z_result_t _zp_stop_lease_task(_z_session_t *zn) {
     }
     return ret;
 }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *zn) {
+    if (zn->_periodic_scheduler_task == NULL) {
+        return _Z_ERR_INVALID;
+    }
+
+    z_result_t ret = _zp_periodic_scheduler_stop_task(&zn->_periodic_scheduler);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR_RETURN(ret);
+    }
+
+    ret = _z_task_join(zn->_periodic_scheduler_task);
+    if (ret != _Z_RES_OK) {
+        _Z_ERROR_RETURN(ret);
+    }
+
+    _z_task_t *task = zn->_periodic_scheduler_task;
+    zn->_periodic_scheduler_task = NULL;
+    z_free(task);
+
+    return _Z_RES_OK;
+}
+#endif  // Z_FEATURE_PERIODIC_TASKS == 1
+#endif  // Z_FEATURE_UNSTABLE_API
 #endif  // Z_FEATURE_MULTI_THREAD == 1

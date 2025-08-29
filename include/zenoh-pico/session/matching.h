@@ -58,7 +58,7 @@ _z_matching_listener_state_t *_z_matching_listener_state_new(uint32_t interest_i
 void _z_matching_listener_state_clear(_z_matching_listener_state_t *state);
 
 _Z_ELEM_DEFINE(_z_matching_listener, _z_matching_listener_state_t, _z_noop_size, _z_matching_listener_state_clear,
-               _z_noop_copy, _z_noop_move)
+               _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_z_matching_listener, _z_matching_listener_state_t)
 #endif  // Z_FEATURE_MATCHING == 1
 
