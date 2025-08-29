@@ -38,7 +38,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
                 _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
                 if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztm->_common._zbuf);
-                    return _Z_RES_OK;
+                    return _Z_NO_DATA_PROCESSED;
                 }
             }
             // Get stream size
@@ -49,7 +49,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
                 if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
                     _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     _z_zbuf_compact(&ztm->_common._zbuf);
-                    return _Z_RES_OK;
+                    return _Z_NO_DATA_PROCESSED;
                 }
             }
             break;
@@ -57,7 +57,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
             _z_zbuf_compact(&ztm->_common._zbuf);
             to_read = _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
             if (to_read == SIZE_MAX) {
-                return _Z_RES_OK;
+                return _Z_NO_DATA_PROCESSED;
             }
             break;
         default:
@@ -129,7 +129,7 @@ void *_zp_multicast_read_task(void *ztm_arg) {
     uint8_t addr_buff[_Z_MULTICAST_ADDR_BUFF_SIZE] = {0};
     _z_slice_t addr = _z_slice_alias_buf(addr_buff, sizeof(addr_buff));
     while (ztm->_common._read_task_running) {
-        if (_zp_multicast_process_messages(ztm, &addr) != _Z_RES_OK) {
+        if (_zp_multicast_process_messages(ztm, &addr) < _Z_RES_OK) {
             ztm->_common._read_task_running = false;
         }
     }
