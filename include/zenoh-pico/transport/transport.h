@@ -117,7 +117,7 @@ typedef struct _z_session_rc_t _z_session_rc_ref_t;
 
 typedef struct {
     _z_session_rc_ref_t *_session;
-    _z_link_t _link;
+    _z_link_t *_link;
     // TX and RX buffers
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
