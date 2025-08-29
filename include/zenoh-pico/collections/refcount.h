@@ -42,7 +42,7 @@ bool _z_simple_rc_decrease(void *rc);
 size_t _z_simple_rc_strong_count(void *rc);
 
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_REFCOUNT_DEFINE(name, type)                                                                               \
+#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                                                                   \
     typedef struct name##_rc_t {                                                                                     \
         type##_t *_val;                                                                                              \
         void *_cnt;                                                                                                  \
@@ -60,19 +60,6 @@ size_t _z_simple_rc_strong_count(void *rc);
         name##_rc_t p = name##_rc_null();                                                                            \
         if (_z_rc_init(&p._cnt) == _Z_RES_OK) {                                                                      \
             p._val = val;                                                                                            \
-        }                                                                                                            \
-        return p;                                                                                                    \
-    }                                                                                                                \
-    static inline name##_rc_t name##_rc_new_from_val(const type##_t *val) {                                          \
-        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));                                                        \
-        if (v == NULL) {                                                                                             \
-            return name##_rc_null();                                                                                 \
-        }                                                                                                            \
-        *v = *val;                                                                                                   \
-        name##_rc_t p = name##_rc_new(v);                                                                            \
-        if (p._cnt == NULL) {                                                                                        \
-            z_free(v);                                                                                               \
-            return name##_rc_null();                                                                                 \
         }                                                                                                            \
         return p;                                                                                                    \
     }                                                                                                                \
@@ -176,6 +163,22 @@ size_t _z_simple_rc_strong_count(void *rc);
     static inline size_t name##_rc_size(name##_rc_t *p) {                                                            \
         _ZP_UNUSED(p);                                                                                               \
         return sizeof(name##_rc_t);                                                                                  \
+    }
+
+#define _Z_REFCOUNT_DEFINE(name, type)                                      \
+    _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                              \
+    static inline name##_rc_t name##_rc_new_from_val(const type##_t *val) { \
+        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));               \
+        if (v == NULL) {                                                    \
+            return name##_rc_null();                                        \
+        }                                                                   \
+        *v = *val;                                                          \
+        name##_rc_t p = name##_rc_new(v);                                   \
+        if (p._cnt == NULL) {                                               \
+            z_free(v);                                                      \
+            return name##_rc_null();                                        \
+        }                                                                   \
+        return p;                                                           \
     }
 
 #define _Z_SIMPLE_REFCOUNT_DEFINE(name, type)                                                                 \
