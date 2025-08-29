@@ -131,6 +131,8 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
         if (_z_unicast_client_read(ztu, curr_peer, &to_read)) {
             // Process data
             _Z_RETURN_IF_ERR(_z_unicast_process_messages(ztu, curr_peer, to_read))
+        } else {
+            return _Z_NO_DATA_PROCESSED;
         }
     }
     return _Z_RES_OK;
