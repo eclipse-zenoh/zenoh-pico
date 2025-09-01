@@ -38,7 +38,8 @@ void _z_liveliness_pending_query_copy(_z_liveliness_pending_query_t *dst, const 
 _z_liveliness_pending_query_t *_z_liveliness_pending_query_clone(const _z_liveliness_pending_query_t *src);
 
 _Z_ELEM_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t, _z_noop_size,
-               _z_liveliness_pending_query_clear, _z_liveliness_pending_query_copy, _z_noop_move)
+               _z_liveliness_pending_query_clear, _z_liveliness_pending_query_copy, _z_noop_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t)
 
 uint32_t _z_liveliness_get_query_id(_z_session_t *zn);

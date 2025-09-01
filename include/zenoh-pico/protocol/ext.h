@@ -105,7 +105,8 @@ void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, const _z_msg_ext_unit_t *ext
 void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext);
 void _z_msg_ext_copy_zbuf(_z_msg_ext_zbuf_t *clone, const _z_msg_ext_zbuf_t *ext);
 
-_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy, _z_noop_move)
+_Z_ELEM_DEFINE(_z_msg_ext, _z_msg_ext_t, _z_noop_size, _z_msg_ext_clear, _z_msg_ext_copy, _z_noop_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
 _Z_VEC_DEFINE(_z_msg_ext, _z_msg_ext_t)
 
 #ifdef __cplusplus

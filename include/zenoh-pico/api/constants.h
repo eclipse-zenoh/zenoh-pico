@@ -101,6 +101,24 @@ typedef enum {
 } z_keyexpr_intersection_level_t;
 
 /**
+ * Key expression constant strings.
+ */
+#define _Z_KEYEXPR_ADV_PREFIX "@adv"
+#define _Z_KEYEXPR_ADV_PREFIX_LEN (sizeof(_Z_KEYEXPR_ADV_PREFIX) - 1)
+#define _Z_KEYEXPR_PUB "pub"
+#define _Z_KEYEXPR_PUB_LEN (sizeof(_Z_KEYEXPR_PUB) - 1)
+#define _Z_KEYEXPR_SUB "sub"
+#define _Z_KEYEXPR_SUB_LEN (sizeof(_Z_KEYEXPR_SUB) - 1)
+#define _Z_KEYEXPR_UHLC "uhlc"
+#define _Z_KEYEXPR_UHLC_LEN (sizeof(_Z_KEYEXPR_UHLC) - 1)
+#define _Z_KEYEXPR_EMPTY "_"
+#define _Z_KEYEXPR_EMPTY_LEN (sizeof(_Z_KEYEXPR_EMPTY) - 1)
+#define _Z_KEYEXPR_STAR "*"
+#define _Z_KEYEXPR_STAR_LEN (sizeof(_Z_KEYEXPR_STAR) - 1)
+#define _Z_KEYEXPR_STARSTAR "**"
+#define _Z_KEYEXPR_STARSTAR_LEN (sizeof(_Z_KEYEXPR_STARSTAR) - 1)
+
+/**
  * Sample kind values.
  *
  * Enumerators:
