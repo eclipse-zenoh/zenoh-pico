@@ -1127,7 +1127,7 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
 
 /**
  * Builds a new sample closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_sample_t`.
@@ -1152,7 +1152,7 @@ void z_closure_sample_call(const z_loaned_closure_sample_t *closure, z_loaned_sa
 
 /**
  * Builds a new query closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_query_t`.
@@ -1177,7 +1177,7 @@ void z_closure_query_call(const z_loaned_closure_query_t *closure, z_loaned_quer
 
 /**
  * Builds a new reply closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_reply_t`.
@@ -1202,7 +1202,7 @@ void z_closure_reply_call(const z_loaned_closure_reply_t *closure, z_loaned_repl
 
 /**
  * Builds a new hello closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_hello_t`.
@@ -1227,7 +1227,7 @@ void z_closure_hello_call(const z_loaned_closure_hello_t *closure, z_loaned_hell
 
 /**
  * Builds a new zid closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_zid_t`.
@@ -1252,7 +1252,7 @@ void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id)
 
 /**
  * Builds a new matching status closure.
- * It consists on a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
  * Parameters:
  *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_matching_status_t`.
@@ -1276,6 +1276,35 @@ z_result_t z_closure_matching_status(z_owned_closure_matching_status_t *closure,
  */
 void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *closure,
                                     const z_matching_status_t *status);
+
+/**
+ * Builds a new sample miss closure.
+ * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`ze_owned_closure_miss_t`.
+ *   call: Pointer to the callback function. ``context`` will be passed as its last argument.
+ *   drop: Pointer to the function that will free the callback state. ``context`` will be passed as its last argument.
+ *   context: Pointer to an arbitrary state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t ze_closure_miss(ze_owned_closure_miss_t *closure, ze_closure_miss_callback_t call,
+                           z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a sample miss closure.
+ *
+ * Parameters:
+ *   closure: Pointer to the :c:type:`ze_loaned_closure_miss_t` to call.
+ *   status: Pointer to the :c:type:`ze_miss_t` to pass to the closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss);
 
 /**************** Loans ****************/
 _Z_OWNED_FUNCTIONS_DEF(string)
@@ -1305,6 +1334,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_reply)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_hello)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_zid)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_matching_status)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(ze, closure_miss)
 
 _Z_VIEW_FUNCTIONS_DEF(keyexpr)
 _Z_VIEW_FUNCTIONS_DEF(string)

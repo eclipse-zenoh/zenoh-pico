@@ -546,6 +546,12 @@ void z_closure_matching_status_call(const z_loaned_closure_matching_status_t *cl
     }
 }
 
+void ze_closure_miss_call(const ze_loaned_closure_miss_t *closure, const ze_miss_t *miss) {
+    if (closure->call != NULL) {
+        (closure->call)(miss, closure->context);
+    }
+}
+
 bool _z_config_check(const _z_config_t *config) { return !_z_str_intmap_is_empty(config); }
 _z_config_t _z_config_null(void) { return _z_str_intmap_make(); }
 z_result_t _z_config_copy(_z_config_t *dst, const _z_config_t *src) {
@@ -610,6 +616,7 @@ _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_hello, z_closure_hello_callback_t, z_clo
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_zid, z_closure_zid_callback_t, z_closure_drop_callback_t)
 _Z_OWNED_FUNCTIONS_CLOSURE_IMPL(closure_matching_status, _z_closure_matching_status_callback_t,
                                 z_closure_drop_callback_t)
+_Z_OWNED_FUNCTIONS_CLOSURE_IMPL_PREFIX(ze, closure_miss, ze_closure_miss_callback_t, z_closure_drop_callback_t)
 
 /************* Primitives **************/
 #if Z_FEATURE_SCOUTING == 1
