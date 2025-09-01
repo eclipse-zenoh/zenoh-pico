@@ -1909,7 +1909,7 @@ const z_loaned_keyexpr_t *z_publisher_keyexpr(const z_loaned_publisher_t *publis
  *   publisher: Pointer to a :c:type:`z_loaned_publisher_t` to get the entity global Id from.
  *
  * Return:
- *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_id_t`.
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */

@@ -39,24 +39,28 @@ void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
     *listener = _ze_sample_miss_listener_null();
 }
 
-void _ze_sample_miss_listener_drop(_ze_sample_miss_listener_t *listener) {
-    if (listener != NULL) {
-        _ze_advanced_subscriber_state_rc_t state_rc = _ze_advanced_subscriber_state_weak_upgrade(&listener->_statesref);
-        if (!_Z_RC_IS_NULL(&state_rc)) {
-            _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&state_rc);
+z_result_t _ze_sample_miss_listener_drop(_ze_sample_miss_listener_t *listener) {
+    if (listener == NULL) {
+        return _Z_ERR_INVALID;
+    }
+
+    _ze_advanced_subscriber_state_rc_t state_rc = _ze_advanced_subscriber_state_weak_upgrade(&listener->_statesref);
+    if (_Z_RC_IS_NULL(&state_rc)) {
+        return _Z_ERR_INVALID;
+    }
+
+    _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&state_rc);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-            if (z_mutex_lock(z_mutex_loan_mut(&state->_mutex)) == _Z_RES_OK) {
+    _Z_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)));
 #endif
-                _ze_closure_miss_intmap_remove(&state->_miss_handlers, listener->_id);
+    _ze_closure_miss_intmap_remove(&state->_miss_handlers, listener->_id);
 #if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-            }
+    z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
 #endif
-            _ze_advanced_subscriber_state_rc_drop(&state_rc);
-            _ze_sample_miss_listener_clear(listener);
-        }
-    }
+    _ze_advanced_subscriber_state_rc_drop(&state_rc);
+    _ze_sample_miss_listener_clear(listener);
+    return _Z_RES_OK;
 }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX(ze, _ze_sample_miss_listener_t, sample_miss_listener,
@@ -1837,6 +1841,10 @@ z_result_t ze_advanced_subscriber_declare_background_sample_miss_listener(
     _Z_RETURN_IF_ERR(ze_advanced_subscriber_declare_sample_miss_listener(subscriber, &listener, callback));
     _ze_sample_miss_listener_clear(&listener._val);
     return _Z_RES_OK;
+}
+
+z_result_t ze_undeclare_sample_miss_listener(ze_moved_sample_miss_listener_t *sample_miss_listener) {
+    return _ze_sample_miss_listener_drop(&sample_miss_listener->_this._val);
 }
 
 z_result_t ze_advanced_subscriber_detect_publishers(const ze_loaned_advanced_subscriber_t *subscriber,

@@ -147,7 +147,7 @@ _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, sample_miss_listener)
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
 
 /**
- * Settings for retrievieng historical data for Advanced Subscriber.
+ * Settings for retrieving historical data for Advanced Subscriber.
  *
  * Members:
  *   bool is_enabled: Must be set to ``true``, to enable the history data recovery.
@@ -325,7 +325,8 @@ z_entity_global_id_t ze_advanced_subscriber_id(const ze_loaned_advanced_subscrib
  *   subscriber: Pointer to a :c:type:`ze_loaned_advanced_subscriber_t` instance to associate with sample miss listener.
  *   sample_miss_listener: Pointer to an uninitialized :c:type:`ze_owned_sample_miss_listener_t` where sample miss
  * listener will be constructed. The sample miss listener's callback will be automatically dropped when the subscriber
- * is dropped. callback: Pointer to a :c:type:`ze_moved_closure_miss_t` that will be called every time a sample miss is
+ * is dropped.
+ *   callback: Pointer to a :c:type:`ze_moved_closure_miss_t` that will be called every time a sample miss is
  * detected.
  *
  * Return:
@@ -352,6 +353,19 @@ z_result_t ze_advanced_subscriber_declare_sample_miss_listener(const ze_loaned_a
  */
 z_result_t ze_advanced_subscriber_declare_background_sample_miss_listener(
     const ze_loaned_advanced_subscriber_t *subscriber, ze_moved_closure_miss_t *callback);
+
+/**
+ * Undeclares the given sample miss listener, droping and invalidating it.
+ *
+ * Parameters:
+ *   sample_miss_listener: Moved :c:type:`ze_moved_sample_miss_listener_t` to undeclare
+ *
+ * Return:
+ *   ``0`` if successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t ze_undeclare_sample_miss_listener(ze_moved_sample_miss_listener_t *sample_miss_listener);
 
 /**
  * Declares a liveliness token listener for matching publishers detection. Only advanced publishers, enabling publisher

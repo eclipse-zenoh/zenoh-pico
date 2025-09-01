@@ -110,7 +110,7 @@ typedef struct {
  *   z_publisher_options_t publisher_options: Base publisher options.
  *   ze_advanced_publisher_cache_options_t cache: Publisher cache settings.
  *   ze_advanced_publisher_sample_miss_detection_options_t sample_miss_detection: Allow
- *     matching Subscribers to detect lost samples and optionally ask for retransimission.
+ *     matching Subscribers to detect lost samples and optionally ask for retransmission.
  *     Retransmission can only be done if history is enabled on subscriber side.
  *   bool publisher_detection: Allow this publisher to be detected through liveliness.
  *   z_loaned_keyexpr_t *publisher_detection_metadata: An optional key expression to be added
@@ -286,21 +286,11 @@ const z_loaned_keyexpr_t *ze_advanced_publisher_keyexpr(const ze_loaned_advanced
  *   publisher: Pointer to a :c:type:`ze_loaned_advanced_publisher_t` to get the entity global Id from.
  *
  * Return:
- *   The entity gloabl Id wrapped as a :c:type:`z_entity_global_global_id_t`.
+ *   The entity global Id wrapped as a :c:type:`z_entity_global_global_id_t`.
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_entity_global_id_t ze_advanced_publisher_id(const ze_loaned_advanced_publisher_t *pub);
-
-/**
- * Builds a :c:type:`ze_advanced_publisher_cache_options_t` with default values.
- *
- * Parameters:
- *   options: Pointer to an uninitialized :c:type:`ze_advanced_publisher_cache_options_t`.
- *
- * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
- */
-void ze_advanced_publisher_cache_options_default(ze_advanced_publisher_cache_options_t *options);
 
 #if Z_FEATURE_MATCHING == 1
 /**

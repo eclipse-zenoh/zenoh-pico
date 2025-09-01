@@ -1166,7 +1166,7 @@ Advanced Publication
 Represents a Zenoh Advanced Publisher entity.
 
 In addition to publishing the data, it also maintains the storage, allowing matching
-subscribers to retrive missed samples.
+subscribers to retrieve missed samples.
 
 Types
 -----
@@ -1293,6 +1293,7 @@ Functions
 
 .. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_declare_sample_miss_listener
 .. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_declare_background_sample_miss_listener
+.. autocfunction:: advanced_subscriber.h::ze_undeclare_sample_miss_listener
 .. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_detect_publishers
 .. autocfunction:: advanced_subscriber.h::ze_advanced_subscriber_detect_publishers_background
 
