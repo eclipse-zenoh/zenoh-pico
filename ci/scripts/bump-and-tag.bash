@@ -22,7 +22,7 @@ git commit version.txt -m "chore: Bump version to $version"
 if [[ ${live_run} == true ]]; then
   git tag --force "$version" -m "v$version"
 fi
-git log -10
+git --no-pager log -10
 git show-ref --tags
 git push --force origin
 git push --force origin "$version"
