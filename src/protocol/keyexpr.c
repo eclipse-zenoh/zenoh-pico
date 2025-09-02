@@ -162,11 +162,9 @@ z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size
     char *wild = _z_string_pbrk(&base_key->_suffix, "*$");
     if (wild == NULL) {
         return _Z_RES_OK;
-    } else if (wild == _z_string_data(&base_key->_suffix)) {
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
     // Remove wildcards from suffix
-    wild = _z_ptr_char_offset(wild, -1);
+    wild = _z_ptr_char_offset(wild, 1);
     *wild_loc = wild;
     size_t len = _z_ptr_char_diff(wild, _z_string_data(&base_key->_suffix));
     *wild_suffix_size = _z_string_len(&base_key->_suffix) - len;
