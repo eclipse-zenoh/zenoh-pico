@@ -186,10 +186,6 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
             ret = _Z_ERR_GENERIC;
         }
 
-#if defined(ZENOH_MACOS) || defined(ZENOH_BSD)
-        setsockopt(sock->_sock._fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
-#endif
-
         ADDRINFOA *it = NULL;
         for (it = rep._ep._iptcp; it != NULL; it = it->ai_next) {
             if ((ret == _Z_RES_OK) && (connect(sock->_sock._fd, it->ai_addr, (int)it->ai_addrlen) < 0)) {
