@@ -538,6 +538,9 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
             _z_unregister_interest(zn, sintr);
             return 0;
         }
+#if Z_FEATURE_AUTO_RECONNECT == 1
+        _z_cache_declaration(zn, &n_msg);
+#endif
         _z_n_msg_clear(&n_msg);
     }
     // Replay declares
@@ -563,6 +566,9 @@ z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id) {
         if (_z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL) != _Z_RES_OK) {
             _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
         }
+#if Z_FEATURE_AUTO_RECONNECT == 1
+        _z_prune_declaration(zn, &n_msg);
+#endif
         _z_n_msg_clear(&n_msg);
     }
     // Only if message is successfully send, session interest can be removed

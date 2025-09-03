@@ -10,7 +10,10 @@ DISCONNECT_MESSAGES = ["Closing session because it has expired", "Send keep aliv
 CONNECT_MESSAGES = ["Z_OPEN(Ack)"]
 LIVELINESS_TOKEN_ALIVE_MESSAGES = ["[LivelinessSubscriber] New alive token"]
 LIVELINESS_TOKEN_DROP_MESSAGES = ["[LivelinessSubscriber] Dropped token"]
+SUBSCRIBER_RECEIVE_MESSAGES = ["[Subscriber] Received"]
 ROUTER_ERROR_MESSAGE = "ERROR"
+WRITE_FILTER_OFF_MESSAGE = "write filter state: 1"
+WRITE_FILTER_ACTIVE_MESSAGE = "write filter state: 0"
 ZENOH_PORT = "7447"
 
 ROUTER_ARGS = ['-l', f'tcp/0.0.0.0:{ZENOH_PORT}', '--no-multicast-scouting']
@@ -232,6 +235,153 @@ def test_liveliness_drop(router_command, liveliness_command, liveliness_sub_comm
         terminate_processes(process_list)
 
 
+def test_pub_sub_survive_router_restart(router_command, pub_command, sub_command, timeout):
+    """
+    Start router, start subscriber and publisher, verify samples flow.
+    Restart router, wait for clients to reconnect, verify samples still flow.
+    """
+    print(f"Pub/Sub flow across router restart (timeout={timeout})")
+
+    router_output = []
+    pub_output    = []
+    sub_output    = []
+    router_ps = []
+    pub_ps    = []
+    sub_ps    = []
+
+    try:
+        # Router up
+        run_background(router_command, router_output, router_ps)
+        time.sleep(ROUTER_INIT_TIMEOUT_S)
+
+        # Start subscriber first so it can declare interest
+        run_background(sub_command, sub_output, sub_ps)
+        wait_connect(sub_output)   # session up from sub side
+        sub_output.clear()
+
+        # Start publisher
+        run_background(pub_command, pub_output, pub_ps)
+        wait_connect(pub_output)   # session up from pub side
+        pub_output.clear()
+
+        # Confirm baseline delivery before restart
+        print("Verifying baseline delivery...")
+        if not wait_messages(sub_output, SUBSCRIBER_RECEIVE_MESSAGES):
+            raise Exception("Baseline: subscriber did not receive any sample.")
+        sub_output.clear()
+
+        # Restart router
+        print("Restarting router...")
+        terminate_processes(router_ps)
+        time.sleep(timeout)
+
+        # Both client logs should eventually show disconnect; don't hard-fail if only one shows it
+        try:
+            wait_disconnect(pub_output)
+            pub_output.clear()
+        except Exception:
+            pass
+        try:
+            wait_disconnect(sub_output)
+            sub_output.clear()
+        except Exception:
+            pass
+
+        run_background(router_command, router_output, router_ps)
+        time.sleep(ROUTER_INIT_TIMEOUT_S)
+
+        # Reconnect
+        wait_reconnect(pub_output)
+        #pub_output.clear()
+        wait_reconnect(sub_output)
+        sub_output.clear()
+
+        # Verify delivery after restart
+        print("Verifying delivery after router restart...")
+        if not wait_messages(sub_output, SUBSCRIBER_RECEIVE_MESSAGES):
+            raise Exception("After restart: subscriber did not receive any sample.")
+        if not wait_messages(pub_output, WRITE_FILTER_OFF_MESSAGE):
+            raise Exception("After restart: write filter state not updated to off.")
+
+        check_router_errors(router_output)
+        print("Pub/Sub flow across router restart: PASSED")
+    finally:
+        terminate_processes(sub_ps + pub_ps + router_ps)
+
+
+def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_command, timeout):
+    """
+    Start router and publisher; restart router; wait for publisher to reconnect;
+    then start a new subscriber and verify it receives samples.
+    This reproduces the writer-side filtering / missing interest issue.
+    """
+    print(f"Pub before restart, new Sub after (timeout={timeout})")
+
+    router_output = []
+    pub_output    = []
+    sub_output    = []
+    router_ps = []
+    pub_ps    = []
+    sub_ps    = []
+
+    try:
+        # Router up
+        run_background(router_command, router_output, router_ps)
+        time.sleep(ROUTER_INIT_TIMEOUT_S)
+
+        # Start publisher first
+        run_background(pub_command, pub_output, pub_ps)
+        wait_connect(pub_output)
+        pub_output.clear()
+
+        # Restart router
+        print("Restarting router...")
+        terminate_processes(router_ps)
+        time.sleep(timeout)
+
+        # Publisher should notice disconnect; don't fail if log line format differs
+        try:
+            wait_disconnect(pub_output)
+            pub_output.clear()
+        except Exception:
+            pass
+
+        run_background(router_command, router_output, router_ps)
+        time.sleep(ROUTER_INIT_TIMEOUT_S)
+
+        # Wait for publisher to reconnect
+        wait_reconnect(pub_output)
+        pub_output.clear()
+
+        # Now start NEW subscriber
+        run_background(sub_command, sub_output, sub_ps)
+        wait_connect(sub_output)
+        sub_output.clear()
+
+        # Critical assertion: subscriber should receive samples
+        print("Waiting for subscriber to receive samples...")
+        if not wait_messages(sub_output, SUBSCRIBER_RECEIVE_MESSAGES):
+            # Print some context for debugging
+            print("=== Publisher (last lines) ===")
+            [print(l) for l in pub_output[-50:]]
+            print("=== Subscriber (last lines) ===")
+            [print(l) for l in sub_output[-50:]]
+            print("=== Router (last lines) ===")
+            [print(l) for l in router_output[-50:]]
+            raise Exception(
+                "New subscriber did not receive samples after router restart while publisher "
+                "existed before. This matches the issue where publisher stays in writer-side "
+                "filtering and never resends interest."
+            )
+        if not wait_messages(pub_output, WRITE_FILTER_OFF_MESSAGE):
+            raise Exception("After restart: write filter state not updated to off.")
+
+        check_router_errors(router_output)
+        print("Pub before restart, new Sub after: PASSED")
+    finally:
+        terminate_processes(sub_ps + pub_ps + router_ps)
+
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: sudo python3 ./connection_restore.py /path/to/zenohd")
@@ -254,6 +404,18 @@ def main():
     # timeout more than sesson timeout
     test_router_restart(router_command, ACTIVE_CLIENT_COMMAND, 15)
     test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 15)
+
+    # Existing z_pub <-> z_sub communication survives a router restart
+    test_pub_sub_survive_router_restart(router_command,
+                                        ACTIVE_CLIENT_COMMAND,
+                                        PASSIVE_CLIENT_COMMAND,
+                                        8)
+
+    # After a router restart, a new z_sub can receive samples from a pre-restart z_pub
+    test_pub_before_restart_then_new_sub(router_command,
+                                         ACTIVE_CLIENT_COMMAND,
+                                         PASSIVE_CLIENT_COMMAND,
+                                         8)
 
     test_liveliness_drop(router_command, LIVELINESS_CLIENT_COMMAND, LIVELINESS_SUB_CLIENT_COMMAND)
 

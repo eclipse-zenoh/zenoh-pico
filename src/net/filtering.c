@@ -81,6 +81,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
     }
     // Process filter state
     ctx->state = (ctx->targets == NULL) ? WRITE_FILTER_ACTIVE : WRITE_FILTER_OFF;
+    _Z_DEBUG("Updated write filter state: %d", ctx->state);
 }
 
 z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
