@@ -275,11 +275,13 @@ def test_pub_sub_survive_router_restart(router_command, pub_command, sub_command
 
         # Both client logs should eventually show disconnect; don't hard-fail if only one shows it
         try:
-            wait_disconnect(pub_output);   pub_output.clear()
+            wait_disconnect(pub_output)
+            pub_output.clear()
         except Exception:
             pass
         try:
-            wait_disconnect(sub_output);   sub_output.clear()
+            wait_disconnect(sub_output)
+            sub_output.clear()
         except Exception:
             pass
 
@@ -287,8 +289,10 @@ def test_pub_sub_survive_router_restart(router_command, pub_command, sub_command
         time.sleep(ROUTER_INIT_TIMEOUT_S)
 
         # Reconnect
-        wait_reconnect(pub_output); pub_output.clear()
-        wait_reconnect(sub_output); sub_output.clear()
+        wait_reconnect(pub_output)
+        pub_output.clear()
+        wait_reconnect(sub_output)
+        sub_output.clear()
 
         # Verify delivery after restart
         print("Verifying delivery after router restart...")
@@ -332,7 +336,8 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
 
         # Publisher should notice disconnect; don't fail if log line format differs
         try:
-            wait_disconnect(pub_output); pub_output.clear()
+            wait_disconnect(pub_output)
+            pub_output.clear()
         except Exception:
             pass
 
@@ -340,22 +345,28 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
         time.sleep(ROUTER_INIT_TIMEOUT_S)
 
         # Wait for publisher to reconnect
-        wait_reconnect(pub_output); pub_output.clear()
+        wait_reconnect(pub_output)
+        pub_output.clear()
 
         # Now start NEW subscriber
         run_background(sub_command, sub_output, sub_ps)
-        wait_connect(sub_output); sub_output.clear()
+        wait_connect(sub_output)
+        sub_output.clear()
 
         # Critical assertion: subscriber should receive samples
         print("Waiting for subscriber to receive samples...")
         if not wait_messages(sub_output, SUBSCRIBER_RECEIVE_MESSAGES):
             # Print some context for debugging
-            print("=== Publisher (last lines) ===");  [print(l) for l in pub_output[-50:]]
-            print("=== Subscriber (last lines) ==="); [print(l) for l in sub_output[-50:]]
-            print("=== Router (last lines) ===");     [print(l) for l in router_output[-50:]]
+            print("=== Publisher (last lines) ===")
+            [print(l) for l in pub_output[-50:]]
+            print("=== Subscriber (last lines) ===")
+            [print(l) for l in sub_output[-50:]]
+            print("=== Router (last lines) ===")
+            [print(l) for l in router_output[-50:]]
             raise Exception(
-                "New subscriber did not receive samples after router restart while publisher existed before. "
-                "This matches the issue where publisher stays in writer-side filtering and never resends interest."
+                "New subscriber did not receive samples after router restart while publisher "
+                "existed before. This matches the issue where publisher stays in writer-side "
+                "filtering and never resends interest."
             )
 
         check_router_errors(router_output)
@@ -388,10 +399,16 @@ def main():
     test_router_restart(router_command, PASSIVE_CLIENT_COMMAND, 15)
 
     # Existing z_pub <-> z_sub communication survives a router restart
-    test_pub_sub_survive_router_restart(router_command, ACTIVE_CLIENT_COMMAND, PASSIVE_CLIENT_COMMAND, 8)
+    test_pub_sub_survive_router_restart(router_command,
+                                        ACTIVE_CLIENT_COMMAND,
+                                        PASSIVE_CLIENT_COMMAND,
+                                        8)
 
     # After a router restart, a new z_sub can receive samples from a pre-restart z_pub
-    test_pub_before_restart_then_new_sub(router_command, ACTIVE_CLIENT_COMMAND, PASSIVE_CLIENT_COMMAND, 8)
+    test_pub_before_restart_then_new_sub(router_command,
+                                         ACTIVE_CLIENT_COMMAND,
+                                         PASSIVE_CLIENT_COMMAND,
+                                         8)
 
     test_liveliness_drop(router_command, LIVELINESS_CLIENT_COMMAND, LIVELINESS_SUB_CLIENT_COMMAND)
 
