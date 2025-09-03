@@ -12,6 +12,8 @@ LIVELINESS_TOKEN_ALIVE_MESSAGES = ["[LivelinessSubscriber] New alive token"]
 LIVELINESS_TOKEN_DROP_MESSAGES = ["[LivelinessSubscriber] Dropped token"]
 SUBSCRIBER_RECEIVE_MESSAGES = ["[Subscriber] Received"]
 ROUTER_ERROR_MESSAGE = "ERROR"
+WRITE_FILTER_OFF_MESSAGE = "write filter state: 1"
+WRITE_FILTER_ACTIVE_MESSAGE = "write filter state: 0"
 ZENOH_PORT = "7447"
 
 ROUTER_ARGS = ['-l', f'tcp/0.0.0.0:{ZENOH_PORT}', '--no-multicast-scouting']
@@ -290,7 +292,7 @@ def test_pub_sub_survive_router_restart(router_command, pub_command, sub_command
 
         # Reconnect
         wait_reconnect(pub_output)
-        pub_output.clear()
+        #pub_output.clear()
         wait_reconnect(sub_output)
         sub_output.clear()
 
@@ -298,6 +300,8 @@ def test_pub_sub_survive_router_restart(router_command, pub_command, sub_command
         print("Verifying delivery after router restart...")
         if not wait_messages(sub_output, SUBSCRIBER_RECEIVE_MESSAGES):
             raise Exception("After restart: subscriber did not receive any sample.")
+        if not wait_messages(pub_output, WRITE_FILTER_OFF_MESSAGE):
+            raise Exception("After restart: write filter state not updated to off.")
 
         check_router_errors(router_output)
         print("Pub/Sub flow across router restart: PASSED")
@@ -327,7 +331,8 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
 
         # Start publisher first
         run_background(pub_command, pub_output, pub_ps)
-        wait_connect(pub_output); pub_output.clear()
+        wait_connect(pub_output)
+        pub_output.clear()
 
         # Restart router
         print("Restarting router...")
@@ -368,6 +373,8 @@ def test_pub_before_restart_then_new_sub(router_command, pub_command, sub_comman
                 "existed before. This matches the issue where publisher stays in writer-side "
                 "filtering and never resends interest."
             )
+        if not wait_messages(pub_output, WRITE_FILTER_OFF_MESSAGE):
+            raise Exception("After restart: write filter state not updated to off.")
 
         check_router_errors(router_output)
         print("Pub before restart, new Sub after: PASSED")
