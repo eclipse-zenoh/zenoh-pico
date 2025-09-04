@@ -39,7 +39,7 @@ jobs:
       branch: ${{ steps.create-release-branch.outputs.branch }}
     steps:
       - id: version
-        run:
+        run: |
           if [[ -n "${{ inputs.version }}" ]]; then
             echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           else
