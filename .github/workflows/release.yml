@@ -38,11 +38,19 @@ jobs:
       version: ${{ steps.create-release-branch.outputs.version }}
       branch: ${{ steps.create-release-branch.outputs.branch }}
     steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch || 'main' }}
+          fetch-tags: true
+          path: version-checkout
+
       - id: version
         run: |
           if [[ -n "${{ inputs.version }}" ]]; then
             echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           else
+            cd version-checkout
             tag=$(git describe --tags --abbrev=0)
             tweak=$(git describe --tags --abbrev=1 | cut -d'-' -f2)
             echo "version=$tag.$tweak" >> "$GITHUB_OUTPUT"
