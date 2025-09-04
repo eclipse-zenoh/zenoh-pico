@@ -38,16 +38,22 @@ jobs:
       version: ${{ steps.create-release-branch.outputs.version }}
       branch: ${{ steps.create-release-branch.outputs.branch }}
     steps:
+      - id: version
+        run:
+          if [[ -n "${{ inputs.version }}" ]]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            tag=$(git describe --tags --abbrev=0)
+            tweak=$(git describe --tags --abbrev=1 | cut -d'-' -f2)
+            echo "version=$tag.$tweak" >> "$GITHUB_OUTPUT"
+          fi
+
       - id: create-release-branch
         uses: eclipse-zenoh/ci/create-release-branch@main
         with:
           repo: ${{ github.repository }}
           live-run: ${{ inputs.live-run || false }}
-          # NOTE(fuzzypixelz): When the version is undefined (e.g. on schedule
-          # events) we cannot use git-describe as CMake doesn't support it.
-          # However, we still need some placeholder version to test that the
-          # version can be reliably bumped.
-          version: ${{ inputs.version || '0.0.0' }}
+          version: ${{ steps.version.outputs.version }}
           branch: ${{ inputs.branch }}
           github-token: ${{ secrets.BOT_TOKEN_WORKFLOW }}
 
