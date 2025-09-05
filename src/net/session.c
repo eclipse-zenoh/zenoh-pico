@@ -141,7 +141,12 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     if (ret != _Z_RES_OK) {
         return ret;
     }
-    _z_transport_get_common(&zn->_tp)->_session = zs;
+    _z_session_rc_t *session = (_z_session_rc_t *)z_malloc(sizeof(_z_session_rc_t));
+    if (session == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    *session = _z_session_rc_clone(zs);
+    _z_transport_get_common(&zn->_tp)->_session = session;
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
     if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_interest_pull_resource_from_peers(zn);
