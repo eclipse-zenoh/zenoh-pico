@@ -36,6 +36,9 @@
 #if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/link/config/ws.h"
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/config/tls.h"
+#endif
 #include "zenoh-pico/link/config/raweth.h"
 
 /*------------------ Locator ------------------*/
@@ -322,6 +325,12 @@ z_result_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, const _z_stri
             return _z_ws_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+        cmp_str = _z_string_alias_str(TLS_SCHEMA);
+        if (_z_string_equals(proto, &cmp_str)) {
+            return _z_tls_config_from_strn(strint, p_start, cfg_size);
+        }
+#endif
         cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_raweth_config_from_strn(strint, p_start, cfg_size);
@@ -363,6 +372,12 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, _z_string_t *proto) {
         return _z_ws_config_strlen(s);
     }
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+    cmp_str = _z_string_alias_str(TLS_SCHEMA);
+    if (_z_string_equals(proto, &cmp_str)) {
+        return _z_tls_config_strlen(s);
+    }
+#endif
     cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_raweth_config_strlen(s);
@@ -402,6 +417,12 @@ char *_z_endpoint_config_to_string(const _z_str_intmap_t *s, const _z_string_t *
     cmp_str = _z_string_alias_str(WS_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_ws_config_to_str(s);
+    }
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+    cmp_str = _z_string_alias_str(TLS_SCHEMA);
+    if (_z_string_equals(proto, &cmp_str)) {
+        return _z_tls_config_to_str(s);
     }
 #endif
     cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
