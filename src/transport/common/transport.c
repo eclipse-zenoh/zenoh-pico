@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/unicast/accept.h"
 #include "zenoh-pico/utils/result.h"
@@ -58,4 +59,6 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
     _z_zbuf_clear(&ztc->_zbuf);
 
     _z_link_clear(&ztc->_link);
+    _z_session_rc_drop(ztc->_session);
+    z_free(&ztc->_session);
 }
