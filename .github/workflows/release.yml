@@ -43,6 +43,7 @@ jobs:
         with:
           ref: ${{ inputs.branch || 'main' }}
           fetch-tags: true
+          fetch-depth: 0
           path: version-checkout
 
       - id: version
