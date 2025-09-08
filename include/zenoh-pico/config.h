@@ -17,6 +17,8 @@
 
 #ifdef ZENOH_GENERIC
 #include <zenoh_generic_config.h>
+#elif defined(ZENOH_RTTHREAD)
+#include "config_rtthread.h"
 #else
 
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
