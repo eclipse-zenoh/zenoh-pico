@@ -45,6 +45,10 @@
 #include "zenoh-pico/system/link/ws.h"
 #endif
 
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
+#endif
+
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -120,6 +124,7 @@ enum _z_link_type_e {
     _Z_LINK_TYPE_BT,
     _Z_LINK_TYPE_SERIAL,
     _Z_LINK_TYPE_WS,
+    _Z_LINK_TYPE_TLS,
     _Z_LINK_TYPE_RAWETH,
 };
 
@@ -141,6 +146,9 @@ typedef struct _z_link_t {
 #endif
 #if Z_FEATURE_LINK_WS == 1
         _z_ws_socket_t _ws;
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+        _z_tls_socket_t _tls;
 #endif
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
         _z_raweth_socket_t _raweth;

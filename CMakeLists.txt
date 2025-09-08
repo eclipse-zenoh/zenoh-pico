@@ -11,7 +11,7 @@
 # Contributors:
 # ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 
@@ -150,10 +150,10 @@ endfunction()
 
 function(pico_target_link_library value)
   if(PICO_STATIC)
-    target_link_libraries(zenohpico_static ${value})
+    target_link_libraries(zenohpico_static PUBLIC ${value})
   endif()
   if(PICO_SHARED)
-    target_link_libraries(zenohpico_shared ${value})
+    target_link_libraries(zenohpico_shared PRIVATE ${value})
   endif()
 endfunction()
 
@@ -258,6 +258,7 @@ set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
 set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
+set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
 set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
@@ -398,6 +399,27 @@ if(PICO_SHARED)
       $<INSTALL_INTERFACE:include>)
 endif()
 
+# TLS support via Mbed TLS
+if(Z_FEATURE_LINK_TLS)
+  find_package(PkgConfig REQUIRED)
+  pkg_search_module(MBEDTLS mbedtls>=3.0.0 mbedtls-3>=3.0.0)
+  if(NOT MBEDTLS_FOUND)
+    pkg_check_modules(MBEDTLS REQUIRED mbedtls>=2.0.0)
+  endif()
+
+  if(MBEDTLS_FOUND)
+    message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+  endif()
+
+  if(PICO_STATIC)
+    target_include_directories(${Libname}_static PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+  endif()
+  if(PICO_SHARED)
+    target_include_directories(${Libname}_shared PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+  endif()
+
+  pico_target_link_library(${MBEDTLS_LINK_LIBRARIES})
+endif()
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
@@ -458,6 +480,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   pico_target_link_library(Ws2_32)
   pico_target_link_library(Iphlpapi)
 endif()
+
 
 #
 # Build tests, examples, installation only when project is root
