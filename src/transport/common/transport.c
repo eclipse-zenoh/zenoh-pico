@@ -57,6 +57,6 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
     _z_wbuf_clear(&ztc->_wbuf);
     _z_zbuf_clear(&ztc->_zbuf);
 
-    _z_link_clear(&ztc->_link);
+    _z_link_free(&ztc->_link);
     _z_session_weak_drop(&ztc->_session);
 }

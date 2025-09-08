@@ -75,7 +75,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Transport lease
     ztu->_common._lease = param->_lease;
     // Transport link for unicast
-    ztu->_common._link = *zl;
+    ztu->_common._link = zl;
 
     ztu->_peers = _z_transport_peer_unicast_slist_new();
     return _Z_RES_OK;

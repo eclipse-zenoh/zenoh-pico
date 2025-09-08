@@ -38,10 +38,10 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
     _z_transport_rx_mutex_lock(&ztm->_common);
     size_t to_read = 0;
     do {
-        switch (ztm->_common._link._cap._flow) {
+        switch (ztm->_common._link->_cap._flow) {
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
                     if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztm->_common._zbuf);
                         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
@@ -53,7 +53,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
                 to_read = _z_read_stream_size(&ztm->_common._zbuf);
                 // Read data
                 if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
-                    _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+                    _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
                     if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
                         _z_zbuf_set_rpos(&ztm->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
@@ -67,7 +67,7 @@ static z_result_t _z_multicast_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_t
             // Datagram capable links
             case Z_LINK_CAP_FLOW_DATAGRAM:
                 _z_zbuf_compact(&ztm->_common._zbuf);
-                to_read = _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+                to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
                 if (to_read == SIZE_MAX) {
                     _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;

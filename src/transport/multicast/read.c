@@ -32,10 +32,10 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
     size_t to_read = 0;
 
     // Read bytes from socket to the main buffer
-    switch (ztm->_common._link._cap._flow) {
+    switch (ztm->_common._link->_cap._flow) {
         case Z_LINK_CAP_FLOW_STREAM:
             if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+                _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
                 if (_z_zbuf_len(&ztm->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                     _z_zbuf_compact(&ztm->_common._zbuf);
                     return _Z_NO_DATA_PROCESSED;
@@ -45,7 +45,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
             to_read = _z_read_stream_size(&ztm->_common._zbuf);
             // Read data
             if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
-                _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, NULL);
+                _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, NULL);
                 if (_z_zbuf_len(&ztm->_common._zbuf) < to_read) {
                     _z_zbuf_set_rpos(&ztm->_common._zbuf, _z_zbuf_get_rpos(&ztm->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
                     _z_zbuf_compact(&ztm->_common._zbuf);
@@ -55,7 +55,7 @@ static z_result_t _zp_multicast_process_messages(_z_transport_multicast_t *ztm, 
             break;
         case Z_LINK_CAP_FLOW_DATAGRAM:
             _z_zbuf_compact(&ztm->_common._zbuf);
-            to_read = _z_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+            to_read = _z_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
             if (to_read == SIZE_MAX) {
                 return _Z_NO_DATA_PROCESSED;
             }
