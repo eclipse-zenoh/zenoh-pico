@@ -344,6 +344,8 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {
+    // the session should always outlive the transport, so it should be safe
+    // to access pointer directly without upgrade
     return _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&transport->_session);
 }
 
