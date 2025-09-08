@@ -111,9 +111,6 @@ _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transp
                _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
-// Forward type declaration to avoid cyclical include
-typedef struct _z_session_rc_t _z_session_rc_ref_t;
-
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
 typedef struct {
