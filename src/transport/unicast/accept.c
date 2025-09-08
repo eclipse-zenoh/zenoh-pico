@@ -25,7 +25,7 @@
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
-    _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);
+    _z_sys_net_socket_t listen_socket = *_z_link_get_socket(ztu->_common._link);
     _z_sys_net_socket_t con_socket = {0};
     bool *accept_task_is_running = ztu->_common._accept_task_running;
 
@@ -48,7 +48,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
         }
         _z_transport_unicast_establish_param_t param = {0};
         // Start handshake
-        ret = _z_unicast_handshake_listen(&param, &ztu->_common._link,
+        ret = _z_unicast_handshake_listen(&param, ztu->_common._link,
                                           &_z_transport_common_get_session(&ztu->_common)->_local_zid, Z_WHATAMI_PEER,
                                           &con_socket);
         if (ret != _Z_RES_OK) {

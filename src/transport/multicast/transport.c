@@ -121,7 +121,7 @@ z_result_t _z_multicast_transport_create(_z_transport_t *zt, _z_link_t *zl,
         ztm->_common._transmitted = false;
 
         // Transport link for multicast
-        ztm->_common._link = *zl;
+        ztm->_common._link = zl;
     }
     return ret;
 }
