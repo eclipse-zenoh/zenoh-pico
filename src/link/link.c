@@ -12,12 +12,11 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#include "zenoh-pico/link/link.h"
-
 #include <stddef.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/config/raweth.h"
+#include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -25,9 +24,12 @@ z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socke
     _z_endpoint_t ep;
     z_result_t ret = _Z_RES_OK;
     _Z_RETURN_IF_ERR(_z_endpoint_from_string(&ep, locator));
-    // For now only tcp endpoints are supported
     if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
         ret = _z_new_peer_tcp(&ep, socket);
+#if Z_FEATURE_LINK_TLS == 1
+    } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+        ret = _z_new_peer_tls(&ep, socket);
+#endif
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
@@ -66,6 +68,11 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
             ret = _z_new_link_ws(zl, &ep);
         } else
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tls(zl, &ep);
+        } else
+#endif
         {
             _Z_ERROR_LOG(_Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN);
             ret = _Z_ERR_CONFIG_LOCATOR_SCHEMA_UNKNOWN;
@@ -99,6 +106,11 @@ z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator) {
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
+#if Z_FEATURE_LINK_TLS == 1
+            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tls(zl, &ep);
+        } else
+#endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
             if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
@@ -228,6 +240,10 @@ const _z_sys_net_socket_t *_z_link_get_socket(const _z_link_t *link) {
 #if Z_FEATURE_LINK_WS == 1
         case _Z_LINK_TYPE_WS:
             return &link->_socket._ws._sock;
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+        case _Z_LINK_TYPE_TLS:
+            return &link->_socket._tls._sock;
 #endif
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
         case _Z_LINK_TYPE_RAWETH:

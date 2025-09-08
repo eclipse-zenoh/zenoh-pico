@@ -11,7 +11,7 @@
 # Contributors:
 # ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 
@@ -47,6 +47,7 @@ option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 option(WITH_FREERTOS_LWIP "Build for FreeRTOS RTOS and LWIP (Lightweight IP) network stack" OFF)
 option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
+option(MBEDTLS_SHARED "Link against shared Mbed TLS libraries instead of static ones" ON)
 set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -258,6 +259,7 @@ set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
 set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
+set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
 set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
@@ -457,6 +459,26 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   pico_target_link_library(Ws2_32)
   pico_target_link_library(Iphlpapi)
+endif()
+
+# TLS support via Mbed TLS
+if(Z_FEATURE_LINK_TLS)
+  find_package(MbedTLS REQUIRED)
+  if(MBEDTLS_SHARED)
+    if(NOT TARGET MbedTLS::mbedtls)
+      message(FATAL_ERROR "Shared Mbed TLS libraries not found. Install them or disable MBEDTLS_SHARED.")
+    endif()
+    pico_target_link_library(MbedTLS::mbedtls)
+    pico_target_link_library(MbedTLS::mbedx509)
+    pico_target_link_library(MbedTLS::mbedcrypto)
+  else()
+    if(NOT TARGET MbedTLS::mbedtls_static)
+      message(FATAL_ERROR "Static PIC Mbed TLS libraries not found. Install them or enable MBEDTLS_SHARED.")
+    endif()
+    pico_target_link_library(MbedTLS::mbedtls_static)
+    pico_target_link_library(MbedTLS::mbedx509_static)
+    pico_target_link_library(MbedTLS::mbedcrypto_static)
+  endif()
 endif()
 
 #

@@ -11,8 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/transport/unicast/transport.h"
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,6 +23,7 @@
 #include "zenoh-pico/transport/common/transport.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
