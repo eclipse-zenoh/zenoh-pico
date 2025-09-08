@@ -16,7 +16,6 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/link/link.h"
-#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/unicast/accept.h"
 #include "zenoh-pico/utils/result.h"
