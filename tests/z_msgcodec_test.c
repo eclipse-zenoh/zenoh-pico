@@ -205,7 +205,7 @@ _z_id_t gen_zid(void) {
     for (uint8_t i = 0; i < len; i++) {
         uint8_t byte = gen_uint8();
         id.id[i] = byte;
-        hash ^= i * byte;
+        hash = (uint8_t)(hash ^ i * byte);
     }
     id.id[0] = hash;
     return id;
