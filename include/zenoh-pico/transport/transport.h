@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
@@ -116,7 +117,7 @@ typedef struct _z_session_rc_t _z_session_rc_ref_t;
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
 typedef struct {
-    _z_session_rc_ref_t *_session;
+    _z_void_weak_t _session;
     _z_link_t _link;
     // TX and RX buffers
     _z_wbuf_t _wbuf;

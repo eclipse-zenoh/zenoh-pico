@@ -312,9 +312,10 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
         // Drop peer if needed
         if (drop_peer) {
             _Z_DEBUG("Dropping peer");
-            _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
-            _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
-            _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
+            _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+            _z_subscription_cache_invalidate(zs);
+            _z_queryable_cache_invalidate(zs);
+            _z_interest_peer_disconnected(zs, &curr_peer->common);
             ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
         }
         _z_zbuf_reset(&ztu->_common._zbuf);
@@ -331,7 +332,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_common._zbuf);
-    z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
+    z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
         curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);

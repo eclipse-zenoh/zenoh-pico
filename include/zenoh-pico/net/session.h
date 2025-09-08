@@ -343,6 +343,14 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 #endif  // Z_FEATURE_UNSTABLE_API
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
+static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {
+    return _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&transport->_session);
+}
+
+static inline _z_session_weak_t *_z_transport_common_get_session_weak(_z_transport_common_t *transport) {
+    return (_z_session_weak_t *)&transport->_session;
+}
+
 #ifdef __cplusplus
 }
 #endif

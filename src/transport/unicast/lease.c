@@ -45,15 +45,17 @@ z_result_t _zp_unicast_send_keep_alive(_z_transport_unicast_t *ztu) {
 
 static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztu->_common._session));
+    _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztu->_common));
 #endif
-
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_session_rc_t zs = _z_session_weak_upgrade(_z_transport_common_get_session_weak(&ztu->_common));
+#endif
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
     _z_unicast_transport_clear(ztu, true);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_ref_t *zs = ztu->_common._session;
-    z_result_t ret = _z_reopen(zs);
+    z_result_t ret = _z_reopen(&zs);
+    _z_session_rc_drop(&zs);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Reopen failed: %i", ret);
     }
@@ -69,7 +71,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
     int next_lease = (int)ztu->_common._lease;
     int next_keep_alive = (int)(ztu->_common._lease / Z_TRANSPORT_LEASE_EXPIRE_FACTOR);
 
-    z_whatami_t mode = _Z_RC_IN_VAL(ztu->_common._session)->_mode;
+    z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {
         curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
@@ -134,9 +136,10 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     curr_list = _z_transport_peer_unicast_slist_next(curr_list);
                     // Drop if needed
                     if (drop_peer) {
-                        _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
-                        _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztu->_common._session));
-                        _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztu->_common._session), &curr_peer->common);
+                        _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+                        _z_subscription_cache_invalidate(zs);
+                        _z_queryable_cache_invalidate(zs);
+                        _z_interest_peer_disconnected(zs, &curr_peer->common);
                         ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
                     }
                 }
@@ -163,7 +166,7 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
 #endif
 
         // Query timeout process
-        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztu->_common._session));
+        _z_pending_query_process_timeout(_z_transport_common_get_session(&ztu->_common));
 
         // Compute the target interval
         int interval;
