@@ -56,6 +56,14 @@ extern "C" {
         ZENOH_LOG_PRINT(__VA_ARGS__);                                    \
         ZENOH_LOG_PRINT("\r\n");                                         \
     } while (false)
+
+#define _Z_LOG_NONL(level, ...)                                          \
+    do {                                                                 \
+        char __timestamp[64];                                            \
+        z_time_now_as_str(__timestamp, sizeof(__timestamp));             \
+        ZENOH_LOG_PRINT("[%s " #level " ::%s] ", __timestamp, __func__); \
+        ZENOH_LOG_PRINT(__VA_ARGS__);                                    \
+    } while (false)
 // In debug build, if a level is not enabled, the following macro is used instead
 // in order to check that the arguments are valid and compile fine.
 #define _Z_CHECK_LOG(...)                        \
@@ -75,10 +83,13 @@ extern "C" {
 #ifdef ZENOH_LOG_DEBUG
 #define ZENOH_LOG_INFO
 #define _Z_DEBUG(...) _Z_LOG(DEBUG, __VA_ARGS__)
+#define _Z_DEBUG_NONL(...) _Z_LOG_NONL(DEBUG, __VA_ARGS__)
 #elif defined(Z_BUILD_LOG)
 #define _Z_DEBUG _Z_CHECK_LOG
+#define _Z_DEBUG_NONL _Z_CHECK_LOG
 #else
 #define _Z_DEBUG(...) (void)(0)
+#define _Z_DEBUG_NONL(...) (void)(0)
 #endif
 
 #ifdef ZENOH_LOG_INFO

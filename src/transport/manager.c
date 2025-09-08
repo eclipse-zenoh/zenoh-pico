@@ -68,6 +68,7 @@ static z_result_t _z_new_transport_client(_z_transport_t *zt, const _z_string_t 
         }
         default:
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            _z_link_free(&zl);
             ret = _Z_ERR_GENERIC;
             break;
     }
@@ -78,32 +79,36 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
                                         int peer_op) {
     z_result_t ret = _Z_RES_OK;
     // Init link
-    _z_link_t zl;
-    memset(&zl, 0, sizeof(_z_link_t));
+    _z_link_t *zl = (_z_link_t *)z_malloc(sizeof(_z_link_t));
+    if (zl == NULL) {
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    memset(zl, 0, sizeof(_z_link_t));
     // Listen link
     if (peer_op == _Z_PEER_OP_OPEN) {
-        ret = _z_open_link(&zl, locator);
+        ret = _z_open_link(zl, locator);
     } else {
-        ret = _z_listen_link(&zl, locator);
+        ret = _z_listen_link(zl, locator);
     }
     if (ret != _Z_RES_OK) {
+        z_free(zl);
         return ret;
     }
-    switch (zl._cap._transport) {
+    switch (zl->_cap._transport) {
         case Z_LINK_CAP_TRANSPORT_UNICAST: {
 #if Z_FEATURE_UNICAST_PEER == 1
             _z_transport_unicast_establish_param_t tp_param = {0};
-            ret = _z_unicast_open_peer(&tp_param, &zl, local_zid, peer_op, NULL);
+            ret = _z_unicast_open_peer(&tp_param, zl, local_zid, peer_op, NULL);
             if (ret != _Z_RES_OK) {
-                _z_link_clear(&zl);
+                _z_link_free(&zl);
                 return ret;
             }
-            ret = _z_unicast_transport_create(zt, &zl, &tp_param);
+            ret = _z_unicast_transport_create(zt, zl, &tp_param);
             if (ret == _Z_RES_OK) {
                 if (peer_op == _Z_PEER_OP_OPEN) {
-                    ret = _z_socket_set_non_blocking(_z_link_get_socket(&zl));
+                    ret = _z_socket_set_non_blocking(_z_link_get_socket(zl));
                     if (ret == _Z_RES_OK) {
-                        _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(&zl),
+                        _z_transport_peer_unicast_add(&zt->_transport._unicast, &tp_param, *_z_link_get_socket(zl),
                                                       NULL);
                     }
                 } else {
@@ -119,16 +124,17 @@ static z_result_t _z_new_transport_peer(_z_transport_t *zt, const _z_string_t *l
         case Z_LINK_CAP_TRANSPORT_RAWETH:
         case Z_LINK_CAP_TRANSPORT_MULTICAST: {
             _z_transport_multicast_establish_param_t tp_param;
-            ret = _z_multicast_open_peer(&tp_param, &zl, local_zid);
+            ret = _z_multicast_open_peer(&tp_param, zl, local_zid);
             if (ret != _Z_RES_OK) {
-                _z_link_clear(&zl);
+                _z_link_free(&zl);
                 return ret;
             }
-            ret = _z_multicast_transport_create(zt, &zl, &tp_param);
+            ret = _z_multicast_transport_create(zt, zl, &tp_param);
             break;
         }
         default:
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
+            _z_link_free(&zl);
             ret = _Z_ERR_GENERIC;
             break;
     }
