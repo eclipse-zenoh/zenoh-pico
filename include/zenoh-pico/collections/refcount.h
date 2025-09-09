@@ -18,7 +18,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -118,6 +117,19 @@ size_t _z_simple_rc_strong_count(void *rc);
         }                                                                                                            \
         return false;                                                                                                \
     }                                                                                                                \
+    static inline bool name##_rc_drop(name##_rc_t *p) {                                                              \
+        if (p == NULL) {                                                                                             \
+            return false;                                                                                            \
+        }                                                                                                            \
+        bool res = false;                                                                                            \
+        if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
+            type##_clear(p->_val);                                                                                   \
+            z_free(p->_val);                                                                                         \
+            res = true;                                                                                              \
+        }                                                                                                            \
+        *p = name##_rc_null();                                                                                       \
+        return res;                                                                                                  \
+    }                                                                                                                \
     static inline name##_weak_t name##_weak_clone(const name##_weak_t *p) {                                          \
         if (_z_rc_increase_weak(p->_cnt) == _Z_RES_OK) {                                                             \
             return *p;                                                                                               \
@@ -151,19 +163,6 @@ size_t _z_simple_rc_strong_count(void *rc);
     static inline size_t name##_rc_size(name##_rc_t *p) {                                                            \
         _ZP_UNUSED(p);                                                                                               \
         return sizeof(name##_rc_t);                                                                                  \
-    }                                                                                                                \
-    static inline bool name##_rc_drop(name##_rc_t *p) {                                                              \
-        if (p == NULL) {                                                                                             \
-            return false;                                                                                            \
-        }                                                                                                            \
-        bool res = false;                                                                                            \
-        if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
-            type##_clear(p->_val);                                                                                   \
-            z_free(p->_val);                                                                                         \
-            res = true;                                                                                              \
-        }                                                                                                            \
-        *p = name##_rc_null();                                                                                       \
-        return res;                                                                                                  \
     }                                                                                                                \
     static inline name##_t *name##_weak_as_unsafe_ptr(name##_weak_t *p) { return p->_val; }
 
@@ -241,6 +240,7 @@ size_t _z_simple_rc_strong_count(void *rc);
         return (type##_t *)_z_simple_rc_value(p->_val);                                                       \
     }                                                                                                         \
     static inline bool name##_simple_rc_is_null(const name##_simple_rc_t *p) { return p->_val == NULL; }
+
 #ifdef __cplusplus
 }
 #endif

@@ -388,5 +388,6 @@ int main(void) {
     test_simple_rc_clone_as_ptr();
     test_simple_rc_copy();
     test_simple_rc_decr();
+
     return 0;
 }
