@@ -42,12 +42,8 @@ bool _z_simple_rc_decrease(void *rc);
 
 size_t _z_simple_rc_strong_count(void *rc);
 
-typedef void _z_void_t;
-typedef struct _z_void_rc_t _z_void_rc_t;
-typedef struct _z_void_weak_t _z_void_weak_t;
-
 /*------------------ Internal Array Macros ------------------*/
-#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL_NO_VOID(name, type)                                                           \
+#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                                                                   \
     typedef struct name##_rc_t {                                                                                     \
         type##_t *_val;                                                                                              \
         void *_cnt;                                                                                                  \
@@ -156,25 +152,20 @@ typedef struct _z_void_weak_t _z_void_weak_t;
         _ZP_UNUSED(p);                                                                                               \
         return sizeof(name##_rc_t);                                                                                  \
     }                                                                                                                \
+    static inline bool name##_rc_drop(name##_rc_t *p) {                                                              \
+        if (p == NULL) {                                                                                             \
+            return false;                                                                                            \
+        }                                                                                                            \
+        bool res = false;                                                                                            \
+        if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
+            type##_clear(p->_val);                                                                                   \
+            z_free(p->_val);                                                                                         \
+            res = true;                                                                                              \
+        }                                                                                                            \
+        *p = name##_rc_null();                                                                                       \
+        return res;                                                                                                  \
+    }                                                                                                                \
     static inline name##_t *name##_weak_as_unsafe_ptr(name##_weak_t *p) { return p->_val; }
-
-#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                                              \
-    _Z_REFCOUNT_DEFINE_NO_FROM_VAL_NO_VOID(name, type)                                          \
-    static inline bool name##_rc_drop(name##_rc_t *p) {                                         \
-        if (p == NULL) {                                                                        \
-            return false;                                                                       \
-        }                                                                                       \
-        bool res = false;                                                                       \
-        if (name##_rc_decr(p) && p->_val != NULL) {                                             \
-            type##_clear(p->_val);                                                              \
-            z_free(p->_val);                                                                    \
-            res = true;                                                                         \
-        }                                                                                       \
-        *p = name##_rc_null();                                                                  \
-        return res;                                                                             \
-    }                                                                                           \
-    static inline _z_void_rc_t *name##_rc_as_void(name##_rc_t *p) { return (_z_void_rc_t *)p; } \
-    static inline _z_void_weak_t *name##_weak_as_void(name##_weak_t *p) { return (_z_void_weak_t *)p; }
 
 #define _Z_REFCOUNT_DEFINE(name, type)                                      \
     _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                              \
@@ -250,8 +241,6 @@ typedef struct _z_void_weak_t _z_void_weak_t;
         return (type##_t *)_z_simple_rc_value(p->_val);                                                       \
     }                                                                                                         \
     static inline bool name##_simple_rc_is_null(const name##_simple_rc_t *p) { return p->_val == NULL; }
-
-_Z_REFCOUNT_DEFINE_NO_FROM_VAL_NO_VOID(_z_void, _z_void)
 #ifdef __cplusplus
 }
 #endif

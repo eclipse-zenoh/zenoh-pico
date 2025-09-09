@@ -141,8 +141,7 @@ static z_result_t _z_open_inner(_z_session_rc_t *zs, _z_string_t *locator, const
     if (ret != _Z_RES_OK) {
         return ret;
     }
-    _z_session_weak_t weak_zs = _z_session_rc_clone_as_weak(zs);
-    _z_transport_get_common(&zn->_tp)->_session = *_z_session_weak_as_void(&weak_zs);
+    _z_transport_get_common(&zn->_tp)->_session = _z_session_rc_clone_as_weak(zs);
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
     if (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
         ret = _z_interest_pull_resource_from_peers(zn);

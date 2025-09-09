@@ -116,10 +116,6 @@ typedef struct _z_session_t {
 #endif
 } _z_session_t;
 
-extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid cyclical include
-
-_Z_REFCOUNT_DEFINE(_z_session, _z_session)
-
 /**
  * Open a zenoh-net session
  *
@@ -346,11 +342,7 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {
     // the session should always outlive the transport, so it should be safe
     // to access pointer directly without upgrade
-    return _z_session_weak_as_unsafe_ptr((_z_session_weak_t *)&transport->_session);
-}
-
-static inline _z_session_weak_t *_z_transport_common_get_session_weak(_z_transport_common_t *transport) {
-    return (_z_session_weak_t *)&transport->_session;
+    return _z_session_weak_as_unsafe_ptr(&transport->_session);
 }
 
 #ifdef __cplusplus

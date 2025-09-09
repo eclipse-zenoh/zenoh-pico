@@ -48,7 +48,7 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztu->_common));
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_t zs = _z_session_weak_upgrade(_z_transport_common_get_session_weak(&ztu->_common));
+    _z_session_rc_t zs = _z_session_weak_upgrade(&ztu->_common._session);
 #endif
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
     _z_unicast_transport_clear(ztu, true);

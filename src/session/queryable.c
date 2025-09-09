@@ -231,8 +231,8 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     if (_Z_RC_IS_NULL(&query)) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    *q = _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters,
-                             _z_transport_common_get_session_weak(transport), qid, &msgq->_ext_attachment, anyke);
+    *q = _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters, &transport->_session, qid,
+                             &msgq->_ext_attachment, anyke);
 
     z_result_t ret = _Z_RES_OK;
     // Parse session_queryable svec

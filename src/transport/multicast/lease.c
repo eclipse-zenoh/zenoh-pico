@@ -65,7 +65,7 @@ static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
     _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztm->_common));
 #endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_t zs = _z_session_weak_upgrade(_z_transport_common_get_session_weak(&ztm->_common));
+    _z_session_rc_t zs = _z_session_weak_upgrade(&ztm->_common._session);
 #endif
     _z_multicast_transport_clear(ztm, true);
 
