@@ -21,6 +21,7 @@
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/transport/multicast/lease.h"
+#include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
@@ -32,7 +33,7 @@ z_result_t _zp_multicast_send_join(_z_transport_multicast_t *ztm) {
     next_sn._val._plain._best_effort = ztm->_common._sn_tx_best_effort;
     next_sn._val._plain._reliable = ztm->_common._sn_tx_reliable;
 
-    _z_id_t zid = _Z_RC_IN_VAL(ztm->_common._session)->_local_zid;
+    _z_id_t zid = _z_transport_common_get_session(&ztm->_common)->_local_zid;
     _z_transport_message_t jsm = _z_t_msg_make_join(Z_WHATAMI_PEER, Z_TRANSPORT_LEASE, zid, next_sn);
 
     return ztm->_send_f(&ztm->_common, &jsm);
@@ -61,11 +62,16 @@ static void _zp_multicast_failed(_z_transport_multicast_t *ztm) {
     _ZP_UNUSED(ztm);
 
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
-    _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztm->_common._session));
+    _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztm->_common));
 #endif
+#if Z_FEATURE_AUTO_RECONNECT == 1
+    _z_session_rc_t zs = _z_session_weak_upgrade(&ztm->_common._session);
+#endif
+    _z_multicast_transport_clear(ztm, true);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_reopen(ztm->_common._session);
+    _z_reopen(&zs);
+    _z_session_rc_drop(&zs);
 #endif
 }
 
@@ -138,9 +144,10 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                 curr_list = _z_transport_peer_multicast_slist_next(curr_list);
                 // Drop if needed
                 if (drop_peer) {
-                    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
-                    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(ztm->_common._session));
-                    _z_interest_peer_disconnected(_Z_RC_IN_VAL(ztm->_common._session), &curr_peer->common);
+                    _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
+                    _z_subscription_cache_invalidate(s);
+                    _z_queryable_cache_invalidate(s);
+                    _z_interest_peer_disconnected(s, &curr_peer->common);
                     ztm->_peers = _z_transport_peer_multicast_slist_drop_element(ztm->_peers, prev_drop);
                 }
             }
@@ -170,7 +177,8 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
         }
 
         // Query timeout process
-        _z_pending_query_process_timeout(_Z_RC_IN_VAL(ztm->_common._session));
+        _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
+        _z_pending_query_process_timeout(s);
 
         // Compute the target interval to sleep
         int interval;

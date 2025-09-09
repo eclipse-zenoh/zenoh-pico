@@ -167,7 +167,7 @@ static z_result_t _z_multicast_handle_frame(_z_transport_multicast_t *ztm, uint8
     while (_z_zbuf_len(msg->_payload) > 0) {
         _Z_RETURN_IF_ERR(_z_network_message_decode(&curr_nmsg, msg->_payload, &arcs, (uintptr_t)&entry->common));
         curr_nmsg._reliability = tmsg_reliability;
-        _Z_RETURN_IF_ERR(_z_handle_network_message(ztm->_common._session, &curr_nmsg, &entry->common));
+        _Z_RETURN_IF_ERR(_z_handle_network_message(&ztm->_common, &curr_nmsg, &entry->common));
     }
     return _Z_RES_OK;
 }
@@ -283,7 +283,7 @@ static z_result_t _z_multicast_handle_fragment_inner(_z_transport_multicast_t *z
         zm._reliability = tmsg_reliability;
         if (ret == _Z_RES_OK) {
             // Memory clear of the network message data must be handled by the network message layer
-            _z_handle_network_message(ztm->_common._session, &zm, &entry->common);
+            _z_handle_network_message(&ztm->_common, &zm, &entry->common);
         } else {
             _Z_INFO("Failed to decode defragmented message");
             _Z_ERROR_LOG(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
