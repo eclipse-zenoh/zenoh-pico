@@ -121,7 +121,14 @@ z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
 static z_result_t _z_f_link_open_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
-    ret = _z_open_tls(&self->_socket._tls, self->_socket._tls._rep, &self->_endpoint._config);
+    char *hostname = __z_parse_address_segment_tls(&self->_endpoint._locator._address);
+    if (!hostname) {
+        _Z_ERROR("Failed to parse hostname");
+        return _Z_ERR_GENERIC;
+    }
+
+    ret = _z_open_tls(&self->_socket._tls, self->_socket._tls._rep, hostname, &self->_endpoint._config);
+    z_free(hostname);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS open failed");
     }
@@ -152,9 +159,14 @@ static z_result_t _z_f_link_listen_tls(_z_link_t *self) {
 static void _z_f_link_close_tls(_z_link_t *self) { _z_close_tls(&self->_socket._tls); }
 
 static size_t _z_f_link_write_tls(const _z_link_t *self, const uint8_t *ptr, size_t len, _z_sys_net_socket_t *socket) {
-    _ZP_UNUSED(socket);
-    _Z_DEBUG("_z_f_link_write_tls: self=%p, &self->_socket._tls=%p", (void *)self, (void *)&self->_socket._tls);
-    return _z_write_tls(&self->_socket._tls, ptr, len);
+    // Use provided socket if available, otherwise fall back to link socket
+    if (socket != NULL && socket->_tls_sock != NULL) {
+        _Z_DEBUG("05 %s: using provided socket fd=%d, tls_ctx=%p", __func__, socket->_fd, (void*)socket->_tls_sock);
+        return _z_write_tls((_z_tls_socket_t *)socket->_tls_sock, ptr, len);
+    } else {
+        _Z_DEBUG("05 %s: using link socket (listening socket)", __func__);
+        return _z_write_tls(&self->_socket._tls, ptr, len);
+    }
 }
 
 static size_t _z_f_link_write_all_tls(const _z_link_t *self, const uint8_t *ptr, size_t len) {
@@ -168,11 +180,17 @@ static size_t _z_f_link_read_tls(const _z_link_t *self, uint8_t *ptr, size_t len
 
 static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size_t len, _z_slice_t *addr,
                                        _z_sys_net_socket_t *socket) {
-    _ZP_UNUSED(socket);
     _ZP_UNUSED(addr);
+
     size_t n = (size_t)0;
     do {
-        size_t rb = _z_read_tls(&self->_socket._tls, &ptr[n], len - n);
+        size_t rb;
+        if (socket != NULL && socket->_tls_sock != NULL) {
+            rb = _z_read_tls((_z_tls_socket_t *)socket->_tls_sock, &ptr[n], len - n);
+        } else {
+            rb = _z_read_tls(&self->_socket._tls, &ptr[n], len - n);
+        }
+
         if (rb == SIZE_MAX) {
             n = rb;
             break;
@@ -184,11 +202,11 @@ static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size
 }
 
 static size_t _z_f_link_tls_read_socket(const _z_sys_net_socket_t socket, uint8_t *ptr, size_t len) {
-    if (socket._tls_ctx == NULL) {
+    if (socket._tls_sock == NULL) {
         _Z_ERROR("TLS context not found in socket");
         return SIZE_MAX;
     }
-    return _z_read_tls((_z_tls_socket_t *)socket._tls_ctx, ptr, len);
+    return _z_read_tls((_z_tls_socket_t *)socket._tls_sock, ptr, len);
 }
 
 static void _z_f_link_free_tls(_z_link_t *self) { _ZP_UNUSED(self); }
@@ -197,6 +215,7 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint) {
     z_result_t ret = _Z_RES_OK;
 
     zl->_type = _Z_LINK_TYPE_TLS;
+    _Z_DEBUG("10 %s: set zl->_type to %d (_Z_LINK_TYPE_TLS=%d)", __func__, zl->_type, _Z_LINK_TYPE_TLS);
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
     zl->_cap._flow = Z_LINK_CAP_FLOW_STREAM;
     zl->_cap._is_reliable = true;
@@ -204,8 +223,10 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_mtu = _z_get_link_mtu_tls();
 
     zl->_endpoint = *endpoint;
+    _Z_DEBUG("TLS IPv6: input address='%.*s'", (int)_z_string_len(&endpoint->_locator._address), _z_string_data(&endpoint->_locator._address));
     char *s_address = __z_parse_address_segment_tls(&endpoint->_locator._address);
     char *s_port = __z_parse_port_segment_tls(&endpoint->_locator._address);
+    _Z_DEBUG("TLS IPv6: parsed address='%s', port='%s'", s_address ? s_address : "NULL", s_port ? s_port : "NULL");
     ret = _z_create_endpoint_tcp(&zl->_socket._tls._rep, s_address, s_port);
     z_free(s_address);
     z_free(s_port);
@@ -220,6 +241,7 @@ z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *endpoint) {
     zl->_read_socket_f = _z_f_link_tls_read_socket;
     zl->_free_f = _z_f_link_free_tls;
 
+    _Z_DEBUG("90 %s: final zl->_type=%d", __func__, zl->_type);
     return ret;
 }
 
@@ -232,20 +254,20 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket)
         goto cleanup;
     }
 
-    socket->_tls_ctx = z_malloc(sizeof(_z_tls_socket_t));
-    if (socket->_tls_ctx == NULL) {
+    socket->_tls_sock = z_malloc(sizeof(_z_tls_socket_t));
+    if (socket->_tls_sock == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         goto cleanup;
     }
 
-    ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_ctx, sys_endpoint, &endpoint->_config);
+    ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_sock, sys_endpoint, s_address, &endpoint->_config);
     if (ret != _Z_RES_OK) {
-        z_free(socket->_tls_ctx);
-        socket->_tls_ctx = NULL;
+        z_free(socket->_tls_sock);
+        socket->_tls_sock = NULL;
         goto cleanup;
     }
 
-    socket->_fd = ((_z_tls_socket_t *)socket->_tls_ctx)->_sock._fd;
+    socket->_fd = ((_z_tls_socket_t *)socket->_tls_sock)->_sock._fd;
 
 cleanup:
     z_free(s_address);

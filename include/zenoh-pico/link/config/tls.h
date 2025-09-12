@@ -24,15 +24,25 @@ extern "C" {
 
 #if Z_FEATURE_LINK_TLS == 1
 
-#define TLS_CONFIG_ARGC 1
+#define TLS_CONFIG_ARGC 3
 
 #define TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY 0x01
 #define TLS_CONFIG_ROOT_CA_CERTIFICATE_STR "root_ca_certificate"
 
+#define TLS_CONFIG_LISTEN_PRIVATE_KEY_KEY 0x02
+#define TLS_CONFIG_LISTEN_PRIVATE_KEY_STR "listen_private_key"
+
+#define TLS_CONFIG_LISTEN_CERTIFICATE_KEY 0x03
+#define TLS_CONFIG_LISTEN_CERTIFICATE_STR "listen_certificate"
+
 #define TLS_CONFIG_MAPPING_BUILD                       \
     _z_str_intmapping_t args[TLS_CONFIG_ARGC];         \
     args[0]._key = TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY; \
-    args[0]._str = (char *)TLS_CONFIG_ROOT_CA_CERTIFICATE_STR;
+    args[0]._str = (char *)TLS_CONFIG_ROOT_CA_CERTIFICATE_STR; \
+    args[1]._key = TLS_CONFIG_LISTEN_PRIVATE_KEY_KEY; \
+    args[1]._str = (char *)TLS_CONFIG_LISTEN_PRIVATE_KEY_STR; \
+    args[2]._key = TLS_CONFIG_LISTEN_CERTIFICATE_KEY; \
+    args[2]._str = (char *)TLS_CONFIG_LISTEN_CERTIFICATE_STR;
 
 size_t _z_tls_config_strlen(const _z_str_intmap_t *s);
 
