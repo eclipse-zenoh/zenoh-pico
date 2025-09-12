@@ -106,6 +106,11 @@ z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator) {
         if (_z_endpoint_tcp_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_tcp(zl, &ep);
         } else
+#if Z_FEATURE_LINK_TLS == 1
+            if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
+            ret = _z_new_link_tls(zl, &ep);
+        } else
+#endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1
             if (_z_endpoint_udp_multicast_valid(&ep) == _Z_RES_OK) {
             ret = _z_new_link_udp_multicast(zl, ep);
