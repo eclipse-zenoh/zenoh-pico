@@ -48,15 +48,12 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
     _z_liveliness_subscription_undeclare_all(_Z_RC_IN_VAL(ztu->_common._session));
 #endif
 
-    // In case of reopening, store the session pointer before freeing the transport memory.
-#if Z_FEATURE_AUTO_RECONNECT == 1
-    _z_session_rc_ref_t zs = *ztu->_common._session;
-#endif
     _z_unicast_transport_close(ztu, _Z_CLOSE_EXPIRED);
     _z_unicast_transport_clear(ztu, true);
 
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    z_result_t ret = _z_reopen(&zs);
+    _z_session_rc_ref_t *zs = ztu->_common._session;
+    z_result_t ret = _z_reopen(zs);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Reopen failed: %i", ret);
     }
