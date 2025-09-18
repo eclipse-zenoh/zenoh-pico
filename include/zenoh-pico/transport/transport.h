@@ -116,12 +116,6 @@ typedef struct _z_session_rc_t _z_session_rc_ref_t;
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
 typedef struct {
-    // This is not an actual clone of the session arc, just a raw copy. A strong clone would in fact make a cycle,
-    // while a weak clone would impact performance because of numerous upgrades. As this field share the same
-    // lifetime as the session, it should be safe.
-    // Also, because of cyclical include issue, a pointer to a forward declaration has to be used. However, the owned
-    // session pointer must not be assigned here, as it would prevent the owned session object to be moved. Instead,
-    // a dedicated malloc is used to copy the arc.
     _z_session_rc_ref_t *_session;
     _z_link_t _link;
     // TX and RX buffers
