@@ -48,8 +48,9 @@ static void *_zp_unicast_accept_task(void *ctx) {
         }
         _z_transport_unicast_establish_param_t param = {0};
         // Start handshake
-        ret = _z_unicast_handshake_listen(&param, &ztu->_common._link, &_Z_RC_IN_VAL(ztu->_common._session)->_local_zid,
-                                          Z_WHATAMI_PEER, &con_socket);
+        ret = _z_unicast_handshake_listen(&param, &ztu->_common._link,
+                                          &_z_transport_common_get_session(&ztu->_common)->_local_zid, Z_WHATAMI_PEER,
+                                          &con_socket);
         if (ret != _Z_RES_OK) {
             _Z_INFO("Connection accept handshake failed with error %d", ret);
             _z_socket_close(&con_socket);
@@ -65,7 +66,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
         _z_transport_peer_unicast_t *new_peer;
         _z_transport_peer_unicast_add(ztu, &param, con_socket, &new_peer);
         if (new_peer != NULL) {
-            _z_interest_push_declarations_to_peer(_Z_RC_IN_VAL(ztu->_common._session), (void *)new_peer);
+            _z_interest_push_declarations_to_peer(_z_transport_common_get_session(&ztu->_common), (void *)new_peer);
         }
     }
     z_free(accept_task_is_running);

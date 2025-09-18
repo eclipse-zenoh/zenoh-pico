@@ -347,6 +347,18 @@ void test_simple_rc_decr(void) {
     z_free(drc1._val);
 }
 
+void test_as_unsafe_ptr(void) {
+    _dummy_t *val = (_dummy_t *)z_malloc(sizeof(_dummy_t));
+    val->foo = 42;
+    _dummy_rc_t drc = _dummy_rc_new(val);
+    _dummy_weak_t dweak = _dummy_rc_clone_as_weak(&drc);
+
+    assert(_dummy_weak_as_unsafe_ptr(&dweak) == val);
+
+    assert(_dummy_rc_drop(&drc));
+    assert(_dummy_weak_drop(&dweak));
+}
+
 int main(void) {
     test_rc_null();
     test_rc_size();
@@ -365,6 +377,7 @@ int main(void) {
     test_weak_upgrade();
     test_overflow();
     test_decr();
+    test_as_unsafe_ptr();
 
     test_simple_rc_null();
     test_simple_rc_size();

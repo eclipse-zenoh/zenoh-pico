@@ -163,7 +163,8 @@ size_t _z_simple_rc_strong_count(void *rc);
     static inline size_t name##_rc_size(name##_rc_t *p) {                                                            \
         _ZP_UNUSED(p);                                                                                               \
         return sizeof(name##_rc_t);                                                                                  \
-    }
+    }                                                                                                                \
+    static inline name##_t *name##_weak_as_unsafe_ptr(name##_weak_t *p) { return p->_val; }
 
 #define _Z_REFCOUNT_DEFINE(name, type)                                      \
     _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                              \

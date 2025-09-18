@@ -191,15 +191,9 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     return _Z_RES_OK;
 }
 
-static inline void _z_queryable_query_steal_data(_z_query_t *query, _z_session_rc_t *zsrc, _z_msg_query_t *msgq,
-                                                 _z_keyexpr_t *key, uint32_t qid, bool anyke) {
-    // Steal received data in query
-    *query = _z_query_steal_data(&msgq->_ext_value, key, &msgq->_parameters, zsrc, qid, &msgq->_ext_attachment, anyke);
-}
-
-z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z_keyexpr_t *q_key, uint32_t qid,
-                                 _z_transport_peer_common_t *peer) {
-    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
+z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,
+                                 uint32_t qid, _z_transport_peer_common_t *peer) {
+    _z_session_t *zn = _z_transport_common_get_session(transport);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
     qle_infos.ke_in = _z_keyexpr_steal(q_key);
     // Retrieve sub infos
@@ -237,7 +231,8 @@ z_result_t _z_trigger_queryables(_z_session_rc_t *zsrc, _z_msg_query_t *msgq, _z
     if (_Z_RC_IS_NULL(&query)) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    _z_queryable_query_steal_data(q, zsrc, msgq, &qle_infos.ke_out, qid, anyke);
+    *q = _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters, &transport->_session, qid,
+                             &msgq->_ext_attachment, anyke);
 
     z_result_t ret = _Z_RES_OK;
     // Parse session_queryable svec

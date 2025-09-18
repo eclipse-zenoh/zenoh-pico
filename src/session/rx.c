@@ -92,16 +92,18 @@ static z_result_t _z_handle_declare(_z_session_t *zn, _z_n_msg_declare_t *decl, 
     return ret;
 }
 
-static z_result_t _z_handle_request(_z_session_rc_t *zsrc, _z_session_t *zn, _z_n_msg_request_t *req,
+static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_request_t *req,
                                     z_reliability_t reliability, _z_transport_peer_common_t *peer) {
     _ZP_UNUSED(reliability);
-    _ZP_UNUSED(zsrc);
+    _ZP_UNUSED(transport);
     _ZP_UNUSED(peer);
+    _z_session_t *zn = _z_transport_common_get_session(transport);
+    _ZP_UNUSED(zn);
     switch (req->_tag) {
         case _Z_REQUEST_QUERY:
 #if Z_FEATURE_QUERYABLE == 1
             // Memory cleaning must be done in the feature layer
-            return _z_trigger_queryables(zsrc, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
+            return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
 #else
             _Z_DEBUG("_Z_REQUEST_QUERY dropped, queryables not supported");
             _z_n_msg_request_clear(req);
@@ -172,9 +174,10 @@ static z_result_t _z_handle_response(_z_session_t *zn, _z_n_msg_response_t *resp
     return _Z_RES_OK;
 }
 
-z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *msg, _z_transport_peer_common_t *peer) {
+z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_message_t *msg,
+                                     _z_transport_peer_common_t *peer) {
     z_result_t ret = _Z_RES_OK;
-    _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
+    _z_session_t *zn = _z_transport_common_get_session(transport);
 
     switch (msg->_tag) {
         case _Z_N_DECLARE:
@@ -189,7 +192,7 @@ z_result_t _z_handle_network_message(_z_session_rc_t *zsrc, _z_zenoh_message_t *
 
         case _Z_N_REQUEST:
             _Z_DEBUG("Handling _Z_N_REQUEST");
-            ret = _z_handle_request(zsrc, zn, &msg->_body._request, msg->_reliability, peer);
+            ret = _z_handle_request(transport, &msg->_body._request, msg->_reliability, peer);
             break;
 
         case _Z_N_RESPONSE:

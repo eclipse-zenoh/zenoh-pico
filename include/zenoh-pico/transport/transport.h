@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
@@ -110,13 +111,13 @@ _Z_ELEM_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, _z_transp
                _z_transport_peer_unicast_eq, _z_noop_cmp, _z_noop_hash)
 _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
-// Forward type declaration to avoid cyclical include
-typedef struct _z_session_rc_t _z_session_rc_ref_t;
-
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
+typedef struct _z_session_t _z_session_t;
+extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid cyclical include
+_Z_REFCOUNT_DEFINE_NO_FROM_VAL(_z_session, _z_session)
 typedef struct {
-    _z_session_rc_ref_t *_session;
+    _z_session_weak_t _session;
     _z_link_t _link;
     // TX and RX buffers
     _z_wbuf_t _wbuf;
