@@ -52,8 +52,8 @@ z_result_t _z_join_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_join_t 
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_JOIN_S)) {
         cbyte = 0;
-        cbyte |= (msg->_seq_num_res & 0x03);
-        cbyte |= ((msg->_req_id_res & 0x03) << 2);
+        cbyte = (uint8_t)(cbyte | (msg->_seq_num_res & 0x03));
+        cbyte = (uint8_t)(cbyte | ((msg->_req_id_res & 0x03) << 2));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte));
         _Z_RETURN_IF_ERR(_z_uint16_encode(wbf, msg->_batch_size));
     }
@@ -195,8 +195,8 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
 
     if (_Z_HAS_FLAG(header, _Z_FLAG_T_INIT_S) == true) {
         cbyte = 0;
-        cbyte |= (msg->_seq_num_res & 0x03);
-        cbyte |= ((msg->_req_id_res & 0x03) << 2);
+        cbyte = (uint8_t)(cbyte | (msg->_seq_num_res & 0x03));
+        cbyte = (uint8_t)(cbyte | ((msg->_req_id_res & 0x03) << 2));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
         _Z_RETURN_IF_ERR(_z_uint16_encode(wbf, msg->_batch_size))
     }

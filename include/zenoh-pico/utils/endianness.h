@@ -38,8 +38,9 @@ extern "C" {
     static inline uint##SIZE##_t _z_le_load##SIZE(const uint8_t *src) { \
         uint##SIZE##_t val = 0;                                         \
         for (size_t i = sizeof(val); i != 0; --i) {                     \
-            val = val << 8;                                             \
-            val = val | src[i - 1];                                     \
+            val = (uint##SIZE##_t)(val << 8);                           \
+            unsigned tmp = (uint8_t)src[i - 1];                         \
+            val |= (uint##SIZE##_t)tmp;                                 \
         }                                                               \
         return val;                                                     \
     }
@@ -68,8 +69,9 @@ _Z_LE_STORE_IMPL(64)
     static inline uint##SIZE##_t _z_be_load##SIZE(const uint8_t *src) { \
         uint##SIZE##_t val = 0;                                         \
         for (size_t i = 0; i < sizeof(val); ++i) {                      \
-            val = val << 8;                                             \
-            val = val | src[i];                                         \
+            val = (uint##SIZE##_t)(val << 8);                           \
+            unsigned tmp = (uint8_t)src[i];                             \
+            val |= (uint##SIZE##_t)tmp;                                 \
         }                                                               \
         return val;                                                     \
     }
