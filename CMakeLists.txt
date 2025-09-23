@@ -693,11 +693,13 @@ endif()
       target_link_libraries(z_api_advanced_pubsub_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
+      configure_file(${PROJECT_SOURCE_DIR}/tests/tls_verify.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
 
       enable_testing()
       if(Z_FEATURE_LINK_TLS)
         add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test --enable-tls)
+        add_test(z_tls_verify_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh z_client_test)
       else()
         add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
       endif()

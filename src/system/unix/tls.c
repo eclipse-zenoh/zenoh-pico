@@ -172,6 +172,13 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
 
     sock->_is_peer_socket = peer_socket;
 
+    bool verify_name = true;
+    const char *verify_opt = _z_str_intmap_get(config, TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY);
+    if (verify_opt != NULL) {
+        if (verify_opt[0] == '0' || verify_opt[0] == 'n' || verify_opt[0] == 'N' || verify_opt[0] == 'f') {
+            verify_name = false;
+        }
+    }
     sock->_tls_ctx = _z_tls_context_new();
     if (sock->_tls_ctx == NULL) {
         _Z_ERROR("Failed to create TLS context");
@@ -207,7 +214,8 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     if (sock->_tls_ctx->_ca_cert.version != 0) {
         mbedtls_ssl_conf_ca_chain(&sock->_tls_ctx->_ssl_config, &sock->_tls_ctx->_ca_cert, NULL);
     }
-    mbedtls_ssl_conf_authmode(&sock->_tls_ctx->_ssl_config, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_authmode(&sock->_tls_ctx->_ssl_config,
+                              verify_name ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL);
     mbedtls_ssl_conf_rng(&sock->_tls_ctx->_ssl_config, mbedtls_hmac_drbg_random, &sock->_tls_ctx->_hmac_drbg);
 
     mbedret = mbedtls_ssl_setup(&sock->_tls_ctx->_ssl, &sock->_tls_ctx->_ssl_config);
