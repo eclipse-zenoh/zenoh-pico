@@ -57,6 +57,10 @@ openssl x509 -req -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -o
     -extfile server.cnf -extensions san
 rm -f server.csr server.cnf
 
+openssl req -newkey rsa:2048 -keyout client-key.pem -out client.csr -nodes -subj "/CN=Test Client"
+openssl x509 -req -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client.pem -days 30
+rm -f client.csr
+
 cat > zenohd_tls.json <<EOF
 {
   "transport": {
@@ -71,21 +75,27 @@ cat > zenohd_tls.json <<EOF
 }
 EOF
 
+LOC_BASE="tls/127.0.0.1:7447"
+
 run_test() {
     locator="$1"
     expect_success="$2"
+    config_file="${3:-zenohd_tls.json}"
 
-    RUST_LOG=warn ./zenohd -c zenohd_tls.json --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" \
-        -l "$locator" > zenohd.z_tls_verify.log 2>&1 &
+    echo "> Running zenohd -c $config_file ..."
+    RUST_LOG=warn ./zenohd -c "$config_file" --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" \
+        -l "$LOC_BASE" > zenohd.z_tls_verify.log 2>&1 &
     ZPID=$!
-    sleep 2
+    sleep 5
 
-    echo "> Running $TESTBIN ..."
+    echo "> Running $TESTBIN \"$locator\" ..."
     "$TESTBIN" "$locator" --msgs=1 > client.z_tls_verify.log 2>&1
     RETCODE=$?
 
+    echo "> Stopping zenohd ..."
     kill -9 "$ZPID" 2>/dev/null || true
     wait "$ZPID" 2>/dev/null || true
+    sleep 1
 
     if [ "$expect_success" = "1" ]; then
         if [ "$RETCODE" -ne 0 ]; then
@@ -102,10 +112,27 @@ run_test() {
     fi
 }
 
-LOC_BASE="tls/127.0.0.1:7447#root_ca_certificate=$TESTDIR/ca.pem"
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem" 0
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;verify_name_on_connect=0" 1
 
-run_test "$LOC_BASE" 0
-run_test "$LOC_BASE;verify_name_on_connect=0" 1
+cat > zenohd_tls_mtls.json <<EOF
+{
+  "transport": {
+    "link": {
+      "tls": {
+        "root_ca_certificate": "$TESTDIR/ca.pem",
+        "listen_private_key": "$TESTDIR/server-key.pem",
+        "listen_certificate": "$TESTDIR/server.pem",
+        "enable_mtls": true
+      }
+    }
+  }
+}
+EOF
 
-rm -f client.z_tls_verify.log zenohd.z_tls_verify.log
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;enable_mtls=1" 0 zenohd_tls_mtls.json
+run_test "$LOC_BASE#root_ca_certificate=$TESTDIR/ca.pem;enable_mtls=1;connect_private_key=$TESTDIR/client-key.pem;connect_certificate=$TESTDIR/client.pem;verify_name_on_connect=0" 1 zenohd_tls_mtls.json
+
+rm -f client.z_tls_verify.log zenohd.z_tls_verify.log zenohd_tls_mtls.json
+rm -f client.pem client-key.pem server.pem server-key.pem ca.pem ca-key.pem ca.srl
 exit 0

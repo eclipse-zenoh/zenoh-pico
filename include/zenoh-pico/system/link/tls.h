@@ -43,6 +43,9 @@ typedef struct {
     mbedtls_x509_crt _ca_cert;
     mbedtls_pk_context _listen_key;
     mbedtls_x509_crt _listen_cert;
+    mbedtls_pk_context _client_key;
+    mbedtls_x509_crt _client_cert;
+    bool _enable_mtls;
 } _z_tls_context_t;
 
 typedef struct {

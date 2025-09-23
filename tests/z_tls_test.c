@@ -41,13 +41,27 @@ int main(void) {
     _z_str_intmap_clear(&config);
 
     _z_str_intmap_init(&config);
-    res = _z_tls_config_from_str(&config, "root_ca_certificate=ca.pem");
+    res = _z_tls_config_from_str(&config,
+                                 "root_ca_certificate=ca.pem;enable_mtls=1;connect_private_key=client.key;"
+                                 "connect_certificate=client.pem;verify_name_on_connect=0");
     assert(res == _Z_RES_OK);
-    assert(_z_str_intmap_len(&config) == 1);
+    assert(_z_str_intmap_len(&config) == 5);
 
     ca_cert = _z_str_intmap_get(&config, TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY);
     assert(ca_cert != NULL);
     assert(_z_str_eq(ca_cert, "ca.pem") == true);
+    char *enable = _z_str_intmap_get(&config, TLS_CONFIG_ENABLE_MTLS_KEY);
+    assert(enable != NULL);
+    assert(_z_str_eq(enable, "1") == true);
+    char *client_key = _z_str_intmap_get(&config, TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY);
+    assert(client_key != NULL);
+    assert(_z_str_eq(client_key, "client.key") == true);
+    char *client_cert = _z_str_intmap_get(&config, TLS_CONFIG_CONNECT_CERTIFICATE_KEY);
+    assert(client_cert != NULL);
+    assert(_z_str_eq(client_cert, "client.pem") == true);
+    char *verify = _z_str_intmap_get(&config, TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY);
+    assert(verify != NULL);
+    assert(_z_str_eq(verify, "0") == true);
     _z_str_intmap_clear(&config);
 
     _z_str_intmap_init(&config);
