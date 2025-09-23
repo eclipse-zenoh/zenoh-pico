@@ -84,6 +84,8 @@ _z_tls_context_t *_z_tls_context_new(void) {
     mbedtls_x509_crt_init(&ctx->_ca_cert);
     mbedtls_pk_init(&ctx->_listen_key);
     mbedtls_x509_crt_init(&ctx->_listen_cert);
+    mbedtls_pk_init(&ctx->_client_key);
+    mbedtls_x509_crt_init(&ctx->_client_cert);
 #ifdef ZENOH_LOG_TRACE
     mbedtls_debug_set_threshold(4);
     mbedtls_ssl_conf_dbg(&ctx->_ssl_config, _z_tls_debug, NULL);
@@ -109,6 +111,8 @@ void _z_tls_context_free(_z_tls_context_t **ctx) {
         mbedtls_x509_crt_free(&(*ctx)->_ca_cert);
         mbedtls_pk_free(&(*ctx)->_listen_key);
         mbedtls_x509_crt_free(&(*ctx)->_listen_cert);
+        mbedtls_pk_free(&(*ctx)->_client_key);
+        mbedtls_x509_crt_free(&(*ctx)->_client_cert);
         z_free(*ctx);
         *ctx = NULL;
     }
@@ -157,6 +161,28 @@ static z_result_t _z_tls_load_listen_cert(_z_tls_context_t *ctx, const _z_str_in
     return _Z_RES_OK;
 }
 
+static z_result_t _z_tls_load_client_cert(_z_tls_context_t *ctx, const char *key_path, const char *cert_path) {
+    if (key_path == NULL || cert_path == NULL) {
+        _Z_ERROR("mTLS requires both client private key and certificate");
+        return _Z_ERR_GENERIC;
+    }
+
+    int ret = mbedtls_pk_parse_keyfile(&ctx->_client_key, key_path, NULL, mbedtls_hmac_drbg_random, &ctx->_hmac_drbg);
+    if (ret != 0) {
+        _Z_ERROR("Failed to parse client private key file %s: -0x%04x", key_path, -ret);
+        return _Z_ERR_GENERIC;
+    }
+
+    ret = mbedtls_x509_crt_parse_file(&ctx->_client_cert, cert_path);
+    if (ret != 0) {
+        _Z_ERROR("Failed to parse client certificate file %s: -0x%04x", cert_path, -ret);
+        return _Z_ERR_GENERIC;
+    }
+
+    _Z_DEBUG("Loaded client certificate from %s and key from %s", cert_path, key_path);
+    return _Z_RES_OK;
+}
+
 z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, const char *hostname,
                        const _z_str_intmap_t *config, bool peer_socket) {
     if ((rep == NULL) || (rep->_iptcp == NULL)) {
@@ -173,10 +199,28 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
             verify_name = false;
         }
     }
+
+    bool enable_mtls = false;
+    const char *mtls_opt = _z_str_intmap_get(config, TLS_CONFIG_ENABLE_MTLS_KEY);
+    if (mtls_opt != NULL) {
+        if (!(mtls_opt[0] == '0' || mtls_opt[0] == 'n' || mtls_opt[0] == 'N' || mtls_opt[0] == 'f')) {
+            enable_mtls = true;
+        }
+    }
+    const char *client_key_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY);
+    const char *client_cert_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_CERTIFICATE_KEY);
     sock->_tls_ctx = _z_tls_context_new();
     if (sock->_tls_ctx == NULL) {
         _Z_ERROR("Failed to create TLS context");
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    if (enable_mtls) {
+        z_result_t ret_client = _z_tls_load_client_cert(sock->_tls_ctx, client_key_path, client_cert_path);
+        if (ret_client != _Z_RES_OK) {
+            _z_tls_context_free(&sock->_tls_ctx);
+            return ret_client;
+        }
     }
 
     z_result_t ret = _z_tls_load_ca_certificate(sock->_tls_ctx, config);
@@ -212,6 +256,17 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
                               verify_name ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_OPTIONAL);
     mbedtls_ssl_conf_rng(&sock->_tls_ctx->_ssl_config, mbedtls_hmac_drbg_random, &sock->_tls_ctx->_hmac_drbg);
 
+    if (enable_mtls) {
+        int own_ret = mbedtls_ssl_conf_own_cert(&sock->_tls_ctx->_ssl_config, &sock->_tls_ctx->_client_cert,
+                                                &sock->_tls_ctx->_client_key);
+        if (own_ret != 0) {
+            _Z_ERROR("Failed to configure client certificate: -0x%04x", -own_ret);
+            _z_close_tcp(&sock->_sock);
+            _z_tls_context_free(&sock->_tls_ctx);
+            return _Z_ERR_GENERIC;
+        }
+    }
+
     mbedret = mbedtls_ssl_setup(&sock->_tls_ctx->_ssl, &sock->_tls_ctx->_ssl_config);
     if (mbedret != 0) {
         _Z_ERROR("Failed to setup SSL: -0x%04x", -mbedret);
@@ -246,11 +301,32 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
         }
     }
 
+    uint32_t ignored_flags = verify_name ? 0u : MBEDTLS_X509_BADCERT_CN_MISMATCH;
+    uint32_t verify_result = mbedtls_ssl_get_verify_result(&sock->_tls_ctx->_ssl);
+    if (verify_result != 0) {
+        if ((verify_result & ~ignored_flags) != 0u) {
+            _Z_ERROR("TLS client certificate verification failed: 0x%08x", verify_result);
+            _z_close_tcp(&sock->_sock);
+            _z_tls_context_free(&sock->_tls_ctx);
+            return _Z_ERR_GENERIC;
+        }
+        if (!verify_name) {
+            _Z_INFO("TLS client name verification disabled; ignoring certificate name mismatch");
+        }
+    }
+
     return _Z_RES_OK;
 }
 
 z_result_t _z_listen_tls(_z_tls_socket_t *sock, const char *host, const char *port, const _z_str_intmap_t *config) {
     sock->_is_peer_socket = false;
+    bool enable_mtls = false;
+    const char *mtls_opt = _z_str_intmap_get(config, TLS_CONFIG_ENABLE_MTLS_KEY);
+    if (mtls_opt != NULL) {
+        if (!(mtls_opt[0] == '0' || mtls_opt[0] == 'n' || mtls_opt[0] == 'N' || mtls_opt[0] == 'f')) {
+            enable_mtls = true;
+        }
+    }
     sock->_tls_ctx = _z_tls_context_new();
     if (sock->_tls_ctx == NULL) {
         _Z_ERROR("Failed to create TLS context");
@@ -316,7 +392,8 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const char *host, const char *po
         }
     }
 
-    mbedtls_ssl_conf_authmode(&sock->_tls_ctx->_ssl_config, MBEDTLS_SSL_VERIFY_NONE);
+    mbedtls_ssl_conf_authmode(&sock->_tls_ctx->_ssl_config,
+                              enable_mtls ? MBEDTLS_SSL_VERIFY_REQUIRED : MBEDTLS_SSL_VERIFY_NONE);
     mbedtls_ssl_conf_rng(&sock->_tls_ctx->_ssl_config, mbedtls_hmac_drbg_random, &sock->_tls_ctx->_hmac_drbg);
 
     _z_free_endpoint_tcp(&tcp_endpoint);
@@ -380,6 +457,14 @@ z_result_t _z_tls_accept(_z_sys_net_socket_t *socket, const _z_sys_net_socket_t 
             socket->_tls_sock = NULL;
             return _Z_ERR_GENERIC;
         }
+    }
+    uint32_t verify_result = mbedtls_ssl_get_verify_result(&tls_sock->_tls_ctx->_ssl);
+    if (verify_result != 0) {
+        _Z_ERROR("TLS client certificate verification failed: 0x%08x", verify_result);
+        _z_tls_context_free(&tls_sock->_tls_ctx);
+        z_free(socket->_tls_sock);
+        socket->_tls_sock = NULL;
+        return _Z_ERR_GENERIC;
     }
 
     tls_sock->_is_peer_socket = true;

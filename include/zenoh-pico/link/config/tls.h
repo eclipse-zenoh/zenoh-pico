@@ -24,7 +24,7 @@ extern "C" {
 
 #if Z_FEATURE_LINK_TLS == 1
 
-#define TLS_CONFIG_ARGC 4
+#define TLS_CONFIG_ARGC 7
 
 #define TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY 0x01
 #define TLS_CONFIG_ROOT_CA_CERTIFICATE_STR "root_ca_certificate"
@@ -35,7 +35,16 @@ extern "C" {
 #define TLS_CONFIG_LISTEN_CERTIFICATE_KEY 0x03
 #define TLS_CONFIG_LISTEN_CERTIFICATE_STR "listen_certificate"
 
-#define TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY 0x04
+#define TLS_CONFIG_ENABLE_MTLS_KEY 0x04
+#define TLS_CONFIG_ENABLE_MTLS_STR "enable_mtls"
+
+#define TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY 0x05
+#define TLS_CONFIG_CONNECT_PRIVATE_KEY_STR "connect_private_key"
+
+#define TLS_CONFIG_CONNECT_CERTIFICATE_KEY 0x06
+#define TLS_CONFIG_CONNECT_CERTIFICATE_STR "connect_certificate"
+
+#define TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY 0x07
 #define TLS_CONFIG_VERIFY_NAME_ON_CONNECT_STR "verify_name_on_connect"
 
 #define TLS_CONFIG_MAPPING_BUILD                               \
@@ -46,8 +55,14 @@ extern "C" {
     args[1]._str = (char *)TLS_CONFIG_LISTEN_PRIVATE_KEY_STR;  \
     args[2]._key = TLS_CONFIG_LISTEN_CERTIFICATE_KEY;          \
     args[2]._str = (char *)TLS_CONFIG_LISTEN_CERTIFICATE_STR;  \
-    args[3]._key = TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY;      \
-    args[3]._str = (char *)TLS_CONFIG_VERIFY_NAME_ON_CONNECT_STR;
+    args[3]._key = TLS_CONFIG_ENABLE_MTLS_KEY;                 \
+    args[3]._str = (char *)TLS_CONFIG_ENABLE_MTLS_STR;         \
+    args[4]._key = TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY;         \
+    args[4]._str = (char *)TLS_CONFIG_CONNECT_PRIVATE_KEY_STR; \
+    args[5]._key = TLS_CONFIG_CONNECT_CERTIFICATE_KEY;         \
+    args[5]._str = (char *)TLS_CONFIG_CONNECT_CERTIFICATE_STR; \
+    args[6]._key = TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY;      \
+    args[6]._str = (char *)TLS_CONFIG_VERIFY_NAME_ON_CONNECT_STR;
 
 size_t _z_tls_config_strlen(const _z_str_intmap_t *s);
 
