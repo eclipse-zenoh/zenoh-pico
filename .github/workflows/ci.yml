@@ -248,6 +248,23 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
+  windows_all_features_build:
+    name: Check compilation on Windows with all features enabled
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build all features
+        run: |
+          make all
+        shell: cmd
+        env: 
+          Z_FEATURE_UNSTABLE_API: 1
+          Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          Z_FEATURE_ADVANCED_PUBLICATION: 1
+          Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
+
   st_build:
     needs: zenoh_build
     name: Build and test in single thread on ubuntu-latest
