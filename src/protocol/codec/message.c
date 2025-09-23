@@ -594,8 +594,7 @@ z_result_t _z_scout_encode(_z_wbuf_t *wbf, uint8_t header, const _z_s_msg_scout_
 
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_version))
 
-    uint8_t cbyte = 0;
-    cbyte |= (msg->_what & 0x07);
+    uint8_t cbyte = msg->_what & 0x07;
     uint8_t zid_len = _z_id_len(msg->_zid);
     if (zid_len > 0) {
         _Z_SET_FLAG(cbyte, _Z_FLAG_T_SCOUT_I);

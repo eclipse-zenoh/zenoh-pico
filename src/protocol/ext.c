@@ -22,8 +22,7 @@
 _z_msg_ext_t _z_msg_ext_make_unit(uint8_t id) {
     _z_msg_ext_t ext;
 
-    ext._header = 0;
-    ext._header |= (id & _Z_EXT_ID_MASK);
+    ext._header = id & _Z_EXT_ID_MASK;
     ext._header |= _Z_MSG_EXT_ENC_UNIT;
 
     return ext;
@@ -39,8 +38,7 @@ void _z_msg_ext_copy_unit(_z_msg_ext_unit_t *clone, const _z_msg_ext_unit_t *ext
 _z_msg_ext_t _z_msg_ext_make_zint(uint8_t id, _z_zint_t zid) {
     _z_msg_ext_t ext;
 
-    ext._header = 0;
-    ext._header |= (id & _Z_EXT_ID_MASK);
+    ext._header = id & _Z_EXT_ID_MASK;
     ext._header |= _Z_MSG_EXT_ENC_ZINT;
 
     ext._body._zint._val = zid;
@@ -55,8 +53,7 @@ void _z_msg_ext_copy_zint(_z_msg_ext_zint_t *clone, const _z_msg_ext_zint_t *ext
 _z_msg_ext_t _z_msg_ext_make_zbuf(uint8_t id, _z_slice_t zbuf) {
     _z_msg_ext_t ext;
 
-    ext._header = 0;
-    ext._header |= (id & _Z_EXT_ID_MASK);
+    ext._header = id & _Z_EXT_ID_MASK;
     ext._header |= _Z_MSG_EXT_ENC_ZBUF;
 
     ext._body._zbuf._val = _z_slice_steal(&zbuf);

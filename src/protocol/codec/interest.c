@@ -82,7 +82,7 @@ z_result_t _z_interest_decode(_z_interest_t *interest, _z_zbuf_t *zbf, bool is_f
                                                _Z_HAS_FLAG(flags, _Z_INTEREST_CODEC_FLAG_M), mapping));
         }
         // Store interest flags (current and future already processed)
-        interest->flags |= (flags & _Z_INTEREST_FLAG_COPY_MASK);
+        interest->flags = (uint8_t)(interest->flags | (flags & _Z_INTEREST_FLAG_COPY_MASK));
     }
     if (has_ext) {
         _Z_RETURN_IF_ERR(_z_msg_ext_skip_non_mandatories(zbf, _Z_INTEREST_TRACE_ID));

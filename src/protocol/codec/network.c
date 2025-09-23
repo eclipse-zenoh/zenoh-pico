@@ -53,7 +53,7 @@ z_result_t _z_push_encode(_z_wbuf_t *wbf, const _z_n_msg_push_t *msg) {
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 
     if (has_qos_ext) {
-        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, _Z_MSG_EXT_ENC_ZINT | 0x01 | (has_timestamp_ext << 7)));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (uint8_t)(_Z_MSG_EXT_ENC_ZINT | 0x01 | (has_timestamp_ext << 7))));
         _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, msg->_qos._val));
     }
 
@@ -119,7 +119,7 @@ z_result_t _z_request_encode(_z_wbuf_t *wbf, const _z_n_msg_request_t *msg) {
         header |= _Z_FLAG_N_REQUEST_N;
     }
     _z_n_msg_request_exts_t exts = _z_n_msg_request_needed_exts(msg);
-    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header | (exts.n != 0 ? _Z_FLAG_Z_Z : 0)));
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, (uint8_t)(header | (exts.n != 0 ? _Z_FLAG_Z_Z : 0))));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, msg->_rid));
     _Z_RETURN_IF_ERR(_z_keyexpr_encode(wbf, has_suffix, &msg->_key));
 

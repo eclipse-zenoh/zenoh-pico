@@ -85,7 +85,7 @@ typedef _z_qos_t _z_n_qos_t;
 static inline _z_qos_t _z_n_qos_create(bool express, z_congestion_control_t congestion_control, z_priority_t priority) {
     _z_n_qos_t ret;
     bool nodrop = congestion_control == Z_CONGESTION_CONTROL_DROP ? 0 : 1;
-    ret._val = (uint8_t)((express << 4) | (nodrop << 3) | priority);
+    ret._val = (uint8_t)((express << 4) | (nodrop << 3) | (uint8_t)priority);
     return ret;
 }
 static inline z_priority_t _z_n_qos_get_priority(_z_n_qos_t n_qos) {
