@@ -12,11 +12,20 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <stdlib.h>
 #include <sys/types.h>
-#include <windows.h>
-// The following includes must come after winsock2
-#include <ntsecapi.h>
 #include <time.h>
+#include <windows.h>
+
+// The following includes must come after windows
+#include <ntsecapi.h>
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"

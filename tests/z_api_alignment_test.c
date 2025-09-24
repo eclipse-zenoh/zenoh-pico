@@ -22,9 +22,8 @@
 #include <assert.h>
 
 #define URI "demo/example/**/*"
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-#include <windows.h>
-#else
+// Don't include <windows.h> due to clash with Zenoh Pico system includes
+#if !defined(WIN32) && !defined(_WIN32) && (!defined(__WIN32) || defined(__CYGWIN__))
 #include <unistd.h>
 #endif
 

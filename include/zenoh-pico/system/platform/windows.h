@@ -15,8 +15,17 @@
 #ifndef ZENOH_PICO_SYSTEM_WINDOWS_H
 #define ZENOH_PICO_SYSTEM_WINDOWS_H
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <sys/timeb.h>
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 #include "zenoh-pico/config.h"
 
