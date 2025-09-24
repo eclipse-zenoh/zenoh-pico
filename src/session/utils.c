@@ -53,6 +53,8 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 
 /*------------------ Init/Free/Close session ------------------*/
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
+    zn->_state = _Z_SESSION_STATE_UNINITIALIZED;
+
     z_result_t ret = _Z_RES_OK;
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -106,6 +108,9 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
     if (ret != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        _z_mutex_drop(&zn->_mutex_inner);
+#endif
         _Z_ERROR_RETURN(ret);
     }
 #endif
@@ -115,13 +120,17 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
     zn->_local_zid = *zid;
 
+    zn->_state = _Z_SESSION_STATE_INITIALIZED;
     return ret;
 }
 
 void _z_session_clear(_z_session_t *zn) {
-    if (_z_session_is_closed(zn)) {
+    _z_session_state_t state = zn->_state;
+    if (state == _Z_SESSION_STATE_UNINITIALIZED || state == _Z_SESSION_STATE_CLOSED) {
         return;
     }
+    zn->_state = _Z_SESSION_STATE_CLOSED;
+
 #if Z_FEATURE_MULTI_THREAD == 1
     _zp_stop_read_task(zn);
     _zp_stop_lease_task(zn);
@@ -143,37 +152,39 @@ void _z_session_clear(_z_session_t *zn) {
     _z_network_message_slist_free(&zn->_declaration_cache);
 #endif
 
-    _z_close(zn);
-    // Clear Zenoh PID
-    // Clean up transports
-    _z_transport_clear(&zn->_tp);
+    if (state == _Z_SESSION_STATE_OPEN) {
+        _z_close(zn);
+        // Clear Zenoh PID
+        // Clean up transports
+        _z_transport_clear(&zn->_tp);
 
-    // Clean up the entities
-    _z_flush_local_resources(zn);
+        // Clean up the entities
+        _z_flush_local_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
-    _z_flush_subscriptions(zn);
+        _z_flush_subscriptions(zn);
 #if Z_FEATURE_RX_CACHE == 1
-    _z_subscription_lru_cache_delete(&zn->_subscription_cache);
+        _z_subscription_lru_cache_delete(&zn->_subscription_cache);
 #endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1
-    _z_flush_session_queryable(zn);
+        _z_flush_session_queryable(zn);
 #if Z_FEATURE_RX_CACHE == 1
-    _z_queryable_lru_cache_delete(&zn->_queryable_cache);
+        _z_queryable_lru_cache_delete(&zn->_queryable_cache);
 #endif
 #endif
 #if Z_FEATURE_QUERY == 1
-    _z_flush_pending_queries(zn);
+        _z_flush_pending_queries(zn);
 #endif
 #if Z_FEATURE_LIVELINESS == 1
-    _z_liveliness_clear(zn);
+        _z_liveliness_clear(zn);
 #endif
 
 #if Z_FEATURE_MATCHING == 1
-    _z_matching_listener_intmap_clear(&zn->_matching_listeners);
+        _z_matching_listener_intmap_clear(&zn->_matching_listeners);
 #endif
 
-    _z_flush_interest(zn);
+        _z_flush_interest(zn);
+    }
 
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_drop(&zn->_mutex_inner);

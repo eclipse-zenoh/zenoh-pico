@@ -34,6 +34,13 @@
 extern "C" {
 #endif
 
+typedef enum {
+    _Z_SESSION_STATE_UNINITIALIZED = 0,
+    _Z_SESSION_STATE_INITIALIZED = 1,
+    _Z_SESSION_STATE_OPEN = 2,
+    _Z_SESSION_STATE_CLOSED = 3
+} _z_session_state_t;
+
 /**
  * A zenoh-net session.
  */
@@ -41,6 +48,8 @@ typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+    _z_session_state_t _state;
 
     // Zenoh-pico is considering a single transport per session.
     z_whatami_t _mode;

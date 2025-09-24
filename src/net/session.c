@@ -202,6 +202,9 @@ z_result_t _z_open(_z_session_rc_t *zn, _z_config_t *config, const _z_id_t *zid)
         }
     }
     _z_string_svec_clear(&locators);
+    if (ret == _Z_RES_OK) {
+        _Z_RC_IN_VAL(zn)->_state = _Z_SESSION_STATE_OPEN;
+    }
     return ret;
 }
 
