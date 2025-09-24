@@ -40,7 +40,7 @@ z_result_t _z_decl_ext_keyexpr_encode(_z_wbuf_t *wbf, _z_keyexpr_t ke, bool has_
     uint8_t header = _Z_MSG_EXT_ENC_ZBUF | _Z_MSG_EXT_FLAG_M | 0x0f | (has_next_ext ? _Z_FLAG_Z_Z : 0);
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     uint32_t kelen = (uint32_t)(_z_keyexpr_has_suffix(&ke) ? _z_string_len(&ke._suffix) : 0);
-    header = (_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0);
+    header = (uint8_t)((_z_keyexpr_is_local(&ke) ? 2 : 0) | (kelen != 0 ? 1 : 0));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, 1 + kelen + _z_zint_len(ke._id)));
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, ke._id));

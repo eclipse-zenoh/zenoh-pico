@@ -134,7 +134,7 @@ uint8_t _z_zint64_encode_buf(uint8_t *buf, uint64_t v) {
     uint8_t len = 0;
     size_t start = 0;
     while ((lv & VLE_LEN1_MASK) != 0) {
-        uint8_t c = (lv & 0x7f) | 0x80;
+        uint8_t c = (uint8_t)((lv & 0x7f) | 0x80);
         buf[start++] = c;
         len++;
         lv = lv >> (uint64_t)7;

@@ -39,7 +39,7 @@ extern "C" {
         uint##SIZE##_t val = 0;                                         \
         for (size_t i = sizeof(val); i != 0; --i) {                     \
             val = val << 8;                                             \
-            val = val | src[i - 1];                                     \
+            val = (uint##SIZE##_t)(val | src[i - 1]);                   \
         }                                                               \
         return val;                                                     \
     }
@@ -69,7 +69,7 @@ _Z_LE_STORE_IMPL(64)
         uint##SIZE##_t val = 0;                                         \
         for (size_t i = 0; i < sizeof(val); ++i) {                      \
             val = val << 8;                                             \
-            val = val | src[i];                                         \
+            val = (uint##SIZE##_t)(val | src[i]);                       \
         }                                                               \
         return val;                                                     \
     }
