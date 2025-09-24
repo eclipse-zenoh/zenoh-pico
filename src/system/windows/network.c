@@ -37,6 +37,7 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
     int nlen = sizeof(naddr);
+    sock_out->_sock._fd = INVALID_SOCKET;
     SOCKET con_socket = accept(sock_in->_sock._fd, &naddr, &nlen);
     if (con_socket == INVALID_SOCKET) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
@@ -44,14 +45,17 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     // Set socket options
     DWORD tv = Z_CONFIG_SOCKET_TIMEOUT;
     if (setsockopt(con_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv)) < 0) {
+        closesocket(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     int flags = 1;
     if (setsockopt(con_socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags)) < 0) {
+        closesocket(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #if Z_FEATURE_TCP_NODELAY == 1
     if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags)) < 0) {
+        closesocket(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
@@ -59,6 +63,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        closesocket(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     // Note socket
@@ -67,8 +72,11 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
-    shutdown(sock->_sock._fd, SD_BOTH);
-    closesocket(sock->_sock._fd);
+    if (sock->_sock._fd != INVALID_SOCKET) {
+        shutdown(sock->_sock._fd, SD_BOTH);
+        closesocket(sock->_sock._fd);
+        sock->_sock._fd = INVALID_SOCKET;
+    }
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -201,6 +209,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
         if (ret != _Z_RES_OK) {
             closesocket(sock->_sock._fd);
+            sock->_sock._fd = INVALID_SOCKET;
             WSACleanup();
         }
     } else {
@@ -284,6 +293,7 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
 
     if (ret != _Z_RES_OK) {
         closesocket(sock->_sock._fd);
+        sock->_sock._fd = INVALID_SOCKET;
     }
 
     // Cleanup Winsock
@@ -292,9 +302,12 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
 }
 
 void _z_close_tcp(_z_sys_net_socket_t *sock) {
-    shutdown(sock->_sock._fd, SD_BOTH);
-    closesocket(sock->_sock._fd);
-    WSACleanup();
+    if (sock->_sock._fd != INVALID_SOCKET) {
+        shutdown(sock->_sock._fd, SD_BOTH);
+        closesocket(sock->_sock._fd);
+        sock->_sock._fd = INVALID_SOCKET;
+        WSACleanup();
+    }
 }
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -378,6 +391,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
         }
         if (ret != _Z_RES_OK) {
             closesocket(sock->_sock._fd);
+            sock->_sock._fd = INVALID_SOCKET;
             WSACleanup();
         }
     } else {
@@ -402,8 +416,11 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
 }
 
 void _z_close_udp_unicast(_z_sys_net_socket_t *sock) {
-    closesocket(sock->_sock._fd);
-    WSACleanup();
+    if (sock->_sock._fd != INVALID_SOCKET) {
+        closesocket(sock->_sock._fd);
+        sock->_sock._fd = INVALID_SOCKET;
+        WSACleanup();
+    }
 }
 
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -579,6 +596,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
 
             if (ret != _Z_RES_OK) {
                 closesocket(sock->_sock._fd);
+                sock->_sock._fd = INVALID_SOCKET;
                 WSACleanup();
             }
         } else {
@@ -679,6 +697,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
             if (ret != _Z_RES_OK) {
                 closesocket(sock->_sock._fd);
+                sock->_sock._fd = INVALID_SOCKET;
                 WSACleanup();
             }
         } else {
@@ -698,28 +717,36 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
                             const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
     _ZP_UNUSED(lep);
-    if (rep._ep._iptcp->ai_family == AF_INET) {
-        struct ip_mreq mreq;
-        (void)memset(&mreq, 0, sizeof(mreq));
-        mreq.imr_multiaddr.s_addr = ((SOCKADDR_IN *)rep._ep._iptcp->ai_addr)->sin_addr.s_addr;
-        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-        setsockopt(sockrecv->_sock._fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char *)&mreq, sizeof(mreq));
-    } else if (rep._ep._iptcp->ai_family == AF_INET6) {
-        struct ipv6_mreq mreq;
-        (void)memset(&mreq, 0, sizeof(mreq));
-        (void)memcpy(&mreq.ipv6mr_multiaddr, &((SOCKADDR_IN6 *)rep._ep._iptcp->ai_addr)->sin6_addr,
-                     sizeof(struct in6_addr));
-        // mreq.ipv6mr_interface = ifindex;
-        setsockopt(sockrecv->_sock._fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, (const char *)&mreq, sizeof(mreq));
-    } else {
-        // Do nothing. It must never not enter here.
-        // Required to be compliant with MISRA 15.7 rule
+    if (sockrecv->_sock._fd != INVALID_SOCKET) {
+        if (rep._ep._iptcp->ai_family == AF_INET) {
+            struct ip_mreq mreq;
+            (void)memset(&mreq, 0, sizeof(mreq));
+            mreq.imr_multiaddr.s_addr = ((SOCKADDR_IN *)rep._ep._iptcp->ai_addr)->sin_addr.s_addr;
+            mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+            setsockopt(sockrecv->_sock._fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char *)&mreq, sizeof(mreq));
+        } else if (rep._ep._iptcp->ai_family == AF_INET6) {
+            struct ipv6_mreq mreq;
+            (void)memset(&mreq, 0, sizeof(mreq));
+            (void)memcpy(&mreq.ipv6mr_multiaddr, &((SOCKADDR_IN6 *)rep._ep._iptcp->ai_addr)->sin6_addr,
+                         sizeof(struct in6_addr));
+            // mreq.ipv6mr_interface = ifindex;
+            setsockopt(sockrecv->_sock._fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP, (const char *)&mreq, sizeof(mreq));
+        } else {
+            // Do nothing. It must never not enter here.
+            // Required to be compliant with MISRA 15.7 rule
+        }
     }
 
-    closesocket(sockrecv->_sock._fd);
-    WSACleanup();
-    closesocket(socksend->_sock._fd);
-    WSACleanup();
+    if (sockrecv->_sock._fd != INVALID_SOCKET) {
+        closesocket(sockrecv->_sock._fd);
+        sockrecv->_sock._fd = INVALID_SOCKET;
+        WSACleanup();
+    }
+    if (socksend->_sock._fd != INVALID_SOCKET) {
+        closesocket(socksend->_sock._fd);
+        socksend->_sock._fd = INVALID_SOCKET;
+        WSACleanup();
+    }
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,

@@ -57,7 +57,7 @@ z_result_t _z_create_endpoint_tcp(_z_sys_net_endpoint_t *ep, const char *s_addre
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
     if (!ep->_iptcp._addr->fromString(s_address)) {
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -65,7 +65,7 @@ _Z_ERROR_LOG(_Z_ERR_GENERIC);
     ep->_iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep->_iptcp._port < (uint32_t)1) ||
         (ep->_iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -83,12 +83,13 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
     sock->_tcp = new WiFiClient();
     if (!sock->_tcp->connect(*rep._iptcp._addr, rep._iptcp._port)) {
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
     if (ret != _Z_RES_OK) {
         delete sock->_tcp;
+        sock->_tcp = NULL;
     }
 
     return ret;
@@ -100,15 +101,18 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     (void)lep;
 
     // @TODO: To be implemented
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
     ret = _Z_ERR_GENERIC;
 
     return ret;
 }
 
 void _z_close_tcp(_z_sys_net_socket_t *sock) {
-    sock->_tcp->stop();
-    delete sock->_tcp;
+    if (sock->_tcp != NULL) {
+        sock->_tcp->stop();
+        delete sock->_tcp;
+        sock->_tcp = NULL;
+    }
 }
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -153,7 +157,7 @@ z_result_t _z_create_endpoint_udp(_z_sys_net_endpoint_t *ep, const char *s_addre
     // Parse and check the validity of the IP address
     ep->_iptcp._addr = new IPAddress();
     if (!ep->_iptcp._addr->fromString(s_address)) {
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -161,7 +165,7 @@ _Z_ERROR_LOG(_Z_ERR_GENERIC);
     ep->_iptcp._port = strtoul(s_port, NULL, 10);
     if ((ep->_iptcp._port < (uint32_t)1) ||
         (ep->_iptcp._port > (uint32_t)65355)) {  // Port numbers should range from 1 to 65355
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -185,12 +189,13 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
     // FIXME: make it random
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->begin(7447)) {
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
     if (ret != _Z_RES_OK) {
         delete sock->_udp;
+        sock->_udp = NULL;
     }
 
     return ret;
@@ -203,15 +208,18 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     (void)tout;
 
     // @TODO: To be implemented
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+    _Z_ERROR_LOG(_Z_ERR_GENERIC);
     ret = _Z_ERR_GENERIC;
 
     return ret;
 }
 
 void _z_close_udp_unicast(_z_sys_net_socket_t *sock) {
-    sock->_udp->stop();
-    delete sock->_udp;
+    if (sock->_udp != NULL) {
+        sock->_udp->stop();
+        delete sock->_udp;
+        sock->_udp = NULL;
+    }
 }
 
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -267,7 +275,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
 
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->begin(55555)) {  // FIXME: make port to be random
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
@@ -277,6 +285,7 @@ _Z_ERROR_LOG(_Z_ERR_GENERIC);
 
     if (ret != _Z_RES_OK) {
         delete sock->_udp;
+        sock->_udp = NULL;
     }
 
     return ret;
@@ -289,12 +298,13 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
     sock->_udp = new WiFiUDP();
     if (!sock->_udp->beginMulticast(*rep._iptcp._addr, rep._iptcp._port)) {
-_Z_ERROR_LOG(_Z_ERR_GENERIC);
+        _Z_ERROR_LOG(_Z_ERR_GENERIC);
         ret = _Z_ERR_GENERIC;
     }
 
     if (ret != _Z_RES_OK) {
         delete sock->_udp;
+        sock->_udp = NULL;
     }
 
     return ret;
@@ -305,11 +315,17 @@ void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *
     _ZP_UNUSED(rep);
     _ZP_UNUSED(lep);
 
-    sockrecv->_udp->stop();
-    delete sockrecv->_udp;
+    if (sockrecv->_udp != NULL) {
+        sockrecv->_udp->stop();
+        delete sockrecv->_udp;
+        sockrecv->_udp = NULL;
+    }
 
-    socksend->_udp->stop();
-    delete socksend->_udp;
+    if (socksend_udp != NULL) {
+        socksend->_udp->stop();
+        delete socksend->_udp;
+        socksend->_udp = NULL;
+    }
 }
 
 size_t _z_read_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len, const _z_sys_net_endpoint_t lep,

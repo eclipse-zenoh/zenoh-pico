@@ -53,6 +53,7 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
     unsigned int nlen = sizeof(naddr);
+    sock_out->_fd = -1;
     int con_socket = accept(sock_in->_fd, &naddr, &nlen);
     if (con_socket < 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
@@ -61,6 +62,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 #if Z_FEATURE_TCP_NODELAY == 1
     int optflag = 1;
     if (setsockopt(con_socket, IPPROTO_TCP, TCP_NODELAY, (void *)&optflag, sizeof(optflag)) < 0) {
+        close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
@@ -69,6 +71,7 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     ling.l_onoff = 1;
     ling.l_linger = Z_TRANSPORT_LEASE / 1000;
     if (setsockopt(con_socket, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(struct linger)) < 0) {
+        close(con_socket);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 #endif
@@ -77,7 +80,12 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     return _Z_RES_OK;
 }
 
-void _z_socket_close(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_socket_close(_z_sys_net_socket_t *sock) {
+    if (sock->_fd >= 0) {
+        close(sock->_fd);
+        sock->_fd = -1;
+    }
+}
 
 #if Z_FEATURE_MULTI_THREAD == 1
 z_result_t _z_socket_wait_event(void *v_peers, _z_mutex_rec_t *mutex) {
@@ -197,6 +205,7 @@ z_result_t _z_open_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t re
 
         if (ret != _Z_RES_OK) {
             close(sock->_fd);
+            sock->_fd = -1;
         }
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -224,6 +233,7 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
 #endif
     if (ret != _Z_RES_OK) {
         close(sock->_fd);
+        sock->_fd = -1;
         return ret;
     }
     // Activate socket
@@ -246,13 +256,17 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
     }
     if (ret != _Z_RES_OK) {
         close(sock->_fd);
+        sock->_fd = -1;
     }
     return ret;
 }
 
 void _z_close_tcp(_z_sys_net_socket_t *sock) {
     // shutdown(sock->_fd, SHUT_RDWR); // Not implemented in Zephyr
-    close(sock->_fd);
+    if (sock->_fd >= 0) {
+        close(sock->_fd);
+        sock->_fd = -1;
+    }
 }
 
 size_t _z_read_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
@@ -327,6 +341,7 @@ z_result_t _z_open_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_endpo
 
         if (ret != _Z_RES_OK) {
             close(sock->_fd);
+            sock->_fd = -1;
         }
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -349,7 +364,12 @@ z_result_t _z_listen_udp_unicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
     return ret;
 }
 
-void _z_close_udp_unicast(_z_sys_net_socket_t *sock) { close(sock->_fd); }
+void _z_close_udp_unicast(_z_sys_net_socket_t *sock) {
+    if (sock->_fd >= 0) {
+        close(sock->_fd);
+        sock->_fd = -1;
+    }
+}
 
 size_t _z_read_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len) {
     struct sockaddr_storage raddr;
@@ -472,6 +492,7 @@ z_result_t _z_open_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_end
 
             if (ret != _Z_RES_OK) {
                 close(sock->_fd);
+                sock->_fd = -1;
             }
         } else {
             _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -594,6 +615,11 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
             }
         }
 
+        if (ret != _Z_RES_OK) {
+            close(sock->_fd);
+            sock->_fd = -1;
+        }
+
         z_free(lsockaddr);
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -606,43 +632,51 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
                             const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
     _ZP_UNUSED(lep);
-    // FIXME: iface passed into the locator is being ignored
-    //        default if used instead
-    struct net_if *ifa = NULL;
-    ifa = net_if_get_default();
-    if (ifa != NULL) {
-        struct net_if_mcast_addr *mcast = NULL;
-        if (rep._iptcp->ai_family == AF_INET) {
-            mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
-            if (mcast != NULL) {
+    if (sockrecv->_fd >= 0) {
+        // FIXME: iface passed into the locator is being ignored
+        //        default if used instead
+        struct net_if *ifa = NULL;
+        ifa = net_if_get_default();
+        if (ifa != NULL) {
+            struct net_if_mcast_addr *mcast = NULL;
+            if (rep._iptcp->ai_family == AF_INET) {
+                mcast = net_if_ipv4_maddr_add(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
+                if (mcast != NULL) {
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
-                net_if_ipv4_maddr_leave(ifa, mcast);
+                    net_if_ipv4_maddr_leave(ifa, mcast);
 #else
-                net_if_ipv4_maddr_leave(mcast);
+                    net_if_ipv4_maddr_leave(mcast);
 #endif
-                net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
-            } else {
-                // Do nothing. The socket will be closed in any case.
-            }
-        } else if (rep._iptcp->ai_family == AF_INET6) {
-            mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
-            if (mcast != NULL) {
+                    net_if_ipv4_maddr_rm(ifa, &((struct sockaddr_in *)rep._iptcp->ai_addr)->sin_addr);
+                } else {
+                    // Do nothing. The socket will be closed in any case.
+                }
+            } else if (rep._iptcp->ai_family == AF_INET6) {
+                mcast = net_if_ipv6_maddr_add(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
+                if (mcast != NULL) {
 #if KERNEL_VERSION_MAJOR == 3 && KERNEL_VERSION_MINOR > 3 || KERNEL_VERSION_MAJOR >= 4
-                net_if_ipv6_maddr_leave(ifa, mcast);
+                    net_if_ipv6_maddr_leave(ifa, mcast);
 #else
-                net_if_ipv6_maddr_leave(mcast);
+                    net_if_ipv6_maddr_leave(mcast);
 #endif
-                net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
+                    net_if_ipv6_maddr_rm(ifa, &((struct sockaddr_in6 *)rep._iptcp->ai_addr)->sin6_addr);
+                } else {
+                    // Do nothing. The socket will be closed in any case.
+                }
             } else {
-                // Do nothing. The socket will be closed in any case.
+                // Do nothing. It must never not enter here.
+                // Required to be compliant with MISRA 15.7 rule
             }
-        } else {
-            // Do nothing. It must never not enter here.
-            // Required to be compliant with MISRA 15.7 rule
         }
+    }
 
+    if (sockrecv->_fd >= 0) {
         close(sockrecv->_fd);
+        sockrecv->_fd = -1;
+    }
+    if (socksend->_fd >= 0) {
         close(socksend->_fd);
+        socksend->_fd = -1;
     }
 }
 
