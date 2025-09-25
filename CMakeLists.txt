@@ -400,6 +400,21 @@ if(PICO_SHARED)
       $<INSTALL_INTERFACE:include>)
 endif()
 
+# TLS support via Mbed TLS
+if(Z_FEATURE_LINK_TLS)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(MBEDTLS REQUIRED mbedtls)
+  
+  if(PICO_STATIC)
+    target_include_directories(${Libname}_static PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(${Libname}_static mbedtls mbedx509 mbedcrypto)
+  endif()
+  
+  if(PICO_SHARED)
+    target_include_directories(${Libname}_shared PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(${Libname}_shared mbedtls mbedx509 mbedcrypto)
+  endif()
+endif()
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
@@ -461,25 +476,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   pico_target_link_library(Iphlpapi)
 endif()
 
-# TLS support via Mbed TLS
-if(Z_FEATURE_LINK_TLS)
-  find_package(MbedTLS REQUIRED)
-  if(MBEDTLS_SHARED)
-    if(NOT TARGET MbedTLS::mbedtls)
-      message(FATAL_ERROR "Shared Mbed TLS libraries not found. Install them or disable MBEDTLS_SHARED.")
-    endif()
-    pico_target_link_library(MbedTLS::mbedtls)
-    pico_target_link_library(MbedTLS::mbedx509)
-    pico_target_link_library(MbedTLS::mbedcrypto)
-  else()
-    if(NOT TARGET MbedTLS::mbedtls_static)
-      message(FATAL_ERROR "Static PIC Mbed TLS libraries not found. Install them or enable MBEDTLS_SHARED.")
-    endif()
-    pico_target_link_library(MbedTLS::mbedtls_static)
-    pico_target_link_library(MbedTLS::mbedx509_static)
-    pico_target_link_library(MbedTLS::mbedcrypto_static)
-  endif()
-endif()
 
 #
 # Build tests, examples, installation only when project is root
