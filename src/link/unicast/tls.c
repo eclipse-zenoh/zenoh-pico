@@ -12,12 +12,13 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#include "zenoh-pico/link/config/tls.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/link/config/tls.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/system/link/tls.h"
