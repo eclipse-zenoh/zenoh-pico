@@ -14,6 +14,8 @@
 
 // #include "zenoh-pico/transport/link/tx.h"
 
+#include "zenoh-pico/transport/common/tx.h"
+
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/codec/core.h"
@@ -22,7 +24,6 @@
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/link/raweth.h"
-#include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/transport/utils.h"
