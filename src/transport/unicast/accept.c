@@ -21,11 +21,18 @@
 #include "zenoh-pico/transport/unicast/lease.h"
 #include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/utils/logging.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_UNICAST_PEER == 1
 static void *_zp_unicast_accept_task(void *ctx) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ctx;
-    _z_sys_net_socket_t listen_socket = *_z_link_get_socket(&ztu->_common._link);
+    const _z_sys_net_socket_t *socket_ptr = _z_link_get_socket(ztu->_common._link);
+    if (socket_ptr == NULL) {
+        return NULL;
+    }
+    _z_sys_net_socket_t listen_socket = *socket_ptr;
     _z_sys_net_socket_t con_socket = {0};
     bool *accept_task_is_running = ztu->_common._accept_task_running;
 
@@ -46,9 +53,22 @@ static void *_zp_unicast_accept_task(void *ctx) {
             _z_socket_close(&con_socket);
             continue;
         }
+
+#if Z_FEATURE_LINK_TLS == 1
+        // Perform TLS handshake if this is a TLS link
+        if (ztu->_common._link->_type == _Z_LINK_TYPE_TLS) {
+            ret = _z_tls_accept(&con_socket, &listen_socket);
+            if (ret != _Z_RES_OK) {
+                _Z_INFO("TLS handshake failed with error %d", ret);
+                _z_socket_close(&con_socket);
+                continue;
+            }
+        }
+#endif
+
         _z_transport_unicast_establish_param_t param = {0};
         // Start handshake
-        ret = _z_unicast_handshake_listen(&param, &ztu->_common._link,
+        ret = _z_unicast_handshake_listen(&param, ztu->_common._link,
                                           &_z_transport_common_get_session(&ztu->_common)->_local_zid, Z_WHATAMI_PEER,
                                           &con_socket);
         if (ret != _Z_RES_OK) {

@@ -11,7 +11,7 @@
 # Contributors:
 # ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 #
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.txt version)
 
@@ -47,6 +47,7 @@ option(WITH_ZEPHYR "Build for Zephyr RTOS" OFF)
 option(WITH_FREERTOS_PLUS_TCP "Build for FreeRTOS RTOS and FreeRTOS-Plus-TCP network stack" OFF)
 option(WITH_FREERTOS_LWIP "Build for FreeRTOS RTOS and LWIP (Lightweight IP) network stack" OFF)
 option(WITH_RPI_PICO "Build for Raspberry Pi Pico" OFF)
+option(MBEDTLS_SHARED "Link against shared Mbed TLS libraries instead of static ones" ON)
 set(ZENOH_LOG "" CACHE STRING "Use this to set the ZENOH_LOG variable")
 set(ZENOH_LOG_PRINT "" CACHE STRING "Use this to set the ZENOH_LOG_PRINT variable")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
@@ -258,6 +259,7 @@ set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
 set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
+set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
 set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
@@ -398,6 +400,21 @@ if(PICO_SHARED)
       $<INSTALL_INTERFACE:include>)
 endif()
 
+# TLS support via Mbed TLS
+if(Z_FEATURE_LINK_TLS)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(MBEDTLS REQUIRED mbedtls)
+  
+  if(PICO_STATIC)
+    target_include_directories(${Libname}_static PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(${Libname}_static mbedtls mbedx509 mbedcrypto)
+  endif()
+  
+  if(PICO_SHARED)
+    target_include_directories(${Libname}_shared PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_link_libraries(${Libname}_shared mbedtls mbedx509 mbedcrypto)
+  endif()
+endif()
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
@@ -458,6 +475,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   pico_target_link_library(Ws2_32)
   pico_target_link_library(Iphlpapi)
 endif()
+
 
 #
 # Build tests, examples, installation only when project is root
@@ -582,6 +600,7 @@ if(UNIX OR MSVC)
     add_executable(z_test_peer_multicast ${PROJECT_SOURCE_DIR}/tests/z_test_peer_multicast.c)
     add_executable(z_utils_test ${PROJECT_SOURCE_DIR}/tests/z_utils_test.c)
     add_executable(z_scheduler_test ${PROJECT_SOURCE_DIR}/tests/z_scheduler_test.c)
+    add_executable(z_tls_test ${PROJECT_SOURCE_DIR}/tests/z_tls_test.c)
 
     target_link_libraries(z_data_struct_test zenohpico::lib)
     target_link_libraries(z_channels_test zenohpico::lib)
@@ -605,6 +624,7 @@ if(UNIX OR MSVC)
     target_link_libraries(z_test_peer_multicast zenohpico::lib)
     target_link_libraries(z_utils_test zenohpico::lib)
     target_link_libraries(z_scheduler_test zenohpico::lib)
+    target_link_libraries(z_tls_test zenohpico::lib)
 
     configure_file(${PROJECT_SOURCE_DIR}/tests/modularity.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/modularity.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/raweth.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/raweth.py COPYONLY)
@@ -632,6 +652,7 @@ if(UNIX OR MSVC)
     add_test(z_lru_cache_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_lru_cache_test)
     add_test(z_utils_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_utils_test)
     add_test(z_scheduler_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_scheduler_test)
+    add_test(z_tls_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_tls_test)
   endif()
 
   if(BUILD_INTEGRATION)
@@ -667,10 +688,16 @@ endif()
       target_link_libraries(z_api_advanced_pubsub_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
+      configure_file(${PROJECT_SOURCE_DIR}/tests/tls_verify.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
 
       enable_testing()
-      add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
+      if(Z_FEATURE_LINK_TLS)
+        add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test --enable-tls)
+        add_test(z_tls_verify_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh z_client_test)
+      else()
+        add_test(z_client_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh z_client_test)
+      endif()
       add_test(z_api_alignment_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_alignment_test)
       add_test(z_session_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_session_test)
       add_test(z_wildcard_subscription_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_wildcard_subscription_test)

@@ -11,7 +11,7 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include "zenoh-pico/transport/unicast/transport.h"
+#include "zenoh-pico/transport/common/transport.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -22,9 +22,9 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/common/rx.h"
-#include "zenoh-pico/transport/common/transport.h"
 #include "zenoh-pico/transport/common/tx.h"
 #include "zenoh-pico/transport/transport.h"
+#include "zenoh-pico/transport/unicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
 #include "zenoh-pico/utils/logging.h"
 
@@ -75,7 +75,7 @@ static z_result_t _z_unicast_transport_create_inner(_z_transport_unicast_t *ztu,
     // Transport lease
     ztu->_common._lease = param->_lease;
     // Transport link for unicast
-    ztu->_common._link = *zl;
+    ztu->_common._link = zl;
 
     ztu->_peers = _z_transport_peer_unicast_slist_new();
     return _Z_RES_OK;

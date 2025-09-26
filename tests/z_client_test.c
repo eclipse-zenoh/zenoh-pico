@@ -120,10 +120,15 @@ void data_handler(z_loaned_sample_t *sample, void *arg) {
 int main(int argc, char **argv) {
     setvbuf(stdout, NULL, _IOLBF, 1024);
 
-    assert(argc == 2);
-    (void)(argc);
+    assert(argc >= 2);
 
     int is_reliable = strncmp(argv[1], "tcp", 3) == 0;
+    unsigned int msg_count = MSG;
+    for (int i = 2; i < argc; ++i) {
+        if (strncmp(argv[i], "--msgs=", 7) == 0) {
+            msg_count = (unsigned int)strtoul(argv[i] + 7, NULL, 10);
+        }
+    }
 
     z_owned_config_t config;
     z_config_default(&config);
@@ -231,8 +236,8 @@ int main(int argc, char **argv) {
     uint8_t *value = (uint8_t *)z_malloc(len);
     memset(value, 1, MSG_LEN);
 
-    total = MSG * SET;
-    for (unsigned int n = 0; n < MSG; n++) {
+    total = msg_count * SET;
+    for (unsigned int n = 0; n < msg_count; n++) {
         for (unsigned int i = 0; i < SET; i++) {
             z_put_options_t opt;
             z_put_options_default(&opt);
