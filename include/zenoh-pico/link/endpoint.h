@@ -80,6 +80,9 @@ z_result_t _z_endpoint_from_string(_z_endpoint_t *ep, const _z_string_t *s);
 void _z_endpoint_clear(_z_endpoint_t *ep);
 void _z_endpoint_free(_z_endpoint_t **ep);
 
+char *_z_endpoint_parse_host(_z_string_t *addr);
+char *_z_endpoint_parse_port(_z_string_t *addr);
+
 #ifdef __cplusplus
 }
 #endif
