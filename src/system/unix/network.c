@@ -31,6 +31,9 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
+#endif
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/transport.h"
 #include "zenoh-pico/utils/logging.h"
@@ -91,6 +94,18 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_TLS == 1
+    if (sock->_tls_sock != NULL) {
+        _z_tls_socket_t *tls_sock = (_z_tls_socket_t *)sock->_tls_sock;
+        bool peer_socket = tls_sock->_is_peer_socket;
+        _z_close_tls(tls_sock);
+        if (peer_socket) {
+            z_free(tls_sock);
+        }
+        sock->_tls_sock = NULL;
+        return;
+    }
+#endif
     if (sock->_fd >= 0) {
         shutdown(sock->_fd, SHUT_RDWR);
         close(sock->_fd);
@@ -272,22 +287,46 @@ z_result_t _z_listen_tcp(_z_sys_net_socket_t *sock, const _z_sys_net_endpoint_t 
         close(sock->_fd);
         return ret;
     }
+
     struct addrinfo *it = NULL;
+    int addr_count = 0;
     for (it = lep._iptcp; it != NULL; it = it->ai_next) {
+        addr_count++;
+        char addr_str[INET6_ADDRSTRLEN];
+        const char *family_str = (it->ai_family == AF_INET) ? "IPv4" : (it->ai_family == AF_INET6) ? "IPv6" : "Unknown";
+
+        // Extract address string for logging
+        if (it->ai_family == AF_INET) {
+            inet_ntop(AF_INET, &((struct sockaddr_in *)it->ai_addr)->sin_addr, addr_str, INET_ADDRSTRLEN);
+        } else if (it->ai_family == AF_INET6) {
+            inet_ntop(AF_INET6, &((struct sockaddr_in6 *)it->ai_addr)->sin6_addr, addr_str, INET6_ADDRSTRLEN);
+        } else {
+            snprintf(addr_str, sizeof(addr_str), "%s", "unknown");
+        }
+
+        _Z_DEBUG("Trying address %d: %s (%s), family=%d", addr_count, addr_str, family_str, it->ai_family);
         if (bind(sock->_fd, it->ai_addr, it->ai_addrlen) < 0) {
+            _Z_DEBUG("bind() failed for address %s: %s", addr_str, strerror(errno));
             if (it->ai_next == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
                 break;
             }
+            continue;  // Try next address
         }
+        _Z_DEBUG("bind() successful for address %s", addr_str);
+
         if (listen(sock->_fd, Z_LISTEN_MAX_CONNECTION_NB) < 0) {
+            _Z_DEBUG("listen() failed for address %s: %s", addr_str, strerror(errno));
             if (it->ai_next == NULL) {
                 _Z_ERROR_LOG(_Z_ERR_GENERIC);
                 ret = _Z_ERR_GENERIC;
                 break;
             }
+            continue;  // Try next address
         }
+        _Z_DEBUG("listen() successful for address %s", addr_str);
+        break;
     }
     if (ret != _Z_RES_OK) {
         close(sock->_fd);

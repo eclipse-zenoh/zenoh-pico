@@ -58,8 +58,9 @@ set(ZENOH_LOG DEBUG)
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 
 target_link_libraries(zenohpico_static
-  freertos_kernel
-  freertos_plus_tcp
+  PRIVATE
+    freertos_kernel
+    freertos_plus_tcp
 )
 
 add_library(main OBJECT main.c)

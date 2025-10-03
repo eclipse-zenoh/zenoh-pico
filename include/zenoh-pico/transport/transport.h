@@ -118,7 +118,7 @@ extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid
 _Z_REFCOUNT_DEFINE_NO_FROM_VAL(_z_session, _z_session)
 typedef struct {
     _z_session_weak_t _session;
-    _z_link_t _link;
+    _z_link_t *_link;
     // TX and RX buffers
     _z_wbuf_t _wbuf;
     _z_zbuf_t _zbuf;
