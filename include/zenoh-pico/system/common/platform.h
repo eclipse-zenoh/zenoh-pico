@@ -55,6 +55,8 @@
 #include "zenoh_generic_platform.h"
 #elif defined(ZENOH_THREADX_STM32)
 #include "zenoh-pico/system/platform/threadx/stm32.h"
+#elif defined(ZENOH_RTTHREAD)
+#include "zenoh-pico/system/platform/rtthread.h"
 #else
 #include "zenoh-pico/system/platform/void.h"
 #error "Unknown platform"
