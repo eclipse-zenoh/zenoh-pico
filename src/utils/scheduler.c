@@ -75,11 +75,12 @@ z_result_t _zp_periodic_scheduler_init(_zp_periodic_scheduler_t *scheduler) {
     scheduler->_time.ctx = scheduler;
     scheduler->_next_id = 1;
     scheduler->_inflight_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
+    scheduler->_initialized = true;
     return _Z_RES_OK;
 }
 
 void _zp_periodic_scheduler_clear(_zp_periodic_scheduler_t *scheduler) {
-    if (scheduler == NULL) {
+    if (scheduler == NULL || !scheduler->_initialized) {
         return;
     }
 
