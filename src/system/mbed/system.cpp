@@ -20,6 +20,7 @@
 
 extern "C" {
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) { return randLIB_get_8bit(); }

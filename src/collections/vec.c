@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 /*-------- vec --------*/
 _z_vec_t _z_vec_make(size_t capacity) {
     _z_vec_t v = {0};
