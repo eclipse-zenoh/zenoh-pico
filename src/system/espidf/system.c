@@ -21,6 +21,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/common/system_error.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 
 /*------------------ Random ------------------*/
 uint8_t z_random_u8(void) { return z_random_u32(); }
