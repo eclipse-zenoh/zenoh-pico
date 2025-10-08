@@ -14,11 +14,15 @@
 
 #include "zenoh-pico/link/endpoint.h"
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #if Z_FEATURE_LINK_TCP == 1
@@ -35,6 +39,9 @@
 #endif
 #if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/link/config/ws.h"
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/link/config/tls.h"
 #endif
 #include "zenoh-pico/link/config/raweth.h"
 
@@ -261,6 +268,85 @@ _z_string_t _z_locator_to_string(const _z_locator_t *loc) {
     return s;
 }
 
+char *_z_endpoint_parse_host(_z_string_t *addr) {
+    if (addr == NULL) {
+        return NULL;
+    }
+
+    const char *addr_data = _z_string_data(addr);
+    const size_t addr_len = _z_string_len(addr);
+    if (addr_data == NULL || addr_len == 0) {
+        return NULL;
+    }
+
+    const char *colon = _z_string_rchr(addr, ':');
+    if (colon == NULL) {
+        return NULL;
+    }
+
+    // IPv6
+    const char *host_start = addr_data;
+    const char *host_end = colon;
+    if ((host_end > host_start) && (host_start[0] == '[') && (host_end[-1] == ']')) {
+        host_start = _z_cptr_char_offset(host_start, 1);
+        host_end = _z_cptr_char_offset(host_end, -1);
+    }
+
+    if (host_end <= host_start) {
+        return NULL;
+    }
+
+    const size_t host_len = _z_ptr_char_diff(host_end, host_start);
+    char *host_copy = (char *)z_malloc(host_len + 1);
+    if (host_copy == NULL) {
+        return NULL;
+    }
+
+    _z_str_n_copy(host_copy, host_start, host_len + 1);
+    return host_copy;
+}
+
+char *_z_endpoint_parse_port(_z_string_t *addr) {
+    if (addr == NULL) {
+        return NULL;
+    }
+
+    const char *addr_data = _z_string_data(addr);
+    const size_t addr_len = _z_string_len(addr);
+    if (addr_data == NULL || addr_len == 0) {
+        return NULL;
+    }
+
+    const char *colon = _z_string_rchr(addr, ':');
+    if (colon == NULL) {
+        return NULL;
+    }
+
+    const char *addr_end = _z_cptr_char_offset(addr_data, (ptrdiff_t)addr_len);
+    const char *port_start = _z_cptr_char_offset(colon, 1);
+    if (port_start >= addr_end) {
+        return NULL;
+    }
+
+    const size_t port_len = _z_ptr_char_diff(addr_end, port_start);
+    char *port = (char *)z_malloc(port_len + 1);
+    if (port == NULL) {
+        return NULL;
+    }
+
+    _z_str_n_copy(port, port_start, port_len + 1);
+
+    char *endptr = NULL;
+    errno = 0;
+    unsigned long port_val = strtoul(port, &endptr, 10);
+    if ((errno != 0) || (endptr == port) || (*endptr != '\0') || (port_val == 0) || (port_val > 65535)) {
+        z_free(port);
+        return NULL;
+    }
+
+    return port;
+}
+
 /*------------------ Endpoint ------------------*/
 void _z_endpoint_init(_z_endpoint_t *endpoint) {
     _z_locator_init(&endpoint->_locator);
@@ -322,6 +408,12 @@ z_result_t _z_endpoint_config_from_string(_z_str_intmap_t *strint, const _z_stri
             return _z_ws_config_from_strn(strint, p_start, cfg_size);
         }
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+        cmp_str = _z_string_alias_str(TLS_SCHEMA);
+        if (_z_string_equals(proto, &cmp_str)) {
+            return _z_tls_config_from_strn(strint, p_start, cfg_size);
+        }
+#endif
         cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
         if (_z_string_equals(proto, &cmp_str)) {
             return _z_raweth_config_from_strn(strint, p_start, cfg_size);
@@ -363,6 +455,12 @@ size_t _z_endpoint_config_strlen(const _z_str_intmap_t *s, _z_string_t *proto) {
         return _z_ws_config_strlen(s);
     }
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+    cmp_str = _z_string_alias_str(TLS_SCHEMA);
+    if (_z_string_equals(proto, &cmp_str)) {
+        return _z_tls_config_strlen(s);
+    }
+#endif
     cmp_str = _z_string_alias_str(RAWETH_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_raweth_config_strlen(s);
@@ -402,6 +500,12 @@ char *_z_endpoint_config_to_string(const _z_str_intmap_t *s, const _z_string_t *
     cmp_str = _z_string_alias_str(WS_SCHEMA);
     if (_z_string_equals(proto, &cmp_str)) {
         return _z_ws_config_to_str(s);
+    }
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+    cmp_str = _z_string_alias_str(TLS_SCHEMA);
+    if (_z_string_equals(proto, &cmp_str)) {
+        return _z_tls_config_to_str(s);
     }
 #endif
     cmp_str = _z_string_alias_str(RAWETH_SCHEMA);

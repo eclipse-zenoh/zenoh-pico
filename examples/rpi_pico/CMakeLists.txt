@@ -96,12 +96,13 @@ set(WITH_RPI_PICO ON)
 configure_include_project(ZENOHPICO zenohpico zenohpico::lib "../.." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
 
 target_link_libraries(zenohpico_static
-  hardware_uart 
-  pico_stdlib
-  pico_rand
-  FreeRTOS-Kernel-Heap4
-  ${WIFI_LIB} 
-  ${USB_LIBS} 
+  PRIVATE
+    hardware_uart
+    pico_stdlib
+    pico_rand
+    FreeRTOS-Kernel-Heap4
+    ${WIFI_LIB}
+    ${USB_LIBS}
 )
 
 # Configure build  

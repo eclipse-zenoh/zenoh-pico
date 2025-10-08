@@ -82,12 +82,12 @@ z_result_t _z_raweth_recv_t_msg_na(_z_transport_multicast_t *ztm, _z_transport_m
     // Prepare the buffer
     _z_zbuf_reset(&ztm->_common._zbuf);
 
-    switch (ztm->_common._link._cap._flow) {
+    switch (ztm->_common._link->_cap._flow) {
         // Datagram capable links
         case Z_LINK_CAP_FLOW_DATAGRAM: {
             _z_zbuf_compact(&ztm->_common._zbuf);
             // Read from link
-            size_t to_read = _z_raweth_link_recv_zbuf(&ztm->_common._link, &ztm->_common._zbuf, addr);
+            size_t to_read = _z_raweth_link_recv_zbuf(ztm->_common._link, &ztm->_common._zbuf, addr);
             if (to_read == SIZE_MAX) {
                 _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                 ret = _Z_ERR_TRANSPORT_RX_FAILED;

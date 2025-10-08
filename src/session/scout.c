@@ -51,7 +51,7 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
         _z_link_t zl;
         memset(&zl, 0, sizeof(_z_link_t));
 
-        err = _z_open_link(&zl, locator);
+        err = _z_open_link(&zl, locator, NULL);
         if (err == _Z_RES_OK) {
             // Send the scout message
             err = _z_link_send_wbuf(&zl, wbf, NULL);

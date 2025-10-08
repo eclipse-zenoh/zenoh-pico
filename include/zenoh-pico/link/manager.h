@@ -18,6 +18,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
+#include "zenoh-pico/utils/config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,6 +47,11 @@ z_result_t _z_new_link_serial(_z_link_t *zl, _z_endpoint_t ep);
 #if Z_FEATURE_LINK_WS == 1
 z_result_t _z_endpoint_ws_valid(_z_endpoint_t *ep);
 z_result_t _z_new_link_ws(_z_link_t *zl, _z_endpoint_t *ep);
+#endif
+#if Z_FEATURE_LINK_TLS == 1
+z_result_t _z_endpoint_tls_valid(_z_endpoint_t *ep);
+z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket, const _z_config_t *session_cfg);
+z_result_t _z_new_link_tls(_z_link_t *zl, _z_endpoint_t *ep, const _z_config_t *session_cfg);
 #endif
 
 #ifdef __cplusplus

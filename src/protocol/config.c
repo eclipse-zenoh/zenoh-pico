@@ -127,7 +127,7 @@ z_result_t _z_str_intmap_from_strn(_z_str_intmap_t *strint, const char *s, uint8
 
                 // Process next key value
                 start = _z_cptr_char_offset(p_value_end, 1);
-                curr_len -= _z_ptr_char_diff(start, s);
+                curr_len = n - _z_ptr_char_diff(start, s);
             } else {
                 _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
                 ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
