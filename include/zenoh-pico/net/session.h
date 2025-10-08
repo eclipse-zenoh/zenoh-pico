@@ -39,6 +39,7 @@ extern "C" {
  */
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
+    bool _mutex_inner_initialized;
     _z_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
