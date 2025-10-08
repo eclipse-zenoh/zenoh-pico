@@ -16,6 +16,8 @@
 
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_PERIODIC_TASKS == 1
 

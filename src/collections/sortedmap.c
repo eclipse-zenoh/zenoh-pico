@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 /*-------- sortedmap --------*/
 void _z_sortedmap_init(_z_sortedmap_t *map, z_element_cmp_f f_cmp) {
     map->_vals = NULL;

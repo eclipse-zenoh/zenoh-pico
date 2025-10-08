@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
