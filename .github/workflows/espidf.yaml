@@ -25,6 +25,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
 
+    env:
+      IDF_COMPONENT_MANAGER: "0"   # ← disable pacman to avoid the pydantic crash
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
