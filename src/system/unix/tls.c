@@ -19,10 +19,12 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "mbedtls/base64.h"
 #include "mbedtls/debug.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/error.h"
@@ -40,12 +42,103 @@
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 
+#define Z_TLS_BASE64_MAX_VALUE_LEN (64 * 1024)
+
 #ifdef ZENOH_LOG_TRACE
 static void _z_tls_debug(void *ctx, int level, const char *file, int line, const char *str) {
     _ZP_UNUSED(ctx);
     _Z_DEBUG_NONL("mbed TLS [%d] %s:%04d: %s", level, file, line, str);
 }
 #endif
+
+static z_result_t _z_tls_decode_base64(const char *label, const char *input, unsigned char **output,
+                                       size_t *output_len) {
+    if (input == NULL) {
+        return _Z_ERR_GENERIC;
+    }
+
+    if (label == NULL) {
+        _Z_ERROR("TLS base64 value label is NULL");
+        return _Z_ERR_GENERIC;
+    }
+
+    size_t input_len = strnlen(input, Z_TLS_BASE64_MAX_VALUE_LEN + 1);
+    if (input_len > Z_TLS_BASE64_MAX_VALUE_LEN) {
+        _Z_ERROR("%s exceeds maximum supported value length (%zu bytes)", label, (size_t)Z_TLS_BASE64_MAX_VALUE_LEN);
+        return _Z_ERR_GENERIC;
+    }
+
+    size_t required = 0;
+    int ret = mbedtls_base64_decode(NULL, 0, &required, (const unsigned char *)input, input_len);
+    if (ret != 0 && ret != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL) {
+        _Z_ERROR("Failed to decode %s from base64: -0x%04x", label, -ret);
+        return _Z_ERR_GENERIC;
+    }
+
+    size_t buffer_len = (required > 0) ? required : 1;
+    unsigned char *buffer = (unsigned char *)z_malloc(buffer_len + 1);
+    if (buffer == NULL) {
+        _Z_ERROR("Failed to allocate buffer for %s base64 (%zu bytes)", label, buffer_len);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+
+    ret = mbedtls_base64_decode(buffer, buffer_len, &required, (const unsigned char *)input, input_len);
+    if (ret != 0) {
+        _Z_ERROR("Failed to decode %s from base64: -0x%04x", label, -ret);
+        z_free(buffer);
+        return _Z_ERR_GENERIC;
+    }
+
+    buffer[required] = '\0';
+    *output = buffer;
+    if (output_len != NULL) {
+        *output_len = required;
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_tls_parse_cert_from_base64(mbedtls_x509_crt *cert, const char *base64, const char *label) {
+    unsigned char *decoded = NULL;
+    size_t decoded_len = 0;
+    z_result_t res = _z_tls_decode_base64(label, base64, &decoded, &decoded_len);
+    if (res != _Z_RES_OK) {
+        return res;
+    }
+
+    int ret = mbedtls_x509_crt_parse(cert, decoded, decoded_len + 1);
+    z_free(decoded);
+    if (ret != 0) {
+        _Z_ERROR("Failed to parse %s from base64: -0x%04x", label, -ret);
+        return _Z_ERR_GENERIC;
+    }
+
+    _Z_DEBUG("Loaded %s from base64", label);
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_tls_parse_key_from_base64(mbedtls_pk_context *key, const char *base64, const char *label,
+                                               mbedtls_hmac_drbg_context *rng) {
+    unsigned char *decoded = NULL;
+    size_t decoded_len = 0;
+    z_result_t res = _z_tls_decode_base64(label, base64, &decoded, &decoded_len);
+    if (res != _Z_RES_OK) {
+        return res;
+    }
+
+#if MBEDTLS_VERSION_MAJOR >= 3
+    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0, mbedtls_hmac_drbg_random, rng);
+#else
+    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0);
+#endif
+    z_free(decoded);
+    if (ret != 0) {
+        _Z_ERROR("Failed to parse %s from base64: -0x%04x", label, -ret);
+        return _Z_ERR_GENERIC;
+    }
+
+    _Z_DEBUG("Loaded %s from base64", label);
+    return _Z_RES_OK;
+}
 
 static bool _z_opt_is_true(const char *val) {
     if (val == NULL || val[0] == '\0') {
@@ -132,74 +225,127 @@ void _z_tls_context_free(_z_tls_context_t **ctx) {
 
 static z_result_t _z_tls_load_ca_certificate(_z_tls_context_t *ctx, const _z_str_intmap_t *config) {
     const char *ca_cert_str = _z_str_intmap_get(config, TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY);
-    if (ca_cert_str == NULL) {
+    const char *ca_cert_base64 = _z_str_intmap_get(config, TLS_CONFIG_ROOT_CA_CERTIFICATE_BASE64_KEY);
+
+    if (ca_cert_str == NULL && ca_cert_base64 == NULL) {
         _Z_ERROR("TLS requires 'root_ca_certificate' to be set");
         return _Z_ERR_GENERIC;
     }
 
-    int ret = mbedtls_x509_crt_parse_file(&ctx->_ca_cert, ca_cert_str);
-    if (ret != 0) {
-        _Z_ERROR("Failed to parse CA certificate file %s: -0x%04x", ca_cert_str, -ret);
-        return _Z_ERR_GENERIC;
+    if (ca_cert_str != NULL) {
+        int ret = mbedtls_x509_crt_parse_file(&ctx->_ca_cert, ca_cert_str);
+        if (ret != 0) {
+            _Z_ERROR("Failed to parse CA certificate file %s: -0x%04x", ca_cert_str, -ret);
+            return _Z_ERR_GENERIC;
+        }
+        _Z_DEBUG("Loaded CA certificate from %s", ca_cert_str);
     }
 
-    _Z_DEBUG("Loaded CA certificate from %s", ca_cert_str);
+    if (ca_cert_base64 != NULL) {
+        z_result_t res = _z_tls_parse_cert_from_base64(&ctx->_ca_cert, ca_cert_base64, "CA certificate");
+        if (res != _Z_RES_OK) {
+            return res;
+        }
+    }
+
     return _Z_RES_OK;
 }
 
 static z_result_t _z_tls_load_listen_cert(_z_tls_context_t *ctx, const _z_str_intmap_t *config) {
     const char *listen_key_str = _z_str_intmap_get(config, TLS_CONFIG_LISTEN_PRIVATE_KEY_KEY);
+    const char *listen_key_base64 = _z_str_intmap_get(config, TLS_CONFIG_LISTEN_PRIVATE_KEY_BASE64_KEY);
     const char *listen_cert_str = _z_str_intmap_get(config, TLS_CONFIG_LISTEN_CERTIFICATE_KEY);
+    const char *listen_cert_base64 = _z_str_intmap_get(config, TLS_CONFIG_LISTEN_CERTIFICATE_BASE64_KEY);
 
-    if (listen_key_str == NULL || listen_cert_str == NULL) {
+    if ((listen_key_str == NULL && listen_key_base64 == NULL) ||
+        (listen_cert_str == NULL && listen_cert_base64 == NULL)) {
         _Z_ERROR("TLS server requires both private key and certificate to be configured");
         return _Z_ERR_GENERIC;
     }
 
+    if (listen_key_base64 != NULL) {
+        z_result_t res = _z_tls_parse_key_from_base64(&ctx->_listen_key, listen_key_base64, "listening private key",
+                                                      &ctx->_hmac_drbg);
+        if (res != _Z_RES_OK) {
+            return res;
+        }
+    } else {
 #if MBEDTLS_VERSION_MAJOR >= 3
-    int ret =
-        mbedtls_pk_parse_keyfile(&ctx->_listen_key, listen_key_str, NULL, mbedtls_hmac_drbg_random, &ctx->_hmac_drbg);
+        int ret = mbedtls_pk_parse_keyfile(&ctx->_listen_key, listen_key_str, NULL, mbedtls_hmac_drbg_random,
+                                           &ctx->_hmac_drbg);
 #else
-    int ret = mbedtls_pk_parse_keyfile(&ctx->_listen_key, listen_key_str, NULL);
+        int ret = mbedtls_pk_parse_keyfile(&ctx->_listen_key, listen_key_str, NULL);
 #endif
-    if (ret != 0) {
-        _Z_ERROR("Failed to parse listening side private key file %s: -0x%04x", listen_key_str, -ret);
-        return _Z_ERR_GENERIC;
+        if (ret != 0) {
+            _Z_ERROR("Failed to parse listening side private key file %s: -0x%04x", listen_key_str, -ret);
+            return _Z_ERR_GENERIC;
+        }
+        _Z_DEBUG("Loaded listening private key from %s", listen_key_str);
     }
 
-    ret = mbedtls_x509_crt_parse_file(&ctx->_listen_cert, listen_cert_str);
-    if (ret != 0) {
-        _Z_ERROR("Failed to parse listening side certificate file %s: -0x%04x", listen_cert_str, -ret);
-        return _Z_ERR_GENERIC;
+    if (listen_cert_base64 != NULL) {
+        z_result_t res =
+            _z_tls_parse_cert_from_base64(&ctx->_listen_cert, listen_cert_base64, "listening side certificate");
+        if (res != _Z_RES_OK) {
+            return res;
+        }
+    } else {
+        int ret = mbedtls_x509_crt_parse_file(&ctx->_listen_cert, listen_cert_str);
+        if (ret != 0) {
+            _Z_ERROR("Failed to parse listening side certificate file %s: -0x%04x", listen_cert_str, -ret);
+            return _Z_ERR_GENERIC;
+        }
+        _Z_DEBUG("Loaded listening side certificate from %s", listen_cert_str);
     }
 
-    _Z_DEBUG("Loaded listening side certificate from %s and key from %s", listen_cert_str, listen_key_str);
     return _Z_RES_OK;
 }
 
-static z_result_t _z_tls_load_client_cert(_z_tls_context_t *ctx, const char *key_path, const char *cert_path) {
-    if (key_path == NULL || cert_path == NULL) {
+static z_result_t _z_tls_load_client_cert(_z_tls_context_t *ctx, const _z_str_intmap_t *config) {
+    const char *key_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY);
+    const char *key_base64 = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_PRIVATE_KEY_BASE64_KEY);
+    const char *cert_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_CERTIFICATE_KEY);
+    const char *cert_base64 = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_CERTIFICATE_BASE64_KEY);
+
+    if ((key_path == NULL && key_base64 == NULL) || (cert_path == NULL && cert_base64 == NULL)) {
         _Z_ERROR("mTLS requires both client private key and certificate");
         return _Z_ERR_GENERIC;
     }
 
+    if (key_base64 != NULL) {
+        z_result_t res =
+            _z_tls_parse_key_from_base64(&ctx->_client_key, key_base64, "client private key", &ctx->_hmac_drbg);
+        if (res != _Z_RES_OK) {
+            return res;
+        }
+    } else {
 #if MBEDTLS_VERSION_MAJOR >= 3
-    int ret = mbedtls_pk_parse_keyfile(&ctx->_client_key, key_path, NULL, mbedtls_hmac_drbg_random, &ctx->_hmac_drbg);
+        int ret =
+            mbedtls_pk_parse_keyfile(&ctx->_client_key, key_path, NULL, mbedtls_hmac_drbg_random, &ctx->_hmac_drbg);
 #else
-    int ret = mbedtls_pk_parse_keyfile(&ctx->_client_key, key_path, NULL);
+        int ret = mbedtls_pk_parse_keyfile(&ctx->_client_key, key_path, NULL);
 #endif
-    if (ret != 0) {
-        _Z_ERROR("Failed to parse client private key file %s: -0x%04x", key_path, -ret);
-        return _Z_ERR_GENERIC;
+        if (ret != 0) {
+            _Z_ERROR("Failed to parse client private key file %s: -0x%04x", key_path, -ret);
+            return _Z_ERR_GENERIC;
+        }
+        _Z_DEBUG("Loaded client private key from %s", key_path);
     }
 
-    ret = mbedtls_x509_crt_parse_file(&ctx->_client_cert, cert_path);
-    if (ret != 0) {
-        _Z_ERROR("Failed to parse client certificate file %s: -0x%04x", cert_path, -ret);
-        return _Z_ERR_GENERIC;
+    if (cert_base64 != NULL) {
+        z_result_t res = _z_tls_parse_cert_from_base64(&ctx->_client_cert, cert_base64, "client certificate");
+        if (res != _Z_RES_OK) {
+            return res;
+        }
+    } else {
+        int ret = mbedtls_x509_crt_parse_file(&ctx->_client_cert, cert_path);
+        if (ret != 0) {
+            _Z_ERROR("Failed to parse client certificate file %s: -0x%04x", cert_path, -ret);
+            return _Z_ERR_GENERIC;
+        }
+        _Z_DEBUG("Loaded client certificate from %s", cert_path);
     }
 
-    _Z_DEBUG("Loaded client certificate from %s and key from %s", cert_path, key_path);
     return _Z_RES_OK;
 }
 
@@ -223,8 +369,6 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     if (mtls_opt != NULL && _z_opt_is_true(mtls_opt)) {
         enable_mtls = true;
     }
-    const char *client_key_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_PRIVATE_KEY_KEY);
-    const char *client_cert_path = _z_str_intmap_get(config, TLS_CONFIG_CONNECT_CERTIFICATE_KEY);
     sock->_tls_ctx = _z_tls_context_new();
     if (sock->_tls_ctx == NULL) {
         _Z_ERROR("Failed to create TLS context");
@@ -232,7 +376,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     }
 
     if (enable_mtls) {
-        z_result_t ret_client = _z_tls_load_client_cert(sock->_tls_ctx, client_key_path, client_cert_path);
+        z_result_t ret_client = _z_tls_load_client_cert(sock->_tls_ctx, config);
         if (ret_client != _Z_RES_OK) {
             _z_tls_context_free(&sock->_tls_ctx);
             return ret_client;
@@ -520,8 +664,8 @@ size_t _z_read_tls(const _z_tls_socket_t *sock, uint8_t *ptr, size_t len) {
         return 0;
     }
 
-    if (ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) {
-        return 0;
+    if (ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == MBEDTLS_ERR_SSL_CONN_EOF) {
+        return SIZE_MAX;
     }
 
     _Z_ERROR("TLS read error: %d", ret);

@@ -47,4 +47,5 @@ z_result_t _z_tls_config_from_str(_z_str_intmap_t *strint, const char *s) {
 
     return _z_str_intmap_from_str(strint, s, TLS_CONFIG_ARGC, args);
 }
+
 #endif

@@ -21,7 +21,10 @@
 #include "zenoh-pico/link/manager.h"
 #include "zenoh-pico/utils/logging.h"
 
-z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socket) {
+z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket) {
+#if Z_FEATURE_LINK_TLS != 1
+    _ZP_UNUSED(session_cfg);
+#endif
     _z_endpoint_t ep;
     z_result_t ret = _Z_RES_OK;
     _Z_RETURN_IF_ERR(_z_endpoint_from_string(&ep, locator));
@@ -29,7 +32,7 @@ z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socke
         ret = _z_new_peer_tcp(&ep, socket);
 #if Z_FEATURE_LINK_TLS == 1
     } else if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-        ret = _z_new_peer_tls(&ep, socket);
+        ret = _z_new_peer_tls(&ep, socket, session_cfg);
 #endif
     } else {
         _Z_ERROR_LOG(_Z_ERR_GENERIC);
@@ -39,7 +42,10 @@ z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socke
     return ret;
 }
 
-z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
+z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
+#if Z_FEATURE_LINK_TLS != 1
+    _ZP_UNUSED(session_cfg);
+#endif
     z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
@@ -71,7 +77,7 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
 #endif
 #if Z_FEATURE_LINK_TLS == 1
             if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tls(zl, &ep);
+            ret = _z_new_link_tls(zl, &ep, session_cfg);
         } else
 #endif
         {
@@ -97,7 +103,10 @@ z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator) {
     return ret;
 }
 
-z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator) {
+z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg) {
+#if Z_FEATURE_LINK_TLS != 1
+    _ZP_UNUSED(session_cfg);
+#endif
     z_result_t ret = _Z_RES_OK;
 
     _z_endpoint_t ep;
@@ -109,7 +118,7 @@ z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator) {
         } else
 #if Z_FEATURE_LINK_TLS == 1
             if (_z_endpoint_tls_valid(&ep) == _Z_RES_OK) {
-            ret = _z_new_link_tls(zl, &ep);
+            ret = _z_new_link_tls(zl, &ep, session_cfg);
         } else
 #endif
 #if Z_FEATURE_LINK_UDP_MULTICAST == 1

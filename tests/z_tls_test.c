@@ -18,7 +18,7 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/link/config/tls.h"
-#include "zenoh-pico/system/link/tls.h"
+#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/result.h"
 
 #undef NDEBUG
@@ -43,9 +43,11 @@ int main(void) {
     _z_str_intmap_init(&config);
     res = _z_tls_config_from_str(&config,
                                  "root_ca_certificate=ca.pem;enable_mtls=1;connect_private_key=client.key;"
-                                 "connect_certificate=client.pem;verify_name_on_connect=0");
+                                 "connect_certificate=client.pem;verify_name_on_connect=0;"
+                                 "root_ca_certificate_base64=BASE64_CA;connect_private_key_base64=BASE64_KEY;"
+                                 "connect_certificate_base64=BASE64_CERT");
     assert(res == _Z_RES_OK);
-    assert(_z_str_intmap_len(&config) == 5);
+    assert(_z_str_intmap_len(&config) == 8);
 
     ca_cert = _z_str_intmap_get(&config, TLS_CONFIG_ROOT_CA_CERTIFICATE_KEY);
     assert(ca_cert != NULL);
@@ -62,6 +64,10 @@ int main(void) {
     char *verify = _z_str_intmap_get(&config, TLS_CONFIG_VERIFY_NAME_ON_CONNECT_KEY);
     assert(verify != NULL);
     assert(_z_str_eq(verify, "0") == true);
+    char *ca_base64 = _z_str_intmap_get(&config, TLS_CONFIG_ROOT_CA_CERTIFICATE_BASE64_KEY);
+    assert(ca_base64 != NULL && _z_str_eq(ca_base64, "BASE64_CA") == true);
+    char *client_key_inline = _z_str_intmap_get(&config, TLS_CONFIG_CONNECT_PRIVATE_KEY_BASE64_KEY);
+    assert(client_key_inline != NULL && _z_str_eq(client_key_inline, "BASE64_KEY") == true);
     _z_str_intmap_clear(&config);
 
     _z_str_intmap_init(&config);
@@ -69,6 +75,16 @@ int main(void) {
     assert(res == _Z_RES_OK);
     assert(_z_str_intmap_is_empty(&config) == true);
     _z_str_intmap_clear(&config);
+
+    _z_config_t session_cfg;
+    _z_config_init(&session_cfg);
+    assert(_zp_config_insert(&session_cfg, Z_CONFIG_TLS_ROOT_CA_CERTIFICATE_KEY, "/session/ca.pem") == _Z_RES_OK);
+    assert(_zp_config_insert(&session_cfg, Z_CONFIG_TLS_ROOT_CA_CERTIFICATE_BASE64_KEY, "SESSION_CA") == _Z_RES_OK);
+    assert(_zp_config_insert(&session_cfg, Z_CONFIG_TLS_ENABLE_MTLS_KEY, "true") == _Z_RES_OK);
+    assert(_zp_config_insert(&session_cfg, Z_CONFIG_TLS_CONNECT_CERTIFICATE_BASE64_KEY, "SESSION_CERT") == _Z_RES_OK);
+    assert(_z_str_eq(_z_config_get(&session_cfg, Z_CONFIG_TLS_ROOT_CA_CERTIFICATE_KEY), "/session/ca.pem"));
+    assert(_z_str_eq(_z_config_get(&session_cfg, Z_CONFIG_TLS_ENABLE_MTLS_KEY), "true"));
+    _z_config_clear(&session_cfg);
 #else
     printf("TLS feature not enabled, skipping tests\n");
 #endif
