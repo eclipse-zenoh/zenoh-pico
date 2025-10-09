@@ -277,13 +277,15 @@ jobs:
     name: Check compilation with Ubuntu 20.04 (GCC 9)
     runs-on: ubuntu-latest
     container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Build with GCC 9
         run: |
-          apt-get update && apt-get install -y ninja-build build-essential cmake
+          apt update && apt install -y ninja-build build-essential cmake
           CC=gcc-9 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
   st_build:
