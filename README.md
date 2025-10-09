@@ -483,13 +483,13 @@ The simplest way to run some of the example is to get a Docker image of the **ze
 Assuming you've pulled the Docker image of the **zenoh** router on a Linux host (to leverage UDP multicast scouting as explained [here](https://zenoh.io/docs/getting-started/quick-test/#run-zenoh-router-in-a-docker-container), then simply do:
 
 ```bash
-docker run --init --net host eclipse/zenoh:main
+docker run --init --net host eclipse/zenoh:1.5.1
 ```
 
 To see the zenoh manual page, simply do:
 
 ```bash
-docker run --init --net host eclipse/zenoh:main --help
+docker run --init --net host eclipse/zenoh:1.5.1 --help
 ```
 
 :warning: **Please notice that the `--net host` option in Docker is restricted to Linux only.**
@@ -555,8 +555,8 @@ where `lo0` is the network interface you want to use for multicast communication
 To allow Zenoh-Pico unicast clients to talk to Zenoh-Pico multicast peers, as well as with any other Zenoh client/peer, you need to start a Zenoh Router that listens on both multicast and unicast:
 
 ```bash
-docker run --init --net host eclipse/zenoh:main -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
-```
+docker run --init --net host eclipse/zenoh:1.5.1 -l udp/224.0.0.123:7447#iface=lo0 -l tcp/127.0.0.1:7447
+```f
 
 Assuming that (1) you are running the **zenoh** router as indicated above, and (2) you are under the build directory, do:
 
