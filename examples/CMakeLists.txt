@@ -1,20 +1,42 @@
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-    # Settings when 'examples' is the root projet
+    # Settings when 'examples' is the root project
     cmake_minimum_required(VERSION 3.20)
     project(zenohpico_examples LANGUAGES C)
     include(../cmake/helpers.cmake)
     set_default_build_type(Release)
     configure_include_project(ZENOHPICO zenohpico zenohpico::lib ".." zenohpico "https://github.com/eclipse-zenoh/zenoh-pico" "")
     add_custom_target(examples ALL)
+
+    set(CHECK_THREADS "ON")
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        # keep ON
+    elseif(POSIX_COMPATIBLE)
+        set(CHECK_THREADS "OFF")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "PICO")
+        set(CHECK_THREADS "OFF")
+    endif()
+
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    if(CHECK_THREADS)
+        find_package(Threads REQUIRED)
+    endif()
 else()
     message(STATUS "zenoh-pico examples")
     add_custom_target(examples)
+
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    if(CHECK_THREADS)
+        find_package(Threads REQUIRED)
+    endif()
 endif()
 
 function(add_example name)
     add_executable(${name} ${ARGN})
     set_property(TARGET ${name} PROPERTY C_STANDARD 11)
-    target_link_libraries(${name} zenohpico::lib)
+    target_link_libraries(${name} PRIVATE zenohpico::lib)
+    if(CHECK_THREADS)
+        target_link_libraries(${name} PRIVATE Threads::Threads)
+    endif()
     add_dependencies(examples ${name})
 endfunction()
 
