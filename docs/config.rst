@@ -49,6 +49,24 @@ Defines a single endpoint a node will listen on.
 
 * `Z_CONFIG_LISTEN_KEY`: The index of the option in the config table.
 
+TLS
+-----------
+
+With `Z_FEATURE_LINK_TLS` enabled, configure TLS using the following keys:
+
+* `Z_CONFIG_TLS_ROOT_CA_CERTIFICATE_KEY`: Path to the CA bundle used to verify remote certificates (required).
+* `Z_CONFIG_TLS_ROOT_CA_CERTIFICATE_BASE64_KEY`: Base64-encoded CA bundle (inline alternative to the file path).
+* `Z_CONFIG_TLS_LISTEN_PRIVATE_KEY_KEY`: Path to the listener private key used while listening for TLS peers (required for peers).
+* `Z_CONFIG_TLS_LISTEN_PRIVATE_KEY_BASE64_KEY`: Base64-encoded listener private key.
+* `Z_CONFIG_TLS_LISTEN_CERTIFICATE_KEY`: Path to the listener certificate presented to clients (required for peers).
+* `Z_CONFIG_TLS_LISTEN_CERTIFICATE_BASE64_KEY`: Base64-encoded listener certificate.
+* `Z_CONFIG_TLS_ENABLE_MTLS_KEY`: Set to `true`/`1`/`yes`/`on` to require client certificates (mutual TLS); defaults to disabled.
+* `Z_CONFIG_TLS_CONNECT_PRIVATE_KEY_KEY`: Path to the client private key (required when mTLS is enabled).
+* `Z_CONFIG_TLS_CONNECT_PRIVATE_KEY_BASE64_KEY`: Base64-encoded client private key.
+* `Z_CONFIG_TLS_CONNECT_CERTIFICATE_KEY`: Path to the client certificate (required when mTLS is enabled).
+* `Z_CONFIG_TLS_CONNECT_CERTIFICATE_BASE64_KEY`: Base64-encoded client certificate.
+* `Z_CONFIG_TLS_VERIFY_NAME_ON_CONNECT_KEY`: Set to `false`/`0`/`no`/`off` to skip CN/SAN hostname verification; defaults to enabled.
+
 Scouting
 -----------
 
