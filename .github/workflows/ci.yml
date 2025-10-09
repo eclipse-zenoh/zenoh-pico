@@ -274,15 +274,16 @@ jobs:
           CC=gcc-10 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
   gcc9_build:
-    name: Check compilation with GCC 9
+    name: Check compilation with Ubuntu 20.04 (GCC 9)
     runs-on: ubuntu-latest
+    container: ubuntu:20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Build with GCC 9
         run: |
-          sudo apt install -y ninja-build gcc-9
+          apt-get update && apt-get install -y ninja-build build-essential cmake
           CC=gcc-9 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
   st_build:
