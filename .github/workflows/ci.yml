@@ -285,8 +285,10 @@ jobs:
 
       - name: Build with GCC 9
         run: |
-          apt update && apt install -y ninja-build build-essential cmake
-          CC=gcc-9 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
+          apt update && apt install -y build-essential cmake
+          mkdir build && cd build
+          CC=gcc-9 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_PUBLICATION=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 cmake ..
+          cmake --build .
 
   st_build:
     needs: zenoh_build
