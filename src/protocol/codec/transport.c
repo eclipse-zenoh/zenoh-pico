@@ -189,10 +189,6 @@ z_result_t _z_init_encode(_z_wbuf_t *wbf, uint8_t header, const _z_t_msg_init_t 
     cbyte |= _z_whatami_to_uint8(msg->_whatami);
     uint8_t zidlen = _z_id_len(msg->_zid);
     cbyte |= (uint8_t)(((zidlen - 1) & 0x0F) << 4);
-    if (zidlen < 1 || zidlen > Z_ZID_LENGTH) {
-        _Z_ERROR("Invalid ZID length to encode: %d", zidlen);
-        return _Z_ERR_MESSAGE_SERIALIZATION_FAILED;
-    }
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, cbyte))
     _Z_RETURN_IF_ERR(_z_wbuf_write_bytes(wbf, msg->_zid.id, 0, zidlen))
 
