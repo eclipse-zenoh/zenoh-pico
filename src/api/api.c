@@ -768,6 +768,11 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
     }
 
     _z_id_t zid = _z_session_get_zid(cfg);
+    if (!_z_id_check(zid)) {
+        _Z_ERROR("Invalid ZID.");
+        z_config_drop(config);
+        return _Z_ERR_INVALID;
+    }
 
     z_result_t ret = _z_session_rc_init(zs, &zid);
     if (ret != _Z_RES_OK) {
