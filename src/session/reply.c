@@ -59,7 +59,7 @@ z_result_t _z_trigger_reply_final(_z_session_t *zn, _z_n_msg_response_final_t *f
 #if Z_FEATURE_QUERY == 1
     // TODO check id to know where to dispatch
     _z_zint_t id = final->_request_id;
-    _z_trigger_query_reply_final(zn, id);
+    _z_trigger_query_reply_final(zn, id, true);
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(final);

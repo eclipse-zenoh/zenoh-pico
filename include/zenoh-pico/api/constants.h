@@ -55,6 +55,22 @@ typedef enum z_whatami_t {
 #define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER;
 
 /**
+ * The locality of samples to be received by subscribers or targeted by publishers.
+ *
+ * Enumerators:
+ *   Z_LOCALITY_ANY: Allow both session-local and remote traffic.
+ *   Z_LOCALITY_SESSION_LOCAL: Allow session-local traffic only.
+ *   Z_LOCALITY_REMOTE: Allow remote traffic only.
+ */
+typedef enum z_locality_t {
+    Z_LOCALITY_ANY = 0,
+    Z_LOCALITY_SESSION_LOCAL = 1,
+    Z_LOCALITY_REMOTE = 2,
+} z_locality_t;
+
+static inline z_locality_t z_locality_default(void) { return Z_LOCALITY_ANY; }
+
+/**
  * Status values for keyexpr canonization operation.
  * Used as return value of canonization-related functions,
  * like :c:func:`z_keyexpr_is_canon` or :c:func:`z_keyexpr_canonize`.

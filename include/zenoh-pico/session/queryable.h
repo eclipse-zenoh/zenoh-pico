@@ -32,6 +32,7 @@ typedef struct {
     _z_keyexpr_t ke_in;
     _z_keyexpr_t ke_out;
     _z_session_queryable_rc_svec_rc_t infos;
+    bool is_remote;
 } _z_queryable_cache_data_t;
 
 void _z_queryable_cache_invalidate(_z_session_t *zn);
