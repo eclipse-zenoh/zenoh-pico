@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -22,6 +23,7 @@
 #include "zenoh-pico/api/handlers.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/bytes.h"
 
 #if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1 && defined(Z_FEATURE_UNSTABLE_API)
 
@@ -29,7 +31,9 @@
 #include <assert.h>
 
 const char *keyexpr = "zenoh-pico/source_info/test";
-const char *test_payload = "source-info-test";
+const char test_payload[] = "source-info-test";
+
+#define SAMPLE_BUF_CAP 128
 
 #define assert_ok(x)                            \
     {                                           \
@@ -39,6 +43,63 @@ const char *test_payload = "source-info-test";
             assert(false);                      \
         }                                       \
     }
+
+typedef struct sample_capture_t {
+    atomic_bool ready;
+    bool payload_ok;
+    z_entity_global_id_t source;
+    uint32_t sn;
+    z_sample_kind_t kind;
+} sample_capture_t;
+
+static void sample_capture_reset(sample_capture_t *capture) {
+    atomic_store_explicit(&capture->ready, false, memory_order_relaxed);
+    capture->payload_ok = false;
+    capture->source = (z_entity_global_id_t){0};
+    capture->sn = 0;
+    capture->kind = Z_SAMPLE_KIND_PUT;
+}
+
+static bool wait_for_capture(sample_capture_t *capture) {
+    for (int attempt = 0; attempt < 50; ++attempt) {
+        if (atomic_load_explicit(&capture->ready, memory_order_acquire)) {
+            return true;
+        }
+        z_sleep_ms(100);
+    }
+    return false;
+}
+
+static void sample_capture_callback(_z_sample_t *sample, void *arg) {
+    sample_capture_t *capture = (sample_capture_t *)arg;
+    if ((sample == NULL) || (capture == NULL)) {
+        return;
+    }
+    capture->kind = sample->kind;
+    if (sample->kind == Z_SAMPLE_KIND_PUT) {
+        size_t len = _z_bytes_len(&sample->payload);
+        if ((len == sizeof(test_payload) - 1) && (len < SAMPLE_BUF_CAP)) {
+            char buf[SAMPLE_BUF_CAP];
+            size_t copied = _z_bytes_to_buf(&sample->payload, (uint8_t *)buf, len);
+            capture->payload_ok = (copied == len) && (memcmp(buf, test_payload, sizeof(test_payload) - 1) == 0);
+        } else {
+            capture->payload_ok = false;
+        }
+    } else {
+        capture->payload_ok = true;
+    }
+
+    capture->source = sample->source_info._source_id;
+    capture->sn = sample->source_info._source_sn;
+    atomic_store_explicit(&capture->ready, true, memory_order_release);
+}
+
+static void assert_source_info_equal(const z_entity_global_id_t *expected, uint32_t expected_sn,
+                                     const z_entity_global_id_t *actual, uint32_t actual_sn) {
+    assert(expected->eid == actual->eid);
+    assert(memcmp(expected->zid.id, actual->zid.id, Z_ZID_LENGTH) == 0);
+    assert(expected_sn == actual_sn);
+}
 
 void test_source_info(bool put, bool publisher, bool local_subscriber) {
     z_owned_config_t c1;
@@ -69,7 +130,13 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
 
     z_owned_closure_sample_t callback;
     z_owned_fifo_handler_sample_t handler;
-    assert_ok(z_fifo_channel_sample_new(&callback, &handler, 1));
+    sample_capture_t capture;
+    if (local_subscriber) {
+        sample_capture_reset(&capture);
+        assert_ok(z_closure_sample(&callback, sample_capture_callback, NULL, &capture));
+    } else {
+        assert_ok(z_fifo_channel_sample_new(&callback, &handler, 1));
+    }
     z_owned_subscriber_t sub;
     assert_ok(z_declare_subscriber(sub_session, &sub, z_loan(ke), z_move(callback), NULL));
     z_sleep_s(1);
@@ -134,28 +201,46 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
     }
     z_sleep_s(1);
 
-    z_owned_sample_t sample;
-    assert_ok(z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(&handler), &sample));
+    if (local_subscriber) {
+        assert(wait_for_capture(&capture));
+        assert(capture.kind == (put ? Z_SAMPLE_KIND_PUT : Z_SAMPLE_KIND_DELETE));
+        if (put) {
+            assert(capture.payload_ok);
+        }
+        assert_source_info_equal(&egid, sn, &capture.source, capture.sn);
+    } else {
+        z_owned_sample_t sample;
+        z_result_t r = Z_CHANNEL_NODATA;
+        for (int attempt = 0; attempt < 50; ++attempt) {
+            r = z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(&handler), &sample);
+            if (r == Z_OK) {
+                break;
+            }
+            assert(r == Z_CHANNEL_NODATA);
+            z_sleep_ms(100);
+        }
+        assert(r == Z_OK);
 
-    if (put) {
-        z_owned_string_t value;
-        assert_ok(z_bytes_to_string(z_sample_payload(z_loan(sample)), &value));
-        assert(strlen(test_payload) == z_string_len(z_loan(value)));
-        assert(memcmp(test_payload, z_string_data(z_loan(value)), z_string_len(z_loan(value))) == 0);
-        z_drop(z_move(value));
+        if (put) {
+            z_owned_string_t value;
+            assert_ok(z_bytes_to_string(z_sample_payload(z_loan(sample)), &value));
+            assert((sizeof(test_payload) - 1) == z_string_len(z_loan(value)));
+            assert(memcmp(test_payload, z_string_data(z_loan(value)), sizeof(test_payload) - 1) == 0);
+            z_drop(z_move(value));
+        }
+
+        const z_loaned_source_info_t *si = z_sample_source_info(z_loan(sample));
+        z_entity_global_id_t gid = z_source_info_id(si);
+        assert_source_info_equal(&egid, sn, &gid, z_source_info_sn(si));
+
+        z_drop(z_move(sample));
     }
-
-    const z_loaned_source_info_t *si = z_sample_source_info(z_loan(sample));
-    z_entity_global_id_t gid = z_source_info_id(si);
-    assert(gid.eid == egid.eid);
-    assert(memcmp(gid.zid.id, egid.zid.id, (sizeof(gid.zid.id) / sizeof(gid.zid.id[0]))) == 0);
-    assert(sn == z_source_info_sn(si));
-
-    z_drop(z_move(sample));
 
     assert_ok(z_undeclare_subscriber(z_move(sub)));
 
-    z_drop(z_move(handler));
+    if (!local_subscriber) {
+        z_drop(z_move(handler));
+    }
 
     assert_ok(zp_stop_read_task(z_loan_mut(s1)));
     assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
@@ -194,7 +279,7 @@ int main(int argc, char **argv) {
 }
 
 #else
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 }

@@ -98,6 +98,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _z_liveliness_init(zn);
 #endif
 
+#if Z_FEATURE_INTEREST == 1
+    zn->_write_filters = NULL;
+#endif
+
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_PERIODIC_TASKS == 1
 #if Z_FEATURE_MULTI_THREAD == 1

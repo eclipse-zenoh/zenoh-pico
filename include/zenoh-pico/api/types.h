@@ -165,7 +165,11 @@ typedef _z_matching_status_t z_matching_status_t;
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    z_locality_t allowed_origin;
+#else
+    uint8_t __dummy;  // keep struct non-empty when locality is disabled
+#endif
 } z_subscriber_options_t;
 
 /**
@@ -218,6 +222,9 @@ typedef struct {
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    z_locality_t allowed_destination;
+#endif
 } z_publisher_options_t;
 
 /**
@@ -241,6 +248,9 @@ typedef struct z_querier_options_t {
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     bool is_express;
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    z_locality_t allowed_destination;
+#endif
     z_priority_t priority;
     uint64_t timeout_ms;
 } z_querier_options_t;
@@ -271,6 +281,9 @@ typedef struct z_querier_get_options_t {
  */
 typedef struct {
     bool complete;
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    z_locality_t allowed_origin;
+#endif
 } z_queryable_options_t;
 
 /**
@@ -349,6 +362,9 @@ typedef struct {
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    z_locality_t allowed_destination;
+#endif
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
     z_moved_source_info_t *source_info;
@@ -371,6 +387,9 @@ typedef struct {
     z_priority_t priority;
     bool is_express;
     z_timestamp_t *timestamp;
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    z_locality_t allowed_destination;
+#endif
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
     z_moved_source_info_t *source_info;
@@ -433,6 +452,9 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     bool is_express;
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    z_locality_t allowed_destination;
+#endif
     z_query_target_t target;
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;

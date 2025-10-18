@@ -100,7 +100,7 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
     _z_session_t *zn = _z_transport_common_get_session(transport);
     _ZP_UNUSED(zn);
     switch (req->_tag) {
-        case _Z_REQUEST_QUERY:
+        case _Z_REQUEST_QUERY: {
 #if Z_FEATURE_QUERYABLE == 1
             // Memory cleaning must be done in the feature layer
             return _z_trigger_queryables(transport, &req->_body._query, &req->_key, (uint32_t)req->_rid, peer);
@@ -109,6 +109,7 @@ static z_result_t _z_handle_request(_z_transport_common_t *transport, _z_n_msg_r
             _z_n_msg_request_clear(req);
             break;
 #endif
+        }
 
         case _Z_REQUEST_PUT: {
 #if Z_FEATURE_SUBSCRIPTION == 1

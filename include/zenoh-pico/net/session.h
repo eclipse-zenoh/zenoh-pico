@@ -37,6 +37,8 @@ extern "C" {
 /**
  * A zenoh-net session.
  */
+struct _z_write_filter_registration_t;
+
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool _mutex_inner_initialized;
@@ -100,6 +102,7 @@ typedef struct _z_session_t {
 #if Z_FEATURE_INTEREST == 1
     _z_session_interest_rc_slist_t *_local_interests;
     _z_declare_data_slist_t *_remote_declares;
+    struct _z_write_filter_registration_t *_write_filters;
 #endif
 
 #ifdef Z_FEATURE_UNSTABLE_API

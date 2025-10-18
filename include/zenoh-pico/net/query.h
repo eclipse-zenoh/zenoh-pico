@@ -67,6 +67,7 @@ typedef struct _z_querier_t {
     z_reliability_t reliability;
     bool _is_express;
     uint64_t _timeout_ms;
+    z_locality_t _allowed_destination;
     _z_write_filter_t _filter;
 } _z_querier_t;
 
