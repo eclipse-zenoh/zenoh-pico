@@ -42,6 +42,7 @@ typedef struct {
     _z_keyexpr_t ke_out;
     _z_subscription_infos_svec_t infos;
     size_t sub_nb;
+    bool is_remote;
 } _z_subscription_cache_data_t;
 
 void _z_subscription_cache_invalidate(_z_session_t *zn);

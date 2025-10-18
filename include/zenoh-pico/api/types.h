@@ -164,7 +164,7 @@ typedef _z_matching_status_t z_matching_status_t;
  * Represents the configuration used to configure a subscriber upon declaration :c:func:`z_declare_subscriber`.
  */
 typedef struct {
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+    zp_locality_t allowed_origin;
 } z_subscriber_options_t;
 
 /**
@@ -210,6 +210,7 @@ typedef struct {
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
 #endif
+    zp_locality_t allowed_destination;
 } z_publisher_options_t;
 
 /**
@@ -233,6 +234,7 @@ typedef struct z_querier_options_t {
     z_query_consolidation_t consolidation;
     z_congestion_control_t congestion_control;
     bool is_express;
+    zp_locality_t allowed_destination;
     z_priority_t priority;
     uint64_t timeout_ms;
 } z_querier_options_t;
@@ -259,6 +261,7 @@ typedef struct z_querier_get_options_t {
  */
 typedef struct {
     bool complete;
+    zp_locality_t allowed_origin;
 } z_queryable_options_t;
 
 /**
@@ -337,6 +340,7 @@ typedef struct {
     z_timestamp_t *timestamp;
     bool is_express;
     z_moved_bytes_t *attachment;
+    zp_locality_t allowed_destination;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
     z_moved_source_info_t *source_info;
@@ -359,6 +363,7 @@ typedef struct {
     z_priority_t priority;
     bool is_express;
     z_timestamp_t *timestamp;
+    zp_locality_t allowed_destination;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
     z_moved_source_info_t *source_info;
@@ -419,6 +424,7 @@ typedef struct {
     z_congestion_control_t congestion_control;
     z_priority_t priority;
     bool is_express;
+    zp_locality_t allowed_destination;
     z_query_target_t target;
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;

@@ -43,8 +43,11 @@ void _z_subscription_cache_invalidate(_z_session_t *zn) {
 
 #if Z_FEATURE_RX_CACHE == 1
 int _z_subscription_cache_data_compare(const void *first, const void *second) {
-    _z_subscription_cache_data_t *first_data = (_z_subscription_cache_data_t *)first;
-    _z_subscription_cache_data_t *second_data = (_z_subscription_cache_data_t *)second;
+    const _z_subscription_cache_data_t *first_data = (const _z_subscription_cache_data_t *)first;
+    const _z_subscription_cache_data_t *second_data = (const _z_subscription_cache_data_t *)second;
+    if (first_data->is_remote != second_data->is_remote) {
+        return (int)first_data->is_remote - (int)second_data->is_remote;
+    }
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
 
@@ -101,7 +104,7 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_sub
  *  - zn->_mutex_inner
  */
 static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
-                                                      const _z_keyexpr_t *key,
+                                                      const _z_keyexpr_t *key, bool is_remote,
                                                       _z_subscription_infos_svec_t *sub_infos) {
     _z_subscription_rc_slist_t *subs =
         (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
@@ -111,9 +114,15 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
     while (xs != NULL) {
         // Parse subscription list
         _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
-            _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
-                                                    .callback = _Z_RC_IN_VAL(sub)->_callback};
+        const _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
+        bool origin_allowed = is_remote ? zp_locality_allows_remote(sub_val->_allowed_origin)
+                                        : zp_locality_allows_local(sub_val->_allowed_origin);
+        if (!origin_allowed) {
+            xs = _z_subscription_rc_slist_next(xs);
+            continue;
+        }
+        if (_z_keyexpr_suffix_intersects(&sub_val->_key, key)) {
+            _z_subscription_infos_t new_sub_info = {.arg = sub_val->_arg, .callback = sub_val->_callback};
             _Z_RETURN_IF_ERR(_z_subscription_infos_svec_append(sub_infos, &new_sub_info, false));
         }
         xs = _z_subscription_rc_slist_next(xs);
@@ -178,10 +187,14 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
 
 static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind_t kind,
                                             _z_subscription_cache_data_t *infos, _z_transport_peer_common_t *peer) {
+    infos->is_remote = (peer != NULL);
     // Check cache
     _z_subscription_cache_data_t *cache_entry = NULL;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_subscription_lru_cache_get(&zn->_subscription_cache, infos);
+    if (cache_entry != NULL && cache_entry->is_remote != infos->is_remote) {
+        cache_entry = NULL;
+    }
 #endif
     // Note cache entry
     if (cache_entry != NULL) {
@@ -199,7 +212,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
             _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
         }
         // Get subscription list
-        z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, kind, &infos->ke_out, &infos->infos);
+        z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, kind, &infos->ke_out, infos->is_remote, &infos->infos);
         _z_session_mutex_unlock(zn);
         if (ret != _Z_RES_OK) {
             return ret;
@@ -212,6 +225,7 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
             .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
             .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
             .sub_nb = infos->sub_nb,
+            .is_remote = infos->is_remote,
         };
         return _z_subscription_lru_cache_insert(&zn->_subscription_cache, &cache_storage);
 #endif
