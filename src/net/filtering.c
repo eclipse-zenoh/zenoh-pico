@@ -169,7 +169,7 @@ z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
     }
     _z_session_rc_t s = _z_session_weak_upgrade(&_Z_RC_IN_VAL(&filter->ctx)->zn);
     if (!_Z_RC_IS_NULL(&s)) {
-        z_result_t res = _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
+        _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
         _z_session_rc_drop(&s);
     }
     _z_write_filter_ctx_rc_drop(&filter->ctx);
