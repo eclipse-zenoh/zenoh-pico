@@ -23,6 +23,7 @@
 #include "FreeRTOS.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 /*------------------ Random ------------------*/

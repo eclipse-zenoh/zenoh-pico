@@ -81,6 +81,7 @@ typedef struct {
 } _zp_periodic_scheduler_time_source_t;
 
 typedef struct {
+    bool _initialized;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex;
     _z_condvar_t _condvar;
@@ -95,6 +96,9 @@ typedef struct {
     uint32_t _inflight_id;
 } _zp_periodic_scheduler_t;
 
+static inline bool _zp_periodic_scheduler_check(const _zp_periodic_scheduler_t *scheduler) {
+    return scheduler != NULL && scheduler->_initialized;
+}
 z_result_t _zp_periodic_scheduler_init(_zp_periodic_scheduler_t *scheduler);
 void _zp_periodic_scheduler_clear(_zp_periodic_scheduler_t *scheduler);
 z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, const _zp_closure_periodic_task_t *closure,

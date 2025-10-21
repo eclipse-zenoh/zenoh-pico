@@ -36,11 +36,11 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
     size_t to_read = 0;
     _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
     do {
-        switch (ztu->_common._link._cap._flow) {
+        switch (ztu->_common._link->_cap._flow) {
             // Stream capable links
             case Z_LINK_CAP_FLOW_STREAM:
                 if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
-                    _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
+                    _z_link_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_common._zbuf) < _Z_MSG_LEN_ENC_SIZE) {
                         _z_zbuf_compact(&ztu->_common._zbuf);
                         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_NOT_ENOUGH_BYTES);
@@ -52,7 +52,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
                 to_read = _z_read_stream_size(&ztu->_common._zbuf);
                 // Read data
                 if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
-                    _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
+                    _z_link_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, NULL);
                     if (_z_zbuf_len(&ztu->_common._zbuf) < to_read) {
                         _z_zbuf_set_rpos(&ztu->_common._zbuf,
                                          _z_zbuf_get_rpos(&ztu->_common._zbuf) - _Z_MSG_LEN_ENC_SIZE);
@@ -66,7 +66,7 @@ z_result_t _z_unicast_recv_t_msg(_z_transport_unicast_t *ztu, _z_transport_messa
             // Datagram capable links
             case Z_LINK_CAP_FLOW_DATAGRAM:
                 _z_zbuf_compact(&ztu->_common._zbuf);
-                to_read = _z_link_recv_zbuf(&ztu->_common._link, &ztu->_common._zbuf, NULL);
+                to_read = _z_link_recv_zbuf(ztu->_common._link, &ztu->_common._zbuf, NULL);
                 if (to_read == SIZE_MAX) {
                     _Z_ERROR_LOG(_Z_ERR_TRANSPORT_RX_FAILED);
                     ret = _Z_ERR_TRANSPORT_RX_FAILED;

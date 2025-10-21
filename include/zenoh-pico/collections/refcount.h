@@ -19,6 +19,7 @@
 #include <stdint.h>
 
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus

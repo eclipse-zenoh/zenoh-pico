@@ -19,6 +19,7 @@
 #include "zenoh-pico/link/endpoint.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/system/platform.h"
+#include "zenoh-pico/utils/config.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_LINK_TCP == 1
@@ -43,6 +44,10 @@
 
 #if Z_FEATURE_LINK_WS == 1
 #include "zenoh-pico/system/link/ws.h"
+#endif
+
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
 #endif
 
 #include "zenoh-pico/utils/result.h"
@@ -120,6 +125,7 @@ enum _z_link_type_e {
     _Z_LINK_TYPE_BT,
     _Z_LINK_TYPE_SERIAL,
     _Z_LINK_TYPE_WS,
+    _Z_LINK_TYPE_TLS,
     _Z_LINK_TYPE_RAWETH,
 };
 
@@ -142,6 +148,9 @@ typedef struct _z_link_t {
 #if Z_FEATURE_LINK_WS == 1
         _z_ws_socket_t _ws;
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+        _z_tls_socket_t _tls;
+#endif
 #if Z_FEATURE_RAWETH_TRANSPORT == 1
         _z_raweth_socket_t _raweth;
 #endif
@@ -163,9 +172,9 @@ typedef struct _z_link_t {
 
 void _z_link_clear(_z_link_t *zl);
 void _z_link_free(_z_link_t **zl);
-z_result_t _z_open_socket(const _z_string_t *locator, _z_sys_net_socket_t *socket);
-z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator);
-z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator);
+z_result_t _z_open_socket(const _z_string_t *locator, const _z_config_t *session_cfg, _z_sys_net_socket_t *socket);
+z_result_t _z_open_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg);
+z_result_t _z_listen_link(_z_link_t *zl, const _z_string_t *locator, const _z_config_t *session_cfg);
 
 z_result_t _z_link_send_wbuf(const _z_link_t *zl, const _z_wbuf_t *wbf, _z_sys_net_socket_t *socket);
 size_t _z_link_recv_zbuf(const _z_link_t *zl, _z_zbuf_t *zbf, _z_slice_t *addr);

@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "zenoh-pico/utils/logging.h"
+
 /*-------- hashmap --------*/
 void _z_hashmap_init(_z_hashmap_t *map, size_t capacity, z_element_hash_f f_hash, z_element_eq_f f_equals) {
     map->_capacity = capacity;
