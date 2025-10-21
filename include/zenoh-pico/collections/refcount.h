@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
 #ifdef __cplusplus
@@ -41,28 +42,30 @@ bool _z_simple_rc_decrease(void *rc);
 
 size_t _z_simple_rc_strong_count(void *rc);
 
-/*------------------ Internal Array Macros ------------------*/
-#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                                                                   \
-    typedef struct name##_rc_t {                                                                                     \
-        type##_t *_val;                                                                                              \
-        void *_cnt;                                                                                                  \
-    } name##_rc_t;                                                                                                   \
-                                                                                                                     \
-    typedef struct name##_weak_t {                                                                                   \
-        type##_t *_val;                                                                                              \
-        void *_cnt;                                                                                                  \
-    } name##_weak_t;                                                                                                 \
+#define _Z_REFCOUNT_DEFINE_STRUCTS(name, type)                                               \
+    typedef struct name##_rc_t {                                                             \
+        type##_t *_val;                                                                      \
+        void *_cnt;                                                                          \
+    } name##_rc_t;                                                                           \
+                                                                                             \
+    typedef struct name##_weak_t {                                                           \
+        type##_t *_val;                                                                      \
+        void *_cnt;                                                                          \
+    } name##_weak_t;                                                                         \
+    static inline void name##_weak_to_rc_inner(const name##_weak_t *weak, name##_rc_t *rc) { \
+        rc->_val = weak->_val;                                                               \
+        rc->_cnt = weak->_cnt;                                                               \
+    }                                                                                        \
+    static inline void name##_rc_to_weak_inner(const name##_rc_t *rc, name##_weak_t *weak) { \
+        weak->_val = rc->_val;                                                               \
+        weak->_cnt = rc->_cnt;                                                               \
+    }                                                                                        \
+    static inline void name##_rc_clear_inner(name##_rc_t *rc) { type##_clear(rc->_val); }
+
+#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL_INNER(name, type)                                                             \
                                                                                                                      \
     static inline name##_rc_t name##_rc_null(void) { return (name##_rc_t){0}; }                                      \
     static inline name##_weak_t name##_weak_null(void) { return (name##_weak_t){0}; }                                \
-                                                                                                                     \
-    static inline name##_rc_t name##_rc_new(type##_t *val) {                                                         \
-        name##_rc_t p = name##_rc_null();                                                                            \
-        if (_z_rc_init(&p._cnt) == _Z_RES_OK) {                                                                      \
-            p._val = val;                                                                                            \
-        }                                                                                                            \
-        return p;                                                                                                    \
-    }                                                                                                                \
     static inline name##_rc_t name##_rc_clone(const name##_rc_t *p) {                                                \
         if (_z_rc_increase_strong(p->_cnt) == _Z_RES_OK) {                                                           \
             return *p;                                                                                               \
@@ -82,8 +85,7 @@ size_t _z_simple_rc_strong_count(void *rc);
     static inline name##_weak_t name##_rc_clone_as_weak(const name##_rc_t *p) {                                      \
         if (_z_rc_increase_weak(p->_cnt) == _Z_RES_OK) {                                                             \
             name##_weak_t ret;                                                                                       \
-            ret._val = p->_val;                                                                                      \
-            ret._cnt = p->_cnt;                                                                                      \
+            name##_rc_to_weak_inner(p, &ret);                                                                        \
             return ret;                                                                                              \
         }                                                                                                            \
         return name##_weak_null();                                                                                   \
@@ -123,7 +125,7 @@ size_t _z_simple_rc_strong_count(void *rc);
         }                                                                                                            \
         bool res = false;                                                                                            \
         if (name##_rc_decr(p) && p->_val != NULL) {                                                                  \
-            type##_clear(p->_val);                                                                                   \
+            name##_rc_clear_inner(p);                                                                                \
             z_free(p->_val);                                                                                         \
             res = true;                                                                                              \
         }                                                                                                            \
@@ -140,8 +142,7 @@ size_t _z_simple_rc_strong_count(void *rc);
     static inline name##_rc_t name##_weak_upgrade(const name##_weak_t *p) {                                          \
         if (_z_rc_weak_upgrade(p->_cnt) == _Z_RES_OK) {                                                              \
             name##_rc_t ret;                                                                                         \
-            ret._val = p->_val;                                                                                      \
-            ret._cnt = p->_cnt;                                                                                      \
+            name##_weak_to_rc_inner(p, &ret);                                                                        \
             return ret;                                                                                              \
         }                                                                                                            \
         return name##_rc_null();                                                                                     \
@@ -165,6 +166,62 @@ size_t _z_simple_rc_strong_count(void *rc);
         return sizeof(name##_rc_t);                                                                                  \
     }                                                                                                                \
     static inline name##_t *name##_weak_as_unsafe_ptr(name##_weak_t *p) { return p->_val; }
+
+typedef void _z_void_t;
+typedef void (*_z_void_rc_deleter)(void *);
+typedef struct _z_void_rc_t {
+    void *_val;
+    void *_cnt;
+    _z_void_rc_deleter _deleter;
+} _z_void_rc_t;
+
+typedef struct _z_void_weak_t {
+    void *_val;
+    void *_cnt;
+    _z_void_rc_deleter _deleter;
+} _z_void_weak_t;
+
+static inline void _z_void_weak_to_rc_inner(const _z_void_weak_t *weak, _z_void_rc_t *rc) {
+    rc->_val = weak->_val;
+    rc->_cnt = weak->_cnt;
+    rc->_deleter = weak->_deleter;
+}
+
+static inline void _z_void_rc_to_weak_inner(const _z_void_rc_t *rc, _z_void_weak_t *weak) {
+    weak->_val = rc->_val;
+    weak->_cnt = rc->_cnt;
+    weak->_deleter = rc->_deleter;
+}
+
+static inline void _z_void_rc_clear_inner(_z_void_rc_t *rc) { rc->_deleter(rc->_val); }
+_Z_REFCOUNT_DEFINE_NO_FROM_VAL_INNER(_z_void, _z_void)
+static inline _z_void_rc_t _z_void_rc_rc_new(void *val, _z_void_rc_deleter deleter) {
+    _z_void_rc_t p = _z_void_rc_null();
+    if (_z_rc_init(&p._cnt) == _Z_RES_OK) {
+        p._val = val;
+        p._deleter = deleter;
+    }
+    return p;
+}
+
+#define _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                                                \
+    _Z_REFCOUNT_DEFINE_STRUCTS(name, type)                                                        \
+    _Z_REFCOUNT_DEFINE_NO_FROM_VAL_INNER(name, type)                                              \
+    static inline name##_rc_t name##_rc_new(type##_t *val) {                                      \
+        name##_rc_t p = name##_rc_null();                                                         \
+        if (_z_rc_init(&p._cnt) == _Z_RES_OK) {                                                   \
+            p._val = val;                                                                         \
+        }                                                                                         \
+        return p;                                                                                 \
+    }                                                                                             \
+    static inline void __##name##_z_void_rc_deleter(void *val) { type##_clear((type##_t *)val); } \
+    static inline _z_void_rc_t name##_rc_to_void(type##_rc_t *rc) {                               \
+        _z_void_rc_t p = _z_void_rc_null();                                                       \
+        p._val = (void *)rc->_val;                                                                \
+        p._cnt = rc->_cnt;                                                                        \
+        p._deleter = __##name##_z_void_rc_deleter;                                                \
+        return p;                                                                                 \
+    }
 
 #define _Z_REFCOUNT_DEFINE(name, type)                                      \
     _Z_REFCOUNT_DEFINE_NO_FROM_VAL(name, type)                              \

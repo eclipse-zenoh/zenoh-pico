@@ -393,14 +393,14 @@ z_result_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl) {
     if (n_ext != 0) {
         header |= _Z_FLAG_N_Z;
     }
-    if (decl->has_interest_id) {
+    if (decl->_interest_id.has_value) {
         header |= _Z_FLAG_N_DECLARE_I;
     }
     // Encode header
     _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
     // Encode interest id
-    if (decl->has_interest_id) {
-        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_interest_id));
+    if (decl->_interest_id.has_value) {
+        _Z_RETURN_IF_ERR(_z_zsize_encode(wbf, decl->_interest_id.value));
     }
     // Encode extensions
     if (has_qos_ext) {
@@ -438,8 +438,8 @@ z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t h
     decl->_ext_qos = _Z_N_QOS_DEFAULT;
     // Retrieve interest id
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_DECLARE_I)) {
-        _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_interest_id, zbf));
-        decl->has_interest_id = true;
+        _Z_RETURN_IF_ERR(_z_zint32_decode(&decl->_interest_id.value, zbf));
+        decl->_interest_id.has_value = true;
     }
     // Decode extensions
     if (_Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {

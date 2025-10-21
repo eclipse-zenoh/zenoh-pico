@@ -20,7 +20,10 @@
 
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/primitives.h"
+#include "zenoh-pico/session/matching.h"
+#include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
+#include "zenoh-pico/session/utils.h"
 
 #if Z_FEATURE_INTEREST == 1
 
@@ -37,18 +40,16 @@ static bool _z_filter_target_eq(const void *left, const void *right) {
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static void _z_write_filter_mutex_lock(_z_writer_filter_ctx_t *ctx) { _z_mutex_lock(&ctx->mutex); }
-static void _z_write_filter_mutex_unlock(_z_writer_filter_ctx_t *ctx) { _z_mutex_unlock(&ctx->mutex); }
+static void _z_write_filter_mutex_lock(_z_write_filter_ctx_t *ctx) { _z_mutex_lock(&ctx->mutex); }
+static void _z_write_filter_mutex_unlock(_z_write_filter_ctx_t *ctx) { _z_mutex_unlock(&ctx->mutex); }
 #else
-static void _z_write_filter_mutex_lock(_z_writer_filter_ctx_t *ctx) { _ZP_UNUSED(ctx); }
-static void _z_write_filter_mutex_unlock(_z_writer_filter_ctx_t *ctx) { _ZP_UNUSED(ctx); }
+static void _z_write_filter_mutex_lock(_z_write_filter_ctx_t *ctx) { _ZP_UNUSED(ctx); }
+static void _z_write_filter_mutex_unlock(_z_write_filter_ctx_t *ctx) { _ZP_UNUSED(ctx); }
 #endif
 
-static bool _z_write_filter_push_target(_z_writer_filter_ctx_t *ctx, _z_transport_peer_common_t *peer, uint32_t id) {
+static bool _z_write_filter_push_target(_z_write_filter_ctx_t *ctx, _z_transport_peer_common_t *peer, uint32_t id) {
     _z_filter_target_t target = {.peer = (uintptr_t)peer, .decl_id = id};
-    _z_write_filter_mutex_lock(ctx);
     ctx->targets = _z_filter_target_slist_push(ctx->targets, &target);
-    _z_write_filter_mutex_unlock(ctx);
     if (ctx->targets == NULL) {  // Allocation can fail
         return false;
     }
@@ -56,42 +57,60 @@ static bool _z_write_filter_push_target(_z_writer_filter_ctx_t *ctx, _z_transpor
 }
 
 static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg) {
-    _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)arg;
+    _z_write_filter_ctx_t *ctx = (_z_write_filter_ctx_t *)arg;
     // Process message
+    _z_write_filter_mutex_lock(ctx);
+    uint8_t prev_state = ctx->state;
     switch (msg->type) {
         case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:
-        case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE:
-            _z_write_filter_push_target(ctx, peer, msg->id);
+        case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE: {
+            // the message might be a redeclare - so we need to remove the previous one first
+            _z_filter_target_t target = {.decl_id = msg->id, .peer = (uintptr_t)peer};
+            ctx->targets = _z_filter_target_slist_drop_first_filter(ctx->targets, _z_filter_target_eq, &target);
+            if (!ctx->is_complete ||
+                (msg->is_complete && (ctx->is_aggregate || _z_keyexpr_suffix_includes(msg->key, &ctx->key)))) {
+                _z_write_filter_push_target(ctx, peer, msg->id);
+            }
             break;
+        }
         case _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER:
         case _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE: {
             _z_filter_target_t target = {.decl_id = msg->id, .peer = (uintptr_t)peer};
-            _z_write_filter_mutex_lock(ctx);
-            ctx->targets = _z_filter_target_slist_drop_filter(ctx->targets, _z_filter_target_eq, &target);
-            _z_write_filter_mutex_unlock(ctx);
+            ctx->targets = _z_filter_target_slist_drop_first_filter(ctx->targets, _z_filter_target_eq, &target);
         } break;
         case _Z_INTEREST_MSG_TYPE_CONNECTION_DROPPED: {
             _z_filter_target_t target = {.decl_id = 0, .peer = (uintptr_t)peer};
-            _z_write_filter_mutex_lock(ctx);
-            ctx->targets = _z_filter_target_slist_drop_filter(ctx->targets, _z_filter_target_peer_eq, &target);
-            _z_write_filter_mutex_unlock(ctx);
+            ctx->targets = _z_filter_target_slist_drop_all_filter(ctx->targets, _z_filter_target_peer_eq, &target);
         } break;
         default:
             break;
     }
     // Process filter state
     ctx->state = (ctx->targets == NULL) ? WRITE_FILTER_ACTIVE : WRITE_FILTER_OFF;
-    _Z_DEBUG("Updated write filter state: %d", ctx->state);
+    if (prev_state != ctx->state) {
+        _Z_DEBUG("Updated write filter state: %d", ctx->state);
+#if Z_FEATURE_MATCHING
+        _z_closure_matching_status_intmap_iterator_t it =
+            _z_closure_matching_status_intmap_iterator_make(&ctx->callbacks);
+        _z_matching_status_t s = {.matching = ctx->state != WRITE_FILTER_ACTIVE};
+        while (_z_closure_matching_status_intmap_iterator_next(&it)) {
+            _z_closure_matching_status_t *c = _z_closure_matching_status_intmap_iterator_value(&it);
+            c->call(&s, c->context);
+        }
+#endif
+    }
+    _z_write_filter_mutex_unlock(ctx);
 }
 
-z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
-                                  uint8_t interest_flag) {
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+                                  uint8_t interest_flag, bool complete) {
     uint8_t flags = interest_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT;
     // Add client specific flags
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
+    if (_Z_RC_IN_VAL(zn)->_mode == Z_WHATAMI_CLIENT) {
         flags |= _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_AGGREGATE | _Z_INTEREST_FLAG_FUTURE;
     }
-    _z_writer_filter_ctx_t *ctx = (_z_writer_filter_ctx_t *)z_malloc(sizeof(_z_writer_filter_ctx_t));
+    filter->ctx = _z_write_filter_ctx_rc_null();
+    _z_write_filter_ctx_t *ctx = (_z_write_filter_ctx_t *)z_malloc(sizeof(_z_write_filter_ctx_t));
 
     if (ctx == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
@@ -101,42 +120,100 @@ z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _
 #endif
     ctx->state = WRITE_FILTER_ACTIVE;
     ctx->targets = _z_filter_target_slist_new();
+#if Z_FEATURE_MATCHING
+    _z_closure_matching_status_intmap_init(&ctx->callbacks);
+#endif
+    ctx->is_complete = complete;
+    ctx->is_aggregate = (flags & _Z_INTEREST_FLAG_AGGREGATE) != 0;
+    ctx->key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
+    ctx->zn = _z_session_rc_clone_as_weak(zn);
+    if (_Z_RC_IS_NULL(&ctx->zn)) {
+        _z_write_filter_ctx_clear(ctx);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    filter->ctx = _z_write_filter_ctx_rc_new(ctx);
 
-    filter->ctx = ctx;
-    filter->_interest_id = _z_add_interest(zn, keyexpr, _z_write_filter_callback, flags, (void *)ctx);
+    if (_Z_RC_IS_NULL(&filter->ctx)) {
+        _z_write_filter_ctx_clear(ctx);
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    _z_void_rc_t ctx_void = _z_write_filter_ctx_rc_to_void(&filter->ctx);
+    filter->_interest_id = _z_add_interest(_Z_RC_IN_VAL(zn), keyexpr, _z_write_filter_callback, flags, &ctx_void);
     if (filter->_interest_id == 0) {
-        z_free(ctx);
+        _z_write_filter_ctx_rc_drop(&filter->ctx);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
     return _Z_RES_OK;
 }
 
-z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) {
-    if (filter->ctx != NULL) {
-        z_result_t res = _z_remove_interest(zn, filter->_interest_id);
-        _z_filter_target_slist_free(&filter->ctx->targets);
-#if Z_FEATURE_MULTI_THREAD == 1
-        _z_mutex_drop(&filter->ctx->mutex);
+z_result_t _z_write_filter_ctx_clear(_z_write_filter_ctx_t *ctx) {
+    z_result_t res = _Z_RES_OK;
+    _z_write_filter_mutex_lock(ctx);
+    _z_filter_target_slist_free(&ctx->targets);
+#if Z_FEATURE_MATCHING
+    _z_closure_matching_status_intmap_clear(&ctx->callbacks);
 #endif
-        z_free(filter->ctx);
-        filter->ctx = NULL;
-        return res;
+    _z_keyexpr_clear(&ctx->key);
+    _z_session_weak_drop(&ctx->zn);
+    _z_write_filter_mutex_unlock(ctx);
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_drop(&ctx->mutex);
+#endif
+    return res;
+}
+
+z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
+    if (_Z_RC_IS_NULL(&filter->ctx)) {
+        return _Z_RES_OK;
     }
+    _z_session_rc_t s = _z_session_weak_upgrade(&_Z_RC_IN_VAL(&filter->ctx)->zn);
+    if (!_Z_RC_IS_NULL(&s)) {
+        z_result_t res = _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
+        _z_session_rc_drop(&s);
+    }
+    _z_write_filter_ctx_rc_drop(&filter->ctx);
     return _Z_RES_OK;
 }
 
+#if Z_FEATURE_MATCHING == 1
+void _z_write_filter_ctx_remove_callback(_z_write_filter_ctx_t *ctx, size_t id) {
+    _z_write_filter_mutex_lock(ctx);
+    _z_closure_matching_status_intmap_remove(&ctx->callbacks, id);
+    _z_write_filter_mutex_unlock(ctx);
+}
+
+z_result_t _z_write_filter_ctx_add_callback(_z_write_filter_ctx_t *ctx, size_t id, _z_closure_matching_status_t *v) {
+    _z_closure_matching_status_t *ptr = (_z_closure_matching_status_t *)z_malloc(sizeof(_z_closure_matching_status_t));
+    if (ptr == NULL) {
+        _z_closure_matching_status_clear(v);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    *ptr = *v;
+    *v = (_z_closure_matching_status_t){NULL, NULL, NULL};
+    _z_write_filter_mutex_lock(ctx);
+    if (!_z_write_filter_ctx_active(ctx)) {
+        _z_matching_status_t s = (_z_matching_status_t){.matching = true};
+        v->call(&s, v->context);
+    }
+    _z_closure_matching_status_intmap_insert(&ctx->callbacks, id, ptr);
+    _z_write_filter_mutex_unlock(ctx);
+    return _Z_RES_OK;
+}
+#endif
+
 #else  // Z_FEATURE_INTEREST == 0
-z_result_t _z_write_filter_create(_z_session_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
-                                  uint8_t interest_flag) {
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+                                  uint8_t interest_flag, bool complete) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(filter);
     _ZP_UNUSED(interest_flag);
+    _ZP_UNUSED(complete);
     return _Z_RES_OK;
 }
 
-z_result_t _z_write_filter_destroy(_z_session_t *zn, _z_write_filter_t *filter) {
-    _ZP_UNUSED(zn);
+z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
     _ZP_UNUSED(filter);
     return _Z_RES_OK;
 }

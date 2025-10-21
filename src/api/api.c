@@ -922,10 +922,7 @@ const z_loaned_slice_t *z_string_as_slice(const z_loaned_string_t *str) { return
 z_priority_t z_priority_default(void) { return Z_PRIORITY_DEFAULT; }
 
 #if Z_FEATURE_PUBLICATION == 1
-void _z_publisher_drop(_z_publisher_t *pub) {
-    _z_undeclare_publisher(pub);
-    _z_publisher_clear(pub);
-}
+void _z_publisher_drop(_z_publisher_t *pub) { _z_undeclare_publisher(pub); }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_publisher_t, publisher, _z_publisher_check, _z_publisher_null,
                                               _z_publisher_drop)
@@ -1087,8 +1084,7 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
         _z_declare_publisher(zs, final_key, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                              opt.congestion_control, opt.priority, opt.is_express, reliability);
     // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS);
+    z_result_t res = _z_write_filter_create(zs, &int_pub._filter, keyexpr_aliased, _Z_INTEREST_FLAG_SUBSCRIBERS, false);
     if (res != _Z_RES_OK) {
         if (final_key._id != Z_RESOURCE_ID_NONE) {
             _z_undeclare_resource(_Z_RC_IN_VAL(zs), final_key._id);
@@ -1099,11 +1095,7 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_publisher(z_moved_publisher_t *pub) {
-    z_result_t ret = _z_undeclare_publisher(&pub->_this._val);
-    _z_publisher_clear(&pub->_this._val);
-    return ret;
-}
+z_result_t z_undeclare_publisher(z_moved_publisher_t *pub) { return _z_undeclare_publisher(&pub->_this._val); }
 
 void z_publisher_put_options_default(z_publisher_put_options_t *options) {
     options->encoding = NULL;
@@ -1387,21 +1379,22 @@ z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publi
 z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
                                                  z_owned_matching_listener_t *matching_listener,
                                                  z_moved_closure_matching_status_t *callback) {
+    matching_listener->_val = _z_matching_listener_null();
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
-    _z_matching_listener_t listener = _z_matching_listener_declare(&sess_rc, &publisher->_key, publisher->_id,
-                                                                   _Z_INTEREST_FLAG_SUBSCRIBERS, callback->_this._val);
-    _z_session_rc_drop(&sess_rc);
-
-    z_internal_closure_matching_status_null(&callback->_this);
-
-    matching_listener->_val = listener;
-
-    return _z_matching_listener_check(&listener) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        matching_listener->_val = _z_matching_listener_declare(
+            &publisher->_filter.ctx, _z_get_entity_id(_Z_RC_IN_VAL(&sess_rc)), &callback->_this._val);
+        _z_session_rc_drop(&sess_rc);
+    } else {
+        matching_listener->_val = _z_matching_listener_null();
+        z_internal_closure_matching_status_null(&callback->_this);
+    }
+    return _z_matching_listener_check(&matching_listener->_val) ? _Z_RES_OK : _Z_ERR_GENERIC;
 }
 
 z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher,
                                            z_matching_status_t *matching_status) {
-    matching_status->matching = publisher->_filter.ctx->state != WRITE_FILTER_ACTIVE;
+    matching_status->matching = !_z_write_filter_active(&publisher->_filter);
     return _Z_RES_OK;
 }
 #endif  // Z_FEATURE_MATCHING == 1
@@ -1470,10 +1463,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     return ret;
 }
 
-void _z_querier_drop(_z_querier_t *querier) {
-    _z_undeclare_querier(querier);
-    _z_querier_clear(querier);
-}
+void _z_querier_drop(_z_querier_t *querier) { _z_undeclare_querier(querier); }
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL(_z_querier_t, querier, _z_querier_check, _z_querier_null, _z_querier_drop)
 
@@ -1525,8 +1515,8 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
                                                   opt.target, opt.priority, opt.is_express, opt.timeout_ms,
                                                   opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability);
     // Create write filter
-    z_result_t res =
-        _z_write_filter_create(_Z_RC_IN_VAL(zs), &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES);
+    z_result_t res = _z_write_filter_create(zs, &int_querier._filter, keyexpr_aliased, _Z_INTEREST_FLAG_QUERYABLES,
+                                            int_querier._target == Z_QUERY_TARGET_ALL_COMPLETE);
     if (res != _Z_RES_OK) {
         if (final_key._id != Z_RESOURCE_ID_NONE) {
             _z_undeclare_resource(_Z_RC_IN_VAL(zs), final_key._id);
@@ -1537,11 +1527,7 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
     return _Z_RES_OK;
 }
 
-z_result_t z_undeclare_querier(z_moved_querier_t *querier) {
-    z_result_t ret = _z_undeclare_querier(&querier->_this._val);
-    _z_querier_clear(&querier->_this._val);
-    return ret;
-}
+z_result_t z_undeclare_querier(z_moved_querier_t *querier) { return _z_undeclare_querier(&querier->_this._val); }
 
 z_result_t z_querier_get(const z_loaned_querier_t *querier, const char *parameters, z_moved_closure_reply_t *callback,
                          z_querier_get_options_t *options) {
@@ -1667,20 +1653,21 @@ z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier
 z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
                                                z_owned_matching_listener_t *matching_listener,
                                                z_moved_closure_matching_status_t *callback) {
+    matching_listener->_val = _z_matching_listener_null();
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
-    _z_matching_listener_t listener = _z_matching_listener_declare(&sess_rc, &querier->_key, querier->_id,
-                                                                   _Z_INTEREST_FLAG_QUERYABLES, callback->_this._val);
-    _z_session_rc_drop(&sess_rc);
-
-    z_internal_closure_matching_status_null(&callback->_this);
-
-    matching_listener->_val = listener;
-
-    return _z_matching_listener_check(&listener) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        matching_listener->_val = _z_matching_listener_declare(
+            &querier->_filter.ctx, _z_get_entity_id(_Z_RC_IN_VAL(&sess_rc)), &callback->_this._val);
+        _z_session_rc_drop(&sess_rc);
+    } else {
+        matching_listener->_val = _z_matching_listener_null();
+        z_internal_closure_matching_status_null(&callback->_this);
+    }
+    return _z_matching_listener_check(&matching_listener->_val) ? _Z_RES_OK : _Z_ERR_GENERIC;
 }
 
 z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_matching_status_t *matching_status) {
-    matching_status->matching = querier->_filter.ctx->state != WRITE_FILTER_ACTIVE;
+    matching_status->matching = !_z_write_filter_active(&querier->_filter);
     return _Z_RES_OK;
 }
 

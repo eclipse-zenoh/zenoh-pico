@@ -515,7 +515,7 @@ void slist_test(void) {
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
         slist = _z_slist_push(slist, values[i], strlen(values[i]) + 1, _z_noop_copy, false);
     }
-    slist = _z_slist_drop_filter(slist, _z_noop_clear, slist_eq_f, values[1]);
+    slist = _z_slist_drop_filter(slist, _z_noop_clear, slist_eq_f, values[1], true);
     assert(_z_slist_len(slist) == 2);
     assert(strcmp(values[2], (char *)_z_slist_value(slist)) == 0);
     assert(strcmp(values[0], (char *)_z_slist_value(_z_slist_next(slist))) == 0);
