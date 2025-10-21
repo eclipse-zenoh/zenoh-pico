@@ -193,7 +193,11 @@ static inline void _z_void_rc_to_weak_inner(const _z_void_rc_t *rc, _z_void_weak
     weak->_deleter = rc->_deleter;
 }
 
-static inline void _z_void_rc_clear_inner(_z_void_rc_t *rc) { rc->_deleter(rc->_val); }
+static inline void _z_void_rc_clear_inner(_z_void_rc_t *rc) {
+    if (rc->_deleter != NULL) {
+        rc->_deleter(rc->_val);
+    }
+}
 _Z_REFCOUNT_DEFINE_NO_FROM_VAL_INNER(_z_void, _z_void)
 static inline _z_void_rc_t _z_void_rc_rc_new(void *val, _z_void_rc_deleter deleter) {
     _z_void_rc_t p = _z_void_rc_null();
@@ -220,6 +224,7 @@ static inline _z_void_rc_t _z_void_rc_rc_new(void *val, _z_void_rc_deleter delet
         p._val = (void *)rc->_val;                                                                \
         p._cnt = rc->_cnt;                                                                        \
         p._deleter = __##name##_z_void_rc_deleter;                                                \
+        *rc = name##_rc_null();                                                                   \
         return p;                                                                                 \
     }
 

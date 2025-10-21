@@ -516,7 +516,8 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
     intr._key = _z_get_expanded_key_from_key(zn, &keyexpr, NULL);
     intr._flags = flags;
     intr._callback = callback;
-    intr._arg = _z_void_rc_clone(arg);
+    intr._arg = *arg;
+    *arg = _z_void_rc_null();
     if (_Z_RC_IS_NULL(&intr._arg)) {
         return 0;
     }

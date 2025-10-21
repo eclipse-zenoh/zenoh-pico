@@ -137,7 +137,8 @@ z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *
         _z_write_filter_ctx_clear(ctx);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-    _z_void_rc_t ctx_void = _z_write_filter_ctx_rc_to_void(&filter->ctx);
+    _z_write_filter_ctx_rc_t filter_ctx_clone = _z_write_filter_ctx_rc_clone(&filter->ctx);
+    _z_void_rc_t ctx_void = _z_write_filter_ctx_rc_to_void(&filter_ctx_clone);
     filter->_interest_id = _z_add_interest(_Z_RC_IN_VAL(zn), keyexpr, _z_write_filter_callback, flags, &ctx_void);
     if (filter->_interest_id == 0) {
         _z_write_filter_ctx_rc_drop(&filter->ctx);
