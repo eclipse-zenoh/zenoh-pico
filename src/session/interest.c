@@ -569,8 +569,14 @@ void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interes
     _z_declare_data_slist_t *xs = res_list;
     while (xs != NULL) {
         _z_declare_data_t *res = _z_declare_data_slist_value(xs);
-        if (_z_keyexpr_suffix_intersects(&interest->_key, &res->_key)) {
+        bool is_matching = _z_session_interest_is_aggregate(interest)
+                               ? _z_keyexpr_equals(&interest->_key, &res->_key)
+                               : _z_keyexpr_suffix_intersects(&interest->_key, &res->_key);
+        if (is_matching) {
             _z_interest_msg_t msg = {0};
+            msg.key = &res->_key;
+            msg.is_complete = res->_complete;
+            msg.id = res->_id;
             switch (res->_type) {
                 default:
                     break;
@@ -584,7 +590,7 @@ void _z_interest_replay_declare(_z_session_t *zn, _z_session_interest_t *interes
                     msg.type = _Z_INTEREST_MSG_TYPE_DECL_TOKEN;
                     break;
             }
-            interest->_callback(&msg, (_z_transport_peer_common_t *)res->_key._mapping, &_Z_RC_IN_VAL(&interest->_arg));
+            interest->_callback(&msg, (_z_transport_peer_common_t *)res->_key._mapping, _Z_RC_IN_VAL(&interest->_arg));
         }
         xs = _z_declare_data_slist_next(xs);
     }
