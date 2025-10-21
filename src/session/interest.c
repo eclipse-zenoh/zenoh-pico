@@ -250,9 +250,13 @@ static _z_session_interest_rc_slist_t *__z_get_interest_by_key_and_flags(_z_sess
     while (xs != NULL) {
         _z_session_interest_rc_t *intr = _z_session_interest_rc_slist_value(xs);
         if ((_Z_RC_IN_VAL(intr)->_flags & flags) == 0) {
+            xs = _z_session_interest_rc_slist_next(xs);
             continue;
         }
-        if (interest_id.has_value && interest_id.value != _Z_RC_IN_VAL(intr)->_id) {
+        // consider only interests with matching id if specified (which corresponds to CURRENT interest response)
+        // ignore 0 id, since it is the one initially used by peers for declarations propagation
+        if (interest_id.has_value && interest_id.value != 0 && interest_id.value != _Z_RC_IN_VAL(intr)->_id) {
+            xs = _z_session_interest_rc_slist_next(xs);
             continue;
         }
         bool is_matching = _z_session_interest_is_aggregate(_Z_RC_IN_VAL(intr))
