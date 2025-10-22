@@ -246,9 +246,7 @@ static inline _z_optional_id_t _z_optional_id_make_some(uint32_t value) {
     return id;
 }
 static inline _z_optional_id_t _z_optional_id_make_none(void) {
-    _z_optional_id_t id;
-    id.value = 0;
-    id.has_value = false;
+    _z_optional_id_t id = {0};
     return id;
 }
 
