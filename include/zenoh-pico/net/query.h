@@ -74,8 +74,6 @@ typedef struct _z_querier_t {
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_querier_t _z_querier_null(void) { return (_z_querier_t){0}; }
 static inline bool _z_querier_check(const _z_querier_t *querier) { return !_Z_RC_IS_NULL(&querier->_zn); }
-void _z_querier_clear(_z_querier_t *querier);
-void _z_querier_free(_z_querier_t **querier);
 #endif
 
 /**

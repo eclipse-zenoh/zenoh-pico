@@ -306,8 +306,8 @@ void _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id) {
 z_result_t _z_liveliness_process_token_declare(_z_session_t *zn, const _z_n_msg_declare_t *decl,
                                                _z_transport_peer_common_t *peer) {
 #if Z_FEATURE_QUERY == 1
-    if (decl->has_interest_id) {
-        _z_liveliness_pending_query_reply(zn, decl->_interest_id, &decl->_decl._body._decl_token._keyexpr,
+    if (decl->_interest_id.has_value) {
+        _z_liveliness_pending_query_reply(zn, decl->_interest_id.value, &decl->_decl._body._decl_token._keyexpr,
                                           &decl->_ext_timestamp, peer);
     }
 #endif
@@ -337,8 +337,8 @@ z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_ms
 
 z_result_t _z_liveliness_process_declare_final(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
 #if Z_FEATURE_QUERY == 1
-    if (decl->has_interest_id) {
-        _z_liveliness_pending_query_drop(zn, decl->_interest_id);
+    if (decl->_interest_id.has_value) {
+        _z_liveliness_pending_query_drop(zn, decl->_interest_id.value);
     }
     return _Z_RES_OK;
 #else

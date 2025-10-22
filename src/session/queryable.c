@@ -262,7 +262,7 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
     _z_session_mutex_lock(zn);
 
     zn->_local_queryable =
-        _z_session_queryable_rc_slist_drop_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
+        _z_session_queryable_rc_slist_drop_first_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
     _z_session_mutex_unlock(zn);
 }

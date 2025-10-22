@@ -36,7 +36,7 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
     _z_keyexpr_t ke = _z_keyexpr_duplicate(keyexpr);
     _z_declaration_t declaration = _z_make_decl_token(&ke, id);
     _z_network_message_t n_msg;
-    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
+    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     ret = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
     _z_n_msg_clear(&n_msg);
 
@@ -59,7 +59,7 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
 
     _z_declaration_t declaration = _z_make_undecl_token(token->_id, &token->_key);
     _z_network_message_t n_msg;
-    _z_n_msg_make_declare(&n_msg, declaration, false, 0);
+    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
     ret = _z_send_undeclare(_Z_RC_IN_VAL(&token->_zn), &n_msg);
     _z_n_msg_clear(&n_msg);
 

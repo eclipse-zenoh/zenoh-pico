@@ -39,6 +39,7 @@ typedef struct {
     _z_keyexpr_t _keyexpr;
     uint32_t _id;
     uint8_t flags;
+    bool complete;
 } _z_interest_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.

@@ -173,8 +173,10 @@ typedef enum {
 } _z_interest_msg_type_t;
 
 typedef struct _z_interest_msg_t {
-    uint8_t type;
     uint32_t id;
+    uint8_t type;
+    const _z_keyexpr_t *key;
+    bool is_complete;
 } _z_interest_msg_t;
 
 /**
@@ -186,12 +188,16 @@ typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
     _z_interest_handler_t _callback;
-    void *_arg;
+    _z_void_rc_t _arg;
     uint8_t _flags;
 } _z_session_interest_t;
 
 bool _z_session_interest_eq(const _z_session_interest_t *one, const _z_session_interest_t *two);
 void _z_session_interest_clear(_z_session_interest_t *res);
+
+static inline bool _z_session_interest_is_aggregate(const _z_session_interest_t *intr) {
+    return (intr->_flags & _Z_INTEREST_FLAG_AGGREGATE) != 0;
+}
 
 _Z_REFCOUNT_DEFINE(_z_session_interest, _z_session_interest)
 _Z_ELEM_DEFINE(_z_session_interest, _z_session_interest_t, _z_noop_size, _z_session_interest_clear, _z_noop_copy,
@@ -211,6 +217,7 @@ typedef struct {
     _z_keyexpr_t _key;
     uint32_t _id;
     uint8_t _type;
+    bool _complete;
 } _z_declare_data_t;
 
 void _z_declare_data_clear(_z_declare_data_t *data);

@@ -151,13 +151,15 @@ _z_list_t *_z_list_drop_element(_z_list_t *list, _z_list_t *prev, z_element_free
     return list;
 }
 
-_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, const void *left) {
+_z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq_f c_f, const void *left,
+                               bool only_first) {
     _z_list_t *l = (_z_list_t *)xs;
     _z_list_t *previous = xs;
     _z_list_t *current = xs;
 
     while (current != NULL) {
         if (c_f(left, current->_val)) {
+            _z_list_t *next = current->_next;
             _z_list_t *this_ = current;
 
             // head removal
@@ -175,7 +177,10 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
 
             f_f(&this_->_val);
             z_free(this_);
-            break;
+            if (only_first) {
+                break;
+            }
+            current = next;
         } else {
             previous = current;
             current = current->_next;
@@ -343,7 +348,8 @@ _z_slist_t *_z_slist_drop_element(_z_slist_t *list, _z_slist_t *prev, z_element_
     return list;
 }
 
-_z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_element_eq_f c_f, const void *target_val) {
+_z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_element_eq_f c_f, const void *target_val,
+                                 bool only_first) {
     _z_slist_t *previous = head;
     _z_slist_t *current = head;
     while (current != NULL) {
@@ -355,9 +361,13 @@ _z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_elem
             } else {  // middle removal
                 _z_slist_node_data(previous)->next = _z_slist_node_data(current)->next;
             }
+            _z_slist_t *next = _z_slist_node_data(current)->next;
             f_f(_z_slist_node_value(current));
             z_free(current);
-            break;
+            if (only_first) {
+                break;
+            }
+            current = next;
         } else {
             previous = current;
             current = _z_slist_node_data(current)->next;

@@ -96,7 +96,7 @@ void _z_hashmap_remove(_z_hashmap_t *map, const void *k, z_element_free_f f) {
         e._key = (void *)k;  // k will not be mutated by this operation
         e._val = NULL;
 
-        map->_vals[idx] = _z_list_drop_filter(map->_vals[idx], f, map->_f_equals, &e);
+        map->_vals[idx] = _z_list_drop_filter(map->_vals[idx], f, map->_f_equals, &e, true);
     }
 }
 

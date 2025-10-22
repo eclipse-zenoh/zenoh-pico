@@ -48,7 +48,8 @@ void _z_pending_query_process_timeout(_z_session_t *zn) {
     // Lock session
     _z_session_mutex_lock(zn);
     // Drop all queries with timeout elapsed
-    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
+    zn->_pending_queries =
+        _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
     _z_session_mutex_unlock(zn);
 }
 
@@ -146,8 +147,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
-                    pen_qry->_pending_replies =
-                        _z_pending_reply_slist_drop_filter(pen_qry->_pending_replies, _z_pending_reply_eq, pen_rep);
+                    pen_qry->_pending_replies = _z_pending_reply_slist_drop_first_filter(pen_qry->_pending_replies,
+                                                                                         _z_pending_reply_eq, pen_rep);
                 }
                 break;
             }
@@ -235,7 +236,7 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
         }
     }
     // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
-    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     _z_session_mutex_unlock(zn);
     return _Z_RES_OK;
 }
@@ -243,7 +244,7 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
 void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
     _z_session_mutex_lock(zn);
 
-    zn->_pending_queries = _z_pending_query_slist_drop_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
 
     _z_session_mutex_unlock(zn);
 }

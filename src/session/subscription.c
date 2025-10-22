@@ -271,10 +271,10 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
     _z_session_mutex_lock(zn);
 
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
-        zn->_subscriptions = _z_subscription_rc_slist_drop_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
+        zn->_subscriptions = _z_subscription_rc_slist_drop_first_filter(zn->_subscriptions, _z_subscription_rc_eq, sub);
     } else {
         zn->_liveliness_subscriptions =
-            _z_subscription_rc_slist_drop_filter(zn->_liveliness_subscriptions, _z_subscription_rc_eq, sub);
+            _z_subscription_rc_slist_drop_first_filter(zn->_liveliness_subscriptions, _z_subscription_rc_eq, sub);
     }
 
     _z_session_mutex_unlock(zn);
