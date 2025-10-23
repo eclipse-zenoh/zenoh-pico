@@ -33,6 +33,7 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
 #include "zenoh-pico/session/liveliness.h"
+#include "zenoh-pico/session/loopback.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/resource.h"
@@ -195,8 +196,15 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_byte
                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                     const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info) {
     z_result_t ret = _Z_RES_OK;
-    _z_network_message_t msg;
     _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
+
+    bool handled_locally = _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp,
+                                                           attachment, reliability, source_info);
+    if (handled_locally && !_z_session_has_remote_targets(zn)) {
+        return _Z_RES_OK;
+    }
+
+    _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
             _z_n_msg_make_push_put(&msg, keyexpr, payload, encoding, qos, timestamp, attachment, reliability,
@@ -378,6 +386,12 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     }
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
+    bool handled_locally = _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos,
+                                                            timestamp, att, source_info);
+    if (handled_locally && !_z_session_has_remote_targets(zn)) {
+        return _Z_RES_OK;
+    }
+
     _z_zenoh_message_t z_msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
@@ -408,6 +422,11 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_make(false, true, Z_PRIORITY_DEFAULT);
     _z_source_info_t source_info = _z_source_info_null();
+    bool handled_locally = _z_session_deliver_reply_err_locally(query, zsrc, payload, encoding, qos);
+    if (handled_locally && !_z_session_has_remote_targets(zn)) {
+        return _Z_RES_OK;
+    }
+
     _z_zenoh_message_t msg;
     _z_n_msg_make_reply_err(&msg, &zn->_local_zid, query->_request_id, Z_RELIABILITY_DEFAULT, qos, payload, encoding,
                             &source_info);
@@ -500,6 +519,13 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _z_zenoh_message_t z_msg;
     _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
                         timeout_ms, attachment, qos, &source_info);
+
+    bool handled_locally = _z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding,
+                                                            attachment, &source_info, pq->_id, timeout_ms, qos);
+    if (handled_locally && !_z_session_has_remote_targets(zn)) {
+        _z_trigger_query_reply_final(zn, pq->_id);
+        return _Z_RES_OK;
+    }
 
     if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
         _z_unregister_pending_query(zn, pq);
