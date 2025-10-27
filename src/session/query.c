@@ -161,7 +161,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 tmp_rep._reply = _z_reply_null();
                 tmp_rep._reply.data._tag = _Z_REPLY_TAG_DATA;
                 _Z_CLEAN_RETURN_IF_ERR(
-                    _z_keyexpr_move(&pen_rep->_reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
+                    _z_keyexpr_move(&tmp_rep._reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
                     _z_reply_clear(&reply);
                     _z_session_mutex_unlock(zn));
             } else {
