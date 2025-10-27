@@ -58,26 +58,6 @@ void _z_query_free(_z_query_t **query) {
     }
 }
 
-#if Z_FEATURE_QUERY == 1
-void _z_querier_clear(_z_querier_t *querier) {
-    _z_keyexpr_clear(&querier->_key);
-    _z_session_weak_drop(&querier->_zn);
-    _z_encoding_clear(&querier->_encoding);
-    *querier = _z_querier_null();
-}
-
-void _z_querier_free(_z_querier_t **querier) {
-    _z_querier_t *ptr = *querier;
-
-    if (ptr != NULL) {
-        _z_querier_clear(ptr);
-
-        z_free(ptr);
-        *querier = NULL;
-    }
-}
-#endif
-
 #if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
     _z_session_weak_drop(&qbl->_zn);

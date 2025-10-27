@@ -149,11 +149,9 @@ void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid) {
     msg->_body._response_final._request_id = rid;
 }
 
-void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, bool has_interest_id,
-                           uint32_t interest_id) {
+void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id) {
     msg->_tag = _Z_N_DECLARE;
     msg->_reliability = Z_RELIABILITY_DEFAULT;
-    msg->_body._declare.has_interest_id = has_interest_id;
     msg->_body._declare._interest_id = interest_id;
     msg->_body._declare._decl = declaration;
     msg->_body._declare._ext_qos = _Z_N_QOS_DEFAULT;

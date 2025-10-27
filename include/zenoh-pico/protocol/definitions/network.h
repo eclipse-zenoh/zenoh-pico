@@ -235,13 +235,26 @@ typedef struct {
 void _z_n_msg_response_clear(_z_n_msg_response_t *msg);
 
 /*------------------ Declare Message ------------------*/
+typedef struct {
+    uint32_t value;
+    bool has_value;
+} _z_optional_id_t;
+static inline _z_optional_id_t _z_optional_id_make_some(uint32_t value) {
+    _z_optional_id_t id;
+    id.value = value;
+    id.has_value = true;
+    return id;
+}
+static inline _z_optional_id_t _z_optional_id_make_none(void) {
+    _z_optional_id_t id = {0};
+    return id;
+}
 
 typedef struct {
     _z_declaration_t _decl;
     _z_timestamp_t _ext_timestamp;
     _z_n_qos_t _ext_qos;
-    uint32_t _interest_id;
-    bool has_interest_id;
+    _z_optional_id_t _interest_id;
 } _z_n_msg_declare_t;
 static inline void _z_n_msg_declare_clear(_z_n_msg_declare_t *msg) { _z_declaration_clear(&msg->_decl); }
 
@@ -312,8 +325,7 @@ _Z_SVEC_DEFINE(_z_network_message, _z_network_message_t)
 _Z_SLIST_DEFINE(_z_network_message, _z_network_message_t, true)
 
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
-void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, bool has_interest_id,
-                           uint32_t interest_id);
+void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id);
 void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
                          z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                          const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,

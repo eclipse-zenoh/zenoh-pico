@@ -313,7 +313,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
 
 #if Z_FEATURE_INTEREST == 1
 uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_handler_t callback, uint8_t flags,
-                         void *arg);
+                         _z_void_rc_t *arg);
 z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
 #endif
 

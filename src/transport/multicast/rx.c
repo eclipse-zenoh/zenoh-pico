@@ -352,7 +352,7 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
             // TODO: cleanup here should also be done on mappings/subs/etc...
-            _z_transport_peer_multicast_slist_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
+            _z_transport_peer_multicast_slist_drop_first_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             return _Z_RES_OK;
         }
         // Update SNs
@@ -419,8 +419,8 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
-                ztm->_peers =
-                    _z_transport_peer_multicast_slist_drop_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
+                ztm->_peers = _z_transport_peer_multicast_slist_drop_first_filter(
+                    ztm->_peers, _z_transport_peer_multicast_eq, entry);
             }
             _z_t_msg_close_clear(&t_msg->_body._close);
             break;

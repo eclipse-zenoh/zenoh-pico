@@ -52,14 +52,14 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
             break;
 
         case _Z_DECL_SUBSCRIBER:
-            return _z_interest_process_declares(zn, &decl->_decl, peer);
+            return _z_interest_process_declares(zn, decl, peer);
 
         case _Z_DECL_QUERYABLE:
-            return _z_interest_process_declares(zn, &decl->_decl, peer);
+            return _z_interest_process_declares(zn, decl, peer);
 
         case _Z_DECL_TOKEN:
             _Z_RETURN_IF_ERR(_z_liveliness_process_token_declare(zn, decl, peer));
-            return _z_interest_process_declares(zn, &decl->_decl, peer);
+            return _z_interest_process_declares(zn, decl, peer);
 
         case _Z_UNDECL_SUBSCRIBER:
             return _z_interest_process_undeclares(zn, &decl->_decl, peer);
@@ -74,10 +74,10 @@ static z_result_t _z_handle_declare_inner(_z_session_t *zn, _z_n_msg_declare_t *
         case _Z_DECL_FINAL:
             _Z_RETURN_IF_ERR(_z_liveliness_process_declare_final(zn, decl));
             // Check that interest id is valid
-            if (!decl->has_interest_id) {
+            if (!decl->_interest_id.has_value) {
                 _Z_ERROR_RETURN(_Z_ERR_MESSAGE_ZENOH_DECLARATION_UNKNOWN);
             }
-            return _z_interest_process_declare_final(zn, decl->_interest_id, peer);
+            return _z_interest_process_declare_final(zn, decl->_interest_id.value, peer);
 
         default:
             _Z_INFO("Received unknown declare tag: %d\n", decl->_decl._tag);
