@@ -27,20 +27,12 @@ extern "C" {
 // Forward declaration to avoid cyclical include
 typedef struct _z_session_t _z_session_t;
 
-// Subscription infos
-typedef struct {
-    _z_closure_sample_callback_t callback;
-    void *arg;
-} _z_subscription_infos_t;
-
-_Z_ELEM_DEFINE(_z_subscription_infos, _z_subscription_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move,
-               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SVEC_DEFINE(_z_subscription_infos, _z_subscription_infos_t)
+_Z_SVEC_DEFINE(_z_subscription_rc, _z_subscription_rc_t)
 
 typedef struct {
     _z_keyexpr_t ke_in;
     _z_keyexpr_t ke_out;
-    _z_subscription_infos_svec_t infos;
+    _z_subscription_rc_svec_t infos;
     size_t sub_nb;
 } _z_subscription_cache_data_t;
 
