@@ -29,9 +29,11 @@ echo "------------------ Running test $TESTBIN -------------------"
 sleep 5
 
 if [ ! -f zenohd ]; then
-    git clone https://github.com/DenisBiryukov91/zenoh.git zenoh-git
+    git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
     cd zenoh-git || exit
-    git switch fix-aggregate
+    if [ -n "$ZENOH_BRANCH" ]; then
+        git switch "$ZENOH_BRANCH"
+    fi
     rustup show
     cargo build --lib --bin zenohd
     cp ./target/debug/zenohd "$TESTDIR"/
