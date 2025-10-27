@@ -96,10 +96,6 @@ typedef struct _z_session_t {
     _z_pending_query_slist_t *_pending_queries;
 #endif
 
-#if Z_FEATURE_MATCHING == 1
-    _z_matching_listener_intmap_t _matching_listeners;
-#endif
-
     // Session interests
 #if Z_FEATURE_INTEREST == 1
     _z_session_interest_rc_slist_t *_local_interests;

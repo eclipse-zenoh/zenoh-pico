@@ -37,29 +37,15 @@ typedef struct {
 
 #if Z_FEATURE_MATCHING == 1
 
-#define _Z_MATCHING_LISTENER_CTX_NULL_ID 0xFFFFFFFF
+static inline void _z_closure_matching_status_clear(_z_closure_matching_status_t *closure) {
+    if (closure->drop != NULL) {
+        closure->drop(closure->context);
+    }
+}
 
-typedef struct _z_matching_listener_ctx_t {
-    uint32_t decl_id;
-    _z_closure_matching_status_t callback;
-} _z_matching_listener_ctx_t;
-
-typedef struct {
-    uint32_t interest_id;
-    _z_zint_t entity_id;
-    _z_matching_listener_ctx_t *ctx;
-} _z_matching_listener_state_t;
-
-_z_matching_listener_ctx_t *_z_matching_listener_ctx_new(_z_closure_matching_status_t callback);
-void _z_matching_listener_ctx_clear(_z_matching_listener_ctx_t *ctx);
-
-_z_matching_listener_state_t *_z_matching_listener_state_new(uint32_t interest_id, _z_zint_t entity_id,
-                                                             _z_matching_listener_ctx_t *ctx);
-void _z_matching_listener_state_clear(_z_matching_listener_state_t *state);
-
-_Z_ELEM_DEFINE(_z_matching_listener, _z_matching_listener_state_t, _z_noop_size, _z_matching_listener_state_clear,
+_Z_ELEM_DEFINE(_z_closure_matching_status, _z_closure_matching_status_t, _z_noop_size, _z_closure_matching_status_clear,
                _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_INT_MAP_DEFINE(_z_matching_listener, _z_matching_listener_state_t)
+_Z_INT_MAP_DEFINE(_z_closure_matching_status, _z_closure_matching_status_t)
 #endif  // Z_FEATURE_MATCHING == 1
 
 #ifdef __cplusplus

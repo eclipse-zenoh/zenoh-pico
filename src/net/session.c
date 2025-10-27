@@ -290,19 +290,19 @@ void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
             const _z_declaration_t *decl = &n_msg->_body._declare._decl;
             switch (decl->_tag) {
                 case _Z_UNDECL_KEXPR:
-                    zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
                         zs->_declaration_cache, _z_cache_declaration_undeclare_filter_kexpr, n_msg);
                     break;
                 case _Z_UNDECL_SUBSCRIBER:
-                    zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
                         zs->_declaration_cache, _z_cache_declaration_undeclare_filter_subscriber, n_msg);
                     break;
                 case _Z_UNDECL_QUERYABLE:
-                    zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
                         zs->_declaration_cache, _z_cache_declaration_undeclare_filter_queryable, n_msg);
                     break;
                 case _Z_UNDECL_TOKEN:
-                    zs->_declaration_cache = _z_network_message_slist_drop_filter(
+                    zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
                         zs->_declaration_cache, _z_cache_declaration_undeclare_filter_token, n_msg);
                     break;
                 default:
@@ -311,7 +311,7 @@ void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg) {
             break;
         }
         case _Z_N_INTEREST:
-            zs->_declaration_cache = _z_network_message_slist_drop_filter(
+            zs->_declaration_cache = _z_network_message_slist_drop_first_filter(
                 zs->_declaration_cache, _z_cache_declaration_undeclare_filter_interest, n_msg);
             break;
         default:

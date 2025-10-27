@@ -195,8 +195,8 @@ z_result_t _zp_periodic_scheduler_remove(_zp_periodic_scheduler_t *scheduler, ui
     bool removed = false;
     if (!_zp_periodic_task_list_is_empty(scheduler->_tasks)) {
         size_t expected_len = (scheduler->_inflight != NULL) ? scheduler->_task_count - 2 : scheduler->_task_count - 1;
-        scheduler->_tasks = _zp_periodic_task_list_drop_filter(scheduler->_tasks, _zp_periodic_task_eq,
-                                                               &(const _zp_periodic_task_t){._id = id});
+        scheduler->_tasks = _zp_periodic_task_list_drop_first_filter(scheduler->_tasks, _zp_periodic_task_eq,
+                                                                     &(const _zp_periodic_task_t){._id = id});
         size_t new_len = _zp_periodic_task_list_len(scheduler->_tasks);
         if (new_len == expected_len) {
             scheduler->_task_count--;

@@ -18,8 +18,8 @@
 
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/primitives.h"
-#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/session/matching.h"
 #include "zenoh-pico/session/resource.h"
@@ -27,86 +27,27 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_MATCHING == 1
-static void _z_matching_listener_callback(const _z_interest_msg_t *msg, _z_transport_peer_common_t *peer, void *arg) {
-    _ZP_UNUSED(peer);
-    _z_matching_listener_ctx_t *ctx = (_z_matching_listener_ctx_t *)arg;
-    switch (msg->type) {
-        case _Z_INTEREST_MSG_TYPE_DECL_SUBSCRIBER:
-        case _Z_INTEREST_MSG_TYPE_DECL_QUERYABLE: {
-            if (ctx->decl_id == _Z_MATCHING_LISTENER_CTX_NULL_ID) {
-                ctx->decl_id = msg->id;
-                z_matching_status_t status = {.matching = true};
-                z_closure_matching_status_call(&ctx->callback, &status);
-            }
-            break;
-        }
-
-        case _Z_INTEREST_MSG_TYPE_UNDECL_SUBSCRIBER:
-        case _Z_INTEREST_MSG_TYPE_UNDECL_QUERYABLE: {
-            if (ctx->decl_id == msg->id) {
-                ctx->decl_id = _Z_MATCHING_LISTENER_CTX_NULL_ID;
-                z_matching_status_t status = {.matching = false};
-                z_closure_matching_status_call(&ctx->callback, &status);
-            }
-            break;
-        }
-
-        default:
-            break;
+_z_matching_listener_t _z_matching_listener_declare(const _z_write_filter_ctx_rc_t *ctx, uint32_t id,
+                                                    _z_closure_matching_status_t *callback) {
+    if (_z_write_filter_ctx_add_callback(_Z_RC_IN_VAL(ctx), id, callback) == _Z_RES_OK) {
+        return (_z_matching_listener_t){._id = id, ._write_filter_ctx = _z_write_filter_ctx_rc_clone_as_weak(ctx)};
+    } else {
+        return _z_matching_listener_null();
     }
-}
-
-_z_matching_listener_t _z_matching_listener_declare(_z_session_rc_t *zn, const _z_keyexpr_t *key, _z_zint_t entity_id,
-                                                    uint8_t interest_type_flag, _z_closure_matching_status_t callback) {
-    uint8_t flags = interest_type_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_FUTURE |
-                    _Z_INTEREST_FLAG_AGGREGATE | _Z_INTEREST_FLAG_CURRENT;
-    _z_matching_listener_t ret = _z_matching_listener_null();
-
-    _z_matching_listener_ctx_t *ctx = _z_matching_listener_ctx_new(callback);
-    if (ctx == NULL) {
-        return ret;
-    }
-    _z_keyexpr_t ke;
-    _z_keyexpr_alias_from_user_defined(&ke, key);
-    ret._interest_id = _z_add_interest(_Z_RC_IN_VAL(zn), ke, _z_matching_listener_callback, flags, (void *)ctx);
-    if (ret._interest_id == 0) {
-        _z_matching_listener_ctx_clear(ctx);
-        return ret;
-    }
-
-    ret._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
-    ret._zn = _z_session_rc_clone_as_weak(zn);
-
-    _z_matching_listener_intmap_insert(&_Z_RC_IN_VAL(zn)->_matching_listeners, ret._id,
-                                       _z_matching_listener_state_new(ret._interest_id, entity_id, ctx));
-
-    return ret;
-}
-
-z_result_t _z_matching_listener_entity_undeclare(_z_session_t *zn, _z_zint_t entity_id) {
-    _z_matching_listener_intmap_iterator_t iter = _z_matching_listener_intmap_iterator_make(&zn->_matching_listeners);
-    bool has_next = _z_matching_listener_intmap_iterator_next(&iter);
-    while (has_next) {
-        size_t key = _z_matching_listener_intmap_iterator_key(&iter);
-        _z_matching_listener_state_t *listener = _z_matching_listener_intmap_iterator_value(&iter);
-        has_next = _z_matching_listener_intmap_iterator_next(&iter);
-        if (listener->entity_id == entity_id) {
-            _Z_DEBUG("_z_matching_listener_entity_undeclare: entity=%i, listener=%i", (int)entity_id, (int)key);
-            _z_remove_interest(zn, listener->interest_id);
-            _z_matching_listener_intmap_remove(&zn->_matching_listeners, key);
-        }
-    }
-    return _Z_RES_OK;
 }
 
 z_result_t _z_matching_listener_undeclare(_z_matching_listener_t *listener) {
-    _z_session_t *zn = _Z_RC_IN_VAL(&listener->_zn);
-    _z_matching_listener_intmap_remove(&zn->_matching_listeners, listener->_id);
-    return _z_remove_interest(zn, listener->_interest_id);
+    _z_write_filter_ctx_rc_t write_filter = _z_write_filter_ctx_weak_upgrade(&listener->_write_filter_ctx);
+    if (!_Z_RC_IS_NULL(&write_filter)) {
+        _z_write_filter_ctx_remove_callback(_Z_RC_IN_VAL(&write_filter), listener->_id);
+        _z_write_filter_ctx_rc_drop(&write_filter);
+    }
+    *listener = _z_matching_listener_null();
+    return _Z_RES_OK;
 }
 
 void _z_matching_listener_clear(_z_matching_listener_t *listener) {
-    _z_session_weak_drop(&listener->_zn);
+    _z_write_filter_ctx_weak_drop(&listener->_write_filter_ctx);
     *listener = _z_matching_listener_null();
 }
 
