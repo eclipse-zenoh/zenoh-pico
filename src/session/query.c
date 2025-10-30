@@ -92,10 +92,9 @@ _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t
     return pql;
 }
 
-z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id) {
+z_result_t _z_unsafe_register_pending_query(_z_session_t *zn, _z_zint_t id) {
     z_result_t ret = _Z_RES_OK;
 
-    _z_session_mutex_lock(zn);
     _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
     if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
         zn->_pending_queries = _z_pending_query_slist_push_empty(zn->_pending_queries);
@@ -103,7 +102,6 @@ z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id) {
         _Z_ERROR_LOG(_Z_ERR_ENTITY_DECLARATION_FAILED);
         ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
     }
-    _z_session_mutex_unlock(zn);
 
     return ret;
 }

@@ -184,7 +184,7 @@
         return ret;                                                                                               \
     }                                                                                                             \
     attribute void z_##name##_drop(z_moved_##name##_t *obj) {                                                     \
-        if (!_Z_RC_IS_NULL(&obj->_this._rc)) {                                                                    \
+        if (obj != NULL && !_Z_RC_IS_NULL(&obj->_this._rc)) {                                                     \
             _z_##name##_rc_drop(&obj->_this._rc);                                                                 \
         }                                                                                                         \
     }                                                                                                             \

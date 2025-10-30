@@ -135,9 +135,16 @@ z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *
 #if Z_FEATURE_QUERY == 1
 /**
  * The options for :c:func:`z_liveliness_get()`
+ *
+ * Members:
+ *   uint64_t timeout_ms: Liveliness query timeout in milliseconds.
+ *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct z_liveliness_get_options_t {
     uint64_t timeout_ms;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_cancellation_token_t *cancellation_token;
+#endif
 } z_liveliness_get_options_t;
 
 /**

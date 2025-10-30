@@ -90,6 +90,7 @@ typedef enum {
     Z_EDESERIALIZE = -72,
     Z_ETIMEDOUT = -71,
 
+    _Z_ERR_NULL = -127,
     _Z_ERR_GENERIC = -128
 } _z_res_t;
 
