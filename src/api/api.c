@@ -761,11 +761,11 @@ static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
     _ZP_UNUSED(options);
 
-    _z_config_t *cfg = &config->_this._val;
     if (config == NULL) {
         _Z_ERROR("A valid config is missing.");
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
+    _z_config_t *cfg = &config->_this._val;
 
     _z_id_t zid = _z_session_get_zid(cfg);
     if (!_z_id_check(zid)) {
