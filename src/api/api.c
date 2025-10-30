@@ -1776,13 +1776,19 @@ z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
 
 const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *queryable) {
     // Retrieve keyexpr from session
-    uint32_t lookup = queryable->_entity_id;
-    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&queryable->_zn);
-    if (_Z_RC_IS_NULL(&s)) {
-        return NULL;
-    }
     const z_loaned_keyexpr_t *ret = NULL;
-    _z_session_queryable_rc_slist_t *node = _Z_RC_IN_VAL(&s)->_local_queryable;
+    uint32_t lookup = queryable->_entity_id;
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&queryable->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        return ret;
+    }
+    _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
+#else
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+#endif
+    _z_session_mutex_lock(zn);
+    _z_session_queryable_rc_slist_t *node = zn->_local_queryable;
     while (node != NULL) {
         _z_session_queryable_rc_t *val = _z_session_queryable_rc_slist_value(node);
         if (_Z_RC_IN_VAL(val)->_id == lookup) {
@@ -1791,7 +1797,10 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
         }
         node = _z_session_queryable_rc_slist_next(node);
     }
-    _z_session_rc_drop(&s);
+    _z_session_mutex_unlock(zn);
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
     return ret;
 }
 
@@ -2097,17 +2106,33 @@ z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {
 }
 
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub) {
+    const z_loaned_keyexpr_t *ret = NULL;
     // Retrieve keyexpr from session
     uint32_t lookup = sub->_entity_id;
-    _z_subscription_rc_slist_t *node = _Z_RC_IN_VAL(&sub->_zn)->_subscriptions;
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&sub->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        return ret;
+    }
+    _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
+#else
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+#endif
+    _z_session_mutex_lock(zn);
+    _z_subscription_rc_slist_t *node = zn->_subscriptions;
     while (node != NULL) {
         _z_subscription_rc_t *val = _z_subscription_rc_slist_value(node);
         if (_Z_RC_IN_VAL(val)->_id == lookup) {
-            return (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(val)->_key;
+            ret = (const z_loaned_keyexpr_t *)&_Z_RC_IN_VAL(val)->_key;
+            break;
         }
         node = _z_subscription_rc_slist_next(node);
     }
-    return NULL;
+    _z_session_mutex_unlock(zn);
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
+    return ret;
 }
 
 #ifdef Z_FEATURE_UNSTABLE_API
