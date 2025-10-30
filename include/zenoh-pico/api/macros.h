@@ -82,7 +82,8 @@
                   z_owned_closure_matching_status_t : z_closure_matching_status_loan,  \
                   ze_owned_closure_miss_t : ze_closure_miss_loan,                      \
                   ze_owned_serializer_t : ze_serializer_loan,                          \
-                  z_owned_bytes_writer_t : z_bytes_writer_loan                         \
+                  z_owned_bytes_writer_t : z_bytes_writer_loan,                        \
+                  z_owned_cancellation_token_t : z_cancellation_token_loan             \
             )(&x)
 
 #define z_loan_mut(x) _Generic((x), \
@@ -114,7 +115,8 @@
                   z_owned_condvar_t : z_condvar_loan_mut,                              \
                   z_owned_reply_err_t : z_reply_err_loan_mut,                          \
                   ze_owned_serializer_t : ze_serializer_loan_mut,                      \
-                  z_owned_bytes_writer_t : z_bytes_writer_loan_mut                     \
+                  z_owned_bytes_writer_t : z_bytes_writer_loan_mut,                    \
+                  z_owned_cancellation_token_t : z_cancellation_token_loan_mut         \
             )(&x)
 
 /**
@@ -164,7 +166,8 @@
                   z_moved_ring_handler_sample_t* : z_ring_handler_sample_drop,         \
                   z_moved_reply_err_t* : z_reply_err_drop,                             \
                   ze_moved_serializer_t* : ze_serializer_drop,                         \
-                  z_moved_bytes_writer_t* : z_bytes_writer_drop                        \
+                  z_moved_bytes_writer_t* : z_bytes_writer_drop,                       \
+                  z_moved_cancellation_token_t* : z_cancellation_token_drop            \
             )(x)
 
 /**
@@ -209,7 +212,8 @@
                   z_owned_query_t : z_internal_query_check,                                      \
                   z_owned_encoding_t : z_internal_encoding_check,                                \
                   ze_owned_serializer_t : ze_internal_serializer_check,                          \
-                  z_owned_bytes_writer_t : z_internal_bytes_writer_check                         \
+                  z_owned_bytes_writer_t : z_internal_bytes_writer_check,                        \
+                  z_owned_cancellation_token_t : z_internal_cancellation_token_check             \
             )(&x)
 
 /**
@@ -298,7 +302,8 @@
                   z_owned_fifo_handler_sample_t : z_fifo_handler_sample_move,           \
                   z_owned_reply_err_t : z_reply_err_move,                               \
                   ze_owned_serializer_t : ze_serializer_move,                           \
-                  z_owned_bytes_writer_t : z_bytes_writer_move                          \
+                  z_owned_bytes_writer_t : z_bytes_writer_move,                         \
+                  z_owned_cancellation_token_t : z_cancellation_token_move              \
             )(&x)
 
 /**
@@ -351,7 +356,8 @@
         z_owned_string_t *: z_string_take,                                     \
         z_owned_subscriber_t *: z_subscriber_take,                             \
         ze_owned_serializer_t *: ze_serializer_take,                           \
-        z_owned_bytes_writer_t *: z_bytes_writer_take                          \
+        z_owned_bytes_writer_t *: z_bytes_writer_take,                         \
+        z_owned_cancellation_token_t *: z_cancellation_token_take              \
     )(this_, x)
 
 /**
@@ -364,20 +370,21 @@
  * Returns:
  *   `0` in case of success, negative error code otherwise.
  */
-#define z_clone(dst, src) _Generic((dst), \
-                  z_owned_keyexpr_t* : z_keyexpr_clone,                 \
-                  z_owned_query_t* : z_query_clone,                     \
-                  z_owned_sample_t* : z_sample_clone,                   \
-                  z_owned_source_info_t* : z_source_info_clone,         \
-                  z_owned_bytes_t* : z_bytes_clone,                     \
-                  z_owned_encoding_t* : z_encoding_clone,               \
-                  z_owned_reply_err_t* : z_reply_err_clone,             \
-                  z_owned_reply_t* : z_reply_clone,                     \
-                  z_owned_hello_t* : z_hello_clone,                     \
-                  z_owned_string_t* : z_string_clone,                   \
-                  z_owned_slice_t* : z_slice_clone,                     \
-                  z_owned_string_array_t* : z_string_array_clone,       \
-                  z_owned_config_t* : z_config_clone                    \
+#define z_clone(dst, src) _Generic((dst),                                    \
+                  z_owned_keyexpr_t* : z_keyexpr_clone,                      \
+                  z_owned_query_t* : z_query_clone,                          \
+                  z_owned_sample_t* : z_sample_clone,                        \
+                  z_owned_source_info_t* : z_source_info_clone,              \
+                  z_owned_bytes_t* : z_bytes_clone,                          \
+                  z_owned_encoding_t* : z_encoding_clone,                    \
+                  z_owned_reply_err_t* : z_reply_err_clone,                  \
+                  z_owned_reply_t* : z_reply_clone,                          \
+                  z_owned_hello_t* : z_hello_clone,                          \
+                  z_owned_string_t* : z_string_clone,                        \
+                  z_owned_slice_t* : z_slice_clone,                          \
+                  z_owned_string_array_t* : z_string_array_clone,            \
+                  z_owned_config_t* : z_config_clone,                        \
+                  z_owned_cancellation_token_t* : z_cancellation_token_clone \
             )(dst, src)
 
 /**
@@ -390,7 +397,7 @@
  * Returns:
  *   `0` in case of success, negative error code otherwise.
  */
-#define z_take_from_loaned(dst, src) _Generic((dst), \
+#define z_take_from_loaned(dst, src) _Generic((dst),                               \
                   z_owned_keyexpr_t* : z_keyexpr_take_from_loaned,                 \
                   z_owned_query_t* : z_query_take_from_loaned,                     \
                   z_owned_sample_t* : z_sample_take_from_loaned,                   \
@@ -402,9 +409,10 @@
                   z_owned_string_t* : z_string_take_from_loaned,                   \
                   z_owned_slice_t* : z_slice_take_from_loaned,                     \
                   z_owned_string_array_t* : z_string_array_take_from_loaned,       \
-                  z_owned_config_t* : z_config_take_from_loaned                    \
+                  z_owned_config_t* : z_config_take_from_loaned,                   \
                   z_owned_bytes_writer_t* : z_bytes_writer_take_from_loaned,       \
                   ze_owned_serializer_t* : ze_serializer_take_from_loaned,         \
+                  z_cancellation_token_t* : z_cancellation_token_take_from_loaned  \
             )(dst, src)
 
 /**
@@ -445,7 +453,8 @@
                   z_owned_encoding_t * : z_internal_encoding_null,                                \
                   z_owned_reply_err_t * : z_internal_reply_err_null,                              \
                   ze_owned_serializer_t * : ze_internal_serializer_null,                          \
-                  z_owned_bytes_writer_t * : z_internal_bytes_writer_null                         \
+                  z_owned_bytes_writer_t * : z_internal_bytes_writer_null,                        \
+                  z_owned_cancellation_token_t * : z_internal_cancellation_token_null             \
             )(x)
 
 // clang-format on
@@ -519,6 +528,7 @@ inline const z_loaned_ring_handler_reply_t* z_loan(const z_owned_ring_handler_re
 inline const z_loaned_ring_handler_sample_t* z_loan(const z_owned_ring_handler_sample_t& x) { return z_ring_handler_sample_loan(&x); }
 inline const z_loaned_bytes_writer_t* z_loan(const z_owned_bytes_writer_t& x) { return z_bytes_writer_loan(&x); }
 inline const ze_loaned_serializer_t* z_loan(const ze_owned_serializer_t& x) { return ze_serializer_loan(&x); }
+inline const z_loaned_cancellation_token_t* z_loan(const z_owned_cancellation_token_t& x) { return z_cancellation_token_loan(&x); }
 
 // z_loan_mut definition
 inline z_loaned_keyexpr_t* z_loan_mut(z_owned_keyexpr_t& x) { return z_keyexpr_loan_mut(&x); }
@@ -552,6 +562,7 @@ inline z_loaned_condvar_t* z_loan_mut(z_owned_condvar_t& x) { return z_condvar_l
 inline z_loaned_reply_err_t* z_loan_mut(z_owned_reply_err_t& x) { return z_reply_err_loan_mut(&x); }
 inline z_loaned_bytes_writer_t* z_loan_mut(z_owned_bytes_writer_t& x) { return z_bytes_writer_loan_mut(&x); }
 inline ze_loaned_serializer_t* z_loan_mut(ze_owned_serializer_t& x) { return ze_serializer_loan_mut(&x); }
+inline z_loaned_cancellation_token_t* z_loan_mut(z_owned_cancellation_token_t& x) { return z_cancellation_token_loan_mut(&x); }
 
 // z_drop definition
 inline void z_drop(z_moved_session_t* v) { z_session_drop(v); }
@@ -594,6 +605,7 @@ inline void z_drop(z_moved_ring_handler_reply_t* v) { z_ring_handler_reply_drop(
 inline void z_drop(z_moved_fifo_handler_reply_t* v) { z_fifo_handler_reply_drop(v); }
 inline void z_drop(z_moved_bytes_writer_t* v) { z_bytes_writer_drop(v); }
 inline void z_drop(ze_moved_serializer_t* v) { ze_serializer_drop(v); }
+inline void z_drop(z_moved_cancellation_token_t* v) { z_cancellation_token_drop(v); }
 
 // z_internal_null definition
 inline void z_internal_null(z_owned_session_t* v) { z_internal_session_null(v); }
@@ -632,6 +644,7 @@ inline void z_internal_null(z_owned_fifo_handler_reply_t* v) { return z_internal
 inline void z_internal_null(z_owned_fifo_handler_sample_t* v) { return z_internal_fifo_handler_sample_null(v); }
 inline void z_internal_null(z_owned_bytes_writer_t* v) { return z_internal_bytes_writer_null(v); }
 inline void z_internal_null(ze_owned_serializer_t* v) { return ze_internal_serializer_null(v); }
+inline void z_internal_null(z_owned_cancellation_token_t* v) { return z_internal_cancellation_token_null(v); }
 
 // z_internal_check definition
 inline bool z_internal_check(const z_owned_session_t& v) { return z_internal_session_check(&v); }
@@ -663,6 +676,7 @@ inline bool z_internal_check(const z_owned_ring_handler_reply_t& v) { return z_i
 inline bool z_internal_check(const z_owned_ring_handler_sample_t& v) { return z_internal_ring_handler_sample_check(&v); }
 inline bool z_internal_check(const z_owned_bytes_writer_t& v) { return z_internal_bytes_writer_check(&v); }
 inline bool z_internal_check(const ze_owned_serializer_t& v) { return ze_internal_serializer_check(&v); }
+inline bool z_internal_check(const z_owned_cancellation_token_t& v) { return z_internal_cancellation_token_check(&v); }
 
 // z_call definition
 inline void z_call(const z_loaned_closure_sample_t &closure, z_loaned_sample_t *sample) 
@@ -835,6 +849,7 @@ inline z_moved_ring_handler_sample_t* z_move(z_owned_ring_handler_sample_t& x) {
 }
 inline z_moved_bytes_writer_t* z_move(z_owned_bytes_writer_t& x) { return z_bytes_writer_move(&x); }
 inline ze_moved_serializer_t* z_move(ze_owned_serializer_t& x) { return ze_serializer_move(&x); }
+inline z_moved_cancellation_token_t* z_move(z_owned_cancellation_token_t& x) { return z_cancellation_token_move(&x); }
 
 // z_take definition
 inline void z_take(z_owned_session_t* this_, z_moved_session_t* v) { return z_session_take(this_, v); }
@@ -901,6 +916,9 @@ inline void z_take(z_owned_fifo_handler_reply_t* this_, z_moved_fifo_handler_rep
 }
 inline void z_take(z_owned_bytes_writer_t* this_, z_moved_bytes_writer_t* v) { z_bytes_writer_take(this_, v); }
 inline void z_take(ze_owned_serializer_t* this_, ze_moved_serializer_t* v) { ze_serializer_take(this_, v); }
+inline void z_take(z_owned_cancellation_token_t* this_, z_moved_cancellation_token_t* v) {
+    z_cancellation_token_take(this_, v);
+}
 
 // z_clone definition
 inline z_result_t z_clone(z_owned_bytes_t* dst, const z_loaned_bytes_t* this_) { return z_bytes_clone(dst, this_); }
@@ -969,6 +987,9 @@ inline z_result_t z_take_from_loaned(z_owned_bytes_writer_t* dst, z_loaned_bytes
 }
 inline z_result_t z_take_from_loaned(ze_owned_serializer_t* dst, ze_loaned_serializer_t* this_) {
     return ze_serializer_take_from_loaned(dst, this_);
+}
+inline z_result_t z_take_from_loaned(z_owned_cancellation_token_t* dst, z_loaned_cancellation_token_t* this_) {
+    return z_cancellation_token_take_from_loaned(dst, this_);
 }
 
 template <class T>
@@ -1278,6 +1299,14 @@ struct z_loaned_to_owned_type_t<ze_loaned_serializer_t> {
 template <>
 struct z_owned_to_loaned_type_t<ze_owned_serializer_t> {
     typedef ze_loaned_serializer_t type;
+};
+template <>
+struct z_loaned_to_owned_type_t<z_loaned_cancellation_token_t> {
+    typedef z_owned_cancellation_token_t type;
+};
+template <>
+struct z_owned_to_loaned_type_t<z_owned_cancellation_token_t> {
+    typedef z_loaned_cancellation_token_t type;
 };
 
 #endif

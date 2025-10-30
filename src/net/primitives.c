@@ -459,8 +459,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
                     z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                     const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
-                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                    z_congestion_control_t cong_ctrl) {
+                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos, _z_zint_t *out_qid) {
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
         return Z_EINVAL;
@@ -475,11 +474,12 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     }
     // Add the pending query to the current session
     _z_zint_t qid = _z_get_query_id(zn);
-    _Z_RETURN_IF_ERR(_z_register_pending_query(zn, qid));
+    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_unsafe_register_pending_query(zn, qid), _z_session_mutex_unlock(zn));
     // Create the pending query object
     _z_pending_query_t *pq = _z_pending_query_slist_value(zn->_pending_queries);
     pq->_id = qid;
-    pq->_key = _z_get_expanded_key_from_key(zn, keyexpr, NULL);
+    pq->_key = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, false, NULL);
     pq->_target = target;
     pq->_consolidation = consolidation;
     pq->_anykey =
@@ -490,7 +490,8 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     pq->_arg = arg;
     pq->_timeout = timeout_ms;
     pq->_start_time = z_clock_now();
-
+    _z_session_mutex_unlock(zn);
+    *out_qid = qid;
     // Send query message
     _z_source_info_t source_info = _z_source_info_null();
     _z_slice_t params =
@@ -499,7 +500,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
                         timeout_ms, attachment, qos, &source_info);
 
-    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, cong_ctrl, NULL) != _Z_RES_OK) {
+    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL) != _Z_RES_OK) {
         _z_unregister_pending_query(zn, pq);
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }

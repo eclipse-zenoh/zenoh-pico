@@ -30,7 +30,7 @@ _z_zint_t _z_get_query_id(_z_session_t *zn);
 
 _z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id);
 
-z_result_t _z_register_pending_query(_z_session_t *zn, _z_zint_t id);
+z_result_t _z_unsafe_register_pending_query(_z_session_t *zn, _z_zint_t id);
 z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, _z_zint_t reply_context, _z_keyexpr_t *keyexpr,
                                           _z_msg_put_t *msg, z_sample_kind_t kind, _z_entity_global_id_t *replier_id,
                                           _z_transport_peer_common_t *peer);

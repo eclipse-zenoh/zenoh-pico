@@ -146,6 +146,9 @@ z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *
 #if Z_FEATURE_QUERY == 1
 z_result_t z_liveliness_get_options_default(z_liveliness_get_options_t *options) {
     options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
+#ifdef Z_FEATURE_UNSTABLE_API
+    options->cancellation_token = NULL;
+#endif
     return _Z_RES_OK;
 }
 
@@ -165,9 +168,30 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
 
     _z_keyexpr_t ke;
     _z_keyexpr_alias_from_user_defined(&ke, keyexpr);
-    ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), &ke, callback->_this._val.call, callback->_this._val.drop, ctx,
-                              opt.timeout_ms);
 
+#ifdef Z_FEATURE_UNSTABLE_API
+    bool should_proceed = (opt.cancellation_token == NULL ||
+                           !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
+#else
+    bool should_proceed = true;
+#endif
+    if (should_proceed) {
+        _z_zint_t qid;
+        ret = _z_liveliness_query(_Z_RC_IN_VAL(zs), &ke, callback->_this._val.call, callback->_this._val.drop, ctx,
+                                  opt.timeout_ms, &qid);
+#ifdef Z_FEATURE_UNSTABLE_API
+        if (ret == _Z_RES_OK && opt.cancellation_token != NULL) {
+            ret = _z_cancellation_token_add_on_liveliness_query_cancel_handler(
+                _Z_RC_IN_VAL(&opt.cancellation_token->_this._rc), zs, qid);
+        }
+#endif
+    } else if (callback->_this._val.drop != NULL) {
+        callback->_this._val.drop(ctx);
+    }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_cancellation_token_drop(opt.cancellation_token);
+#endif
     z_internal_closure_reply_null(
         &callback->_this);  // call and drop passed to _z_liveliness_query, so we nullify the closure here
     return ret;
