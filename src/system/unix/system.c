@@ -156,6 +156,7 @@ z_result_t _z_condvar_init(_z_condvar_t *cv) {
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
 #ifndef ZENOH_MACOS
+    // macos does not have pthread_condattr_setclock function
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
 #endif
     _Z_CHECK_SYS_ERR(pthread_cond_init(cv, &attr));
@@ -170,7 +171,26 @@ z_result_t _z_condvar_signal_all(_z_condvar_t *cv) { _Z_CHECK_SYS_ERR(pthread_co
 z_result_t _z_condvar_wait(_z_condvar_t *cv, _z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_cond_wait(cv, m)); }
 
 z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_t *abstime) {
+#ifndef ZENOH_MACOS
     int error = pthread_cond_timedwait(cv, m, abstime);
+#else
+    // pthread_cond_timedwait does not work for macos since it assumes REALTIME_CLOCK
+    // while z_clock_t corresponds to MONOTONIC_CLOCK.
+    z_clock_t deadline = {0};
+    z_clock_t now = z_clock_now();
+    if (now.tv_sec < abstime->tv_sec) {
+        deadline.tv_sec = abstime->tv_sec - now.tv_sec;
+        if (now.tv_nsec <= abstime->tv_nsec) {
+            deadline.tv_nsec = abstime->tv_nsec - now.tv_nsec;
+        } else {
+            deadline.tv_sec--;
+            deadline.tv_nsec += 1000000000 + abstime->tv_nsec - now.tv_nsec;
+        }
+    } else if (now.tv_sec == abstime->tv_sec && now.tv_nsec < abstime->tv_nsec) {
+        deadline.tv_nsec = abstime->tv_nsec - now.tv_nsec;
+    }
+    int error = pthread_cond_timedwait_relative_np(cv, m, &deadline);
+#endif
 
     if (error == ETIMEDOUT) {
         return Z_ETIMEDOUT;
