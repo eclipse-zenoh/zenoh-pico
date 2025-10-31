@@ -189,7 +189,6 @@ z_result_t _z_condvar_wait_until(_z_condvar_t *cv, _z_mutex_t *m, const z_clock_
     } else if (now.tv_sec == abstime->tv_sec && now.tv_nsec < abstime->tv_nsec) {
         deadline.tv_nsec = abstime->tv_nsec - now.tv_nsec;
     }
-
     int error = pthread_cond_timedwait_relative_np(cv, m, &deadline);
 #endif
 
