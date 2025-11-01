@@ -47,8 +47,11 @@ void _z_queryable_cache_invalidate(_z_session_t *zn) {
 
 #if Z_FEATURE_RX_CACHE == 1
 int _z_queryable_cache_data_compare(const void *first, const void *second) {
-    _z_queryable_cache_data_t *first_data = (_z_queryable_cache_data_t *)first;
-    _z_queryable_cache_data_t *second_data = (_z_queryable_cache_data_t *)second;
+    const _z_queryable_cache_data_t *first_data = (const _z_queryable_cache_data_t *)first;
+    const _z_queryable_cache_data_t *second_data = (const _z_queryable_cache_data_t *)second;
+    if (first_data->is_remote != second_data->is_remote) {
+        return (int)first_data->is_remote - (int)second_data->is_remote;
+    }
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
 
@@ -104,7 +107,7 @@ static _z_session_queryable_rc_t *__unsafe_z_get_session_queryable_by_id(_z_sess
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-static z_result_t __unsafe_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *key,
+static z_result_t __unsafe_z_get_session_queryable_by_key(_z_session_t *zn, const _z_keyexpr_t *key, bool is_remote,
                                                           _z_queryable_infos_svec_t *qle_infos) {
     _z_session_queryable_rc_slist_t *qles = zn->_local_queryable;
 
@@ -113,9 +116,15 @@ static z_result_t __unsafe_z_get_session_queryable_by_key(_z_session_t *zn, cons
     while (xs != NULL) {
         // Parse queryable list
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_slist_value(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(qle)->_key, key)) {
-            _z_queryable_infos_t new_qle_info = {.arg = _Z_RC_IN_VAL(qle)->_arg,
-                                                 .callback = _Z_RC_IN_VAL(qle)->_callback};
+        const _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
+        bool origin_allowed = is_remote ? zp_locality_allows_remote(qle_val->_allowed_origin)
+                                        : zp_locality_allows_local(qle_val->_allowed_origin);
+        if (!origin_allowed) {
+            xs = _z_session_queryable_rc_slist_next(xs);
+            continue;
+        }
+        if (_z_keyexpr_suffix_intersects(&qle_val->_key, key)) {
+            _z_queryable_infos_t new_qle_info = {.arg = qle_val->_arg, .callback = qle_val->_callback};
             _Z_RETURN_IF_ERR(_z_queryable_infos_svec_append(qle_infos, &new_qle_info, false));
         }
         xs = _z_session_queryable_rc_slist_next(xs);
@@ -149,9 +158,13 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
 
 static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_cache_data_t *infos,
                                                  _z_transport_peer_common_t *peer) {
+    infos->is_remote = (peer != NULL);
     _z_queryable_cache_data_t *cache_entry = NULL;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_queryable_lru_cache_get(&zn->_queryable_cache, infos);
+    if (cache_entry != NULL && cache_entry->is_remote != infos->is_remote) {
+        cache_entry = NULL;
+    }
 #endif
     // Check cache
     if (cache_entry != NULL) {
@@ -171,7 +184,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
             _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
         }
         // Get queryable list
-        z_result_t ret = __unsafe_z_get_session_queryable_by_key(zn, &infos->ke_out, &infos->infos);
+        z_result_t ret = __unsafe_z_get_session_queryable_by_key(zn, &infos->ke_out, infos->is_remote, &infos->infos);
         _z_session_mutex_unlock(zn);
         if (ret != _Z_RES_OK) {
             return ret;
@@ -184,6 +197,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
             .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
             .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
             .qle_nb = infos->qle_nb,
+            .is_remote = infos->is_remote,
         };
         _z_queryable_lru_cache_insert(&zn->_queryable_cache, &cache_storage);
 #endif

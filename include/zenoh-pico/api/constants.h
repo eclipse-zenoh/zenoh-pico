@@ -14,6 +14,8 @@
 #ifndef ZENOH_PICO_API_CONSTANTS_H
 #define ZENOH_PICO_API_CONSTANTS_H
 
+#include <stdbool.h>
+
 #define Z_SELECTOR_TIME "_time="
 #define Z_SELECTOR_QUERY_MATCH "_anyke"
 
@@ -53,6 +55,44 @@ typedef enum z_whatami_t {
     Z_WHATAMI_CLIENT = 0x04,
 } z_whatami_t;
 #define Z_WHATAMI_DEFAULT Z_WHATAMI_ROUTER;
+
+/**
+ * The locality of samples to be received by subscribers or targeted by publishers.
+ *
+ * Enumerators:
+ *   ZP_LOCALITY_ANY: Allow both session-local and remote traffic.
+ *   ZP_LOCALITY_SESSION_LOCAL: Allow session-local traffic only.
+ *   ZP_LOCALITY_REMOTE: Allow remote traffic only.
+ */
+typedef enum zp_locality_t {
+    ZP_LOCALITY_ANY = 0,
+    ZP_LOCALITY_SESSION_LOCAL = 1,
+    ZP_LOCALITY_REMOTE = 2,
+} zp_locality_t;
+
+static inline zp_locality_t zp_locality_default(void) { return ZP_LOCALITY_ANY; }
+
+static inline bool zp_locality_allows_local(zp_locality_t locality) {
+    switch (locality) {
+        case ZP_LOCALITY_REMOTE:
+            return false;
+        case ZP_LOCALITY_ANY:
+        case ZP_LOCALITY_SESSION_LOCAL:
+        default:
+            return true;
+    }
+}
+
+static inline bool zp_locality_allows_remote(zp_locality_t locality) {
+    switch (locality) {
+        case ZP_LOCALITY_SESSION_LOCAL:
+            return false;
+        case ZP_LOCALITY_ANY:
+        case ZP_LOCALITY_REMOTE:
+        default:
+            return true;
+    }
+}
 
 /**
  * Status values for keyexpr canonization operation.

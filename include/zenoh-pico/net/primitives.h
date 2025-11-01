@@ -110,7 +110,7 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
  */
 _z_publisher_t _z_declare_publisher(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, _z_encoding_t *encoding,
                                     z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
-                                    z_reliability_t reliability);
+                                    z_reliability_t reliability, zp_locality_t allowed_destination);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -147,7 +147,8 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
 z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
                     const _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                    const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info);
+                    const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info,
+                    zp_locality_t allowed_destination);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -165,7 +166,8 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_byte
  *    The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
  */
 _z_subscriber_t _z_declare_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
-                                      _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg);
+                                      _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                      zp_locality_t allowed_origin);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -195,7 +197,8 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  *    The created :c:type:`_z_queryable_t` (in null state if the declaration failed)..
  */
 _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr, bool complete,
-                                    _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg);
+                                    _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                    zp_locality_t allowed_origin);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -270,7 +273,8 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 _z_querier_t _z_declare_querier(const _z_session_rc_t *zn, _z_keyexpr_t keyexpr,
                                 z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                                 z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
-                                _z_encoding_t *encoding, z_reliability_t reliability);
+                                _z_encoding_t *encoding, z_reliability_t reliability,
+                                zp_locality_t allowed_destination);
 
 /**
  * Undeclare a :c:type:`_z_querier_t`.
@@ -308,7 +312,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
                     z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                     const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
                     void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                    z_congestion_control_t cong_ctrl);
+                    z_congestion_control_t cong_ctrl, zp_locality_t allowed_destination);
 #endif
 
 #if Z_FEATURE_INTEREST == 1
