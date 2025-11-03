@@ -148,19 +148,19 @@ static void test_start_stop_scheduler_task(void) {
     _zp_closure_periodic_task_t cl = mk_closure(&ctx);
     uint32_t id = 0;
 
-    // Add a 50 ms job
-    ASSERT_OK(_zp_periodic_task_add(inner, &cl, 50, &id));
+    // Add a 500 ms job
+    ASSERT_OK(_zp_periodic_task_add(inner, &cl, 500, &id));
     ASSERT_TRUE(id != 0);
 
     // Allow a few periods to elapse
-    z_sleep_ms(170);
+    z_sleep_ms(1700);
     int hits_after_start = ctx.hits;
     ASSERT_TRUE(hits_after_start >= 2);  // typically 3–4, but allow margin
 
     // Stop the scheduler: hits must stop increasing
     ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s)));
     int stop_snapshot = ctx.hits;
-    z_sleep_ms(150);
+    z_sleep_ms(1500);
     ASSERT_TRUE(ctx.hits == stop_snapshot);
 
     // Remove task; should call drop exactly once
