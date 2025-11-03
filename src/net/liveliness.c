@@ -137,7 +137,7 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERY == 1
 z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_closure_reply_callback_t callback,
-                               _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms) {
+                               _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_zint_t *out_id) {
     z_result_t ret = _Z_RES_OK;
 
     // Create the pending liveliness query object
@@ -149,6 +149,7 @@ z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z
         pq->_callback = callback;
         pq->_dropper = dropper;
         pq->_arg = arg;
+        *out_id = id;
 
         ret = _z_liveliness_register_pending_query(zn, id, pq);
         if (ret == _Z_RES_OK) {

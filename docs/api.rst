@@ -1629,6 +1629,35 @@ Functions
 .. autocfunction:: liveliness.h::z_liveliness_declare_background_subscriber
 .. autocfunction:: liveliness.h::z_liveliness_get
 
+Cancellation Token
+==================
+Types
+-----
+
+Represents a Cancellation token entity, which is used to interrupt initiated queries (unstable).
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_cancellation_token_t
+.. c:type:: z_loaned_cancellation_token_t
+.. c:type:: z_moved_cancellation_token_t
+
+
+Functions
+---------
+.. autocfunction:: primitives.h::z_cancellation_token_new
+.. autocfunction:: primitives.h::z_cancellation_token_is_cancelled
+.. autocfunction:: primitives.h::z_cancellation_token_cancel
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: void z_cancellation_token_drop(z_moved_cancellation_token_t *cancellation_token) 
+.. c:function:: void z_cancellation_token_clone(z_owned_cancellation_token_t *dst, const z_loaned_cancellation_token_t *src) 
+.. c:function:: const z_loaned_cancellation_token_t *z_cancellation_token_loan(const z_owned_cancellation_token_t * cancellation_token)
+.. c:function:: z_loaned_cancellation_token * z_cancellation_token_loan_mut(z_owned_cancellation_token_t *cancellation_token)
+.. c:function:: z_result_t z_cancellation_token_take_from_loaned(z_owned_cancellation_token_t *dst, z_loaned_cancellation_token_t *src)
 
 Others
 ======
