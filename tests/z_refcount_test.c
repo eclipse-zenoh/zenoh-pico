@@ -86,6 +86,17 @@ void test_rc_new_from_val(void) {
     assert(val_foo == FOO_CLEARED_VALUE);
 }
 
+void test_rc_new_undefined(void) {
+    int val_foo = 42;
+    _dummy_rc_t drc = _dummy_rc_new_undefined();
+    assert(!_Z_RC_IS_NULL(&drc));
+    assert(_z_rc_strong_count(drc._cnt) == 1);
+    assert(_z_rc_weak_count(drc._cnt) == 1);
+    _Z_RC_IN_VAL(&drc)->foo = &val_foo;
+    assert(_dummy_rc_drop(&drc));
+    assert(val_foo == FOO_CLEARED_VALUE);
+}
+
 void test_rc_clone(void) {
     int val_foo = 42;
     _dummy_t val = {.foo = &val_foo};
@@ -409,6 +420,7 @@ int main(void) {
     test_rc_drop();
     test_rc_new();
     test_rc_new_from_val();
+    test_rc_new_undefined();
     test_rc_clone();
     test_rc_eq();
     test_rc_clone_as_ptr();

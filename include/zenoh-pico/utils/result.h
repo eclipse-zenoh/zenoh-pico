@@ -93,6 +93,13 @@ typedef enum {
     _Z_ERR_GENERIC = -128
 } _z_res_t;
 
+#define _Z_SET_IF_OK(expr, value) \
+    {                             \
+        if (expr == _Z_RES_OK) {  \
+            expr = value;         \
+        }                         \
+    }
+
 #define _Z_RETURN_IF_ERR(expr)    \
     {                             \
         z_result_t __res = expr;  \
@@ -108,6 +115,21 @@ typedef enum {
             clean_expr;                               \
             return __res;                             \
         }                                             \
+    }
+
+#define _Z_RETURN_ERR_OOM_IF_TRUE(expr)         \
+    {                                           \
+        if (expr) {                             \
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY; \
+        }                                       \
+    }
+
+#define _Z_CLEAN_RETURN_ERR_OOM_IF_TRUE(expr, clean_expr) \
+    {                                                     \
+        if (expr) {                                       \
+            clean_expr;                                   \
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;           \
+        }                                                 \
     }
 
 #define _Z_IS_OK(expr) (expr == _Z_RES_OK)

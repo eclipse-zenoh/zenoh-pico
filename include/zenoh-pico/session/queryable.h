@@ -25,20 +25,13 @@ typedef struct _z_session_t _z_session_t;
 typedef struct _z_session_rc_t _z_session_rc_t;
 
 // Queryable infos
-typedef struct {
-    _z_closure_query_callback_t callback;
-    void *arg;
-} _z_queryable_infos_t;
-
-_Z_ELEM_DEFINE(_z_queryable_infos, _z_queryable_infos_t, _z_noop_size, _z_noop_clear, _z_noop_copy, _z_noop_move,
-               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
-_Z_SVEC_DEFINE(_z_queryable_infos, _z_queryable_infos_t)
+_Z_SVEC_DEFINE(_z_session_queryable_rc, _z_session_queryable_rc_t)
+_Z_REFCOUNT_DEFINE(_z_session_queryable_rc_svec, _z_session_queryable_rc_svec)
 
 typedef struct {
     _z_keyexpr_t ke_in;
     _z_keyexpr_t ke_out;
-    _z_queryable_infos_svec_t infos;
-    size_t qle_nb;
+    _z_session_queryable_rc_svec_rc_t infos;
 } _z_queryable_cache_data_t;
 
 void _z_queryable_cache_invalidate(_z_session_t *zn);

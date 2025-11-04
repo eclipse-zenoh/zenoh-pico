@@ -258,11 +258,22 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     if (sub == NULL || _Z_RC_IS_NULL(&sub->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&sub->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
+#else
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+#endif
     // Find subscription entry
-    _z_subscription_rc_t *s =
-        _z_get_subscription_by_id(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, sub->_entity_id);
+    _z_subscription_rc_t *s = _z_get_subscription_by_id(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, sub->_entity_id);
     if (s == NULL) {
 #if Z_FEATURE_LIVELINESS == 1
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
         // Not found, treat it as a liveliness subscriber
         return _z_undeclare_liveliness_subscriber(sub);
 #else
@@ -271,22 +282,28 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&sub->_zn)->_mode == Z_WHATAMI_CLIENT) {
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_subscriber(sub->_entity_id, &_Z_RC_IN_VAL(s)->_key);
     }
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    if (_z_send_undeclare(_Z_RC_IN_VAL(&sub->_zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_undeclare(zn, &n_msg) != _Z_RES_OK) {
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local subscription state can be removed
-    _z_undeclare_resource(_Z_RC_IN_VAL(&sub->_zn), _Z_RC_IN_VAL(s)->_key_id);
-    _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
+    _z_undeclare_resource(zn, _Z_RC_IN_VAL(s)->_key_id);
+    _z_unregister_subscription(zn, _Z_SUBSCRIBER_KIND_SUBSCRIBER, s);
     // Invalidate cache
-    _z_subscription_cache_invalidate(_Z_RC_IN_VAL(&sub->_zn));
+    _z_subscription_cache_invalidate(zn);
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
     return _Z_RES_OK;
 }
 #endif
@@ -333,28 +350,46 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     if (qle == NULL || _Z_RC_IS_NULL(&qle->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&qle->_zn);
+    if (_Z_RC_IS_NULL(&sess_rc)) {
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    _z_session_t *zn = _Z_RC_IN_VAL(&sess_rc);
+#else
+    _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&sub->_zn);
+#endif
     // Find session_queryable entry
-    _z_session_queryable_rc_t *q = _z_get_session_queryable_by_id(_Z_RC_IN_VAL(&qle->_zn), qle->_entity_id);
+    _z_session_queryable_rc_t *q = _z_get_session_queryable_by_id(zn, qle->_entity_id);
     if (q == NULL) {
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
     // Build the declare message to send on the wire
     _z_declaration_t declaration;
-    if (_Z_RC_IN_VAL(&qle->_zn)->_mode == Z_WHATAMI_CLIENT) {
+    if (zn->_mode == Z_WHATAMI_CLIENT) {
         declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
     } else {
         declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
     }
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    if (_z_send_undeclare(_Z_RC_IN_VAL(&qle->_zn), &n_msg) != _Z_RES_OK) {
+    if (_z_send_undeclare(zn, &n_msg) != _Z_RES_OK) {
+#if Z_FEATURE_SESSION_CHECK == 1
+        _z_session_rc_drop(&sess_rc);
+#endif
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
     _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
-    _z_unregister_session_queryable(_Z_RC_IN_VAL(&qle->_zn), q);
+    _z_unregister_session_queryable(zn, q);
     // Invalidate cache
-    _z_queryable_cache_invalidate(_Z_RC_IN_VAL(&qle->_zn));
+    _z_queryable_cache_invalidate(zn);
+#if Z_FEATURE_SESSION_CHECK == 1
+    _z_session_rc_drop(&sess_rc);
+#endif
     return _Z_RES_OK;
 }
 

@@ -243,6 +243,18 @@ static inline _z_void_rc_t _z_void_rc_rc_new(void *val, _z_void_rc_deleter delet
             return name##_rc_null();                                        \
         }                                                                   \
         return p;                                                           \
+    }                                                                       \
+    static inline name##_rc_t name##_rc_new_undefined(void) {               \
+        type##_t *v = (type##_t *)z_malloc(sizeof(type##_t));               \
+        if (v == NULL) {                                                    \
+            return name##_rc_null();                                        \
+        }                                                                   \
+        name##_rc_t p = name##_rc_new(v);                                   \
+        if (p._cnt == NULL) {                                               \
+            z_free(v);                                                      \
+            return name##_rc_null();                                        \
+        }                                                                   \
+        return p;                                                           \
     }
 
 #define _Z_SIMPLE_REFCOUNT_DEFINE(name, type)                                                                 \
