@@ -301,6 +301,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     timeout_ms: The timeout value of this query.
  *     attachment: An optional attachment to this query.
  *     qos: QoS to apply when routing this query.
+ *     out_id: In case of success the query id will be written to it.
  *
  */
 z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
