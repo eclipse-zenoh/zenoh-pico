@@ -42,26 +42,16 @@ jobs:
     steps:
       - name: Uninstall pre-installed packages
         run: sudo apt remove dotnet* azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox temurin-8-jdk powershell mysql-server-core-8.0 mono-devel -y
-
-      - name: Quick disk diagnostics
-        run: |
-          echo "Runner disk:"
-          df -h
-          echo "/tmp usage:"
-          sudo du -sh /tmp || true
-          echo "/var/lib/docker usage:"
-          sudo du -sh /var/lib/docker || true
           
-      #    This avoids filling /var/lib/docker on small root partitions.
+      # This avoids filling /var/lib/docker on small root partitions.
       - name: Relocate Docker storage to /mnt/docker
         run: |
           set -euxo pipefail
           sudo systemctl stop docker
-          sudo rm -rf /var/lib/docker || true
+          sudo rm -rf /var/lib/docker
           sudo mkdir -p /mnt/docker
           echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
           sudo systemctl start docker
-          docker info | grep 'Docker Root Dir' || true
 
       - uses: actions/checkout@v4
       - name: Crosscompile debug
