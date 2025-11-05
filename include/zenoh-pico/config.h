@@ -25,6 +25,7 @@
 #define Z_BATCH_MULTICAST_SIZE 2048
 #define Z_CONFIG_SOCKET_TIMEOUT 100
 #define Z_TRANSPORT_LEASE 10000
+#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3
 #define ZP_PERIODIC_SCHEDULER_MAX_TASKS 64
 
 /* #undef Z_FEATURE_UNSTABLE_API */
@@ -181,11 +182,6 @@
  * Do not change this value.
  */
 #define Z_PROTO_VERSION 0x09
-
-/**
- * Default session lease expire factor.
- */
-#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3
 
 /**
  * Default multicast session join interval in milliseconds.
