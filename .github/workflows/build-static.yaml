@@ -50,16 +50,6 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: true
-          
-      # This avoids filling /var/lib/docker on small root partitions.
-      #- name: Relocate Docker storage to /mnt/docker
-      #  run: |
-      #    set -euxo pipefail
-      #    sudo systemctl stop docker
-      #    sudo rm -rf /var/lib/docker
-      #    sudo mkdir -p /mnt/docker
-      #    echo '{"data-root":"/mnt/docker"}' | sudo tee /etc/docker/daemon.json
-      #    sudo systemctl start docker
 
       - uses: actions/checkout@v4
       - name: Crosscompile debug
