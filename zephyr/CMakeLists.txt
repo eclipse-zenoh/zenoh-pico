@@ -27,6 +27,13 @@ configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_UDP_MULTICAST)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_SCOUTING)
 configure_zenoh_feature(CONFIG_ZENOH_PICO_LINK_WS)
 
+include(../features.cmake)
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/zenoh-pico/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include/zenoh-pico/config.h
+  @ONLY
+)
 
 file(GLOB_RECURSE Sources
   "../src/api/*.c"
