@@ -138,7 +138,9 @@ The following options are here to reduce binary sizes for users that don't need 
 * `Z_FEATURE_UNSTABLE_API`: (DEFAULT: OFF) Toggle compilation of unstable API functions.
 * `Z_FEATURE_MULTI_THREAD`: (DEFAULT: ON) Toggle compilation of multi thread capabilities. Will limit the library to single thread only without this.
 * `Z_FEATURE_PUBLICATION`: (DEFAULT: ON) Toggle compilation of publication API functions, the library can't publish without this.
+* `Z_FEATURE_ADVANCED_PUBLICATION`: (DEFAULT: OFF) Toggle compilation of advanced publication API functions.
 * `Z_FEATURE_SUBSCRIPTION`: (DEFAULT: ON) Toggle compilation of subscription API functions, the library can't subscribe without this.
+* `Z_FEATURE_ADVANCED_SUBSCRIPTION`: (DEFAULT: OFF) Toggle compilation of advanced subscription API functions.
 * `Z_FEATURE_QUERY`: (DEFAULT: ON) Toggle compilation of query API functions, the library can't get/query without this.
 * `Z_FEATURE_QUERYABLE`: (DEFAULT: ON) Toggle compilation of queryable API functions, the library can't reply to queries without this.
 * `Z_FEATURE_SCOUTING`: (DEFAULT: ON) Toggle compilation of scouting API functions, the library can't scout without this.
@@ -148,7 +150,8 @@ The following options are here to reduce binary sizes for users that don't need 
 * `Z_FEATURE_INTEREST`: (DEFAULT: ON) Toggle compilation of interest protocol, the library can't do write filtering without this.
 * `Z_FEATURE_ENCODING_VALUES`: (DEFAULT: ON) Toggle compilation of encoding values constants, the library will not provide encoding constants without this.
 * `Z_FEATURE_SESSION_CHECK`: (DEFAULT: ON) Toggle session reference check. Dangerous if entities like publishers or queriers are used after a session is closed.
-* `Z_FEATURE_LOCAL_SUBSCRIBER`: (DEFAULT: ON) Toggle local subscriber feature, subscribers will not be triggered by local publications without this.
+* `Z_FEATURE_LOCAL_SUBSCRIBER`: (DEFAULT: OFF) Toggle local subscriber feature, subscribers will not be triggered by local publications without this.
+* `Z_FEATURE_LOCAL_QUERYABLE`: (DEFAULT: OFF) Toggle local queryable feature, queryables will not be triggered by local queries without this.
 * `Z_FEATURE_FRAGMENTATION`: (DEFAULT: ON) Toggle fragmentation feature, the library can't send or receive fragmented messages without this.
 * `Z_FEATURE_MULTICAST_TRANSPORT`: (DEFAULT: ON) Toggle multicast transport feature, the library can't handle multicast connections without this.
 * `Z_FEATURE_UNICAST_TRANSPORT`: (DEFAULT: ON) Toggle unicast transport feature, the library can't handle unicast connections without this.
@@ -161,3 +164,5 @@ The following options are here to reduce binary sizes for users that don't need 
 * `Z_FEATURE_LINK_WS`: (DEFAULT: OFF) Toggle compilation of WebSocket link support.
 * `Z_FEATURE_LINK_SERIAL`: (DEFAULT: OFF) Toggle compilation of Serial link support.
 * `Z_FEATURE_LINK_SERIAL_USB`: (DEFAULT: OFF) Toggle compilation of Serial USB link support.
+* `Z_FEATURE_LINK_TLS`: (DEFAULT: OFF) Toggle compilation of TLS support.
+* `Z_FEATURE_ADMIN_SPACE`: (DEFAULT: OFF) Toggle compilation of admin space API functions.
