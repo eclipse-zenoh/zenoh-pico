@@ -240,6 +240,9 @@ z_result_t _z_svec_expand(_z_svec_t *v, z_element_move_f move, size_t element_si
 z_result_t _z_svec_append(_z_svec_t *v, const void *e, z_element_move_f move, size_t element_size, bool use_elem_f) {
     if (v->_capacity == 0) {
         *v = _z_svec_make(1, element_size);
+        if (v->_capacity == 0) {
+            _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+        }
     } else if (v->_len == v->_capacity) {
         _Z_RETURN_IF_ERR(_z_svec_expand(v, move, element_size, use_elem_f));
     }
