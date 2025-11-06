@@ -189,9 +189,12 @@ void _z_zbuf_free(_z_zbuf_t **zbf) {
 }
 
 /*------------------ WBuf ------------------*/
-static void _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios) {
-    wbf->_w_idx++;
-    _z_iosli_svec_append(&wbf->_ioss, ios, false);
+static z_result_t _z_wbuf_add_iosli(_z_wbuf_t *wbf, _z_iosli_t *ios) {
+    z_result_t res = _z_iosli_svec_append(&wbf->_ioss, ios, false);
+    if (res == _Z_RES_OK) {
+        wbf->_w_idx++;
+    }
+    return res;
 }
 
 size_t _z_wbuf_len_iosli(const _z_wbuf_t *wbf) { return _z_iosli_svec_len(&wbf->_ioss); }
@@ -206,7 +209,10 @@ _z_wbuf_t _z_wbuf_make(size_t capacity, bool is_expandable) {
         wbf._expansion_step = 0;
     }
     _z_iosli_t ios = _z_iosli_make(capacity);
-    _z_iosli_svec_append(&wbf._ioss, &ios, false);
+    z_result_t res = _z_iosli_svec_append(&wbf._ioss, &ios, false);
+    if (res != _Z_RES_OK) {
+        _z_iosli_clear(&ios);
+    }
     wbf._w_idx = 0;
     wbf._r_idx = 0;
     return wbf;
@@ -301,7 +307,7 @@ z_result_t _z_wbuf_write(_z_wbuf_t *wbf, uint8_t b) {
                 _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NO_SPACE);
             }
             _z_iosli_t tmp = _z_iosli_make(wbf->_expansion_step);
-            _z_wbuf_add_iosli(wbf, &tmp);
+            _Z_CLEAN_RETURN_IF_ERR(_z_wbuf_add_iosli(wbf, &tmp), _z_iosli_clear(&tmp));
         } else {
             wbf->_w_idx++;
         }
@@ -325,7 +331,7 @@ z_result_t _z_wbuf_write_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset,
         loffset += writable;
         while (llength > (size_t)0) {
             _z_iosli_t tmp = _z_iosli_make(wbf->_expansion_step);
-            _z_wbuf_add_iosli(wbf, &tmp);
+            _Z_CLEAN_RETURN_IF_ERR(_z_wbuf_add_iosli(wbf, &tmp), _z_iosli_clear(&tmp));
             ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx);
 
             writable = _z_iosli_writable(ios);
@@ -351,12 +357,12 @@ z_result_t _z_wbuf_wrap_bytes(_z_wbuf_t *wbf, const uint8_t *bs, size_t offset, 
     ios->_capacity = ios->_w_pos;
     // Wrap data
     _z_iosli_t wios = _z_iosli_wrap(bs, length, offset, offset + length);
-    _z_wbuf_add_iosli(wbf, &wios);
+    _Z_CLEAN_RETURN_IF_ERR(_z_wbuf_add_iosli(wbf, &wios), _z_iosli_clear(&wios));
     // If svec expanded, ios is invalid, refresh pointer.
     ios = _z_wbuf_get_iosli(wbf, wbf->_w_idx - 1);
     // Set remaining space as a new ioslice
     wios = _z_iosli_wrap(_z_ptr_u8_offset(ios->_buf, (ptrdiff_t)ios->_w_pos), curr_space, 0, 0);
-    _z_wbuf_add_iosli(wbf, &wios);
+    _Z_CLEAN_RETURN_IF_ERR(_z_wbuf_add_iosli(wbf, &wios), _z_iosli_clear(&wios));
     return ret;
 }
 
