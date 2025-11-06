@@ -35,7 +35,9 @@
 
 void _z_subscription_cache_invalidate(_z_session_t *zn) {
 #if Z_FEATURE_RX_CACHE == 1
+    _z_session_mutex_lock(zn);
     _z_subscription_lru_cache_clear(&zn->_subscription_cache);
+    _z_session_mutex_unlock(zn);
 #else
     _ZP_UNUSED(zn);
 #endif
@@ -47,13 +49,13 @@ int _z_subscription_cache_data_compare(const void *first, const void *second) {
     _z_subscription_cache_data_t *second_data = (_z_subscription_cache_data_t *)second;
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
+#endif  // Z_FEATURE_RX_CACHE == 1
 
 void _z_subscription_cache_data_clear(_z_subscription_cache_data_t *val) {
-    _z_subscription_infos_svec_clear(&val->infos);
+    _z_subscription_rc_svec_rc_drop(&val->infos);
     _z_keyexpr_clear(&val->ke_in);
     _z_keyexpr_clear(&val->ke_out);
 }
-#endif  // Z_FEATURE_RX_CACHE == 1
 
 bool _z_subscription_eq(const _z_subscription_t *other, const _z_subscription_t *this_) {
     return this_->_id == other->_id;
@@ -101,22 +103,39 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_sub
  *  - zn->_mutex_inner
  */
 static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
-                                                      const _z_keyexpr_t *key,
-                                                      _z_subscription_infos_svec_t *sub_infos) {
+                                                      const _z_keyexpr_t *key, _z_subscription_rc_svec_t *sub_infos) {
     _z_subscription_rc_slist_t *subs =
         (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
 
-    *sub_infos = _z_subscription_infos_svec_make(_Z_SUBINFOS_VEC_SIZE);
+    *sub_infos = _z_subscription_rc_svec_make(_Z_SUBINFOS_VEC_SIZE);
+    _Z_RETURN_ERR_OOM_IF_TRUE(sub_infos->_val == NULL);
     _z_subscription_rc_slist_t *xs = subs;
     while (xs != NULL) {
         // Parse subscription list
         _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
         if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
-            _z_subscription_infos_t new_sub_info = {.arg = _Z_RC_IN_VAL(sub)->_arg,
-                                                    .callback = _Z_RC_IN_VAL(sub)->_callback};
-            _Z_RETURN_IF_ERR(_z_subscription_infos_svec_append(sub_infos, &new_sub_info, false));
+            _z_subscription_rc_t sub_clone = _z_subscription_rc_clone(sub);
+            _Z_CLEAN_RETURN_IF_ERR(_z_subscription_rc_svec_append(sub_infos, &sub_clone, true),
+                                   _z_subscription_rc_svec_clear(sub_infos));
         }
         xs = _z_subscription_rc_slist_next(xs);
+    }
+    return _Z_RES_OK;
+}
+
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->_mutex_inner
+ */
+static z_result_t __unsafe_z_get_subscriptions_rc_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
+                                                         const _z_keyexpr_t *key,
+                                                         _z_subscription_rc_svec_rc_t *sub_infos) {
+    *sub_infos = _z_subscription_rc_svec_rc_new_undefined();
+    z_result_t ret = !_Z_RC_IS_NULL(sub_infos) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_by_key(zn, kind, key, _Z_RC_IN_VAL(sub_infos)));
+    if (ret != _Z_RES_OK) {
+        _z_subscription_rc_svec_rc_drop(sub_infos);
     }
     return _Z_RES_OK;
 }
@@ -178,45 +197,38 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
 
 static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind_t kind,
                                             _z_subscription_cache_data_t *infos, _z_transport_peer_common_t *peer) {
-    // Check cache
+    _z_session_mutex_lock(zn);
     _z_subscription_cache_data_t *cache_entry = NULL;
+    z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_subscription_lru_cache_get(&zn->_subscription_cache, infos);
 #endif
-    // Note cache entry
-    if (cache_entry != NULL) {
-        infos->ke_out = _z_keyexpr_alias(&cache_entry->ke_out);
-        infos->infos = _z_subscription_infos_svec_alias(&cache_entry->infos);
-        infos->sub_nb = cache_entry->sub_nb;
+    if (cache_entry != NULL) {  // Copy cache entry
+        infos->infos = _z_subscription_rc_svec_rc_clone(&cache_entry->infos);
+        ret = _z_keyexpr_copy(&infos->ke_out, &cache_entry->ke_out);
     } else {  // Construct data and add to cache
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
                  _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
-        _z_session_mutex_lock(zn);
-        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true, peer);
-
-        if (!_z_keyexpr_has_suffix(&infos->ke_out)) {
-            _z_session_mutex_unlock(zn);
-            _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_UNKNOWN);
-        }
+        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
+        ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
         // Get subscription list
-        z_result_t ret = __unsafe_z_get_subscriptions_by_key(zn, kind, &infos->ke_out, &infos->infos);
-        _z_session_mutex_unlock(zn);
-        if (ret != _Z_RES_OK) {
-            return ret;
-        }
-        infos->sub_nb = _z_subscription_infos_svec_len(&infos->infos);
+        _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_rc_by_key(zn, kind, &infos->ke_out, &infos->infos));
 #if Z_FEATURE_RX_CACHE == 1
-        // Update cache, takes ownership of the data
-        _z_subscription_cache_data_t cache_storage = {
-            .infos = _z_subscription_infos_svec_transfer(&infos->infos),
-            .ke_in = _z_keyexpr_duplicate(&infos->ke_in),
-            .ke_out = _z_keyexpr_duplicate(&infos->ke_out),
-            .sub_nb = infos->sub_nb,
-        };
-        return _z_subscription_lru_cache_insert(&zn->_subscription_cache, &cache_storage);
+        _z_subscription_cache_data_t cache_storage = _z_subscription_cache_data_null();
+        cache_storage.infos = _z_subscription_rc_svec_rc_clone(&infos->infos);
+        _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_out, &infos->ke_out));
+        _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_in, &infos->ke_in));
+        _Z_SET_IF_OK(ret, _z_subscription_lru_cache_insert(&zn->_subscription_cache, &cache_storage));
+        if (ret != _Z_RES_OK) {
+            _z_subscription_cache_data_clear(&cache_storage);
+        }
 #endif
     }
-    return _Z_RES_OK;
+    if (ret != _Z_RES_OK) {
+        _z_subscription_cache_data_clear(infos);
+    }
+    _z_session_mutex_unlock(zn);
+    return ret;
 }
 
 z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t sub_kind, _z_keyexpr_t *keyexpr,
@@ -225,14 +237,13 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
                                          z_reliability_t reliability, _z_source_info_t *source_info,
                                          _z_transport_peer_common_t *peer) {
     // Retrieve sub infos
-    _z_subscription_cache_data_t sub_infos;
+    _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
-    _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, peer),
-                           _z_keyexpr_clear(&sub_infos.ke_in);
-                           _z_encoding_clear(encoding); _z_bytes_drop(payload); _z_bytes_drop(attachment);
-                           _z_source_info_clear(source_info););
-    // Check if there are subs
-    _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_infos.sub_nb, sub_infos.ke_out._id,
+    _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, peer), _z_encoding_clear(encoding);
+                           _z_bytes_drop(payload); _z_bytes_drop(attachment); _z_source_info_clear(source_info););
+    const _z_subscription_rc_svec_t *subs = _Z_RC_IN_VAL(&sub_infos.infos);
+    size_t sub_nb = _z_subscription_rc_svec_len(subs);
+    _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_nb, sub_infos.ke_out._id,
              (int)_z_string_len(&sub_infos.ke_out._suffix), _z_string_data(&sub_infos.ke_out._suffix));
     // Create sample
     z_result_t ret = _Z_RES_OK;
@@ -240,30 +251,27 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
     _z_sample_steal_data(&sample, &sub_infos.ke_out, payload, timestamp, encoding, sample_kind, qos, attachment,
                          reliability, source_info);
     // Parse subscription infos svec
-    if (sub_infos.sub_nb == 1) {
-        _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, 0);
-        sub_info->callback(&sample, sub_info->arg);
+    if (sub_nb == 1) {
+        _z_subscription_t *sub_info = _Z_RC_IN_VAL(_z_subscription_rc_svec_get(subs, 0));
+        sub_info->_callback(&sample, sub_info->_arg);
     } else {
-        for (size_t i = 0; i < sub_infos.sub_nb; i++) {
-            _z_subscription_infos_t *sub_info = _z_subscription_infos_svec_get(&sub_infos.infos, i);
-            if (i + 1 == sub_infos.sub_nb) {
-                sub_info->callback(&sample, sub_info->arg);
+        for (size_t i = 0; i < sub_nb; i++) {
+            _z_subscription_t *sub_info = _Z_RC_IN_VAL(_z_subscription_rc_svec_get(subs, i));
+            if (i + 1 == sub_nb) {
+                sub_info->_callback(&sample, sub_info->_arg);
             } else {
                 _z_sample_t sample_copy;
                 ret = _z_sample_copy(&sample_copy, &sample);
                 if (ret != _Z_RES_OK) {
                     break;
                 }
-                sub_info->callback(&sample_copy, sub_info->arg);
+                sub_info->_callback(&sample_copy, sub_info->_arg);
                 _z_sample_clear(&sample_copy);
             }
         }
     }
     _z_sample_clear(&sample);
-#if Z_FEATURE_RX_CACHE == 0
-    _z_subscription_infos_svec_release(&sub_infos.infos);  // Otherwise it's released with cache
-#endif
-    _z_keyexpr_clear(&sub_infos.ke_in);
+    _z_subscription_cache_data_clear(&sub_infos);
     return ret;
 }
 

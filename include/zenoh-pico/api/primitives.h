@@ -2361,6 +2361,7 @@ z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable);
  * Return:
  *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`. Will return NULL if
  *   corresponding session is closed or dropped.
+ *   The lifetime of key expression pointer is bound to those of queryable and its session.
  */
 const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *queryable);
 
@@ -2561,7 +2562,9 @@ z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z
  *   subscriber: Pointer to a :c:type:`z_loaned_subscriber_t` to get the keyexpr from.
  *
  * Return:
- *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`.
+ *   The keyexpr wrapped as a :c:type:`z_loaned_keyexpr_t`. Will return `NULL` if corresponding session
+ *   is closed or dropped.
+ *   The lifetime of key expression pointer is bound to those of subscriber and its session.
  */
 const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *subscriber);
 
