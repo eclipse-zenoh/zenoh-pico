@@ -25,6 +25,7 @@
 #define Z_BATCH_MULTICAST_SIZE @BATCH_MULTICAST_SIZE@
 #define Z_CONFIG_SOCKET_TIMEOUT @Z_CONFIG_SOCKET_TIMEOUT@
 #define Z_TRANSPORT_LEASE @Z_TRANSPORT_LEASE@
+#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR @Z_TRANSPORT_LEASE_EXPIRE_FACTOR@
 #define ZP_PERIODIC_SCHEDULER_MAX_TASKS @ZP_PERIODIC_SCHEDULER_MAX_TASKS@
 
 #cmakedefine Z_FEATURE_UNSTABLE_API
@@ -181,11 +182,6 @@
  * Do not change this value.
  */
 #define Z_PROTO_VERSION 0x09
-
-/**
- * Default session lease expire factor.
- */
-#define Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3
 
 /**
  * Default multicast session join interval in milliseconds.
