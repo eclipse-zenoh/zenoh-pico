@@ -485,6 +485,113 @@ z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, u
     return _z_interest_decode(&interest->_interest, zbf, is_final, has_ext, mapping);
 }
 
+z_result_t _z_oam_encode(_z_wbuf_t *wbf, const _z_n_msg_oam_t *oam) {
+    uint8_t header = _Z_MID_N_OAM;
+    bool has_qos_ext = oam->_ext_qos._val != _Z_N_QOS_DEFAULT._val;
+    bool has_timestamp_ext = _z_timestamp_check(&oam->_ext_timestamp);
+    int n_ext = (has_qos_ext ? 1 : 0) + (has_timestamp_ext ? 1 : 0);
+    if (n_ext != 0) {
+        header |= _Z_FLAG_N_Z;
+    }
+    switch (oam->_enc) {
+        case _Z_OAM_BODY_UNIT: {
+            header |= _Z_MSG_EXT_ENC_UNIT;
+        } break;
+        case _Z_OAM_BODY_ZINT: {
+            header |= _Z_MSG_EXT_ENC_ZINT;
+        } break;
+        case _Z_OAM_BODY_ZBUF: {
+            header |= _Z_MSG_EXT_ENC_ZBUF;
+        } break;
+        default:
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, header));
+    _Z_RETURN_IF_ERR(_z_zint16_encode(wbf, oam->_id));
+
+    if (has_qos_ext) {
+        n_ext -= 1;
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, 0x01 | _Z_MSG_EXT_ENC_ZINT | (n_ext != 0 ? _Z_FLAG_Z_Z : 0)));
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, oam->_ext_qos._val));
+    }
+    if (has_timestamp_ext) {
+        n_ext -= 1;
+        _Z_RETURN_IF_ERR(_z_uint8_encode(wbf, 0x02 | _Z_MSG_EXT_ENC_ZBUF | (n_ext != 0 ? _Z_FLAG_Z_Z : 0)));
+        _Z_RETURN_IF_ERR(_z_timestamp_encode_ext(wbf, &oam->_ext_timestamp));
+    }
+
+    switch (oam->_enc) {
+        case _Z_OAM_BODY_UNIT: {
+            // No body to encode
+        } break;
+        case _Z_OAM_BODY_ZINT: {
+            _Z_RETURN_IF_ERR(_z_zint64_encode(wbf, oam->_body._zint._val));
+        } break;
+        case _Z_OAM_BODY_ZBUF: {
+            _Z_RETURN_IF_ERR(_z_slice_encode(wbf, &oam->_body._zbuf._val));
+        } break;
+        default:
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+
+    return _Z_RES_OK;
+}
+
+z_result_t _z_oam_decode_extensions(_z_msg_ext_t *extension, void *ctx) {
+    _z_n_msg_oam_t *oam = (_z_n_msg_oam_t *)ctx;
+    switch (_Z_EXT_FULL_ID(extension->_header)) {
+        case _Z_MSG_EXT_ENC_ZINT | 0x01: {
+            oam->_ext_qos._val = (uint8_t)extension->_body._zint._val;
+            break;
+        }
+        case _Z_MSG_EXT_ENC_ZBUF | 0x02: {
+            _z_zbuf_t zbf = _z_slice_as_zbuf(extension->_body._zbuf._val);
+            return _z_timestamp_decode(&oam->_ext_timestamp, &zbf);
+        }
+        default:
+            if (_Z_HAS_FLAG(extension->_header, _Z_MSG_EXT_FLAG_M)) {
+                return _z_msg_ext_unknown_error(extension, 0x20);
+            }
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_oam_decode(_z_n_msg_oam_t *oam, _z_zbuf_t *zbf, uint8_t header) {
+    _Z_DEBUG("Decoding _Z_MID_N_OAM");
+    // Decode ID
+    _Z_RETURN_IF_ERR(_z_zint16_decode(&oam->_id, zbf));
+
+    // Initialize extensions with default values
+    oam->_ext_qos = _Z_N_QOS_DEFAULT;
+    oam->_ext_timestamp = _z_timestamp_null();
+
+    // Decode extensions
+    if (_Z_HAS_FLAG(header, _Z_FLAG_N_Z)) {
+        _Z_RETURN_IF_ERR(_z_msg_ext_decode_iter(zbf, _z_oam_decode_extensions, oam))
+    }
+
+    // Decode payload
+    switch (_Z_EXT_ENC(header)) {
+        case _Z_MSG_EXT_ENC_UNIT: {
+            oam->_enc = _Z_OAM_BODY_UNIT;
+            return _Z_RES_OK;
+        } break;
+
+        case _Z_MSG_EXT_ENC_ZINT: {
+            oam->_enc = _Z_OAM_BODY_ZINT;
+            return _z_zint64_decode(&oam->_body._zint._val, zbf);
+        } break;
+
+        case _Z_MSG_EXT_ENC_ZBUF: {
+            oam->_enc = _Z_OAM_BODY_ZBUF;
+            return _z_slice_decode(&oam->_body._zbuf._val, zbf);
+        } break;
+        default: {
+            _Z_ERROR_RETURN(_Z_ERR_MESSAGE_DESERIALIZATION_FAILED);
+        }
+    }
+}
+
 z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg) {
     switch (msg->_tag) {
         case _Z_N_DECLARE: {
@@ -513,6 +620,9 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
             return _z_n_interest_encode(wbf, &msg->_body._interest);
         } break;
 #endif
+        case _Z_N_OAM: {
+            return _z_oam_encode(wbf, &msg->_body._oam);
+        } break;
         default:
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
@@ -545,6 +655,10 @@ z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, 
         case _Z_MID_N_INTEREST: {
             msg->_tag = _Z_N_INTEREST;
             return _z_n_interest_decode(&msg->_body._interest, zbf, *header, mapping);
+        } break;
+        case _Z_MID_N_OAM: {
+            msg->_tag = _Z_N_OAM;
+            return _z_oam_decode(&msg->_body._oam, zbf, *header);
         } break;
         default:
             _Z_INFO("Unknown message type received: %d", _Z_MID(*header));

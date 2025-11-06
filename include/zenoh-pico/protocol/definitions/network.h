@@ -297,6 +297,40 @@ typedef struct {
 } _z_n_msg_interest_t;
 static inline void _z_n_msg_interest_clear(_z_n_msg_interest_t *msg) { _z_interest_clear(&msg->_interest); }
 
+/*------------------ OAM Message ------------------*/
+
+/// Flags:
+/// - E |: Encoding     The encoding of the extension
+/// - E/
+/// - Z: Extension      If Z==1 then at least one extension is present
+///
+///  7 6 5 4 3 2 1 0
+/// +-+-+-+-+-+-+-+-+
+/// |Z|ENC|  OAM    |
+/// +-+-+-+---------+
+/// ~    id:z16     ~
+/// +---------------+
+/// ~  [oam_exts]   ~  if Z==1
+/// +---------------+
+/// %    length     %  If ENC == Z64 || ENC == ZBuf (z32)
+/// +---------------+
+/// ~     [u8]      ~  If ENC == ZBuf
+/// +---------------+
+///
+/// Encoding:
+/// - 0b00: Unit
+/// - 0b01: Z64
+/// - 0b10: ZBuf
+/// - 0b11: Reserved
+typedef struct {
+    uint16_t _id;
+    _z_timestamp_t _ext_timestamp;
+    _z_n_qos_t _ext_qos;
+    enum { _Z_OAM_BODY_UNIT, _Z_OAM_BODY_ZINT, _Z_OAM_BODY_ZBUF } _enc;
+    _z_msg_ext_body_t _body;
+} _z_n_msg_oam_t;
+void _z_n_msg_oam_clear(_z_n_msg_oam_t *msg);
+
 /*------------------ Zenoh Message ------------------*/
 typedef union {
     _z_n_msg_declare_t _declare;
@@ -305,9 +339,10 @@ typedef union {
     _z_n_msg_response_t _response;
     _z_n_msg_response_final_t _response_final;
     _z_n_msg_interest_t _interest;
+    _z_n_msg_oam_t _oam;
 } _z_network_body_t;
 typedef struct {
-    enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL, _Z_N_INTEREST } _tag;
+    enum { _Z_N_DECLARE, _Z_N_PUSH, _Z_N_REQUEST, _Z_N_RESPONSE, _Z_N_RESPONSE_FINAL, _Z_N_INTEREST, _Z_N_OAM } _tag;
     _z_network_body_t _body;
     z_reliability_t _reliability;
 } _z_network_message_t;

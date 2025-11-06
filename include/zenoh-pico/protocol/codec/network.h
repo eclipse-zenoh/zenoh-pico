@@ -39,6 +39,8 @@ z_result_t _z_declare_encode(_z_wbuf_t *wbf, const _z_n_msg_declare_t *decl);
 z_result_t _z_declare_decode(_z_n_msg_declare_t *decl, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping);
 z_result_t _z_n_interest_encode(_z_wbuf_t *wbf, const _z_n_msg_interest_t *interest);
 z_result_t _z_n_interest_decode(_z_n_msg_interest_t *interest, _z_zbuf_t *zbf, uint8_t header, uintptr_t mapping);
+z_result_t _z_oam_encode(_z_wbuf_t *wbf, const _z_n_msg_oam_t *oam);
+z_result_t _z_oam_decode(_z_n_msg_oam_t *oam, _z_zbuf_t *zbf, uint8_t header);
 
 z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t *msg);
 z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs,

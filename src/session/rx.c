@@ -218,6 +218,11 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
             _z_n_msg_interest_clear(&msg->_body._interest);
         } break;
 
+        case _Z_N_OAM: {
+            _Z_DEBUG("Ignoring _Z_N_OAM");
+            _z_n_msg_oam_clear(&msg->_body._oam);
+        } break;
+
         default:
             _Z_ERROR("Unknown network message ID");
             _z_n_msg_clear(msg);
