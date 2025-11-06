@@ -77,6 +77,7 @@ typedef enum {
 
     _Z_ERR_SCOUT_NO_RESULTS = -87,
 
+    _Z_ERR_UNDERFLOW = -81,
     _Z_ERR_SYSTEM_GENERIC = -80,
     _Z_ERR_SYSTEM_TASK_FAILED = -79,
     _Z_ERR_SYSTEM_OUT_OF_MEMORY = -78,

@@ -86,6 +86,15 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+#if Z_FEATURE_ADMIN_SPACE == 1
+    // Start admin space
+    if (zp_start_admin_space(z_loan_mut(s)) < 0) {
+        printf("Unable to start admin space\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+#endif
+
     ze_advanced_subscriber_options_t sub_opts;
     ze_advanced_subscriber_options_default(&sub_opts);
     ze_advanced_subscriber_history_options_default(&sub_opts.history);

@@ -117,6 +117,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
         _Z_ERROR_RETURN(ret);
     }
 #endif
+
+#if Z_FEATURE_ADMIN_SPACE == 1
+    zn->_admin_space_queryable_id = 0;
+#endif
 #endif
 
     _z_interest_init(zn);
@@ -154,6 +158,7 @@ void _z_session_clear(_z_session_t *zn) {
         _z_flush_subscriptions(zn);
 #endif
 #if Z_FEATURE_QUERYABLE == 1
+        // Admin space querable cleanup will occur as part of queryable cleanup
         _z_flush_session_queryable(zn);
 #endif
 #if Z_FEATURE_QUERY == 1
