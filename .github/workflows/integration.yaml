@@ -63,3 +63,49 @@ jobs:
           Z_FEATURE_UNSTABLE_API: 1
           Z_FEATURE_LOCAL_SUBSCRIBER: 1
           ZENOH_BRANCH: main
+
+  asan-build:
+    name: Build on ubuntu-latest with ASAN
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Clone this repository
+        uses: actions/checkout@v4
+
+      - name: Install TLS dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install -y libmbedtls-dev
+
+      - name: Install TLS dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
+
+      - name: Compile debug
+        run: make all
+        env:
+          BUILD_TYPE: Debug
+          BUILD_TESTING: OFF
+          BUILD_INTEGRATION: ON
+          Z_FEATURE_LINK_TLS: 1
+          Z_FEATURE_UNSTABLE_API: 1
+          Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          Z_FEATURE_PERIODIC_TASKS: 1
+          Z_FEATURE_ADVANCED_PUBLICATION: 1
+          Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
+          ASAN: 1
+
+      - name: Test debug
+        run: make test
+        timeout-minutes: 30
+        env:
+          BUILD_TYPE: Debug # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
+          BUILD_INTEGRATION: ON # Workaround for Windows as it seems the previous step is being ignored
+          Z_FEATURE_LINK_TLS: 1
+          Z_FEATURE_UNSTABLE_API: 1
+          Z_FEATURE_LOCAL_SUBSCRIBER: 1
+          ZENOH_BRANCH: main
