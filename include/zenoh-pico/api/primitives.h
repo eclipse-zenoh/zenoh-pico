@@ -1328,6 +1328,8 @@ _Z_OWNED_FUNCTIONS_NO_COPY_DEF(bytes_writer)
 _Z_OWNED_FUNCTIONS_DEF(reply_err)
 _Z_OWNED_FUNCTIONS_DEF(encoding)
 
+_Z_OWNED_FUNCTIONS_DEF(cancellation_token)
+
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_sample)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_query)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_reply)
@@ -2830,6 +2832,51 @@ z_result_t zp_process_periodic_tasks(const z_loaned_session_t *zs);
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_reliability_t z_reliability_default(void);
+#endif
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_QUERY == 1
+/**
+ * Construct a new cancellation token. Can be used to interrupt get operations.  (unstable).
+ *
+ * Parameters:
+ *   cancellation_token: Pointer to an uninitialized :c:type:`z_owned_cancellation_token_t`.
+ *
+ * Return:
+ *   ``0`` if creation successful, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_cancellation_token_new(z_owned_cancellation_token_t *cancellation_token);
+
+/**
+ * Interrupt all currently running get calls, to which clones of the token were passed.  (unstable).
+ *
+ * Parameters:
+ *   cancellation_token: Pointer to token to cancel.
+ *
+ * Return:
+ *   ``0`` in case of success (in this case all pending operations are guaranteed to be cancelled or terminated),
+ * ``negative error value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+z_result_t z_cancellation_token_cancel(z_loaned_cancellation_token_t *cancellation_token);
+
+/**
+ * Verify if token was cancelled  (unstable).
+ *
+ * Parameters:
+ *   cancellation_token: Pointer to cancellation token.
+ *
+ * Return:
+ *   ``true`` if token was cancelled (i.e if :c:func:`z_cancellation_token_cancel` was called on it or one of its
+ * clones), ``false`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+bool z_cancellation_token_is_cancelled(const z_loaned_cancellation_token_t *cancellation_token);
+#endif
 #endif
 
 #ifdef __cplusplus

@@ -30,6 +30,7 @@
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/net/subscribe.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/cancellation.h"
 #include "zenoh-pico/session/session.h"
 
 #ifdef __cplusplus
@@ -192,6 +193,13 @@ typedef struct {
 } z_query_consolidation_t;
 
 /**
+ * A cancellation token used to interrupt get requests (unstable).
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+ */
+_Z_OWNED_TYPE_RC(_z_cancellation_token_rc_t, cancellation_token)
+
+/**
  * Represents the configuration used to configure a publisher upon declaration with :c:func:`z_declare_publisher`.
  *
  * Members:
@@ -244,11 +252,15 @@ typedef struct z_querier_options_t {
  *   z_moved_bytes_t *payload: An optional payload to attach to the query.
  *   z_moved_encoding_t *encoding: An optional encoding of the query payload and or attachment.
  *   z_moved_bytes_t *attachment: An optional attachment to attach to the query.
+ *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct z_querier_get_options_t {
     z_moved_bytes_t *payload;
     z_moved_encoding_t *encoding;
     z_moved_bytes_t *attachment;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_cancellation_token_t *cancellation_token;
+#endif
 } z_querier_get_options_t;
 
 /**
@@ -410,7 +422,9 @@ typedef struct {
  *   z_priority_t priority: The priority of the query.
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
+ *   uint64_t timeout_ms: Query timeout in milliseconds.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
+ *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct {
     z_moved_bytes_t *payload;
@@ -422,6 +436,9 @@ typedef struct {
     z_query_target_t target;
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
+#ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_cancellation_token_t *cancellation_token;
+#endif
 } z_get_options_t;
 
 /**
