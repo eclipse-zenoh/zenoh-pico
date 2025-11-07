@@ -98,7 +98,7 @@ endif()
 
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
+  ${ZENOH_PICO_INCLUDEDIR}/zenoh-pico/config.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
   @ONLY
 )
