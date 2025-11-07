@@ -129,12 +129,14 @@ z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *
     ctx->zn = _z_session_rc_clone_as_weak(zn);
     if (_Z_RC_IS_NULL(&ctx->zn)) {
         _z_write_filter_ctx_clear(ctx);
+        z_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     filter->ctx = _z_write_filter_ctx_rc_new(ctx);
 
     if (_Z_RC_IS_NULL(&filter->ctx)) {
         _z_write_filter_ctx_clear(ctx);
+        z_free(ctx);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     _z_write_filter_ctx_rc_t filter_ctx_clone = _z_write_filter_ctx_rc_clone(&filter->ctx);

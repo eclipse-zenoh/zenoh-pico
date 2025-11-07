@@ -42,7 +42,6 @@ z_result_t _z_matching_listener_undeclare(_z_matching_listener_t *listener) {
         _z_write_filter_ctx_remove_callback(_Z_RC_IN_VAL(&write_filter), listener->_id);
         _z_write_filter_ctx_rc_drop(&write_filter);
     }
-    *listener = _z_matching_listener_null();
     return _Z_RES_OK;
 }
 

@@ -551,6 +551,7 @@ static void test_advanced_sample_miss(void) {
     z_entity_global_id_t pub_id = ze_advanced_publisher_id(z_loan(pub));
     miss_ctx_assert_single(&miss_ctx, &pub_id, 1);
 
+    z_drop(z_move(miss_listener));
     z_drop(z_move(sub));
     z_drop(z_move(pub));
     z_drop(z_move(handler));
@@ -633,6 +634,7 @@ static void test_advanced_retransmission_sample_miss(void) {
     z_entity_global_id_t pub_id = ze_advanced_publisher_id(z_loan(pub));
     miss_ctx_assert_single(&miss_ctx, &pub_id, 2);
 
+    z_drop(z_move(miss_listener));
     z_drop(z_move(sub));
     z_drop(z_move(pub));
     z_drop(z_move(handler));

@@ -64,7 +64,7 @@ void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state) {
 bool _ze_advanced_publisher_check(const _ze_advanced_publisher_t *pub) {
     return z_internal_publisher_check(&pub->_publisher) &&
            (!pub->_has_liveliness || z_internal_liveliness_token_check(&pub->_liveliness)) &&
-           (!_Z_RC_IS_NULL(&pub->_state) && _ze_advanced_publisher_state_check(_Z_RC_IN_VAL(&pub->_state)));
+           (_Z_RC_IS_NULL(&pub->_state) || _ze_advanced_publisher_state_check(_Z_RC_IN_VAL(&pub->_state)));
 }
 
 _ze_advanced_publisher_t _ze_advanced_publisher_null(void) {
