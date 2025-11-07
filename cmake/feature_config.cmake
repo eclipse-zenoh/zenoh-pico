@@ -87,13 +87,13 @@ if(Z_FEATURE_ADVANCED_PUBLICATION OR Z_FEATURE_ADVANCED_SUBSCRIPTION)
 endif()
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  ${ZENOH_PICO_INCLUDEDIR}/zenoh-pico.h.in
+  ${ZENOH_PICO_INCLUDEDIR}/zenoh-pico.h
   @ONLY
 )
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  ${ZENOH_PICO_INCLUDEDIR}/zenoh-pico/config.h.in
+  ${ZENOH_PICO_INCLUDEDIR}/zenoh-pico/config.h
   @ONLY
 )
