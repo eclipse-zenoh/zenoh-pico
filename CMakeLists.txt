@@ -232,6 +232,7 @@ if (NOT(ZENOH_LOG_PRINT STREQUAL ""))
 endif()
 add_compile_definitions("Z_BUILD_LOG=$<CONFIG:Debug>")
 
+set(ZENOH_PICO_INCLUDEDIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 include(feature_config)
 
 message(STATUS "Building with feature config:\n\
