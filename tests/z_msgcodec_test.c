@@ -168,7 +168,9 @@ _z_wbuf_t gen_wbuf(size_t len) {
         len = 1 + (gen_zint() % len);
     }
 
-    return _z_wbuf_make(len, is_expandable);
+    _z_wbuf_t wbuf = _z_wbuf_make(len, is_expandable);
+    assert(_z_wbuf_capacity(&wbuf) == len);
+    return wbuf;
 }
 
 _z_slice_t gen_slice(size_t len) {
@@ -233,7 +235,7 @@ _z_string_svec_t gen_str_array(size_t size) {
     _z_string_svec_t sa = _z_string_svec_make(size);
     for (size_t i = 0; i < size; i++) {
         _z_string_t s = gen_string(16);
-        _z_string_svec_append(&sa, &s, true);
+        assert(_z_string_svec_append(&sa, &s, true) == _Z_RES_OK);
     }
 
     return sa;
@@ -1843,7 +1845,7 @@ _z_network_message_svec_t gen_net_msgs(size_t n) {
     _z_network_message_svec_t ret = _z_network_message_svec_make(n);
     for (size_t i = 0; i < n; i++) {
         _z_network_message_t msg = gen_net_msg();
-        _z_network_message_svec_append(&ret, &msg, false);
+        assert(_z_network_message_svec_append(&ret, &msg, false) == _Z_RES_OK);
     }
     return ret;
 }

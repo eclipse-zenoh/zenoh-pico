@@ -97,7 +97,11 @@ static _z_hello_slist_t *__z_scout_loop(const _z_wbuf_t *wbf, _z_string_t *locat
 
                                 for (size_t i = 0; i < n_loc; i++) {
                                     _z_string_t s = _z_locator_to_string(&s_msg._body._hello._locators._val[i]);
-                                    _z_string_svec_append(&hello->_locators, &s, true);
+                                    err = _z_string_svec_append(&hello->_locators, &s, true);
+                                    if (err != _Z_RES_OK) {
+                                        _Z_ERROR_LOG(err);
+                                        break;  // bail out of locator loop; case-level break follows below
+                                    }
                                 }
                             } else {
                                 // @TODO: construct the locator departing from the sock address
@@ -145,7 +149,12 @@ _z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t zid, _z_string_t *
     // Create and encode the scout message
     _z_scouting_message_t scout = _z_s_msg_make_scout(what, zid);
 
-    _z_scouting_message_encode(&wbf, &scout);
+    z_result_t res = _z_scouting_message_encode(&wbf, &scout);
+    if (res != _Z_RES_OK) {
+        _Z_ERROR("Scout message encoding failed with err %d", res);
+        _z_wbuf_clear(&wbf);
+        return NULL;
+    }
 
     // Scout on multicast
     ret = __z_scout_loop(&wbf, locator, timeout, exit_on_first);
