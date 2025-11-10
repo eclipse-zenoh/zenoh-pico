@@ -21,6 +21,7 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
+#ifndef _Z_SEQNUMBER_TYPE
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD != 99
 #ifndef __cplusplus
 #include <stdatomic.h>
@@ -31,6 +32,7 @@
 #endif
 #else
 #define _Z_SEQNUMBER_TYPE uint32_t
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -44,7 +46,11 @@ typedef struct {
 #endif
 } _z_seqnumber_t;
 
+#ifdef __cplusplus
+static inline _z_seqnumber_t _z_seqnumber_null(void) { return (_z_seqnumber_t){}; }
+#else
 static inline _z_seqnumber_t _z_seqnumber_null(void) { return (_z_seqnumber_t){0}; }
+#endif
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq);
 z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value);
 z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value);
