@@ -44,7 +44,7 @@ typedef struct {
 #endif
 } _z_seqnumber_t;
 
-static inline _z_seqnumber_t _z_seqnumber_null(void) { return (_z_seqnumber_t){0}; }
+_z_seqnumber_t _z_seqnumber_null(void);
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq);
 z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value);
 z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value);

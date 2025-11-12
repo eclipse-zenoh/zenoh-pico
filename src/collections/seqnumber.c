@@ -16,6 +16,8 @@
 
 #include "zenoh-pico/utils/logging.h"
 
+_z_seqnumber_t _z_seqnumber_null(void) { return (_z_seqnumber_t){0}; }
+
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq) {
     if (seq == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
