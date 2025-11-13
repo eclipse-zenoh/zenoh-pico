@@ -189,7 +189,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
         cache_storage.infos = _z_session_queryable_rc_svec_rc_clone(&infos->infos);
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_in, &infos->ke_in));
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_out, &infos->ke_out));
-        _Z_SET_IF_OK(ret, _z_queryable_lru_cache_insert(&zn->_subscription_cache, &cache_storage));
+        _Z_SET_IF_OK(ret, _z_queryable_lru_cache_insert(&zn->_queryable_cache, &cache_storage));
         if (ret != _Z_RES_OK) {
             _z_queryable_cache_data_clear(&cache_storage);
         }
