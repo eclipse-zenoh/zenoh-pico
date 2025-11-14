@@ -16,6 +16,38 @@
 
 #include "zenoh-pico/utils/logging.h"
 
+#if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD != 99
+#include <stdatomic.h>
+#endif
+
+z_result_t _z_seqnumber_null(_z_seqnumber_t *seq) {
+    if (seq == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+#if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
+    z_result_t res = _z_mutex_lock(&seq->_mutex);
+    if (res != _Z_RES_OK) {
+        return res;
+    }
+#endif
+
+#if (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99)
+    atomic_store(&seq->_seq, 0);
+#else
+    seq->_seq = 0;
+#endif
+
+#if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
+    res = _z_mutex_unlock(&seq->_mutex);
+    if (res != _Z_RES_OK) {
+        return res;
+    }
+#endif
+
+    return _Z_RES_OK;
+}
+
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq) {
     if (seq == NULL) {
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
@@ -28,7 +60,12 @@ z_result_t _z_seqnumber_init(_z_seqnumber_t *seq) {
     }
 #endif
 
+#if (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99)
+    atomic_init(&seq->_seq, 0);
+#else
     seq->_seq = 0;
+#endif
+
     return _Z_RES_OK;
 }
 
@@ -44,7 +81,11 @@ z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value) {
     }
 #endif
 
+#if (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99)
+    *value = atomic_load(&seq->_seq);
+#else
     *value = seq->_seq;
+#endif
 
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
     res = _z_mutex_unlock(&seq->_mutex);
@@ -70,6 +111,8 @@ z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value
 
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && defined(ZENOH_COMPILER_GCC)
     *value = __sync_fetch_and_add(&seq->_seq, 1);
+#elif (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99)
+    *value = atomic_fetch_add(&seq->_seq, 1);
 #else
     *value = seq->_seq++;
 #endif

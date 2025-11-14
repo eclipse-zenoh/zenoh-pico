@@ -31,7 +31,7 @@ static _ze_advanced_publisher_state_t _ze_advanced_publisher_state_null(void) {
     state._zn = _z_session_weak_null();
     z_internal_publisher_null(&state._publisher);
     state._state_publisher_task_id = _ZP_PERIODIC_SCHEDULER_INVALID_ID;
-    state._seqnumber = _z_seqnumber_null();
+    _z_seqnumber_null(&state._seqnumber);
     return state;
 }
 
@@ -57,7 +57,7 @@ void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state) {
     }
     _z_session_weak_drop(&state->_zn);
     state->_heartbeat_mode = ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE;
-    state->_seqnumber = _z_seqnumber_null();
+    _z_seqnumber_null(&state->_seqnumber);
     state->_last_published_sn = 0;
 }
 
