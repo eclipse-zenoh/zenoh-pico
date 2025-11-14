@@ -21,31 +21,23 @@
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/utils/result.h"
 
-#if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD != 99
-#ifndef __cplusplus
-#include <stdatomic.h>
-#define _Z_SEQNUMBER_TYPE _Atomic uint32_t
-#else
-#include <atomic>
-#define _Z_SEQNUMBER_TYPE std::atomic<uint32_t>
-#endif
-#else
-#define _Z_SEQNUMBER_TYPE uint32_t
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct {
-    _Z_SEQNUMBER_TYPE _seq;
+#if (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99) && !defined(__cplusplus)
+    _Atomic uint32_t _seq;
+#else
+    uint32_t _seq;
+#endif
 #if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
     _z_mutex_t _mutex;
 #endif
 } _z_seqnumber_t;
 
-static inline _z_seqnumber_t _z_seqnumber_null(void) { return (_z_seqnumber_t){0}; }
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq);
+z_result_t _z_seqnumber_drop(_z_seqnumber_t *seq);
 z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value);
 z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value);
 
