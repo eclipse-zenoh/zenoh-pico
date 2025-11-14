@@ -36,8 +36,8 @@ typedef struct {
 #endif
 } _z_seqnumber_t;
 
-z_result_t _z_seqnumber_null(_z_seqnumber_t *seq);
 z_result_t _z_seqnumber_init(_z_seqnumber_t *seq);
+z_result_t _z_seqnumber_drop(_z_seqnumber_t *seq);
 z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value);
 z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value);
 
