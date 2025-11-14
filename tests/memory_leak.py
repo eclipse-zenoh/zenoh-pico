@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # Test failure mode
     print("*** Failure mode ***")
-    if failure_mode('z_pub -m peer') == 1:
+    if failure_mode('z_pub -m invalid') == 1:
         EXIT_STATUS = 1
     # Test pub and sub examples
     print("*** Pub & sub test ***")
