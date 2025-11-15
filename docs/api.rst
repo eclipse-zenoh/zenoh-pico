@@ -1741,7 +1741,7 @@ CMake build provides a variable ``ZENOH_LOG`` which accepts the following values
 
     ZENOH_LOG=debug make  # build zenoh-pico with debug and higher level messages enabled
 
-When building zenoh-pico from source, logging can be enabled by defining corresponding macro, like ``-DZENOH_LOG_DEBUG``.
+When building zenoh-pico from source, logging can be enabled by defining corresponding macro, like ``-DZENOH_LOG=DEBUG``.
 
 Override Logs printing
 ----------------------
