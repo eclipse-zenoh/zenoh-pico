@@ -198,18 +198,22 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_byte
                     const _z_encoding_t *encoding, z_sample_kind_t kind, z_congestion_control_t cong_ctrl,
                     z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
                     const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info,
-                    z_locality_t allowed_destination) {
+                    z_locality_t allowed_destination, bool *delivered_locally) {
     z_result_t ret = _Z_RES_OK;
     _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
+    bool local_delivery = false;
 
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     if (_z_locality_allows_local(allowed_destination)) {
-        _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp, attachment, reliability,
-                                        source_info, allowed_destination);
+        local_delivery = _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp,
+                                                         attachment, reliability, source_info, allowed_destination);
     }
 #endif
 
     if (!_z_locality_allows_remote(allowed_destination)) {
+        if (delivered_locally != NULL) {
+            *delivered_locally = local_delivery;
+        }
         return _Z_RES_OK;
     }
 
@@ -228,6 +232,9 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_byte
     if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
         _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
         ret = _Z_ERR_TRANSPORT_TX_FAILED;
+    }
+    if (delivered_locally != NULL) {
+        *delivered_locally = local_delivery;
     }
     // Freeing z_msg is unnecessary, as all of its components are aliased
     return ret;

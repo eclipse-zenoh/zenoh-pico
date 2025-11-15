@@ -19,6 +19,8 @@
 #include <stdio.h>
 
 #include "zenoh-pico/api/constants.h"
+#include "zenoh-pico/api/macros.h"
+#include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/string.h"
@@ -47,6 +49,7 @@ static atomic_uint g_query_drop_callback_count = 0;
 static atomic_uint g_query_reply_callback_count = 0;
 
 static _z_session_t g_session;
+static _z_session_rc_t g_session_rc = {0};
 static _z_transport_common_t g_fake_transport = {0};
 static bool g_transport_ready = false;
 static _z_link_t g_dummy_link = {0};
@@ -124,6 +127,12 @@ static void setup_session(void) {
     _z_id_t zid;
     _z_session_generate_zid(&zid, Z_ZID_LENGTH);
     assert(_z_session_init(&g_session, &zid) == _Z_RES_OK);
+    if (_Z_RC_IS_NULL(&g_session_rc)) {
+        g_session_rc = _z_session_rc_new(&g_session);
+        assert(!_Z_RC_IS_NULL(&g_session_rc));
+    } else {
+        g_session_rc._val = &g_session;
+    }
 
     g_dummy_link = (_z_link_t){0};
     g_fake_transport = (_z_transport_common_t){0};
@@ -237,6 +246,80 @@ static void test_put_local_only_single(void) {
     cleanup_session();
 }
 
+static void test_put_local_only_single_via_api(void) {
+    setup_session();
+
+    _z_keyexpr_t keyexpr = _z_keyexpr_null();
+    _z_keyexpr_t expanded = _z_keyexpr_null();
+    uint16_t rid = 0;
+    create_local_resource("zenoh-pico/tests/local/put/api", &keyexpr, &expanded, &rid);
+    _z_subscription_rc_t *subscription_rc =
+        register_local_subscription(&expanded, rid, &g_local_put_delivery_count, Z_LOCALITY_SESSION_LOCAL);
+
+    atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
+
+    const char payload_data[] = "payload";
+    z_owned_bytes_t payload = {0};
+    assert(z_bytes_from_buf(&payload, (uint8_t *)payload_data, sizeof(payload_data) - 1, NULL, NULL) == Z_OK);
+
+    z_put_options_t opt;
+    z_put_options_default(&opt);
+    opt.allowed_destination = Z_LOCALITY_SESSION_LOCAL;
+
+    z_result_t res = z_put(&g_session_rc, (const z_loaned_keyexpr_t *)&keyexpr, z_move(payload), &opt);
+    assert(res == Z_OK);
+    assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
+
+    _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, subscription_rc);
+    cleanup_local_resource(&keyexpr, &expanded, rid);
+
+    cleanup_session();
+}
+
+static void test_put_local_and_remote_via_api(void) {
+    setup_session();
+    add_fake_peer();
+
+    _z_keyexpr_t keyexpr = _z_keyexpr_null();
+    _z_keyexpr_t expanded = _z_keyexpr_null();
+    uint16_t rid = 0;
+    create_local_resource("zenoh-pico/tests/local/put/api-mixed", &keyexpr, &expanded, &rid);
+    _z_subscription_rc_t *subscription_rc =
+        register_local_subscription(&expanded, rid, &g_local_put_delivery_count, Z_LOCALITY_ANY);
+
+    atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
+
+    const char payload_data[] = "payload";
+    z_owned_bytes_t payload = {0};
+    assert(z_bytes_from_buf(&payload, (uint8_t *)payload_data, sizeof(payload_data) - 1, NULL, NULL) == Z_OK);
+
+    z_put_options_t opt;
+    z_put_options_default(&opt);
+    opt.allowed_destination = Z_LOCALITY_SESSION_LOCAL;
+    z_result_t res = z_put(&g_session_rc, (const z_loaned_keyexpr_t *)&keyexpr, z_move(payload), &opt);
+    assert(res == Z_OK);
+    assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
+
+    atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
+    z_owned_bytes_t payload2 = {0};
+    assert(z_bytes_from_buf(&payload2, (uint8_t *)payload_data, sizeof(payload_data) - 1, NULL, NULL) == Z_OK);
+    opt.allowed_destination = Z_LOCALITY_ANY;
+    res = z_put(&g_session_rc, (const z_loaned_keyexpr_t *)&keyexpr, z_move(payload2), &opt);
+    assert(res == Z_OK);
+    assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
+
+    _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, subscription_rc);
+    cleanup_local_resource(&keyexpr, &expanded, rid);
+
+    cleanup_session();
+}
+
 static void test_query_local_only_single(void) {
     setup_session();
 
@@ -343,7 +426,8 @@ static void test_put_local_and_remote(void) {
     // Session-local only delivery should not touch transport
     z_result_t res =
         _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_SESSION_LOCAL);
+                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_SESSION_LOCAL,
+                 NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
@@ -352,7 +436,7 @@ static void test_put_local_and_remote(void) {
     atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     res = _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                   Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY);
+                   Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
@@ -524,7 +608,7 @@ static void test_put_remote_only_destination(void) {
 
     z_result_t res =
         _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_REMOTE);
+                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_REMOTE, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
@@ -560,7 +644,7 @@ static void test_subscriber_remote_only_origin(void) {
 
     z_result_t res =
         _z_write(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, Z_CONGESTION_CONTROL_BLOCK,
-                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY);
+                 Z_PRIORITY_DEFAULT, false, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_ANY, NULL);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
@@ -652,6 +736,8 @@ static void test_queryable_remote_only_origin(void) {
 
 int main(void) {
     test_put_local_only_single();
+    test_put_local_only_single_via_api();
+    test_put_local_and_remote_via_api();
     test_put_local_only_multiple();
     test_put_local_and_remote();
     test_query_local_only_single();
