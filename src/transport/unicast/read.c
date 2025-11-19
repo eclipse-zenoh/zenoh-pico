@@ -333,6 +333,7 @@ void *_zp_unicast_read_task(void *ztu_arg) {
 
     // Prepare the buffer
     _z_zbuf_reset(&ztu->_common._zbuf);
+
     z_whatami_t mode = _z_transport_common_get_session(&ztu->_common)->_mode;
     _z_transport_peer_unicast_t *curr_peer = NULL;
     if (mode == Z_WHATAMI_CLIENT) {

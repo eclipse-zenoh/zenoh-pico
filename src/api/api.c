@@ -721,7 +721,19 @@ z_result_t z_scout(z_moved_config_t *config, z_moved_closure_hello_t *callback, 
 }
 #endif
 
-void z_open_options_default(z_open_options_t *options) { options->__dummy = 0; }
+void z_open_options_default(z_open_options_t *options) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    options->auto_start_read_task = true;
+    options->auto_start_lease_task = true;
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    options->auto_start_periodic_task = false;
+#endif
+#endif
+#else
+    options->__dummy = 0;
+#endif
+}
 
 static _z_id_t _z_session_get_zid(const _z_config_t *config) {
     _z_id_t zid = _z_id_empty();
@@ -760,7 +772,16 @@ static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
 }
 
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_open_options_t opts;
+    if (options == NULL) {
+        z_open_options_default(&opts);
+    } else {
+        opts = *options;
+    }
+#else
     _ZP_UNUSED(options);
+#endif  // Z_FEATURE_MULTI_THREAD
 
     if (config == NULL) {
         _Z_ERROR("A valid config is missing.");
@@ -787,6 +808,33 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         z_config_drop(config);
         return ret;
     }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_session_t *session = _Z_RC_IN_VAL(&zs->_rc);
+    z_result_t task_ret = _Z_RES_OK;
+
+    if (opts.auto_start_lease_task) {
+        _Z_SET_IF_OK(task_ret, _zp_start_lease_task(session, NULL));
+    }
+
+    if (opts.auto_start_read_task) {
+        _Z_SET_IF_OK(task_ret, _zp_start_read_task(session, NULL));
+    }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    if (opts.auto_start_periodic_task) {
+        _Z_SET_IF_OK(task_ret, _zp_start_periodic_scheduler_task(session, NULL));
+    }
+#endif
+#endif
+
+    if (task_ret != _Z_RES_OK) {
+        z_session_drop(z_session_move(zs));
+        z_config_drop(config);
+        return task_ret;
+    }
+#endif  // Z_FEATURE_MULTI_THREAD
 
     // Clean up
 #if Z_FEATURE_AUTO_RECONNECT == 1
@@ -2294,10 +2342,36 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
 
 z_result_t zp_stop_read_task(z_loaned_session_t *zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_read_task(_Z_RC_IN_VAL(zs));
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    if (!session->_read_task_should_run) {
+        return _Z_RES_OK;
+    }
+    return _zp_stop_read_task(session);
 #else
     (void)(zs);
     return -1;
+#endif
+}
+
+bool zp_read_task_is_running(const z_loaned_session_t *zs) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (_Z_RC_IS_NULL(zs)) {
+        return false;
+    }
+    const _z_session_t *session = _Z_RC_IN_VAL(zs);
+    switch (session->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            return session->_tp._transport._unicast._common._read_task_running;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            return session->_tp._transport._multicast._common._read_task_running;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            return session->_tp._transport._raweth._common._read_task_running;
+        default:
+            return false;
+    }
+#else
+    _ZP_UNUSED(zs);
+    return false;
 #endif
 }
 
@@ -2326,10 +2400,36 @@ z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_optio
 
 z_result_t zp_stop_lease_task(z_loaned_session_t *zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
-    return _zp_stop_lease_task(_Z_RC_IN_VAL(zs));
+    _z_session_t *session = _Z_RC_IN_VAL(zs);
+    if (!session->_lease_task_should_run) {
+        return _Z_RES_OK;
+    }
+    return _zp_stop_lease_task(session);
 #else
     (void)(zs);
     return -1;
+#endif
+}
+
+bool zp_lease_task_is_running(const z_loaned_session_t *zs) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (_Z_RC_IS_NULL(zs)) {
+        return false;
+    }
+    const _z_session_t *session = _Z_RC_IN_VAL(zs);
+    switch (session->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            return session->_tp._transport._unicast._common._lease_task_running;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            return session->_tp._transport._multicast._common._lease_task_running;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            return session->_tp._transport._raweth._common._lease_task_running;
+        default:
+            return false;
+    }
+#else
+    _ZP_UNUSED(zs);
+    return false;
 #endif
 }
 
@@ -2365,6 +2465,18 @@ z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs) {
 #else
     (void)(zs);
     return -1;
+#endif
+}
+bool zp_periodic_scheduler_task_is_running(const z_loaned_session_t *zs) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (_Z_RC_IS_NULL(zs)) {
+        return false;
+    }
+    const _z_session_t *session = _Z_RC_IN_VAL(zs);
+    return session->_periodic_scheduler._task_running;
+#else
+    _ZP_UNUSED(zs);
+    return false;
 #endif
 }
 #endif  // Z_FEATURE_PERIODIC_TASKS == 1
