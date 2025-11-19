@@ -123,36 +123,26 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
     _Z_DEBUG("Received Z_INIT(Ack)");
-    if (mode == Z_WHATAMI_CLIENT) {
-        // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
-        // otherwise the InitAck message is considered invalid and it should be treated as a
-        // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
-        if (iam._body._init._seq_num_res <= param->_seq_num_res) {
-            param->_seq_num_res = iam._body._init._seq_num_res;
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
-            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-        }
-        if (iam._body._init._req_id_res <= param->_req_id_res) {
-            param->_req_id_res = iam._body._init._req_id_res;
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
-            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-        }
-        if (iam._body._init._batch_size <= param->_batch_size) {
-            param->_batch_size = iam._body._init._batch_size;
-        } else {
-            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
-            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-        }
+    // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,
+    // otherwise the InitAck message is considered invalid and it should be treated as a
+    // CLOSE message with L==0 by the Initiating Peer -- the recipient of the InitAck message.
+    if (iam._body._init._seq_num_res <= param->_seq_num_res) {
+        param->_seq_num_res = iam._body._init._seq_num_res;
     } else {
-        // If the new node has less representing capabilities then it is incompatible to communication
-        if ((iam._body._init._seq_num_res < param->_seq_num_res) ||
-            (iam._body._init._req_id_res < param->_req_id_res) || (iam._body._init._batch_size < param->_batch_size)) {
-            _Z_INFO("Couldn't open session because distant node is incompatible config wise.");
-            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
-            ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
-        }
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
+        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+    }
+    if (iam._body._init._req_id_res <= param->_req_id_res) {
+        param->_req_id_res = iam._body._init._req_id_res;
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
+        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
+    }
+    if (iam._body._init._batch_size <= param->_batch_size) {
+        param->_batch_size = iam._body._init._batch_size;
+    } else {
+        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
+        ret = _Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION;
     }
 #if Z_FEATURE_FRAGMENTATION == 1
     if (iam._body._init._patch <= ism._body._init._patch) {
@@ -233,13 +223,21 @@ z_result_t _z_unicast_handshake_listen(_z_transport_unicast_establish_param_t *p
     _z_slice_t cookie = _z_slice_null();
     _z_transport_message_t iam = _z_t_msg_make_init_ack(mode, *local_zid, cookie);
 
-    // If the new node has less representing capabilities then it is incompatible to communication
-    if ((tmsg._body._init._seq_num_res < iam._body._init._seq_num_res) ||
-        (tmsg._body._init._req_id_res < iam._body._init._req_id_res) ||
-        (tmsg._body._init._batch_size < iam._body._init._batch_size)) {
-        _z_t_msg_clear(&tmsg);
-        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_OPEN_SN_RESOLUTION);
+    // If the new node has less representing capabilities adjust settings
+    if (tmsg._body._init._seq_num_res < iam._body._init._seq_num_res) {
+        _Z_DEBUG("Adjusting SN resolution from %u to %u", iam._body._init._seq_num_res, tmsg._body._init._seq_num_res);
+        iam._body._init._seq_num_res = tmsg._body._init._seq_num_res;
     }
+    if (tmsg._body._init._req_id_res < iam._body._init._req_id_res) {
+        _Z_DEBUG("Adjusting Req ID resolution from %u to %u", iam._body._init._req_id_res,
+                 tmsg._body._init._req_id_res);
+        iam._body._init._req_id_res = tmsg._body._init._req_id_res;
+    }
+    if (tmsg._body._init._batch_size < iam._body._init._batch_size) {
+        _Z_DEBUG("Adjusting Batch Size from %u to %u", iam._body._init._batch_size, tmsg._body._init._batch_size);
+        iam._body._init._batch_size = tmsg._body._init._batch_size;
+    }
+
 #if Z_FEATURE_FRAGMENTATION == 1
     if (iam._body._init._patch > tmsg._body._init._patch) {
         iam._body._init._patch = tmsg._body._init._patch;
