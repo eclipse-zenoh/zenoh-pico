@@ -20,6 +20,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/sample.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
@@ -27,6 +28,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -45,8 +47,11 @@ void _z_subscription_cache_invalidate(_z_session_t *zn) {
 
 #if Z_FEATURE_RX_CACHE == 1
 int _z_subscription_cache_data_compare(const void *first, const void *second) {
-    _z_subscription_cache_data_t *first_data = (_z_subscription_cache_data_t *)first;
-    _z_subscription_cache_data_t *second_data = (_z_subscription_cache_data_t *)second;
+    const _z_subscription_cache_data_t *first_data = (const _z_subscription_cache_data_t *)first;
+    const _z_subscription_cache_data_t *second_data = (const _z_subscription_cache_data_t *)second;
+    if (first_data->is_remote != second_data->is_remote) {
+        return (int)first_data->is_remote - (int)second_data->is_remote;
+    }
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
 #endif  // Z_FEATURE_RX_CACHE == 1
@@ -103,7 +108,8 @@ _z_subscription_rc_t *__unsafe_z_get_subscription_by_id(_z_session_t *zn, _z_sub
  *  - zn->_mutex_inner
  */
 static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
-                                                      const _z_keyexpr_t *key, _z_subscription_rc_svec_t *sub_infos) {
+                                                      const _z_keyexpr_t *key, bool is_remote,
+                                                      _z_subscription_rc_svec_t *sub_infos) {
     _z_subscription_rc_slist_t *subs =
         (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) ? zn->_subscriptions : zn->_liveliness_subscriptions;
 
@@ -113,7 +119,10 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
     while (xs != NULL) {
         // Parse subscription list
         _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(sub)->_key, key)) {
+        const _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
+        bool origin_allowed = is_remote ? _z_locality_allows_remote(sub_val->_allowed_origin)
+                                        : _z_locality_allows_local(sub_val->_allowed_origin);
+        if (origin_allowed && _z_keyexpr_suffix_intersects(&sub_val->_key, key)) {
             _z_subscription_rc_t sub_clone = _z_subscription_rc_clone(sub);
             _Z_CLEAN_RETURN_IF_ERR(_z_subscription_rc_svec_append(sub_infos, &sub_clone, true),
                                    _z_subscription_rc_svec_clear(sub_infos));
@@ -129,11 +138,11 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
  *  - zn->_mutex_inner
  */
 static z_result_t __unsafe_z_get_subscriptions_rc_by_key(_z_session_t *zn, _z_subscriber_kind_t kind,
-                                                         const _z_keyexpr_t *key,
+                                                         const _z_keyexpr_t *key, bool is_remote,
                                                          _z_subscription_rc_svec_rc_t *sub_infos) {
     *sub_infos = _z_subscription_rc_svec_rc_new_undefined();
     z_result_t ret = !_Z_RC_IS_NULL(sub_infos) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_by_key(zn, kind, key, _Z_RC_IN_VAL(sub_infos)));
+    _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_by_key(zn, kind, key, is_remote, _Z_RC_IN_VAL(sub_infos)));
     if (ret != _Z_RES_OK) {
         _z_subscription_rc_svec_rc_drop(sub_infos);
     }
@@ -166,6 +175,15 @@ _z_subscription_rc_t *_z_register_subscription(_z_session_t *zn, _z_subscriber_k
     *ret = _z_subscription_rc_new_from_val(s);
     _z_session_mutex_unlock(zn);
 
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    if (ret != NULL && kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
+        _z_subscription_t *sub_val = _Z_RC_IN_VAL(ret);
+        if (_z_locality_allows_local(sub_val->_allowed_origin)) {
+            _z_write_filter_notify_subscriber(zn, &sub_val->_key, sub_val->_allowed_origin, true);
+        }
+    }
+#endif
+
     return ret;
 }
 
@@ -197,11 +215,15 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
 
 static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind_t kind,
                                             _z_subscription_cache_data_t *infos, _z_transport_peer_common_t *peer) {
+    infos->is_remote = (peer != NULL);
     _z_session_mutex_lock(zn);
     _z_subscription_cache_data_t *cache_entry = NULL;
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_subscription_lru_cache_get(&zn->_subscription_cache, infos);
+    if (cache_entry != NULL && cache_entry->is_remote != infos->is_remote) {
+        cache_entry = NULL;
+    }
 #endif
     if (cache_entry != NULL) {  // Copy cache entry
         infos->infos = _z_subscription_rc_svec_rc_clone(&cache_entry->infos);
@@ -212,10 +234,12 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
         infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
         ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
         // Get subscription list
-        _Z_SET_IF_OK(ret, __unsafe_z_get_subscriptions_rc_by_key(zn, kind, &infos->ke_out, &infos->infos));
+        _Z_SET_IF_OK(ret,
+                     __unsafe_z_get_subscriptions_rc_by_key(zn, kind, &infos->ke_out, infos->is_remote, &infos->infos));
 #if Z_FEATURE_RX_CACHE == 1
         _z_subscription_cache_data_t cache_storage = _z_subscription_cache_data_null();
         cache_storage.infos = _z_subscription_rc_svec_rc_clone(&infos->infos);
+        cache_storage.is_remote = infos->is_remote;
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_out, &infos->ke_out));
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_in, &infos->ke_in));
         _Z_SET_IF_OK(ret, _z_subscription_lru_cache_insert(&zn->_subscription_cache, &cache_storage));
@@ -236,8 +260,8 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
                                          const _z_timestamp_t *timestamp, const _z_n_qos_t qos, _z_bytes_t *attachment,
                                          z_reliability_t reliability, _z_source_info_t *source_info,
                                          _z_transport_peer_common_t *peer) {
-    // Retrieve sub infos
     _z_subscription_cache_data_t sub_infos = _z_subscription_cache_data_null();
+    // Retrieve sub infos
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
     _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, peer), _z_encoding_clear(encoding);
                            _z_bytes_drop(payload); _z_bytes_drop(attachment); _z_source_info_clear(source_info););
@@ -276,6 +300,21 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
 }
 
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub) {
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    _z_keyexpr_t key_copy = _z_keyexpr_null();
+    z_locality_t origin = Z_LOCALITY_ANY;
+    bool notify = false;
+    if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
+        _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
+        if (_z_locality_allows_local(sub_val->_allowed_origin)) {
+            key_copy = _z_keyexpr_duplicate(&sub_val->_key);
+            if (_z_keyexpr_has_suffix(&key_copy)) {
+                origin = sub_val->_allowed_origin;
+                notify = true;
+            }
+        }
+    }
+#endif
     _z_session_mutex_lock(zn);
 
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
@@ -286,6 +325,13 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
     }
 
     _z_session_mutex_unlock(zn);
+
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    if (notify) {
+        _z_write_filter_notify_subscriber(zn, &key_copy, origin, false);
+        _z_keyexpr_clear(&key_copy);
+    }
+#endif
 }
 
 void _z_flush_subscriptions(_z_session_t *zn) {

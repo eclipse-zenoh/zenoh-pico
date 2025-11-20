@@ -19,6 +19,7 @@
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/utils/locality.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +40,13 @@ typedef enum {
     WRITE_FILTER_OFF = 1,
 } _z_write_filter_state_t;
 
+struct _z_write_filter_registration_t;
+
+typedef enum {
+    _Z_WRITE_FILTER_SUBSCRIBER = 0,
+    _Z_WRITE_FILTER_QUERYABLE = 1,
+} _z_write_filter_target_type_t;
+
 typedef struct {
     _z_session_weak_t zn;
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -52,6 +60,11 @@ typedef struct {
     uint8_t state;
     bool is_complete;
     bool is_aggregate;
+    bool allow_local;
+    bool allow_remote;
+    _z_write_filter_target_type_t target_type;
+    size_t local_targets;
+    struct _z_write_filter_registration_t *registration;
 } _z_write_filter_ctx_t;
 
 z_result_t _z_write_filter_ctx_clear(_z_write_filter_ctx_t *filter);
@@ -67,8 +80,12 @@ typedef struct _z_write_filter_t {
 } _z_write_filter_t;
 
 z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
-                                  uint8_t interest_flag, bool complete);
+                                  uint8_t interest_flag, bool complete, z_locality_t locality);
 z_result_t _z_write_filter_clear(_z_write_filter_t *filter);
+void _z_write_filter_notify_subscriber(struct _z_session_t *session, const _z_keyexpr_t *key,
+                                       z_locality_t allowed_origin, bool add);
+void _z_write_filter_notify_queryable(struct _z_session_t *session, const _z_keyexpr_t *key,
+                                      z_locality_t allowed_origin, bool is_complete, bool add);
 
 #if Z_FEATURE_MATCHING
 z_result_t _z_write_filter_ctx_add_callback(_z_write_filter_ctx_t *filter, size_t id, _z_closure_matching_status_t *v);

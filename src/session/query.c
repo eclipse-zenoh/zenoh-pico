@@ -22,6 +22,7 @@
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
 
 #if Z_FEATURE_QUERY == 1
@@ -31,6 +32,7 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     }
     _z_keyexpr_clear(&pen_qry->_key);
     _z_pending_reply_slist_free(&pen_qry->_pending_replies);
+    pen_qry->_allowed_destination = z_locality_default();
 }
 
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
@@ -170,12 +172,14 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
             }
             tmp_rep._tstamp = _z_timestamp_duplicate(&msg->_commons._timestamp);
             pen_qry->_pending_replies = _z_pending_reply_slist_push(pen_qry->_pending_replies, &tmp_rep);
+            _Z_DEBUG("stored reply for id=%jd consolidation=%d", (intmax_t)id, pen_qry->_consolidation);
         }
     }
     _z_session_mutex_unlock(zn);
 
     // Trigger callback if applicable
     if (pen_qry->_consolidation != Z_CONSOLIDATION_MODE_LATEST) {
+        _Z_DEBUG("immediate callback for id=%jd", (intmax_t)id);
         pen_qry->_callback(&reply, pen_qry->_arg);
     }
     _z_reply_clear(&reply);
@@ -214,7 +218,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
     return _Z_RES_OK;
 }
 
-z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
+z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id, bool finalize) {
     // Retrieve query
     _z_session_mutex_lock(zn);
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
@@ -223,18 +227,25 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
         // Not concerned by the reply
         return _Z_RES_OK;
     }
+    _Z_DEBUG("trigger_reply_final id=%jd finalize=%d", (intmax_t)id, finalize);
+    bool should_finalize = finalize || !_z_locality_allows_remote(pen_qry->_allowed_destination);
     // The reply is the final one, apply consolidation if needed
     if (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) {
         while (pen_qry->_pending_replies != NULL) {
             _z_pending_reply_t *pen_rep = _z_pending_reply_slist_value(pen_qry->_pending_replies);
 
             // Trigger the query handler
+            _Z_DEBUG("deliver pending reply in final id=%jd", (intmax_t)id);
             pen_qry->_callback(&pen_rep->_reply, pen_qry->_arg);
             pen_qry->_pending_replies = _z_pending_reply_slist_pop(pen_qry->_pending_replies);
         }
     }
-    // Dropping a pending query triggers the dropper callback that is now the equivalent to a reply with the FINAL
-    zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    // Finalize query if requested: drop pending query and trigger dropper callback,
+    // which is equivalent to a reply with FINAL.
+    if (should_finalize) {
+        zn->_pending_queries =
+            _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+    }
     _z_session_mutex_unlock(zn);
     return _Z_RES_OK;
 }

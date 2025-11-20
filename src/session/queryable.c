@@ -18,12 +18,14 @@
 
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/query.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
 #include "zenoh-pico/utils/pointers.h"
 #include "zenoh-pico/utils/string.h"
@@ -49,8 +51,11 @@ void _z_queryable_cache_invalidate(_z_session_t *zn) {
 
 #if Z_FEATURE_RX_CACHE == 1
 int _z_queryable_cache_data_compare(const void *first, const void *second) {
-    _z_queryable_cache_data_t *first_data = (_z_queryable_cache_data_t *)first;
-    _z_queryable_cache_data_t *second_data = (_z_queryable_cache_data_t *)second;
+    const _z_queryable_cache_data_t *first_data = (const _z_queryable_cache_data_t *)first;
+    const _z_queryable_cache_data_t *second_data = (const _z_queryable_cache_data_t *)second;
+    if (first_data->is_remote != second_data->is_remote) {
+        return (int)first_data->is_remote - (int)second_data->is_remote;
+    }
     return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
 }
 #endif  // Z_FEATURE_RX_CACHE == 1
@@ -106,7 +111,7 @@ static _z_session_queryable_rc_t *__unsafe_z_get_session_queryable_by_id(_z_sess
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-static z_result_t __unsafe_z_get_session_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t *key,
+static z_result_t __unsafe_z_get_session_queryables_by_key(_z_session_t *zn, const _z_keyexpr_t *key, bool is_remote,
                                                            _z_session_queryable_rc_svec_t *qle_infos) {
     _z_session_queryable_rc_slist_t *qles = zn->_local_queryable;
 
@@ -116,7 +121,10 @@ static z_result_t __unsafe_z_get_session_queryables_by_key(_z_session_t *zn, con
     while (xs != NULL) {
         // Parse queryable list
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_slist_value(xs);
-        if (_z_keyexpr_suffix_intersects(&_Z_RC_IN_VAL(qle)->_key, key)) {
+        const _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
+        bool origin_allowed = is_remote ? _z_locality_allows_remote(qle_val->_allowed_origin)
+                                        : _z_locality_allows_local(qle_val->_allowed_origin);
+        if (origin_allowed && _z_keyexpr_suffix_intersects(&qle_val->_key, key)) {
             _z_session_queryable_rc_t qle_clone = _z_session_queryable_rc_clone(qle);
             _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_rc_svec_append(qle_infos, &qle_clone, true),
                                    _z_session_queryable_rc_svec_clear(qle_infos));
@@ -131,11 +139,11 @@ static z_result_t __unsafe_z_get_session_queryables_by_key(_z_session_t *zn, con
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-static z_result_t __unsafe_z_get_session_queryables_rc_by_key(_z_session_t *zn, const _z_keyexpr_t *key,
+static z_result_t __unsafe_z_get_session_queryables_rc_by_key(_z_session_t *zn, const _z_keyexpr_t *key, bool is_remote,
                                                               _z_session_queryable_rc_svec_rc_t *qle_infos) {
     *qle_infos = _z_session_queryable_rc_svec_rc_new_undefined();
     z_result_t ret = !_Z_RC_IS_NULL(qle_infos) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    _Z_SET_IF_OK(ret, __unsafe_z_get_session_queryables_by_key(zn, key, _Z_RC_IN_VAL(qle_infos)));
+    _Z_SET_IF_OK(ret, __unsafe_z_get_session_queryables_by_key(zn, key, is_remote, _Z_RC_IN_VAL(qle_infos)));
     if (ret != _Z_RES_OK) {
         _z_session_queryable_rc_svec_rc_drop(qle_infos);
     }
@@ -163,16 +171,27 @@ _z_session_queryable_rc_t *_z_register_session_queryable(_z_session_t *zn, _z_se
     *ret = _z_session_queryable_rc_new_from_val(q);
     _z_session_mutex_unlock(zn);
 
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    if (ret != NULL && _z_locality_allows_local(q->_allowed_origin)) {
+        _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(ret);
+        _z_write_filter_notify_queryable(zn, &qle_val->_key, qle_val->_allowed_origin, qle_val->_complete, true);
+    }
+#endif
+
     return ret;
 }
 
 static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_cache_data_t *infos,
                                                  _z_transport_peer_common_t *peer) {
+    infos->is_remote = (peer != NULL);
     _z_session_mutex_lock(zn);
     _z_queryable_cache_data_t *cache_entry = NULL;
     z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_RX_CACHE == 1
     cache_entry = _z_queryable_lru_cache_get(&zn->_queryable_cache, infos);
+    if (cache_entry != NULL && cache_entry->is_remote != infos->is_remote) {
+        cache_entry = NULL;
+    }
 #endif
     if (cache_entry != NULL) {  // Copy cache entry
         infos->infos = _z_session_queryable_rc_svec_rc_clone(&cache_entry->infos);
@@ -182,11 +201,13 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
                  _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
         infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true, peer);
         ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
-        _Z_SET_IF_OK(ret, __unsafe_z_get_session_queryables_rc_by_key(zn, &infos->ke_out, &infos->infos));
+        _Z_SET_IF_OK(ret,
+                     __unsafe_z_get_session_queryables_rc_by_key(zn, &infos->ke_out, infos->is_remote, &infos->infos));
 #if Z_FEATURE_RX_CACHE == 1
         // Update cache
         _z_queryable_cache_data_t cache_storage = _z_queryable_cache_data_null();
         cache_storage.infos = _z_session_queryable_rc_svec_rc_clone(&infos->infos);
+        cache_storage.is_remote = infos->is_remote;
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_in, &infos->ke_in));
         _Z_SET_IF_OK(ret, _z_keyexpr_copy(&cache_storage.ke_out, &infos->ke_out));
         _Z_SET_IF_OK(ret, _z_queryable_lru_cache_insert(&zn->_queryable_cache, &cache_storage));
@@ -256,12 +277,32 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
 }
 
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *qle) {
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    _z_keyexpr_t key_copy = _z_keyexpr_null();
+    z_locality_t origin = Z_LOCALITY_ANY;
+    bool notify = false;
+    _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
+    if (_z_locality_allows_local(qle_val->_allowed_origin)) {
+        key_copy = _z_keyexpr_duplicate(&qle_val->_key);
+        if (_z_keyexpr_has_suffix(&key_copy)) {
+            origin = qle_val->_allowed_origin;
+            notify = true;
+        }
+    }
+#endif
     _z_session_mutex_lock(zn);
 
     zn->_local_queryable =
         _z_session_queryable_rc_slist_drop_first_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
     _z_session_mutex_unlock(zn);
+
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    if (notify) {
+        _z_write_filter_notify_queryable(zn, &key_copy, origin, qle_val->_complete, false);
+        _z_keyexpr_clear(&key_copy);
+    }
+#endif
 }
 
 void _z_flush_session_queryable(_z_session_t *zn) {
