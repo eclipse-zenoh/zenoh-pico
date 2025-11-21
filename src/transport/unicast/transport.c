@@ -122,6 +122,7 @@ static z_result_t _z_unicast_handshake_open(_z_transport_unicast_establish_param
         _z_t_msg_clear(&iam);
         _Z_ERROR_RETURN(_Z_ERR_MESSAGE_UNEXPECTED);
     }
+    param->_remote_whatami = iam._body._init._whatami;
     _Z_DEBUG("Received Z_INIT(Ack)");
     if (mode == Z_WHATAMI_CLIENT) {
         // Any of the size parameters in the InitAck must be less or equal than the one in the InitSyn,

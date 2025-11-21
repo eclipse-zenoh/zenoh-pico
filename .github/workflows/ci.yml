@@ -470,6 +470,60 @@ jobs:
           RUST_LOG=debug sudo python3 ./build/tests/connection_restore.py ./zenoh-standalone/zenohd
         timeout-minutes: 20
 
+  routed_peer_client_test:
+    needs: zenoh_build
+    name: Test routed peer client communication
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Zenoh artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.zenoh_build.outputs.artifact-name }}
+
+      - name: Unzip Zenoh artifacts
+        run: unzip ${{ needs.zenoh_build.outputs.artifact-name }} -d zenoh-standalone
+
+      - id: select-multicast-iface
+        name: Select multicast-capable interface
+        run: |
+          echo "Detecting multicast interface..."
+          # Pick first non-loopback, non-docker, non-veth interface
+          IFACE=$(ip -o link show | awk -F': ' '$2 != "lo" && $2 !~ /docker/ && $2 !~ /veth/ {print $2; exit}')
+          if [ -z "$IFACE" ]; then
+            echo "No suitable interface found, defaulting to eth0"
+            IFACE=eth0
+          fi
+          echo "Selected interface: $IFACE"
+          echo "iface=$IFACE" >> "$GITHUB_OUTPUT"
+
+      - id: run-zenoh
+        name: Run Zenoh router
+        run: |
+          IFACE=${{ steps.select-multicast-iface.outputs.iface }}
+          RUST_LOG=debug ./zenoh-standalone/zenohd -l tcp/127.0.0.1:7447 -l udp/224.0.0.123:7447#iface=$IFACE > zenohd.log 2>&1 &
+          echo "zenohd-pid=$!" >> $GITHUB_OUTPUT
+
+      - name: Build project and run test
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_UNSTABLE_API=1 BATCH_MULTICAST_SIZE=8192 BATCH_UNICAST_SIZE=49152 CMAKE_GENERATOR=Ninja make
+          IFACE=${{ steps.select-multicast-iface.outputs.iface }}
+          python3 ./build/tests/routed_peer_client.py tcp/127.0.0.1:7447 udp/224.0.0.123:7447#iface=$IFACE
+        timeout-minutes: 15
+
+      - name: Kill Zenoh router
+        if: always()
+        run: kill ${{ steps.run-zenoh.outputs.zenohd-pid }}
+
+      - name: Print zenohd logs
+        if: always()
+        run: |
+          echo "===== ZENOH ROUTER LOGS ====="
+          cat zenohd.log || echo "zenohd.log not found"
+
   unicast_peer_test:
     name: P2p unicast test
     runs-on: ubuntu-latest

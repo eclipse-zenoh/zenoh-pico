@@ -105,9 +105,12 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
 z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
                                   uint8_t interest_flag, bool complete) {
     uint8_t flags = interest_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT;
-    // Add client specific flags
     if (_Z_RC_IN_VAL(zn)->_mode == Z_WHATAMI_CLIENT) {
+        // Add client specific flags
         flags |= _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_AGGREGATE | _Z_INTEREST_FLAG_FUTURE;
+    } else if (_Z_RC_IN_VAL(zn)->_mode == Z_WHATAMI_PEER && _z_session_has_router_peer(_Z_RC_IN_VAL(zn))) {
+        // Add additional flags when in peer mode and connected to a router
+        flags |= _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_FUTURE;
     }
     filter->ctx = _z_write_filter_ctx_rc_null();
     _z_write_filter_ctx_t *ctx = (_z_write_filter_ctx_t *)z_malloc(sizeof(_z_write_filter_ctx_t));
