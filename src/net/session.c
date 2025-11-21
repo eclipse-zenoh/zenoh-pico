@@ -329,6 +329,29 @@ void _z_close(_z_session_t *zn) { _z_session_close(zn, _Z_CLOSE_GENERIC); }
 
 bool _z_session_is_closed(const _z_session_t *session) { return session->_tp._type == _Z_TRANSPORT_NONE; }
 
+bool _z_session_has_router_peer(const _z_session_t *session) {
+    if (session->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_transport_peer_unicast_slist_t *peers = session->_tp._transport._unicast._peers;
+        while (peers != NULL) {
+            _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(peers);
+            if (peer->common._remote_whatami == Z_WHATAMI_ROUTER) {
+                return true;
+            }
+            peers = _z_transport_peer_unicast_slist_next(peers);
+        }
+    } else if (session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE) {
+        _z_transport_peer_multicast_slist_t *peers = session->_tp._transport._multicast._peers;
+        while (peers != NULL) {
+            _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(peers);
+            if (peer->common._remote_whatami == Z_WHATAMI_ROUTER) {
+                return true;
+            }
+            peers = _z_transport_peer_multicast_slist_next(peers);
+        }
+    }
+    return false;
+}
+
 _z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session) {
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(session);
     if (!_Z_RC_IS_NULL(&sess_rc) && _z_session_is_closed(_Z_RC_IN_VAL(&sess_rc))) {

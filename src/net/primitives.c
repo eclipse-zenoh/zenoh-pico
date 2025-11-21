@@ -565,8 +565,9 @@ uint32_t _z_add_interest(_z_session_t *zn, _z_keyexpr_t keyexpr, _z_interest_han
         _z_keyexpr_clear(&intr._key);
         return 0;
     }
-    // Build the interest message to send on the wire (only needed in client mode or multicast transport)
-    if (zn->_mode == Z_WHATAMI_CLIENT
+    // Build the interest message to send on the wire (only needed in client mode or multicast transport or when
+    // connected to a router in peer mode)
+    if (zn->_mode == Z_WHATAMI_CLIENT || _z_session_has_router_peer(zn)
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 1
         || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
 #endif
