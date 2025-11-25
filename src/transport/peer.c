@@ -35,6 +35,7 @@ void _z_transport_peer_common_copy(_z_transport_peer_common_t *dst, const _z_tra
 #endif
     dst->_received = src->_received;
     dst->_remote_zid = src->_remote_zid;
+    dst->_remote_whatami = src->_remote_whatami;
 }
 
 bool _z_transport_peer_common_eq(const _z_transport_peer_common_t *left, const _z_transport_peer_common_t *right) {
@@ -107,6 +108,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
     peer->_sn_rx_best_effort = initial_sn_rx;
 
     peer->common._remote_zid = param->_remote_zid;
+    peer->common._remote_whatami = param->_remote_whatami;
     peer->common._received = true;
     peer->common._remote_resources = NULL;
 #if Z_FEATURE_FRAGMENTATION == 1

@@ -46,6 +46,7 @@ typedef _z_slist_t _z_resource_slist_t;
 
 typedef struct {
     _z_id_t _remote_zid;
+    z_whatami_t _remote_whatami;
     volatile bool _received;
     _z_resource_slist_t *_remote_resources;
 #if Z_FEATURE_FRAGMENTATION == 1
@@ -180,7 +181,7 @@ typedef struct {
     _z_zint_t _initial_sn_rx;
     _z_zint_t _initial_sn_tx;
     _z_zint_t _lease;
-    z_whatami_t _whatami;
+    z_whatami_t _remote_whatami;
     uint8_t _key_id_res;
     uint8_t _req_id_res;
     uint8_t _seq_num_res;

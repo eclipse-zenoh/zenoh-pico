@@ -169,6 +169,11 @@ void _z_close(_z_session_t *session);
 bool _z_session_is_closed(const _z_session_t *session);
 
 /**
+ * Return true if session is connected to at least one router peer.
+ */
+bool _z_session_has_router_peer(const _z_session_t *session);
+
+/**
  * Upgrades weak session session, than resets it to null if session is closed.
  */
 _z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session);
