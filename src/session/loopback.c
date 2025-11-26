@@ -199,13 +199,6 @@ bool _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keye
                                       const _z_encoding_t *encoding, const _z_bytes_t *attachment,
                                       const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
                                       _z_n_qos_t qos, z_locality_t allowed_destination) {
-    if (!_z_locality_allows_local(allowed_destination)) {
-        return false;
-    }
-    if (!_z_session_has_local_queryable(zn, keyexpr)) {
-        return false;
-    }
-
     _z_transport_common_t *transport = _z_session_get_transport_common(zn);
     if (transport == NULL) {
         return false;

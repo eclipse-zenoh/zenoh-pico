@@ -569,6 +569,13 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     pq->_arg = arg;
     pq->_timeout = timeout_ms;
     pq->_start_time = z_clock_now();
+    // Count how many finals we expect: one for the local path (if handled_locally)
+    // and one for the remote path (if remote is allowed). Keep at least 1 to avoid stuck pending.
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    pq->_remaining_finals = (uint8_t)((allow_local ? 1 : 0) + (allow_remote ? 1 : 0));
+#else
+    pq->_remaining_finals = 1;
+#endif
     _z_session_mutex_unlock(zn);
     *out_qid = qid;
     // Send query message
@@ -579,12 +586,11 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
                         timeout_ms, attachment, qos, &source_info);
 
-    bool handled_locally = false;
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
-    if (allow_local) {
-        handled_locally =
-            _z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding, attachment,
-                                             &source_info, pq->_id, timeout_ms, qos, allowed_destination);
+    if (allow_local &&
+        _z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding, attachment,
+                                         &source_info, pq->_id, timeout_ms, qos, allowed_destination)) {
+        _Z_RETURN_IF_ERR(_z_trigger_query_reply_final(zn, pq->_id));
     }
 #else
     _ZP_UNUSED(allow_local);
@@ -593,22 +599,6 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _ZP_UNUSED(attachment);
     _ZP_UNUSED(source_info);
 #endif
-
-    _Z_DEBUG("_z_query: handled_locally=%d remote_possible=%d", handled_locally, remote_possible);
-
-    // Count how many finals we expect: one for the local path (if handled_locally)
-    // and one for the remote path (if remote is allowed). Keep at least 1 to avoid stuck pending.
-    _z_session_mutex_lock(zn);
-    uint8_t remaining_finals = (uint8_t)((handled_locally ? 1 : 0) + (allow_remote ? 1 : 0));
-    pq->_remaining_finals = remaining_finals;
-    if (pq->_remaining_finals == 0) {
-        pq->_remaining_finals = 1;
-    }
-    _z_session_mutex_unlock(zn);
-
-    if (handled_locally) {
-        _Z_RETURN_IF_ERR(_z_trigger_query_reply_final(zn, pq->_id));
-    }
 
     if (!remote_possible) {
         // No link: keep pending to allow for late remote delivery or timeout handling
