@@ -593,6 +593,89 @@ static void test_query_local_and_remote(void) {
     cleanup_session();
 }
 
+static void test_query_local_and_remote_via_api(void) {
+    setup_session();
+    add_fake_peer();
+
+    _z_keyexpr_t keyexpr = _z_keyexpr_null();
+    _z_keyexpr_t expanded = _z_keyexpr_null();
+    uint16_t rid = 0;
+    create_local_resource("zenoh-pico/tests/local/query/api-mixed", &keyexpr, &expanded, &rid);
+
+    _z_session_queryable_rc_t *queryable_primary =
+        register_local_queryable(&expanded, &g_local_query_delivery_count, Z_LOCALITY_ANY);
+
+    atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_local_query_delivery_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_query_drop_callback_count, 0, memory_order_relaxed);
+    atomic_store_explicit(&g_query_reply_callback_count, 0, memory_order_relaxed);
+
+    z_owned_queryable_t queryable = {._this = queryable_primary};
+
+    z_loaned_session_t zs = (z_loaned_session_t)&g_session_rc;
+    z_owned_keyexpr_t keyexpr_owned = {._this._val = keyexpr};
+
+    z_result_t res = z_queryable_declare(zs, z_move(keyexpr_owned), &queryable, &z_queryable_default());
+    assert(res == Z_OK);
+
+    z_owned_queryable_t tmp = z_move(queryable);
+    z_drop(tmp);
+
+    z_queryable_default();
+
+    z_owned_queryable_t qbl = {._this = queryable_primary};
+    z_queryable_drop(&qbl);
+
+    z_owned_query_t query = z_query_null();
+
+    z_query_options_t qopt;
+    z_query_options_default(&qopt);
+    qopt.allowed_destination = Z_LOCALITY_ANY;
+    res = z_get(zs, (z_loaned_keyexpr_t *)&keyexpr, "", &query, &qopt);
+    assert(res == Z_OK);
+
+    // local queryable handled, network query also sent
+    assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
+
+    // Simulate remote reply and final
+    _z_pending_query_t *pq = _z_pending_query_slist_value(g_session._pending_queries);
+    assert(pq != NULL);
+    _z_zint_t request_id = pq->_id;
+
+    const char remote_data[] = "remote-response";
+    _z_bytes_t remote_payload = _z_bytes_null();
+    assert(_z_bytes_from_buf(&remote_payload, (const uint8_t *)remote_data, sizeof(remote_data) - 1) == _Z_RES_OK);
+
+    _z_id_t remote_zid = _z_id_empty();
+    _z_session_generate_zid(&remote_zid, Z_ZID_LENGTH);
+    _z_encoding_t encoding = _z_encoding_null();
+    _z_timestamp_t timestamp = _z_timestamp_null();
+    _z_source_info_t source_info = _z_source_info_null();
+
+    _z_network_message_t reply_msg;
+    _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &keyexpr, Z_RELIABILITY_RELIABLE,
+                               Z_CONSOLIDATION_MODE_DEFAULT, _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT),
+                               &timestamp, &source_info, &remote_payload, &encoding, NULL);
+    res = _z_handle_network_message(&g_fake_transport, &reply_msg, NULL);
+    assert(res == _Z_RES_OK);
+
+    _z_network_message_t final_msg;
+    _z_n_msg_make_response_final(&final_msg, request_id);
+    res = _z_handle_network_message(&g_fake_transport, &final_msg, NULL);
+    assert(res == _Z_RES_OK);
+
+    assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
+    assert(atomic_load_explicit(&g_query_drop_callback_count, memory_order_relaxed) == 1);
+    assert(g_session._pending_queries == NULL);
+
+    _z_unregister_session_queryable(&g_session, queryable_primary);
+    cleanup_local_resource(&keyexpr, &expanded, rid);
+
+    cleanup_session();
+}
+
 static void test_put_remote_only_destination(void) {
     setup_session();
     add_fake_peer();
@@ -752,6 +835,7 @@ int main(void) {
     test_query_local_only_single();
     test_query_local_only_multiple();
     test_query_local_and_remote();
+    test_query_local_and_remote_via_api();
     test_put_remote_only_destination();
     test_subscriber_remote_only_origin();
     test_query_remote_only_destination();
