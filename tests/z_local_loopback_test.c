@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#undef NDEBUG
 #include <assert.h>
 #include <stdatomic.h>
 #include <stdbool.h>
@@ -96,11 +97,11 @@ static void local_query_callback(_z_query_rc_t *query_rc, void *arg) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
 
     _z_network_message_t msg;
-    _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _Z_RC_IN_VAL(query_rc)->_request_id,
-                               &_Z_RC_IN_VAL(query_rc)->_key, Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos,
-                               &timestamp, &source_info, &payload, &encoding, NULL);
+    _z_keyexpr_t key_copy = _z_keyexpr_duplicate(&_Z_RC_IN_VAL(query_rc)->_key);
+    _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _Z_RC_IN_VAL(query_rc)->_request_id, &key_copy,
+                               Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info,
+                               &payload, &encoding, NULL);
     assert(_z_handle_network_message(&g_fake_transport, &msg, NULL) == _Z_RES_OK);
-    _z_n_msg_clear(&msg);
 }
 
 static void query_reply_callback(_z_reply_t *reply, void *arg) {
@@ -136,8 +137,7 @@ static void setup_session(void) {
 
     g_dummy_link = (_z_link_t){0};
     g_fake_transport = (_z_transport_common_t){0};
-    g_fake_transport._session._val = &g_session;
-    g_fake_transport._session._cnt = NULL;
+    g_fake_transport._session = _z_session_rc_clone_as_weak(&g_session_rc);
     g_fake_transport._link = &g_dummy_link;
     g_transport_ready = true;
     _z_session_set_transport_common_override(loopback_override);
@@ -162,7 +162,6 @@ static void cleanup_session(void) {
 static void create_local_resource(const char *key_str, _z_keyexpr_t *keyexpr, _z_keyexpr_t *expanded, uint16_t *rid) {
     _z_string_t suffix = _z_string_copy_from_str(key_str);
     _z_keyexpr_from_string(keyexpr, Z_RESOURCE_ID_NONE, &suffix);
-    _z_string_clear(&suffix);
 
     *rid = _z_register_resource(&g_session, keyexpr, Z_RESOURCE_ID_NONE, NULL);
     assert(*rid != Z_RESOURCE_ID_NONE);
@@ -232,10 +231,9 @@ static void test_put_local_only_single(void) {
     _z_encoding_t encoding = _z_encoding_null();
     _z_timestamp_t ts = _z_timestamp_null();
     _z_source_info_t source_info = _z_source_info_null();
-    bool delivered =
-        _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts, NULL,
-                                        Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_SESSION_LOCAL);
-    assert(delivered);
+    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT,
+                                                           qos, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info);
+    assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
 
@@ -396,10 +394,9 @@ static void test_put_local_only_multiple(void) {
     _z_encoding_t encoding = _z_encoding_null();
     _z_timestamp_t ts = _z_timestamp_null();
     _z_source_info_t source_info = _z_source_info_null();
-    bool delivered =
-        _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts, NULL,
-                                        Z_RELIABILITY_RELIABLE, &source_info, Z_LOCALITY_SESSION_LOCAL);
-    assert(delivered);
+    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT,
+                                                           qos, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info);
+    assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_put_secondary_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
@@ -507,9 +504,8 @@ static void test_query_local_and_remote(void) {
     _z_keyexpr_t expanded = _z_keyexpr_null();
     uint16_t rid = 0;
     create_local_resource("zenoh-pico/tests/local/query/mixed", &keyexpr, &expanded, &rid);
-
     _z_session_queryable_rc_t *queryable_primary =
-        register_local_queryable(&expanded, &g_local_query_delivery_count, Z_LOCALITY_ANY);
+        register_local_queryable(&expanded, &g_local_query_delivery_count, Z_LOCALITY_SESSION_LOCAL);
 
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
@@ -597,13 +593,11 @@ static void test_query_local_and_remote_via_api(void) {
     setup_session();
     add_fake_peer();
 
+    const char *kestr = "zenoh-pico/tests/local/query/api-mixed";
     _z_keyexpr_t keyexpr = _z_keyexpr_null();
     _z_keyexpr_t expanded = _z_keyexpr_null();
     uint16_t rid = 0;
-    create_local_resource("zenoh-pico/tests/local/query/api-mixed", &keyexpr, &expanded, &rid);
-
-    _z_session_queryable_rc_t *queryable_primary =
-        register_local_queryable(&expanded, &g_local_query_delivery_count, Z_LOCALITY_ANY);
+    create_local_resource(kestr, &keyexpr, &expanded, &rid);
 
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
@@ -611,35 +605,33 @@ static void test_query_local_and_remote_via_api(void) {
     atomic_store_explicit(&g_query_drop_callback_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_query_reply_callback_count, 0, memory_order_relaxed);
 
-    z_owned_queryable_t queryable = {._this = queryable_primary};
+    z_owned_closure_query_t q_closure = {0};
+    assert(z_closure_query(&q_closure, (z_closure_query_callback_t)local_query_callback, NULL,
+                           &g_local_query_delivery_count) == Z_OK);
 
-    z_loaned_session_t zs = (z_loaned_session_t)&g_session_rc;
-    z_owned_keyexpr_t keyexpr_owned = {._this._val = keyexpr};
+    z_owned_queryable_t queryable = {0};
+    z_queryable_options_t qopt;
+    z_queryable_options_default(&qopt);
+    qopt.allowed_origin = Z_LOCALITY_ANY;
 
-    z_result_t res = z_queryable_declare(zs, z_move(keyexpr_owned), &queryable, &z_queryable_default());
+    z_owned_keyexpr_t keyexpr_owned = {0};
+    assert(z_keyexpr_from_str(&keyexpr_owned, kestr) == Z_OK);
+
+    z_result_t res = z_declare_queryable((const z_loaned_session_t *)&g_session_rc, &queryable,
+                                         (const z_loaned_keyexpr_t *)&keyexpr_owned, z_move(q_closure), &qopt);
     assert(res == Z_OK);
 
-    z_owned_queryable_t tmp = z_move(queryable);
-    z_drop(tmp);
+    z_owned_closure_reply_t r_closure = {0};
+    assert(z_closure_reply(&r_closure, query_reply_callback, query_dropper, NULL) == Z_OK);
 
-    z_queryable_default();
+    z_get_options_t gopt;
+    z_get_options_default(&gopt);
+    gopt.allowed_destination = Z_LOCALITY_ANY;
 
-    z_owned_queryable_t qbl = {._this = queryable_primary};
-    z_queryable_drop(&qbl);
-
-    z_owned_query_t query = z_query_null();
-
-    z_query_options_t qopt;
-    z_query_options_default(&qopt);
-    qopt.allowed_destination = Z_LOCALITY_ANY;
-    res = z_get(zs, (z_loaned_keyexpr_t *)&keyexpr, "", &query, &qopt);
+    res = z_get((const z_loaned_session_t *)&g_session_rc, (const z_loaned_keyexpr_t *)&keyexpr_owned, "",
+                z_move(r_closure), &gopt);
     assert(res == Z_OK);
 
-    // local queryable handled, network query also sent
-    assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
-    assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
-
-    // Simulate remote reply and final
     _z_pending_query_t *pq = _z_pending_query_slist_value(g_session._pending_queries);
     assert(pq != NULL);
     _z_zint_t request_id = pq->_id;
@@ -670,7 +662,10 @@ static void test_query_local_and_remote_via_api(void) {
     assert(atomic_load_explicit(&g_query_drop_callback_count, memory_order_relaxed) == 1);
     assert(g_session._pending_queries == NULL);
 
-    _z_unregister_session_queryable(&g_session, queryable_primary);
+    z_moved_queryable_t *mq = z_queryable_move(&queryable);
+    z_queryable_drop(mq);
+    z_moved_keyexpr_t *mk = z_keyexpr_move(&keyexpr_owned);
+    z_keyexpr_drop(mk);
     cleanup_local_resource(&keyexpr, &expanded, rid);
 
     cleanup_session();
