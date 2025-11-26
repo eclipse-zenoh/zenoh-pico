@@ -346,16 +346,19 @@ _z_queryable_t _z_declare_queryable(const _z_session_rc_t *zn, _z_keyexpr_t keye
         _z_queryable_clear(&ret);
         return ret;
     }
-    // Build the declare message to send on the wire
-    _z_declaration_t declaration = _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
-    _z_network_message_t n_msg;
-    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
-        _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), sp_q);
-        _z_queryable_clear(&ret);
-        return ret;
+    if (_z_locality_allows_remote(allowed_origin)) {
+        // Build the declare message to send on the wire
+        _z_declaration_t declaration =
+            _z_make_decl_queryable(&keyexpr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
+        _z_network_message_t n_msg;
+        _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
+        if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
+            _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), sp_q);
+            _z_queryable_clear(&ret);
+            return ret;
+        }
+        _z_n_msg_clear(&n_msg);
     }
-    _z_n_msg_clear(&n_msg);
     // Fill queryable
     ret._entity_id = q._id;
     ret._zn = _z_session_rc_clone_as_weak(zn);
@@ -385,22 +388,24 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
 #endif
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-    // Build the declare message to send on the wire
-    _z_declaration_t declaration;
-    if (zn->_mode == Z_WHATAMI_CLIENT) {
-        declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
-    } else {
-        declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
-    }
-    _z_network_message_t n_msg;
-    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    if (_z_send_undeclare(zn, &n_msg) != _Z_RES_OK) {
+    if (_z_locality_allows_remote(_Z_RC_IN_VAL(q)->_allowed_origin)) {
+        // Build the declare message to send on the wire
+        _z_declaration_t declaration;
+        if (zn->_mode == Z_WHATAMI_CLIENT) {
+            declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
+        } else {
+            declaration = _z_make_undecl_queryable(qle->_entity_id, &_Z_RC_IN_VAL(q)->_key);
+        }
+        _z_network_message_t n_msg;
+        _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
+        if (_z_send_undeclare(zn, &n_msg) != _Z_RES_OK) {
 #if Z_FEATURE_SESSION_CHECK == 1
-        _z_session_rc_drop(&sess_rc);
+            _z_session_rc_drop(&sess_rc);
 #endif
-        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
+            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
+        }
+        _z_n_msg_clear(&n_msg);
     }
-    _z_n_msg_clear(&n_msg);
     // Only if message is successfully send, local queryable state can be removed
     _z_unregister_session_queryable(zn, q);
     // Invalidate cache

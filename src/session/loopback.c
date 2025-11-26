@@ -148,7 +148,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     _z_n_msg_make_query(&msg, &keyexpr_copy, &params_copy, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
                         timeout_ms, attachment, qos, source_info);
 
-    z_result_t ret = transport == NULL ? _Z_ERR_SESSION_CLOSED : _z_handle_network_message(transport, &msg, NULL);
+    z_result_t ret = _z_handle_network_message(transport, &msg, NULL);
 
     if (payload != NULL) {
         *payload = _z_bytes_null();

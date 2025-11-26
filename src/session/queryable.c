@@ -199,7 +199,9 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     } else {  // Build queryable data
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
                  _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
-        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true, peer);
+        // unlike sample, query is under rc_count so it can not distinguish when it is being copied or moved, so we have
+        // to make a copy of ke to account for such events
+        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
         ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
         _Z_SET_IF_OK(ret,
                      __unsafe_z_get_session_queryables_rc_by_key(zn, &infos->ke_out, infos->is_remote, &infos->infos));
@@ -237,11 +239,6 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     size_t qle_nb = _z_session_queryable_rc_svec_len(qles);
     _Z_DEBUG("Triggering %ju queryables for key %d - %.*s", (uintmax_t)qle_nb, qle_infos.ke_out._id,
              (int)_z_string_len(&qle_infos.ke_out._suffix), _z_string_data(&qle_infos.ke_out._suffix));
-    if (qle_nb == 0) {
-        _z_msg_query_clear(msgq);
-        _z_queryable_cache_data_clear(&qle_infos);
-        return _Z_RES_OK;
-    }
     // Check anyke
     bool anyke = false;
     if (_z_slice_check(&msgq->_parameters)) {
