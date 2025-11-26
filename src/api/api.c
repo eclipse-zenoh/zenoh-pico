@@ -1017,16 +1017,14 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
     reliability = opt.reliability;
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
-    _z_bytes_t dummy_payload = _z_bytes_null();
     _z_keyexpr_t keyexpr_aliased;
     _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
     z_locality_t allowed_destination = z_locality_default();
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     allowed_destination = opt.allowed_destination;
 #endif
-    ret = _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE,
-                   opt.congestion_control, opt.priority, opt.is_express, opt.timestamp, &dummy_payload, reliability,
-                   source_info, allowed_destination);
+    ret = _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
+                   opt.priority, opt.is_express, opt.timestamp, NULL, reliability, source_info, allowed_destination);
 
 #ifdef Z_FEATURE_UNSTABLE_API
     z_source_info_drop(opt.source_info);
@@ -1263,16 +1261,15 @@ z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_pub
 #else
     session = _Z_RC_IN_VAL(&pub->_zn);
 #endif
-    _z_bytes_t dummy_payload = _z_bytes_null();
     z_result_t ret = _Z_RES_OK;
     if (
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
         session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
 #endif
         !_z_write_filter_active(&pub->_filter)) {
-        ret = _z_write(session, &pub_keyexpr, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control,
-                       pub->_priority, pub->_is_express, opt.timestamp, &dummy_payload, reliability, source_info,
-                       pub->_allowed_destination);
+        ret =
+            _z_write(session, &pub_keyexpr, NULL, NULL, Z_SAMPLE_KIND_DELETE, pub->_congestion_control, pub->_priority,
+                     pub->_is_express, opt.timestamp, NULL, reliability, source_info, pub->_allowed_destination);
     }
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
     if (cache != NULL) {
