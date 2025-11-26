@@ -259,6 +259,7 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     }
     *_Z_RC_IN_VAL(&query) = _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters,
                                                 &transport->_session, qid, &msgq->_ext_attachment, anyke);
+    _Z_RC_IN_VAL(&query)->_is_local = peer == NULL;
 
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_nb; i++) {

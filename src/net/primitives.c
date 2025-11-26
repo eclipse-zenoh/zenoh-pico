@@ -194,42 +194,38 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
-                    const _z_encoding_t *encoding, z_sample_kind_t kind, z_congestion_control_t cong_ctrl,
-                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                    const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info,
-                    z_locality_t allowed_destination) {
+z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
+                    z_sample_kind_t kind, z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
+                    const _z_timestamp_t *timestamp, _z_bytes_t *attachment, z_reliability_t reliability,
+                    const _z_source_info_t *source_info, z_locality_t allowed_destination) {
     z_result_t ret = _Z_RES_OK;
     _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
 
+    if (_z_locality_allows_remote(allowed_destination)) {
+        _z_network_message_t msg;
+        switch (kind) {
+            case Z_SAMPLE_KIND_PUT:
+                _z_n_msg_make_push_put(&msg, keyexpr, payload, encoding, qos, timestamp, attachment, reliability,
+                                       source_info);
+                break;
+            case Z_SAMPLE_KIND_DELETE:
+                _z_n_msg_make_push_del(&msg, keyexpr, qos, timestamp, reliability, source_info);
+                break;
+            default:
+                _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+        }
+        if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
+            _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
+            ret = _Z_ERR_TRANSPORT_TX_FAILED;
+        }
+    }
+
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-    if (_z_locality_allows_local(allowed_destination)) {
-        _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp, attachment, reliability,
-                                        source_info, allowed_destination);
+    if (ret == _Z_RES_OK && _z_locality_allows_local(allowed_destination)) {
+        ret = _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp, attachment,
+                                              reliability, source_info);
     }
 #endif
-
-    if (!_z_locality_allows_remote(allowed_destination)) {
-        return _Z_RES_OK;
-    }
-
-    _z_network_message_t msg;
-    switch (kind) {
-        case Z_SAMPLE_KIND_PUT:
-            _z_n_msg_make_push_put(&msg, keyexpr, payload, encoding, qos, timestamp, attachment, reliability,
-                                   source_info);
-            break;
-        case Z_SAMPLE_KIND_DELETE:
-            _z_n_msg_make_push_del(&msg, keyexpr, qos, timestamp, reliability, source_info);
-            break;
-        default:
-            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-    if (_z_send_n_msg(zn, &msg, reliability, cong_ctrl, NULL) != _Z_RES_OK) {
-        _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
-        ret = _Z_ERR_TRANSPORT_TX_FAILED;
-    }
-    // Freeing z_msg is unnecessary, as all of its components are aliased
     return ret;
 }
 #endif
@@ -416,9 +412,9 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
 }
 
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
-                         const _z_bytes_t *payload, const _z_encoding_t *encoding, const z_sample_kind_t kind,
+                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
-                         const _z_timestamp_t *timestamp, const _z_bytes_t *att, const _z_source_info_t *source_info) {
+                         const _z_timestamp_t *timestamp, _z_bytes_t *att, const _z_source_info_t *source_info) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _Z_DEBUG("send_reply: rid=%jd kind=%d", (intmax_t)query->_request_id, (int)kind);
     // Check key expression
@@ -435,10 +431,9 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     }
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
-    bool handled_locally = _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos,
-                                                            timestamp, att, source_info);
-    if (handled_locally) {
-        return _Z_RES_OK;
+    if (query->_is_local) {
+        return _z_session_deliver_reply_locally(query, zsrc, keyexpr, payload, encoding, kind, qos, timestamp, att,
+                                                source_info);
     }
 
     _z_zenoh_message_t z_msg;
@@ -463,17 +458,16 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
     return _Z_RES_OK;
 }
 
-z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_bytes_t *payload,
-                             const _z_encoding_t *encoding) {
+z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_bytes_t *payload,
+                             _z_encoding_t *encoding) {
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
 
     // Build the reply context decorator. This is NOT the final reply.
     _z_n_qos_t qos = _z_n_qos_make(false, true, Z_PRIORITY_DEFAULT);
     _z_source_info_t source_info = _z_source_info_null();
-    bool handled_locally = _z_session_deliver_reply_err_locally(query, zsrc, payload, encoding, qos);
-    if (handled_locally) {
-        return _Z_RES_OK;
+    if (query->_is_local) {
+        return _z_session_deliver_reply_err_locally(query, zsrc, payload, encoding, qos);
     }
 
     _z_zenoh_message_t msg;
@@ -529,10 +523,10 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 
 /*------------------ Query ------------------*/
 z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
-                    z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
-                    const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
-                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                    z_locality_t allowed_destination, _z_zint_t *out_qid) {
+                    z_query_target_t target, z_consolidation_mode_t consolidation, _z_bytes_t *payload,
+                    _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                    uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos, z_locality_t allowed_destination,
+                    _z_zint_t *out_qid) {
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
         return Z_EINVAL;
@@ -574,6 +568,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     pq->_remaining_finals = (uint8_t)((allow_local ? 1 : 0) + (allow_remote ? 1 : 0));
 #else
+    _ZP_UNUSED(allow_local);
     pq->_remaining_finals = 1;
 #endif
     _z_session_mutex_unlock(zn);
@@ -582,32 +577,26 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _z_source_info_t source_info = _z_source_info_null();
     _z_slice_t params =
         (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
-    _z_zenoh_message_t z_msg;
-    _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload, encoding,
-                        timeout_ms, attachment, qos, &source_info);
+
+    if (remote_possible) {
+        _z_zenoh_message_t z_msg;
+        _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload,
+                            encoding, timeout_ms, attachment, qos, &source_info);
+
+        if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL) !=
+            _Z_RES_OK) {
+            _z_unregister_pending_query(zn, pq);
+            _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
+        }
+    }
 
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
-    if (allow_local &&
-        _z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding, attachment,
-                                         &source_info, pq->_id, timeout_ms, qos, allowed_destination)) {
-        _Z_RETURN_IF_ERR(_z_trigger_query_reply_final(zn, pq->_id));
+    if (allow_local) {
+        _Z_RETURN_IF_ERR(_z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding,
+                                                          attachment, &source_info, pq->_id, timeout_ms, qos,
+                                                          allowed_destination));
     }
-#else
-    _ZP_UNUSED(allow_local);
-    _ZP_UNUSED(payload);
-    _ZP_UNUSED(encoding);
-    _ZP_UNUSED(attachment);
-    _ZP_UNUSED(source_info);
 #endif
-
-    if (!remote_possible) {
-        // No link: keep pending to allow for late remote delivery or timeout handling
-        return _Z_RES_OK;
-    }
-    if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL) != _Z_RES_OK) {
-        _z_unregister_pending_query(zn, pq);
-        _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
-    }
     return _Z_RES_OK;
 }
 #endif

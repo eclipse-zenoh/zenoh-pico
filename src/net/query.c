@@ -36,24 +36,16 @@ z_result_t _z_query_send_reply_final(_z_query_t *q) {
     }
 
     _z_session_t *session = _Z_RC_IN_VAL(&sess_rc);
-    bool allow_remote = true;
-#if Z_FEATURE_QUERY == 1
-    _z_pending_query_t *pending = _z_get_pending_query_by_id(session, q->_request_id);
-    if (pending != NULL) {
-        allow_remote = _z_locality_allows_remote(pending->_allowed_destination);
-    }
-    _Z_DEBUG("send_reply_final: rid=%jd allow_remote=%d", (intmax_t)q->_request_id, allow_remote);
-#endif
-
-    if (_z_session_deliver_reply_final_locally(session, q->_request_id, allow_remote)) {
-        _z_session_rc_drop(&sess_rc);
-        return _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
+    if (q->_is_local) {
+        ret = _z_session_deliver_reply_final_locally(session, q->_request_id);
+    } else {
+        _z_zenoh_message_t z_msg;
+        _z_n_msg_make_response_final(&z_msg, q->_request_id);
+        ret = _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
+        _z_msg_clear(&z_msg);
     }
 
-    _z_zenoh_message_t z_msg;
-    _z_n_msg_make_response_final(&z_msg, q->_request_id);
-    z_result_t ret = _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
-    _z_msg_clear(&z_msg);
     _z_session_rc_drop(&sess_rc);
     return ret;
 }

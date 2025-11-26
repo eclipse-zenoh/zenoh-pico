@@ -593,12 +593,12 @@ _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL(_z_bytes_writer_t, bytes_writer, _z_bytes_
 
 #if Z_FEATURE_PUBLICATION == 1 || Z_FEATURE_QUERYABLE == 1 || Z_FEATURE_QUERY == 1
 // Convert a user owned bytes payload to an internal bytes payload, returning an empty one if value invalid
-static inline const _z_bytes_t *_z_bytes_from_moved(const z_moved_bytes_t *bytes) {
+static inline _z_bytes_t *_z_bytes_from_moved(z_moved_bytes_t *bytes) {
     return (bytes == NULL) ? NULL : &bytes->_this._val;
 }
 
 // Convert a user owned encoding to an internal encoding, return default encoding if value invalid
-static inline const _z_encoding_t *_z_encoding_from_moved(const z_moved_encoding_t *encoding) {
+static inline _z_encoding_t *_z_encoding_from_moved(z_moved_encoding_t *encoding) {
     return (encoding == NULL) ? NULL : &encoding->_this._val;
 }
 #endif
@@ -979,11 +979,11 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
 #endif
 
-    const _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
-    const _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
+    _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
+    _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
     _z_keyexpr_t keyexpr_aliased;
     _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
-    const _z_encoding_t *encoding = _z_encoding_from_moved(opt.encoding);
+    _z_encoding_t *encoding = _z_encoding_from_moved(opt.encoding);
     z_locality_t allowed_destination = z_locality_default();
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     allowed_destination = opt.allowed_destination;
@@ -992,38 +992,12 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
                    opt.congestion_control, opt.priority, opt.is_express, opt.timestamp, attachment_bytes, reliability,
                    source_info, allowed_destination);
 
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
 #ifdef Z_FEATURE_UNSTABLE_API
     z_source_info_drop(opt.source_info);
 #endif
     z_bytes_drop(payload);
-#else
-    _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
-    _z_encoding_t local_encoding = encoding != NULL ? *encoding : _z_encoding_null();
-    _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
-    _z_bytes_t local_payload = (payload_bytes != NULL) ? *payload_bytes : _z_bytes_null();
-    _z_bytes_t local_attachment = (attachment_bytes != NULL) ? *attachment_bytes : _z_bytes_null();
-
-    payload->_this._val = _z_bytes_null();
-    if (opt.attachment != NULL) {
-        opt.attachment->_this._val = _z_bytes_null();
-    }
-    if (opt.encoding != NULL) {
-        opt.encoding->_this._val = _z_encoding_null();
-    }
-#ifdef Z_FEATURE_UNSTABLE_API
-    if (opt.source_info != NULL) {
-        opt.source_info->_this._val = _z_source_info_null();
-    }
-#endif
-
-    _z_trigger_subscriptions_put(
-        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &local_payload, &local_encoding, &local_timestamp,
-        _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        &local_attachment, reliability, &local_source_info, NULL);
-#endif  // Z_FEATURE_LOCAL_SUBSCRIBER
 
     return ret;
 }
@@ -1053,17 +1027,6 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
     ret = _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, &dummy_payload, NULL, Z_SAMPLE_KIND_DELETE,
                    opt.congestion_control, opt.priority, opt.is_express, opt.timestamp, &dummy_payload, reliability,
                    source_info, allowed_destination);
-
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 0
-    _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
-    _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
-    _z_bytes_t local_attachment = _z_bytes_null();
-
-    _z_trigger_subscriptions_del(
-        _Z_RC_IN_VAL(zs), &keyexpr_aliased, &local_timestamp,
-        _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority),
-        &local_attachment, reliability, &local_source_info, NULL);
-#endif
 
 #ifdef Z_FEATURE_UNSTABLE_API
     z_source_info_drop(opt.source_info);
@@ -1202,21 +1165,8 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
 #endif
 
     if (session != NULL) {
-        const _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
-        const _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
-
-        // Check if write filter is active before writing
-        if (
-#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
-            session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
-#endif
-            !_z_write_filter_active(&pub->_filter)) {
-            // Write value
-            ret = _z_write(session, &pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
-                           pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info,
-                           pub->_allowed_destination);
-        }
-
+        _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
+        _z_bytes_t *attachment_bytes = _z_bytes_from_moved(opt.attachment);
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
         if (cache != NULL) {
             _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
@@ -1240,32 +1190,17 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
             }
         }
 #endif
-
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 0
-        if (_z_locality_allows_local(pub->_allowed_destination)) {
-            _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
-            _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
-            _z_bytes_t local_payload = (payload_bytes != NULL) ? *payload_bytes : _z_bytes_null();
-            _z_bytes_t local_attachment = (attachment_bytes != NULL) ? *attachment_bytes : _z_bytes_null();
-
-            payload->_this._val = _z_bytes_null();
-            if (opt.attachment != NULL) {
-                opt.attachment->_this._val = _z_bytes_null();
-            }
-            if (opt.encoding != NULL) {
-                opt.encoding->_this._val = _z_encoding_null();
-            }
-#ifdef Z_FEATURE_UNSTABLE_API
-            if (opt.source_info != NULL) {
-                opt.source_info->_this._val = _z_source_info_null();
-            }
+        // Check if write filter is active before writing
+        if (
+#if Z_FEATURE_MULTICAST_DECLARATIONS == 0
+            session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE ||
 #endif
-            _z_trigger_subscriptions_put(
-                session, &pub_keyexpr, &local_payload, &encoding, &local_timestamp,
-                _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-                &local_attachment, reliability, &local_source_info, NULL);
+            !_z_write_filter_active(&pub->_filter)) {
+            // Write value
+            ret = _z_write(session, &pub_keyexpr, payload_bytes, &encoding, Z_SAMPLE_KIND_PUT, pub->_congestion_control,
+                           pub->_priority, pub->_is_express, opt.timestamp, attachment_bytes, reliability, source_info,
+                           pub->_allowed_destination);
         }
-#endif  // Z_FEATURE_LOCAL_SUBSCRIBER == 0
     } else {
         _Z_ERROR_LOG(_Z_ERR_SESSION_CLOSED);
         ret = _Z_ERR_SESSION_CLOSED;
@@ -1339,17 +1274,6 @@ z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_pub
                        pub->_priority, pub->_is_express, opt.timestamp, &dummy_payload, reliability, source_info,
                        pub->_allowed_destination);
     }
-
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 0
-    _z_timestamp_t local_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
-    _z_source_info_t local_source_info = (source_info != NULL) ? *source_info : _z_source_info_null();
-    _z_bytes_t local_attachment = _z_bytes_null();
-    _z_trigger_subscriptions_del(
-        session, &pub_keyexpr, &local_timestamp,
-        _z_n_qos_make(pub->_is_express, pub->_congestion_control == Z_CONGESTION_CONTROL_BLOCK, pub->_priority),
-        &local_attachment, reliability, &local_source_info, NULL);
-#endif
-
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1
     if (cache != NULL) {
         _z_timestamp_t cache_timestamp = (opt.timestamp != NULL) ? *opt.timestamp : _z_timestamp_null();
@@ -1961,7 +1885,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     return ret;
 }
 
-z_result_t _z_query_reply_sample(const z_loaned_query_t *query, const z_loaned_sample_t *sample,
+z_result_t _z_query_reply_sample(const z_loaned_query_t *query, z_loaned_sample_t *sample,
                                  const z_query_reply_options_t *options) {
     // Try upgrading session weak to rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);

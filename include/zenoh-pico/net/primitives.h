@@ -145,11 +145,10 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_bytes_t *payload,
-                    const _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
-                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp,
-                    const _z_bytes_t *attachment, z_reliability_t reliability, const _z_source_info_t *source_info,
-                    z_locality_t allowed_destination);
+z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
+                    const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
+                    bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+                    z_reliability_t reliability, const _z_source_info_t *source_info, z_locality_t allowed_destination);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -233,10 +232,9 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     source_info: The message source info.
  */
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
-                         const _z_bytes_t *payload, const _z_encoding_t *encoding, const z_sample_kind_t kind,
+                         _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
-                         const _z_timestamp_t *timestamp, const _z_bytes_t *attachment,
-                         const _z_source_info_t *source_info);
+                         const _z_timestamp_t *timestamp, _z_bytes_t *attachment, const _z_source_info_t *source_info);
 /**
  * Send a reply error to a query.
  *
@@ -250,8 +248,8 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
  *     key: The resource key of this reply. The caller keeps the ownership.
  *     payload: The value of this reply, the caller keeps ownership.
  */
-z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_bytes_t *payload,
-                             const _z_encoding_t *encoding);
+z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsrc, _z_bytes_t *payload,
+                             _z_encoding_t *encoding);
 #endif
 
 #if Z_FEATURE_QUERY == 1
@@ -310,10 +308,10 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *
  */
 z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
-                    z_query_target_t target, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
-                    const _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper,
-                    void *arg, uint64_t timeout_ms, const _z_bytes_t *attachment, _z_n_qos_t qos,
-                    z_locality_t allowed_destination, _z_zint_t *out_id);
+                    z_query_target_t target, z_consolidation_mode_t consolidation, _z_bytes_t *payload,
+                    _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                    uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos, z_locality_t allowed_destination,
+                    _z_zint_t *out_id);
 #endif
 
 #if Z_FEATURE_INTEREST == 1
