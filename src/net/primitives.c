@@ -598,8 +598,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (allow_local) {
         _Z_RETURN_IF_ERR(_z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding,
-                                                          attachment, &source_info, pq->_id, timeout_ms, qos,
-                                                          allowed_destination));
+                                                          attachment, &source_info, pq->_id, timeout_ms, qos));
     }
 #endif
     return _Z_RES_OK;

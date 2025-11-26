@@ -115,13 +115,19 @@ void test_queryable(z_locality_t get_allowed_destination, z_locality_t q1_allowe
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t replystr;
         z_bytes_to_string(z_sample_payload(sample), &replystr);
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         if (strncmp(z_string_data(z_loan(replystr)), "1", 1) == 0) {
             found_1 = true;
         }
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         if (strncmp(z_string_data(z_loan(replystr)), "2", 1) == 0) {
             found_2 = true;
         }
         reply_count++;
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         assert(strncmp(z_string_data(z_loan(keystr)), QUERYABLE_EXPR, strlen(QUERYABLE_EXPR)) == 0);
         z_reply_drop(z_reply_move(&reply));
         z_string_drop(z_string_move(&replystr));

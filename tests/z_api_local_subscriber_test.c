@@ -80,8 +80,11 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
         z_keyexpr_as_view_string(z_sample_keyexpr(sample), &keystr);
         z_owned_string_t payloadstr;
         z_bytes_to_string(z_sample_payload(sample), &payloadstr);
-
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         assert(strncmp(z_string_data(z_loan(payloadstr)), PAYLOAD, strlen(PAYLOAD)) == 0);
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         assert(strncmp(z_string_data(z_loan(keystr)), PUB_EXPR, strlen(PUB_EXPR)) == 0);
         z_string_drop(z_string_move(&payloadstr));
     } else {
@@ -95,7 +98,11 @@ void test_put_sub(z_locality_t pub_allowed_destination, z_locality_t s1_allowed_
         z_owned_string_t payloadstr;
         z_bytes_to_string(z_sample_payload(sample), &payloadstr);
 
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         assert(strncmp(z_string_data(z_loan(payloadstr)), PAYLOAD, strlen(PAYLOAD)) == 0);
+        // SAFETY: test.
+        // Flawfinder: ignore [CWE-126]
         assert(strncmp(z_string_data(z_loan(keystr)), PUB_EXPR, strlen(PUB_EXPR)) == 0);
         z_string_drop(z_string_move(&payloadstr));
     } else {

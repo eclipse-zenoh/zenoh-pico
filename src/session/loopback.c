@@ -131,7 +131,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
                                             const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
-                                            _z_n_qos_t qos, z_locality_t allowed_destination) {
+                                            _z_n_qos_t qos) {
     _z_transport_common_t *transport = _z_session_get_transport_common(zn);
     if (transport == NULL) {
         return _Z_ERR_INVALID;
@@ -166,8 +166,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
                                             const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
-                                            _z_n_qos_t qos, z_locality_t allowed_destination) {
-    _ZP_UNUSED(allowed_destination);
+                                            _z_n_qos_t qos) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(parameters);
