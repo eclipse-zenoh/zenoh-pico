@@ -279,11 +279,13 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
     _z_keyexpr_t key_copy = _z_keyexpr_null();
     z_locality_t origin = Z_LOCALITY_ANY;
     bool notify = false;
+    bool complete = false;
     _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
     if (_z_locality_allows_local(qle_val->_allowed_origin)) {
         key_copy = _z_keyexpr_duplicate(&qle_val->_key);
         if (_z_keyexpr_has_suffix(&key_copy)) {
             origin = qle_val->_allowed_origin;
+            complete = qle_val->_complete;
             notify = true;
         }
     }
@@ -297,7 +299,7 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
 
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (notify) {
-        _z_write_filter_notify_queryable(zn, &key_copy, origin, qle_val->_complete, false);
+        _z_write_filter_notify_queryable(zn, &key_copy, origin, complete, false);
         _z_keyexpr_clear(&key_copy);
     }
 #endif
