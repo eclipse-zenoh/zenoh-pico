@@ -276,19 +276,8 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
 
 void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t *qle) {
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
-    _z_keyexpr_t key_copy = _z_keyexpr_null();
-    z_locality_t origin = Z_LOCALITY_ANY;
-    bool notify = false;
-    bool complete = false;
     _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
-    if (_z_locality_allows_local(qle_val->_allowed_origin)) {
-        key_copy = _z_keyexpr_duplicate(&qle_val->_key);
-        if (_z_keyexpr_has_suffix(&key_copy)) {
-            origin = qle_val->_allowed_origin;
-            complete = qle_val->_complete;
-            notify = true;
-        }
-    }
+    _z_write_filter_notify_queryable(zn, &qle_val->_key, qle_val->_allowed_origin, qle_val->_complete, false);
 #endif
     _z_session_mutex_lock(zn);
 
@@ -296,13 +285,6 @@ void _z_unregister_session_queryable(_z_session_t *zn, _z_session_queryable_rc_t
         _z_session_queryable_rc_slist_drop_first_filter(zn->_local_queryable, _z_session_queryable_rc_eq, qle);
 
     _z_session_mutex_unlock(zn);
-
-#if Z_FEATURE_LOCAL_QUERYABLE == 1
-    if (notify) {
-        _z_write_filter_notify_queryable(zn, &key_copy, origin, complete, false);
-        _z_keyexpr_clear(&key_copy);
-    }
-#endif
 }
 
 void _z_flush_session_queryable(_z_session_t *zn) {
