@@ -38,6 +38,7 @@ typedef struct _z_query_t {
     _z_bytes_t _attachment;
     _z_string_t _parameters;
     bool _anyke;
+    bool _is_local;
 } _z_query_t;
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
@@ -67,6 +68,7 @@ typedef struct _z_querier_t {
     z_reliability_t reliability;
     bool _is_express;
     uint64_t _timeout_ms;
+    z_locality_t _allowed_destination;
     _z_write_filter_t _filter;
 } _z_querier_t;
 

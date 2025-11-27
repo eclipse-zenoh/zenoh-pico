@@ -14,7 +14,10 @@
 #include "zenoh-pico/net/query.h"
 
 #include "zenoh-pico/net/session.h"
+#include "zenoh-pico/session/loopback.h"
+#include "zenoh-pico/session/query.h"
 #include "zenoh-pico/transport/common/tx.h"
+#include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
 
 static void _z_query_clear_inner(_z_query_t *q) {
@@ -31,11 +34,18 @@ z_result_t _z_query_send_reply_final(_z_query_t *q) {
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }
-    _z_zenoh_message_t z_msg;
-    _z_n_msg_make_response_final(&z_msg, q->_request_id);
-    z_result_t ret =
-        _z_send_n_msg(_Z_RC_IN_VAL(&sess_rc), &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
-    _z_msg_clear(&z_msg);
+
+    _z_session_t *session = _Z_RC_IN_VAL(&sess_rc);
+    z_result_t ret = _Z_RES_OK;
+    if (q->_is_local) {
+        ret = _z_session_deliver_reply_final_locally(session, q->_request_id);
+    } else {
+        _z_zenoh_message_t z_msg;
+        _z_n_msg_make_response_final(&z_msg, q->_request_id);
+        ret = _z_send_n_msg(session, &z_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, NULL);
+        _z_msg_clear(&z_msg);
+    }
+
     _z_session_rc_drop(&sess_rc);
     return ret;
 }

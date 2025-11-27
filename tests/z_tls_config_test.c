@@ -111,7 +111,11 @@ static char *encode_base64_strdup(const char *input) {
     assert(buffer != NULL);
 
     rc = mbedtls_base64_encode(buffer, output_len, &output_len, (const unsigned char *)input, input_len);
-    assert(rc == 0);
+    if (rc != 0) {
+        fprintf(stderr, "mbedtls_base64_encode(data) failed: %d\n", rc);
+        free(buffer);
+        return NULL;
+    }
     buffer[output_len] = '\0';
     return (char *)buffer;
 }
@@ -122,9 +126,15 @@ static void tls_sample_handler(z_loaned_sample_t *sample, void *ctx) {
     const char *expected = (const char *)ctx;
 
     z_owned_string_t payload;
-    assert(z_bytes_to_string(z_sample_payload(sample), &payload) == Z_OK);
-    assert(expected != NULL);
-    assert(strcmp(expected, z_string_data(z_loan(payload))) == 0);
+    if (z_bytes_to_string(z_sample_payload(sample), &payload) != Z_OK) {
+        fprintf(stderr, "subscriber: failed to decode payload\n");
+        return;
+    }
+    if (expected == NULL || strcmp(expected, z_string_data(z_loan(payload))) != 0) {
+        fprintf(stderr, "subscriber: unexpected payload\n");
+        z_drop(z_move(payload));
+        return;
+    }
 
     g_received = true;
     z_drop(z_move(payload));
@@ -140,6 +150,10 @@ int main(void) {
     char *ca_base64 = encode_base64_strdup(SERVER_CA_PEM);
     char *cert_base64 = encode_base64_strdup(SERVER_CERT_PEM);
     char *key_base64 = encode_base64_strdup(SERVER_KEY_PEM);
+    if (ca_base64 == NULL || cert_base64 == NULL || key_base64 == NULL) {
+        fprintf(stderr, "failed to prepare TLS credentials\n");
+        goto cleanup_buffers;
+    }
 
     z_owned_config_t listen_cfg;
     z_config_default(&listen_cfg);
@@ -155,17 +169,31 @@ int main(void) {
         fprintf(stderr, "server z_open failed: %d\n", res);
         return 1;
     }
-    assert(zp_start_read_task(z_loan_mut(server), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(server), NULL) == Z_OK);
+    if (zp_start_read_task(z_loan_mut(server), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(server), NULL) != Z_OK) {
+        fprintf(stderr, "server: failed to start tasks\n");
+        goto cleanup_server;
+    }
     (void)z_sleep_ms(50);
 
     z_view_keyexpr_t keyexpr;
-    assert(z_view_keyexpr_from_str(&keyexpr, keyexpr_str) == Z_OK);
+    if (z_view_keyexpr_from_str(&keyexpr, keyexpr_str) != Z_OK) {
+        fprintf(stderr, "failed to create keyexpr view\n");
+        goto cleanup_server;
+    }
 
     z_owned_closure_sample_t callback;
     z_closure(&callback, tls_sample_handler, NULL, (void *)payload_str);
     z_owned_subscriber_t subscriber;
-    assert(z_declare_subscriber(z_loan(server), &subscriber, z_loan(keyexpr), z_move(callback), NULL) == Z_OK);
+    z_internal_null(&subscriber);
+    z_subscriber_options_t sub_opts;
+    z_subscriber_options_default(&sub_opts);
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    sub_opts.allowed_origin = Z_LOCALITY_ANY;
+#endif
+    if (z_declare_subscriber(z_loan(server), &subscriber, z_loan(keyexpr), z_move(callback), &sub_opts) != Z_OK) {
+        fprintf(stderr, "server: failed to declare subscriber\n");
+        goto cleanup_server;
+    }
 
     z_owned_config_t connect_cfg;
     z_config_default(&connect_cfg);
@@ -179,32 +207,65 @@ int main(void) {
         fprintf(stderr, "client z_open failed: %d\n", res);
         return 1;
     }
-    assert(zp_start_read_task(z_loan_mut(client), NULL) == Z_OK);
-    assert(zp_start_lease_task(z_loan_mut(client), NULL) == Z_OK);
+    if (zp_start_read_task(z_loan_mut(client), NULL) != Z_OK || zp_start_lease_task(z_loan_mut(client), NULL) != Z_OK) {
+        fprintf(stderr, "client: failed to start tasks\n");
+        goto cleanup_client;
+    }
     (void)z_sleep_ms(50);
 
     z_owned_publisher_t publisher;
-    assert(z_declare_publisher(z_loan(client), &publisher, z_loan(keyexpr), NULL) == Z_OK);
+    z_internal_null(&publisher);
+    z_publisher_options_t pub_opts;
+    z_publisher_options_default(&pub_opts);
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    pub_opts.allowed_destination = Z_LOCALITY_ANY;
+#endif
+    if (z_declare_publisher(z_loan(client), &publisher, z_loan(keyexpr), &pub_opts) != Z_OK) {
+        fprintf(stderr, "client: failed to declare publisher\n");
+        goto cleanup_client;
+    }
 
     z_owned_bytes_t payload;
-    z_bytes_copy_from_str(&payload, payload_str);
-    assert(z_publisher_put(z_loan(publisher), z_move(payload), NULL) == Z_OK);
+    z_internal_null(&payload);
+    if (z_bytes_copy_from_str(&payload, payload_str) != Z_OK) {
+        fprintf(stderr, "client: failed to build payload\n");
+        goto cleanup_pub;
+    }
+    if (z_publisher_put(z_loan(publisher), z_move(payload), NULL) != Z_OK) {
+        fprintf(stderr, "client: publisher put failed\n");
+        goto cleanup_pub;
+    }
 
     for (int i = 0; (i < 200) && !g_received; ++i) {
         z_sleep_ms(10);
     }
-    assert(g_received == true);
+    if (!g_received) {
+        fprintf(stderr, "subscriber: did not receive payload\n");
+    }
 
-    z_drop(z_move(publisher));
-    z_drop(z_move(subscriber));
+cleanup_pub:
+    if (z_internal_check(publisher)) {
+        z_drop(z_move(publisher));
+    }
+cleanup_client:
+    if (z_internal_check(subscriber)) {
+        z_drop(z_move(subscriber));
+    }
+cleanup_server:
     z_session_drop(z_session_move(&client));
     z_session_drop(z_session_move(&server));
 
-    free(key_base64);
-    free(cert_base64);
-    free(ca_base64);
-
-    return 0;
+cleanup_buffers:
+    if (key_base64 != NULL) {
+        free(key_base64);
+    }
+    if (cert_base64 != NULL) {
+        free(cert_base64);
+    }
+    if (ca_base64 != NULL) {
+        free(ca_base64);
+    }
+    return g_received ? 0 : 1;
 }
 
 #else

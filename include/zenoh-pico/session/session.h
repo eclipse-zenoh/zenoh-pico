@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/collections/refcount.h"
@@ -73,6 +74,7 @@ typedef struct {
     _z_keyexpr_t _declared_key;
     uint16_t _key_id;
     uint32_t _id;
+    z_locality_t _allowed_origin;
     _z_closure_sample_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
@@ -109,6 +111,7 @@ typedef struct {
     _z_drop_handler_t _dropper;
     void *_arg;
     bool _complete;
+    z_locality_t _allowed_origin;
 } _z_session_queryable_t;
 
 bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
@@ -137,9 +140,11 @@ typedef struct {
     _z_zint_t _id;
     _z_closure_reply_callback_t _callback;
     _z_drop_handler_t _dropper;
+    z_locality_t _allowed_destination;
     z_clock_t _start_time;
     uint64_t _timeout;
     void *_arg;
+    uint8_t _remaining_finals;
     _z_pending_reply_slist_t *_pending_replies;
     z_query_target_t _target;
     z_consolidation_mode_t _consolidation;

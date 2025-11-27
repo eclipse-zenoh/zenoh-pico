@@ -1128,6 +1128,7 @@ Constants
 .. autocenum:: constants.h::z_congestion_control_t
 .. autocenum:: constants.h::z_priority_t
 .. autocenum:: constants.h::z_reliability_t
+.. autocenum:: constants.h::z_locality_t
 
 Functions
 ---------

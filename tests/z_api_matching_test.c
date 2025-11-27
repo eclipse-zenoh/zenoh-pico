@@ -25,13 +25,13 @@
 #undef NDEBUG
 #include <assert.h>
 
-static const char* PUB_EXPR = "zenoh-pico/matching/test/val";
-static const char* SUB_EXPR = "zenoh-pico/matching/**";
-static const char* KEY_EXPR_WRONG = "zenoh-pico/matching/test_wrong/*";
+static const char *PUB_EXPR = "zenoh-pico/matching/test/val";
+static const char *SUB_EXPR = "zenoh-pico/matching/**";
+static const char *KEY_EXPR_WRONG = "zenoh-pico/matching/test_wrong/*";
 
-static const char* QUERYABLE_EXPR = "zenoh-pico/matching/query_test/val";
-static const char* QUERIER_EXPR = "zenoh-pico/matching/query_test/*";
-static const char* QUERYABLE_EXPR_WILD = "zenoh-pico/matching/query_test/**";
+static const char *QUERYABLE_EXPR = "zenoh-pico/matching/query_test/val";
+static const char *QUERIER_EXPR = "zenoh-pico/matching/query_test/*";
+static const char *QUERYABLE_EXPR_WILD = "zenoh-pico/matching/query_test/**";
 
 static unsigned long DEFAULT_TIMEOUT_S = 10;
 
@@ -42,13 +42,13 @@ typedef struct context_t {
     z_owned_condvar_t cv;
     z_owned_mutex_t m;
 #else
-    z_loaned_session_t* s1;
-    z_loaned_session_t* s2;
+    z_loaned_session_t *s1;
+    z_loaned_session_t *s2;
 #endif
     context_state_t state;
 } context_t;
 
-static void _context_init(context_t* c) {
+static void _context_init(context_t *c) {
 #if Z_FEATURE_MULTI_THREAD == 1
     z_condvar_init(&c->cv);
     z_mutex_init(&c->m);
@@ -56,7 +56,7 @@ static void _context_init(context_t* c) {
     c->state = NONE;
 }
 
-static void _context_drop(context_t* c) {
+static void _context_drop(context_t *c) {
 #if Z_FEATURE_MULTI_THREAD == 1
     z_condvar_drop(z_condvar_move(&c->cv));
     z_mutex_drop(z_mutex_move(&c->m));
@@ -66,7 +66,7 @@ static void _context_drop(context_t* c) {
 }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static bool _context_wait(context_t* c, context_state_t state, unsigned long timeout_s) {
+static bool _context_wait(context_t *c, context_state_t state, unsigned long timeout_s) {
     z_mutex_lock(z_mutex_loan_mut(&c->m));
     if (c->state != state) {
         printf("Waiting for state %d...\n", state);
@@ -92,7 +92,7 @@ static bool _context_wait(context_t* c, context_state_t state, unsigned long tim
     return true;
 }
 
-static bool _context_wait_none(context_t* c, unsigned long timeout_s) {
+static bool _context_wait_none(context_t *c, unsigned long timeout_s) {
     z_sleep_s(timeout_s);
     z_mutex_lock(z_mutex_loan_mut(&c->m));
     context_state_t s = c->state;
@@ -104,7 +104,7 @@ static bool _context_wait_none(context_t* c, unsigned long timeout_s) {
     return true;
 }
 #else
-static bool _context_wait_none(context_t* c, unsigned long timeout_s) {
+static bool _context_wait_none(context_t *c, unsigned long timeout_s) {
     unsigned long tm = timeout_s * 1000;
     while (c->state == NONE && tm > 0) {
         zp_read(c->s1, NULL);
@@ -121,7 +121,7 @@ static bool _context_wait_none(context_t* c, unsigned long timeout_s) {
     return true;
 }
 
-static bool _context_wait(context_t* c, context_state_t state, unsigned long timeout_s) {
+static bool _context_wait(context_t *c, context_state_t state, unsigned long timeout_s) {
     unsigned long tm = timeout_s * 1000;
     while (c->state == NONE && tm > 0) {
         zp_read(c->s1, NULL);
@@ -144,7 +144,7 @@ static bool _context_wait(context_t* c, context_state_t state, unsigned long tim
 }
 #endif
 
-static void _context_notify(context_t* c, context_state_t state) {
+static void _context_notify(context_t *c, context_state_t state) {
 #if Z_FEATURE_MULTI_THREAD == 1
     z_mutex_lock(z_mutex_loan_mut(&c->m));
 #endif
@@ -169,13 +169,13 @@ static void _context_notify(context_t* c, context_state_t state) {
         }                                                \
     }
 
-void on_receive(const z_matching_status_t* s, void* context) {
-    context_t* c = (context_t*)context;
+void on_receive(const z_matching_status_t *s, void *context) {
+    context_t *c = (context_t *)context;
     _context_notify(c, s->matching ? MATCH : UNMATCH);
 }
 
-void on_drop(void* context) {
-    context_t* c = (context_t*)context;
+void on_drop(void *context) {
+    context_t *c = (context_t *)context;
     _context_notify(c, DROP);
 }
 
@@ -209,7 +209,7 @@ void test_matching_listener_publisher(bool background) {
     assert_ok(z_declare_publisher(z_session_loan(&s1), &pub, z_view_keyexpr_loan(&k_pub), NULL));
 
     z_owned_closure_matching_status_t closure;
-    z_closure_matching_status(&closure, on_receive, on_drop, (void*)(&context));
+    z_closure_matching_status(&closure, on_receive, on_drop, (void *)(&context));
 
     z_owned_matching_listener_t matching_listener;
     if (background) {
@@ -292,7 +292,7 @@ void test_matching_listener_querier(bool complete, bool background) {
     assert_ok(z_declare_querier(z_session_loan(&s1), &querier, z_view_keyexpr_loan(&k_querier), &querier_opts));
 
     z_owned_closure_matching_status_t closure;
-    z_closure_matching_status(&closure, on_receive, on_drop, (void*)(&context));
+    z_closure_matching_status(&closure, on_receive, on_drop, (void *)(&context));
 
     z_owned_matching_listener_t matching_listener;
     if (background) {
@@ -381,7 +381,7 @@ void test_matching_listener_querier(bool complete, bool background) {
     z_session_drop(z_session_move(&s2));
 }
 
-static bool _check_publisher_status(z_owned_publisher_t* pub, z_loaned_session_t* s1, z_loaned_session_t* s2,
+static bool _check_publisher_status(z_owned_publisher_t *pub, z_loaned_session_t *s1, z_loaned_session_t *s2,
                                     bool expected) {
     z_matching_status_t status;
     status.matching = !expected;
@@ -476,7 +476,80 @@ void test_matching_status_publisher(void) {
     z_session_drop(z_session_move(&s2));
 }
 
-static bool _check_querier_status(z_owned_querier_t* querier, z_loaned_session_t* s1, z_loaned_session_t* s2,
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+static void test_matching_status_publisher_locality(z_locality_t locality, bool create_local_sub,
+                                                    bool create_remote_sub, bool expected) {
+    printf("test_matching_status_publisher_locality locality=%d local=%d remote=%d expected=%d\n", (int)locality,
+           create_local_sub, create_remote_sub, expected);
+
+    z_owned_session_t s1, s2;
+    z_owned_config_t c1, c2;
+    z_config_default(&c1);
+    z_config_default(&c2);
+    z_view_keyexpr_t k_pub, k_sub;
+    z_view_keyexpr_from_str(&k_pub, PUB_EXPR);
+    z_view_keyexpr_from_str(&k_sub, SUB_EXPR);
+
+    assert_ok(z_open(&s1, z_config_move(&c1), NULL));
+    assert_ok(z_open(&s2, z_config_move(&c2), NULL));
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
+#endif
+
+    z_publisher_options_t pub_opts;
+    z_publisher_options_default(&pub_opts);
+    pub_opts.allowed_destination = locality;
+
+    z_owned_publisher_t pub;
+    assert_ok(z_declare_publisher(z_session_loan(&s1), &pub, z_view_keyexpr_loan(&k_pub), &pub_opts));
+
+    z_owned_subscriber_t local_sub;
+    z_owned_subscriber_t remote_sub;
+
+    if (create_local_sub) {
+        z_subscriber_options_t opts;
+        z_subscriber_options_default(&opts);
+        opts.allowed_origin = Z_LOCALITY_SESSION_LOCAL;
+        z_owned_closure_sample_t cb;
+        z_closure_sample(&cb, NULL, NULL, NULL);
+        assert_ok(z_declare_subscriber(z_session_loan(&s1), &local_sub, z_view_keyexpr_loan(&k_sub),
+                                       z_closure_sample_move(&cb), &opts));
+    }
+
+    if (create_remote_sub) {
+        z_owned_closure_sample_t cb;
+        z_closure_sample(&cb, NULL, NULL, NULL);
+        assert_ok(z_declare_subscriber(z_session_loan(&s2), &remote_sub, z_view_keyexpr_loan(&k_sub),
+                                       z_closure_sample_move(&cb), NULL));
+    }
+
+    assert(_check_publisher_status(&pub, z_loan_mut(s1), z_loan_mut(s2), expected));
+
+    if (create_local_sub) {
+        z_subscriber_drop(z_subscriber_move(&local_sub));
+    }
+    if (create_remote_sub) {
+        z_subscriber_drop(z_subscriber_move(&remote_sub));
+    }
+    z_publisher_drop(z_publisher_move(&pub));
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_read_task(z_loan_mut(s2)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
+#endif
+
+    z_session_drop(z_session_move(&s1));
+    z_session_drop(z_session_move(&s2));
+}
+#endif  // Z_FEATURE_LOCAL_SUBSCRIBER == 1
+
+static bool _check_querier_status(z_owned_querier_t *querier, z_loaned_session_t *s1, z_loaned_session_t *s2,
                                   bool expected) {
     z_matching_status_t status;
     status.matching = !expected;
@@ -596,7 +669,82 @@ void test_matching_status_querier(bool complete) {
     z_session_drop(z_session_move(&s2));
 }
 
-int main(int argc, char** argv) {
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+static void test_matching_status_querier_locality(z_locality_t locality, bool create_local_queryable,
+                                                  bool create_remote_queryable, bool expected) {
+    printf("test_matching_status_querier_locality locality=%d local=%d remote=%d expected=%d\n", (int)locality,
+           create_local_queryable, create_remote_queryable, expected);
+
+    z_owned_session_t s1, s2;
+    z_owned_config_t c1, c2;
+    z_config_default(&c1);
+    z_config_default(&c2);
+    z_view_keyexpr_t k_queryable, k_querier;
+    z_view_keyexpr_from_str(&k_queryable, QUERYABLE_EXPR);
+    z_view_keyexpr_from_str(&k_querier, QUERIER_EXPR);
+
+    assert_ok(z_open(&s1, z_config_move(&c1), NULL));
+    assert_ok(z_open(&s2, z_config_move(&c2), NULL));
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
+#endif
+
+    z_querier_options_t querier_opts;
+    z_querier_options_default(&querier_opts);
+    querier_opts.allowed_destination = locality;
+
+    z_owned_querier_t querier;
+    assert_ok(z_declare_querier(z_session_loan(&s1), &querier, z_view_keyexpr_loan(&k_querier), &querier_opts));
+
+    z_owned_queryable_t local_queryable;
+    z_owned_queryable_t remote_queryable;
+
+    if (create_local_queryable) {
+        z_queryable_options_t opts;
+        z_queryable_options_default(&opts);
+        opts.allowed_origin = Z_LOCALITY_SESSION_LOCAL;
+        z_owned_closure_query_t cb;
+        z_closure_query(&cb, NULL, NULL, NULL);
+        assert_ok(z_declare_queryable(z_session_loan(&s1), &local_queryable, z_view_keyexpr_loan(&k_queryable),
+                                      z_closure_query_move(&cb), &opts));
+    }
+
+    if (create_remote_queryable) {
+        z_queryable_options_t opts;
+        z_queryable_options_default(&opts);
+        z_owned_closure_query_t cb;
+        z_closure_query(&cb, NULL, NULL, NULL);
+        assert_ok(z_declare_queryable(z_session_loan(&s2), &remote_queryable, z_view_keyexpr_loan(&k_queryable),
+                                      z_closure_query_move(&cb), &opts));
+    }
+
+    assert(_check_querier_status(&querier, z_loan_mut(s1), z_loan_mut(s2), expected));
+
+    if (create_local_queryable) {
+        z_queryable_drop(z_queryable_move(&local_queryable));
+    }
+    if (create_remote_queryable) {
+        z_queryable_drop(z_queryable_move(&remote_queryable));
+    }
+    z_querier_drop(z_querier_move(&querier));
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    assert_ok(zp_stop_read_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_read_task(z_loan_mut(s2)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s1)));
+    assert_ok(zp_stop_lease_task(z_loan_mut(s2)));
+#endif
+
+    z_session_drop(z_session_move(&s1));
+    z_session_drop(z_session_move(&s2));
+}
+#endif  // Z_FEATURE_LOCAL_QUERYABLE == 1
+
+int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
     test_matching_listener_publisher(true);
@@ -609,10 +757,26 @@ int main(int argc, char** argv) {
     test_matching_listener_querier(false, true);
     test_matching_status_querier(false);
     test_matching_status_querier(true);
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
+    test_matching_status_publisher_locality(Z_LOCALITY_SESSION_LOCAL, true, false, true);
+    test_matching_status_publisher_locality(Z_LOCALITY_SESSION_LOCAL, false, true, false);
+    test_matching_status_publisher_locality(Z_LOCALITY_SESSION_LOCAL, true, true, true);
+    test_matching_status_publisher_locality(Z_LOCALITY_REMOTE, true, false, false);
+    test_matching_status_publisher_locality(Z_LOCALITY_REMOTE, false, true, true);
+    test_matching_status_publisher_locality(Z_LOCALITY_REMOTE, true, true, true);
+#endif
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    test_matching_status_querier_locality(Z_LOCALITY_SESSION_LOCAL, true, false, true);
+    test_matching_status_querier_locality(Z_LOCALITY_SESSION_LOCAL, false, true, false);
+    test_matching_status_querier_locality(Z_LOCALITY_SESSION_LOCAL, true, true, true);
+    test_matching_status_querier_locality(Z_LOCALITY_REMOTE, true, false, false);
+    test_matching_status_querier_locality(Z_LOCALITY_REMOTE, false, true, true);
+    test_matching_status_querier_locality(Z_LOCALITY_REMOTE, true, true, true);
+#endif
 }
 
 #else
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 }

@@ -21,6 +21,7 @@
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/session.h"
 #include "zenoh-pico/session/subscription.h"
+#include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LIVELINESS == 1
@@ -80,6 +81,7 @@ _z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_k
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
+    s._allowed_origin = z_locality_default();
 
     _z_subscriber_t ret = _z_subscriber_null();
     // Register subscription, stored at session-level, do not drop it by the end of this function.

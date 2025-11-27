@@ -34,6 +34,7 @@ typedef struct {
     _z_keyexpr_t ke_in;
     _z_keyexpr_t ke_out;
     _z_subscription_rc_svec_rc_t infos;
+    bool is_remote;
 } _z_subscription_cache_data_t;
 
 static inline _z_subscription_cache_data_t _z_subscription_cache_data_null(void) {

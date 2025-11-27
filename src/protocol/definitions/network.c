@@ -231,6 +231,7 @@ void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, 
     dst->_body._push._body._body._del._commons._timestamp = (timestamp == NULL) ? _z_timestamp_null() : *timestamp;
     dst->_body._push._body._body._del._commons._source_info =
         (source_info == NULL) ? _z_source_info_null() : *source_info;
+    dst->_body._push._body._body._del._attachment = _z_bytes_null();
 }
 
 void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
