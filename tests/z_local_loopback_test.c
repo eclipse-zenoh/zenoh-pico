@@ -160,8 +160,9 @@ static void cleanup_session(void) {
 }
 
 static void create_local_resource(const char *key_str, _z_keyexpr_t *keyexpr, _z_keyexpr_t *expanded, uint16_t *rid) {
-    _z_string_t suffix = _z_string_copy_from_str(key_str);
-    _z_keyexpr_from_string(keyexpr, Z_RESOURCE_ID_NONE, &suffix);
+    keyexpr->_id = Z_RESOURCE_ID_NONE;
+    keyexpr->_mapping = _Z_KEYEXPR_MAPPING_LOCAL;
+    keyexpr->_suffix = _z_string_copy_from_str(key_str);
 
     *rid = _z_register_resource(&g_session, keyexpr, Z_RESOURCE_ID_NONE, NULL);
     assert(*rid != Z_RESOURCE_ID_NONE);
@@ -560,7 +561,8 @@ static void test_query_local_and_remote(void) {
     _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
-    _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &keyexpr, Z_RELIABILITY_RELIABLE,
+    _z_keyexpr_t ke_copy = _z_keyexpr_duplicate(&keyexpr);
+    _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &ke_copy, Z_RELIABILITY_RELIABLE,
                                Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info, &remote_payload, &encoding,
                                NULL);
     res = _z_handle_network_message(&g_fake_transport, &reply_msg, NULL);
@@ -647,7 +649,8 @@ static void test_query_local_and_remote_via_api(void) {
     _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
-    _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &keyexpr, Z_RELIABILITY_RELIABLE,
+    _z_keyexpr_t ke_copy = _z_keyexpr_duplicate(&keyexpr);
+    _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &ke_copy, Z_RELIABILITY_RELIABLE,
                                Z_CONSOLIDATION_MODE_DEFAULT, _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT),
                                &timestamp, &source_info, &remote_payload, &encoding, NULL);
     res = _z_handle_network_message(&g_fake_transport, &reply_msg, NULL);
