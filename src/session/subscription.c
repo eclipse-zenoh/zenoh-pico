@@ -301,18 +301,9 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
 
 void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_rc_t *sub) {
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-    _z_keyexpr_t key_copy = _z_keyexpr_null();
-    z_locality_t origin = Z_LOCALITY_ANY;
-    bool notify = false;
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
-        if (_z_locality_allows_local(sub_val->_allowed_origin)) {
-            key_copy = _z_keyexpr_duplicate(&sub_val->_key);
-            if (_z_keyexpr_has_suffix(&key_copy)) {
-                origin = sub_val->_allowed_origin;
-                notify = true;
-            }
-        }
+        _z_write_filter_notify_subscriber(zn, &sub_val->_key, sub_val->_allowed_origin, false);
     }
 #endif
     _z_session_mutex_lock(zn);
@@ -325,13 +316,6 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
     }
 
     _z_session_mutex_unlock(zn);
-
-#if Z_FEATURE_LOCAL_SUBSCRIBER == 1
-    if (notify) {
-        _z_write_filter_notify_subscriber(zn, &key_copy, origin, false);
-        _z_keyexpr_clear(&key_copy);
-    }
-#endif
 }
 
 void _z_flush_subscriptions(_z_session_t *zn) {
