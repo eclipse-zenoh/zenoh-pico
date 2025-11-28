@@ -49,6 +49,11 @@ typedef struct _z_session_t {
     z_whatami_t _mode;
     _z_transport_t _tp;
 
+#if Z_FEATURE_MULTI_THREAD == 1
+    bool _read_task_should_run;
+    bool _lease_task_should_run;
+#endif
+
     // Zenoh PID
     _z_id_t _local_zid;
 
@@ -110,6 +115,8 @@ typedef struct _z_session_t {
 #if Z_FEATURE_PERIODIC_TASKS == 1
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_task_t *_periodic_scheduler_task;
+    bool _periodic_task_should_run;
+    z_task_attr_t *_periodic_scheduler_task_attr;
 #endif
     _zp_periodic_scheduler_t _periodic_scheduler;
 #endif

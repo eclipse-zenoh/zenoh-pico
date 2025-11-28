@@ -174,9 +174,24 @@ typedef struct {
 
 /**
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
+ *
+ * Members (multi-thread builds):
+ *   bool auto_start_read_task: auto-start read task after `z_open()` (default true).
+ *   bool auto_start_lease_task: auto-start lease task after `z_open()` (default true).
+ *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only when periodic tasks enabled).
  */
 typedef struct {
+#if Z_FEATURE_MULTI_THREAD == 1
+    bool auto_start_read_task;
+    bool auto_start_lease_task;
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    bool auto_start_periodic_task;
+#endif
+#endif
+#else
     uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#endif
 } z_open_options_t;
 
 /**
