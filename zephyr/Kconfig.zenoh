@@ -65,5 +65,11 @@ config ZENOH_PICO_LINK_WS
 	help
 	  WS Link
 
+config ZENOH_PICO_STACK_SIZE
+    int "Zenoh Stack Size"
+    default MAIN_STACK_SIZE
+    help
+      Set the stack size for Zenoh threads
+
 endif
 
