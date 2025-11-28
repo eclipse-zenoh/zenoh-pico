@@ -1405,7 +1405,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->encoding = NULL;
     options->payload = NULL;
     options->attachment = NULL;
-    options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
+    options->timeout_ms = 0;
 #ifdef Z_FEATURE_UNSTABLE_API
     options->cancellation_token = NULL;
 #endif
@@ -1433,6 +1433,9 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
         opt = *options;
     } else {
         z_get_options_default(&opt);
+    }
+    if (opt.timeout_ms == 0) {
+        opt.timeout_ms = Z_GET_TIMEOUT_DEFAULT;
     }
 
 #ifdef Z_FEATURE_UNSTABLE_API
@@ -1497,7 +1500,7 @@ void z_querier_options_default(z_querier_options_t *options) {
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     options->allowed_destination = z_locality_default();
 #endif
-    options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
+    options->timeout_ms = 0;
 }
 
 z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *querier,
@@ -1521,9 +1524,13 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
 #endif
     // Set options
     z_querier_options_t opt;
-    z_querier_options_default(&opt);
     if (options != NULL) {
         opt = *options;
+    } else {
+        z_querier_options_default(&opt);
+    }
+    if (opt.timeout_ms == 0) {
+        opt.timeout_ms = Z_GET_TIMEOUT_DEFAULT;
     }
     z_reliability_t reliability = Z_RELIABILITY_DEFAULT;
     z_locality_t allowed_destination = z_locality_default();

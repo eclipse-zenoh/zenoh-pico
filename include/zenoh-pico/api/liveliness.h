@@ -137,7 +137,7 @@ z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *
  * The options for :c:func:`z_liveliness_get()`
  *
  * Members:
- *   uint64_t timeout_ms: Liveliness query timeout in milliseconds.
+ *   uint64_t timeout_ms: Liveliness query timeout in milliseconds. 0 corresponds to default get request timeout.
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct z_liveliness_get_options_t {
