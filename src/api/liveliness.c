@@ -145,7 +145,7 @@ z_result_t z_liveliness_declare_background_subscriber(const z_loaned_session_t *
 
 #if Z_FEATURE_QUERY == 1
 z_result_t z_liveliness_get_options_default(z_liveliness_get_options_t *options) {
-    options->timeout_ms = Z_GET_TIMEOUT_DEFAULT;
+    options->timeout_ms = 0;
 #ifdef Z_FEATURE_UNSTABLE_API
     options->cancellation_token = NULL;
 #endif
@@ -164,6 +164,9 @@ z_result_t z_liveliness_get(const z_loaned_session_t *zs, const z_loaned_keyexpr
         z_liveliness_get_options_default(&opt);
     } else {
         opt = *options;
+    }
+    if (opt.timeout_ms == 0) {
+        opt.timeout_ms = Z_GET_TIMEOUT_DEFAULT;
     }
 
     _z_keyexpr_t ke;

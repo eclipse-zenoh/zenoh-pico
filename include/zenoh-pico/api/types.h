@@ -239,8 +239,8 @@ typedef struct {
  *   bool is_express: If set to ``true``, the querier queries will not be batched. This usually has a positive impact on
  * 	   latency but negative impact on throughput.
  *   z_priority_t priority: The priority of the querier queries.
- *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 means default query timeout from zenoh
- *     configuration.
+ *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 corresponds to default get request
+ * timeout.
  */
 typedef struct z_querier_options_t {
     z_moved_encoding_t *encoding;
@@ -441,7 +441,8 @@ typedef struct {
  *   z_priority_t priority: The priority of the query.
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
- *   uint64_t timeout_ms: Query timeout in milliseconds.
+ *   uint64_t timeout_ms: Query timeout in milliseconds. 0 means default timeout. 0 corresponds to default get request
+ * timeout.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
