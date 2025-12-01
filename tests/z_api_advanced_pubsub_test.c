@@ -41,6 +41,11 @@ static void put_str(const ze_loaned_advanced_publisher_t *pub, const char *s) {
     z_owned_bytes_t payload;
     ASSERT_OK(z_bytes_copy_from_str(&payload, s));
     ASSERT_OK(ze_advanced_publisher_put(pub, z_move(payload), NULL));
+    // TODO: cache requires monotonically increasing timestamps to work correctly on advanced subscriber side.
+    // Due to currently imprecise timestamping (due to low resolution of gettimeofday), we need
+    // to add a small delay to ensure that we get monotonically increasing timestamps, until
+    // more accurate timestamping (hlc ?) is implemented.
+    z_sleep_us(50);
 }
 
 static void expect_next(const z_loaned_fifo_handler_sample_t *handler, const char *expected) {
@@ -118,7 +123,6 @@ static void test_advanced_history(bool p2p) {
     for (int idx = 1; idx <= 4; idx++) {
         snprintf(buf, sizeof(buf), "%d", idx);
         put_str(z_loan(pub), buf);
-        z_sleep_us(10);  // add small dealy to account for imprecise timestamping
     }
     z_sleep_ms(TEST_SLEEP_MS);
 
