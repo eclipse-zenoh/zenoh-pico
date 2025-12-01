@@ -118,6 +118,7 @@ static void test_advanced_history(bool p2p) {
     for (int idx = 1; idx <= 4; idx++) {
         snprintf(buf, sizeof(buf), "%d", idx);
         put_str(z_loan(pub), buf);
+        z_sleep_us(10);  // add small dealy to account for imprecise timestamping
     }
     z_sleep_ms(TEST_SLEEP_MS);
 
