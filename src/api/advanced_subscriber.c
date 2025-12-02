@@ -483,10 +483,10 @@ static z_result_t __unsafe_ze_advanced_subscriber_handle_sample(_ze_advanced_sub
     }
     *new_sequenced_source = false;
 
-    const z_loaned_source_info_t *source_info = z_sample_source_info(sample);
+    const z_source_info_t *source_info = z_sample_source_info(sample);
     const z_timestamp_t *timestamp = z_sample_timestamp(sample);
 
-    if (_z_source_info_check(source_info)) {
+    if (source_info != NULL) {
         z_entity_global_id_t id = z_source_info_id(source_info);
         uint32_t source_sn = z_source_info_sn(source_info);
         _ze_advanced_subscriber_sequenced_state_t *state =
@@ -1089,8 +1089,8 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
             return;
         }
 
-        const z_loaned_source_info_t *source_info = z_sample_source_info(sample);
-        if (_z_source_info_check(source_info)) {
+        const z_source_info_t *source_info = z_sample_source_info(sample);
+        if (source_info != NULL) {
             z_entity_global_id_t source_id = z_source_info_id(source_info);
 
             _ze_advanced_subscriber_sequenced_state_t *state =

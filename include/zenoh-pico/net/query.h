@@ -93,7 +93,7 @@ static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0
 static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
 static inline _z_query_t _z_query_steal_data(_z_value_t *value, _z_keyexpr_t *key, _z_slice_t *parameters,
                                              const _z_session_weak_t *zn, uint32_t request_id, _z_bytes_t *attachment,
-                                             bool anyke, _z_source_info_t *source_info) {
+                                             bool anyke, const _z_source_info_t *source_info) {
     _z_query_t ret;
     ret._key = _z_keyexpr_steal(key);
     ret._value = _z_value_steal(value);
@@ -102,7 +102,7 @@ static inline _z_query_t _z_query_steal_data(_z_value_t *value, _z_keyexpr_t *ke
     ret._attachment = _z_bytes_steal(attachment);
     ret._parameters._slice = _z_slice_steal(parameters);
     ret._anyke = anyke;
-    ret._source_info = _z_source_info_steal(source_info);
+    ret._source_info = *source_info;
     return ret;
 }
 void _z_queryable_clear(_z_queryable_t *qbl);

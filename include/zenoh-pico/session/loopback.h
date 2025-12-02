@@ -32,18 +32,18 @@ extern "C" {
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
-                                           z_reliability_t reliability, _z_source_info_t *source_info);
+                                           z_reliability_t reliability, const _z_source_info_t *source_info);
 
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
-                                            _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
+                                            const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
                                             _z_n_qos_t qos);
 
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *zn,
                                             const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                                             z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, _z_source_info_t *source_info);
+                                            _z_bytes_t *attachment, const _z_source_info_t *source_info);
 
 z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn, _z_bytes_t *payload,
                                                 _z_encoding_t *encoding, _z_n_qos_t qos);

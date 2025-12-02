@@ -69,7 +69,7 @@ static _z_transport_common_t *_z_session_get_transport_common(_z_session_t *zn) 
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
-                                           z_reliability_t reliability, _z_source_info_t *source_info) {
+                                           z_reliability_t reliability, const _z_source_info_t *source_info) {
     _z_transport_common_t *transport = _z_session_get_transport_common(zn);
     if (transport == NULL) {
         return _Z_ERR_INVALID;
@@ -105,16 +105,13 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
     if (encoding != NULL) {
         *encoding = _z_encoding_null();
     }
-    if (source_info != NULL) {
-        *source_info = _z_source_info_null();
-    }
     return ret;
 }
 #else
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
-                                           z_reliability_t reliability, _z_source_info_t *source_info) {
+                                           z_reliability_t reliability, const _z_source_info_t *source_info) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
     _ZP_UNUSED(payload);
@@ -133,7 +130,7 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
-                                            _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
+                                            const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
                                             _z_n_qos_t qos) {
     _z_transport_common_t *transport = _z_session_get_transport_common(zn);
     if (transport == NULL) {
@@ -162,16 +159,13 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
     if (encoding != NULL) {
         *encoding = _z_encoding_null();
     }
-    if (source_info != NULL) {
-        *source_info = _z_source_info_null();
-    }
     return ret;
 }
 #else
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
                                             z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                                             _z_encoding_t *encoding, _z_bytes_t *attachment,
-                                            _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
+                                            const _z_source_info_t *source_info, _z_zint_t qid, uint64_t timeout_ms,
                                             _z_n_qos_t qos) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);
@@ -192,7 +186,7 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *zn,
                                             const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                                             z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, _z_source_info_t *source_info) {
+                                            _z_bytes_t *attachment, const _z_source_info_t *source_info) {
     if (_z_get_pending_query_by_id(_Z_RC_IN_VAL(zn), query->_request_id) == NULL) {
         return _Z_ERR_ENTITY_UNKNOWN;
     }
@@ -232,9 +226,6 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
     }
     if (encoding != NULL) {
         *encoding = _z_encoding_null();
-    }
-    if (source_info != NULL) {
-        *source_info = _z_source_info_null();
     }
     return ret;
 }
@@ -278,7 +269,7 @@ z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t ri
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *responder,
                                             const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                                             z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, _z_source_info_t *source_info) {
+                                            _z_bytes_t *attachment, const _z_source_info_t *source_info) {
     _ZP_UNUSED(query);
     _ZP_UNUSED(responder);
     _ZP_UNUSED(keyexpr);

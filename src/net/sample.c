@@ -40,7 +40,7 @@ z_result_t _z_sample_copy_data(_z_sample_t *dst, const _z_keyexpr_t *key, const 
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, payload), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, attachment), _z_sample_clear(dst));
     dst->timestamp = _z_timestamp_duplicate(timestamp);
-    _Z_CLEAN_RETURN_IF_ERR(_z_source_info_copy(&dst->source_info, source_info), _z_sample_clear(dst));
+    dst->source_info = *source_info;
     dst->qos = qos;
     dst->reliability = reliability;
     dst->kind = kind;
@@ -54,7 +54,7 @@ z_result_t _z_sample_move(_z_sample_t *dst, _z_sample_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->payload, &src->payload), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->attachment, &src->attachment), _z_sample_clear(dst));
     _z_timestamp_move(&dst->timestamp, &src->timestamp);
-    _z_source_info_move(&dst->source_info, &src->source_info);
+    dst->source_info = src->source_info;
     dst->qos = src->qos;
     dst->reliability = src->reliability;
     dst->kind = src->kind;
@@ -83,9 +83,9 @@ z_result_t _z_sample_copy(_z_sample_t *dst, const _z_sample_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->payload, &src->payload), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_encoding_copy(&dst->encoding, &src->encoding), _z_sample_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_copy(&dst->attachment, &src->attachment), _z_sample_clear(dst));
-    _Z_CLEAN_RETURN_IF_ERR(_z_source_info_copy(&dst->source_info, &src->source_info), _z_sample_clear(dst));
     dst->kind = src->kind;
     dst->timestamp = _z_timestamp_duplicate(&src->timestamp);
+    dst->source_info = src->source_info;
     dst->qos = src->qos;
     dst->reliability = src->reliability;
     return _Z_RES_OK;

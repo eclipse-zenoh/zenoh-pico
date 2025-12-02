@@ -148,7 +148,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
 z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                     const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
                     bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
-                    z_reliability_t reliability, _z_source_info_t *source_info, z_locality_t allowed_destination);
+                    z_reliability_t reliability, const _z_source_info_t *source_info, z_locality_t allowed_destination);
 #endif
 
 #if Z_FEATURE_SUBSCRIPTION == 1

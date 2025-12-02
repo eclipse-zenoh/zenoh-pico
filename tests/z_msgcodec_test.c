@@ -626,8 +626,6 @@ void source_info_field(void) {
     printf("\n");
 
     // Free
-    _z_source_info_clear(&e_si);
-    _z_source_info_clear(&d_si);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }

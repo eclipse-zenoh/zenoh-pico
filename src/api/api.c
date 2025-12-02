@@ -465,16 +465,16 @@ uint32_t z_entity_global_id_eid(const z_entity_global_id_t *gid) { return gid->e
 
 z_id_t z_entity_global_id_zid(const z_entity_global_id_t *gid) { return gid->zid; }
 
-z_result_t z_source_info_new(z_owned_source_info_t *info, const z_entity_global_id_t *source_id, uint32_t source_sn) {
-    info->_val = _z_source_info_null();
-    info->_val._source_id = *source_id;
-    info->_val._source_sn = source_sn;
-    return _Z_RES_OK;
+z_source_info_t z_source_info_new(const z_entity_global_id_t *source_id, uint32_t source_sn) {
+    z_source_info_t si;
+    si._source_id = *source_id;
+    si._source_sn = source_sn;
+    return si;
 }
 
-uint32_t z_source_info_sn(const z_loaned_source_info_t *info) { return info->_source_sn; }
+uint32_t z_source_info_sn(const z_source_info_t *info) { return info->_source_sn; }
 
-z_entity_global_id_t z_source_info_id(const z_loaned_source_info_t *info) { return info->_source_id; }
+z_entity_global_id_t z_source_info_id(const z_source_info_t *info) { return info->_source_id; }
 
 z_query_target_t z_query_target_default(void) { return Z_QUERY_TARGET_DEFAULT; }
 
@@ -506,8 +506,9 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { retur
 
 const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.payload; }
 
-const z_loaned_source_info_t *z_query_source_info(const z_loaned_query_t *query) {
-    return &_Z_RC_IN_VAL(query)->_source_info;
+const z_source_info_t *z_query_source_info(const z_loaned_query_t *query) {
+    const z_source_info_t *info = &_Z_RC_IN_VAL(query)->_source_info;
+    return _z_source_info_check(info) ? info : NULL;
 }
 
 const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) {
@@ -606,9 +607,6 @@ static inline _z_encoding_t *_z_encoding_from_moved(z_moved_encoding_t *encoding
     return (encoding == NULL) ? NULL : &encoding->_this._val;
 }
 #endif
-
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_source_info_t, source_info, _z_source_info_check, _z_source_info_null,
-                              _z_source_info_copy, _z_source_info_move, _z_source_info_clear)
 
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_sample_t, sample, _z_sample_check, _z_sample_null, _z_sample_copy, _z_sample_move,
                               _z_sample_clear)
@@ -937,7 +935,10 @@ const z_loaned_keyexpr_t *z_sample_keyexpr(const z_loaned_sample_t *sample) { re
 z_sample_kind_t z_sample_kind(const z_loaned_sample_t *sample) { return sample->kind; }
 #ifdef Z_FEATURE_UNSTABLE_API
 z_reliability_t z_sample_reliability(const z_loaned_sample_t *sample) { return sample->reliability; }
-const z_loaned_source_info_t *z_sample_source_info(const z_loaned_sample_t *sample) { return &sample->source_info; }
+const z_source_info_t *z_sample_source_info(const z_loaned_sample_t *sample) {
+    const z_source_info_t *info = &sample->source_info;
+    return _z_source_info_check(info) ? info : NULL;
+}
 #endif
 const z_loaned_bytes_t *z_sample_payload(const z_loaned_sample_t *sample) { return &sample->payload; }
 const z_timestamp_t *z_sample_timestamp(const z_loaned_sample_t *sample) {
@@ -1037,7 +1038,7 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
     _z_source_info_t *source_info = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
     reliability = opt.reliability;
-    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
+    source_info = opt.source_info;
 #endif
 
     _z_bytes_t *payload_bytes = _z_bytes_from_moved(payload);
@@ -1055,9 +1056,6 @@ z_result_t z_put(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr
 
     z_encoding_drop(opt.encoding);
     z_bytes_drop(opt.attachment);
-#ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
-#endif
     z_bytes_drop(payload);
 
     return ret;
@@ -1076,7 +1074,7 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
     _z_source_info_t *source_info = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
     reliability = opt.reliability;
-    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
+    source_info = opt.source_info;
 #endif
     _z_keyexpr_t keyexpr_aliased;
     _z_keyexpr_alias_from_user_defined(&keyexpr_aliased, keyexpr);
@@ -1086,10 +1084,6 @@ z_result_t z_delete(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keye
 #endif
     ret = _z_write(_Z_RC_IN_VAL(zs), &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE, opt.congestion_control,
                    opt.priority, opt.is_express, opt.timestamp, NULL, reliability, source_info, allowed_destination);
-
-#ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
-#endif
     return ret;
 }
 
@@ -1194,7 +1188,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
 #ifdef Z_FEATURE_UNSTABLE_API
     reliability = pub->reliability;
     if (opt.source_info != NULL) {
-        source_info = &opt.source_info->_this._val;
+        source_info = opt.source_info;
     }
 #endif
 
@@ -1272,9 +1266,6 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
     // Clean-up
     _z_encoding_clear(&encoding);
     z_bytes_drop(opt.attachment);
-#ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
-#endif
     z_bytes_drop(payload);
     return ret;
 }
@@ -1304,7 +1295,7 @@ z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_pub
     _z_source_info_t *source_info = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
     reliability = pub->reliability;
-    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
+    source_info = opt.source_info;
 #endif
     // Remove potentially redundant ke suffix
     _z_keyexpr_t pub_keyexpr;
@@ -1359,9 +1350,6 @@ z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_pub
 #if Z_FEATURE_SESSION_CHECK == 1
     // Clean up
     _z_session_rc_drop(&sess_rc);
-#endif
-#ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
 #endif
     return ret;
 }
@@ -1502,7 +1490,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     _z_source_info_t *source_info = NULL;
 
 #ifdef Z_FEATURE_UNSTABLE_API
-    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
+    source_info = opt.source_info;
     bool should_proceed = (opt.cancellation_token == NULL ||
                            !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
 #else
@@ -1531,7 +1519,6 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     }
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
     z_cancellation_token_drop(opt.cancellation_token);
 #endif
     z_bytes_drop(opt.payload);
@@ -1673,7 +1660,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
     should_proceed = should_proceed || (session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE);
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
-    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
+    source_info = opt.source_info;
     should_proceed =
         should_proceed && (opt.cancellation_token == NULL ||
                            !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
@@ -1702,7 +1689,6 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
 
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_source_info_drop(opt.source_info);
     z_cancellation_token_drop(opt.cancellation_token);
 #endif
     z_bytes_drop(opt.payload);
@@ -1944,7 +1930,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
     }
     _z_source_info_t *source_info = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
-    source_info = opts.source_info == NULL ? NULL : &opts.source_info->_this._val;
+    source_info = opts.source_info;
 #endif
     z_result_t ret =
         _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, _z_bytes_from_moved(payload),
@@ -2015,7 +2001,7 @@ z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyex
     }
     _z_source_info_t *source_info = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
-    source_info = opts.source_info == NULL ? NULL : &opts.source_info->_this._val;
+    source_info = opts.source_info;
 #endif
     z_result_t ret = _z_send_reply(_Z_RC_IN_VAL(query), &sess_rc, &keyexpr_aliased, NULL, NULL, Z_SAMPLE_KIND_DELETE,
                                    opts.congestion_control, opts.priority, opts.is_express, opts.timestamp,

@@ -151,7 +151,7 @@ _Z_OWNED_TYPE_VALUE(_z_value_t, reply_err)
 /**
  * Represents sample source information.
  */
-_Z_OWNED_TYPE_VALUE(_z_source_info_t, source_info)
+typedef _z_source_info_t z_source_info_t;
 
 /**
  * A struct that indicates if there exist Subscribers matching the Publisher's key expression or Queryables matching
@@ -278,7 +278,7 @@ typedef struct z_querier_options_t {
  *   z_moved_bytes_t *payload: An optional payload to attach to the query.
  *   z_moved_encoding_t *encoding: An optional encoding of the query payload and or attachment.
  *   z_moved_bytes_t *attachment: An optional attachment to attach to the query.
- *   z_moved_source_info_t* source_info: The source info for the request (unstable).
+ *   z_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct z_querier_get_options_t {
@@ -287,7 +287,7 @@ typedef struct z_querier_get_options_t {
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_moved_cancellation_token_t *cancellation_token;
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_querier_get_options_t;
 
@@ -314,7 +314,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -324,7 +324,7 @@ typedef struct {
     bool is_express;
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_query_reply_options_t;
 
@@ -337,7 +337,7 @@ typedef struct {
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the response.
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
@@ -346,7 +346,7 @@ typedef struct {
     bool is_express;
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_query_reply_del_options_t;
 
@@ -371,7 +371,7 @@ typedef struct {
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
  *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
@@ -385,7 +385,7 @@ typedef struct {
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_put_options_t;
 
@@ -398,7 +398,7 @@ typedef struct {
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_reliability_t reliability: The reliability that should be used to transmit the data (unstable).
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_congestion_control_t congestion_control;
@@ -410,7 +410,7 @@ typedef struct {
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
     z_reliability_t reliability;
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_delete_options_t;
 
@@ -422,14 +422,14 @@ typedef struct {
  *   z_moved_encoding_t* encoding: The encoding of the payload.
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
  *   z_moved_bytes_t* attachment: An optional attachment to the publication.
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_moved_encoding_t *encoding;
     z_timestamp_t *timestamp;
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_publisher_put_options_t;
 
@@ -439,12 +439,12 @@ typedef struct {
  *
  * Members:
  *   z_timestamp_t *timestamp: The API level timestamp (e.g. of the data when it was created).
- *   z_moved_source_info_t* source_info: The source info for the message (unstable).
+ *   z_source_info_t* source_info: The source info for the message (unstable).
  */
 typedef struct {
     z_timestamp_t *timestamp;
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
 #endif
 } z_publisher_delete_options_t;
 
@@ -462,7 +462,7 @@ typedef struct {
  *   uint64_t timeout_ms: Query timeout in milliseconds. 0 means default timeout. 0 corresponds to default get request
  * timeout.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
- *   z_moved_source_info_t* source_info: The source info for the request (unstable).
+ *   z_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct {
@@ -479,7 +479,7 @@ typedef struct {
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
-    z_moved_source_info_t *source_info;
+    z_source_info_t *source_info;
     z_moved_cancellation_token_t *cancellation_token;
 #endif
 } z_get_options_t;
