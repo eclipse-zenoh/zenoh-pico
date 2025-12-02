@@ -44,29 +44,19 @@
 
 #if Z_FEATURE_MULTI_THREAD == 1
 static bool _zp_read_task_is_running_session(const _z_session_t *zs) {
-    switch (zs->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            return zs->_tp._transport._unicast._common._read_task_running;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            return zs->_tp._transport._multicast._common._read_task_running;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            return zs->_tp._transport._raweth._common._read_task_running;
-        default:
-            return false;
+    _z_transport_common_t *common = _z_transport_get_common((_z_transport_t *)&zs->_tp);
+    if (common == NULL) {
+        return false;
     }
+    return common->_read_task_running;
 }
 
 static bool _zp_lease_task_is_running_session(const _z_session_t *zs) {
-    switch (zs->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            return zs->_tp._transport._unicast._common._lease_task_running;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            return zs->_tp._transport._multicast._common._lease_task_running;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            return zs->_tp._transport._raweth._common._lease_task_running;
-        default:
-            return false;
+    _z_transport_common_t *common = _z_transport_get_common((_z_transport_t *)&zs->_tp);
+    if (common == NULL) {
+        return false;
     }
+    return common->_lease_task_running;
 }
 
 #ifdef Z_FEATURE_UNSTABLE_API

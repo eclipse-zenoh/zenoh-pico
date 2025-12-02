@@ -2359,16 +2359,12 @@ bool zp_read_task_is_running(const z_loaned_session_t *zs) {
         return false;
     }
     const _z_session_t *session = _Z_RC_IN_VAL(zs);
-    switch (session->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            return session->_tp._transport._unicast._common._read_task_running;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            return session->_tp._transport._multicast._common._read_task_running;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            return session->_tp._transport._raweth._common._read_task_running;
-        default:
-            return false;
+    _z_transport_common_t *common = _z_transport_get_common((_z_transport_t *)&session->_tp);
+
+    if (common == NULL) {
+        return false;
     }
+    return common->_read_task_running;
 #else
     _ZP_UNUSED(zs);
     return false;
@@ -2417,16 +2413,12 @@ bool zp_lease_task_is_running(const z_loaned_session_t *zs) {
         return false;
     }
     const _z_session_t *session = _Z_RC_IN_VAL(zs);
-    switch (session->_tp._type) {
-        case _Z_TRANSPORT_UNICAST_TYPE:
-            return session->_tp._transport._unicast._common._lease_task_running;
-        case _Z_TRANSPORT_MULTICAST_TYPE:
-            return session->_tp._transport._multicast._common._lease_task_running;
-        case _Z_TRANSPORT_RAWETH_TYPE:
-            return session->_tp._transport._raweth._common._lease_task_running;
-        default:
-            return false;
+    _z_transport_common_t *common = _z_transport_get_common((_z_transport_t *)&session->_tp);
+
+    if (common == NULL) {
+        return false;
     }
+    return common->_lease_task_running;
 #else
     _ZP_UNUSED(zs);
     return false;
@@ -2467,6 +2459,7 @@ z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs) {
     return -1;
 #endif
 }
+
 bool zp_periodic_scheduler_task_is_running(const z_loaned_session_t *zs) {
 #if Z_FEATURE_MULTI_THREAD == 1
     if (_Z_RC_IS_NULL(zs)) {
