@@ -264,7 +264,7 @@ z_result_t _z_trigger_subscriptions_impl(_z_session_t *zn, _z_subscriber_kind_t 
     // Retrieve sub infos
     sub_infos.ke_in = _z_keyexpr_steal(keyexpr);
     _Z_CLEAN_RETURN_IF_ERR(_z_subscription_get_infos(zn, sub_kind, &sub_infos, peer), _z_encoding_clear(encoding);
-                           _z_bytes_drop(payload); _z_bytes_drop(attachment); _z_source_info_clear(source_info););
+                           _z_bytes_drop(payload); _z_bytes_drop(attachment););
     const _z_subscription_rc_svec_t *subs = _Z_RC_IN_VAL(&sub_infos.infos);
     size_t sub_nb = _z_subscription_rc_svec_len(subs);
     _Z_DEBUG("Triggering %ju subs for key %d - %.*s", (uintmax_t)sub_nb, sub_infos.ke_out._id,

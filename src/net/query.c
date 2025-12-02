@@ -25,7 +25,6 @@ static void _z_query_clear_inner(_z_query_t *q) {
     _z_value_clear(&q->_value);
     _z_bytes_drop(&q->_attachment);
     _z_string_clear(&q->_parameters);
-    _z_source_info_clear(&q->_source_info);
     _z_session_weak_drop(&q->_zn);
 }
 

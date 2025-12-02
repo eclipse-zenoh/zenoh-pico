@@ -474,26 +474,13 @@ Represents sample source information.
 
 Types
 ^^^^^
-.. c:type:: z_owned_source_info_t
-.. c:type:: z_loaned_source_info_t
-.. c:type:: z_moved_source_info_t
+.. c:type:: z_source_info_t
 
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_source_info_new
 .. autocfunction:: primitives.h::z_source_info_sn
 .. autocfunction:: primitives.h::z_source_info_id
-
-Ownership Functions
-^^^^^^^^^^^^^^^^^^^
-
-See details at :ref:`owned_types_concept`
-
-.. c:function:: void z_source_info_drop(z_moved_source_info_t * source_info) 
-.. c:function:: void z_source_info_clone(z_owned_source_info_t * dst, const z_loaned_source_info_t * source_info) 
-.. c:function:: const z_loaned_source_info_t * z_source_info_loan(const z_owned_source_info_t * source_info)
-.. c:function:: z_loaned_source_info_t * z_source_info_loan_mut(z_owned_source_info_t * source_info)
-.. c:function:: z_result_t z_source_info_take_from_loaned(z_owned_source_info_t *dst, z_loaned_source_info_t *src)
 
 Closures
 ========

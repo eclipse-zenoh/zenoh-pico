@@ -156,9 +156,8 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_publisher_put_options_t opt;
         z_publisher_put_options_default(&opt);
         egid = z_publisher_id(z_loan(pub));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         z_publisher_put(z_loan(pub), z_move(payload), &opt);
         z_sleep_s(1);
@@ -167,9 +166,8 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_put_options_t opt;
         z_put_options_default(&opt);
         egid = z_session_id(z_loan(s1));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         assert_ok(z_put(z_loan(s1), z_loan(ke), z_move(payload), &opt));
     } else if (!put && publisher) {
@@ -180,9 +178,8 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_publisher_delete_options_t opt;
         z_publisher_delete_options_default(&opt);
         egid = z_publisher_id(z_loan(pub));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         z_publisher_delete(z_loan(pub), &opt);
         z_sleep_s(1);
@@ -191,9 +188,8 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
         z_delete_options_t opt;
         z_delete_options_default(&opt);
         egid = z_session_id(z_loan(s1));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         assert_ok(z_delete(z_loan(s1), z_loan(ke), &opt));
     }
@@ -227,7 +223,8 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
             z_drop(z_move(value));
         }
 
-        const z_loaned_source_info_t *si = z_sample_source_info(z_loan(sample));
+        const z_source_info_t *si = z_sample_source_info(z_loan(sample));
+        assert(si != NULL);
         z_entity_global_id_t gid = z_source_info_id(si);
         assert_source_info_equal(&egid, sn, &gid, z_source_info_sn(si));
 
@@ -311,18 +308,16 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
         z_querier_get_options_t opt;
         z_querier_get_options_default(&opt);
         egid = z_querier_id(z_loan(querier));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         z_querier_get(z_loan(querier), NULL, z_move(reply_callback), &opt);
     } else {
         z_get_options_t opt;
         z_get_options_default(&opt);
         egid = z_session_id(z_loan(s1));
-        z_owned_source_info_t si;
-        assert_ok(z_source_info_new(&si, &egid, sn));
-        opt.source_info = z_move(si);
+        z_source_info_t si = z_source_info_new(&egid, sn);
+        opt.source_info = &si;
 
         z_get(z_loan(s1), z_loan(ke), NULL, z_move(reply_callback), &opt);
     }
@@ -330,16 +325,16 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
 
     z_owned_query_t q;
     assert(z_try_recv(z_loan(query_handler), &q) == Z_OK);
-    z_loaned_source_info_t si = *z_query_source_info(z_loan(q));
-    assert_source_info_equal(&egid, sn, &si._source_id, si._source_sn);
+    const z_source_info_t *si = z_query_source_info(z_loan(q));
+    assert(si != NULL);
+    assert_source_info_equal(&egid, sn, &si->_source_id, si->_source_sn);
 
     z_query_reply_options_t opts;
     z_query_reply_options_default(&opts);
     egid = z_queryable_id(z_loan(qbl));
     sn = z_random_u32();
-    z_owned_source_info_t si2;
-    assert(z_source_info_new(&si2, &egid, sn) == Z_OK);
-    opts.source_info = z_move(si2);
+    z_source_info_t si2 = z_source_info_new(&egid, sn);
+    opts.source_info = &si2;
     z_query_reply(z_loan(q), z_loan(ke), NULL, &opts);
     z_query_drop(z_move(q));
 
@@ -347,8 +342,9 @@ void test_source_info_query(bool use_querier, bool local_queryable) {
     z_owned_reply_t r;
     assert(z_try_recv(z_loan(reply_handler), &r) == Z_OK);
     assert(z_reply_is_ok(z_loan(r)));
-    si = *z_sample_source_info(z_reply_ok(z_loan(r)));
-    assert_source_info_equal(&egid, sn, &si._source_id, si._source_sn);
+    si = z_sample_source_info(z_reply_ok(z_loan(r)));
+    assert(si != NULL);
+    assert_source_info_equal(&egid, sn, &si->_source_id, si->_source_sn);
     z_reply_drop(z_move(r));
 
     z_drop(z_move(qbl));

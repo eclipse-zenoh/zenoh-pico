@@ -76,9 +76,6 @@ int main(void) {
 #if Z_FEATURE_QUERY == 1
     TEST(z_owned_reply_t)
 #endif
-#ifdef Z_FEATURE_UNSTABLE_API
-    TEST(z_owned_source_info_t)
-#endif
     // Double drop not supported for these types
     // TEST(z_owned_task_t)
     // TEST(z_owned_mutex_t)

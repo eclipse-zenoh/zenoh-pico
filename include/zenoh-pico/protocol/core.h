@@ -260,17 +260,8 @@ typedef struct {
 
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_source_info_t _z_source_info_null(void) { return (_z_source_info_t){0}; }
-static inline void _z_source_info_clear(_z_source_info_t *info) { (void)(info); }
-z_result_t _z_source_info_copy(_z_source_info_t *dst, const _z_source_info_t *src);
-z_result_t _z_source_info_move(_z_source_info_t *dst, _z_source_info_t *src);
 static inline bool _z_source_info_check(const _z_source_info_t *info) {
     return _z_entity_global_id_check(&info->_source_id);
-}
-static inline _z_source_info_t _z_source_info_steal(_z_source_info_t *info) {
-    _z_source_info_t si;
-    si._source_id = info->_source_id;
-    si._source_sn = info->_source_sn;
-    return si;
 }
 typedef struct {
     uint32_t _request_id;
