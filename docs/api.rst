@@ -1064,6 +1064,7 @@ Functions
 .. autocfunction:: primitives.h::z_open
 .. autocfunction:: primitives.h::z_close
 .. autocfunction:: primitives.h::z_session_is_closed
+.. autocfunction:: primitives.h::z_session_id
 
 .. autocfunction:: primitives.h::z_info_zid
 .. autocfunction:: primitives.h::z_info_routers_zid
@@ -1362,6 +1363,7 @@ Functions
 .. autocfunction:: primitives.h::z_query_reply
 .. autocfunction:: primitives.h::z_query_reply_err
 .. autocfunction:: primitives.h::z_query_reply_del
+.. autocfunction:: primitives.h::z_query_source_info
 
 Ownership Functions
 -------------------

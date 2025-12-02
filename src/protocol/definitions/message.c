@@ -42,6 +42,7 @@ void _z_msg_query_clear(_z_msg_query_t *msg) {
     _z_slice_clear(&msg->_parameters);
     _z_bytes_drop(&msg->_ext_attachment);
     _z_value_clear(&msg->_ext_value);
+    _z_source_info_clear(&msg->_ext_info);
 }
 void _z_msg_err_clear(_z_msg_err_t *err) {
     _z_encoding_clear(&err->_encoding);
