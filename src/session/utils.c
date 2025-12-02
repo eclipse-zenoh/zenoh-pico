@@ -65,6 +65,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     zn->_mode = Z_WHATAMI_CLIENT;
     zn->_tp._type = _Z_TRANSPORT_NONE;
+#if Z_FEATURE_MULTI_THREAD == 1
+    zn->_read_task_should_run = false;
+    zn->_lease_task_should_run = false;
+#endif
     // Initialize the counters to 1
     zn->_entity_id = 1;
     zn->_resource_id = 1;
@@ -106,6 +110,8 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #if Z_FEATURE_PERIODIC_TASKS == 1
 #if Z_FEATURE_MULTI_THREAD == 1
     zn->_periodic_scheduler_task = NULL;
+    zn->_periodic_task_should_run = false;
+    zn->_periodic_scheduler_task_attr = NULL;
 #endif
     ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
     if (ret != _Z_RES_OK) {
@@ -176,6 +182,17 @@ void _z_session_clear(_z_session_t *zn) {
     }
 #endif
 #endif
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    zn->_read_task_should_run = false;
+    zn->_lease_task_should_run = false;
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_PERIODIC_TASKS == 1
+    zn->_periodic_task_should_run = false;
+    zn->_periodic_scheduler_task_attr = NULL;
+#endif
+#endif  // Z_FEATURE_UNSTABLE_API
+#endif  // Z_FEATURE_MULTI_THREAD == 1
 
 #if Z_FEATURE_MULTI_THREAD == 1
     if (zn->_mutex_inner_initialized) {

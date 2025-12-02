@@ -1560,6 +1560,11 @@ void z_scout_options_default(z_scout_options_t *options);
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options);
 
 /**
+ * Builds a :c:type:`z_open_options_t` with default value.
+ */
+void z_open_options_default(z_open_options_t *options);
+
+/**
  * Closes a Zenoh session.
  *
  * Parameters:
@@ -2684,6 +2689,11 @@ z_result_t zp_start_read_task(z_loaned_session_t *zs, const zp_task_read_options
 z_result_t zp_stop_read_task(z_loaned_session_t *zs);
 
 /**
+ * Returns whether the read task is currently running for the given session.
+ */
+bool zp_read_task_is_running(const z_loaned_session_t *zs);
+
+/**
  * Builds a :c:type:`zp_task_lease_options_t` with default value.
  *
  * Parameters:
@@ -2720,6 +2730,11 @@ z_result_t zp_start_lease_task(z_loaned_session_t *zs, const zp_task_lease_optio
  *   ``0`` if task stopped successfully, ``negative value`` otherwise.
  */
 z_result_t zp_stop_lease_task(z_loaned_session_t *zs);
+
+/**
+ * Returns whether the lease task is currently running for the given session.
+ */
+bool zp_lease_task_is_running(const z_loaned_session_t *zs);
 
 /************* Single Thread helpers **************/
 /**
@@ -2779,6 +2794,11 @@ z_result_t zp_start_periodic_scheduler_task(z_loaned_session_t *zs,
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
 z_result_t zp_stop_periodic_scheduler_task(z_loaned_session_t *zs);
+
+/**
+ * Returns whether the periodic scheduler task is currently running for the given session.
+ */
+bool zp_periodic_scheduler_task_is_running(const z_loaned_session_t *zs);
 #endif
 #endif
 
