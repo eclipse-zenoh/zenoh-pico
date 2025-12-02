@@ -197,7 +197,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
 z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                     z_sample_kind_t kind, z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
                     const _z_timestamp_t *timestamp, _z_bytes_t *attachment, z_reliability_t reliability,
-                    const _z_source_info_t *source_info, z_locality_t allowed_destination) {
+                    _z_source_info_t *source_info, z_locality_t allowed_destination) {
     z_result_t ret = _Z_RES_OK;
     _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
 
@@ -419,7 +419,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
 z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
                          _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
-                         const _z_timestamp_t *timestamp, _z_bytes_t *att, const _z_source_info_t *source_info) {
+                         const _z_timestamp_t *timestamp, _z_bytes_t *att, _z_source_info_t *source_info) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _Z_DEBUG("send_reply: rid=%jd kind=%d", (intmax_t)query->_request_id, (int)kind);
     // Check key expression
@@ -530,8 +530,8 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *parameters, size_t parameters_len,
                     z_query_target_t target, z_consolidation_mode_t consolidation, _z_bytes_t *payload,
                     _z_encoding_t *encoding, _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                    uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos, z_locality_t allowed_destination,
-                    _z_zint_t *out_qid) {
+                    uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
+                    z_locality_t allowed_destination, _z_zint_t *out_qid) {
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
         return Z_EINVAL;
@@ -579,14 +579,13 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
     _z_session_mutex_unlock(zn);
     *out_qid = qid;
     // Send query message
-    _z_source_info_t source_info = _z_source_info_null();
     _z_slice_t params =
         (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
 
     if (remote_possible) {
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, keyexpr, &params, pq->_id, Z_RELIABILITY_DEFAULT, pq->_consolidation, payload,
-                            encoding, timeout_ms, attachment, qos, &source_info);
+                            encoding, timeout_ms, attachment, qos, source_info);
 
         if (_z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL) !=
             _Z_RES_OK) {
@@ -598,7 +597,7 @@ z_result_t _z_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const char *p
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (allow_local) {
         _Z_RETURN_IF_ERR(_z_session_deliver_query_locally(zn, keyexpr, &params, pq->_consolidation, payload, encoding,
-                                                          attachment, &source_info, pq->_id, timeout_ms, qos));
+                                                          attachment, source_info, pq->_id, timeout_ms, qos));
     }
 #endif
     return _Z_RES_OK;

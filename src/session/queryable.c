@@ -233,7 +233,7 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
     // Retrieve sub infos
     _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos, peer), _z_keyexpr_clear(&qle_infos.ke_in);
                            _z_value_clear(&msgq->_ext_value); _z_bytes_drop(&msgq->_ext_attachment);
-                           _z_slice_clear(&msgq->_parameters););
+                           _z_slice_clear(&msgq->_parameters); _z_source_info_clear(&msgq->_ext_info));
     // Check if there are queryables
     const _z_session_queryable_rc_svec_t *qles = _Z_RC_IN_VAL(&qle_infos.infos);
     size_t qle_nb = _z_session_queryable_rc_svec_len(qles);
@@ -254,8 +254,9 @@ z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_
         _z_query_rc_drop(&query);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    *_Z_RC_IN_VAL(&query) = _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters,
-                                                &transport->_session, qid, &msgq->_ext_attachment, anyke);
+    *_Z_RC_IN_VAL(&query) =
+        _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters, &transport->_session, qid,
+                            &msgq->_ext_attachment, anyke, &msgq->_ext_info);
     _Z_RC_IN_VAL(&query)->_is_local = peer == NULL;
 
     // Parse session_queryable svec

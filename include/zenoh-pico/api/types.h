@@ -262,6 +262,7 @@ typedef struct z_querier_options_t {
  *   z_moved_bytes_t *payload: An optional payload to attach to the query.
  *   z_moved_encoding_t *encoding: An optional encoding of the query payload and or attachment.
  *   z_moved_bytes_t *attachment: An optional attachment to attach to the query.
+ *   z_moved_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct z_querier_get_options_t {
@@ -270,6 +271,7 @@ typedef struct z_querier_get_options_t {
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
     z_moved_cancellation_token_t *cancellation_token;
+    z_moved_source_info_t *source_info;
 #endif
 } z_querier_get_options_t;
 
@@ -444,6 +446,7 @@ typedef struct {
  *   uint64_t timeout_ms: Query timeout in milliseconds. 0 means default timeout. 0 corresponds to default get request
  * timeout.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
+ *   z_moved_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
  */
 typedef struct {
@@ -460,6 +463,7 @@ typedef struct {
     uint64_t timeout_ms;
     z_moved_bytes_t *attachment;
 #ifdef Z_FEATURE_UNSTABLE_API
+    z_moved_source_info_t *source_info;
     z_moved_cancellation_token_t *cancellation_token;
 #endif
 } z_get_options_t;

@@ -1126,6 +1126,17 @@ const z_loaned_bytes_t *z_query_attachment(const z_loaned_query_t *query);
 const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query);
 
 /**
+ * Gets a query source info by aliasing it.
+ *
+ * Parameters:
+ *   query: Pointer to the :c:type:`z_loaned_query_t` to get the value from.
+ *
+ * Return:
+ *   Pointer to the source info as a :c:type:`z_source_info_t`.
+ */
+const z_loaned_source_info_t *z_query_source_info(const z_loaned_query_t *query);
+
+/**
  * Builds a new sample closure.
  * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
  *
@@ -1571,6 +1582,19 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options);
  */
 bool z_session_is_closed(const z_loaned_session_t *zs);
 
+#ifdef Z_FEATURE_UNSTABLE_API
+/**
+ * Gets the entity global Id of Zenoh session (unstable).
+ *
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to get the id from.
+ *
+ * Return:
+ *   The entity global Id of the session as :c:type:`z_entity_t`.
+ */
+z_entity_global_id_t z_session_id(const z_loaned_session_t *zs);
+#endif
 /**
  * Fetches Zenoh IDs of all connected peers.
  *

@@ -354,7 +354,7 @@ static void test_query_local_only_single(void) {
     _z_zint_t query_id = 0;
     z_result_t res =
         _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_SESSION_LOCAL, &query_id);
+                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, &query_id);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
@@ -481,7 +481,7 @@ static void test_query_local_only_multiple(void) {
     _z_zint_t query_id = 0;
     z_result_t res =
         _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_SESSION_LOCAL, &query_id);
+                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, &query_id);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_query_secondary_count, memory_order_relaxed) == 1);
@@ -520,7 +520,7 @@ static void test_query_local_and_remote(void) {
     _z_zint_t query_id = 0;
     z_result_t res =
         _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_SESSION_LOCAL, &query_id);
+                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_SESSION_LOCAL, &query_id);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_query_reply_callback_count, memory_order_relaxed) == 1);
@@ -536,7 +536,7 @@ static void test_query_local_and_remote(void) {
     atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
     // Permit remote delivery; still send to loopback, but network request must be emitted as well
     res = _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                   query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_ANY, &query_id);
+                   query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_ANY, &query_id);
     assert(res == _Z_RES_OK);
 
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 1);
@@ -767,7 +767,7 @@ static void test_query_remote_only_destination(void) {
     _z_zint_t query_id = 0;
     z_result_t res =
         _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_REMOTE, &query_id);
+                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_REMOTE, &query_id);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);
@@ -806,7 +806,7 @@ static void test_queryable_remote_only_origin(void) {
     _z_zint_t query_id = 0;
     z_result_t res =
         _z_query(&g_session, &keyexpr, NULL, 0, Z_QUERY_TARGET_DEFAULT, Z_CONSOLIDATION_MODE_LATEST, NULL, NULL,
-                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, Z_LOCALITY_ANY, &query_id);
+                 query_reply_callback, query_dropper, NULL, 1000, NULL, qos, NULL, Z_LOCALITY_ANY, &query_id);
     assert(res == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_query_delivery_count, memory_order_relaxed) == 0);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 1);

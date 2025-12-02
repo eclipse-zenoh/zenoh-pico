@@ -11,7 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 
-#include <assert.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -25,7 +24,8 @@
 #include "zenoh-pico/api/types.h"
 #include "zenoh-pico/collections/bytes.h"
 
-#if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1 && defined(Z_FEATURE_UNSTABLE_API)
+#if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_QUERY == 1 && Z_FEATURE_QUERYABLE == 1 && \
+    defined(Z_FEATURE_UNSTABLE_API)
 
 #undef NDEBUG
 #include <assert.h>
@@ -166,8 +166,7 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
     } else if (put) {
         z_put_options_t opt;
         z_put_options_default(&opt);
-        egid.zid = z_info_zid(z_loan(s1));
-        egid.eid = z_random_u32();
+        egid = z_session_id(z_loan(s1));
         z_owned_source_info_t si;
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
@@ -191,8 +190,7 @@ void test_source_info(bool put, bool publisher, bool local_subscriber) {
     } else {
         z_delete_options_t opt;
         z_delete_options_default(&opt);
-        egid.zid = z_info_zid(z_loan(s1));
-        egid.eid = z_random_u32();
+        egid = z_session_id(z_loan(s1));
         z_owned_source_info_t si;
         assert_ok(z_source_info_new(&si, &egid, sn));
         opt.source_info = z_move(si);
@@ -265,6 +263,105 @@ void test_source_info_delete(bool publisher, bool local_subscriber) {
     test_source_info(false, publisher, local_subscriber);
 }
 
+void test_source_info_query(bool use_querier, bool local_queryable) {
+    printf("test_source_info_query: querier=%d, local_queryable=%d\n", use_querier, local_queryable);
+
+    z_owned_config_t c1;
+    z_config_default(&c1);
+
+    z_owned_session_t s1;
+    assert_ok(z_open(&s1, z_config_move(&c1), NULL));
+
+    assert_ok(zp_start_read_task(z_loan_mut(s1), NULL));
+    assert_ok(zp_start_lease_task(z_loan_mut(s1), NULL));
+
+    z_owned_session_t s2 = s1;
+    if (!local_queryable) {
+        z_owned_config_t c2;
+        z_config_default(&c2);
+
+        assert_ok(z_open(&s2, z_config_move(&c2), NULL));
+
+        assert_ok(zp_start_read_task(z_loan_mut(s2), NULL));
+        assert_ok(zp_start_lease_task(z_loan_mut(s2), NULL));
+    }
+
+    z_view_keyexpr_t ke;
+    assert_ok(z_view_keyexpr_from_str(&ke, keyexpr));
+
+    z_owned_closure_query_t query_callback;
+    z_owned_closure_reply_t reply_callback;
+    z_owned_fifo_handler_query_t query_handler;
+    z_owned_fifo_handler_reply_t reply_handler;
+
+    z_fifo_channel_query_new(&query_callback, &query_handler, 1);
+    z_fifo_channel_reply_new(&reply_callback, &reply_handler, 1);
+
+    z_owned_queryable_t qbl;
+    assert_ok(z_declare_queryable(z_loan(s2), &qbl, z_loan(ke), z_move(query_callback), NULL));
+    z_sleep_s(1);
+
+    z_entity_global_id_t egid = _z_entity_global_id_null();
+    uint32_t sn = z_random_u32();
+    z_owned_querier_t querier;
+    z_internal_querier_null(&querier);
+    if (use_querier) {
+        assert_ok(z_declare_querier(z_loan(s1), &querier, z_loan(ke), NULL));
+        z_sleep_s(1);
+        z_querier_get_options_t opt;
+        z_querier_get_options_default(&opt);
+        egid = z_querier_id(z_loan(querier));
+        z_owned_source_info_t si;
+        assert_ok(z_source_info_new(&si, &egid, sn));
+        opt.source_info = z_move(si);
+
+        z_querier_get(z_loan(querier), NULL, z_move(reply_callback), &opt);
+    } else {
+        z_get_options_t opt;
+        z_get_options_default(&opt);
+        egid = z_session_id(z_loan(s1));
+        z_owned_source_info_t si;
+        assert_ok(z_source_info_new(&si, &egid, sn));
+        opt.source_info = z_move(si);
+
+        z_get(z_loan(s1), z_loan(ke), NULL, z_move(reply_callback), &opt);
+    }
+    z_sleep_s(1);
+
+    z_owned_query_t q;
+    assert(z_try_recv(z_loan(query_handler), &q) == Z_OK);
+    z_loaned_source_info_t si = *z_query_source_info(z_loan(q));
+    assert_source_info_equal(&egid, sn, &si._source_id, si._source_sn);
+
+    z_query_reply_options_t opts;
+    z_query_reply_options_default(&opts);
+    egid = z_queryable_id(z_loan(qbl));
+    sn = z_random_u32();
+    z_owned_source_info_t si2;
+    assert(z_source_info_new(&si2, &egid, sn) == Z_OK);
+    opts.source_info = z_move(si2);
+    z_query_reply(z_loan(q), z_loan(ke), NULL, &opts);
+    z_query_drop(z_move(q));
+
+    z_sleep_s(1);
+    z_owned_reply_t r;
+    assert(z_try_recv(z_loan(reply_handler), &r) == Z_OK);
+    assert(z_reply_is_ok(z_loan(r)));
+    si = *z_sample_source_info(z_reply_ok(z_loan(r)));
+    assert_source_info_equal(&egid, sn, &si._source_id, si._source_sn);
+    z_reply_drop(z_move(r));
+
+    z_drop(z_move(qbl));
+    z_drop(z_move(query_handler));
+    z_drop(z_move(reply_handler));
+    z_drop(z_move(querier));
+
+    z_drop(z_move(s1));
+    if (!local_queryable) {
+        z_drop(z_move(s2));
+    }
+}
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -275,6 +372,12 @@ int main(int argc, char **argv) {
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     test_source_info_put(false, true);
     test_source_info_put(true, true);
+#endif
+    test_source_info_query(false, false);
+    test_source_info_query(true, false);
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    test_source_info_query(false, true);
+    test_source_info_query(true, true);
 #endif
 }
 

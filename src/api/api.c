@@ -506,6 +506,10 @@ const z_loaned_keyexpr_t *z_query_keyexpr(const z_loaned_query_t *query) { retur
 
 const z_loaned_bytes_t *z_query_payload(const z_loaned_query_t *query) { return &_Z_RC_IN_VAL(query)->_value.payload; }
 
+const z_loaned_source_info_t *z_query_source_info(const z_loaned_query_t *query) {
+    return &_Z_RC_IN_VAL(query)->_source_info;
+}
+
 const z_loaned_encoding_t *z_query_encoding(const z_loaned_query_t *query) {
     return &_Z_RC_IN_VAL(query)->_value.encoding;
 }
@@ -811,6 +815,15 @@ z_result_t z_close(z_loaned_session_t *zs, const z_close_options_t *options) {
 }
 
 bool z_session_is_closed(const z_loaned_session_t *zs) { return _z_session_is_closed(_Z_RC_IN_VAL(zs)); }
+
+#ifdef Z_FEATURE_UNSTABLE_API
+z_entity_global_id_t z_session_id(const z_loaned_session_t *zs) {
+    z_entity_global_id_t ret;
+    // eid counter starts from 1, so it is safe to use 0 for session
+    z_entity_global_id_new(&ret, &_Z_RC_IN_VAL(zs)->_local_zid, 0);  // never fails
+    return ret;
+}
+#endif
 
 z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t *callback) {
     if (_Z_RC_IN_VAL(zs)->_mode != Z_WHATAMI_PEER) {
@@ -1407,6 +1420,7 @@ void z_get_options_default(z_get_options_t *options) {
     options->attachment = NULL;
     options->timeout_ms = 0;
 #ifdef Z_FEATURE_UNSTABLE_API
+    options->source_info = NULL;
     options->cancellation_token = NULL;
 #endif
 }
@@ -1437,8 +1451,10 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     if (opt.timeout_ms == 0) {
         opt.timeout_ms = Z_GET_TIMEOUT_DEFAULT;
     }
+    _z_source_info_t *source_info = NULL;
 
 #ifdef Z_FEATURE_UNSTABLE_API
+    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
     bool should_proceed = (opt.cancellation_token == NULL ||
                            !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
 #else
@@ -1455,7 +1471,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
         ret = _z_query(_Z_RC_IN_VAL(zs), &keyexpr_aliased, parameters, parameters_len, opt.target,
                        opt.consolidation.mode, _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding),
                        callback->_this._val.call, callback->_this._val.drop, ctx, opt.timeout_ms,
-                       _z_bytes_from_moved(opt.attachment), qos, allowed_destination, &qid);
+                       _z_bytes_from_moved(opt.attachment), qos, source_info, allowed_destination, &qid);
 #ifdef Z_FEATURE_UNSTABLE_API
         if (ret == _Z_RES_OK && opt.cancellation_token != NULL) {
             ret = _z_cancellation_token_add_on_query_cancel_handler(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc),
@@ -1467,6 +1483,7 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
     }
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
+    z_source_info_drop(opt.source_info);
     z_cancellation_token_drop(opt.cancellation_token);
 #endif
     z_bytes_drop(opt.payload);
@@ -1486,6 +1503,7 @@ void z_querier_get_options_default(z_querier_get_options_t *options) {
     options->attachment = NULL;
     options->payload = NULL;
 #ifdef Z_FEATURE_UNSTABLE_API
+    options->source_info = NULL;
     options->cancellation_token = NULL;
 #endif
 }
@@ -1601,11 +1619,13 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
 #else
     session = _z_session_weak_as_unsafe_ptr(&querier->_zn);
 #endif
+    _z_source_info_t *source_info = NULL;
     bool should_proceed = !_z_write_filter_active(&querier->_filter);
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     should_proceed = should_proceed || (session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE);
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
+    source_info = opt.source_info == NULL ? NULL : &opt.source_info->_this._val;
     should_proceed =
         should_proceed && (opt.cancellation_token == NULL ||
                            !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
@@ -1617,7 +1637,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         ret = _z_query(session, &querier_keyexpr, parameters, parameters_len, querier->_target,
                        querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
                        callback->_this._val.call, callback->_this._val.drop, ctx, querier->_timeout_ms,
-                       _z_bytes_from_moved(opt.attachment), qos, querier->_allowed_destination, &qid);
+                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_allowed_destination, &qid);
 #ifdef Z_FEATURE_UNSTABLE_API
         if (ret == _Z_RES_OK && opt.cancellation_token != NULL) {
             ret = _z_cancellation_token_add_on_query_cancel_handler(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc),
@@ -1634,6 +1654,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
 
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
+    z_source_info_drop(opt.source_info);
     z_cancellation_token_drop(opt.cancellation_token);
 #endif
     z_bytes_drop(opt.payload);
