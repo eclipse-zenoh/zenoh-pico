@@ -178,7 +178,8 @@ typedef struct {
  * Members (multi-thread builds):
  *   bool auto_start_read_task: auto-start read task after `z_open()` (default true).
  *   bool auto_start_lease_task: auto-start lease task after `z_open()` (default true).
- *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only when periodic tasks enabled).
+ *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only when periodic tasks feature is
+ *     enabled).
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
