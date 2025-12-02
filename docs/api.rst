@@ -1058,10 +1058,12 @@ See details at :ref:`owned_types_concept`
 .. c:type:: z_moved_session_t
 
 .. c:type:: z_id_t
+.. c:type:: z_open_options_t
 
 Functions
 ^^^^^^^^^
 .. autocfunction:: primitives.h::z_open
+.. autocfunction:: primitives.h::z_open_options_default
 .. autocfunction:: primitives.h::z_close
 .. autocfunction:: primitives.h::z_session_is_closed
 
@@ -1691,14 +1693,17 @@ Functions
 .. autocfunction:: primitives.h::zp_task_read_options_default
 .. autocfunction:: primitives.h::zp_start_read_task
 .. autocfunction:: primitives.h::zp_stop_read_task
+.. autocfunction:: primitives.h::zp_read_task_is_running
 
 .. autocfunction:: primitives.h::zp_task_lease_options_default
 .. autocfunction:: primitives.h::zp_start_lease_task
 .. autocfunction:: primitives.h::zp_stop_lease_task
+.. autocfunction:: primitives.h::zp_lease_task_is_running
 
 .. autocfunction:: primitives.h::zp_task_periodic_scheduler_options_default
 .. autocfunction:: primitives.h::zp_start_periodic_scheduler_task
 .. autocfunction:: primitives.h::zp_stop_periodic_scheduler_task
+.. autocfunction:: primitives.h::zp_periodic_scheduler_task_is_running
 
 .. autocfunction:: primitives.h::zp_read_options_default
 .. autocfunction:: primitives.h::zp_read
