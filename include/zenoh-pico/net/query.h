@@ -49,6 +49,7 @@ static inline bool _z_query_check(const _z_query_t *query) {
            _z_string_check(&query->_parameters);
 }
 z_result_t _z_query_send_reply_final(_z_query_t *q);
+z_result_t _z_session_send_reply_final(_z_session_t *session, uint32_t query_id, bool is_local);
 void _z_query_clear(_z_query_t *q);
 void _z_query_free(_z_query_t **query);
 
@@ -91,19 +92,19 @@ typedef struct {
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_queryable_t _z_queryable_null(void) { return (_z_queryable_t){0}; }
 static inline bool _z_queryable_check(const _z_queryable_t *queryable) { return !_Z_RC_IS_NULL(&queryable->_zn); }
-static inline _z_query_t _z_query_steal_data(_z_value_t *value, _z_keyexpr_t *key, _z_slice_t *parameters,
-                                             const _z_session_weak_t *zn, uint32_t request_id, _z_bytes_t *attachment,
-                                             bool anyke, const _z_source_info_t *source_info) {
-    _z_query_t ret;
-    ret._key = _z_keyexpr_steal(key);
-    ret._value = _z_value_steal(value);
-    ret._request_id = request_id;
-    ret._zn = _z_session_weak_clone(zn);
-    ret._attachment = _z_bytes_steal(attachment);
-    ret._parameters._slice = _z_slice_steal(parameters);
-    ret._anyke = anyke;
-    ret._source_info = *source_info;
-    return ret;
+static inline z_result_t _z_query_move_data(_z_query_t *dst, _z_value_t *value, _z_keyexpr_t *key,
+                                            _z_slice_t *parameters, const _z_session_weak_t *zn, uint32_t request_id,
+                                            _z_bytes_t *attachment, bool anyke, const _z_source_info_t *source_info) {
+    *dst = _z_query_null();
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_move(&dst->_key, key), _z_query_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_value_move(&dst->_value, value), _z_query_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->_attachment, attachment), _z_query_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_slice_move(&dst->_parameters._slice, parameters), _z_query_clear(dst));
+    dst->_request_id = request_id;
+    dst->_zn = _z_session_weak_clone(zn);
+    dst->_anyke = anyke;
+    dst->_source_info = *source_info;
+    return _Z_RES_OK;
 }
 void _z_queryable_clear(_z_queryable_t *qbl);
 void _z_queryable_free(_z_queryable_t **qbl);

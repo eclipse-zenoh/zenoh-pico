@@ -75,37 +75,27 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr_copy;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr_copy, keyexpr));
+    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
+    _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
 
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT: {
-            _z_n_msg_make_push_put(&msg, &keyexpr_copy, payload, encoding, qos, timestamp, attachment, reliability,
+            _z_n_msg_make_push_put(&msg, &keyexpr2, &payload2, &encoding2, qos, timestamp, &attachment2, reliability,
                                    source_info);
             break;
         }
         case Z_SAMPLE_KIND_DELETE: {
-            _z_n_msg_make_push_del(&msg, &keyexpr_copy, qos, timestamp, reliability, source_info);
+            _z_n_msg_make_push_del(&msg, &keyexpr2, qos, timestamp, reliability, source_info);
             break;
         }
         default:
-            _z_keyexpr_clear(&keyexpr_copy);
             return _Z_ERR_INVALID;
     }
 
-    z_result_t ret = _z_handle_network_message(transport, &msg, NULL);
-
-    if (payload != NULL) {
-        *payload = _z_bytes_null();
-    }
-    if (attachment != NULL) {
-        *attachment = _z_bytes_null();
-    }
-    if (encoding != NULL) {
-        *encoding = _z_encoding_null();
-    }
-    return ret;
+    return _z_handle_network_message(transport, &msg, NULL);
 }
 #else
 z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload,
@@ -137,29 +127,17 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
         return _Z_ERR_INVALID;
     }
 
-    _z_slice_t params_copy = _z_slice_null();
-    _z_keyexpr_t keyexpr_copy = _z_keyexpr_null();
-    if (parameters != NULL) {
-        _Z_RETURN_IF_ERR(_z_slice_copy(&params_copy, parameters));
-    }
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr_copy, keyexpr), _z_slice_clear(&params_copy));
+    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_slice_t parameters2 = parameters == NULL ? _z_slice_null() : _z_slice_alias(*parameters);
+    _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
+    _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
 
     _z_zenoh_message_t msg;
-    _z_n_msg_make_query(&msg, &keyexpr_copy, &params_copy, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
-                        timeout_ms, attachment, qos, source_info);
+    _z_n_msg_make_query(&msg, &keyexpr2, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
+                        timeout_ms, &attachment2, qos, source_info);
 
-    z_result_t ret = _z_handle_network_message(transport, &msg, NULL);
-
-    if (payload != NULL) {
-        *payload = _z_bytes_null();
-    }
-    if (attachment != NULL) {
-        *attachment = _z_bytes_null();
-    }
-    if (encoding != NULL) {
-        *encoding = _z_encoding_null();
-    }
-    return ret;
+    return _z_handle_network_message(transport, &msg, NULL);
 }
 #else
 z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t *keyexpr, const _z_slice_t *parameters,
@@ -196,38 +174,28 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr_copy;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&keyexpr_copy, keyexpr));
+    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
+    _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
 
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
-            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr_copy,
+            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
-                                       payload, encoding, attachment);
+                                       &payload2, &encoding2, &attachment2);
             break;
         case Z_SAMPLE_KIND_DELETE:
-            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr_copy,
+            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
-                                       attachment);
+                                       &attachment2);
             break;
         default:
-            _z_keyexpr_clear(&keyexpr_copy);
             return _Z_ERR_INVALID;
     }
 
-    z_result_t ret = _z_handle_network_message(transport, &msg, NULL);
-
-    if (payload != NULL) {
-        *payload = _z_bytes_null();
-    }
-    if (attachment != NULL) {
-        *attachment = _z_bytes_null();
-    }
-    if (encoding != NULL) {
-        *encoding = _z_encoding_null();
-    }
-    return ret;
+    return _z_handle_network_message(transport, &msg, NULL);
 }
 
 z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn, _z_bytes_t *payload,
@@ -241,18 +209,13 @@ z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _
         return _Z_ERR_INVALID;
     }
 
+    _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
+    _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
+
     _z_network_message_t msg;
     _z_n_msg_make_reply_err(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, Z_RELIABILITY_DEFAULT, qos,
-                            payload, encoding, NULL);
-    z_result_t ret = _z_handle_network_message(transport, &msg, NULL);
-
-    if (payload != NULL) {
-        *payload = _z_bytes_null();
-    }
-    if (encoding != NULL) {
-        *encoding = _z_encoding_null();
-    }
-    return ret;
+                            &payload2, &encoding2, NULL);
+    return _z_handle_network_message(transport, &msg, NULL);
 }
 
 z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t rid) {

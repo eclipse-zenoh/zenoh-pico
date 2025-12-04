@@ -199,9 +199,7 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
     } else {  // Build queryable data
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
                  _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
-        // unlike sample, query is under rc_count so it can not distinguish when it is being copied or moved, so we have
-        // to make a copy of ke to account for such events
-        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
+        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, true, peer);
         ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
         _Z_SET_IF_OK(ret,
                      __unsafe_z_get_session_queryables_rc_by_key(zn, &infos->ke_out, infos->is_remote, &infos->infos));
@@ -227,38 +225,42 @@ static z_result_t _z_session_queryable_get_infos(_z_session_t *zn, _z_queryable_
 
 z_result_t _z_trigger_queryables(_z_transport_common_t *transport, _z_msg_query_t *msgq, _z_keyexpr_t *q_key,
                                  uint32_t qid, _z_transport_peer_common_t *peer) {
+    bool is_local = peer == NULL;
     _z_session_t *zn = _z_transport_common_get_session(transport);
     _z_queryable_cache_data_t qle_infos = _z_queryable_cache_data_null();
     qle_infos.ke_in = _z_keyexpr_steal(q_key);
     // Retrieve sub infos
     _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_get_infos(zn, &qle_infos, peer), _z_keyexpr_clear(&qle_infos.ke_in);
-                           _z_value_clear(&msgq->_ext_value); _z_bytes_drop(&msgq->_ext_attachment);
-                           _z_slice_clear(&msgq->_parameters));
+                           _z_msg_query_clear(msgq));
     // Check if there are queryables
     const _z_session_queryable_rc_svec_t *qles = _Z_RC_IN_VAL(&qle_infos.infos);
     size_t qle_nb = _z_session_queryable_rc_svec_len(qles);
     _Z_DEBUG("Triggering %ju queryables for key %d - %.*s", (uintmax_t)qle_nb, qle_infos.ke_out._id,
              (int)_z_string_len(&qle_infos.ke_out._suffix), _z_string_data(&qle_infos.ke_out._suffix));
+
+    if (qle_nb == 0) {  // optimization for local queries, since moves can imply extra copy if aliased
+        _z_queryable_cache_data_clear(&qle_infos);
+        _z_msg_query_clear(msgq);
+        _z_session_send_reply_final(zn, qid, is_local);
+        return _Z_RES_OK;
+    }
     // Check anyke
     bool anyke = false;
     if (_z_slice_check(&msgq->_parameters)) {
         char *slice_end = _z_ptr_char_offset((char *)msgq->_parameters.start, (ptrdiff_t)msgq->_parameters.len);
         anyke = _z_strstr((char *)msgq->_parameters.start, slice_end, Z_SELECTOR_QUERY_MATCH) != NULL;
     }
-
     // Build the z_query
     _z_query_rc_t query = _z_query_rc_new_undefined();
-    if (_Z_RC_IS_NULL(&query)) {
-        _z_msg_query_clear(msgq);
-        _z_queryable_cache_data_clear(&qle_infos);
-        _z_query_rc_drop(&query);
-        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-    }
-    *_Z_RC_IN_VAL(&query) =
-        _z_query_steal_data(&msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters, &transport->_session, qid,
-                            &msgq->_ext_attachment, anyke, &msgq->_ext_info);
-    _Z_RC_IN_VAL(&query)->_is_local = peer == NULL;
+    z_result_t ret = _Z_RC_IS_NULL(&query) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;
+    // Note: _z_query_move_data will make copies of all aliased fields, since query is under ref count
+    // and thus it is impossible to detect when user moves it out of callback
+    _Z_SET_IF_OK(ret, _z_query_move_data(_Z_RC_IN_VAL(&query), &msgq->_ext_value, &qle_infos.ke_out, &msgq->_parameters,
+                                         &transport->_session, qid, &msgq->_ext_attachment, anyke, &msgq->_ext_info));
+    _Z_CLEAN_RETURN_IF_ERR(ret, _z_msg_query_clear(msgq); _z_queryable_cache_data_clear(&qle_infos);
+                           _z_query_rc_drop(&query); _z_msg_query_clear(msgq))
 
+    _Z_RC_IN_VAL(&query)->_is_local = is_local;
     // Parse session_queryable svec
     for (size_t i = 0; i < qle_nb; i++) {
         _z_session_queryable_t *qle_info = _Z_RC_IN_VAL(_z_session_queryable_rc_svec_get(qles, i));
