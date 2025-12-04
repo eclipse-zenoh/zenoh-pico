@@ -29,11 +29,10 @@ jobs:
       - name: Clone this repository
         uses: actions/checkout@v4
 
-      - name: Install TLS dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install -y libmbedtls-dev
+      - name: Setup mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls.yml@setup-mbedtls
+        with:
+          mbedtls-version: mbedtls-3.6.5
 
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
@@ -76,12 +75,10 @@ jobs:
       - name: Clone this repository
         uses: actions/checkout@v4
 
-      - name: Install TLS dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
-          sudo apt install -y libmbedtls-dev
-
+      - name: Setup mbedtls
+        uses: ZettaScaleLabs/ci/.github/workflows/setup-mbedtls.yml@setup-mbedtls
+        with:
+          mbedtls-version: mbedtls-3.6.5
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
         run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
