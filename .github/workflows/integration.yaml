@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls.yml@setup-mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/.github/workflows/setup-mbedtls.yml@setup-mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
       - name: Install TLS dependencies (macOS)

@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/.github/workflows/setup-mbedtls.yml@setup-mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
       - name: Checkout code
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/.github/workflows/setup-mbedtls.yml@setup-mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -407,7 +407,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/.github/workflows/setup-mbedtls.yml@setup-mbedtls
+        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
       - name: Checkout code
