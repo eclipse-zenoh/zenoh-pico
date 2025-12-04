@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
       - name: Checkout code
@@ -35,7 +35,7 @@ jobs:
 
       - name: Build & run tests
         run: |
-          sudo apt install -y ninja-build libmbedtls-dev
+          sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_PERIODIC_TASKS=1 CMAKE_GENERATOR=Ninja ASAN=ON make BUILD_TYPE=Debug test
 
   run_windows_test:
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -407,9 +407,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
+
       - name: Checkout code
         uses: actions/checkout@v4
 

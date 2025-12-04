@@ -31,7 +31,7 @@ jobs:
 
       - name: Setup mbedtls
         if: runner.os == 'Linux'
-        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -76,10 +76,12 @@ jobs:
       - name: Clone this repository
         uses: actions/checkout@v4
 
-      - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
+      - name: Setup mbedtls (Linux)
+        if: runner.os == 'Linux'
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
+
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
         run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
