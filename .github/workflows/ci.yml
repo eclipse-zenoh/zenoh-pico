@@ -133,7 +133,7 @@ jobs:
       - name: Build with TLS
         run: |
           sudo apt update
-          sudo apt install -y ninja-build libmbedtls-dev
+          sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 CMAKE_GENERATOR=Ninja make
 
   zenoh_build:

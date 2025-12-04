@@ -30,6 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup mbedtls
+        if: runner.os == 'Linux'
         uses: ZettaScaleLabs/ci/setup-mbedtls@setup-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
