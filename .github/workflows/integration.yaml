@@ -37,7 +37,17 @@ jobs:
 
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew list mbedtls@3 >/dev/null 2>&1 || brew install mbedtls@3
+        run: |
+          brew list mbedtls@3 >/dev/null 2>&1 || brew install mbedtls@3
+          # For compilers to find mbedtls@3 you may need to set:
+          echo "LDFLAGS=-L/opt/homebrew/opt/mbedtls@3/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I/opt/homebrew/opt/mbedtls@3/include" >> $GITHUB_ENV
+
+          # For pkgconf to find mbedtls@3 you may need to set:
+          echo "PKG_CONFIG_PATH=/opt/homebrew/opt/mbedtls@3/lib/pkgconfig" >> $GITHUB_ENV
+
+          # For cmake to find mbedtls@3 you may need to set:
+          export "CMAKE_PREFIX_PATH=/opt/homebrew/opt/mbedtls@3" >> $GITHUB_ENV
 
       - name: Compile debug
         run: make all
