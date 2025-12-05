@@ -321,6 +321,11 @@ if(Z_FEATURE_ADVANCED_PUBLICATION OR Z_FEATURE_ADVANCED_SUBSCRIPTION)
   set(Z_FEATURE_PERIODIC_TASKS 1 CACHE STRING "Toggle periodic task support" FORCE)
 endif()
 
+if(Z_FEATURE_ADMIN_SPACE AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_ADMIN_SPACE can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_ADMIN_SPACE.")
+  set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support" FORCE)
+endif()
+
 
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
@@ -745,6 +750,7 @@ if(UNIX OR MSVC)
       add_executable(z_api_cancellation_test ${PROJECT_SOURCE_DIR}/tests/z_api_cancellation_test.c)
       add_executable(z_api_local_queryable_test ${PROJECT_SOURCE_DIR}/tests/z_api_local_queryable_test.c)
       add_executable(z_api_local_subscriber_test ${PROJECT_SOURCE_DIR}/tests/z_api_local_subscriber_test.c)
+      add_executable(z_api_admin_space_test ${PROJECT_SOURCE_DIR}/tests/z_api_admin_space_test.c)
 if(UNIX)
       add_executable(z_api_advanced_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_api_advanced_pubsub_test.c
                                                 ${PROJECT_SOURCE_DIR}/tests/utils/tcp_proxy.c)
@@ -766,6 +772,7 @@ endif()
       target_link_libraries(z_api_cancellation_test zenohpico::lib)
       target_link_libraries(z_api_local_queryable_test zenohpico::lib)
       target_link_libraries(z_api_local_subscriber_test zenohpico::lib)
+      target_link_libraries(z_api_admin_space_test zenohpico::lib)
 
       configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
       configure_file(${PROJECT_SOURCE_DIR}/tests/tls_verify.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh COPYONLY)
@@ -790,6 +797,7 @@ endif()
       add_test(z_api_advanced_pubsub_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_advanced_pubsub_test)
       add_test(z_api_local_queryable_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_local_queryable_test)
       add_test(z_api_local_subscriber_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_local_subscriber_test)
+      add_test(z_api_admin_space_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_admin_space_test)
     endif()
   endif()
 endif()

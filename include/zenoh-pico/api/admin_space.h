@@ -20,15 +20,27 @@
 extern "C" {
 #endif
 
-typedef struct {
-    _z_session_weak_t _zn;
-    z_owned_queryable_t _queryable;
-} _z_admin_space_t;
+/**
+ * Starts the admin space for a session.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to start the admin space on.
+ *
+ * Return:
+ *   ``0`` if start operation is successful, ``negative value`` otherwise.
+ */
+z_result_t ze_start_admin_space(z_loaned_session_t *zs);
 
-_Z_OWNED_TYPE_VALUE_PREFIX(ze, _z_admin_space_t, admin_space)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, admin_space)
-
-z_result_t ze_declare_admin_space(const z_loaned_session_t *zs, ze_owned_admin_space_t *admin_space);
+/**
+ * Stops the admin space for a session.
+ *
+ * Parameters:
+ *   zs: Pointer to a :c:type:`z_loaned_session_t` to stop the admin space on.
+ *
+ * Return:
+ *   ``0`` if stop operation is successful, ``negative value`` otherwise.
+ */
+z_result_t ze_stop_admin_space(z_loaned_session_t *zs);
 
 #ifdef __cplusplus
 }
