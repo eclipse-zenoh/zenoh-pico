@@ -37,7 +37,7 @@ jobs:
 
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
+        run: brew list mbedtls@3 >/dev/null 2>&1 || brew install mbedtls@3
 
       - name: Compile debug
         run: make all
