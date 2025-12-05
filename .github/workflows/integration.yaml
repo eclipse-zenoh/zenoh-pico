@@ -47,7 +47,7 @@ jobs:
           echo "PKG_CONFIG_PATH=/opt/homebrew/opt/mbedtls@3/lib/pkgconfig" >> $GITHUB_ENV
 
           # For cmake to find mbedtls@3 you may need to set:
-          export "CMAKE_PREFIX_PATH=/opt/homebrew/opt/mbedtls@3" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=/opt/homebrew/opt/mbedtls@3" >> $GITHUB_ENV
 
       - name: Compile debug
         run: make all
