@@ -31,13 +31,33 @@ jobs:
 
       - name: Setup mbedtls
         if: runner.os == 'Linux'
-        uses: eclipse-zenoh/ci/setup-mbedtls@main
+        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
 
       - name: Install TLS dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew list mbedtls >/dev/null 2>&1 || brew install mbedtls
+        shell: bash
+        run: |
+          # Install mbedtls@3 if not installed
+          if ! brew list mbedtls@3 >/dev/null 2>&1; then
+            brew install mbedtls@3
+          fi
+
+          MBEDTLS_PREFIX="$(brew --prefix mbedtls@3)"
+
+          # Make this prefix available for later steps
+          echo "MBEDTLS_INSTALL=${MBEDTLS_PREFIX}" >> "$GITHUB_ENV"
+
+          # Let pkg-config find the v3 .pc files first
+          echo "PKG_CONFIG_PATH=${MBEDTLS_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}" >> "$GITHUB_ENV"
+
+          # Help CMake find it as a generic prefix
+          echo "CMAKE_PREFIX_PATH=${MBEDTLS_PREFIX}:${CMAKE_PREFIX_PATH}" >> "$GITHUB_ENV"
+
+          # Needed to *run* binaries/tests that link against libmbedtls.dylib
+          echo "LD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+          echo "DYLD_LIBRARY_PATH=${MBEDTLS_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Compile debug
         run: make all
@@ -78,7 +98,7 @@ jobs:
 
       - name: Setup mbedtls (Linux)
         if: runner.os == 'Linux'
-        uses: eclipse-zenoh/ci/setup-mbedtls@main
+        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
         with:
           mbedtls-version: mbedtls-3.6.5
 

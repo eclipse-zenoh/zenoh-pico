@@ -128,6 +128,7 @@ static z_result_t _z_tls_parse_key_from_base64(mbedtls_pk_context *key, const ch
 #if MBEDTLS_VERSION_MAJOR >= 3
     int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0, mbedtls_hmac_drbg_random, rng);
 #else
+    _ZP_UNUSED(rng);
     int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0);
 #endif
     z_free(decoded);
