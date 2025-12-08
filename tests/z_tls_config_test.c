@@ -124,13 +124,16 @@ static volatile bool g_received = false;
 
 static void tls_sample_handler(z_loaned_sample_t *sample, void *ctx) {
     const char *expected = (const char *)ctx;
+    // flawfinder: ignore[CWE-126]
+    size_t expected_len = expected ? strlen(expected) : 0;
 
     z_owned_string_t payload;
     if (z_bytes_to_string(z_sample_payload(sample), &payload) != Z_OK) {
         fprintf(stderr, "subscriber: failed to decode payload\n");
         return;
     }
-    if (expected == NULL || strcmp(expected, z_string_data(z_loan(payload))) != 0) {
+    size_t payload_len = z_string_len(z_loan(payload));
+    if (expected_len != payload_len || memcmp(expected, z_string_data(z_loan(payload)), expected_len) != 0) {
         fprintf(stderr, "subscriber: unexpected payload\n");
         z_drop(z_move(payload));
         return;

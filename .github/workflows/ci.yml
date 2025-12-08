@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
       - name: Checkout code
@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -83,7 +83,7 @@ jobs:
           for test in *_test; do
             if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
               echo "Running Valgrind on $test"
-              valgrind --leak-check=full --error-exitcode=1 "./$test" > /dev/null || exit 1
+              valgrind --leak-check=full --error-exitcode=1 --suppressions=valgrind.supp "./$test" > /dev/null || exit 1
             fi
           done
 
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
 
@@ -412,7 +412,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup mbedtls
-        uses: ZettaScaleLabs/ci/setup-mbedtls@fix-mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
         with:
           mbedtls-version: mbedtls-3.6.5
 

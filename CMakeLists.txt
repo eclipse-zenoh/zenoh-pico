@@ -673,6 +673,7 @@ if(UNIX OR MSVC)
     configure_file(${PROJECT_SOURCE_DIR}/tests/memory_leak.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/memory_leak.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/connection_restore.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/connection_restore.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/routed_peer_client.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed_peer_client.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/valgrind.supp ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/valgrind.supp COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)

@@ -57,9 +57,25 @@ openssl x509 -req -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -o
     -extfile server.cnf -extensions san
 rm -f server.csr server.cnf
 
-openssl req -newkey rsa:2048 -keyout client-key.pem -out client.csr -nodes -subj "/CN=Test Client"
-openssl x509 -req -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client.pem -days 30
-rm -f client.csr
+cat > client.cnf <<EOF
+[ req ]
+prompt = no
+distinguished_name = dn
+req_extensions = v3_req
+
+[ dn ]
+CN = Test Client
+
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+EOF
+
+openssl req -newkey rsa:2048 -keyout client-key.pem -out client.csr -nodes -config client.cnf
+openssl x509 -req -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client.pem -days 30 \
+    -extfile client.cnf -extensions v3_req
+rm -f client.csr client.cnf
 
 cat > zenohd_tls.json <<EOF
 {
@@ -82,7 +98,7 @@ run_test() {
     expect_success="$2"
     config_file="${3:-zenohd_tls.json}"
 
-    echo "> Running zenohd -c $config_file ..."
+    echo "> Running ./zenohd -c $config_file -l ${LOC_BASE} ..."
     RUST_LOG=warn ./zenohd -c "$config_file" --plugin-search-dir "$TESTDIR/zenoh-git/target/debug" \
         -l "$LOC_BASE" > zenohd.z_tls_verify.log 2>&1 &
     ZPID=$!
