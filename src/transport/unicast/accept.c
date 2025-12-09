@@ -84,7 +84,7 @@ static void *_zp_unicast_accept_task(void *ctx) {
         }
         // Add peer
         _z_transport_peer_unicast_t *new_peer;
-        _z_transport_peer_unicast_add(ztu, &param, con_socket, &new_peer);
+        _z_transport_peer_unicast_add(ztu, &param, con_socket, true, &new_peer);
         if (new_peer != NULL) {
             _z_interest_push_declarations_to_peer(_z_transport_common_get_session(&ztu->_common), (void *)new_peer);
         }
