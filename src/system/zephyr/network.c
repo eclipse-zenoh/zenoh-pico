@@ -31,6 +31,9 @@
 
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
+#if Z_FEATURE_LINK_TLS == 1
+#include "zenoh-pico/system/link/tls.h"
+#endif
 #include "zenoh-pico/system/link/serial.h"
 #include "zenoh-pico/system/platform.h"
 #include "zenoh-pico/transport/transport.h"
@@ -81,6 +84,18 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
 }
 
 void _z_socket_close(_z_sys_net_socket_t *sock) {
+#if Z_FEATURE_LINK_TLS == 1
+    if (sock->_tls_sock != NULL) {
+        _z_tls_socket_t *tls_sock = (_z_tls_socket_t *)sock->_tls_sock;
+        bool peer_socket = tls_sock->_is_peer_socket;
+        _z_close_tls(tls_sock);
+        if (peer_socket) {
+            z_free(tls_sock);
+        }
+        sock->_tls_sock = NULL;
+        return;
+    }
+#endif
     if (sock->_fd >= 0) {
         close(sock->_fd);
         sock->_fd = -1;

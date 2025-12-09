@@ -65,6 +65,11 @@ config ZENOH_PICO_LINK_WS
 	help
 	  WS Link
 
+config ZENOH_PICO_LINK_TLS
+	bool "TLS Link"
+	help
+	  TLS Link Support
+
 config ZENOH_PICO_STACK_SIZE
     int "Zenoh Stack Size"
     default MAIN_STACK_SIZE
