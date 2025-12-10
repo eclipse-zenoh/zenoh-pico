@@ -404,38 +404,61 @@ endif()
 # TLS support via Mbed TLS
 if(Z_FEATURE_LINK_TLS)
   find_package(PkgConfig REQUIRED)
-  pkg_search_module(MBEDTLS mbedtls>=3.0.0 mbedtls-3>=3.0.0)
-  if(NOT MBEDTLS_FOUND)
-    pkg_check_modules(MBEDTLS REQUIRED mbedtls>=2.0.0)
+
+  # Prefer Mbed TLS 3.x, fall back to 2.x
+  # Never accept 4.x or newer
+  #
+  pkg_search_module(MBEDTLS REQUIRED
+    mbedtls>=3.0.0
+    mbedtls-3>=3.0.0
+    mbedtls>=2.0.0
+  )
+  if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
+    message(FATAL_ERROR
+      "Mbed TLS ${MBEDTLS_VERSION} is not supported. "
+      "Please install Mbed TLS 2.x or 3.x.")
+  endif()
+  message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+
+  pkg_search_module(MBEDX509 OPTIONAL
+    mbedx509>=3.0.0
+    mbedx509>=2.0.0)
+
+  pkg_search_module(MBEDCRYPTO OPTIONAL
+    mbedcrypto>=3.0.0
+    mbedcrypto>=2.0.0)
+
+  set(MBEDTLS_LINK_LIBRARIES
+    ${MBEDTLS_LIBRARIES}
+  )
+
+  if(MBEDX509_FOUND)
+    if(MBEDX509_VERSION AND NOT MBEDX509_VERSION VERSION_EQUAL MBEDTLS_VERSION)
+      message(FATAL_ERROR
+        "mbedtls (${MBEDTLS_VERSION}) and mbedx509 (${MBEDX509_VERSION}) "
+        "versions do not match.")
+    endif()
+    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDX509_LIBRARIES})
   endif()
 
-  if(MBEDTLS_FOUND)
-    if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
+  if(MBEDCRYPTO_FOUND)
+    if(MBEDCRYPTO_VERSION AND NOT MBEDCRYPTO_VERSION VERSION_EQUAL MBEDTLS_VERSION)
       message(FATAL_ERROR
-        "Mbed TLS ${MBEDTLS_VERSION} is not supported. "
-        "Please install Mbed TLS 2.x or 3.x.")
+        "mbedtls (${MBEDTLS_VERSION}) and mbedcrypto (${MBEDCRYPTO_VERSION}) "
+        "versions do not match.")
     endif()
-    message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDCRYPTO_LIBRARIES})
+  endif()
 
-    pkg_check_modules(MBEDTLS REQUIRED mbedtls)
-    pkg_check_modules(MBEDX509 REQUIRED mbedx509)
-    pkg_check_modules(MBEDCRYPTO REQUIRED mbedcrypto)
-
-    set(MBEDTLS_LINK_LIBRARIES
-      ${MBEDTLS_LIBRARIES}
-      ${MBEDX509_LIBRARIES}
-      ${MBEDCRYPTO_LIBRARIES})
-
-    if(PICO_STATIC)
-      target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-      target_link_directories(${Libname}_static PUBLIC ${MBEDTLS_LIBRARY_DIRS})
-      target_link_libraries(${Libname}_static PUBLIC ${MBEDTLS_LINK_LIBRARIES})
-    endif()
-    if(PICO_SHARED)
-      target_include_directories(${Libname}_shared PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-      target_link_directories(${Libname}_shared PUBLIC ${MBEDTLS_LIBRARY_DIRS})
-      target_link_libraries(${Libname}_shared PUBLIC ${MBEDTLS_LINK_LIBRARIES})
-    endif()
+  if(PICO_STATIC)
+    target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+    target_link_directories(${Libname}_static PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+    target_link_libraries(${Libname}_static PUBLIC ${MBEDTLS_LINK_LIBRARIES})
+  endif()
+  if(PICO_SHARED)
+    target_include_directories(${Libname}_shared PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+    target_link_directories(${Libname}_shared PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+    target_link_libraries(${Libname}_shared PUBLIC ${MBEDTLS_LINK_LIBRARIES})
   endif()
 endif()
 
