@@ -62,9 +62,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup mbedtls
+        uses: eclipse-zenoh/ci/setup-mbedtls@main
+        with:
+          mbedtls-version: mbedtls-3.6.5
+
       - name: Build tests
         run: |
-          sudo apt install -y ninja-build libmbedtls-dev
+          sudo apt install -y ninja-build
           Z_FEATURE_LINK_TLS=1 Z_FEATURE_LOCAL_QUERYABLE=1 Z_FEATURE_LOCAL_SUBSCRIBER=1 Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_PERIODIC_TASKS=1 CMAKE_GENERATOR=Ninja make BUILD_TYPE=Debug
 
       - name: Install valgrind
@@ -78,7 +83,7 @@ jobs:
           for test in *_test; do
             if [[ -x "$test" && ! -d "$test" ]]; then  # Run only executables
               echo "Running Valgrind on $test"
-              valgrind --leak-check=full --error-exitcode=1 "./$test" > /dev/null || exit 1
+              valgrind --leak-check=full --error-exitcode=1 --suppressions=valgrind.supp "./$test" > /dev/null || exit 1
             fi
           done
 

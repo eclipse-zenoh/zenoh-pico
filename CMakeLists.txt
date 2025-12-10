@@ -404,23 +404,64 @@ endif()
 # TLS support via Mbed TLS
 if(Z_FEATURE_LINK_TLS)
   find_package(PkgConfig REQUIRED)
-  pkg_search_module(MBEDTLS mbedtls>=3.0.0 mbedtls-3>=3.0.0)
-  if(NOT MBEDTLS_FOUND)
-    pkg_check_modules(MBEDTLS REQUIRED mbedtls>=2.0.0)
+
+  # Prefer Mbed TLS 3.x, fall back to 2.x
+  # Never accept 4.x or newer
+  #
+  pkg_search_module(MBEDTLS REQUIRED
+    mbedtls-3>=3.0.0
+    mbedtls>=3.0.0
+    mbedtls>=2.0.0
+  )
+  if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
+    message(FATAL_ERROR
+      "Mbed TLS ${MBEDTLS_VERSION} is not supported. "
+      "Please install Mbed TLS 2.x or 3.x.")
+  endif()
+  message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+
+  pkg_search_module(MBEDX509 OPTIONAL
+    mbedx509-3>=3.0.0
+    mbedx509>=3.0.0
+    mbedx509>=2.0.0)
+
+  pkg_search_module(MBEDCRYPTO OPTIONAL
+    mbedcrypto-3>=3.0.0
+    mbedcrypto>=3.0.0
+    mbedcrypto>=2.0.0)
+
+  set(MBEDTLS_LINK_LIBRARIES
+    ${MBEDTLS_LIBRARIES}
+  )
+
+  if(MBEDX509_FOUND)
+    if(MBEDX509_VERSION AND NOT MBEDX509_VERSION VERSION_EQUAL MBEDTLS_VERSION)
+      message(FATAL_ERROR
+        "mbedtls (${MBEDTLS_VERSION}) and mbedx509 (${MBEDX509_VERSION}) "
+        "versions do not match.")
+    endif()
+    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDX509_LIBRARIES})
   endif()
 
-  if(MBEDTLS_FOUND)
-    message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+  if(MBEDCRYPTO_FOUND)
+    if(MBEDCRYPTO_VERSION AND NOT MBEDCRYPTO_VERSION VERSION_EQUAL MBEDTLS_VERSION)
+      message(FATAL_ERROR
+        "mbedtls (${MBEDTLS_VERSION}) and mbedcrypto (${MBEDCRYPTO_VERSION}) "
+        "versions do not match.")
+    endif()
+    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDCRYPTO_LIBRARIES})
   endif()
 
   if(PICO_STATIC)
-    target_include_directories(${Libname}_static PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+    target_link_directories(${Libname}_static PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+    target_link_libraries(${Libname}_static PUBLIC ${MBEDTLS_LINK_LIBRARIES})
   endif()
   if(PICO_SHARED)
-    target_include_directories(${Libname}_shared PRIVATE ${MBEDTLS_INCLUDE_DIRS})
+    target_include_directories(${Libname}_shared PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+    target_link_directories(${Libname}_shared PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+    target_link_libraries(${Libname}_shared PUBLIC ${MBEDTLS_LINK_LIBRARIES})
   endif()
-
-  pico_target_link_library(${MBEDTLS_LINK_LIBRARIES})
 endif()
 
 file(GLOB_RECURSE Sources
@@ -641,14 +682,6 @@ if(UNIX OR MSVC)
     target_link_libraries(z_condvar_wait_until_test zenohpico::lib)
     target_link_libraries(z_sync_group_test zenohpico::lib)
     target_link_libraries(z_cancellation_token_test zenohpico::lib)
-    if(Z_FEATURE_LINK_TLS AND MBEDTLS_FOUND)
-      target_include_directories(z_tls_config_test PRIVATE ${MBEDTLS_INCLUDE_DIRS})
-      target_link_libraries(z_tls_config_test ${MBEDTLS_LIBRARIES})
-      find_library(MBEDTLS_CRYPTO_LIBRARY NAMES mbedcrypto-3 mbedcrypto PATHS ${MBEDTLS_LIBRARY_DIRS})
-      if(MBEDTLS_CRYPTO_LIBRARY)
-        target_link_libraries(z_tls_config_test ${MBEDTLS_CRYPTO_LIBRARY})
-      endif()
-    endif()
     target_link_libraries(z_local_loopback_test zenohpico::lib)
     target_include_directories(z_local_loopback_test PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_definitions(z_local_loopback_test PRIVATE Z_LOOPBACK_TESTING=1)
@@ -668,6 +701,7 @@ if(UNIX OR MSVC)
     configure_file(${PROJECT_SOURCE_DIR}/tests/memory_leak.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/memory_leak.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/connection_restore.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/connection_restore.py COPYONLY)
     configure_file(${PROJECT_SOURCE_DIR}/tests/routed_peer_client.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed_peer_client.py COPYONLY)
+    configure_file(${PROJECT_SOURCE_DIR}/tests/valgrind.supp ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/valgrind.supp COPYONLY)
 
     enable_testing()
     add_test(z_data_struct_test ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/z_data_struct_test)
