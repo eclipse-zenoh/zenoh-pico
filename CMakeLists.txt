@@ -421,10 +421,12 @@ if(Z_FEATURE_LINK_TLS)
   message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
 
   pkg_search_module(MBEDX509 OPTIONAL
+    mbedx509-3>=3.0.0
     mbedx509>=3.0.0
     mbedx509>=2.0.0)
 
   pkg_search_module(MBEDCRYPTO OPTIONAL
+    mbedcrypto-3>=3.0.0
     mbedcrypto>=3.0.0
     mbedcrypto>=2.0.0)
 
