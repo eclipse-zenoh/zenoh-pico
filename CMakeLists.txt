@@ -417,11 +417,14 @@ if(Z_FEATURE_LINK_TLS)
     endif()
     message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
 
-    # Start from what pkg-config gave us (usually just "mbedtls")
-    set(MBEDTLS_LINK_LIBRARIES ${MBEDTLS_LIBRARIES})
+    pkg_check_modules(MBEDTLS REQUIRED mbedtls)
+    pkg_check_modules(MBEDX509 REQUIRED mbedx509)
+    pkg_check_modules(MBEDCRYPTO REQUIRED mbedcrypto)
 
-    # Ensure we also link the other components by *name*
-    list(APPEND MBEDTLS_LINK_LIBRARIES mbedx509 mbedcrypto)
+    set(MBEDTLS_LINK_LIBRARIES
+      ${MBEDTLS_LIBRARIES}
+      ${MBEDX509_LIBRARIES}
+      ${MBEDCRYPTO_LIBRARIES})
 
     if(PICO_STATIC)
       target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
