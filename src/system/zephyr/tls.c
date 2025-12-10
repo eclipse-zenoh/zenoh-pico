@@ -105,7 +105,7 @@ static z_result_t _z_tls_parse_cert_from_base64(mbedtls_x509_crt *cert, const ch
         return res;
     }
 
-    int ret = mbedtls_x509_crt_parse(cert, decoded, decoded_len + 1);
+    int ret = mbedtls_x509_crt_parse(cert, decoded, decoded_len);
     z_free(decoded);
     if (ret != 0) {
         _Z_ERROR("Failed to parse %s from base64: -0x%04x", label, -ret);
@@ -126,13 +126,13 @@ static z_result_t _z_tls_parse_key_from_base64(mbedtls_pk_context *key, const ch
     }
 
 #if MBEDTLS_VERSION_MAJOR >= 3
-    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0, mbedtls_hmac_drbg_random, rng);
+    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len, NULL, 0, mbedtls_hmac_drbg_random, rng);
 #else
-    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len + 1, NULL, 0);
+    int ret = mbedtls_pk_parse_key(key, decoded, decoded_len, NULL, 0);
 #endif
     z_free(decoded);
     if (ret != 0) {
-        _Z_ERROR("Failed to parse %s from base64: -0x%04x", label, -ret);
+        _Z_ERROR("Failed to parse \"%s\" from base64: -0x%04x", label, -ret);
         return _Z_ERR_GENERIC;
     }
 
