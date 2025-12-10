@@ -409,8 +409,8 @@ if(Z_FEATURE_LINK_TLS)
   # Never accept 4.x or newer
   #
   pkg_search_module(MBEDTLS REQUIRED
-    mbedtls>=3.0.0
     mbedtls-3>=3.0.0
+    mbedtls>=3.0.0
     mbedtls>=2.0.0
   )
   if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
