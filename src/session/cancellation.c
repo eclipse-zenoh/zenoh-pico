@@ -193,8 +193,7 @@ z_result_t _z_cancellation_token_add_on_query_cancel_handler(_z_cancellation_tok
                                                          ._on_cancel = ___z_cancellation_token_remove_pending_query,
                                                          ._on_drop = ___z_cancellation_token_remove_pending_query_drop,
                                                          ._sync_group = _z_sync_group_null()};
-    _z_cancellation_token_add_on_cancel_handler(ct, &handler);
-    return _Z_RES_OK;
+    return _z_cancellation_token_add_on_cancel_handler(ct, &handler);
 }
 
 #if Z_FEATURE_LIVELINESS == 1
@@ -225,8 +224,7 @@ z_result_t _z_cancellation_token_add_on_liveliness_query_cancel_handler(_z_cance
         ._on_cancel = ___z_cancellation_token_remove_pending_liveliness_query,
         ._on_drop = ___z_cancellation_token_remove_pending_query_drop,
         ._sync_group = _z_sync_group_null()};
-    _z_cancellation_token_add_on_cancel_handler(ct, &handler);
-    return _Z_RES_OK;
+    return _z_cancellation_token_add_on_cancel_handler(ct, &handler);
 }
 #endif
 #endif
