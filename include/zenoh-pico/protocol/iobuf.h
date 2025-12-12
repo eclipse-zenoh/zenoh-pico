@@ -82,8 +82,9 @@ static inline void _z_iosli_read_bytes(_z_iosli_t *ios, uint8_t *dst, size_t off
 static inline void _z_iosli_copy_bytes(_z_iosli_t *dst, const _z_iosli_t *src) {
     size_t length = _z_iosli_readable(src);
     assert(dst->_capacity >= length);
-    (void)memcpy(dst->_buf + dst->_w_pos, src->_buf + src->_r_pos, length);
-    dst->_w_pos += length;
+    (void)memcpy(dst->_buf, src->_buf + src->_r_pos, length);
+    dst->_r_pos = 0;
+    dst->_w_pos = length;
 }
 static inline void _z_iosli_write_bytes(_z_iosli_t *ios, const uint8_t *bs, size_t offset, size_t length) {
     assert(_z_iosli_writable(ios) >= length);
