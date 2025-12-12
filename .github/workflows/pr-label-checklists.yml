@@ -16,7 +16,7 @@ jobs:
       pull-requests: write
       statuses: write
       contents: read
-    uses: eclipse-zenoh/ci/.github/workflows/pr-label-checklists.yml@main
+    uses: sashacmc/ci/.github/workflows/pr-label-checklists.yml@main
     with:
       checklists-repo: eclipse-zenoh/ci
     secrets:
