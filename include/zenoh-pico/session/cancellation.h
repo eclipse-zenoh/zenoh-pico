@@ -72,6 +72,7 @@ typedef struct {
 #endif
     _z_cancellation_token_on_cancel_handler_svec_t _handlers;
     bool _is_cancelled;
+    z_result_t _cancel_result;
 } _z_cancellation_token_t;
 
 z_result_t _z_cancellation_token_create(_z_cancellation_token_t* ct);

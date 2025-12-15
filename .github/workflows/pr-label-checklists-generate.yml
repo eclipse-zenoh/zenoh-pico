@@ -14,8 +14,9 @@ jobs:
     name: Generate
     permissions:
       pull-requests: write
+      statuses: write
       contents: read
-    uses: sashacmc/ci/.github/workflows/pr-label-checklists-generate.yml@main
+    uses: eclipse-zenoh/ci/.github/workflows/pr-label-checklists-generate.yml@main
     with:
       checklists-repo: eclipse-zenoh/ci
     secrets:

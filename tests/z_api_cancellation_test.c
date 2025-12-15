@@ -235,6 +235,71 @@ void test_cancel_querier_get(void) {
     z_session_drop(z_session_move(&s2));
 }
 
+void test_cancel_does_not_prevent_session_close_on_drop(void) {
+    printf("test_cancel_does_not_prevent_session_close_on_drop\n");
+    const char* query_expr = "zenoh-pico/cancellation_does_not_prevent_session_close_on_drop";
+
+    z_owned_session_t s1, s2;
+    z_owned_config_t c1, c2;
+    z_config_default(&c1);
+    z_config_default(&c2);
+    z_view_keyexpr_t ke;
+    z_view_keyexpr_from_str(&ke, query_expr);
+
+    assert(z_open(&s1, z_config_move(&c1), NULL) == Z_OK);
+    assert(z_open(&s2, z_config_move(&c2), NULL) == Z_OK);
+
+    assert(zp_start_read_task(z_loan_mut(s1), NULL) == Z_OK);
+    assert(zp_start_read_task(z_loan_mut(s2), NULL) == Z_OK);
+    assert(zp_start_lease_task(z_loan_mut(s1), NULL) == Z_OK);
+    assert(zp_start_lease_task(z_loan_mut(s2), NULL) == Z_OK);
+
+    z_owned_queryable_t queryable;
+    z_owned_closure_query_t query_callback;
+    z_owned_fifo_handler_query_t query_handler;
+    z_fifo_channel_query_new(&query_callback, &query_handler, 16);
+    z_declare_queryable(z_session_loan(&s1), &queryable, z_view_keyexpr_loan(&ke),
+                        z_closure_query_move(&query_callback), NULL);
+
+    z_owned_querier_t querier;
+    z_declare_querier(z_session_loan(&s2), &querier, z_view_keyexpr_loan(&ke), NULL);
+    z_sleep_s(2);
+
+    z_owned_closure_reply_t reply_callback, reply_callback2;
+    z_owned_fifo_handler_reply_t reply_handler, reply_handler2;
+    z_fifo_channel_reply_new(&reply_callback, &reply_handler, 16);
+    z_fifo_channel_reply_new(&reply_callback2, &reply_handler2, 16);
+
+    z_owned_cancellation_token_t ct, ct_clone, ct_clone2;
+    assert(z_cancellation_token_new(&ct) == Z_OK);
+    assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
+    assert(z_cancellation_token_clone(&ct_clone2, z_cancellation_token_loan(&ct)) == Z_OK);
+
+    z_get_options_t opts;
+    z_get_options_default(&opts);
+    opts.cancellation_token = z_cancellation_token_move(&ct_clone);
+    z_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts);
+
+    z_querier_get_options_t opts2;
+    z_querier_get_options_default(&opts2);
+    opts2.cancellation_token = z_cancellation_token_move(&ct_clone2);
+    z_querier_get(z_querier_loan(&querier), "", z_closure_reply_move(&reply_callback2), &opts2);
+
+    z_session_drop(z_session_move(&s2));
+    z_owned_reply_t reply;
+    assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
+    assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler2), &reply) == Z_CHANNEL_DISCONNECTED);
+    z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
+    z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler2));
+
+    z_fifo_handler_query_drop(z_fifo_handler_query_move(&query_handler));
+
+    z_cancellation_token_drop(z_cancellation_token_move(&ct));
+    z_queryable_drop(z_queryable_move(&queryable));
+    z_querier_drop(z_querier_move(&querier));
+    z_session_drop(z_session_move(&s1));
+}
+
 #if Z_FEATURE_LIVELINESS == 1
 void test_liveliness_get(void) {
     printf("test_cancel_liveliness_get\n");
@@ -298,6 +363,7 @@ int main(void) {
 #if Z_FEATURE_QUERY == 1 && Z_FEATURE_MULTI_THREAD == 1 && defined(Z_FEATURE_UNSTABLE_API)
     test_cancel_get();
     test_cancel_querier_get();
+    test_cancel_does_not_prevent_session_close_on_drop();
 #if Z_FEATURE_LIVELINESS == 1
     test_liveliness_get();
 #endif
