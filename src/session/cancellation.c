@@ -42,6 +42,7 @@ z_result_t _z_cancellation_token_on_cancel_handler_cancel_deadline(_z_cancellati
 
 z_result_t _z_cancellation_token_create(_z_cancellation_token_t *ct) {
     ct->_is_cancelled = false;
+    ct->_cancel_result = _Z_RES_OK;
     ct->_handlers = _z_cancellation_token_on_cancel_handler_svec_null();
 #if Z_FEATURE_MULTI_THREAD == 1
     return _z_mutex_init(&ct->_mutex);
@@ -67,10 +68,11 @@ z_result_t _z_cancellation_token_cancel(_z_cancellation_token_t *ct) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&ct->_mutex));
 #endif
     if (ct->_is_cancelled) {
+        ret = ct->_cancel_result;
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_unlock(&ct->_mutex);
 #endif
-        return _Z_RES_OK;
+        return ret;
     }
     ct->_is_cancelled = true;
 
@@ -83,6 +85,7 @@ z_result_t _z_cancellation_token_cancel(_z_cancellation_token_t *ct) {
         }
     }
     _z_cancellation_token_on_cancel_handler_svec_clear(&ct->_handlers);
+    ct->_cancel_result = ret;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ct->_mutex);
 #endif
@@ -97,10 +100,11 @@ z_result_t _z_cancellation_token_cancel_with_timeout(_z_cancellation_token_t *ct
     _Z_RETURN_IF_ERR(_z_mutex_lock(&ct->_mutex));
 #endif
     if (ct->_is_cancelled) {
+        ret = ct->_cancel_result;
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_unlock(&ct->_mutex);
 #endif
-        return _Z_RES_OK;
+        return ret;
     }
 
     for (size_t i = 0; i < _z_cancellation_token_on_cancel_handler_svec_len(&ct->_handlers); ++i) {
@@ -113,6 +117,7 @@ z_result_t _z_cancellation_token_cancel_with_timeout(_z_cancellation_token_t *ct
     }
     _z_cancellation_token_on_cancel_handler_svec_clear(&ct->_handlers);
     ct->_is_cancelled = true;
+    ct->_cancel_result = ret;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_unlock(&ct->_mutex);
 #endif
@@ -150,7 +155,7 @@ z_result_t _z_cancellation_token_add_on_cancel_handler(_z_cancellation_token_t *
 
 #if Z_FEATURE_QUERY == 1
 typedef struct {
-    _z_session_rc_t zn;
+    _z_session_weak_t zn;
     _z_zint_t qid;
 } __z_cancellation_token_remove_pending_query_arg;
 
@@ -158,13 +163,17 @@ z_result_t ___z_cancellation_token_remove_pending_query(void *arg) {
     __z_cancellation_token_remove_pending_query_arg *typed_arg = (__z_cancellation_token_remove_pending_query_arg *)arg;
     _z_pending_query_t pq = {0};
     pq._id = typed_arg->qid;
-    _z_unregister_pending_query(_Z_RC_IN_VAL(&typed_arg->zn), &pq);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&typed_arg->zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        _z_unregister_pending_query(_Z_RC_IN_VAL(&typed_arg->zn), &pq);
+        _z_session_rc_drop(&sess_rc);
+    }
     return _Z_RES_OK;
 }
 
 void ___z_cancellation_token_remove_pending_query_drop(void *arg) {
     __z_cancellation_token_remove_pending_query_arg *typed_arg = (__z_cancellation_token_remove_pending_query_arg *)arg;
-    _z_session_rc_drop(&typed_arg->zn);
+    _z_session_weak_drop(&typed_arg->zn);
     z_free(arg);
 }
 
@@ -176,7 +185,7 @@ z_result_t _z_cancellation_token_add_on_query_cancel_handler(_z_cancellation_tok
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     arg->qid = qid;
-    arg->zn = _z_session_rc_clone(zs);
+    arg->zn = _z_session_rc_clone_as_weak(zs);
     // sync group is not needed for queries since currently the callback execution is protected by session mutex
     // i.e. ___z_cancellation_token_remove_pending_query will not return until callback is dropped.
     // In particular it means that using cancel_with_timeout does not make much sense
@@ -184,14 +193,17 @@ z_result_t _z_cancellation_token_add_on_query_cancel_handler(_z_cancellation_tok
                                                          ._on_cancel = ___z_cancellation_token_remove_pending_query,
                                                          ._on_drop = ___z_cancellation_token_remove_pending_query_drop,
                                                          ._sync_group = _z_sync_group_null()};
-    _z_cancellation_token_add_on_cancel_handler(ct, &handler);
-    return _Z_RES_OK;
+    return _z_cancellation_token_add_on_cancel_handler(ct, &handler);
 }
 
 #if Z_FEATURE_LIVELINESS == 1
 z_result_t ___z_cancellation_token_remove_pending_liveliness_query(void *arg) {
     __z_cancellation_token_remove_pending_query_arg *typed_arg = (__z_cancellation_token_remove_pending_query_arg *)arg;
-    _z_liveliness_unregister_pending_query(_Z_RC_IN_VAL(&typed_arg->zn), (uint32_t)typed_arg->qid);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&typed_arg->zn);
+    if (!_Z_RC_IS_NULL(&sess_rc)) {
+        _z_liveliness_unregister_pending_query(_Z_RC_IN_VAL(&typed_arg->zn), (uint32_t)typed_arg->qid);
+        _z_session_rc_drop(&sess_rc);
+    }
     return _Z_RES_OK;
 }
 
@@ -203,7 +215,7 @@ z_result_t _z_cancellation_token_add_on_liveliness_query_cancel_handler(_z_cance
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     arg->qid = qid;
-    arg->zn = _z_session_rc_clone(zs);
+    arg->zn = _z_session_rc_clone_as_weak(zs);
     // sync group is not needed for liveliness queries since currently the callback execution is protected by session
     // mutex i.e. ___z_cancellation_token_remove_pending_query will not return until callback is dropped. In particular
     // it means that using cancel_with_timeout does not make much sense
@@ -212,8 +224,7 @@ z_result_t _z_cancellation_token_add_on_liveliness_query_cancel_handler(_z_cance
         ._on_cancel = ___z_cancellation_token_remove_pending_liveliness_query,
         ._on_drop = ___z_cancellation_token_remove_pending_query_drop,
         ._sync_group = _z_sync_group_null()};
-    _z_cancellation_token_add_on_cancel_handler(ct, &handler);
-    return _Z_RES_OK;
+    return _z_cancellation_token_add_on_cancel_handler(ct, &handler);
 }
 #endif
 #endif
