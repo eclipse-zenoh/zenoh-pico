@@ -14,7 +14,6 @@ jobs:
     name: Generate
     permissions:
       pull-requests: write
-      statuses: write
       contents: read
     uses: sashacmc/ci/.github/workflows/pr-label-checklists-generate.yml@main
     with:
