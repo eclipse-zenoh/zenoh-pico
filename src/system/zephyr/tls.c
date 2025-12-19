@@ -247,6 +247,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     if (enable_mtls) {
         z_result_t ret_client = _z_tls_load_client_cert(sock->_tls_ctx, config);
         if (ret_client != _Z_RES_OK) {
+            _Z_ERROR("Failed to load client cert");
             _z_tls_context_free(&sock->_tls_ctx);
             return ret_client;
         }
@@ -280,6 +281,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     }
 
     if (sock->_tls_ctx->_ca_cert.version != 0) {
+        _Z_DEBUG("Configuring CA chain, version: %d", sock->_tls_ctx->_ca_cert.version);
         mbedtls_ssl_conf_ca_chain(&sock->_tls_ctx->_ssl_config, &sock->_tls_ctx->_ca_cert, NULL);
     }
     mbedtls_ssl_conf_authmode(&sock->_tls_ctx->_ssl_config,
@@ -287,6 +289,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     mbedtls_ssl_conf_rng(&sock->_tls_ctx->_ssl_config, mbedtls_hmac_drbg_random, &sock->_tls_ctx->_hmac_drbg);
 
     if (enable_mtls) {
+        _Z_DEBUG("Configuring client certificate for mTLS");
         int own_ret = mbedtls_ssl_conf_own_cert(&sock->_tls_ctx->_ssl_config, &sock->_tls_ctx->_client_cert,
                                                 &sock->_tls_ctx->_client_key);
         if (own_ret != 0) {
@@ -295,6 +298,8 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
+    } else {
+        _Z_DEBUG("mTLS not enabled; skipping client certificate configuration");
     }
 
     mbedret = mbedtls_ssl_setup(&sock->_tls_ctx->_ssl, &sock->_tls_ctx->_ssl_config);
@@ -306,31 +311,34 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     }
 
     if (!hostname) {
-        _Z_ERROR("No hostname is set");
+        _Z_ERROR("No hostname is set. Returning _Z_ERR_GENERIC");
         _z_close_tcp(&sock->_sock);
         _z_tls_context_free(&sock->_tls_ctx);
         return _Z_ERR_GENERIC;
-    }
-
-    mbedret = mbedtls_ssl_set_hostname(&sock->_tls_ctx->_ssl, hostname);
-    if (mbedret != 0) {
-        _Z_ERROR("Failed to set hostname: -0x%04x", -mbedret);
-        _z_close_tcp(&sock->_sock);
-        _z_tls_context_free(&sock->_tls_ctx);
-        return _Z_ERR_GENERIC;
+    } else {
+        mbedret = mbedtls_ssl_set_hostname(&sock->_tls_ctx->_ssl, hostname);
+        if (mbedret != 0) {
+            _Z_ERROR("Failed to set ssl-hostname to %s: -0x%04x", hostname, -mbedret);
+            _z_close_tcp(&sock->_sock);
+            _z_tls_context_free(&sock->_tls_ctx);
+            return _Z_ERR_GENERIC;
+        } else {
+            _Z_DEBUG("Set SSL-hostname to: %s", hostname);
+        }
     }
 
     mbedtls_ssl_set_bio(&sock->_tls_ctx->_ssl, &sock->_sock._fd, _z_tls_bio_send, _z_tls_bio_recv, NULL);
 
+    _Z_DEBUG("Handshaking\n");
     while ((mbedret = mbedtls_ssl_handshake(&sock->_tls_ctx->_ssl)) != 0) {
         if (mbedret != MBEDTLS_ERR_SSL_WANT_READ && mbedret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-            _Z_ERROR("TLS handshake failed: -0x%04x", -mbedret);
+            _Z_ERROR("==>TLS handshake failed: -0x%04x", -mbedret);
             _z_close_tcp(&sock->_sock);
             _z_tls_context_free(&sock->_tls_ctx);
             return _Z_ERR_GENERIC;
         }
     }
-
+    _Z_DEBUG("Handshake done\n");
     uint32_t ignored_flags = verify_name ? 0u : MBEDTLS_X509_BADCERT_CN_MISMATCH;
     uint32_t verify_result = mbedtls_ssl_get_verify_result(&sock->_tls_ctx->_ssl);
     if (verify_result != 0) {
@@ -344,11 +352,12 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
             _Z_INFO("TLS client name verification disabled; ignoring certificate name mismatch");
         }
     }
-
+    _Z_INFO("TLS connection established\n");
     return _Z_RES_OK;
 }
 
 z_result_t _z_listen_tls(_z_tls_socket_t *sock, const char *host, const char *port, const _z_str_intmap_t *config) {
+    _Z_DEBUG("Listening TLS on %s:%s\n", host, port);
     sock->_is_peer_socket = false;
     bool enable_mtls = false;
     const char *mtls_opt = _z_str_intmap_get(config, TLS_CONFIG_ENABLE_MTLS_KEY);
@@ -430,6 +439,7 @@ z_result_t _z_listen_tls(_z_tls_socket_t *sock, const char *host, const char *po
 }
 
 z_result_t _z_tls_accept(_z_sys_net_socket_t *socket, const _z_sys_net_socket_t *listen_sock) {
+    _Z_DEBUG("Accepting TLS connection\n");
     socket->_tls_sock = z_malloc(sizeof(_z_tls_socket_t));
     if (socket->_tls_sock == NULL) {
         _Z_ERROR("Failed to allocate TLS socket structure");
