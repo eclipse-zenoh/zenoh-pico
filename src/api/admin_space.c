@@ -13,6 +13,7 @@
 //
 
 #include "zenoh-pico/api/admin_space.h"
+
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/net/primitives.h"
 
@@ -51,7 +52,8 @@ static z_result_t _ze_admin_space_transport_ke(z_owned_keyexpr_t *ke, const z_id
 }
 
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_TRANSPORT_* / _Z_KEYEXPR_LINK / LID
-static z_result_t _ze_admin_space_transport_link_ke(z_owned_keyexpr_t *ke, const z_id_t *zid, const char *transport, const z_id_t *lid) {
+static z_result_t _ze_admin_space_transport_link_ke(z_owned_keyexpr_t *ke, const z_id_t *zid, const char *transport,
+                                                    const z_id_t *lid) {
     _Z_RETURN_IF_ERR(_ze_admin_space_transport_ke(ke, zid, transport));
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_LINK), z_keyexpr_drop(z_keyexpr_move(ke)));
 
@@ -66,8 +68,7 @@ static z_result_t _ze_admin_space_transport_link_ke(z_owned_keyexpr_t *ke, const
     return _Z_RES_OK;
 }
 
-static void _ze_admin_space_reply_unicast(z_loaned_query_t *query, const z_id_t *zid,
-                                        _z_transport_unicast_t *unicast) {
+static void _ze_admin_space_reply_unicast(z_loaned_query_t *query, const z_id_t *zid, _z_transport_unicast_t *unicast) {
     z_owned_keyexpr_t ke1;
     if (_ze_admin_space_transport_ke(&ke1, zid, _Z_KEYEXPR_TRANSPORT_UNICAST) != _Z_RES_OK) {
         _Z_ERROR("Failed to construct admin space unicast transport key expression - dropping query");
@@ -82,7 +83,8 @@ static void _ze_admin_space_reply_unicast(z_loaned_query_t *query, const z_id_t 
     while (curr != NULL) {
         _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
         z_owned_keyexpr_t ke2;
-        if (_ze_admin_space_transport_link_ke(&ke2, zid, _Z_KEYEXPR_TRANSPORT_UNICAST, &peer->common._remote_zid) != _Z_RES_OK) {
+        if (_ze_admin_space_transport_link_ke(&ke2, zid, _Z_KEYEXPR_TRANSPORT_UNICAST, &peer->common._remote_zid) !=
+            _Z_RES_OK) {
             _Z_ERROR("Failed to construct admin space unicast link key expression - dropping query");
             return;
         }
@@ -96,7 +98,7 @@ static void _ze_admin_space_reply_unicast(z_loaned_query_t *query, const z_id_t 
 }
 
 static void _ze_admin_space_reply_multicast_common(z_loaned_query_t *query, const z_id_t *zid,
-                                                _z_transport_multicast_t *multicast, const char *transport_keyexpr) {
+                                                   _z_transport_multicast_t *multicast, const char *transport_keyexpr) {
     z_owned_keyexpr_t ke1;
     if (_ze_admin_space_transport_ke(&ke1, zid, transport_keyexpr) != _Z_RES_OK) {
         _Z_ERROR("Failed to construct admin space multicast transport key expression - dropping query");
@@ -121,22 +123,21 @@ static void _ze_admin_space_reply_multicast_common(z_loaned_query_t *query, cons
         z_keyexpr_drop(z_keyexpr_move(&ke2));
 
         curr = _z_transport_peer_multicast_slist_next(curr);
-    }                                            
+    }
 }
 
 static void _ze_admin_space_reply_multicast(z_loaned_query_t *query, const z_id_t *zid,
-                                        _z_transport_multicast_t *multicast) {
+                                            _z_transport_multicast_t *multicast) {
     _ze_admin_space_reply_multicast_common(query, zid, multicast, _Z_KEYEXPR_TRANSPORT_MULTICAST);
 }
 
-static void _ze_admin_space_reply_raweth(z_loaned_query_t *query, const z_id_t *zid,
-                                        _z_transport_multicast_t *raweth) {
+static void _ze_admin_space_reply_raweth(z_loaned_query_t *query, const z_id_t *zid, _z_transport_multicast_t *raweth) {
     _ze_admin_space_reply_multicast_common(query, zid, raweth, _Z_KEYEXPR_TRANSPORT_RAWETH);
 }
 
 static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     _z_session_weak_t *session_weak = (_z_session_weak_t *)ctx;
-    
+
     _z_session_rc_t session_rc = _z_session_weak_upgrade_if_open(session_weak);
     if (_Z_RC_IS_NULL(&session_rc)) {
         _Z_ERROR("Dropped admin space query - session closed");
@@ -146,7 +147,7 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     z_id_t zid = z_info_zid(&session_rc);
     _z_transport_t *tp = &_Z_RC_IN_VAL(&session_rc)->_tp;
 
-    switch(tp->_type) {
+    switch (tp->_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             _ze_admin_space_reply_unicast(query, &zid, &tp->_transport._unicast);
             break;
@@ -181,7 +182,8 @@ z_result_t ze_start_admin_space(z_loaned_session_t *zs) {
     z_id_t zid = z_info_zid(zs);
 
     z_owned_keyexpr_t ke;
-    _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_queryable_ke(&ke, &zid), _z_session_weak_drop(session_weak); z_free(session_weak));
+    _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_queryable_ke(&ke, &zid), _z_session_weak_drop(session_weak);
+                           z_free(session_weak));
 
     z_owned_closure_query_t callback;
     _Z_CLEAN_RETURN_IF_ERR(
