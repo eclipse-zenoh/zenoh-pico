@@ -63,7 +63,7 @@ z_result_t _z_f_link_open_tcp(_z_link_t *zl) {
     if (tout_as_str != NULL) {
         tout = (uint32_t)strtoul(tout_as_str, NULL, 10);
     }
-
+    _Z_DEBUG("Opening TCP");
     ret = _z_open_tcp(&zl->_socket._tcp._sock, zl->_socket._tcp._rep, tout);
 
     return ret;
@@ -141,6 +141,7 @@ cleanup:
 }
 
 z_result_t _z_new_link_tcp(_z_link_t *zl, _z_endpoint_t *endpoint) {
+    _Z_DEBUG("Creating new TCP link");
     z_result_t ret = _Z_RES_OK;
     zl->_type = _Z_LINK_TYPE_TCP;
     zl->_cap._transport = Z_LINK_CAP_TRANSPORT_UNICAST;
