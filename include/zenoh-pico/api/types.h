@@ -175,23 +175,27 @@ typedef struct {
 /**
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
  *
- * Members (multi-thread builds):
- *   bool auto_start_read_task: auto-start read task after `z_open()` (default true).
- *   bool auto_start_lease_task: auto-start lease task after `z_open()` (default true).
- *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only when periodic tasks feature is
- *     enabled).
+ * Members:
+ *   bool auto_start_read_task: auto-start read task after `z_open()` (default true; only multi-thread builds).
+ *   bool auto_start_lease_task: auto-start lease task after `z_open()` (default true; only multi-thread builds).
+ *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only multi-thread builds when
+ *     periodic tasks feature is enabled).
+ *   bool auto_start_admin_space: auto-start admin space after `z_open()` (default false; only when admin space feature
+ * is enabled).
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool auto_start_read_task;
     bool auto_start_lease_task;
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
+#endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_PERIODIC_TASKS == 1)
     bool auto_start_periodic_task;
 #endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
+    bool auto_start_admin_space;
 #endif
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
+    uint8_t __dummy;  // avoid empty struct
 #endif
 } z_open_options_t;
 
