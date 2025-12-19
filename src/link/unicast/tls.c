@@ -28,6 +28,8 @@
 
 #if Z_FEATURE_LINK_TLS == 1
 
+static char *Myhostname = "/zenohd";
+
 uint16_t _z_get_link_mtu_tls(void) { return 65535; }
 
 z_result_t _z_endpoint_tls_valid(_z_endpoint_t *endpoint) {
@@ -101,22 +103,22 @@ static _z_config_t _z_tls_merge_config(_z_str_intmap_t *endpoint_cfg, const _z_c
 static z_result_t _z_f_link_open_tls(_z_link_t *self) {
     z_result_t ret = _Z_RES_OK;
 
-    char *hostname = _z_endpoint_parse_host(&self->_endpoint._locator._address);
+    char *address = _z_endpoint_parse_host(&self->_endpoint._locator._address);
     char *port = _z_endpoint_parse_port(&self->_endpoint._locator._address);
-    if ((hostname == NULL) || (port == NULL)) {
+    if ((address == NULL) || (port == NULL)) {
         _Z_ERROR("Failed to parse TLS endpoint address");
-        z_free(hostname);
+        z_free(address);
         z_free(port);
         return _Z_ERR_GENERIC;
     }
 
     _z_sys_net_endpoint_t rep = {0};
-    ret = _z_create_endpoint_tcp(&rep, hostname, port);
+    ret = _z_create_endpoint_tcp(&rep, address, port);
     if (ret == _Z_RES_OK) {
-        ret = _z_open_tls(&self->_socket._tls, &rep, hostname, &self->_endpoint._config, false);
+            ret = _z_open_tls(&self->_socket._tls, &rep, Myhostname, &self->_endpoint._config, true);
     }
     _z_free_endpoint_tcp(&rep);
-    z_free(hostname);
+    z_free(address);
     z_free(port);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("TLS open failed");
@@ -251,7 +253,7 @@ z_result_t _z_new_peer_tls(_z_endpoint_t *endpoint, _z_sys_net_socket_t *socket,
     }
 
     _z_config_t cfg = _z_tls_merge_config(&endpoint->_config, session_cfg);
-    ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_sock, &sys_endpoint, s_address, &cfg, true);
+        ret = _z_open_tls((_z_tls_socket_t *)socket->_tls_sock, &sys_endpoint, Myhostname, &cfg, true);
     if (ret != _Z_RES_OK) {
         z_free(socket->_tls_sock);
         socket->_tls_sock = NULL;
