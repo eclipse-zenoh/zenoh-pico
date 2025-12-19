@@ -178,10 +178,10 @@ static z_result_t _z_tls_load_listen_cert(_z_tls_context_t *ctx, const _z_str_in
 
     ret = mbedtls_x509_crt_parse(&ctx->_listen_cert, listen_cert_str, strlen(listen_cert_str) + 1);
     if (ret != 0) {
-        _Z_ERROR("Failed to parse listening side certificate: -0x%04x", listen_cert_str, -ret);
+        _Z_ERROR("Failed to parse listening side certificate: -0x%04x", -ret);
         return _Z_ERR_GENERIC;
     }
-    _Z_DEBUG("Loaded listening side certificate from %s", listen_cert_str);
+    _Z_DEBUG("Loaded listening side certificate");
 
 
     return _Z_RES_OK;
