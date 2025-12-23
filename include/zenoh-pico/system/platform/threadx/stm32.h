@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #ifndef Z_TASK_TIME_SLICE
-#define Z_TASK_TIME_SLICE 1
+#define Z_TASK_TIME_SLICE 10
 #endif
 
 /*

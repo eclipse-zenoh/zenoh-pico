@@ -87,20 +87,19 @@ z_result_t _z_task_join(_z_task_t *task) {
 }
 
 z_result_t _z_task_detach(_z_task_t *task) {
-    // Not implemented
-    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    return _z_task_cancel(task);
 }
 
 z_result_t _z_task_cancel(_z_task_t *task) {
-    // Not implemented
-    _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    tx_thread_terminate(&task->threadx_thread);
 }
 
-void _z_task_exit(void) {  // NEW with new vesion
-    // Not implemented
+void _z_task_exit(void) {
+    tx_thread_terminate(tx_thread_identify());
 }
 
 void _z_task_free(_z_task_t **task) {
+    tx_thread_delete(&(*task)->threadx_thread);
     z_free(*task);
     *task = NULL;
 }
