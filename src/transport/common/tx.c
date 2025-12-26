@@ -270,6 +270,10 @@ z_result_t _z_transport_tx_send_t_msg(_z_transport_common_t *ztc, const _z_trans
                                       _z_transport_peer_unicast_slist_t *peers) {
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send session message");
+
+    if (ztc->_link == NULL) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
     // If sending to a peer list, make sure the peer mutex is locked
     _z_transport_tx_mutex_lock(ztc, true);
 
@@ -289,6 +293,9 @@ static z_result_t _z_transport_tx_send_n_msg(_z_transport_common_t *ztc, const _
     z_result_t ret = _Z_RES_OK;
     _Z_DEBUG("Send network message");
 
+    if (ztc->_link == NULL) {
+        return _Z_ERR_TRANSPORT_TX_FAILED;
+    }
     // Acquire the lock and drop the message if needed
     if (!_z_transport_batch_hold_tx_mutex()) {
         ret = _z_transport_tx_mutex_lock(ztc, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK);
