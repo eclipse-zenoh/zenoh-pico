@@ -59,15 +59,54 @@ void z_free(void *ptr) { tx_byte_release(ptr); }
 
 #if Z_FEATURE_MULTI_THREAD == 1
 
-/*------------------ Thread ------------------*/
-z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
-    _Z_DEBUG("Creating a new task!");
+/*------------------ Task Cleanup Queue ------------------*/
+#ifndef Z_TASK_CLEANUP_QUEUE_SIZE
+#define Z_TASK_CLEANUP_QUEUE_SIZE 4
+#endif
 
-    UINT status = tx_thread_create(&(task->threadx_thread), "ztask", (VOID(*)(ULONG))fun, (ULONG)arg,
+static _z_task_t *cleanup_queue[Z_TASK_CLEANUP_QUEUE_SIZE];
+
+// Process cleanup queue - free any terminated tasks
+static void cleanup_queue_process(void) {
+    for (int i = 0; i < Z_TASK_CLEANUP_QUEUE_SIZE; i++) {
+        _z_task_t *task = cleanup_queue[i];
+        if (task != NULL) {
+            UINT state;
+            UINT status = tx_thread_info_get(&task->threadx_thread, NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
+            if (status == TX_SUCCESS && (state == TX_COMPLETED || state == TX_TERMINATED)) {
+                tx_thread_delete(&task->threadx_thread);
+                z_free(task);
+                cleanup_queue[i] = NULL;
+            }
+        }
+    }
+}
+
+// Add a task to the cleanup queue
+static bool cleanup_queue_add(_z_task_t *task) {
+    for (int i = 0; i < Z_TASK_CLEANUP_QUEUE_SIZE; i++) {
+        if (cleanup_queue[i] == NULL) {
+            cleanup_queue[i] = task;
+            return true;
+        }
+    }
+    return false;  // Queue full
+}
+
+/*------------------ Thread ------------------*/
+
+z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void *), void *arg) {
+    _ZP_UNUSED(attr);
+
+    // Process any pending cleanup
+    cleanup_queue_process();
+
+    UINT status = tx_thread_create(&task->threadx_thread, "ztask", (VOID(*)(ULONG))fun, (ULONG)arg,
                                    task->threadx_stack, Z_TASK_STACK_SIZE, Z_TASK_PRIORITY, Z_TASK_PREEMPT_THRESHOLD,
                                    Z_TASK_TIME_SLICE, TX_AUTO_START);
-
-    if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    if (status != TX_SUCCESS) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
 
     return _Z_RES_OK;
 }
@@ -75,26 +114,49 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
 z_result_t _z_task_join(_z_task_t *task) {
     while (1) {
         UINT state;
-        UINT status = tx_thread_info_get(&(task->threadx_thread), NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
-        if (status != TX_SUCCESS) _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-
-        if ((state == TX_COMPLETED) || (state == TX_TERMINATED)) break;
-
+        UINT status = tx_thread_info_get(&task->threadx_thread, NULL, &state, NULL, NULL, NULL, NULL, NULL, NULL);
+        if (status != TX_SUCCESS) {
+            _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+        }
+        if (state == TX_COMPLETED || state == TX_TERMINATED) {
+            break;
+        }
         tx_thread_sleep(1);
     }
-
     return _Z_RES_OK;
 }
 
-z_result_t _z_task_detach(_z_task_t *task) { return _z_task_cancel(task); }
+z_result_t _z_task_detach(_z_task_t *task) {
+    TX_THREAD *current = tx_thread_identify();
+    if (&task->threadx_thread == current) {
+        return _Z_RES_OK;
+    }
+    tx_thread_terminate(&task->threadx_thread);
+    return _Z_RES_OK;
+}
 
-z_result_t _z_task_cancel(_z_task_t *task) { tx_thread_terminate(&task->threadx_thread); }
+z_result_t _z_task_cancel(_z_task_t *task) {
+    tx_thread_terminate(&task->threadx_thread);
+    return _Z_RES_OK;
+}
 
 void _z_task_exit(void) { tx_thread_terminate(tx_thread_identify()); }
 
 void _z_task_free(_z_task_t **task) {
-    tx_thread_delete(&(*task)->threadx_thread);
-    z_free(*task);
+    _z_task_t *t = *task;
+    if (t == NULL) return;
+
+    TX_THREAD *current = tx_thread_identify();
+    if (&t->threadx_thread == current) {
+        // Self-cleanup: add to queue, _z_task_exit() will terminate later
+        // Cleanup happens in next _z_task_init() call
+        cleanup_queue_add(t);
+        *task = NULL;
+        return;
+    }
+
+    tx_thread_delete(&t->threadx_thread);
+    z_free(t);
     *task = NULL;
 }
 
