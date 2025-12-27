@@ -101,7 +101,7 @@ z_result_t _z_task_init(_z_task_t *task, z_task_attr_t *attr, void *(*fun)(void 
     // Process any pending cleanup
     cleanup_queue_process();
 
-    UINT status = tx_thread_create(&task->threadx_thread, "ztask", (VOID(*)(ULONG))fun, (ULONG)arg,
+    UINT status = tx_thread_create(&(task->threadx_thread), "ztask", (VOID(*)(ULONG))fun, (ULONG)arg,
                                    task->threadx_stack, Z_TASK_STACK_SIZE, Z_TASK_PRIORITY, Z_TASK_PREEMPT_THRESHOLD,
                                    Z_TASK_TIME_SLICE, TX_AUTO_START);
     if (status != TX_SUCCESS) {
