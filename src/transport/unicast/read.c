@@ -42,7 +42,9 @@ static z_result_t _z_unicast_process_messages(_z_transport_unicast_t *ztu, _z_tr
         zbuf = _z_zbuf_view(&ztu->_common._zbuf, to_read);
     }
 
-    peer->common._received = true;
+    if (to_read > 0) {
+        peer->common._received = true;
+    }
     while (_z_zbuf_len(&zbuf) > 0) {
         // Decode one session message
         _z_transport_message_t t_msg;
