@@ -736,7 +736,7 @@ void _ze_advanced_subscriber_query_reply_handler(z_loaned_reply_t *reply, void *
 
         if (z_keyexpr_intersects(z_keyexpr_loan(&states->_keyexpr), keyexpr)) {
 #if Z_FEATURE_MULTI_THREAD == 1
-            if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
+            if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
                 _Z_ERROR("Failed to lock mutex for query reply handling");
                 return;
             }
@@ -832,7 +832,7 @@ void _ze_advanced_subscriber_query_drop_handler(void *ctx) {
     if (!_Z_RC_IS_NULL(&query_ctx->_statesref)) {
         _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
 #if Z_FEATURE_MULTI_THREAD == 1
-        if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) == _Z_RES_OK) {
+        if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) == _Z_RES_OK) {
 #endif
             switch (query_ctx->_kind) {
                 case _ZE_ADVANCED_SUBSCRIBER_QUERY_CTX_INITIAL:
@@ -941,64 +941,94 @@ typedef struct {
 static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
     _ze_advanced_subscriber_periodic_query_ctx_t *query_ctx = (_ze_advanced_subscriber_periodic_query_ctx_t *)ctx;
 
-    if (!_Z_RC_IS_NULL(&query_ctx->_statesref)) {
-        _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
+    if (_Z_RC_IS_NULL(&query_ctx->_statesref)) {
+        return;
+    }
+    _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-        z_result_t res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+    z_result_t res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+    if (res != _Z_RES_OK) {
+        _Z_WARN("Failed to lock mutex when running periodic query: %d", res);
+        return;
+    }
+#endif
+
+    // Global history still running? Don’t schedule a per-source query yet.
+    if (states->_global_pending_queries != 0) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        return;
+    }
+
+    _ze_advanced_subscriber_sequenced_state_t *state =
+        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
+                                                                                &query_ctx->source_id);
+    if (state == NULL) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        return;
+    }
+
+    // Don’t pile up queries; wait until the previous one finishes.
+    if (state->_pending_queries != 0) {
+        // Nothing to do this tick.
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        return;
+    }
+
+    char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
+    _z_query_param_range_t range = {
+        ._has_start = state->_has_last_delivered,
+        ._start = state->_has_last_delivered ? _z_seqnumber_next(state->_last_delivered) : 0u,
+        ._has_end = false,
+        ._end = 0};
+
+    if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        _Z_WARN("Failed to prepare periodic query");
+        return;
+    }
+
+    z_owned_keyexpr_t query_keyexpr;
+    if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        _Z_WARN("Failed to clone keyexpr for periodic query");
+        return;
+    }
+
+    state->_pending_queries++;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+    res = _ze_advanced_subscriber_sequenced_query(&query_ctx->_statesref, z_keyexpr_loan(&query_keyexpr), params,
+                                                  &query_ctx->source_id);
+    z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+    if (res != _Z_RES_OK) {
+        _Z_WARN("Failed to run periodic query");
+#if Z_FEATURE_MULTI_THREAD == 1
+        res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
         if (res != _Z_RES_OK) {
-            _Z_WARN("Failed to lock mutex when running periodic query: %d", res);
-            return;
+            _Z_ERROR(
+                "FATAL: failed to relock mutex after periodic query failure (%d); "
+                "advanced subscriber invariants are violated; terminating process",
+                res);
+            abort();
         }
 #endif
-
-        // Global history still running? Don’t schedule a per-source query yet.
-        if (states->_global_pending_queries != 0) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-            return;
-        }
-
-        _ze_advanced_subscriber_sequenced_state_t *state =
-            _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
-                                                                                    &query_ctx->source_id);
+        state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
+                                                                                        &query_ctx->source_id);
         if (state != NULL) {
-            // Don’t pile up queries; wait until the previous one finishes.
-            if (state->_pending_queries != 0) {
-                // Nothing to do this tick.
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                return;
-            }
-
-            char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
-            _z_query_param_range_t range = {
-                ._has_start = state->_has_last_delivered,
-                ._start = state->_has_last_delivered ? _z_seqnumber_next(state->_last_delivered) : 0u,
-                ._has_end = false,
-                ._end = 0};
-
-            if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                _Z_WARN("Failed to prepare periodic query");
-                return;
-            } else {
-                state->_pending_queries++;
-                if (_ze_advanced_subscriber_sequenced_query(&query_ctx->_statesref,
-                                                            z_keyexpr_loan(&state->_query_keyexpr), params,
-                                                            &query_ctx->source_id) != _Z_RES_OK) {
-                    state->_pending_queries--;
-#if Z_FEATURE_MULTI_THREAD == 1
-                    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                    _Z_WARN("Failed to run periodic query");
-                    return;
-                }
-            }
+            state->_pending_queries--;
         }
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
@@ -1070,68 +1100,104 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
 
 void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void *ctx) {
     _ze_advanced_subscriber_state_rc_t *rc_states = (_ze_advanced_subscriber_state_rc_t *)ctx;
-    if (!_Z_RC_IS_NULL(rc_states)) {
-        _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
+    if (_Z_RC_IS_NULL(rc_states)) {
+        return;
+    }
+
+    _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
 #if Z_FEATURE_MULTI_THREAD == 1
-        if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-            _Z_ERROR("Failed to lock subscriber callback mutex");
-            return;
-        }
+    if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
+        _Z_ERROR("Failed to lock subscriber callback mutex");
+        return;
+    }
 #endif
 
-        bool new_source = false;
-        z_result_t ret = __unsafe_ze_advanced_subscriber_handle_sample(states, sample, &new_source);
-        if (ret != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-            _Z_ERROR("Failed to handle sample in subscriber callback: %i", ret);
-            return;
-        }
-
-        const z_source_info_t *source_info = z_sample_source_info(sample);
-        if (source_info != NULL) {
-            z_entity_global_id_t source_id = z_source_info_id(source_info);
-
-            _ze_advanced_subscriber_sequenced_state_t *state =
-                _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
-                                                                                        &source_id);
-            if (state != NULL && new_source) {
-                __unsafe_ze_advanced_subscriber_spawn_periodic_query(state, rc_states, &source_id);
-            }
-            if (state != NULL && states->_retransmission && state->_pending_queries == 0 &&
-                !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
-                char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
-                _z_query_param_range_t range = {
-                    ._has_start = state->_has_last_delivered,
-                    ._start = state->_has_last_delivered ? _z_seqnumber_next(state->_last_delivered) : 0u,
-                    ._has_end = false,
-                    ._end = 0};
-
-                if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-                    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                    _Z_ERROR("Failed to prepare query for missing samples");
-                    return;
-                } else {
-                    state->_pending_queries++;
-                    if (_ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr),
-                                                                params, &source_id) != _Z_RES_OK) {
-                        state->_pending_queries--;
-#if Z_FEATURE_MULTI_THREAD == 1
-                        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                        _Z_ERROR("Failed to query for missing samples");
-                        return;
-                    }
-                }
-            }
-        }
+    bool new_source = false;
+    z_result_t ret = __unsafe_ze_advanced_subscriber_handle_sample(states, sample, &new_source);
+    if (ret != _Z_RES_OK) {
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
+        _Z_ERROR("Failed to handle sample in subscriber callback: %i", ret);
+        return;
     }
+
+    const z_source_info_t *source_info = z_sample_source_info(sample);
+    if (source_info == NULL) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        return;
+    }
+    z_entity_global_id_t source_id = z_source_info_id(source_info);
+
+    _ze_advanced_subscriber_sequenced_state_t *state =
+        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states, &source_id);
+    if (state != NULL && new_source) {
+        __unsafe_ze_advanced_subscriber_spawn_periodic_query(state, rc_states, &source_id);
+    }
+    if (state != NULL && states->_retransmission && state->_pending_queries == 0 &&
+        !_z_uint32__z_sample_sortedmap_is_empty(&state->_pending_samples)) {
+        char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
+        _z_query_param_range_t range = {
+            ._has_start = state->_has_last_delivered,
+            ._start = state->_has_last_delivered ? _z_seqnumber_next(state->_last_delivered) : 0u,
+            ._has_end = false,
+            ._end = 0};
+
+        if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+            _Z_ERROR("Failed to prepare query for missing samples");
+            return;
+        }
+
+        z_owned_keyexpr_t query_keyexpr;
+        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+            _Z_WARN("Failed to clone keyexpr for missing sample query");
+            return;
+        }
+
+        state->_pending_queries++;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+
+        z_result_t res =
+            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &source_id);
+        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+        if (res != _Z_RES_OK) {
+            _Z_ERROR("Failed to query for missing samples");
+#if Z_FEATURE_MULTI_THREAD == 1
+            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            if (res != _Z_RES_OK) {
+                _Z_ERROR(
+                    "FATAL: failed to relock mutex after missing sample query failure (%d); "
+                    "advanced subscriber invariants are violated; terminating process",
+                    res);
+                abort();
+            }
+#endif
+
+            state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
+                                                                                            &source_id);
+            if (state != NULL) {
+                state->_pending_queries--;
+            }
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        }
+        return;
+    }
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
 }
 
 void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
@@ -1265,7 +1331,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 
     if (id.eid == _ZE_ADVANCED_SUBSCRIBER_UHLC_EID) {
 #if Z_FEATURE_MULTI_THREAD == 1
-        if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
+        if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
             _Z_ERROR("Failed to lock liveliness subscriber callback mutex");
             return;
         }
@@ -1315,23 +1381,39 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 #endif
             _Z_ERROR("Failed to prepare query for timestamped samples");
             return;
-        } else {
-            state->_pending_queries++;
-            if (_ze_advanced_subscriber_timestamped_query(rc_states, ke, params, &id.zid) != _Z_RES_OK) {
-                state->_pending_queries--;
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                _Z_ERROR("Failed to query for timestamped samples");
-                return;
-            }
         }
+
+        state->_pending_queries++;
+
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
+        if (_ze_advanced_subscriber_timestamped_query(rc_states, ke, params, &id.zid) != _Z_RES_OK) {
+            _Z_ERROR("Failed to query for timestamped samples");
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_result_t res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            if (res != _Z_RES_OK) {
+                _Z_ERROR(
+                    "FATAL: failed to relock mutex after timestamped sample query failure (%d); "
+                    "advanced subscriber invariants are violated; terminating process",
+                    res);
+                abort();
+            }
+#endif
+
+            state = _z_id__ze_advanced_subscriber_timestamped_state_hashmap_get(&states->_timestamped_states, &id.zid);
+            if (state != NULL) {
+                state->_pending_queries--;
+            }
+
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        }
+        return;
     } else {
 #if Z_FEATURE_MULTI_THREAD == 1
-        if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
+        if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
             _Z_ERROR("Failed to lock mutex when processing liveliness subscriber callback");
             return;
         }
@@ -1394,25 +1476,51 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 #endif
             _Z_ERROR("Failed to prepare query for sequenced samples");
             return;
-        } else {
-            state->_pending_queries++;
-            if (_ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params,
-                                                        &id) != _Z_RES_OK) {
-                state->_pending_queries--;
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                _Z_ERROR("Failed to query for sequenced samples");
-                return;
-            }
-
-            if (state != NULL && new_source) {
-                __unsafe_ze_advanced_subscriber_spawn_periodic_query(state, rc_states, &id);
-            }
         }
+
+        z_owned_keyexpr_t query_keyexpr;
+        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+            _Z_WARN("Failed to clone keyexpr for sequenced sample query");
+            return;
+        }
+
+        if (state != NULL && new_source) {
+            __unsafe_ze_advanced_subscriber_spawn_periodic_query(state, rc_states, &id);
+        }
+
+        state->_pending_queries++;
+
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
+        z_result_t res =
+            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &id);
+        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+        if (res != _Z_RES_OK) {
+            _Z_ERROR("Failed to query for sequenced samples");
+#if Z_FEATURE_MULTI_THREAD == 1
+            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            if (res != _Z_RES_OK) {
+                _Z_ERROR(
+                    "FATAL: failed to relock mutex after sequenced sample query failure (%d); "
+                    "advanced subscriber invariants are violated; terminating process",
+                    res);
+                abort();
+            }
+#endif
+            state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
+                                                                                            &id);
+            if (state != NULL) {
+                state->_pending_queries--;
+            }
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        }
+        return;
     }
 }
 
@@ -1469,7 +1577,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
     }
 
 #if Z_FEATURE_MULTI_THREAD == 1
-    if (_z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
+    if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
         _Z_ERROR("Failed to lock heartbeat subscriber callback mutex");
         return;
     }
@@ -1545,18 +1653,48 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
 #endif
             _Z_ERROR("Failed to prepare query for missing samples");
             return;
-        } else {
-            state->_pending_queries++;
-            if (_ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params,
-                                                        &id) != _Z_RES_OK) {
-                state->_pending_queries--;
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-                _Z_ERROR("Failed to query for missing samples");
-                return;
-            }
         }
+
+        z_owned_keyexpr_t query_keyexpr;
+        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+            _Z_WARN("Failed to clone keyexpr for missing sample query");
+            return;
+        }
+
+        state->_pending_queries++;
+
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        z_result_t res =
+            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &id);
+        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+        if (res != _Z_RES_OK) {
+            _Z_ERROR("Failed to query for missing samples");
+#if Z_FEATURE_MULTI_THREAD == 1
+            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            if (res != _Z_RES_OK) {
+                _Z_ERROR(
+                    "FATAL: failed to relock mutex after missing sample query failure (%d); "
+                    "advanced subscriber invariants are violated; terminating process",
+                    res);
+                abort();
+            }
+#endif
+            state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
+                                                                                            &id);
+
+            if (state != NULL) {
+                state->_pending_queries--;
+            }
+#if Z_FEATURE_MULTI_THREAD == 1
+            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
+#endif
+        }
+        return;
     }
 #if Z_FEATURE_MULTI_THREAD == 1
     z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
@@ -1739,7 +1877,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_subscriber_drop(&sub->_val));
 
 #if Z_FEATURE_MULTI_THREAD == 1
-        _Z_CLEAN_RETURN_IF_ERR(_z_mutex_lock(z_mutex_loan_mut(&state->_mutex)), z_keyexpr_drop(z_keyexpr_move(&ke_pub));
+        _Z_CLEAN_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)), z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); z_keyexpr_drop(z_keyexpr_move(&ke));
                                _ze_advanced_subscriber_drop(&sub->_val));
 #endif

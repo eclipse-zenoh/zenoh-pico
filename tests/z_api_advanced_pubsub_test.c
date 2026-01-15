@@ -732,6 +732,64 @@ static void test_advanced_late_joiner(void) {
 
 #endif  // Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY
 
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1 && Z_FEATURE_LOCAL_QUERYABLE == 1
+static void test_advanced_local_pubsub(void) {
+    printf("test_advanced_local_pubsub\n");
+
+    const char *expr = "zenoh-pico/advanced-pubsub/test/local_pubsub";
+
+    z_owned_session_t s;
+    z_owned_config_t c;
+    z_config_default(&c);
+    z_view_keyexpr_t k;
+    ASSERT_OK(z_view_keyexpr_from_str(&k, expr));
+
+    ASSERT_OK(z_open(&s, z_config_move(&c), NULL));
+
+    ASSERT_OK(zp_start_read_task(z_loan_mut(s), NULL));
+    ASSERT_OK(zp_start_lease_task(z_loan_mut(s), NULL));
+    ASSERT_OK(zp_start_periodic_scheduler_task(z_loan_mut(s), NULL));
+
+    ze_owned_advanced_publisher_t pub;
+    ze_advanced_publisher_options_t pub_opts;
+    ze_advanced_publisher_options_default(&pub_opts);
+    pub_opts.cache.is_enabled = true;
+    pub_opts.cache.max_samples = 1;
+    pub_opts.sample_miss_detection.is_enabled = true;
+
+    ASSERT_OK(ze_declare_advanced_publisher(z_loan(s), &pub, z_loan(k), &pub_opts));
+
+    ze_owned_advanced_subscriber_t sub;
+    ze_advanced_subscriber_options_t sub_opts;
+    ze_advanced_subscriber_options_default(&sub_opts);
+    ze_advanced_subscriber_history_options_default(&sub_opts.history);
+    ze_advanced_subscriber_recovery_options_default(&sub_opts.recovery);
+    ze_advanced_subscriber_last_sample_miss_detection_options_default(&sub_opts.recovery.last_sample_miss_detection);
+
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&closure, &handler, 1));
+    ASSERT_OK(ze_declare_advanced_subscriber(z_loan(s), &sub, z_loan(k), z_move(closure), &sub_opts));
+    // z_sleep_ms(TEST_SLEEP_MS);
+
+    put_str(z_loan(pub), "1");
+    z_sleep_ms(TEST_SLEEP_MS);
+
+    expect_next(z_loan(handler), "1");
+    expect_empty(z_loan(handler));
+
+    ze_advanced_subscriber_drop(z_move(sub));
+    ze_advanced_publisher_drop(z_move(pub));
+    z_fifo_handler_sample_drop(z_move(handler));
+
+    ASSERT_OK(zp_stop_read_task(z_loan_mut(s)));
+    ASSERT_OK(zp_stop_lease_task(z_loan_mut(s)));
+    ASSERT_OK(zp_stop_periodic_scheduler_task(z_loan_mut(s)));
+
+    z_session_drop(z_session_move(&s));
+}
+#endif
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -746,6 +804,9 @@ int main(int argc, char **argv) {
     test_advanced_sample_miss();
     test_advanced_retransmission_sample_miss();
     // test_advanced_late_joiner();
+#endif
+#if Z_FEATURE_LOCAL_SUBSCRIBER == 1 && Z_FEATURE_LOCAL_QUERYABLE == 1
+    test_advanced_local_pubsub();
 #endif
 
     return 0;
