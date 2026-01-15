@@ -30,6 +30,7 @@
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/locality.h"
 #include "zenoh-pico/utils/logging.h"
+#include "zenoh-pico/utils/string.h"
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 
@@ -231,8 +232,14 @@ static z_result_t _z_subscription_get_infos(_z_session_t *zn, _z_subscriber_kind
     } else {  // Construct data and add to cache
         _Z_DEBUG("Resolving %d - %.*s on mapping 0x%x", infos->ke_in._id, (int)_z_string_len(&infos->ke_in._suffix),
                  _z_string_data(&infos->ke_in._suffix), (unsigned int)infos->ke_in._mapping);
-        infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
-        ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
+        if ((infos->ke_in._id == Z_RESOURCE_ID_NONE) && _z_keyexpr_has_suffix(&infos->ke_in) &&
+            (_z_string_pbrk(&infos->ke_in._suffix, "*$") == NULL)) {
+            infos->ke_out = _z_keyexpr_alias(&infos->ke_in);
+            ret = _Z_RES_OK;
+        } else {
+            infos->ke_out = __unsafe_z_get_expanded_key_from_key(zn, &infos->ke_in, false, peer);
+            ret = _z_keyexpr_has_suffix(&infos->ke_out) ? _Z_RES_OK : _Z_ERR_KEYEXPR_UNKNOWN;
+        }
         // Get subscription list
         _Z_SET_IF_OK(ret,
                      __unsafe_z_get_subscriptions_rc_by_key(zn, kind, &infos->ke_out, infos->is_remote, &infos->infos));
