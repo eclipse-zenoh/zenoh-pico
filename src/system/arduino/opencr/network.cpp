@@ -135,7 +135,7 @@ size_t _z_read_exact_tcp(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t le
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -251,7 +251,7 @@ size_t _z_read_exact_udp_unicast(const _z_sys_net_socket_t sock, uint8_t *ptr, s
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
@@ -373,7 +373,7 @@ size_t _z_read_exact_udp_multicast(const _z_sys_net_socket_t sock, uint8_t *ptr,
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;

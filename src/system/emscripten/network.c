@@ -160,7 +160,7 @@ size_t _z_read_exact_ws(const _z_sys_net_socket_t sock, uint8_t *ptr, size_t len
         }
 
         n = n + rb;
-        pos = _z_ptr_u8_offset(pos, n);
+        pos = _z_ptr_u8_offset(pos, rb);
     } while (n != len);
 
     return n;
