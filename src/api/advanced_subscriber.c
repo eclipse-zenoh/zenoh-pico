@@ -996,23 +996,13 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         return;
     }
 
-    z_owned_keyexpr_t query_keyexpr;
-    if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-        _Z_WARN("Failed to clone keyexpr for periodic query");
-        return;
-    }
-
     state->_pending_queries++;
 
 #if Z_FEATURE_MULTI_THREAD == 1
     z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
-    res = _ze_advanced_subscriber_sequenced_query(&query_ctx->_statesref, z_keyexpr_loan(&query_keyexpr), params,
-                                                  &query_ctx->source_id);
-    z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+    res = _ze_advanced_subscriber_sequenced_query(&query_ctx->_statesref, z_keyexpr_loan(&state->_query_keyexpr),
+                                                  params, &query_ctx->source_id);
     if (res != _Z_RES_OK) {
         _Z_WARN("Failed to run periodic query");
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -1153,24 +1143,14 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
             return;
         }
 
-        z_owned_keyexpr_t query_keyexpr;
-        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-            _Z_WARN("Failed to clone keyexpr for missing sample query");
-            return;
-        }
-
         state->_pending_queries++;
 
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
 
-        z_result_t res =
-            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &source_id);
-        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+        z_result_t res = _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr),
+                                                                 params, &source_id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for missing samples");
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -1478,15 +1458,6 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
             return;
         }
 
-        z_owned_keyexpr_t query_keyexpr;
-        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-            _Z_WARN("Failed to clone keyexpr for sequenced sample query");
-            return;
-        }
-
         if (state != NULL && new_source) {
             __unsafe_ze_advanced_subscriber_spawn_periodic_query(state, rc_states, &id);
         }
@@ -1497,8 +1468,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
         z_result_t res =
-            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &id);
-        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params, &id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for sequenced samples");
 #if Z_FEATURE_MULTI_THREAD == 1
@@ -1655,23 +1625,13 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
             return;
         }
 
-        z_owned_keyexpr_t query_keyexpr;
-        if (z_keyexpr_clone(&query_keyexpr, z_keyexpr_loan(&state->_query_keyexpr)) != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
-            _Z_WARN("Failed to clone keyexpr for missing sample query");
-            return;
-        }
-
         state->_pending_queries++;
 
 #if Z_FEATURE_MULTI_THREAD == 1
         z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
 #endif
         z_result_t res =
-            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&query_keyexpr), params, &id);
-        z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
+            _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params, &id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for missing samples");
 #if Z_FEATURE_MULTI_THREAD == 1
