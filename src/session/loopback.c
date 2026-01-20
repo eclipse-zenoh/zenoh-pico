@@ -17,8 +17,8 @@
 #include "zenoh-pico/collections/bytes.h"
 #include "zenoh-pico/collections/slice.h"
 #include "zenoh-pico/config.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/session/interest.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/session/query.h"
 #include "zenoh-pico/session/queryable.h"
 #include "zenoh-pico/session/reply.h"
@@ -75,7 +75,7 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
@@ -83,12 +83,12 @@ z_result_t _z_session_deliver_push_locally(_z_session_t *zn, const _z_keyexpr_t 
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT: {
-            _z_n_msg_make_push_put(&msg, &keyexpr2, &payload2, &encoding2, qos, timestamp, &attachment2, reliability,
+            _z_n_msg_make_push_put(&msg, &wireexpr, &payload2, &encoding2, qos, timestamp, &attachment2, reliability,
                                    source_info);
             break;
         }
         case Z_SAMPLE_KIND_DELETE: {
-            _z_n_msg_make_push_del(&msg, &keyexpr2, qos, timestamp, reliability, source_info);
+            _z_n_msg_make_push_del(&msg, &wireexpr, qos, timestamp, reliability, source_info);
             break;
         }
         default:
@@ -127,14 +127,14 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
     _z_slice_t parameters2 = parameters == NULL ? _z_slice_null() : _z_slice_alias(*parameters);
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
 
     _z_zenoh_message_t msg;
-    _z_n_msg_make_query(&msg, &keyexpr2, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
+    _z_n_msg_make_query(&msg, &wireexpr, &parameters2, qid, Z_RELIABILITY_DEFAULT, consolidation, &payload2, &encoding2,
                         timeout_ms, &attachment2, qos, source_info);
 
     return _z_handle_network_message(transport, &msg, NULL);
@@ -174,7 +174,7 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
         return _Z_ERR_INVALID;
     }
 
-    _z_keyexpr_t keyexpr2 = _z_keyexpr_alias(keyexpr);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
     _z_bytes_t payload2 = payload == NULL ? _z_bytes_null() : _z_bytes_steal(payload);
     _z_bytes_t attachment2 = attachment == NULL ? _z_bytes_null() : _z_bytes_steal(attachment);
     _z_encoding_t encoding2 = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
@@ -182,12 +182,12 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
     _z_network_message_t msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
-            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
+            _z_n_msg_make_reply_ok_put(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &wireexpr,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
                                        &payload2, &encoding2, &attachment2);
             break;
         case Z_SAMPLE_KIND_DELETE:
-            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &keyexpr2,
+            _z_n_msg_make_reply_ok_del(&msg, &_Z_RC_IN_VAL(zn)->_local_zid, query->_request_id, &wireexpr,
                                        Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, timestamp, source_info,
                                        &attachment2);
             break;

@@ -26,7 +26,7 @@ extern "C" {
 #if Z_FEATURE_LIVELINESS == 1
 
 z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_token_t *ret_token,
-                                       _z_keyexpr_t *keyexpr);
+                                       const _z_keyexpr_t *keyexpr);
 z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -34,18 +34,19 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
  * Declare a :c:type:`_z_subscriber_t` for the given liveliness key.
  *
  * Parameters:
+ *     subscriber: The subscriber to initialize.
  *     zn: The zenoh-net session. The caller keeps its ownership.
- *     keyexpr: The resource key to subscribe. The callee gets the ownership of any allocated value.
+ *     keyexpr: The resource key to subscribe.
  *     callback: The callback function that will be called each time a matching liveliness token changed.
  *     history: Enable current interest to return history tokens.
  *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
- *     The created :c:type:`_z_subscriber_t` (in null state if the declaration failed).
+ *     0 in case of success, negative error code otherwise.
  */
-_z_subscriber_t _z_declare_liveliness_subscriber(const _z_session_rc_t *zn, _z_keyexpr_t *keyexpr,
-                                                 _z_closure_sample_callback_t callback, _z_drop_handler_t dropper,
-                                                 bool history, void *arg);
+z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                            const _z_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                            _z_drop_handler_t dropper, bool history, void *arg);
 
 /**
  * Undeclare a liveliness :c:type:`_z_subscriber_t`.

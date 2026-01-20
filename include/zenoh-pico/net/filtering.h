@@ -31,6 +31,7 @@ typedef struct {
 } _z_filter_target_t;
 
 typedef z_element_eq_f _z_filter_target_eq_f;
+typedef z_element_eq_f _z_filter_target_predicate_f;
 #define _z_filter_target_elem_copy _z_noop_copy
 #define _z_filter_target_elem_clear _z_noop_clear
 _Z_SLIST_DEFINE(_z_filter_target, _z_filter_target_t, false)
@@ -79,7 +80,7 @@ typedef struct _z_write_filter_t {
     _z_write_filter_ctx_rc_t ctx;
 } _z_write_filter_t;
 
-z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, const _z_keyexpr_t *keyexpr,
                                   uint8_t interest_flag, bool complete, z_locality_t locality);
 z_result_t _z_write_filter_clear(_z_write_filter_t *filter);
 void _z_write_filter_notify_subscriber(struct _z_session_t *session, const _z_keyexpr_t *key,

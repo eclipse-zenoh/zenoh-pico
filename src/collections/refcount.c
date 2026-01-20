@@ -103,6 +103,9 @@
 #define _ZP_RC_OP_SYNC __sync_synchronize();
 #define _ZP_RC_OP_UPGRADE_CAS_LOOP                                                    \
     z_result_t _upgrade(_z_inner_rc_t* cnt) {                                         \
+        if (cnt == NULL) {                                                            \
+            _Z_ERROR_RETURN(_Z_ERR_INVALID);                                          \
+        }                                                                             \
         unsigned int prev = __sync_fetch_and_add(&cnt->_strong_cnt, (unsigned int)0); \
         while ((prev != 0) && (prev < _Z_RC_MAX_COUNT)) {                             \
             if (__sync_bool_compare_and_swap(&cnt->_strong_cnt, prev, prev + 1)) {    \

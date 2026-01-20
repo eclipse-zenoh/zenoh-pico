@@ -22,7 +22,7 @@
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/system/link/raweth.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/transport.h"
@@ -35,7 +35,8 @@ static int _zp_raweth_find_map_entry(const _z_keyexpr_t *keyexpr, _z_raweth_sock
     for (size_t i = 0; i < _zp_raweth_mapping_array_len(&sock->_mapping); i++) {
         // Find matching keyexpr
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, i);
-        if (z_keyexpr_intersects(keyexpr, &entry->_keyexpr) != _Z_RES_OK) {
+        _z_keyexpr_t entry_ke = _z_keyexpr_alias_from_string(&entry->_keyexpr);
+        if (!z_keyexpr_intersects(keyexpr, &entry_ke)) {
             continue;
         }
         return (int)i;
@@ -65,7 +66,7 @@ static z_result_t _zp_raweth_set_socket(const _z_keyexpr_t *keyexpr, _z_raweth_s
         if (idx < 0) {
             idx = 0;  // Set to default entry
             _Z_DEBUG("Key '%.*s' wasn't found in config mapping, sending to default address",
-                     (int)_z_string_len(&keyexpr->_suffix), _z_string_data(&keyexpr->_suffix));
+                     (int)_z_string_len(&keyexpr), _z_string_data(&keyexpr));
         }
         // Store data into socket
         const _zp_raweth_mapping_entry_t *entry = _zp_raweth_mapping_array_get(&sock->_mapping, (size_t)idx);

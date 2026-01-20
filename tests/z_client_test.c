@@ -172,8 +172,8 @@ int main(int argc, char **argv) {
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(z_loan(s1), &expr, z_loan(ke));
-        printf("Declared resource on session 1: %u %.*s\n", z_loan(expr)->_id,
-               (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
+        printf("Declared resource on session 1: %.*s\n", (int)z_string_len(&z_loan(expr)->_keyexpr),
+               z_string_data(&z_loan(expr)->_keyexpr));
         rids1[i] = expr;
     }
 
@@ -185,8 +185,8 @@ int main(int argc, char **argv) {
         z_view_keyexpr_from_str(&ke, s1_res);
         z_owned_keyexpr_t expr;
         z_declare_keyexpr(z_loan(s2), &expr, z_loan(ke));
-        printf("Declared resource on session 2: %u %.*s\n", z_loan(expr)->_id,
-               (int)z_string_len(&z_loan(expr)->_suffix), z_string_data(&z_loan(expr)->_suffix));
+        printf("Declared resource on session 2: %.*s\n", (int)z_string_len(&z_loan(expr)->_keyexpr),
+               z_string_data(&z_loan(expr)->_keyexpr));
         rids2[i] = expr;
     }
 
@@ -199,8 +199,8 @@ int main(int argc, char **argv) {
         z_owned_subscriber_t *sub = (z_owned_subscriber_t *)z_malloc(sizeof(z_owned_subscriber_t));
         z_result_t res = z_declare_subscriber(z_loan(s2), sub, z_loan(rids2[i]), z_move(callback), NULL);
         assert(res == _Z_RES_OK);
-        printf("Declared subscription on session 2: %ju %u %s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
-               z_loan(rids2[i])->_id, "");
+        printf("Declared subscription on session 2: %ju %.*s\n", (uintmax_t)z_subscriber_loan(sub)->_entity_id,
+               (int)z_string_len(&z_loan(rids2[i])->_keyexpr), z_string_data(&z_loan(rids2[i])->_keyexpr));
         subs2 = _z_list_push(subs2, sub);
     }
 
@@ -248,8 +248,8 @@ int main(int argc, char **argv) {
             z_bytes_from_buf(&payload, value, len, NULL, NULL);
 
             z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
-            printf("Wrote data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len, n * SET + (i + 1),
-                   total);
+            printf("Wrote data from session 1: %.*s %zu b\t(%u/%u)\n", (int)z_string_len(&z_loan(rids1[i])->_keyexpr),
+                   z_string_data(&z_loan(rids1[i])->_keyexpr), len, n * SET + (i + 1), total);
         }
     }
 
@@ -288,7 +288,8 @@ int main(int argc, char **argv) {
                 z_bytes_from_buf(&payload, value, len, NULL, NULL);
 
                 z_put(z_loan(s1), z_loan(rids1[i]), z_move(payload), &opt);
-                printf("Wrote fragment data from session 1: %u %zu b\t(%u/%u)\n", z_loan(rids1[i])->_id, len,
+                printf("Wrote fragment data from session 1: %.*s %zu b\t(%u/%u)\n",
+                       (int)z_string_len(&z_loan(rids1[i])->_keyexpr), z_string_data(&z_loan(rids1[i])->_keyexpr), len,
                        n * SET + (i + 1), total);
             }
         }
@@ -380,14 +381,16 @@ int main(int argc, char **argv) {
 
     // Undeclare resources on both sessions
     for (unsigned int i = 0; i < SET; i++) {
-        printf("Undeclared resource on session 1: %u\n", z_loan(rids1[i])->_id);
+        printf("Undeclared resource on session 1: %.*s\n", (int)z_string_len(&z_loan(rids1[i])->_keyexpr),
+               z_string_data(&z_loan(rids1[i])->_keyexpr));
         z_undeclare_keyexpr(z_loan(s1), z_move(rids1[i]));
     }
 
     z_sleep_s(SLEEP);
 
     for (unsigned int i = 0; i < SET; i++) {
-        printf("Undeclared resource on session 2: %u\n", z_loan(rids2[i])->_id);
+        printf("Undeclared resource on session 2: %.*s\n", (int)z_string_len(&z_loan(rids2[i])->_keyexpr),
+               z_string_data(&z_loan(rids2[i])->_keyexpr));
         z_undeclare_keyexpr(z_loan(s2), z_move(rids2[i]));
     }
 

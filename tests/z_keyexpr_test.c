@@ -15,40 +15,40 @@
 #include <stdlib.h>
 
 #include "zenoh-pico/api/primitives.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 
 #undef NDEBUG
 #include <assert.h>
 
-#define TEST_TRUE_INTERSECT(a, b) \
-    ke_a = _z_rname(a);           \
-    ke_b = _z_rname(b);           \
-    assert(_z_keyexpr_suffix_intersects(&ke_a, &ke_b));
+#define TEST_TRUE_INTERSECT(a, b)        \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(_z_keyexpr_intersects(&ke_a, &ke_b));
 
-#define TEST_FALSE_INTERSECT(a, b) \
-    ke_a = _z_rname(a);            \
-    ke_b = _z_rname(b);            \
-    assert(!_z_keyexpr_suffix_intersects(&ke_a, &ke_b));
+#define TEST_FALSE_INTERSECT(a, b)       \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(!_z_keyexpr_intersects(&ke_a, &ke_b));
 
-#define TEST_TRUE_INCLUDE(a, b) \
-    ke_a = _z_rname(a);         \
-    ke_b = _z_rname(b);         \
-    assert(_z_keyexpr_suffix_includes(&ke_a, &ke_b));
+#define TEST_TRUE_INCLUDE(a, b)          \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(_z_keyexpr_includes(&ke_a, &ke_b));
 
-#define TEST_FALSE_INCLUDE(a, b) \
-    ke_a = _z_rname(a);          \
-    ke_b = _z_rname(b);          \
-    assert(!_z_keyexpr_suffix_includes(&ke_a, &ke_b));
+#define TEST_FALSE_INCLUDE(a, b)         \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(!_z_keyexpr_includes(&ke_a, &ke_b));
 
-#define TEST_TRUE_EQUAL(a, b) \
-    ke_a = _z_rname(a);       \
-    ke_b = _z_rname(b);       \
-    assert(_z_keyexpr_suffix_equals(&ke_a, &ke_b));
+#define TEST_TRUE_EQUAL(a, b)            \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(_z_keyexpr_equals(&ke_a, &ke_b));
 
-#define TEST_FALSE_EQUAL(a, b) \
-    ke_a = _z_rname(a);        \
-    ke_b = _z_rname(b);        \
-    assert(!_z_keyexpr_suffix_equals(&ke_a, &ke_b));
+#define TEST_FALSE_EQUAL(a, b)           \
+    ke_a = _z_keyexpr_alias_from_str(a); \
+    ke_b = _z_keyexpr_alias_from_str(b); \
+    assert(!_z_keyexpr_equals(&ke_a, &ke_b));
 
 void test_intersects(void) {
     _z_keyexpr_t ke_a, ke_b;
@@ -429,6 +429,21 @@ void test_relation_to(void) {
            Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT);
 }
 
+void test_non_wild_prefix_len(void) {
+    _z_keyexpr_t ke1, ke2, ke3, ke4, ke5;
+    ke1 = _z_keyexpr_alias_from_str("foo/bar/**");
+    ke2 = _z_keyexpr_alias_from_str("foo/*/baz");
+    ke3 = _z_keyexpr_alias_from_str("bar1/ab$*/baz");
+    ke4 = _z_keyexpr_alias_from_str("foo/bar");
+    ke5 = _z_keyexpr_alias_from_str("**");
+
+    assert(_z_keyexpr_non_wild_prefix_len(&ke1) == 7);
+    assert(_z_keyexpr_non_wild_prefix_len(&ke2) == 3);
+    assert(_z_keyexpr_non_wild_prefix_len(&ke3) == 4);
+    assert(_z_keyexpr_non_wild_prefix_len(&ke4) == 7);
+    assert(_z_keyexpr_non_wild_prefix_len(&ke5) == 0);
+}
+
 int main(void) {
     test_intersects();
     test_includes();
@@ -438,6 +453,7 @@ int main(void) {
     test_concat();
     test_join();
     test_relation_to();
+    test_non_wild_prefix_len();
 
     return 0;
 }

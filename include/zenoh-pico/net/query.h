@@ -21,7 +21,7 @@
 #include "zenoh-pico/net/filtering.h"
 #include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 
 #ifdef __cplusplus
 extern "C" {

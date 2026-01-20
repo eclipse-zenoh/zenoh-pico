@@ -25,6 +25,7 @@
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
+#include "zenoh-pico/session/weak_session.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,9 +120,6 @@ _Z_SLIST_DEFINE(_z_transport_peer_unicast, _z_transport_peer_unicast_t, true)
 
 #define _Z_RES_POOL_INIT_SIZE 8  // Arbitrary small value
 
-typedef struct _z_session_t _z_session_t;
-extern void _z_session_clear(_z_session_t *zn);  // Forward declaration to avoid cyclical include
-_Z_REFCOUNT_DEFINE_NO_FROM_VAL(_z_session, _z_session)
 typedef struct {
     _z_session_weak_t _session;
     _z_link_t *_link;

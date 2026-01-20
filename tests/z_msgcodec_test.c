@@ -40,7 +40,6 @@
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/ext.h"
 #include "zenoh-pico/protocol/iobuf.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 #include "zenoh-pico/system/platform.h"
 
 #undef NDEBUG
@@ -687,8 +686,8 @@ void timestamp_field(void) {
 }
 
 /*------------------ ResKey field ------------------*/
-_z_keyexpr_t gen_keyexpr(void) {
-    _z_keyexpr_t key;
+_z_wireexpr_t gen_wireexpr(void) {
+    _z_wireexpr_t key;
     key._id = gen_uint16();
     key._mapping = gen_uint32();
     bool is_numerical = gen_bool();
@@ -704,14 +703,14 @@ _z_keyexpr_t gen_keyexpr(void) {
     return key;
 }
 
-void assert_eq_keyexpr(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+void assert_eq_keyexpr(const _z_wireexpr_t *left, const _z_wireexpr_t *right) {
     printf("ResKey -> ");
     printf("ID (%u:%u), ", left->_id, right->_id);
     assert(left->_id == right->_id);
-    assert(_z_keyexpr_has_suffix(left) == _z_keyexpr_has_suffix(right));
+    assert(_z_wireexpr_has_suffix(left) == _z_wireexpr_has_suffix(right));
 
     printf("Name (");
-    if (_z_keyexpr_has_suffix(left)) {
+    if (_z_wireexpr_has_suffix(left)) {
         printf("%.*s:%.*s", (int)_z_string_len(&left->_suffix), _z_string_data(&left->_suffix),
                (int)_z_string_len(&right->_suffix), _z_string_data(&right->_suffix));
         assert(_z_string_equals(&left->_suffix, &right->_suffix) == true);
@@ -726,18 +725,18 @@ void keyexpr_field(void) {
     _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
 
     // Initialize
-    _z_keyexpr_t e_rk = gen_keyexpr();
+    _z_wireexpr_t e_rk = gen_wireexpr();
 
     // Encode
-    uint8_t header = (_z_keyexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
-    z_result_t res = _z_keyexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
+    uint8_t header = (_z_wireexpr_has_suffix(&e_rk)) ? _Z_FLAG_Z_K : 0;
+    z_result_t res = _z_wireexpr_encode(&wbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), &e_rk);
     assert(res == _Z_RES_OK);
     (void)(res);
 
     // Decode
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
-    _z_keyexpr_t d_rk;
-    res = _z_keyexpr_decode(&d_rk, &zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), false, _Z_KEYEXPR_MAPPING_LOCAL);
+    _z_wireexpr_t d_rk;
+    res = _z_wireexpr_decode(&d_rk, &zbf, _Z_HAS_FLAG(header, _Z_FLAG_Z_K), false, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
     printf("   ");
@@ -745,8 +744,8 @@ void keyexpr_field(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_rk);
-    _z_keyexpr_clear(&d_rk);
+    _z_wireexpr_clear(&e_rk);
+    _z_wireexpr_clear(&d_rk);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -756,7 +755,7 @@ void keyexpr_field(void) {
 /*=============================*/
 /*------------------ Resource declaration ------------------*/
 _z_decl_kexpr_t gen_resource_declaration(void) {
-    return (_z_decl_kexpr_t){._id = gen_uint16(), ._keyexpr = gen_keyexpr()};
+    return (_z_decl_kexpr_t){._id = gen_uint16(), ._keyexpr = gen_wireexpr()};
 }
 
 void assert_eq_resource_declaration(const _z_decl_kexpr_t *left, const _z_decl_kexpr_t *right) {
@@ -790,15 +789,15 @@ void resource_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_rd._keyexpr);
-    _z_keyexpr_clear(&d_rd._keyexpr);
+    _z_wireexpr_clear(&e_rd._keyexpr);
+    _z_wireexpr_clear(&d_rd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Subscriber declaration ------------------*/
 _z_decl_subscriber_t gen_subscriber_declaration(void) {
-    _z_decl_subscriber_t e_sd = {._keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
+    _z_decl_subscriber_t e_sd = {._keyexpr = gen_wireexpr(), ._id = (uint32_t)gen_uint64()};
     return e_sd;
 }
 
@@ -831,15 +830,15 @@ void subscriber_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_sd._keyexpr);
-    _z_keyexpr_clear(&d_sd._keyexpr);
+    _z_wireexpr_clear(&e_sd._keyexpr);
+    _z_wireexpr_clear(&d_sd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Queryable declaration ------------------*/
 _z_decl_queryable_t gen_queryable_declaration(void) {
-    _z_decl_queryable_t e_qd = {._keyexpr = gen_keyexpr(),
+    _z_decl_queryable_t e_qd = {._keyexpr = gen_wireexpr(),
                                 ._id = (uint32_t)gen_uint64(),
                                 ._ext_queryable_info = {._complete = gen_uint8(), ._distance = gen_uint16()}};
 
@@ -880,15 +879,15 @@ void queryable_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_qd._keyexpr);
-    _z_keyexpr_clear(&d_qd._keyexpr);
+    _z_wireexpr_clear(&e_qd._keyexpr);
+    _z_wireexpr_clear(&d_qd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Token declaration ------------------*/
 _z_decl_token_t gen_token_declaration(void) {
-    _z_decl_token_t e_qd = {._keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
+    _z_decl_token_t e_qd = {._keyexpr = gen_wireexpr(), ._id = (uint32_t)gen_uint64()};
 
     return e_qd;
 }
@@ -923,8 +922,8 @@ void token_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_qd._keyexpr);
-    _z_keyexpr_clear(&d_qd._keyexpr);
+    _z_wireexpr_clear(&e_qd._keyexpr);
+    _z_wireexpr_clear(&d_qd._keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -975,7 +974,7 @@ void forget_resource_declaration(void) {
 
 /*------------------ Forget Subscriber declaration ------------------*/
 _z_undecl_subscriber_t gen_forget_subscriber_declaration(void) {
-    _z_undecl_subscriber_t e_fsd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_uint64()};
+    _z_undecl_subscriber_t e_fsd = {._ext_keyexpr = gen_wireexpr(), ._id = (uint32_t)gen_uint64()};
     return e_fsd;
 }
 
@@ -1008,15 +1007,15 @@ void forget_subscriber_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_fsd._ext_keyexpr);
-    _z_keyexpr_clear(&d_fsd._ext_keyexpr);
+    _z_wireexpr_clear(&e_fsd._ext_keyexpr);
+    _z_wireexpr_clear(&d_fsd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Forget Queryable declaration ------------------*/
 _z_undecl_queryable_t gen_forget_queryable_declaration(void) {
-    _z_undecl_queryable_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_zint()};
+    _z_undecl_queryable_t e_fqd = {._ext_keyexpr = gen_wireexpr(), ._id = (uint32_t)gen_zint()};
     return e_fqd;
 }
 
@@ -1041,7 +1040,7 @@ void forget_queryable_declaration(void) {
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
-    _z_undecl_queryable_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
+    _z_undecl_queryable_t d_fqd = {._ext_keyexpr = _z_wireexpr_null()};
     res = _z_undecl_queryable_decode(&d_fqd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
@@ -1050,15 +1049,15 @@ void forget_queryable_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_fqd._ext_keyexpr);
-    _z_keyexpr_clear(&d_fqd._ext_keyexpr);
+    _z_wireexpr_clear(&e_fqd._ext_keyexpr);
+    _z_wireexpr_clear(&d_fqd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
 
 /*------------------ Forget Token declaration ------------------*/
 _z_undecl_token_t gen_forget_token_declaration(void) {
-    _z_undecl_token_t e_fqd = {._ext_keyexpr = gen_keyexpr(), ._id = (uint32_t)gen_zint()};
+    _z_undecl_token_t e_fqd = {._ext_keyexpr = gen_wireexpr(), ._id = (uint32_t)gen_zint()};
     return e_fqd;
 }
 
@@ -1083,7 +1082,7 @@ void forget_token_declaration(void) {
     _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
     uint8_t e_hdr = 0;
     _z_uint8_decode(&e_hdr, &zbf);
-    _z_undecl_token_t d_fqd = {._ext_keyexpr = _z_keyexpr_null()};
+    _z_undecl_token_t d_fqd = {._ext_keyexpr = _z_wireexpr_null()};
     res = _z_undecl_token_decode(&d_fqd, &zbf, e_hdr, _Z_KEYEXPR_MAPPING_LOCAL);
     assert(res == _Z_RES_OK);
 
@@ -1092,8 +1091,8 @@ void forget_token_declaration(void) {
     printf("\n");
 
     // Free
-    _z_keyexpr_clear(&e_fqd._ext_keyexpr);
-    _z_keyexpr_clear(&d_fqd._ext_keyexpr);
+    _z_wireexpr_clear(&e_fqd._ext_keyexpr);
+    _z_wireexpr_clear(&d_fqd._ext_keyexpr);
     _z_zbuf_clear(&zbf);
     _z_wbuf_clear(&wbf);
 }
@@ -1252,7 +1251,7 @@ _z_interest_t gen_interest(void) {
         if (is_restricted) {
             i.flags |= _Z_INTEREST_FLAG_RESTRICTED;
             // Generate ke
-            i._keyexpr = gen_keyexpr();
+            i._keyexpr = gen_wireexpr();
         }
     };
     return i;
@@ -1456,7 +1455,7 @@ void reply_message(void) {
 _z_n_msg_push_t gen_push(void) {
     return (_z_n_msg_push_t){
         ._body = gen_push_body(),
-        ._key = gen_keyexpr(),
+        ._key = gen_wireexpr(),
         ._qos = _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8),
         ._timestamp = gen_timestamp(),
     };
@@ -1490,7 +1489,7 @@ _z_n_msg_request_t gen_request(void) {
     _z_qos_t qos_default = {._val = 5};
     _z_n_msg_request_t request = {
         ._rid = gen_zint(),
-        ._key = gen_keyexpr(),
+        ._key = gen_wireexpr(),
         ._ext_qos = gen_bool() ? _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8) : qos_default,
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),
         ._ext_target = gen_uint8() % 3,
@@ -1561,7 +1560,7 @@ void request_message(void) {
 
 _z_n_msg_response_t gen_response(void) {
     _z_n_msg_response_t ret = {
-        ._key = gen_keyexpr(),
+        ._key = gen_wireexpr(),
         ._request_id = gen_zint(),
         ._ext_qos = _z_n_qos_make(gen_bool(), gen_bool(), gen_uint8() % 8),
         ._ext_timestamp = gen_bool() ? gen_timestamp() : _z_timestamp_null(),

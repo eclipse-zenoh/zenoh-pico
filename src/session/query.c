@@ -19,7 +19,7 @@
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/net/reply.h"
 #include "zenoh-pico/net/sample.h"
-#include "zenoh-pico/protocol/keyexpr.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/session/resource.h"
 #include "zenoh-pico/session/utils.h"
 #include "zenoh-pico/utils/locality.h"
@@ -29,6 +29,7 @@
 void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     if (pen_qry->_dropper != NULL) {
         pen_qry->_dropper(pen_qry->_arg);
+        pen_qry->_dropper = NULL;
     }
     _z_keyexpr_clear(&pen_qry->_key);
     _z_pending_reply_slist_free(&pen_qry->_pending_replies);
@@ -109,29 +110,32 @@ z_result_t _z_unsafe_register_pending_query(_z_session_t *zn, _z_zint_t id) {
     return ret;
 }
 
-static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id,
-                                                       const _z_keyexpr_t *keyexpr, _z_msg_put_t *msg,
-                                                       z_sample_kind_t kind, _z_entity_global_id_t *replier_id,
-                                                       _z_transport_peer_common_t *peer) {
+static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
+                                                       _z_msg_put_t *msg, z_sample_kind_t kind,
+                                                       _z_entity_global_id_t *replier_id) {
     _z_session_mutex_lock(zn);
 
     // Get query infos
     _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
         _z_session_mutex_unlock(zn);
+        _z_keyexpr_clear(keyexpr);
+        _z_msg_put_clear(msg);
         // Not concerned by the reply
         return _Z_RES_OK;
     }
-    _z_keyexpr_t expanded_ke = __unsafe_z_get_expanded_key_from_key(zn, keyexpr, true, peer);
-    if (!pen_qry->_anykey && !_z_keyexpr_suffix_intersects(&pen_qry->_key, keyexpr)) {
+
+    if (!pen_qry->_anykey && !_z_keyexpr_intersects(&pen_qry->_key, keyexpr)) {
         _z_session_mutex_unlock(zn);
+        _z_keyexpr_clear(keyexpr);
+        _z_msg_put_clear(msg);
         // Not concerned by the reply
         return _Z_RES_OK;
     }
     // Build the reply
     _z_reply_t reply;
-    _z_reply_steal_data(&reply, &expanded_ke, *replier_id, &msg->_payload, &msg->_commons._timestamp, &msg->_encoding,
-                        kind, &msg->_attachment, &msg->_commons._source_info);
+    _z_reply_steal_data(&reply, keyexpr, *replier_id, &msg->_payload, &msg->_commons._timestamp, &msg->_encoding, kind,
+                        &msg->_attachment, &msg->_commons._source_info);
     // Process monotonic & latest consolidation mode
     if ((pen_qry->_consolidation == Z_CONSOLIDATION_MODE_LATEST) ||
         (pen_qry->_consolidation == Z_CONSOLIDATION_MODE_MONOTONIC)) {
@@ -143,8 +147,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         while (curr_node != NULL) {
             pen_rep = _z_pending_reply_slist_value(curr_node);
             // Check if this is the same resource key
-            if (_z_string_equals(&pen_rep->_reply.data._result.sample.keyexpr._suffix,
-                                 &reply.data._result.sample.keyexpr._suffix)) {
+            if (_z_keyexpr_equals(&pen_rep->_reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr)) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -163,7 +166,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 tmp_rep._reply = _z_reply_null();
                 tmp_rep._reply.data._tag = _Z_REPLY_TAG_DATA;
                 _Z_CLEAN_RETURN_IF_ERR(
-                    _z_keyexpr_move(&tmp_rep._reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
+                    _z_keyexpr_copy(&tmp_rep._reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
                     _z_reply_clear(&reply);
                     _z_session_mutex_unlock(zn));
             } else {
@@ -187,15 +190,17 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     return _Z_RES_OK;
 }
 
-z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
+z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, _z_wireexpr_t *wireexpr,
                                           _z_msg_put_t *msg, z_sample_kind_t kind, _z_entity_global_id_t *replier_id,
                                           _z_transport_peer_common_t *peer) {
-    z_result_t ret = _z_trigger_query_reply_partial_inner(zn, id, keyexpr, msg, kind, replier_id, peer);
+    _z_keyexpr_t keyexpr;
+    z_result_t ret = _z_get_keyexpr_from_wireexpr(zn, &keyexpr, wireexpr, peer, true);
+
+    _Z_SET_IF_OK(ret, _z_trigger_query_reply_partial_inner(zn, id, &keyexpr, msg, kind, replier_id));
     // Clean up
-    _z_keyexpr_clear(keyexpr);
-    _z_bytes_drop(&msg->_payload);
-    _z_bytes_drop(&msg->_attachment);
-    _z_encoding_clear(&msg->_encoding);
+    _z_keyexpr_clear(&keyexpr);
+    _z_wireexpr_clear(wireexpr);
+    _z_msg_put_clear(msg);
     return ret;
 }
 

@@ -24,7 +24,6 @@
 #include "zenoh-pico/protocol/definitions/interest.h"
 #include "zenoh-pico/protocol/definitions/message.h"
 #include "zenoh-pico/protocol/ext.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -134,7 +133,7 @@ extern const _z_qos_t _Z_N_QOS_DEFAULT;
 //
 typedef struct {
     _z_zint_t _rid;
-    _z_keyexpr_t _key;
+    _z_wireexpr_t _key;
     _z_timestamp_t _ext_timestamp;
     _z_n_qos_t _ext_qos;
     z_query_target_t _ext_target;
@@ -206,7 +205,7 @@ void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg);
 // +---------------+
 //
 typedef struct {
-    _z_keyexpr_t _key;
+    _z_wireexpr_t _key;
     _z_timestamp_t _timestamp;
     _z_n_qos_t _qos;
     _z_push_body_t _body;
@@ -217,7 +216,7 @@ void _z_n_msg_push_clear(_z_n_msg_push_t *msg);
 typedef struct {
     _z_timestamp_t _ext_timestamp;
     _z_zint_t _request_id;
-    _z_keyexpr_t _key;
+    _z_wireexpr_t _key;
     _z_n_qos_t _ext_qos;
     struct {
         _z_id_t _zid;
@@ -361,22 +360,22 @@ _Z_SLIST_DEFINE(_z_network_message, _z_network_message_t, true)
 
 void _z_n_msg_make_response_final(_z_network_message_t *msg, _z_zint_t rid);
 void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declaration, _z_optional_id_t interest_id);
-void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
+void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
                          z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                          const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
                          _z_n_qos_t qos, const _z_source_info_t *source_info);
-void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_wireexpr_t *key, const _z_bytes_t *payload,
                             const _z_encoding_t *encoding, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
                             const _z_bytes_t *attachment, z_reliability_t reliability,
                             const _z_source_info_t *source_info);
-void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, _z_n_qos_t qos,
+void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_wireexpr_t *key, _z_n_qos_t qos,
                             const _z_timestamp_t *timestamp, z_reliability_t reliability,
                             const _z_source_info_t *source_info);
-void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
+void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_wireexpr_t *key,
                                 z_reliability_t reliability, z_consolidation_mode_t consolidation, _z_n_qos_t qos,
                                 const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
                                 const _z_bytes_t *payload, const _z_encoding_t *encoding, const _z_bytes_t *attachment);
-void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
+void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_wireexpr_t *key,
                                 z_reliability_t reliability, z_consolidation_mode_t consolidation, _z_n_qos_t qos,
                                 const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
                                 const _z_bytes_t *attachment);
