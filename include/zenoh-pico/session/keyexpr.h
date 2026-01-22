@@ -80,6 +80,8 @@ static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
 _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str);
 _z_keyexpr_t _z_keyexpr_alias_from_substr(const char *str, size_t len);
 static inline _z_keyexpr_t _z_keyexpr_alias_from_str(const char *str) {
+    // SAFETY: By convention in pico code-base passing const char* without len implies that it is null-terminated.
+    // Flawfinder: ignore [CWE-126]
     return _z_keyexpr_alias_from_substr(str, strlen(str));
 }
 z_result_t _z_keyexpr_from_string(_z_keyexpr_t *dst, const _z_string_t *str);

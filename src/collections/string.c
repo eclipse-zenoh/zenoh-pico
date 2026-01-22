@@ -237,12 +237,18 @@ z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, cons
     }
 
     uint8_t *curr_ptr = (uint8_t *)_z_string_data(s);
+    // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+    // Flawfinder: ignore [CWE-120]
     memcpy(curr_ptr, _z_string_data(left), left_len);
     curr_ptr += left_len;
     if (separator_len > 0) {
+        // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+        // Flawfinder: ignore [CWE-120]
         memcpy(curr_ptr, separator, separator_len);
         curr_ptr += separator_len;
     }
+    // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+    // Flawfinder: ignore [CWE-120]
     memcpy(curr_ptr, right, len);
     return _Z_RES_OK;
 }

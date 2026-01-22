@@ -106,6 +106,8 @@ z_result_t z_keyexpr_canonize_null_terminated(char *start) {
 }
 
 void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
+    // SAFETY: Documentation specifies that string should be null-terminated.
+    // Flawfinder: ignore [CWE-126]
     keyexpr->_val = _z_keyexpr_alias_from_substr(name, strlen(name));
 }
 
