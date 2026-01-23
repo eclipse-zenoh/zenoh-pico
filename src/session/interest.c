@@ -522,7 +522,7 @@ z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id) {
     return _Z_RES_OK;
 }
 
-z_result_t _z_interest_process_interest(_z_session_t *zn, _z_wireexpr_t *wireexpr, uint32_t id, uint8_t flags,
+z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *wireexpr, uint32_t id, uint8_t flags,
                                         _z_transport_peer_common_t *peer) {
     // Check transport type
     if (zn->_tp._type == _Z_TRANSPORT_UNICAST_TYPE) {
@@ -539,19 +539,19 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, _z_wireexpr_t *wireexp
     // Current flags process
     if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_CURRENT)) {
         // Send all declare
-        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_KEYEXPRS)) {
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_KEYEXPRS)) {
             _Z_DEBUG("Sending declare resources");
             ret = _z_interest_send_decl_resource(zn, id, NULL, restr_key_opt);
         }
-        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_SUBSCRIBERS)) {
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_SUBSCRIBERS)) {
             _Z_DEBUG("Sending declare subscribers");
-            ret = _z_interest_send_decl_subscriber(zn, id, NULL, restr_key_opt);
+            _z_interest_send_decl_subscriber(zn, id, NULL, restr_key_opt);
         }
-        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_QUERYABLES)) {
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_QUERYABLES)) {
             _Z_DEBUG("Sending declare queryables");
             ret = _z_interest_send_decl_queryable(zn, id, NULL, restr_key_opt);
         }
-        if (_Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
+        if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_TOKENS)) {
             _Z_DEBUG("Sending declare tokens");
             ret = _z_interest_send_decl_token(zn, id, NULL, restr_key_opt);
         }
