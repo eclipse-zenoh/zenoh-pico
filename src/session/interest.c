@@ -545,7 +545,7 @@ z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *w
         }
         if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_SUBSCRIBERS)) {
             _Z_DEBUG("Sending declare subscribers");
-            _z_interest_send_decl_subscriber(zn, id, NULL, restr_key_opt);
+            ret = _z_interest_send_decl_subscriber(zn, id, NULL, restr_key_opt);
         }
         if (ret == _Z_RES_OK && _Z_HAS_FLAG(flags, _Z_INTEREST_FLAG_QUERYABLES)) {
             _Z_DEBUG("Sending declare queryables");

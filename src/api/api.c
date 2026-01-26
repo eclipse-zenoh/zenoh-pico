@@ -1960,10 +1960,11 @@ z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *ke
 z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr) {
     _z_keyexpr_wire_declaration_rc_t *declaration = &keyexpr->_this._val._declaration;
     z_result_t ret = _Z_RES_OK;
-    if (!_Z_RC_IS_NULL(declaration) &&
-        !_z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(declaration), _Z_RC_IN_VAL(zs))) {
+    if (_Z_RC_IS_NULL(declaration)) {
+        ret = _Z_ERR_INVALID;
+    } else if (!_z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(declaration), _Z_RC_IN_VAL(zs))) {
         ret = _Z_ERR_KEYEXPR_DECLARED_ON_ANOTHER_SESSION;
-    } else if (!_Z_RC_IS_NULL(declaration)) {
+    } else if (_z_rc_strong_count(declaration->_cnt) == 1) {
         ret = _z_keyexpr_wire_declaration_undeclare(_Z_RC_IN_VAL(declaration));
     }
     z_keyexpr_drop(keyexpr);

@@ -280,7 +280,6 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         }
         _z_network_message_t n_msg;
         _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-        ret = _z_send_undeclare(zn, &n_msg);
         if (_z_send_undeclare(zn, &n_msg) != _Z_RES_OK) {
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
