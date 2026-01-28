@@ -72,6 +72,7 @@ jobs:
           Z_FEATURE_PERIODIC_TASKS: 1
           Z_FEATURE_ADVANCED_PUBLICATION: 1
           Z_FEATURE_ADVANCED_SUBSCRIPTION: 1
+          Z_FEATURE_ADMIN_SPACE: 1
 
       - name: Test debug
         run: make test

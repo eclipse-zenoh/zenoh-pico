@@ -64,6 +64,15 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+#if Z_FEATURE_ADMIN_SPACE == 1
+    // Start admin space
+    if (zp_start_admin_space(z_loan_mut(s)) < 0) {
+        printf("Unable to start admin space\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+#endif
+
     z_owned_closure_sample_t callback;
     z_closure(&callback, data_handler, NULL, NULL);
     printf("Declaring Subscriber on '%s'...\n", keyexpr);

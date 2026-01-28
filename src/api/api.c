@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "zenoh-pico/api/admin_space.h"
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/api/olv_macros.h"
 #include "zenoh-pico/api/primitives.h"
@@ -683,12 +684,14 @@ void z_open_options_default(z_open_options_t *options) {
 #if Z_FEATURE_MULTI_THREAD == 1
     options->auto_start_read_task = true;
     options->auto_start_lease_task = true;
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
+#endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_PERIODIC_TASKS == 1)
     options->auto_start_periodic_task = false;
 #endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
+    options->auto_start_admin_space = false;
 #endif
-#else
+#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
     options->__dummy = 0;
 #endif
 }
@@ -793,6 +796,15 @@ z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_
         return task_ret;
     }
 #endif  // Z_FEATURE_MULTI_THREAD
+
+#ifdef Z_FEATURE_UNSTABLE_API
+#if Z_FEATURE_ADMIN_SPACE == 1
+    if (opts.auto_start_admin_space) {
+        _Z_CLEAN_RETURN_IF_ERR(zp_start_admin_space(z_session_loan_mut(zs)), z_session_drop(z_session_move(zs));
+                               z_config_drop(config));
+    }
+#endif
+#endif
 
     // Clean up
 #if Z_FEATURE_AUTO_RECONNECT == 1
