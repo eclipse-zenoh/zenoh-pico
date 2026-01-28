@@ -47,7 +47,7 @@ _z_n_msg_request_exts_t _z_n_msg_request_needed_exts(const _z_n_msg_request_t *m
 }
 
 void _z_n_msg_request_clear(_z_n_msg_request_t *msg) {
-    _z_keyexpr_clear(&msg->_key);
+    _z_wireexpr_clear(&msg->_key);
     switch (msg->_tag) {
         case _Z_REQUEST_QUERY: {
             _z_msg_query_clear(&msg->_body._query);
@@ -88,13 +88,13 @@ static z_result_t _z_push_body_copy(_z_push_body_t *dst, const _z_push_body_t *s
 void _z_n_msg_response_final_clear(_z_n_msg_response_final_t *msg) { (void)(msg); }
 
 void _z_n_msg_push_clear(_z_n_msg_push_t *msg) {
-    _z_keyexpr_clear(&msg->_key);
+    _z_wireexpr_clear(&msg->_key);
     _z_push_body_clear(&msg->_body);
 }
 
 void _z_n_msg_response_clear(_z_n_msg_response_t *msg) {
     _z_timestamp_clear(&msg->_ext_timestamp);
-    _z_keyexpr_clear(&msg->_key);
+    _z_wireexpr_clear(&msg->_key);
     switch (msg->_tag) {
         case _Z_RESPONSE_BODY_REPLY: {
             _z_msg_reply_clear(&msg->_body._reply);
@@ -179,7 +179,7 @@ void _z_n_msg_make_declare(_z_network_message_t *msg, _z_declaration_t declarati
     msg->_body._declare._ext_timestamp = _z_timestamp_null();
 }
 
-void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
+void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_wireexpr_t *key, const _z_slice_t *parameters, _z_zint_t qid,
                          z_reliability_t reliability, z_consolidation_mode_t consolidation, const _z_bytes_t *payload,
                          const _z_encoding_t *encoding, uint64_t timeout_ms, const _z_bytes_t *attachment,
                          _z_n_qos_t qos, const _z_source_info_t *source_info) {
@@ -201,7 +201,7 @@ void _z_n_msg_make_query(_z_zenoh_message_t *msg, const _z_keyexpr_t *key, const
     msg->_body._request._ext_timestamp = _z_timestamp_null();
 }
 
-void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, const _z_bytes_t *payload,
+void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_wireexpr_t *key, const _z_bytes_t *payload,
                             const _z_encoding_t *encoding, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
                             const _z_bytes_t *attachment, z_reliability_t reliability,
                             const _z_source_info_t *source_info) {
@@ -219,7 +219,7 @@ void _z_n_msg_make_push_put(_z_network_message_t *dst, const _z_keyexpr_t *key, 
     dst->_body._push._body._body._put._attachment = (attachment == NULL) ? _z_bytes_null() : *attachment;
 }
 
-void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, _z_n_qos_t qos,
+void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_wireexpr_t *key, _z_n_qos_t qos,
                             const _z_timestamp_t *timestamp, z_reliability_t reliability,
                             const _z_source_info_t *source_info) {
     dst->_tag = _Z_N_PUSH;
@@ -234,7 +234,7 @@ void _z_n_msg_make_push_del(_z_network_message_t *dst, const _z_keyexpr_t *key, 
     dst->_body._push._body._body._del._attachment = _z_bytes_null();
 }
 
-void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
+void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_wireexpr_t *key,
                                 z_reliability_t reliability, z_consolidation_mode_t consolidation, _z_n_qos_t qos,
                                 const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
                                 const _z_bytes_t *payload, const _z_encoding_t *encoding,
@@ -260,7 +260,7 @@ void _z_n_msg_make_reply_ok_put(_z_network_message_t *dst, const _z_id_t *zid, _
     dst->_body._response._ext_responder._zid = *zid;
 }
 
-void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_keyexpr_t *key,
+void _z_n_msg_make_reply_ok_del(_z_network_message_t *dst, const _z_id_t *zid, _z_zint_t rid, const _z_wireexpr_t *key,
                                 z_reliability_t reliability, z_consolidation_mode_t consolidation, _z_n_qos_t qos,
                                 const _z_timestamp_t *timestamp, const _z_source_info_t *source_info,
                                 const _z_bytes_t *attachment) {
@@ -290,7 +290,7 @@ void _z_n_msg_make_reply_err(_z_network_message_t *dst, const _z_id_t *zid, _z_z
     dst->_reliability = reliability;
     dst->_body._response._tag = _Z_RESPONSE_BODY_ERR;
     dst->_body._response._request_id = rid;
-    dst->_body._response._key = _z_keyexpr_null();
+    dst->_body._response._key = _z_wireexpr_null();
     dst->_body._response._body._err._payload = (payload == NULL) ? _z_bytes_null() : *payload;
     dst->_body._response._body._err._encoding = (encoding == NULL) ? _z_encoding_null() : *encoding;
     dst->_body._response._body._err._ext_source_info = (source_info == NULL) ? _z_source_info_null() : *source_info;
@@ -308,13 +308,13 @@ void _z_n_msg_make_interest(_z_network_message_t *msg, _z_interest_t interest) {
 
 static z_result_t _z_n_msg_push_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
     memcpy(dst, src, sizeof(_z_network_message_t));
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._push._key, &src->_body._push._key));
+    _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst->_body._push._key, &src->_body._push._key));
     return _z_push_body_copy(&dst->_body._push._body, &src->_body._push._body);
 }
 
 static z_result_t _z_n_msg_request_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
     memcpy(dst, src, sizeof(_z_network_message_t));
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._request._key, &src->_body._request._key));
+    _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst->_body._request._key, &src->_body._request._key));
     switch (src->_body._request._tag) {
         case _Z_REQUEST_QUERY:
             _Z_RETURN_IF_ERR(_z_slice_copy(&dst->_body._request._body._query._parameters,
@@ -340,7 +340,7 @@ static z_result_t _z_n_msg_request_copy(_z_network_message_t *dst, const _z_netw
 
 static z_result_t _z_n_msg_response_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
     memcpy(dst, src, sizeof(_z_network_message_t));
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_body._response._key, &src->_body._response._key));
+    _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst->_body._response._key, &src->_body._response._key));
     switch (src->_body._response._tag) {
         case _Z_RESPONSE_BODY_REPLY:
             _Z_RETURN_IF_ERR(
@@ -366,31 +366,31 @@ static z_result_t _z_n_msg_declare_copy(_z_network_message_t *dst, const _z_netw
     switch (src_decl->_tag) {
         case _Z_DECL_KEXPR: {
             _Z_RETURN_IF_ERR(
-                _z_keyexpr_copy(&dst_decl->_body._decl_kexpr._keyexpr, &src_decl->_body._decl_kexpr._keyexpr));
+                _z_wireexpr_copy(&dst_decl->_body._decl_kexpr._keyexpr, &src_decl->_body._decl_kexpr._keyexpr));
         } break;
         case _Z_DECL_SUBSCRIBER: {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._decl_subscriber._keyexpr,
-                                             &src_decl->_body._decl_subscriber._keyexpr));
+            _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst_decl->_body._decl_subscriber._keyexpr,
+                                              &src_decl->_body._decl_subscriber._keyexpr));
         } break;
         case _Z_UNDECL_SUBSCRIBER: {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_subscriber._ext_keyexpr,
-                                             &src_decl->_body._undecl_subscriber._ext_keyexpr));
+            _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst_decl->_body._undecl_subscriber._ext_keyexpr,
+                                              &src_decl->_body._undecl_subscriber._ext_keyexpr));
         } break;
         case _Z_DECL_QUERYABLE: {
             _Z_RETURN_IF_ERR(
-                _z_keyexpr_copy(&dst_decl->_body._decl_queryable._keyexpr, &src_decl->_body._decl_queryable._keyexpr));
+                _z_wireexpr_copy(&dst_decl->_body._decl_queryable._keyexpr, &src_decl->_body._decl_queryable._keyexpr));
         } break;
         case _Z_UNDECL_QUERYABLE: {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_queryable._ext_keyexpr,
-                                             &src_decl->_body._undecl_queryable._ext_keyexpr));
+            _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst_decl->_body._undecl_queryable._ext_keyexpr,
+                                              &src_decl->_body._undecl_queryable._ext_keyexpr));
         } break;
         case _Z_DECL_TOKEN: {
             _Z_RETURN_IF_ERR(
-                _z_keyexpr_copy(&dst_decl->_body._decl_token._keyexpr, &src_decl->_body._decl_token._keyexpr));
+                _z_wireexpr_copy(&dst_decl->_body._decl_token._keyexpr, &src_decl->_body._decl_token._keyexpr));
         } break;
         case _Z_UNDECL_TOKEN: {
-            _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst_decl->_body._undecl_token._ext_keyexpr,
-                                             &src_decl->_body._undecl_token._ext_keyexpr));
+            _Z_RETURN_IF_ERR(_z_wireexpr_copy(&dst_decl->_body._undecl_token._ext_keyexpr,
+                                              &src_decl->_body._undecl_token._ext_keyexpr));
         } break;
         default:
             break;
@@ -401,7 +401,7 @@ static z_result_t _z_n_msg_declare_copy(_z_network_message_t *dst, const _z_netw
 static z_result_t _z_n_msg_interest_copy(_z_network_message_t *dst, const _z_network_message_t *src) {
     memcpy(dst, src, sizeof(_z_network_message_t));
     _Z_RETURN_IF_ERR(
-        _z_keyexpr_copy(&dst->_body._interest._interest._keyexpr, &src->_body._interest._interest._keyexpr));
+        _z_wireexpr_copy(&dst->_body._interest._interest._keyexpr, &src->_body._interest._interest._keyexpr));
     return _Z_RES_OK;
 }
 

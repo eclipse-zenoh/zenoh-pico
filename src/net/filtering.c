@@ -125,8 +125,7 @@ static void _z_write_filter_session_register(_z_session_t *session, _z_write_fil
             _z_subscription_rc_slist_t *node = session->_subscriptions;
             while (node != NULL) {
                 _z_subscription_t *sub = _Z_RC_IN_VAL(_z_subscription_rc_slist_value(node));
-                if (_z_locality_allows_local(sub->_allowed_origin) &&
-                    _z_keyexpr_suffix_intersects(&ctx->key, &sub->_key)) {
+                if (_z_locality_allows_local(sub->_allowed_origin) && _z_keyexpr_intersects(&ctx->key, &sub->_key)) {
                     _z_write_filter_ctx_add_local_match(ctx);
                 }
                 node = _z_subscription_rc_slist_next(node);
@@ -139,9 +138,8 @@ static void _z_write_filter_session_register(_z_session_t *session, _z_write_fil
             while (node != NULL) {
                 _z_session_queryable_t *queryable = _Z_RC_IN_VAL(_z_session_queryable_rc_slist_value(node));
                 if (_z_locality_allows_local(queryable->_allowed_origin)) {
-                    if (ctx->is_complete
-                            ? (queryable->_complete && _z_keyexpr_suffix_includes(&queryable->_key, &ctx->key))
-                            : _z_keyexpr_suffix_intersects(&ctx->key, &queryable->_key)) {
+                    if (ctx->is_complete ? (queryable->_complete && _z_keyexpr_includes(&queryable->_key, &ctx->key))
+                                         : _z_keyexpr_intersects(&ctx->key, &queryable->_key)) {
                         _z_write_filter_ctx_add_local_match(ctx);
                     }
                 }
@@ -198,7 +196,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
             bool peer_allowed = _z_write_filter_peer_allowed(ctx, peer);
             if (peer_allowed &&
                 (!ctx->is_complete ||
-                 (msg->is_complete && (ctx->is_aggregate || _z_keyexpr_suffix_includes(msg->key, &ctx->key))))) {
+                 (msg->is_complete && (ctx->is_aggregate || _z_keyexpr_includes(msg->key, &ctx->key))))) {
                 _z_write_filter_push_target(ctx, peer, msg->id);
             }
             break;
@@ -219,7 +217,7 @@ static void _z_write_filter_callback(const _z_interest_msg_t *msg, _z_transport_
     _z_write_filter_mutex_unlock(ctx);
 }
 
-z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, const _z_keyexpr_t *keyexpr,
                                   uint8_t interest_flag, bool complete, z_locality_t locality) {
     uint8_t flags = interest_flag | _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT;
     if (_Z_RC_IN_VAL(zn)->_mode == Z_WHATAMI_CLIENT) {
@@ -230,13 +228,16 @@ z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *
         flags |= _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_FUTURE;
     }
     filter->ctx = _z_write_filter_ctx_rc_null();
+    _z_keyexpr_t ke;
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke, keyexpr));
     _z_write_filter_ctx_t *ctx = (_z_write_filter_ctx_t *)z_malloc(sizeof(_z_write_filter_ctx_t));
 
     if (ctx == NULL) {
+        _z_keyexpr_clear(&ke);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
 #if Z_FEATURE_MULTI_THREAD == 1
-    _Z_RETURN_IF_ERR(_z_mutex_init(&ctx->mutex));
+    _Z_CLEAN_RETURN_IF_ERR(_z_mutex_init(&ctx->mutex), _z_keyexpr_clear(&ke); z_free(ctx));
 #endif
     ctx->state = WRITE_FILTER_ACTIVE;
     ctx->targets = _z_filter_target_slist_new();
@@ -251,7 +252,7 @@ z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *
     ctx->allow_local = _z_locality_allows_local(locality);
     ctx->allow_remote = _z_locality_allows_remote(locality);
     ctx->target_type = expects_queryable ? _Z_WRITE_FILTER_QUERYABLE : _Z_WRITE_FILTER_SUBSCRIBER;
-    ctx->key = _z_get_expanded_key_from_key(_Z_RC_IN_VAL(zn), &keyexpr, NULL);
+    ctx->key = ke;
     ctx->zn = _z_session_rc_clone_as_weak(zn);
     if (_Z_RC_IS_NULL(&ctx->zn)) {
         _z_write_filter_ctx_clear(ctx);
@@ -363,8 +364,8 @@ static void _z_write_filter_notify_local_entity(_z_session_t *session, const _z_
          registration = registration->next) {
         _z_write_filter_ctx_t *registration_ctx = _Z_RC_IN_VAL(&registration->ctx_rc);
         if (!(registration_ctx->allow_local &&
-              (registration_ctx->is_complete ? (is_complete && _z_keyexpr_suffix_includes(key, &registration_ctx->key))
-                                             : _z_keyexpr_suffix_intersects(&registration_ctx->key, key)))) {
+              (registration_ctx->is_complete ? (is_complete && _z_keyexpr_includes(key, &registration_ctx->key))
+                                             : _z_keyexpr_intersects(&registration_ctx->key, key)))) {
             continue;
         }
         if (registration_ctx->target_type != source_type) {
@@ -427,7 +428,7 @@ void _z_write_filter_notify_queryable(_z_session_t *session, const _z_keyexpr_t 
 #endif  // Z_FEATURE_LOCAL_SUBSCRIBER == 1 || Z_FEATURE_LOCAL_QUERYABLE == 1
 
 #else  // Z_FEATURE_INTEREST == 0
-z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, _z_keyexpr_t keyexpr,
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, const _z_keyexpr_t *keyexpr,
                                   uint8_t interest_flag, bool complete, z_locality_t locality) {
     _ZP_UNUSED(zn);
     _ZP_UNUSED(keyexpr);

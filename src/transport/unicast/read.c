@@ -314,8 +314,6 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
         if (drop_peer) {
             _Z_DEBUG("Dropping peer");
             _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
-            _z_subscription_cache_invalidate(zs);
-            _z_queryable_cache_invalidate(zs);
             _z_interest_peer_disconnected(zs, &curr_peer->common);
             ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
         }

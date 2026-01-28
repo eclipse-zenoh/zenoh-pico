@@ -58,7 +58,11 @@ static inline void *_z_int_void_map_insert(_z_int_void_map_t *map, size_t k, voi
         return NULL;
     }
     *key = k;
-    return _z_hashmap_insert(map, key, v, f, replace);
+    void *ret = _z_hashmap_insert(map, key, v, f, replace);
+    if (ret == NULL) {
+        z_free(key);
+    }
+    return ret;
 }
 
 static inline void *_z_int_void_map_get(const _z_int_void_map_t *map, size_t k) { return _z_hashmap_get(map, &k); }

@@ -18,6 +18,7 @@
 #include <stdbool.h>
 
 #include "zenoh-pico/net/session.h"
+#include "zenoh-pico/protocol/core.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,7 +38,8 @@ z_result_t _z_interest_process_undeclares(_z_session_t *zn, const _z_declaration
                                           _z_transport_peer_common_t *peer);
 z_result_t _z_interest_process_declare_final(_z_session_t *zn, uint32_t id, _z_transport_peer_common_t *peer);
 z_result_t _z_interest_process_interest_final(_z_session_t *zn, uint32_t id);
-z_result_t _z_interest_process_interest(_z_session_t *zn, _z_keyexpr_t *key, uint32_t id, uint8_t flags);
+z_result_t _z_interest_process_interest(_z_session_t *zn, const _z_wireexpr_t *wireexpr, uint32_t id, uint8_t flags,
+                                        _z_transport_peer_common_t *peer);
 z_result_t _z_interest_push_declarations_to_peer(_z_session_t *zn, _z_transport_peer_common_t *peer);
 z_result_t _z_interest_pull_resource_from_peers(_z_session_t *zn);
 void _z_interest_peer_disconnected(_z_session_t *zn, _z_transport_peer_common_t *peer);

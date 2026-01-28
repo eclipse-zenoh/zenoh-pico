@@ -154,37 +154,43 @@ typedef struct {
     uint16_t _id;
     uintptr_t _mapping;
     _z_string_t _suffix;
-} _z_keyexpr_t;
+} _z_wireexpr_t;
 
-static inline bool _z_keyexpr_is_local(const _z_keyexpr_t *key) { return key->_mapping == _Z_KEYEXPR_MAPPING_LOCAL; }
-static inline bool _z_keyexpr_has_suffix(const _z_keyexpr_t *ke) { return _z_string_check(&ke->_suffix); }
-static inline bool _z_keyexpr_check(const _z_keyexpr_t *ke) {
-    return (ke->_id != Z_RESOURCE_ID_NONE) || _z_keyexpr_has_suffix(ke);
+static inline void _z_wireexpr_clear(_z_wireexpr_t *expr) { _z_string_clear(&expr->_suffix); }
+static inline z_result_t _z_wireexpr_copy(_z_wireexpr_t *dst, const _z_wireexpr_t *src) {
+    _Z_RETURN_IF_ERR(_z_string_copy(&dst->_suffix, &src->_suffix));
+    dst->_id = src->_id;
+    dst->_mapping = src->_mapping;
+    return _Z_RES_OK;
 }
-
-/**
- * Create a resource key from a resource name.
- *
- * Parameters:
- *     rname: The resource name. The caller keeps its ownership.
- *
- * Returns:
- *     A :c:type:`_z_keyexpr_t` containing a new resource key.
- */
-_z_keyexpr_t _z_rname(const char *rname);
-
-/**
- * Create a resource key from a resource id and a suffix.
- *
- * Parameters:
- *     id: The resource id.
- *     suffix: The suffix.
- *
- * Returns:
- *     A :c:type:`_z_keyexpr_t` containing a new resource key.
- */
-_z_keyexpr_t _z_rid_with_suffix(uint16_t rid, const char *suffix);
-_z_keyexpr_t _z_rid_with_substr_suffix(uint16_t rid, const char *suffix, size_t suffix_len);
+static inline _z_wireexpr_t _z_wireexpr_alias(const _z_wireexpr_t *src) {
+    _z_wireexpr_t dst;
+    dst._suffix = _z_string_alias(src->_suffix);
+    dst._id = src->_id;
+    dst._mapping = src->_mapping;
+    return dst;
+}
+static inline _z_wireexpr_t _z_wireexpr_null(void) {
+    _z_wireexpr_t expr = {0};
+    return expr;
+}
+static inline _z_wireexpr_t _z_wireexpr_alias_string(const _z_string_t *src) {
+    _z_wireexpr_t dst = _z_wireexpr_null();
+    dst._suffix = _z_string_alias(*src);
+    return dst;
+}
+static inline _z_wireexpr_t _z_wireexpr_steal(_z_wireexpr_t *expr) {
+    _z_wireexpr_t expr2 = *expr;
+    *expr = _z_wireexpr_null();
+    return expr2;
+}
+static inline bool _z_wireexpr_is_local(const _z_wireexpr_t *expr) {
+    return expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL;
+}
+static inline bool _z_wireexpr_has_suffix(const _z_wireexpr_t *expr) { return _z_string_check(&expr->_suffix); }
+static inline bool _z_wireexpr_check(const _z_wireexpr_t *expr) {
+    return _z_string_check(&expr->_suffix) || expr->_id != Z_RESOURCE_ID_NONE;
+}
 
 /**
  * QoS settings of zenoh message.

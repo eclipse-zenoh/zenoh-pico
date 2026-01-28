@@ -73,22 +73,24 @@ void _z_string_free(_z_string_t **str) {
         *str = NULL;
     }
 }
-
-int _z_string_compare(const _z_string_t *left, const _z_string_t *right) {
-    size_t len_left = _z_string_len(left);
-    size_t len_right = _z_string_len(right);
-
-    int result = strncmp(_z_string_data(left), _z_string_data(right), len_left < len_right ? len_left : len_right);
+int _z_substring_compare(const _z_string_t *left, size_t left_start, size_t left_len, const _z_string_t *right,
+                         size_t right_start, size_t right_len) {
+    int result = strncmp(_z_string_data(left) + left_start, _z_string_data(right) + right_start,
+                         left_len < right_len ? left_len : right_len);
 
     if (result == 0) {
-        if (len_left < len_right) {
+        if (left_len < right_len) {
             return -1;
-        } else if (len_left > len_right) {
+        } else if (left_len > right_len) {
             return 1;
         }
     }
 
     return result;
+}
+
+int _z_string_compare(const _z_string_t *left, const _z_string_t *right) {
+    return _z_substring_compare(left, 0, _z_string_len(left), right, 0, _z_string_len(right));
 }
 
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right) {
@@ -210,3 +212,43 @@ char *_z_str_from_string_clone(const _z_string_t *str) {
 bool _z_str_eq(const char *left, const char *right) { return strcmp(left, right) == 0; }
 
 int _z_str_cmp(const char *left, const char *right) { return strcmp(left, right); }
+
+z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, const char *right, size_t len,
+                                   const char *separator, size_t separator_len) {
+    if (separator == NULL && separator_len != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    *s = _z_string_null();
+    size_t left_len = _z_string_len(left);
+    if (len == 0) {
+        return _z_string_copy(s, left);
+    } else if (right == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    } else if (left_len == 0) {
+        *s = _z_string_copy_from_substr(right, len);
+        if (!_z_string_check(s)) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+    }
+
+    *s = _z_string_preallocate(left_len + len + separator_len);
+    if (!_z_string_check(s)) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+
+    uint8_t *curr_ptr = (uint8_t *)_z_string_data(s);
+    // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+    // Flawfinder: ignore [CWE-120]
+    memcpy(curr_ptr, _z_string_data(left), left_len);
+    curr_ptr += left_len;
+    if (separator_len > 0) {
+        // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+        // Flawfinder: ignore [CWE-120]
+        memcpy(curr_ptr, separator, separator_len);
+        curr_ptr += separator_len;
+    }
+    // SAFETY: _z_string_preallocate and check of its result above ensures bound checks.
+    // Flawfinder: ignore [CWE-120]
+    memcpy(curr_ptr, right, len);
+    return _Z_RES_OK;
+}

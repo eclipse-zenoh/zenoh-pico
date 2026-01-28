@@ -18,7 +18,6 @@
 #include <stdint.h>
 
 #include "zenoh-pico/protocol/core.h"
-#include "zenoh-pico/protocol/keyexpr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +35,7 @@ extern "C" {
 #define _Z_INTEREST_NOT_FINAL_MASK (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE)
 
 typedef struct {
-    _z_keyexpr_t _keyexpr;
+    _z_wireexpr_t _keyexpr;
     uint32_t _id;
     uint8_t flags;
     bool complete;
@@ -45,7 +44,7 @@ typedef struct {
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_interest_t _z_interest_null(void) { return (_z_interest_t){0}; }
 void _z_interest_clear(_z_interest_t* decl);
-_z_interest_t _z_make_interest(_Z_MOVE(_z_keyexpr_t) key, uint32_t id, uint8_t flags);
+_z_interest_t _z_make_interest(_Z_MOVE(_z_wireexpr_t) key, uint32_t id, uint8_t flags);
 _z_interest_t _z_make_interest_final(uint32_t id);
 
 #ifdef __cplusplus

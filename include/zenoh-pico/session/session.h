@@ -25,6 +25,7 @@
 #include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/protocol/core.h"
+#include "zenoh-pico/session/keyexpr.h"
 #include "zenoh-pico/transport/manager.h"
 
 #ifdef __cplusplus
@@ -42,7 +43,7 @@ typedef enum {
 } _z_subscriber_kind_t;
 
 typedef struct {
-    _z_keyexpr_t _key;
+    _z_string_t _key;
     uint16_t _id;
     uint16_t _refcount;
 } _z_resource_t;
@@ -60,6 +61,7 @@ _Z_SLIST_DEFINE(_z_resource, _z_resource_t, true)
 _Z_ELEM_DEFINE(_z_keyexpr, _z_keyexpr_t, _z_keyexpr_size, _z_keyexpr_clear, _z_keyexpr_copy, _z_keyexpr_move,
                _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_z_keyexpr, _z_keyexpr_t)
+_Z_SLIST_DEFINE(_z_keyexpr, _z_keyexpr_t, true)
 
 // Forward declaration to avoid cyclical include
 typedef struct _z_sample_t _z_sample_t;
@@ -71,8 +73,6 @@ typedef void (*_z_closure_sample_callback_t)(_z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_keyexpr_t _declared_key;
-    uint16_t _key_id;
     uint32_t _id;
     z_locality_t _allowed_origin;
     _z_closure_sample_callback_t _callback;
@@ -105,7 +105,6 @@ typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_keyexpr_t _declared_key;
     uint32_t _id;
     _z_closure_query_callback_t _callback;
     _z_drop_handler_t _dropper;
@@ -220,6 +219,7 @@ typedef enum {
 
 typedef struct {
     _z_keyexpr_t _key;
+    _z_transport_peer_common_t *_peer;
     uint32_t _id;
     uint8_t _type;
     bool _complete;

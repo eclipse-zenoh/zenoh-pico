@@ -104,8 +104,9 @@ z_result_t _z_encoding_decode(_z_encoding_t *en, _z_zbuf_t *zbf);
 z_result_t _z_value_encode(_z_wbuf_t *wbf, const _z_value_t *en);
 z_result_t _z_value_decode(_z_value_t *en, _z_zbuf_t *zbf);
 
-z_result_t _z_keyexpr_encode(_z_wbuf_t *buf, bool has_suffix, const _z_keyexpr_t *ke);
-z_result_t _z_keyexpr_decode(_z_keyexpr_t *ke, _z_zbuf_t *buf, bool has_suffix, bool remote_mapping, uintptr_t mapping);
+z_result_t _z_wireexpr_encode(_z_wbuf_t *buf, bool has_suffix, const _z_wireexpr_t *ke);
+z_result_t _z_wireexpr_decode(_z_wireexpr_t *ke, _z_zbuf_t *buf, bool has_suffix, bool remote_mapping,
+                              uintptr_t mapping);
 
 z_result_t _z_timestamp_encode(_z_wbuf_t *buf, const _z_timestamp_t *ts);
 z_result_t _z_timestamp_encode_ext(_z_wbuf_t *buf, const _z_timestamp_t *ts);

@@ -107,24 +107,26 @@ void *_z_hashmap_insert(_z_hashmap_t *map, void *k, void *v, z_element_free_f f_
         map->_vals = (_z_list_t **)z_malloc(len);
         if (map->_vals != NULL) {
             (void)memset(map->_vals, 0, len);
+        } else {
+            return NULL;
         }
     }
 
-    if (map->_vals != NULL) {
-        if (replace) {
-            // Free any old value
-            _z_hashmap_remove(map, k, f_f);
-        }
+    if (replace) {
+        // Free any old value
+        _z_hashmap_remove(map, k, f_f);
+    }
 
-        // Insert the element
-        _z_hashmap_entry_t *entry = (_z_hashmap_entry_t *)z_malloc(sizeof(_z_hashmap_entry_t));
-        if (entry != NULL) {
-            entry->_key = k;
-            entry->_val = v;
+    // Insert the element
+    _z_hashmap_entry_t *entry = (_z_hashmap_entry_t *)z_malloc(sizeof(_z_hashmap_entry_t));
+    if (entry != NULL) {
+        entry->_key = k;
+        entry->_val = v;
 
-            size_t idx = map->_f_hash(k) % map->_capacity;
-            map->_vals[idx] = _z_list_push(map->_vals[idx], entry);
-        }
+        size_t idx = map->_f_hash(k) % map->_capacity;
+        map->_vals[idx] = _z_list_push(map->_vals[idx], entry);
+    } else {
+        return NULL;
     }
 
     return v;

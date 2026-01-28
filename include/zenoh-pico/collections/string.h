@@ -118,9 +118,17 @@ _z_string_t _z_string_steal(_z_string_t *str);
 void _z_string_move_str(_z_string_t *dst, char *src);
 void _z_string_free(_z_string_t **s);
 int _z_string_compare(const _z_string_t *left, const _z_string_t *right);
+int _z_substring_compare(const _z_string_t *left, size_t left_start, size_t left_len, const _z_string_t *right,
+                         size_t right_start, size_t right_len);
 bool _z_string_equals(const _z_string_t *left, const _z_string_t *right);
 _z_string_t _z_string_convert_bytes_le(const _z_slice_t *bs);
 _z_string_t _z_string_preallocate(const size_t len);
+z_result_t _z_string_concat_substr(_z_string_t *s, const _z_string_t *left, const char *right, size_t len,
+                                   const char *separator, size_t separator_len);
+static inline z_result_t _z_string_concat(_z_string_t *s, const _z_string_t *left, const _z_string_t *right,
+                                          const char *separator, size_t separator_len) {
+    return _z_string_concat_substr(s, left, _z_string_data(right), _z_string_len(right), separator, separator_len);
+}
 
 char *_z_str_from_string_clone(const _z_string_t *str);
 
