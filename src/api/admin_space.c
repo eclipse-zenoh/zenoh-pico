@@ -20,45 +20,75 @@
 
 #if Z_FEATURE_ADMIN_SPACE == 1
 
-static z_result_t _ze_admin_space_ke_append_id(z_owned_keyexpr_t *ke, const z_id_t *id) {
-    z_owned_string_t s;
-    _Z_RETURN_IF_ERR(z_id_to_string(id, &s));
-    z_result_t r = _z_keyexpr_append_substr(ke, z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s)));
-    z_string_drop(z_string_move(&s));
-    return r;
-}
-
-// ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION
-static z_result_t _ze_admin_space_ke(z_owned_keyexpr_t *ke, const z_id_t *zid) {
-    z_internal_keyexpr_null(ke);
-    _Z_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_AT));
-    _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_ke_append_id(ke, zid), z_keyexpr_drop(z_keyexpr_move(ke)));
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_PICO), z_keyexpr_drop(z_keyexpr_move(ke)));
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_SESSION), z_keyexpr_drop(z_keyexpr_move(ke)));
-    return _Z_RES_OK;
-}
-
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_STARSTAR
 static z_result_t _ze_admin_space_queryable_ke(z_owned_keyexpr_t *ke, const z_id_t *zid) {
-    _Z_RETURN_IF_ERR(_ze_admin_space_ke(ke, zid));
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_STARSTAR), z_keyexpr_drop(z_keyexpr_move(ke)));
-    return _Z_RES_OK;
+    z_internal_keyexpr_null(ke);
+
+    z_owned_string_t zid_str;
+    _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
+
+    char buf[128];
+    int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
+                     (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
+                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,
+                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_STARSTAR);
+
+    z_string_drop(z_string_move(&zid_str));
+
+    if (n < 0 || (size_t)n >= sizeof(buf)) {
+        return _Z_ERR_INVALID;
+    }
+
+    return z_keyexpr_from_str(ke, buf);
 }
 
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_TRANSPORT_*
 static z_result_t _ze_admin_space_transport_ke(z_owned_keyexpr_t *ke, const z_id_t *zid, const char *transport) {
-    _Z_RETURN_IF_ERR(_ze_admin_space_ke(ke, zid));
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, transport), z_keyexpr_drop(z_keyexpr_move(ke)));
-    return _Z_RES_OK;
+    z_internal_keyexpr_null(ke);
+
+    z_owned_string_t zid_str;
+    _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
+
+    char buf[128];
+    int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
+                     (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
+                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,
+                     _Z_KEYEXPR_SEPARATOR, transport);
+
+    z_string_drop(z_string_move(&zid_str));
+
+    if (n < 0 || (size_t)n >= sizeof(buf)) {
+        return _Z_ERR_INVALID;
+    }
+
+    return z_keyexpr_from_str(ke, buf);
 }
 
 // ke = _Z_KEYEXPR_AT / ZID / _Z_KEYEXPR_PICO / _Z_KEYEXPR_SESSION / _Z_KEYEXPR_TRANSPORT_* / _Z_KEYEXPR_LINK / LID
 static z_result_t _ze_admin_space_transport_link_ke(z_owned_keyexpr_t *ke, const z_id_t *zid, const char *transport,
                                                     const z_id_t *lid) {
-    _Z_RETURN_IF_ERR(_ze_admin_space_transport_ke(ke, zid, transport));
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_append_str(ke, _Z_KEYEXPR_LINK), z_keyexpr_drop(z_keyexpr_move(ke)));
-    _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_ke_append_id(ke, lid), z_keyexpr_drop(z_keyexpr_move(ke)));
-    return _Z_RES_OK;
+    z_internal_keyexpr_null(ke);
+
+    z_owned_string_t zid_str;
+    _Z_RETURN_IF_ERR(z_id_to_string(zid, &zid_str));
+    z_owned_string_t lid_str;
+    _Z_CLEAN_RETURN_IF_ERR(z_id_to_string(lid, &lid_str), z_string_drop(z_string_move(&zid_str)));
+
+    char buf[128];
+    int n = snprintf(buf, sizeof(buf), "%s%s%.*s%s%s%s%s%s%s%s%s%s%.*s", _Z_KEYEXPR_AT, _Z_KEYEXPR_SEPARATOR,
+                     (int)z_string_len(z_string_loan(&zid_str)), z_string_data(z_string_loan(&zid_str)),
+                     _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_PICO, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_SESSION,
+                     _Z_KEYEXPR_SEPARATOR, transport, _Z_KEYEXPR_SEPARATOR, _Z_KEYEXPR_LINK, _Z_KEYEXPR_SEPARATOR,
+                     (int)z_string_len(z_string_loan(&lid_str)), z_string_data(z_string_loan(&lid_str)));
+
+    z_string_drop(z_string_move(&zid_str));
+    z_string_drop(z_string_move(&lid_str));
+
+    if (n < 0 || (size_t)n >= sizeof(buf)) {
+        return _Z_ERR_INVALID;
+    }
+
+    return z_keyexpr_from_str(ke, buf);
 }
 
 static z_result_t _ze_admin_space_encode_whatami(_z_json_encoder_t *je, z_whatami_t mode) {
@@ -307,14 +337,15 @@ static z_result_t _ze_admin_space_reply_multicast_common(const z_loaned_query_t 
             _z_json_encoder_t je;
             _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_empty(&je), z_keyexpr_drop(z_keyexpr_move(&ke2)));
             _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_start_object(&je), _z_json_encoder_clear(&je);
-                                   z_keyexpr_drop(z_keyexpr_move(&ke1)));
+                                   z_keyexpr_drop(z_keyexpr_move(&ke2)));
             _Z_CLEAN_RETURN_IF_ERR(_ze_admin_space_encode_peer_multicast(&je, peer), _z_json_encoder_clear(&je);
-                                   z_keyexpr_drop(z_keyexpr_move(&ke1)));
+                                   z_keyexpr_drop(z_keyexpr_move(&ke2)));
             _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_end_object(&je), _z_json_encoder_clear(&je);
-                                   z_keyexpr_drop(z_keyexpr_move(&ke1)));
+                                   z_keyexpr_drop(z_keyexpr_move(&ke2)));
 
             z_owned_bytes_t payload;
-            _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_finish(&je, &payload), _z_json_encoder_clear(&je));
+            _Z_CLEAN_RETURN_IF_ERR(_z_json_encoder_finish(&je, &payload), _z_json_encoder_clear(&je);
+                                   z_keyexpr_drop(z_keyexpr_move(&ke2)));
             _Z_CLEAN_RETURN_IF_ERR(z_query_reply(query, z_keyexpr_loan(&ke2), z_bytes_move(&payload), NULL),
                                    z_keyexpr_drop(z_keyexpr_move(&ke2)));
         }

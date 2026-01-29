@@ -147,6 +147,8 @@ typedef enum {
 #define _Z_KEYEXPR_TRANSPORT_RAWETH_LEN (sizeof(_Z_KEYEXPR_TRANSPORT_RAWETH) - 1)
 #define _Z_KEYEXPR_LINK "link"
 #define _Z_KEYEXPR_LINK_LEN (sizeof(_Z_KEYEXPR_LINK) - 1)
+#define _Z_KEYEXPR_SEPARATOR "/"
+#define _Z_KEYEXPR_SEPARATOR_LEN (sizeof(_Z_KEYEXPR_SEPARATOR) - 1)
 
 /**
  * Sample kind values.
