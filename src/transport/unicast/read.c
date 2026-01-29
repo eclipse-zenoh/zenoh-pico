@@ -148,6 +148,7 @@ z_result_t _zp_unicast_read(_z_transport_unicast_t *ztu, bool single_read) {
 
 #if Z_FEATURE_MULTI_THREAD == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1
 
+#if Z_FEATURE_UNICAST_PEER == 1
 static z_result_t _z_unicast_handle_remaining_data(_z_transport_unicast_t *ztu, _z_transport_peer_unicast_t *peer,
                                                    size_t extra_size, size_t *to_read, bool *message_to_process) {
     *message_to_process = false;
@@ -322,6 +323,7 @@ static z_result_t _zp_unicast_process_peer_event(_z_transport_unicast_t *ztu) {
     _z_transport_peer_mutex_unlock(&ztu->_common);
     return _Z_RES_OK;
 }
+#endif
 
 void *_zp_unicast_read_task(void *ztu_arg) {
     _z_transport_unicast_t *ztu = (_z_transport_unicast_t *)ztu_arg;
