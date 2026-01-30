@@ -15,6 +15,8 @@
 #define ZENOH_PICO_API_ADMIN_SPACE_H
 
 #include "zenoh-pico/api/types.h"
+#include "zenoh-pico/collections/element.h"
+#include "zenoh-pico/collections/list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +24,18 @@ extern "C" {
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADMIN_SPACE == 1
+
+typedef struct {
+    z_owned_keyexpr_t ke;
+    z_owned_bytes_t payload;
+} _ze_admin_space_reply_t;
+
+void _ze_admin_space_reply_null(_ze_admin_space_reply_t *reply);
+void _ze_admin_space_reply_clear(_ze_admin_space_reply_t *reply);
+
+_Z_ELEM_DEFINE(_ze_admin_space_reply, _ze_admin_space_reply_t, _z_noop_size, _ze_admin_space_reply_clear, _z_noop_copy,
+               _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_LIST_DEFINE(_ze_admin_space_reply, _ze_admin_space_reply_t)
 
 /**
  * Starts the admin space for a session.

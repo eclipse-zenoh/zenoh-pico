@@ -1760,7 +1760,7 @@ Zenoh queries.
 The Admin Space is primarily intended for diagnostics, debugging, and tooling.
 
 Enabling the Admin Space
------------------------
+------------------------
 
 The Admin Space is an **optional feature** and must be explicitly enabled at
 build time by defining the ``Z_FEATURE_ADMIN_SPACE`` configuration flag.
