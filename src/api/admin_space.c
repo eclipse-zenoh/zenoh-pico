@@ -229,7 +229,7 @@ static z_result_t _ze_admin_space_encode_peer_multicast(_z_json_encoder_t *je,
     return _Z_RES_OK;
 }
 
-void _ze_admin_space_reply_null(_ze_admin_space_reply_t *reply) {
+static void _ze_admin_space_reply_null(_ze_admin_space_reply_t *reply) {
     z_internal_keyexpr_null(&reply->ke);
     z_internal_bytes_null(&reply->payload);
 }

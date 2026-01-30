@@ -12,21 +12,21 @@
 ..   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 ..
 
-********
+*************
 Configuration
-********
+*************
 
 Zenoh-Pico has many run-time and compile-time configuration options. Some are passed as flags by the build system (make, cmake) while others can be modified manually. 
 
 All of those options are visible in `include/zenoh-pico/config.h`.
 
 Run-time options
-====================
+================
 
 All the run-time options presented in `config.h` should be changed using the `zp_config_insert` function with the corresponding key in your application.
 
 Mode
------------
+----
 
 Defines if a Zenoh node is a client or peer.
 
@@ -36,21 +36,21 @@ Defines if a Zenoh node is a client or peer.
 * `Z_CONFIG_MODE_DEFAULT`: The default value for client or peer mode.
 
 Connect
------------
+-------
 
 Defines one or multiple endpoints a node will connect to.
 
 * `Z_CONFIG_CONNECT_KEY`: The index of the option in the config table.
 
 Listen
------------
+------
 
 Defines a single endpoint a node will listen on.
 
 * `Z_CONFIG_LISTEN_KEY`: The index of the option in the config table.
 
 TLS
------------
+---
 
 With `Z_FEATURE_LINK_TLS` enabled, configure TLS using the following keys:
 
@@ -68,7 +68,7 @@ With `Z_FEATURE_LINK_TLS` enabled, configure TLS using the following keys:
 * `Z_CONFIG_TLS_VERIFY_NAME_ON_CONNECT_KEY`: Set to `false`/`0`/`no`/`off` to skip CN/SAN hostname verification; defaults to enabled.
 
 Scouting
------------
+--------
 
 Scouting is used when a node isn't provided with a connect or listen endpoint.
 
@@ -81,17 +81,17 @@ Defines if and how the node will do the scouting.
 * `Z_CONFIG_SCOUTING_TIMEOUT_KEY`: The index of the option in the config table.
 * `Z_CONFIG_SCOUTING_TIMEOUT_DEFAULT`: Default value for scouting timeout in milliseconds.
 * `Z_CONFIG_SCOUTING_WHAT_KEY`: The index of the option in the config table.
-* `Z_CONFIG_SCOUTING_WHAT_DEFAULT`: Default value for scouting node types as a bitmask, see :ref:`z_whatami_t`
+* `Z_CONFIG_SCOUTING_WHAT_DEFAULT`: Default value for scouting node types as a bitmask, see :c:type:`z_whatami_t`
 
 Session id
------------
+----------
 
 Define a custom value for the session id. Otherwise it will be random.
 
 * `Z_CONFIG_SESSION_ZID_KEY`: The index of the option in the config table.
 
 Unused
------------
+------
 
 The following options are not currently in use, but might be in the future.
 
@@ -101,7 +101,7 @@ The following options are not currently in use, but might be in the future.
 * `Z_CONFIG_PASSWORD_KEY`: The index of the option in the config table.
 
 Manual compile-time options
-====================
+===========================
 
 These options can be changed manually either in `config.h` directly or `config.h.in` if your build system invokes zenoh-pico's own CMake.
 
@@ -117,7 +117,7 @@ These options can be changed manually either in `config.h` directly or `config.h
 * `ZP_ASM_NOP`: Change this options if your platform doesn't have a standard `nop` instruction.
 
 Generated compile-time options
-====================
+==============================
 
 All the generated options must be changed in zenoh-pico's CMake (beware of CMake's cache) or by passing them as flags when calling zenoh-pico's CMake.
 

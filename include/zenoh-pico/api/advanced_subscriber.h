@@ -175,10 +175,9 @@ typedef struct {
  * Members:
  *   bool is_enabled: Must be set to ``true``, to enable the last sample(s) miss detection.
  *   uint64_t periodic_queries_period_ms: Period for queries for not yet received Samples.
- *
  *     These queries allow to retrieve the last Sample(s) if the last Sample(s) is/are lost.
- *     So it is useful for sporadic publications but useless for periodic publications with
- *     a period smaller or equal to this period. If set to 0, the last sample(s) miss detection
+ *     So it is useful for sporadic publications but useless for periodic publications with a
+ *     period smaller or equal to this period. If set to 0, the last sample(s) miss detection
  *     will be performed based on publisher's heartbeat if the latter is enabled.
  *
  * Note: periodic queries require the periodic scheduler to be started via :c:func:`zp_start_periodic_scheduler_task`.
@@ -196,12 +195,10 @@ typedef struct {
  * Members:
  *   bool is_enabled: Must be set to ``true``, to enable the lost sample recovery.
  *   ze_advanced_subscriber_last_sample_miss_detection_options_t last_sample_miss_detection:
- *     Setting for detecting last sample(s) miss.
- *
- *     Note that it does not affect intermediate sample miss detection/retrieval (which is performed
- *     automatically as long as recovery is enabled). If this option is disabled, subscriber will be
- *     unable to detect/request retransmission of missed sample until it receives a more recent one
- *     from the same publisher.
+ *     Setting for detecting last sample(s) miss. Note that it does not affect intermediate sample
+ *     miss detection/retrieval (which is performed automatically as long as recovery is enabled).
+ *     If this option is disabled, subscriber will be unable to detect/request retransmission of
+ *     missed sample until it receives a more recent one from the same publisher.
  *
  * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
  */
@@ -324,10 +321,9 @@ z_entity_global_id_t ze_advanced_subscriber_id(const ze_loaned_advanced_subscrib
  * Parameters:
  *   subscriber: Pointer to a :c:type:`ze_loaned_advanced_subscriber_t` instance to associate with sample miss listener.
  *   sample_miss_listener: Pointer to an uninitialized :c:type:`ze_owned_sample_miss_listener_t` where sample miss
- * listener will be constructed. The sample miss listener's callback will be automatically dropped when the subscriber
- * is dropped.
- *   callback: Pointer to a :c:type:`ze_moved_closure_miss_t` that will be called every time a sample miss is
- * detected.
+ *     listener will be constructed. The sample miss listener's callback will be automatically dropped when the
+ * subscriber is dropped. callback: Pointer to a :c:type:`ze_moved_closure_miss_t` that will be called every time a
+ * sample miss is detected.
  *
  * Return:
  *   ``0`` if successful, ``negative value`` otherwise.
