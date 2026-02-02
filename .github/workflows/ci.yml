@@ -274,6 +274,18 @@ jobs:
           sudo apt install -y ninja-build
           Z_FEATURE_UNSTABLE_API=1 Z_FEATURE_ADVANCED_SUBSCRIPTION=1 CMAKE_GENERATOR=Ninja make
 
+  rx_cache_build:
+    name: Check compilation with RX cache enabled
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with RX cache
+        run: |
+          sudo apt install -y ninja-build
+          Z_FEATURE_RX_CACHE=1 CMAKE_GENERATOR=Ninja make
+
   gcc10_build:
     name: Check compilation with GCC 10
     runs-on: ubuntu-latest
