@@ -1964,7 +1964,7 @@ z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *
         ret = _Z_ERR_INVALID;
     } else if (!_z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(declaration), _Z_RC_IN_VAL(zs))) {
         ret = _Z_ERR_KEYEXPR_DECLARED_ON_ANOTHER_SESSION;
-    } else if (_z_rc_strong_count(declaration->_cnt) == 1) {
+    } else if (_z_keyexpr_wire_declaration_rc_strong_count(declaration) == 1) {
         ret = _z_keyexpr_wire_declaration_undeclare(_Z_RC_IN_VAL(declaration));
     }
     z_keyexpr_drop(keyexpr);

@@ -18,7 +18,7 @@
 
 static inline bool __unsafe_z_sync_group_has_no_alive_notifiers(const _z_sync_group_t* sync_group) {
     // NOTE: the function is unsafe because it requires sync_group_state mutex to be locked
-    return _z_rc_weak_count(sync_group->_state._cnt) == _z_rc_strong_count(sync_group->_state._cnt);
+    return _z_sync_group_state_rc_weak_count(&sync_group->_state) == 0;
 }
 
 z_result_t _z_sync_group_state_create(_z_sync_group_state_t* state) {
