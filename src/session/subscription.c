@@ -50,7 +50,7 @@ int _z_subscription_cache_data_compare(const void *first, const void *second) {
     if (first_data->is_remote != second_data->is_remote) {
         return (int)first_data->is_remote - (int)second_data->is_remote;
     }
-    return _z_keyexpr_compare(&first_data->ke_in, &second_data->ke_in);
+    return _z_keyexpr_compare(&first_data->ke, &second_data->ke);
 }
 #endif  // Z_FEATURE_RX_CACHE == 1
 
