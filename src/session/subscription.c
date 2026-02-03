@@ -177,7 +177,7 @@ _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_ki
         ret = _z_subscription_rc_slist_value(zn->_liveliness_subscriptions);
     }
     if (ret == NULL) {
-        _z_subscription_rc_clear_inner(&out);
+        _z_subscription_rc_drop(&out);
     } else {
         // immediately increase reference count to prevent eventual drop by concurrent session close
         *ret = _z_subscription_rc_clone(&out);
