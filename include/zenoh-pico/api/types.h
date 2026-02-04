@@ -175,23 +175,27 @@ typedef struct {
 /**
  * Represents the configuration used to configure a zenoh upon opening :c:func:`z_open`.
  *
- * Members (multi-thread builds):
- *   bool auto_start_read_task: auto-start read task after `z_open()` (default true).
- *   bool auto_start_lease_task: auto-start lease task after `z_open()` (default true).
- *   bool auto_start_periodic_task: auto-start periodic scheduler (default false; only when periodic tasks feature is
- *     enabled).
+ * Members:
+ *   bool auto_start_read_task: auto-start read task after ``z_open()`` (default true; only multi-thread builds).
+ *   bool auto_start_lease_task: auto-start lease task after ``z_open()`` (default true; only multi-thread builds).
+ *   bool auto_start_periodic_task: auto-start periodic scheduler after ``z_open()`` (default false; only
+ *     multi-thread builds when periodic tasks feature is enabled).
+ *   bool auto_start_admin_space: auto-start admin space after ``z_open()`` (default false; only when admin space
+ *     feature is enabled).
  */
 typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool auto_start_read_task;
     bool auto_start_lease_task;
-#ifdef Z_FEATURE_UNSTABLE_API
-#if Z_FEATURE_PERIODIC_TASKS == 1
+#endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_PERIODIC_TASKS == 1)
     bool auto_start_periodic_task;
 #endif
+#if defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_ADMIN_SPACE == 1)
+    bool auto_start_admin_space;
 #endif
-#else
-    uint8_t __dummy;  // Just to avoid empty structures that might cause undefined behavior
+#if !defined(Z_FEATURE_UNSTABLE_API) && (Z_FEATURE_MULTI_THREAD == 0)
+    uint8_t __dummy;  // avoid empty struct
 #endif
 } z_open_options_t;
 
@@ -250,13 +254,13 @@ typedef struct {
  *   z_moved_encoding_t *encoding: Default encoding for values sent by this querier.
  *   z_query_target_t target: The Queryables that should be target of the querier queries.
  *   z_query_consolidation_t consolidation: The replies consolidation strategy to apply on replies to the querier
- *    queries.
+ *     queries.
  *   z_congestion_control_t congestion_control: The congestion control to apply when routing the querier queries.
  *   bool is_express: If set to ``true``, the querier queries will not be batched. This usually has a positive impact on
- * 	   latency but negative impact on throughput.
+ *     latency but negative impact on throughput.
  *   z_priority_t priority: The priority of the querier queries.
  *   uint64_t timeout_ms: The timeout for the querier queries in milliseconds. 0 corresponds to default get request
- * timeout.
+ *     timeout.
  */
 typedef struct z_querier_options_t {
     z_moved_encoding_t *encoding;
@@ -460,7 +464,7 @@ typedef struct {
  *   bool is_express: If ``true``, Zenoh will not wait to batch this operation with others to reduce the bandwidth.
  *   z_query_target_t target: The queryables that should be targeted by this get.
  *   uint64_t timeout_ms: Query timeout in milliseconds. 0 means default timeout. 0 corresponds to default get request
- * timeout.
+ *     timeout.
  *   z_moved_bytes_t* attachment: An optional attachment to the query.
  *   z_source_info_t* source_info: The source info for the request (unstable).
  *   z_moved_cancellation_token_t *cancellation_token: Token to allow cancelling get operation (unstable).
@@ -573,7 +577,7 @@ typedef struct {
 _Z_OWNED_TYPE_VALUE(_z_sample_t, sample)
 
 /**
- * Represents the content of a `hello` message returned by a zenoh entity as a reply to a `scout` message.
+ * Represents the content of a ``hello`` message returned by a zenoh entity as a reply to a `scout` message.
  */
 _Z_OWNED_TYPE_VALUE(_z_hello_t, hello)
 

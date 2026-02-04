@@ -28,7 +28,9 @@ with open("../version.txt", "rt") as f:
 master_doc = 'index'
 extensions = ['sphinx_c_autodoc', 'sphinx_c_autodoc.napoleon']
 language = 'c'
-c_autodoc_roots = ['../include/zenoh-pico/api/', '../include/zenoh-pico/system/']
+c_autodoc_roots = ['../include/zenoh-pico/api/',
+                   '../include/zenoh-pico/collections/',
+                   '../include/zenoh-pico/system/']
 c_autodoc_compilation_args = [
     "-DSPHINX_DOCS",
     "-DZ_FEATURE_UNSTABLE_API=1",
@@ -43,6 +45,7 @@ c_autodoc_compilation_args = [
     "-DZ_FEATURE_MATCHING=1",
     "-DZ_FEATURE_SCOUTING=1",
     "-DZ_FEATURE_PERIODIC_TASKS=1",
+    "-DZ_FEATURE_ADMIN_SPACE=1",
 ]
 
 # -- Options for HTML output -------------------------------------------------

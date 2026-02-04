@@ -120,6 +120,11 @@ typedef struct _z_session_t {
 #endif
     _zp_periodic_scheduler_t _periodic_scheduler;
 #endif
+
+#if Z_FEATURE_ADMIN_SPACE == 1
+    // entity Id for admin space queryable (0 if not started)
+    uint32_t _admin_space_queryable_id;
+#endif
 #endif
 } _z_session_t;
 

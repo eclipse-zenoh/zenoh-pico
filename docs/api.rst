@@ -1746,3 +1746,56 @@ By default, logging use `printf`, but it can be overridden by setting `ZENOH_LOG
 .. code-block:: bash
 
     ZENOH_LOG_PRINT=my_print make  # build zenoh-pico using `my_print` instead of `printf` for logging
+
+Admin Space
+===========
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+The *Admin Space* exposes internal runtime information of a Zenoh-Pico session
+through a queryable namespace. It allows external Zenoh applications to inspect
+session state such as transports, links, peers, and capabilities using standard
+Zenoh queries.
+
+The Admin Space is primarily intended for diagnostics, debugging, and tooling.
+
+Enabling the Admin Space
+------------------------
+
+The Admin Space is an **optional feature** and must be explicitly enabled at
+build time by defining the ``Z_FEATURE_ADMIN_SPACE`` configuration flag.
+
+When building Zenoh-Pico with CMake, this can be enabled via:
+
+.. code-block:: bash
+
+    -DZ_FEATURE_ADMIN_SPACE=1
+
+If the feature is not enabled, all Admin Space APIs will be unavailable and
+attempts to start the Admin Space will have no effect.
+
+Starting and Stopping the Admin Space
+-------------------------------------
+
+The Admin Space is implemented as a queryable attached to a session. It can be
+started and stopped explicitly using the following functions:
+
+.. autocfunction:: admin_space.h::zp_start_admin_space
+.. autocfunction:: admin_space.h::zp_stop_admin_space
+
+Automatic Startup
+-----------------
+
+The Admin Space can also be started automatically when opening a session by
+configuring the appropriate option in ``z_open_options_t``.
+
+When the ``auto_start_admin_space`` field is set to ``true``, the Admin Space
+is started immediately after the session is opened.
+
+.. code-block:: c
+
+    z_open_options_t opts;
+    z_open_options_default(&opts);
+    opts.auto_start_admin_space = true;
+
+    z_open(&session, config, &opts);
