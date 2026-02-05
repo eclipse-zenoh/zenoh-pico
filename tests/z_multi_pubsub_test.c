@@ -38,7 +38,6 @@
 #if Z_FEATURE_PUBLICATION == 1 && Z_FEATURE_SUBSCRIPTION == 1
 
 #define TEST_SLEEP_MS 2000
-#define FIFO_CAPACITY 32
 #define NUM_MSGS 8
 
 static void pub_put_str(const z_loaned_publisher_t *pub, const char *s) {
@@ -157,9 +156,10 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     z_subscriber_options_t sub_opts;
     z_subscriber_options_default(&sub_opts);
 
+    size_t fifo_capacity = (size_t)num_pubs * NUM_MSGS;
     for (int i = 0; i < num_subs; i++) {
         z_owned_closure_sample_t closure;
-        ASSERT_OK(z_fifo_channel_sample_new(&closure, &handlers[i], FIFO_CAPACITY));
+        ASSERT_OK(z_fifo_channel_sample_new(&closure, &handlers[i], fifo_capacity));
         ASSERT_OK(z_declare_subscriber(z_loan(s_sub), &subs[i], z_loan(k), z_move(closure), &sub_opts));
     }
 
