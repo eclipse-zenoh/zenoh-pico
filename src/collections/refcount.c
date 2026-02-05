@@ -166,7 +166,7 @@ z_result_t _z_rc_init(void** cnt) {
 z_result_t _z_rc_increase_strong(void* cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
     if (_ZP_RC_OP_INCR_AND_CMP_CNT(c->_strong_cnt, _Z_RC_MAX_COUNT)) {
-        _Z_ERROR("Rc weak count overflow");
+        _Z_ERROR("Rc strong count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
     }
     return _Z_RES_OK;

@@ -76,6 +76,7 @@ size_t _z_simple_rc_strong_count(void *rc);
             *c = name##_rc_clone(p);                                                                                 \
             if (c->_cnt == NULL) {                                                                                   \
                 z_free(c);                                                                                           \
+                c = NULL;                                                                                            \
             }                                                                                                        \
         }                                                                                                            \
         return c;                                                                                                    \
@@ -94,6 +95,7 @@ size_t _z_simple_rc_strong_count(void *rc);
             *c = name##_rc_clone_as_weak(p);                                                                         \
             if (c->_cnt == NULL) {                                                                                   \
                 z_free(c);                                                                                           \
+                c = NULL;                                                                                            \
             }                                                                                                        \
         }                                                                                                            \
         return c;                                                                                                    \
@@ -276,6 +278,7 @@ static inline _z_void_rc_t _z_void_rc_rc_new(void *val, _z_void_rc_deleter delet
             *c = name##_simple_rc_clone(p);                                                                   \
             if (c->_val == NULL) {                                                                            \
                 z_free(c);                                                                                    \
+                c = NULL;                                                                                     \
             }                                                                                                 \
         }                                                                                                     \
         return c;                                                                                             \
