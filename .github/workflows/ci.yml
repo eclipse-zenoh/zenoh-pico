@@ -628,6 +628,10 @@ jobs:
     name: Build FreeRTOS
     uses: ./.github/workflows/freertos_plus_tcp.yaml
 
+  freertos_lwip:
+    name: Build FreeRTOS + lwIP
+    uses: ./.github/workflows/freertos_lwip.yaml
+
   mbed:
     name: Build Mbed
     uses: ./.github/workflows/mbed.yaml
@@ -685,6 +689,7 @@ jobs:
         emscripten,
         espidf,
         freertos,
+        freertos_lwip,
         mbed,
         rpi_pico,
         zephyr,
