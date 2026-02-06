@@ -12,19 +12,6 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-//
-// Copyright (c) 2026 ZettaScale Technology
-//
-// This program and the accompanying materials are made available under the
-// terms of the Eclipse Public License 2.0 which is available at
-// http://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-// which is available at https://www.apache.org/licenses/LICENSE-2.0.
-//
-// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-//
-// Contributors:
-//   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
-
 #include <errno.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -136,7 +123,7 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     ASSERT_OK(zp_start_lease_task(z_loan_mut(s_sub), NULL));
 
     // Declare N publishers on s_pub
-    z_owned_publisher_t *pubs = (z_owned_publisher_t *)calloc((size_t)num_pubs, sizeof(z_owned_publisher_t));
+    z_owned_publisher_t *pubs = (z_owned_publisher_t *)z_malloc((size_t)num_pubs * sizeof(z_owned_publisher_t));
     ASSERT_NOT_NULL(pubs);
 
     z_publisher_options_t pub_opts;
@@ -147,9 +134,9 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
     }
 
     // Declare M subscribers on s_sub, each with its own fifo channel
-    z_owned_subscriber_t *subs = (z_owned_subscriber_t *)calloc((size_t)num_subs, sizeof(z_owned_subscriber_t));
+    z_owned_subscriber_t *subs = (z_owned_subscriber_t *)z_malloc((size_t)num_subs * sizeof(z_owned_subscriber_t));
     z_owned_fifo_handler_sample_t *handlers =
-        (z_owned_fifo_handler_sample_t *)calloc((size_t)num_subs, sizeof(z_owned_fifo_handler_sample_t));
+        (z_owned_fifo_handler_sample_t *)z_malloc((size_t)num_subs * sizeof(z_owned_fifo_handler_sample_t));
     ASSERT_NOT_NULL(subs);
     ASSERT_NOT_NULL(handlers);
 
@@ -179,7 +166,7 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
 
     // Give time for delivery then assert each subscriber got >= 1 from each publisher
     for (int i = 0; i < num_subs; i++) {
-        bool *seen = (bool *)calloc((size_t)num_pubs, sizeof(bool));
+        bool *seen = (bool *)z_malloc((size_t)num_pubs * sizeof(bool));
         ASSERT_NOT_NULL(seen);
 
         size_t got = collect_seen_publishers(z_loan(handlers[i]),
@@ -198,7 +185,7 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
             assert(false && "subscriber missing at least one publisher");
         }
 
-        free(seen);
+        z_free(seen);
     }
 
     // Cleanup
@@ -210,9 +197,9 @@ static void test_multi_pub_multi_sub(int num_pubs, int num_subs) {
         z_publisher_drop(z_publisher_move(&pubs[i]));
     }
 
-    free(handlers);
-    free(subs);
-    free(pubs);
+    z_free(handlers);
+    z_free(subs);
+    z_free(pubs);
 
     ASSERT_OK(zp_stop_read_task(z_loan_mut(s_pub)));
     ASSERT_OK(zp_stop_read_task(z_loan_mut(s_sub)));
