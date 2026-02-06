@@ -216,7 +216,9 @@ z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_r
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
+    s._preparsed = _z_keyexpr_parsed_null();
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr), _z_subscription_clear(&s));
+    s._preparsed = _z_keyexpr_parse(&s._key);
 
     _z_subscription_rc_t sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (_Z_RC_IS_NULL(&sp_s)) {
