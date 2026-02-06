@@ -16,7 +16,7 @@
 #define INCLUDE_ZENOH_PICO_CONFIG_H
 
 #ifdef ZENOH_GENERIC
-#include <zenoh_generic_config.h>
+#include "zenoh_generic_config.h"
 #else
 
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
