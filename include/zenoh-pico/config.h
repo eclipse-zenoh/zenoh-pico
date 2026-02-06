@@ -44,7 +44,6 @@
 #define Z_FEATURE_LINK_WS 0
 #define Z_FEATURE_LINK_SERIAL 0
 #define Z_FEATURE_LINK_SERIAL_USB 0
-#define Z_FEATURE_LINK_TLS 1
 #define Z_FEATURE_SCOUTING 1
 #define Z_FEATURE_LINK_UDP_MULTICAST 1
 #define Z_FEATURE_LINK_UDP_UNICAST 1
@@ -77,6 +76,8 @@
  * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
+#define Z_FEATURE_LINK_TLS 1
+
 #define Z_CONFIG_MODE_KEY 0x40
 #define Z_CONFIG_MODE_CLIENT "client"
 #define Z_CONFIG_MODE_PEER "peer"
