@@ -60,10 +60,12 @@ z_result_t _z_sync_group_wait(_z_sync_group_t* sync_group) {
 #else
     if (state->is_closed) {
         return Z_SYNC_GROUP_CLOSED;
-    } else {
+    } else if (__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
         state->is_closed = true;
+        return _Z_RES_OK;
+    } else {
+        return _Z_ERR_GENERIC;
     }
-    return __unsafe_z_sync_group_has_no_alive_notifiers(sync_group) ? _Z_RES_OK : _Z_ERR_GENERIC;
 #endif
 }
 
@@ -111,10 +113,12 @@ z_result_t _z_sync_group_wait_deadline(_z_sync_group_t* sync_group, const z_cloc
     _ZP_UNUSED(deadline);
     if (state->is_closed) {
         return Z_SYNC_GROUP_CLOSED;
-    } else {
+    } else if (__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
         state->is_closed = true;
+        return _Z_RES_OK;
+    } else {
+        return Z_ETIMEDOUT;
     }
-    return __unsafe_z_sync_group_has_no_alive_notifiers(sync_group) ? _Z_RES_OK : Z_ETIMEDOUT;
 #endif
 }
 

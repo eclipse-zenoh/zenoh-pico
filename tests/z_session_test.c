@@ -12,6 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
+#if Z_FEATURE_MULTI_THEAD == 1
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,9 +85,11 @@ static void test_manual_start(void) {
     assert(zp_stop_lease_task(z_loan_mut(s)) == _Z_RES_OK);
     z_drop(z_move(s));
 }
-
+#endif
 int main(void) {
+#if Z_FEATURE_MULTI_THREAD == 1
     test_autostart_defaults();
     test_manual_start();
+#endif
     return 0;
 }
