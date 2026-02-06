@@ -1406,35 +1406,21 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
         opt.timeout_ms = Z_GET_TIMEOUT_DEFAULT;
     }
     _z_source_info_t *source_info = NULL;
+    _z_cancellation_token_rc_t *cancellation_token = NULL;
 
 #ifdef Z_FEATURE_UNSTABLE_API
     source_info = opt.source_info;
-    bool should_proceed = (opt.cancellation_token == NULL ||
-                           !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
-#else
-    bool should_proceed = true;
+    cancellation_token = opt.cancellation_token == NULL ? NULL : &opt.cancellation_token->_this._rc;
 #endif
-    if (should_proceed) {
-        _z_zint_t qid;
-        _z_n_qos_t qos =
-            _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority);
-        z_locality_t allowed_destination = z_locality_default();
+    _z_n_qos_t qos = _z_n_qos_make(opt.is_express, opt.congestion_control == Z_CONGESTION_CONTROL_BLOCK, opt.priority);
+    z_locality_t allowed_destination = z_locality_default();
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
-        allowed_destination = opt.allowed_destination;
+    allowed_destination = opt.allowed_destination;
 #endif
-        ret = _z_query(_Z_RC_IN_VAL(zs), keyexpr, parameters, parameters_len, opt.target, opt.consolidation.mode,
-                       _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding), closure.call,
-                       closure.drop, closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment), qos,
-                       source_info, allowed_destination, &qid);
-#ifdef Z_FEATURE_UNSTABLE_API
-        if (ret == _Z_RES_OK && opt.cancellation_token != NULL) {
-            ret = _z_cancellation_token_add_on_query_cancel_handler(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc),
-                                                                    zs, qid);
-        }
-#endif
-    } else if (closure.drop != NULL) {
-        closure.drop(closure.context);
-    }
+    ret = _z_query(zs, keyexpr, parameters, parameters_len, opt.target, opt.consolidation.mode,
+                   _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding), closure.call, closure.drop,
+                   closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment), qos, source_info,
+                   allowed_destination, cancellation_token);
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
     z_cancellation_token_drop(opt.cancellation_token);
@@ -1532,7 +1518,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
     }
 
     _z_session_t *session = NULL;
-#if defined(Z_FEATURE_UNSTABLE_API) || Z_FEATURE_SESSION_CHECK == 1
+
     // Try to upgrade session rc
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
@@ -1541,42 +1527,29 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
         _Z_ERROR_LOG(_Z_ERR_SESSION_CLOSED);
         ret = _Z_ERR_SESSION_CLOSED;
     }
-#else
-    session = _z_session_weak_as_unsafe_ptr(&querier->_zn);
-#endif
+
     _z_source_info_t *source_info = NULL;
+    _z_cancellation_token_rc_t *cancellation_token = NULL;
     bool should_proceed = ret == _Z_RES_OK && !_z_write_filter_active(&querier->_filter);
 #if Z_FEATURE_MULTICAST_DECLARATIONS == 0
     should_proceed = should_proceed || (session->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE);
 #endif
 #ifdef Z_FEATURE_UNSTABLE_API
     source_info = opt.source_info;
-    should_proceed =
-        should_proceed && (opt.cancellation_token == NULL ||
-                           !_z_cancellation_token_is_cancelled(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc)));
+    cancellation_token = opt.cancellation_token == NULL ? NULL : &opt.cancellation_token->_this._rc;
 #endif
     if (should_proceed) {
-        _z_zint_t qid;
         _z_n_qos_t qos = _z_n_qos_make(querier->_is_express, querier->_congestion_control == Z_CONGESTION_CONTROL_BLOCK,
                                        querier->_priority);
-        ret = _z_query(session, &querier->_key, parameters, parameters_len, querier->_target,
+        ret = _z_query(&sess_rc, &querier->_key, parameters, parameters_len, querier->_target,
                        querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding, closure.call,
                        closure.drop, closure.context, querier->_timeout_ms, _z_bytes_from_moved(opt.attachment), qos,
-                       source_info, querier->_allowed_destination, &qid);
-#ifdef Z_FEATURE_UNSTABLE_API
-        if (ret == _Z_RES_OK && opt.cancellation_token != NULL) {
-            ret = _z_cancellation_token_add_on_query_cancel_handler(_Z_RC_IN_VAL(&opt.cancellation_token->_this._rc),
-                                                                    &sess_rc, qid);
-        }
-#endif
+                       source_info, querier->_allowed_destination, cancellation_token);
     } else if (closure.drop != NULL) {
         closure.drop(closure.context);
     }
 
-#if Z_FEATURE_SESSION_CHECK == 1
     _z_session_rc_drop(&sess_rc);
-#endif
-
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
     z_cancellation_token_drop(opt.cancellation_token);

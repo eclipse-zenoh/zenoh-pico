@@ -121,7 +121,8 @@ void test_cancel_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts);
+    assert(z_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&reply_callback), &opts) ==
+           Z_CANCELLATION_TOKEN_ALREADY_CANCELLED);
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
 
@@ -219,7 +220,8 @@ void test_cancel_querier_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_querier_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_querier_get(z_querier_loan(&querier), "", z_closure_reply_move(&reply_callback), &opts);
+    assert(z_querier_get(z_querier_loan(&querier), "", z_closure_reply_move(&reply_callback), &opts) ==
+           Z_CANCELLATION_TOKEN_ALREADY_CANCELLED);
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));
 
@@ -346,7 +348,8 @@ void test_liveliness_get(void) {
     assert(z_cancellation_token_clone(&ct_clone, z_cancellation_token_loan(&ct)) == Z_OK);
     z_liveliness_get_options_default(&opts);
     opts.cancellation_token = z_cancellation_token_move(&ct_clone);
-    z_liveliness_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), z_closure_reply_move(&reply_callback), &opts);
+    assert(z_liveliness_get(z_session_loan(&s2), z_view_keyexpr_loan(&ke), z_closure_reply_move(&reply_callback),
+                            &opts) == Z_CANCELLATION_TOKEN_ALREADY_CANCELLED);
     z_owned_reply_t reply;
     assert(z_fifo_handler_reply_try_recv(z_fifo_handler_reply_loan(&reply_handler), &reply) == Z_CHANNEL_DISCONNECTED);
     z_fifo_handler_reply_drop(z_fifo_handler_reply_move(&reply_handler));

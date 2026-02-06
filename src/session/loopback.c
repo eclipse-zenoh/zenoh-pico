@@ -165,10 +165,6 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
                                             const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
                                             z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
                                             _z_bytes_t *attachment, const _z_source_info_t *source_info) {
-    if (_z_get_pending_query_by_id(_Z_RC_IN_VAL(zn), query->_request_id) == NULL) {
-        return _Z_ERR_ENTITY_UNKNOWN;
-    }
-
     _z_transport_common_t *transport = _z_session_get_transport_common(_Z_RC_IN_VAL(zn));
     if (transport == NULL) {
         return _Z_ERR_INVALID;
@@ -200,10 +196,6 @@ z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_se
 
 z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn, _z_bytes_t *payload,
                                                 _z_encoding_t *encoding, _z_n_qos_t qos) {
-    if (_z_get_pending_query_by_id(_Z_RC_IN_VAL(zn), query->_request_id) == NULL) {
-        return _Z_ERR_ENTITY_UNKNOWN;
-    }
-
     _z_transport_common_t *transport = _z_session_get_transport_common(_Z_RC_IN_VAL(zn));
     if (transport == NULL) {
         return _Z_ERR_INVALID;
@@ -220,10 +212,6 @@ z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _
 
 z_result_t _z_session_deliver_reply_final_locally(_z_session_t *zn, _z_zint_t rid) {
     if (zn == NULL) {
-        return _Z_ERR_INVALID;
-    }
-    _z_pending_query_t *pending = _z_get_pending_query_by_id(zn, rid);
-    if (pending == NULL) {
         return _Z_ERR_INVALID;
     }
     return _z_trigger_query_reply_final(zn, rid);

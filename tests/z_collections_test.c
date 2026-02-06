@@ -451,7 +451,31 @@ void int_map_iterator_deletion_test(void) {
     _z_str_intmap_clear(&map);
 }
 
+void int_map_extract_test(void) {
+    _z_str_intmap_t map;
+
+    map = _z_str_intmap_make();
+    _z_str_intmap_insert(&map, 10, _z_str_clone("A"));
+    _z_str_intmap_insert(&map, 20, _z_str_clone("B"));
+    _z_str_intmap_insert(&map, 30, _z_str_clone("C"));
+    _z_str_intmap_insert(&map, 40, _z_str_clone("D"));
+
+    assert(_z_str_intmap_extract(&map, 100) == NULL);
+    char *item_c = _z_str_intmap_extract(&map, 30);
+    assert(strcmp(item_c, "C") == 0);
+    z_free(item_c);
+    assert(_z_str_intmap_len(&map) == 3);
+    assert(_z_str_intmap_get(&map, 30) == NULL);
+
+    assert(_z_str_intmap_extract(&map, 30) == NULL);
+
+    _z_str_intmap_clear(&map);
+}
+
 static bool slist_eq_f(const void *left, const void *right) { return strcmp((char *)left, (char *)right) == 0; }
+static bool slist_starts_with_f(const void *left, const void *right) {
+    return strncmp((char *)left, (char *)right, strlen((char *)left)) == 0;
+}
 
 void slist_test(void) {
     char *values[] = {"test1", "test2", "test3"};
@@ -531,6 +555,38 @@ void slist_test(void) {
     elem = _z_slist_find(slist, slist_eq_f, values[2]);
     assert(elem != NULL);
     _z_slist_free(&slist, _z_noop_clear);
+
+    // Extract test
+    char *values2[] = {"test1", "tes2", "test3"};
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
+    }
+    _z_slist_t *extracted = NULL;
+    slist = _z_slist_extract_filter(slist, slist_starts_with_f, "test", &extracted, false);
+
+    assert(_z_slist_len(slist) == 1);
+    assert(_z_slist_len(extracted) == 2);
+    elem = NULL;
+    elem = _z_slist_find(extracted, slist_eq_f, "test1");
+    assert(elem != NULL);
+    elem = _z_slist_find(extracted, slist_eq_f, "test3");
+    assert(elem != NULL);
+    elem = _z_slist_find(slist, slist_eq_f, "tes2");
+    assert(elem != NULL);
+    _z_slist_free(&slist, _z_noop_clear);
+    _z_slist_free(&extracted, _z_noop_clear);
+
+    for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
+    }
+    slist = _z_slist_extract_filter(slist, slist_starts_with_f, "test", &extracted, true);
+
+    assert(_z_slist_len(slist) == 2);
+    assert(_z_slist_len(extracted) == 1);
+    elem = _z_slist_find(slist, slist_eq_f, "tes2");
+    assert(elem != NULL);
+    _z_slist_free(&slist, _z_noop_clear);
+    _z_slist_free(&extracted, _z_noop_clear);
 
     // Clone test
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values); i++) {
@@ -717,6 +773,7 @@ int main(void) {
 
     int_map_iterator_test();
     int_map_iterator_deletion_test();
+    int_map_extract_test();
     ring_iterator_test();
 
     slist_test();

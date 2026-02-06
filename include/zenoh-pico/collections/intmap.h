@@ -189,6 +189,13 @@ static inline void *_z_int_void_map_iterator_value(const _z_int_void_map_iterato
     static inline size_t name##_intmap_iterator_key(const name##_intmap_iterator_t *iter) {                     \
         return _z_int_void_map_iterator_key(iter);                                                              \
     }                                                                                                           \
+    static inline type *name##_intmap_extract(name##_intmap_t *m, size_t k) {                                   \
+        type *out;                                                                                              \
+        _z_int_void_map_entry_t e = _z_hashmap_extract(m, &k);                                                  \
+        out = (type *)e._val;                                                                                   \
+        z_free(e._key);                                                                                         \
+        return out;                                                                                             \
+    }                                                                                                           \
     static inline type *name##_intmap_iterator_value(const name##_intmap_iterator_t *iter) {                    \
         return (type *)_z_int_void_map_iterator_value(iter);                                                    \
     }
