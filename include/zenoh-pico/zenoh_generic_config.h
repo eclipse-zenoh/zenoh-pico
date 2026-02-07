@@ -12,8 +12,8 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#ifndef INCLUDE_ZENOH_GENERIC_CONFIG_H
-#define INCLUDE_ZENOH_GENERIC_CONFIG_H
+#ifndef ZENOH_GENERIC_CONFIG_H
+#define ZENOH_GENERIC_CONFIG_H
 
 /*--- CMake generated config; pass values to CMake to change the following tokens ---*/
 #define Z_FRAG_MAX_SIZE 4096
@@ -206,4 +206,4 @@
  */
 #define ZP_ASM_NOP __asm__("nop")
 
-#endif /* INCLUDE_ZENOH_GENERIC_CONFIG_H */
+#endif /* ZENOH_GENERIC_CONFIG_H */

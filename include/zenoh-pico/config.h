@@ -76,7 +76,6 @@
  * Accepted values : `"client"`, `"peer"`.
  * Default value : `"client"`.
  */
-#define Z_FEATURE_LINK_TLS 1
 
 #define Z_CONFIG_MODE_KEY 0x40
 #define Z_CONFIG_MODE_CLIENT "client"
