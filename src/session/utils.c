@@ -112,8 +112,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #endif
     ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
     if (ret != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
         zn->_mutex_inner_initialized = false;
         _z_mutex_drop(&zn->_mutex_inner);
+#endif
         _Z_ERROR_RETURN(ret);
     }
 #endif

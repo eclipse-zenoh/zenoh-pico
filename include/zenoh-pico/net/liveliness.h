@@ -65,16 +65,17 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub);
  * Query liveliness token state.
  *
  * Parameters:
- *     zn: The zenoh-net session. The caller keeps its ownership.
+ *     session: The zenoh-net session.
  *     keyexpr: The resource key to liveliness token.
  *     callback: The callback function that will be called on reception of replies for this query.
  *     dropper: The callback function that will be called on upon completion of the callback.
  *     arg: A pointer that will be passed to the **callback** on each call.
  *     timeout_ms: The timeout value of this query.
- *     out_id: In case of success the liveliness query id will be written to it.
+ *     opt_cancellation_token: Optional cancellation token, can be NULL.
  */
-z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_closure_reply_callback_t callback,
-                               _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_zint_t *out_id);
+z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
+                               _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                               uint64_t timeout_ms, _z_cancellation_token_rc_t *opt_cancellation_token);
 #endif  // Z_FEATURE_QUERY == 1
 
 #endif  // Z_FEATURE_LIVELINESS == 1

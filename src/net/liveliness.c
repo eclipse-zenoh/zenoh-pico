@@ -200,35 +200,108 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
 /**************** Liveliness Query ****************/
 
 #if Z_FEATURE_QUERY == 1
-z_result_t _z_liveliness_query(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_closure_reply_callback_t callback,
-                               _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_zint_t *out_id) {
-    z_result_t ret = _Z_RES_OK;
+#ifdef Z_FEATURE_UNSTABLE_API
 
-    _z_liveliness_pending_query_t pq;
-    uint32_t id = _z_liveliness_get_query_id(zn);
-    pq._callback = callback;
-    pq._dropper = dropper;
-    pq._arg = arg;
-    *out_id = id;
-    ret = _z_keyexpr_copy(&pq._key, keyexpr);
-    _Z_SET_IF_OK(ret, _z_liveliness_register_pending_query(zn, id, &pq));
+typedef struct _z_cancel_liveliness_pending_query_arg_t {
+    _z_session_weak_t _zn;
+    uint32_t _qid;
+} _z_cancel_liveliness_pending_query_arg_t;
+
+z_result_t _z_cancel_liveliness_pending_query(void *arg) {
+    _z_cancel_liveliness_pending_query_arg_t *a = (_z_cancel_liveliness_pending_query_arg_t *)arg;
+    _z_session_rc_t s_rc = _z_session_weak_upgrade(&a->_zn);
+    if (!_Z_RC_IS_NULL(&s_rc)) {
+        _z_liveliness_unregister_pending_query(_Z_RC_IN_VAL(&s_rc), a->_qid);
+        _z_session_rc_drop(&s_rc);
+    }
+    return _Z_RES_OK;
+}
+
+void _z_cancel_liveliness_pending_query_arg_drop(void *arg) {
+    _z_cancel_liveliness_pending_query_arg_t *a = (_z_cancel_liveliness_pending_query_arg_t *)arg;
+    _z_session_weak_drop(&a->_zn);
+    z_free(a);
+}
+
+z_result_t _z_liveliness_pending_query_register_cancellation(_z_liveliness_pending_query_t *pq,
+                                                             const _z_cancellation_token_rc_t *opt_cancellation_token,
+                                                             const _z_session_rc_t *zn) {
+    pq->_cancellation_data = _z_pending_query_cancellation_data_null();
+    if (opt_cancellation_token != NULL) {
+        _z_cancel_liveliness_pending_query_arg_t *arg =
+            (_z_cancel_liveliness_pending_query_arg_t *)z_malloc(sizeof(_z_cancel_liveliness_pending_query_arg_t));
+        if (arg == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        arg->_zn = _z_session_rc_clone_as_weak(zn);
+        arg->_qid = pq->_id;
+
+        size_t handler_id = 0;
+        _z_cancellation_token_on_cancel_handler_t handler;
+        handler._on_cancel = _z_cancel_liveliness_pending_query;
+        handler._on_drop = _z_cancel_liveliness_pending_query_arg_drop;
+        handler._arg = (void *)arg;
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_cancellation_token_add_on_cancel_handler(_Z_RC_IN_VAL(opt_cancellation_token), &handler, &handler_id),
+            _z_cancellation_token_on_cancel_handler_drop(&handler));
+        pq->_cancellation_data._cancellation_token = _z_cancellation_token_rc_clone(opt_cancellation_token);
+        pq->_cancellation_data._handler_id = handler_id;
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_cancellation_token_get_notifier(_Z_RC_IN_VAL(opt_cancellation_token), &pq->_cancellation_data._notifer),
+            _z_pending_query_cancellation_data_clear(&pq->_cancellation_data));
+    }
+    return _Z_RES_OK;
+}
+#endif
+
+z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
+                               _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                               uint64_t timeout_ms, _z_cancellation_token_rc_t *opt_cancellation_token) {
+    z_result_t ret = _Z_RES_OK;
+    _z_session_t *zn = _Z_RC_IN_VAL(session);
+    _Z_DEBUG("Register liveliness query for (%.*s)", (int)_z_string_len(&keyexpr->_keyexpr),
+             _z_string_data(&keyexpr->_keyexpr));
+
+    _z_keyexpr_t query_ke;
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, keyexpr));
+
+    uint32_t query_id;
+    _z_session_mutex_lock(zn);
+    _z_liveliness_pending_query_t *pq = _z_unsafe_liveliness_register_pending_query(zn);
+    if (pq == NULL) {
+        _z_session_mutex_unlock(zn);
+        _z_keyexpr_clear(&query_ke);
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+    }
+    query_id = pq->_id;
+    pq->_key = query_ke;
+    pq->_callback = callback;
+    pq->_dropper = dropper;
+    pq->_arg = arg;
+#ifdef Z_FEATURE_UNSTABLE_API
+    ret = _z_liveliness_pending_query_register_cancellation(pq, opt_cancellation_token, session);
+#else
+    _ZP_UNUSED(opt_cancellation_token);
+#endif
+    _z_session_mutex_unlock(zn);
+
     if (ret == _Z_RES_OK) {
         _ZP_UNUSED(timeout_ms);  // Current interest in pico don't support timeout
         _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
-        _z_interest_t interest = _z_make_interest(&wireexpr, id,
+        _z_interest_t interest = _z_make_interest(&wireexpr, query_id,
                                                   _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS |
                                                       _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT);
         _z_network_message_t n_msg;
         _z_n_msg_make_interest(&n_msg, interest);
+        ret = _z_send_declare(zn, &n_msg);
+
         if (_z_send_declare(zn, &n_msg) != _Z_RES_OK) {
-            _z_liveliness_unregister_pending_query(zn, id);
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }
         _z_n_msg_clear(&n_msg);
-    } else {
-        _z_liveliness_pending_query_clear(&pq);
     }
+    _Z_CLEAN_RETURN_IF_ERR(ret, _z_liveliness_unregister_pending_query(zn, query_id));
 
     return ret;
 }

@@ -176,55 +176,23 @@ void _z_liveliness_pending_query_clear(_z_liveliness_pending_query_t *pen_qry) {
         pen_qry->_dropper = NULL;
     }
     _z_keyexpr_clear(&pen_qry->_key);
+#ifdef Z_FEATURE_UNSTABLE_API
+    _z_pending_query_cancellation_data_clear(&pen_qry->_cancellation_data);
+#endif
 }
 
-void _z_liveliness_pending_query_copy(_z_liveliness_pending_query_t *dst, const _z_liveliness_pending_query_t *src) {
-    dst->_arg = src->_arg;
-    dst->_callback = src->_callback;
-    dst->_dropper = src->_dropper;
-    _z_keyexpr_copy(&dst->_key, &src->_key);
-}
-
-_z_liveliness_pending_query_t *_z_liveliness_pending_query_clone(const _z_liveliness_pending_query_t *src) {
-    _z_liveliness_pending_query_t *dst =
-        (_z_liveliness_pending_query_t *)z_malloc(sizeof(_z_liveliness_pending_query_t));
-    if (dst != NULL) {
-        _z_liveliness_pending_query_copy(dst, src);
+_z_liveliness_pending_query_t *_z_unsafe_liveliness_register_pending_query(_z_session_t *zn) {
+    _z_liveliness_pending_query_t *q = (_z_liveliness_pending_query_t *)z_malloc(sizeof(_z_liveliness_pending_query_t));
+    if (q == NULL) {
+        return NULL;
     }
-    return dst;
-}
-
-uint32_t _z_liveliness_get_query_id(_z_session_t *zn) { return zn->_liveliness_query_id++; }
-
-z_result_t _z_liveliness_register_pending_query(_z_session_t *zn, uint32_t id, _z_liveliness_pending_query_t *pen_qry) {
-    _Z_DEBUG("Register liveliness query for (%.*s)", (int)_z_string_len(&pen_qry->_key._keyexpr),
-             _z_string_data(&pen_qry->_key._keyexpr));
-
-    z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
-    const _z_liveliness_pending_query_t *pq =
-        _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, id);
-    if (pq != NULL) {
-        _Z_ERROR("Duplicate liveliness query id %i", (int)id);
-        _Z_ERROR_LOG(_Z_ERR_ENTITY_DECLARATION_FAILED);
-        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
-    } else {
-        _z_liveliness_pending_query_t *q =
-            (_z_liveliness_pending_query_t *)z_malloc(sizeof(_z_liveliness_pending_query_t));
-        if (q == NULL || _z_liveliness_pending_query_intmap_insert(&zn->_liveliness_pending_queries, id, q) == NULL) {
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            z_free(q);
-        } else {
-            *q = *pen_qry;
-            *pen_qry = _z_liveliness_pending_query_null();
-        }
+    uint32_t id = zn->_liveliness_query_id++;
+    q->_id = id;
+    if (_z_liveliness_pending_query_intmap_insert(&zn->_liveliness_pending_queries, id, q) == NULL) {
+        z_free(q);
+        return NULL;
     }
-    _z_session_mutex_unlock(zn);
-
-    if (ret != _Z_RES_OK) {
-        _z_liveliness_pending_query_clear(pen_qry);
-    }
-    return ret;
+    return q;
 }
 
 static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t interest_id,
@@ -275,34 +243,18 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
     return ret;
 }
 
-z_result_t _z_liveliness_pending_query_drop(_z_session_t *zn, uint32_t interest_id) {
-    z_result_t ret = _Z_RES_OK;
-
+z_result_t _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id) {
+    _z_liveliness_pending_query_t *pq;
     _z_session_mutex_lock(zn);
-
-    const _z_liveliness_pending_query_t *pq =
-        _z_liveliness_pending_query_intmap_get(&zn->_liveliness_pending_queries, interest_id);
-    if (pq == NULL) {
-        _Z_ERROR_LOG(_Z_ERR_ENTITY_UNKNOWN);
-        ret = _Z_ERR_ENTITY_UNKNOWN;
-    }
-
-    if (ret == _Z_RES_OK) {
-        _Z_DEBUG("Liveliness pending query drop %i", (int)interest_id);
-        _z_liveliness_pending_query_intmap_remove(&zn->_liveliness_pending_queries, interest_id);
-    }
-
+    pq = _z_liveliness_pending_query_intmap_extract(&zn->_liveliness_pending_queries, id);
     _z_session_mutex_unlock(zn);
-
-    return ret;
-}
-
-void _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id) {
-    _z_session_mutex_lock(zn);
-    // TODO: account for possible deadlock due to ke undeclaration
-    _z_liveliness_pending_query_intmap_remove(&zn->_liveliness_pending_queries, id);
-
-    _z_session_mutex_unlock(zn);
+    // drop query outside of session mutex to avoid deadlocks
+    if (pq != NULL) {
+        _z_liveliness_pending_query_clear(pq);
+        z_free(pq);
+        return _Z_RES_OK;
+    }
+    return _Z_ERR_ENTITY_UNKNOWN;
 }
 
 #endif  // Z_FEATURE_QUERY == 1
@@ -340,16 +292,21 @@ z_result_t _z_liveliness_process_token_undeclare(_z_session_t *zn, const _z_n_ms
 }
 
 z_result_t _z_liveliness_process_declare_final(_z_session_t *zn, const _z_n_msg_declare_t *decl) {
+    z_result_t ret = _Z_RES_OK;
 #if Z_FEATURE_QUERY == 1
     if (decl->_interest_id.has_value) {
-        _z_liveliness_pending_query_drop(zn, decl->_interest_id.value);
+        ret = _z_liveliness_unregister_pending_query(zn, decl->_interest_id.value);
+        if (ret != _Z_RES_OK) {
+            _Z_ERROR_LOG(ret);
+        } else {
+            _Z_DEBUG("Liveliness pending query drop %zu", (size_t)decl->_interest_id.value);
+        }
     }
-    return _Z_RES_OK;
 #else
     _ZP_UNUSED(zn);
     _ZP_UNUSED(decl);
-    return _Z_RES_OK;
 #endif
+    return _Z_RES_OK;
 }
 
 /**************** Init/Clear ****************/
@@ -368,15 +325,27 @@ void _z_liveliness_init(_z_session_t *zn) {
 }
 
 void _z_liveliness_clear(_z_session_t *zn) {
-    _z_session_mutex_lock(zn);
-
 #if Z_FEATURE_QUERY == 1
-    _z_liveliness_pending_query_intmap_clear(&zn->_liveliness_pending_queries);
+    _z_liveliness_pending_query_intmap_t queries;
 #endif
-    _z_keyexpr_intmap_clear(&zn->_local_tokens);
-    _z_keyexpr_intmap_clear(&zn->_remote_tokens);
+    _z_keyexpr_intmap_t local, remote;
 
+    _z_session_mutex_lock(zn);
+#if Z_FEATURE_QUERY == 1
+    queries = zn->_liveliness_pending_queries;
+    zn->_liveliness_pending_queries = _z_liveliness_pending_query_intmap_make();
+#endif
+    local = zn->_local_tokens;
+    remote = zn->_remote_tokens;
+    zn->_local_tokens = _z_keyexpr_intmap_make();
+    zn->_remote_tokens = _z_keyexpr_intmap_make();
     _z_session_mutex_unlock(zn);
+    // drop maps outside of session mutex to avoid deadlock
+#if Z_FEATURE_QUERY == 1
+    _z_liveliness_pending_query_intmap_clear(&queries);
+#endif
+    _z_keyexpr_intmap_clear(&local);
+    _z_keyexpr_intmap_clear(&remote);
 }
 
 #else  // Z_FEATURE_LIVELINESS == 0

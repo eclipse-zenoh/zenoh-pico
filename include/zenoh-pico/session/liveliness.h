@@ -28,9 +28,13 @@ typedef struct _z_session_t _z_session_t;
 
 typedef struct {
     _z_keyexpr_t _key;
+    uint32_t _id;
     _z_closure_reply_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
+#ifdef Z_FEATURE_UNSTABLE_API
+    _z_pending_query_cancellation_data_t _cancellation_data;
+#endif
 } _z_liveliness_pending_query_t;
 
 static inline _z_liveliness_pending_query_t _z_liveliness_pending_query_null(void) {
@@ -39,15 +43,10 @@ static inline _z_liveliness_pending_query_t _z_liveliness_pending_query_null(voi
 }
 
 void _z_liveliness_pending_query_clear(_z_liveliness_pending_query_t *res);
-void _z_liveliness_pending_query_copy(_z_liveliness_pending_query_t *dst, const _z_liveliness_pending_query_t *src);
-_z_liveliness_pending_query_t *_z_liveliness_pending_query_clone(const _z_liveliness_pending_query_t *src);
 
 _Z_ELEM_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t, _z_noop_size,
-               _z_liveliness_pending_query_clear, _z_liveliness_pending_query_copy, _z_noop_move, _z_noop_eq,
-               _z_noop_cmp, _z_noop_hash)
+               _z_liveliness_pending_query_clear, _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t)
-
-uint32_t _z_liveliness_get_query_id(_z_session_t *zn);
 
 z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr);
 void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id);
@@ -61,8 +60,8 @@ z_result_t _z_liveliness_subscription_undeclare_all(_z_session_t *zn);
 #endif
 
 #if Z_FEATURE_QUERY == 1
-z_result_t _z_liveliness_register_pending_query(_z_session_t *zn, uint32_t id, _z_liveliness_pending_query_t *pen_qry);
-void _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id);
+_z_liveliness_pending_query_t *_z_unsafe_liveliness_register_pending_query(_z_session_t *zn);
+z_result_t _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id);
 #endif
 
 void _z_liveliness_init(_z_session_t *zn);
