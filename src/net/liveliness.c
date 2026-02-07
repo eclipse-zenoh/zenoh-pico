@@ -137,6 +137,7 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = z_locality_default();
+    s._key = _z_keyexpr_null();
     s._preparsed = _z_keyexpr_parsed_null();
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
     s._preparsed = _z_keyexpr_parse(&s._key);

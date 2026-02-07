@@ -216,6 +216,7 @@ z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_r
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
+    s._key = _z_keyexpr_null();
     s._preparsed = _z_keyexpr_parsed_null();
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr), _z_subscription_clear(&s));
     s._preparsed = _z_keyexpr_parse(&s._key);
@@ -308,7 +309,10 @@ z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t
     q._dropper = dropper;
     q._arg = arg;
     q._allowed_origin = allowed_origin;
+    q._key = _z_keyexpr_null();
+    q._preparsed = _z_keyexpr_parsed_null();
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr), _z_session_queryable_clear(&q));
+    q._preparsed = _z_keyexpr_parse(&q._key);
 
     // Create session_queryable entry, stored at session-level, do not drop it by the end of this function.
     _z_session_queryable_rc_t sp_q = _z_register_session_queryable(_Z_RC_IN_VAL(zn), &q);
