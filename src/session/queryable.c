@@ -121,7 +121,7 @@ static z_result_t __unsafe_z_get_session_queryables_by_key(_z_session_t *zn, con
         const _z_session_queryable_t *qle_val = _Z_RC_IN_VAL(qle);
         bool origin_allowed = is_remote ? _z_locality_allows_remote(qle_val->_allowed_origin)
                                         : _z_locality_allows_local(qle_val->_allowed_origin);
-        if (origin_allowed && _z_keyexpr_intersects_preparsed(&qle_val->_key._preparsed, &qle_val->_key, key)) {
+        if (origin_allowed && _z_keyexpr_intersects_preparsed(&qle_val->_key, key)) {
             _z_session_queryable_rc_t qle_clone = _z_session_queryable_rc_clone(qle);
             _Z_CLEAN_RETURN_IF_ERR(_z_session_queryable_rc_svec_append(qle_infos, &qle_clone, false),
                                    _z_session_queryable_rc_svec_clear(qle_infos));

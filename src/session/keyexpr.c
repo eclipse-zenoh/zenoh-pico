@@ -827,8 +827,8 @@ void _z_keyexpr_parsed_clear(_z_keyexpr_parsed_t *preparsed) {
     *preparsed = _z_keyexpr_parsed_null();
 }
 
-bool _z_keyexpr_intersects_preparsed(const _z_keyexpr_parsed_t *left_preparsed, const _z_keyexpr_t *left,
-                                     const _z_keyexpr_t *right) {
+bool _z_keyexpr_intersects_preparsed(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
+    const _z_keyexpr_parsed_t *left_preparsed = &left->_preparsed;
     if ((left_preparsed == NULL) || (left_preparsed->_chunks == NULL) || (left_preparsed->_keyexpr.start == NULL)) {
         return _z_keyexpr_intersects(left, right);
     }

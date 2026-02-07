@@ -84,8 +84,7 @@ bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 _z_keyexpr_parsed_t _z_keyexpr_parse(const _z_keyexpr_t *keyexpr);
 void _z_keyexpr_parsed_clear(_z_keyexpr_parsed_t *preparsed);
-bool _z_keyexpr_intersects_preparsed(const _z_keyexpr_parsed_t *left_preparsed, const _z_keyexpr_t *left,
-                                     const _z_keyexpr_t *right);
+bool _z_keyexpr_intersects_preparsed(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
