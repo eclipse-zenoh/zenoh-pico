@@ -132,6 +132,8 @@ z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
     _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_keyexpr, &src->_keyexpr), _z_keyexpr_clear(src));
     dst->_declaration = src->_declaration;
     src->_declaration = _z_keyexpr_wire_declaration_rc_null();
+    dst->_preparsed = src->_preparsed;
+    src->_preparsed = _z_keyexpr_parsed_null();
     return _Z_RES_OK;
 }
 

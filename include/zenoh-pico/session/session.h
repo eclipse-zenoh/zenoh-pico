@@ -73,7 +73,6 @@ typedef void (*_z_closure_sample_callback_t)(_z_sample_t *sample, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_keyexpr_parsed_t _preparsed;
     uint32_t _id;
     z_locality_t _allowed_origin;
     _z_closure_sample_callback_t _callback;
@@ -106,7 +105,6 @@ typedef void (*_z_closure_query_callback_t)(_z_query_rc_t *query, void *arg);
 
 typedef struct {
     _z_keyexpr_t _key;
-    _z_keyexpr_parsed_t _preparsed;
     uint32_t _id;
     _z_closure_query_callback_t _callback;
     _z_drop_handler_t _dropper;

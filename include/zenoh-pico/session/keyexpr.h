@@ -57,17 +57,18 @@ static inline bool _z_keyexpr_wire_declaration_is_declared_on_session(const _z_k
 _Z_REFCOUNT_DEFINE(_z_keyexpr_wire_declaration, _z_keyexpr_wire_declaration)
 
 typedef struct {
-    _z_keyexpr_wire_declaration_rc_t _declaration;
-    _z_string_t _keyexpr;
-} _z_keyexpr_t;
-
-typedef struct {
     _z_str_se_t _keyexpr;
     size_t _n_verbatim;
     int8_t _wildness;
     size_t _n_chunks;
     _z_str_se_t *_chunks;
 } _z_keyexpr_parsed_t;
+
+typedef struct {
+    _z_keyexpr_wire_declaration_rc_t _declaration;
+    _z_string_t _keyexpr;
+    _z_keyexpr_parsed_t _preparsed;
+} _z_keyexpr_t;
 
 static inline _z_keyexpr_parsed_t _z_keyexpr_parsed_null(void) {
     _z_keyexpr_parsed_t p = {0};
@@ -95,6 +96,7 @@ static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
         ret._declaration = _z_keyexpr_wire_declaration_rc_clone(&src->_declaration);
     }
     ret._keyexpr = _z_string_alias(src->_keyexpr);
+    ret._preparsed = _z_keyexpr_parsed_null();
     return ret;
 }
 _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str);
@@ -120,6 +122,7 @@ static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
 }
 
 static inline void _z_keyexpr_clear(_z_keyexpr_t *key) {
+    _z_keyexpr_parsed_clear(&key->_preparsed);
     _z_keyexpr_wire_declaration_rc_drop(&key->_declaration);
     _z_string_clear(&key->_keyexpr);
 }
