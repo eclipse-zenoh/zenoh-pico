@@ -20,15 +20,21 @@
 #undef NDEBUG
 #include <assert.h>
 
-#define TEST_TRUE_INTERSECT(a, b)        \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(_z_keyexpr_intersects(&ke_a, &ke_b));
+#define TEST_TRUE_INTERSECT(a, b)                          \
+    ke_a = _z_keyexpr_alias_from_str(a);                   \
+    ke_b = _z_keyexpr_alias_from_str(b);                   \
+    assert(_z_keyexpr_intersects(&ke_a, &ke_b));           \
+    ke_a._preparsed = _z_keyexpr_parse(&ke_a);             \
+    assert(_z_keyexpr_intersects_preparsed(&ke_a, &ke_b)); \
+    _z_keyexpr_parsed_clear(&ke_a._preparsed);
 
-#define TEST_FALSE_INTERSECT(a, b)       \
-    ke_a = _z_keyexpr_alias_from_str(a); \
-    ke_b = _z_keyexpr_alias_from_str(b); \
-    assert(!_z_keyexpr_intersects(&ke_a, &ke_b));
+#define TEST_FALSE_INTERSECT(a, b)                          \
+    ke_a = _z_keyexpr_alias_from_str(a);                    \
+    ke_b = _z_keyexpr_alias_from_str(b);                    \
+    assert(!_z_keyexpr_intersects(&ke_a, &ke_b));           \
+    ke_a._preparsed = _z_keyexpr_parse(&ke_a);              \
+    assert(!_z_keyexpr_intersects_preparsed(&ke_a, &ke_b)); \
+    _z_keyexpr_parsed_clear(&ke_a._preparsed);
 
 #define TEST_TRUE_INCLUDE(a, b)          \
     ke_a = _z_keyexpr_alias_from_str(a); \

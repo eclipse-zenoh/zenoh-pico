@@ -15,11 +15,14 @@
 #define INCLUDE_ZENOH_PICO_SESSION_KEYEXPR_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "zenoh-pico/api/constants.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/protocol/core.h"
 #include "zenoh-pico/session/weak_session.h"
+#include "zenoh-pico/utils/string.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,9 +57,23 @@ static inline bool _z_keyexpr_wire_declaration_is_declared_on_session(const _z_k
 _Z_REFCOUNT_DEFINE(_z_keyexpr_wire_declaration, _z_keyexpr_wire_declaration)
 
 typedef struct {
+    _z_str_se_t _keyexpr;
+    size_t _n_verbatim;
+    int8_t _wildness;
+    size_t _n_chunks;
+    _z_str_se_t *_chunks;
+} _z_keyexpr_parsed_t;
+
+typedef struct {
     _z_keyexpr_wire_declaration_rc_t _declaration;
     _z_string_t _keyexpr;
+    _z_keyexpr_parsed_t _preparsed;
 } _z_keyexpr_t;
+
+static inline _z_keyexpr_parsed_t _z_keyexpr_parsed_null(void) {
+    _z_keyexpr_parsed_t p = {0};
+    return p;
+}
 
 zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
@@ -65,6 +82,9 @@ z_result_t _z_keyexpr_join(_z_keyexpr_t *key, const _z_keyexpr_t *left, const _z
 
 bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
+_z_keyexpr_parsed_t _z_keyexpr_parse(const _z_keyexpr_t *keyexpr);
+void _z_keyexpr_parsed_clear(_z_keyexpr_parsed_t *preparsed);
+bool _z_keyexpr_intersects_preparsed(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 /*------------------ clone/Copy/Free helpers ------------------*/
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
@@ -75,6 +95,7 @@ static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
         ret._declaration = _z_keyexpr_wire_declaration_rc_clone(&src->_declaration);
     }
     ret._keyexpr = _z_string_alias(src->_keyexpr);
+    ret._preparsed = _z_keyexpr_parsed_null();
     return ret;
 }
 _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str);
@@ -100,6 +121,7 @@ static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
 }
 
 static inline void _z_keyexpr_clear(_z_keyexpr_t *key) {
+    _z_keyexpr_parsed_clear(&key->_preparsed);
     _z_keyexpr_wire_declaration_rc_drop(&key->_declaration);
     _z_string_clear(&key->_keyexpr);
 }
