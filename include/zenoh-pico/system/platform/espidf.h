@@ -52,7 +52,7 @@ typedef struct timespec z_clock_t;
 typedef struct timeval z_time_t;
 
 typedef struct {
-    union {
+    struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         int _fd;
 #endif
@@ -66,7 +66,7 @@ typedef struct {
 } _z_sys_net_socket_t;
 
 typedef struct {
-    union {
+    struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         struct addrinfo* _iptcp;
 #endif

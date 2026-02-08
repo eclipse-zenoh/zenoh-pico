@@ -151,13 +151,28 @@ static bool _z_opt_is_true(const char *val) {
 
 static int _z_tls_bio_send(void *ctx, const unsigned char *buf, size_t len) {
     int fd = *(int *)ctx;
+    
+    // Debug: See how big the packet is before sending
+    _Z_DEBUG("BIO trying to send %d bytes...", (int)len);
+
     ssize_t n = send(fd, buf, len, MSG_NOSIGNAL);
+    
     if (n < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        // --- THIS IS THE MISSING PIECE ---
+        int err = errno; // Capture errno immediately
+        _Z_ERROR("BIO SEND FAILED! FD: %d, Len: %d, Errno: %d (%s)", 
+                 fd, (int)len, err, strerror(err));
+        _Z_DEBUG("BIO SEND FAILED! FD: %d, Len: %d, Errno: %d (%s)", 
+                 fd, (int)len, err, strerror(err));
+
+        if (err == EAGAIN || err == EWOULDBLOCK) {
             return MBEDTLS_ERR_SSL_WANT_WRITE;
         }
+        
+        // Return the generic failure
         return MBEDTLS_ERR_NET_SEND_FAILED;
     }
+    
     return (int)n;
 }
 
@@ -354,6 +369,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
                        const _z_str_intmap_t *config, bool peer_socket) {
     if ((rep == NULL) || (rep->_iptcp == NULL)) {
         _Z_ERROR("Invalid TCP endpoint for TLS connection");
+        _Z_DEBUG("Invalid TCP endpoint for TLS connection");
         return _Z_ERR_GENERIC;
     }
 
@@ -373,6 +389,7 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     sock->_tls_ctx = _z_tls_context_new();
     if (sock->_tls_ctx == NULL) {
         _Z_ERROR("Failed to create TLS context");
+        _Z_DEBUG("Failed to create TLS context");
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
@@ -395,12 +412,14 @@ z_result_t _z_open_tls(_z_tls_socket_t *sock, const _z_sys_net_endpoint_t *rep, 
     ret = _z_open_tcp(&sock->_sock, *rep, Z_CONFIG_SOCKET_TIMEOUT);
     if (ret != _Z_RES_OK) {
         _Z_ERROR("Failed to open TCP socket: %d", ret);
+        _Z_DEBUG("Failed to open TCP socket: %d", ret);
         _z_tls_context_free(&sock->_tls_ctx);
         return ret;
     }
-
-    // Needed for _read_socket_f callback which requires TLS context
+    _Z_DEBUG("DEBUG: FD after open_tcp is: %d", sock->_sock._fd);
+    // Needed for _read_socket_f callback which requires TLmbedtls_ssl_set_bioS context
     sock->_sock._tls_sock = (void *)sock;
+    _Z_DEBUG("DEBUG: FD after assigning tls_sock is: %d", sock->_sock._fd);
 
     int mbedret = mbedtls_ssl_config_defaults(&sock->_tls_ctx->_ssl_config, MBEDTLS_SSL_IS_CLIENT,
                                               MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
