@@ -31,13 +31,13 @@ extern "C" {
 
 #if Z_FEATURE_MULTI_THREAD == 1
 typedef struct {
-    const char* name;
+    const char *name;
     UBaseType_t priority;
     size_t stack_depth;
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     bool static_allocation;
-    StackType_t* stack_buffer;
-    StaticTask_t* task_buffer;
+    StackType_t *stack_buffer;
+    StaticTask_t *task_buffer;
 #endif /* SUPPORT_STATIC_ALLOCATION */
 } z_task_attr_t;
 typedef struct {
@@ -61,10 +61,10 @@ typedef struct {
         int _fd;
 #endif
 #if Z_FEATURE_LINK_BLUETOOTH == 1
-        BluetoothSerial* _bts;  // As pointer to cross the boundary between C and C++
+        BluetoothSerial *_bts;  // As pointer to cross the boundary between C and C++
 #endif
 #if Z_FEATURE_LINK_SERIAL == 1
-        HardwareSerial* _serial;  // As pointer to cross the boundary between C and C++
+        HardwareSerial *_serial;  // As pointer to cross the boundary between C and C++
 #endif
 #if Z_FEATURE_LINK_TLS == 1
         void* _tls_sock;  // Pointer to _z_tls_socket_t
@@ -75,7 +75,7 @@ typedef struct {
 typedef struct {
     struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
-        struct addrinfo* _iptcp;
+        struct addrinfo *_iptcp;
 #endif
     };
 } _z_sys_net_endpoint_t;
