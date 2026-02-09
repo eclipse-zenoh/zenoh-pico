@@ -474,6 +474,8 @@ void int_map_extract_test(void) {
 
 static bool slist_eq_f(const void *left, const void *right) { return strcmp((char *)left, (char *)right) == 0; }
 static bool slist_starts_with_f(const void *left, const void *right) {
+    // SAFETY: left and right are guaranteed to be null-terminated.
+    // Flawfinder: ignore [CWE-126]
     return strncmp((char *)left, (char *)right, strlen((char *)left)) == 0;
 }
 
@@ -559,6 +561,8 @@ void slist_test(void) {
     // Extract test
     char *values2[] = {"test1", "tes2", "test3"};
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        // SAFETY: values2[i] only contains null-terminated strings.
+        // Flawfinder: ignore [CWE-126]
         slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
     }
     _z_slist_t *extracted = NULL;
@@ -577,6 +581,8 @@ void slist_test(void) {
     _z_slist_free(&extracted, _z_noop_clear);
 
     for (size_t i = 0; i < _ZP_ARRAY_SIZE(values2); i++) {
+        // SAFETY: values2[i] only contains null-terminated strings.
+        // Flawfinder: ignore [CWE-126]
         slist = _z_slist_push(slist, values2[i], strlen(values2[i]) + 1, _z_noop_copy, false);
     }
     slist = _z_slist_extract_filter(slist, slist_starts_with_f, "test", &extracted, true);
