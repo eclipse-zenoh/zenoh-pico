@@ -1081,9 +1081,16 @@ size_t _z_keyexpr_non_wild_prefix_len(const _z_keyexpr_t *key) {
 
 z_result_t _z_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs, _z_keyexpr_t *out,
                                               const _z_keyexpr_t *keyexpr) {
+    z_result_t ret = _Z_RES_OK;
     if (_z_keyexpr_is_non_wild_prefix_optimized(keyexpr, _Z_RC_IN_VAL(zs))) {
-        return _z_keyexpr_copy(out, keyexpr);
+        ret = _z_keyexpr_copy(out, keyexpr);
     } else {
-        return _z_keyexpr_declare_prefix(zs, out, keyexpr, _z_keyexpr_non_wild_prefix_len(keyexpr));
+        ret = _z_keyexpr_declare_prefix(zs, out, keyexpr, _z_keyexpr_non_wild_prefix_len(keyexpr));
     }
+    if (ret != _Z_RES_OK) {
+        return ret;
+    }
+
+    out->_preparsed = _z_keyexpr_parse(out);
+    return _Z_RES_OK;
 }
