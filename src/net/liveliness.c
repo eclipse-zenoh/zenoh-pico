@@ -295,7 +295,7 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_
         _z_n_msg_make_interest(&n_msg, interest);
         ret = _z_send_declare(zn, &n_msg);
 
-        if (_z_send_declare(zn, &n_msg) != _Z_RES_OK) {
+        if (ret != _Z_RES_OK) {
             _Z_ERROR_LOG(_Z_ERR_TRANSPORT_TX_FAILED);
             ret = _Z_ERR_TRANSPORT_TX_FAILED;
         }

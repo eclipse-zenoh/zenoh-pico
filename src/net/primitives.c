@@ -549,12 +549,6 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
     // Send query message
     _z_slice_t params =
         (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
-#if Z_FEATURE_LOCAL_QUERYABLE == 1
-    if (ret == _Z_RES_OK && allow_local) {
-        ret = _z_session_deliver_query_locally(zn, keyexpr, &params, consolidation, payload, encoding, attachment,
-                                               source_info, qid, timeout_ms, qos);
-    }
-#endif
     if (ret == _Z_RES_OK && remote_possible) {
         _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
@@ -562,6 +556,12 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
                             timeout_ms, attachment, qos, source_info);
         ret = _z_send_n_msg(zn, &z_msg, Z_RELIABILITY_RELIABLE, _z_n_qos_get_congestion_control(qos), NULL);
     }
+#if Z_FEATURE_LOCAL_QUERYABLE == 1
+    if (ret == _Z_RES_OK && allow_local) {
+        ret = _z_session_deliver_query_locally(zn, keyexpr, &params, consolidation, payload, encoding, attachment,
+                                               source_info, qid, timeout_ms, qos);
+    }
+#endif
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_unregister_pending_query(zn, qid));
     return _Z_RES_OK;
 }

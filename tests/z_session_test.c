@@ -12,7 +12,7 @@
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
 
-#if Z_FEATURE_MULTI_THEAD == 1
+#if Z_FEATURE_MULTI_THREAD == 1
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

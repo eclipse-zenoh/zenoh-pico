@@ -57,6 +57,7 @@ z_result_t _z_cancellation_handlers_storage_add(_z_cancellation_handlers_storage
     _z_cancellation_token_on_cancel_handler_t *ret = _z_cancellation_token_on_cancel_handler_intmap_insert(
         &storage->_handlers, storage->_next_handler_id, handler_on_heap);
     if (ret == NULL) {
+        z_free(handler_on_heap);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     _z_cancellation_token_on_cancel_handler_move(ret, handler);
