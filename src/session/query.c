@@ -314,7 +314,7 @@ z_result_t _z_pending_query_register_cancellation(_z_pending_query_t *pq,
         pq->_cancellation_data._cancellation_token = _z_cancellation_token_rc_clone(opt_cancellation_token);
         pq->_cancellation_data._handler_id = handler_id;
         _Z_CLEAN_RETURN_IF_ERR(
-            _z_cancellation_token_get_notifier(_Z_RC_IN_VAL(opt_cancellation_token), &pq->_cancellation_data._notifer),
+            _z_cancellation_token_get_notifier(_Z_RC_IN_VAL(opt_cancellation_token), &pq->_cancellation_data._notifier),
             _z_pending_query_cancellation_data_clear(&pq->_cancellation_data));
     }
     return _Z_RES_OK;

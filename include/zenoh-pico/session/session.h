@@ -140,7 +140,7 @@ typedef struct _z_pending_query_t _z_pending_query_t;
 typedef struct {
     _z_cancellation_token_rc_t _cancellation_token;
     size_t _handler_id;
-    _z_sync_group_notifier_t _notifer;
+    _z_sync_group_notifier_t _notifier;
 } _z_pending_query_cancellation_data_t;
 
 static inline _z_pending_query_cancellation_data_t _z_pending_query_cancellation_data_null(void) {
@@ -151,7 +151,7 @@ static inline void _z_pending_query_cancellation_data_clear(_z_pending_query_can
     if (!_Z_RC_IS_NULL(&data->_cancellation_token)) {
         _z_cancellation_token_remove_on_cancel_handler(_Z_RC_IN_VAL(&data->_cancellation_token), data->_handler_id);
         _z_cancellation_token_rc_drop(&data->_cancellation_token);
-        _z_sync_group_notifier_drop(&data->_notifer);
+        _z_sync_group_notifier_drop(&data->_notifier);
     }
 }
 
