@@ -165,7 +165,7 @@ uint16_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr,
     }
 
     if (id == Z_RESOURCE_ID_NONE) {
-        _z_resource_t *res = _z_get_resource_by_key_inner(resources, &new_key);
+        _z_resource_t *res = _z_get_resource_by_key_inner(*resources, &new_key);
         if (res != NULL) {  // declaration of already declared resource
             res->_refcount++;
             _z_string_clear(&new_key);
