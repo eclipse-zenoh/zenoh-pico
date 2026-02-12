@@ -119,7 +119,7 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
         const _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
         bool origin_allowed = is_remote ? _z_locality_allows_remote(sub_val->_allowed_origin)
                                         : _z_locality_allows_local(sub_val->_allowed_origin);
-        if (origin_allowed && _z_keyexpr_intersects(&sub_val->_key, key)) {
+        if (origin_allowed && _z_keyexpr_intersects_preparsed(&sub_val->_key, key)) {
             _z_subscription_rc_t sub_clone = _z_subscription_rc_clone(sub);
             _Z_CLEAN_RETURN_IF_ERR(_z_subscription_rc_svec_append(sub_infos, &sub_clone, false),
                                    _z_subscription_rc_svec_clear(sub_infos));

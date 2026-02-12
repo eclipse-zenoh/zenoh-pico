@@ -173,6 +173,7 @@ static _z_subscription_rc_t register_local_subscription(const _z_keyexpr_t *keye
     _z_subscription_t sub_entry = {0};
     sub_entry._id = _z_get_entity_id(&g_session);
     sub_entry._key = _z_keyexpr_duplicate(keyexpr);
+    sub_entry._key._preparsed = _z_keyexpr_parse(&sub_entry._key);
     sub_entry._callback = local_sample_callback;
     sub_entry._dropper = NULL;
     sub_entry._arg = counter;
@@ -188,6 +189,7 @@ static _z_session_queryable_rc_t register_local_queryable(const _z_keyexpr_t *ke
                                                           z_locality_t allowed_origin) {
     _z_session_queryable_t queryable_entry = {0};
     queryable_entry._key = _z_keyexpr_duplicate(keyexpr);
+    queryable_entry._key._preparsed = _z_keyexpr_parse(&queryable_entry._key);
     queryable_entry._callback = local_query_callback;
     queryable_entry._dropper = NULL;
     queryable_entry._arg = counter;
