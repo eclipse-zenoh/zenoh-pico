@@ -1461,6 +1461,13 @@ _z_n_msg_push_t gen_push(void) {
     };
 }
 
+static _z_network_message_t gen_push_message(void) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_PUSH,
+        ._body._push = gen_push(),
+    };
+}
+
 void assert_eq_push(const _z_n_msg_push_t *left, const _z_n_msg_push_t *right) {
     assert_eq_timestamp(&left->_timestamp, &right->_timestamp);
     assert_eq_keyexpr(&left->_key, &right->_key);
@@ -1514,6 +1521,13 @@ _z_n_msg_request_t gen_request(void) {
         }
     }
     return request;
+}
+
+static _z_network_message_t gen_request_message(void) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_REQUEST,
+        ._body._request = gen_request(),
+    };
 }
 
 void assert_eq_request(const _z_n_msg_request_t *left, const _z_n_msg_request_t *right) {
@@ -1580,6 +1594,13 @@ _z_n_msg_response_t gen_response(void) {
     return ret;
 }
 
+static _z_network_message_t gen_response_message(void) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_RESPONSE,
+        ._body._response = gen_response(),
+    };
+}
+
 void assert_eq_response(const _z_n_msg_response_t *left, const _z_n_msg_response_t *right) {
     assert_eq_keyexpr(&left->_key, &right->_key);
     assert_eq_timestamp(&left->_ext_timestamp, &right->_ext_timestamp);
@@ -1618,6 +1639,14 @@ void response_message(void) {
 }
 
 _z_n_msg_response_final_t gen_response_final(void) { return (_z_n_msg_response_final_t){._request_id = gen_zint()}; }
+
+static _z_network_message_t gen_response_final_message(void) {
+    return (_z_network_message_t){
+        ._tag = _Z_N_RESPONSE_FINAL,
+        ._body._response_final = gen_response_final(),
+    };
+}
+
 void assert_eq_response_final(const _z_n_msg_response_final_t *left, const _z_n_msg_response_final_t *right) {
     assert(left->_request_id == right->_request_id);
 }
@@ -2132,6 +2161,104 @@ void test_buffer_too_small(void) {
     assert(deserialized_len == SIZE_MAX);
 }
 
+static _z_network_message_t make_specific_net_msg(uint8_t which) {
+    switch (which) {
+        case 0:
+            return gen_declare_message();
+        case 1:
+            return gen_push_message();
+        case 2:
+            return gen_request_message();
+        case 3:
+            return gen_response_message();
+        case 4:
+            return gen_response_final_message();
+        case 5:
+            return gen_interest_message();
+        default:
+            assert(false && "Invalid network message selector");
+    }
+
+    return (_z_network_message_t){0};
+}
+
+static const char *net_msg_name(uint8_t which) {
+    switch (which) {
+        case 0:
+            return "DECLARE";
+        case 1:
+            return "PUSH";
+        case 2:
+            return "INTEREST";
+        case 3:
+            return "RESPONSE";
+        case 4:
+            return "RESPONSE_FINAL";
+        case 5:
+            return "REQUEST";
+        default:
+            return "???";
+    }
+}
+
+// Encode exactly 2 messages (A then B) into one buffer, then decode them sequentially reusing the SAME decoded object.
+static void network_message_decode_pair_reuse(uint8_t a, uint8_t b, bool check_contents) {
+    printf("\n>> Pair %s(%u) -> %s(%u) (check: %s)\n", net_msg_name(a), a, net_msg_name(b), b,
+           check_contents ? "true" : "false");
+
+    _z_wbuf_t wbf = gen_wbuf(UINT16_MAX);
+
+    _z_network_message_t expected[2];
+    expected[0] = make_specific_net_msg(a);
+    expected[1] = make_specific_net_msg(b);
+
+    assert(_z_network_message_encode(&wbf, &expected[0]) == _Z_RES_OK);
+    assert(_z_network_message_encode(&wbf, &expected[1]) == _Z_RES_OK);
+
+    _z_zbuf_t zbf = _z_wbuf_to_zbuf(&wbf);
+
+    _z_network_message_t decoded = {0};
+    _z_arc_slice_t arcs = _z_arc_slice_empty();
+
+    for (int i = 0; i < 2; i++) {
+        _z_n_msg_clear(&decoded);
+
+        z_result_t r = _z_network_message_decode(&decoded, &zbf, &arcs, _Z_KEYEXPR_MAPPING_LOCAL);
+        assert(r == _Z_RES_OK);
+
+        if (check_contents) {
+            assert_eq_net_msg(&expected[i], &decoded);
+        }
+    }
+
+    _z_n_msg_clear(&decoded);
+    _z_n_msg_clear(&expected[0]);
+    _z_n_msg_clear(&expected[1]);
+
+    _z_zbuf_clear(&zbf);
+    _z_wbuf_clear(&wbf);
+}
+
+// 6x6 matrix: test all A->B transitions, one invocation per pair
+static void network_message_decode_pairwise_matrix(bool check_contents, size_t itr) {
+    enum { TYPES = 6 };
+
+    printf(
+        "\n>> Network pairwise matrix "
+        "(2 messages per run), check: %s, iterations: %zu\n",
+        check_contents ? "true" : "false", itr);
+
+    for (size_t it = 0; it < itr; it++) {
+        printf("\n-- MATRIX ITERATION %zu --\n", it);
+
+        for (uint8_t a = 0; a < TYPES; a++) {
+            for (uint8_t b = 0; b < TYPES; b++) {
+                network_message_decode_pair_reuse(a, b, check_contents);
+            }
+        }
+    }
+}
+
 /*=============================*/
 /*            Main             */
 /*=============================*/
@@ -2191,6 +2318,10 @@ int main(void) {
     test_serialize_deserialize();
     test_crc_mismatch();
     test_buffer_too_small();
+
+    // Ensure that we can decode a sequence of messages reusing the same decoded object
+    network_message_decode_pairwise_matrix(false, 1000);
+    network_message_decode_pairwise_matrix(true, 1000);
 
     return 0;
 }
