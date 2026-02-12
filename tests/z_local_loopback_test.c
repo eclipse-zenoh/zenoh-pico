@@ -201,19 +201,15 @@ static _z_session_queryable_rc_t register_local_queryable(const _z_declared_keye
 
 static void test_put_local_only_single(void) {
     setup_session();
-    printf("1\n");
     _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put");
-    printf("1.5\n");
     _z_subscription_rc_t subscription_rc =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_SESSION_LOCAL);
-    printf("2\n");
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
     assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
-    printf("3\n");
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     _z_encoding_t encoding = _z_encoding_null();
     _z_timestamp_t ts = _z_timestamp_null();
@@ -224,14 +220,10 @@ static void test_put_local_only_single(void) {
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
-    printf("4\n");
     _z_bytes_drop(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &subscription_rc);
-    printf("5\n");
     cleanup_local_resource(&keyexpr);
-    printf("6\n");
     cleanup_session();
-    printf("7\n");
 }
 
 static void test_put_local_only_via_api(void) {

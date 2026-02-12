@@ -125,6 +125,7 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
         }
         xs = _z_session_queryable_rc_slist_next(xs);
     }
+    _z_session_queryable_rc_slist_free(&qle_list);
     return _Z_RES_OK;
 }
 #else
@@ -145,8 +146,8 @@ static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interes
     _z_declared_keyexpr_intmap_t token_list = _z_declared_keyexpr_intmap_clone(&zn->_local_tokens);
     _z_session_mutex_unlock(zn);
     _z_declared_keyexpr_intmap_iterator_t iter = _z_declared_keyexpr_intmap_iterator_make(&token_list);
-    while (_z_keyexpr_intmap_iterator_next(&iter)) {
-        uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
+    while (_z_declared_keyexpr_intmap_iterator_next(&iter)) {
+        uint32_t id = (uint32_t)_z_declared_keyexpr_intmap_iterator_key(&iter);
         // Check if key is concerned
         if (restr_key == NULL ||
             _z_keyexpr_intersects(restr_key, &_z_declared_keyexpr_intmap_iterator_value(&iter)->_inner)) {
