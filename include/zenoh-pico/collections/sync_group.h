@@ -24,9 +24,8 @@ typedef struct {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t counter_mutex;
     _z_condvar_t counter_condvar;
-#else
-    uint8_t _dummy;  // to avoid empty struct
 #endif
+    bool is_closed;
 } _z_sync_group_state_t;
 
 z_result_t _z_sync_group_state_create(_z_sync_group_state_t* sync_group);
@@ -54,12 +53,17 @@ static inline _z_sync_group_notifier_t _z_sync_group_notifier_null(void) {
 
 z_result_t _z_sync_group_create(_z_sync_group_t* sync_group);
 z_result_t _z_sync_group_wait(_z_sync_group_t* sync_group);
+void _z_sync_group_close(_z_sync_group_t* sync_group);
 z_result_t _z_sync_group_wait_deadline(_z_sync_group_t* sync_group, const z_clock_t* deadline);
 static inline bool _z_sync_group_check(const _z_sync_group_t* sync_group) {
     return !_Z_RC_IS_NULL(&sync_group->_state);
 }
+bool _z_sync_group_is_closed(const _z_sync_group_t* sync_group);
 void _z_sync_group_drop(_z_sync_group_t* sync_group);
 z_result_t _z_sync_group_create_notifier(_z_sync_group_t* sync_group, _z_sync_group_notifier_t* notifier);
 void _z_sync_group_notifier_drop(_z_sync_group_notifier_t* notifier);
+static inline bool _z_sync_group_notifier_check(const _z_sync_group_notifier_t* notifier) {
+    return !_Z_RC_IS_NULL(&notifier->_state);
+}
 
 #endif

@@ -35,6 +35,9 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
     _z_pending_reply_slist_free(&pen_qry->_pending_replies);
     pen_qry->_allowed_destination = z_locality_default();
     pen_qry->_remaining_finals = 0;
+#ifdef Z_FEATURE_UNSTABLE_API
+    _z_pending_query_cancellation_data_clear(&pen_qry->_cancellation_data);
+#endif
 }
 
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
@@ -49,21 +52,25 @@ static bool _z_pending_query_timeout(const _z_pending_query_t *foo, const _z_pen
 }
 
 void _z_pending_query_process_timeout(_z_session_t *zn) {
-    // Lock session
+    _z_pending_query_slist_t *queries_to_drop;
     _z_session_mutex_lock(zn);
-    // Drop all queries with timeout elapsed
-    zn->_pending_queries =
-        _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
+    // Extract all queries with timeout elapsed
+    zn->_pending_queries = _z_pending_query_slist_extract_all_filter(zn->_pending_queries, &queries_to_drop,
+                                                                     _z_pending_query_timeout, NULL);
     _z_session_mutex_unlock(zn);
+    _z_pending_query_slist_free(&queries_to_drop);
 }
 
 /*------------------ Query ------------------*/
-_z_zint_t _z_get_query_id(_z_session_t *zn) { return zn->_query_id++; }
-
-_z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_slist_t *pqls, const _z_zint_t id) {
+/**
+ * This function is unsafe because it operates in potentially concurrent data.
+ * Make sure that the following mutexes are locked before calling this function:
+ *  - zn->_mutex_inner
+ */
+_z_pending_query_t *_z_unsafe_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
     _z_pending_query_t *ret = NULL;
 
-    _z_pending_query_slist_t *xs = pqls;
+    _z_pending_query_slist_t *xs = zn->_pending_queries;
     while (xs != NULL) {
         _z_pending_query_t *pql = _z_pending_query_slist_value(xs);
         if (pql->_id == id) {
@@ -73,7 +80,6 @@ _z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_slist_t *pqls, 
 
         xs = _z_pending_query_slist_next(xs);
     }
-
     return ret;
 }
 
@@ -82,32 +88,12 @@ _z_pending_query_t *__z_get_pending_query_by_id(_z_pending_query_slist_t *pqls, 
  * Make sure that the following mutexes are locked before calling this function:
  *  - zn->_mutex_inner
  */
-_z_pending_query_t *__unsafe__z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _z_pending_query_slist_t *pqls = zn->_pending_queries;
-    return __z_get_pending_query_by_id(pqls, id);
-}
-
-_z_pending_query_t *_z_get_pending_query_by_id(_z_session_t *zn, const _z_zint_t id) {
-    _z_session_mutex_lock(zn);
-
-    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
-
-    _z_session_mutex_unlock(zn);
-    return pql;
-}
-
-z_result_t _z_unsafe_register_pending_query(_z_session_t *zn, _z_zint_t id) {
-    z_result_t ret = _Z_RES_OK;
-
-    _z_pending_query_t *pql = __unsafe__z_get_pending_query_by_id(zn, id);
-    if (pql == NULL) {  // Register query only if a pending one with the same ID does not exist
-        zn->_pending_queries = _z_pending_query_slist_push_empty(zn->_pending_queries);
-    } else {
-        _Z_ERROR_LOG(_Z_ERR_ENTITY_DECLARATION_FAILED);
-        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
-    }
-
-    return ret;
+_z_pending_query_t *_z_unsafe_register_pending_query(_z_session_t *zn) {
+    _z_zint_t qid = zn->_query_id++;
+    zn->_pending_queries = _z_pending_query_slist_push_empty(zn->_pending_queries);
+    _z_pending_query_t *pq = _z_pending_query_slist_value(zn->_pending_queries);
+    pq->_id = qid;
+    return pq;
 }
 
 static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
@@ -116,7 +102,7 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
     _z_session_mutex_lock(zn);
 
     // Get query infos
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
+    _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(keyexpr);
@@ -208,7 +194,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
                                       _z_entity_global_id_t *replier_id) {
     // Retrieve query
     _z_session_mutex_lock(zn);
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
+    _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     _z_session_mutex_unlock(zn);
     if (pen_qry == NULL) {
         // Not concerned by the reply
@@ -227,7 +213,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     // Retrieve query
     _z_session_mutex_lock(zn);
-    _z_pending_query_t *pen_qry = __unsafe__z_get_pending_query_by_id(zn, id);
+    _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
         _z_session_mutex_unlock(zn);
         // Not concerned by the reply
@@ -253,30 +239,91 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     }
     // Finalize query if requested: drop pending query and trigger dropper callback,
     // which is equivalent to a reply with FINAL.
+    _z_pending_query_slist_t *queries_to_drop = _z_pending_query_slist_new();
     if (do_finalize) {
-        zn->_pending_queries =
-            _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
+        zn->_pending_queries = _z_pending_query_slist_extract_first_filter(zn->_pending_queries, &queries_to_drop,
+                                                                           _z_pending_query_eq, pen_qry);
     }
     _z_session_mutex_unlock(zn);
+    _z_pending_query_slist_free(&queries_to_drop);
     return _Z_RES_OK;
 }
 
-void _z_unregister_pending_query(_z_session_t *zn, _z_pending_query_t *pen_qry) {
+void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t qid) {
+    _z_pending_query_t target;
+    target._id = qid;
+    _z_pending_query_slist_t *queries_to_drop;
     _z_session_mutex_lock(zn);
-
-    zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
-
+    zn->_pending_queries = _z_pending_query_slist_extract_first_filter(zn->_pending_queries, &queries_to_drop,
+                                                                       _z_pending_query_eq, &target);
     _z_session_mutex_unlock(zn);
+    _z_pending_query_slist_free(&queries_to_drop);
 }
 
 void _z_flush_pending_queries(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
-    _z_pending_query_slist_free(&zn->_pending_queries);
+    _z_pending_query_slist_t *queries = zn->_pending_queries;
+    zn->_pending_queries = _z_pending_query_slist_new();
     _z_session_mutex_unlock(zn);
+    _z_pending_query_slist_free(&queries);
 }
+#ifdef Z_FEATURE_UNSTABLE_API
+
+typedef struct _z_cancel_pending_query_arg_t {
+    _z_session_weak_t _zn;
+    _z_zint_t _qid;
+} _z_cancel_pending_query_arg_t;
+
+z_result_t _z_cancel_pending_query(void *arg) {
+    _z_cancel_pending_query_arg_t *a = (_z_cancel_pending_query_arg_t *)arg;
+    _z_session_rc_t s_rc = _z_session_weak_upgrade(&a->_zn);
+    if (!_Z_RC_IS_NULL(&s_rc)) {
+        _z_unregister_pending_query(_Z_RC_IN_VAL(&s_rc), a->_qid);
+    }
+    _z_session_rc_drop(&s_rc);
+    return _Z_RES_OK;
+}
+
+void _z_cancel_pending_query_arg_drop(void *arg) {
+    _z_cancel_pending_query_arg_t *a = (_z_cancel_pending_query_arg_t *)arg;
+    _z_session_weak_drop(&a->_zn);
+    z_free(a);
+}
+
+z_result_t _z_pending_query_register_cancellation(_z_pending_query_t *pq,
+                                                  const _z_cancellation_token_rc_t *opt_cancellation_token,
+                                                  const _z_session_rc_t *zn) {
+    pq->_cancellation_data = _z_pending_query_cancellation_data_null();
+    if (opt_cancellation_token != NULL) {
+        _z_cancel_pending_query_arg_t *arg =
+            (_z_cancel_pending_query_arg_t *)z_malloc(sizeof(_z_cancel_pending_query_arg_t));
+        if (arg == NULL) {
+            return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+        }
+        arg->_zn = _z_session_rc_clone_as_weak(zn);
+        arg->_qid = pq->_id;
+
+        size_t handler_id = 0;
+        _z_cancellation_token_on_cancel_handler_t handler;
+        handler._on_cancel = _z_cancel_pending_query;
+        handler._on_drop = _z_cancel_pending_query_arg_drop;
+        handler._arg = (void *)arg;
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_cancellation_token_add_on_cancel_handler(_Z_RC_IN_VAL(opt_cancellation_token), &handler, &handler_id),
+            _z_cancellation_token_on_cancel_handler_drop(&handler));
+        pq->_cancellation_data._cancellation_token = _z_cancellation_token_rc_clone(opt_cancellation_token);
+        pq->_cancellation_data._handler_id = handler_id;
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_cancellation_token_get_notifier(_Z_RC_IN_VAL(opt_cancellation_token), &pq->_cancellation_data._notifier),
+            _z_pending_query_cancellation_data_clear(&pq->_cancellation_data));
+    }
+    return _Z_RES_OK;
+}
+#endif
+
 #else
 
-void _z_pending_query_process_timeout(_z_session_t *zn) {
+void _z_pending_query_process_timeout(_z_session_t* zn) {
     _ZP_UNUSED(zn);
     return;
 }

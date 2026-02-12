@@ -190,6 +190,34 @@ _z_list_t *_z_list_drop_filter(_z_list_t *xs, z_element_free_f f_f, z_element_eq
     return l;
 }
 
+_z_list_t *_z_list_extract_filter(_z_list_t *head, z_element_eq_f c_f, const void *left, _z_list_t **extracted,
+                                  bool only_first) {
+    _z_list_t self_head = {0};
+    _z_list_t extracted_head = {0};
+    _z_list_t *self_tail = &self_head;
+    _z_list_t *extracted_tail = &extracted_head;
+    _z_list_t *current = head;
+    while (current != NULL) {
+        _z_list_t *next = current->_next;
+        current->_next = NULL;
+        if (c_f(left, current->_val)) {
+            extracted_tail->_next = current;
+            extracted_tail = extracted_tail->_next;
+            if (only_first) {
+                self_tail->_next = next;
+                break;
+            }
+        } else {
+            self_tail->_next = current;
+            self_tail = self_tail->_next;
+        }
+        current = next;
+    }
+
+    *extracted = extracted_head._next;
+    return self_head._next;
+}
+
 _z_list_t *_z_list_clone(const _z_list_t *xs, z_element_clone_f d_f) {
     _z_list_t *new = NULL;
 
@@ -374,6 +402,34 @@ _z_slist_t *_z_slist_drop_filter(_z_slist_t *head, z_element_clear_f f_f, z_elem
         }
     }
     return head;
+}
+
+_z_slist_t *_z_slist_extract_filter(_z_slist_t *head, z_element_eq_f c_f, const void *target_val,
+                                    _z_slist_t **extracted, bool only_first) {
+    _z_slist_node_data_t self_head = {0};
+    _z_slist_node_data_t extracted_head = {0};
+    _z_slist_node_data_t *self_tail = &self_head;
+    _z_slist_node_data_t *extracted_tail = &extracted_head;
+    _z_slist_t *current = head;
+    while (current != NULL) {
+        _z_slist_t *next = _z_slist_node_data(current)->next;
+        _z_slist_node_data(current)->next = NULL;
+        if (c_f(target_val, _z_slist_node_value(current))) {
+            extracted_tail->next = current;
+            extracted_tail = _z_slist_node_data(extracted_tail->next);
+            if (only_first) {
+                self_tail->next = next;
+                break;
+            }
+        } else {
+            self_tail->next = current;
+            self_tail = _z_slist_node_data(self_tail->next);
+        }
+        current = next;
+    }
+
+    *extracted = extracted_head.next;
+    return self_head.next;
 }
 
 _z_slist_t *_z_slist_clone(const _z_slist_t *node, size_t value_size, z_element_copy_f d_f, bool use_elem_f) {

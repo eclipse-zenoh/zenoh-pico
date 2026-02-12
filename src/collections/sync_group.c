@@ -25,9 +25,8 @@ z_result_t _z_sync_group_state_create(_z_sync_group_state_t* state) {
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&state->counter_mutex));
     _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&state->counter_condvar), _z_mutex_drop(&state->counter_mutex));
-#else
-    _ZP_UNUSED(state);
 #endif
+    state->is_closed = false;
     return Z_OK;
 }
 
@@ -44,16 +43,46 @@ z_result_t _z_sync_group_wait(_z_sync_group_t* sync_group) {
     if (_Z_RC_IS_NULL(&sync_group->_state)) {
         return _Z_ERR_NULL;
     }
-#if Z_FEATURE_MULTI_THREAD == 1
     _z_sync_group_state_t* state = _Z_RC_IN_VAL(&sync_group->_state);
+#if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_lock(&state->counter_mutex));
-    while (!__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
+    while (!state->is_closed && !__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
         _Z_RETURN_IF_ERR(_z_condvar_wait(&state->counter_condvar, &state->counter_mutex));
     }
-    _Z_RETURN_IF_ERR(_z_mutex_unlock(&state->counter_mutex));
-    return _Z_RES_OK;
+    z_result_t ret = _Z_RES_OK;
+    if (state->is_closed) {
+        ret = Z_SYNC_GROUP_CLOSED;
+    } else {
+        state->is_closed = true;
+    }
+    _z_mutex_unlock(&state->counter_mutex);
+    return ret;
 #else
-    return __unsafe_z_sync_group_has_no_alive_notifiers(sync_group) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    if (state->is_closed) {
+        return Z_SYNC_GROUP_CLOSED;
+    } else if (__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
+        state->is_closed = true;
+        return _Z_RES_OK;
+    } else {
+        return _Z_ERR_GENERIC;
+    }
+#endif
+}
+
+void _z_sync_group_close(_z_sync_group_t* sync_group) {
+    if (_Z_RC_IS_NULL(&sync_group->_state)) {
+        return;
+    }
+    _z_sync_group_state_t* state = _Z_RC_IN_VAL(&sync_group->_state);
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (_z_mutex_lock(&state->counter_mutex) != _Z_RES_OK) {
+        return;
+    }
+#endif
+    state->is_closed = true;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_condvar_signal_all(&state->counter_condvar);
+    _z_mutex_unlock(&state->counter_mutex);
 #endif
 }
 
@@ -61,11 +90,11 @@ z_result_t _z_sync_group_wait_deadline(_z_sync_group_t* sync_group, const z_cloc
     if (_Z_RC_IS_NULL(&sync_group->_state)) {
         return _Z_ERR_NULL;
     }
+    _z_sync_group_state_t* state = _Z_RC_IN_VAL(&sync_group->_state);
 #if Z_FEATURE_MULTI_THREAD == 1
     z_result_t ret = _Z_RES_OK;
-    _z_sync_group_state_t* state = _Z_RC_IN_VAL(&sync_group->_state);
     _Z_RETURN_IF_ERR(_z_mutex_lock(&state->counter_mutex));
-    while (!__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
+    while (!state->is_closed && !__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
         ret = _z_condvar_wait_until(&state->counter_condvar, &state->counter_mutex, deadline);
         if (ret == Z_ETIMEDOUT) {
             break;
@@ -73,11 +102,23 @@ z_result_t _z_sync_group_wait_deadline(_z_sync_group_t* sync_group, const z_cloc
             return ret;
         }
     }
-    _Z_RETURN_IF_ERR(_z_mutex_unlock(&state->counter_mutex));
+    if (state->is_closed) {
+        ret = Z_SYNC_GROUP_CLOSED;
+    } else if (ret == _Z_RES_OK) {
+        state->is_closed = true;
+    }
+    _z_mutex_unlock(&state->counter_mutex);
     return ret;
 #else
     _ZP_UNUSED(deadline);
-    return __unsafe_z_sync_group_has_no_alive_notifiers(sync_group) ? _Z_RES_OK : Z_ETIMEDOUT;
+    if (state->is_closed) {
+        return Z_SYNC_GROUP_CLOSED;
+    } else if (__unsafe_z_sync_group_has_no_alive_notifiers(sync_group)) {
+        state->is_closed = true;
+        return _Z_RES_OK;
+    } else {
+        return Z_ETIMEDOUT;
+    }
 #endif
 }
 
@@ -107,9 +148,15 @@ z_result_t _z_sync_group_create_notifier(_z_sync_group_t* sync_group, _z_sync_gr
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_lock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex));
 #endif
+    if (_Z_RC_IN_VAL(&sync_group->_state)->is_closed) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        _z_mutex_unlock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex);
+#endif
+        return Z_SYNC_GROUP_CLOSED;
+    }
     notifier->_state = _z_sync_group_state_rc_clone_as_weak(&sync_group->_state);
 #if Z_FEATURE_MULTI_THREAD == 1
-    _Z_RETURN_IF_ERR(_z_mutex_unlock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex));
+    _z_mutex_unlock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex);
 #endif
     return _Z_RC_IS_NULL(&notifier->_state) ? _Z_ERR_SYSTEM_OUT_OF_MEMORY : _Z_RES_OK;
 }
@@ -136,4 +183,17 @@ void _z_sync_group_notifier_drop(_z_sync_group_notifier_t* notifier) {
     } else {
         _z_sync_group_state_weak_drop(&notifier->_state);
     }
+}
+
+bool _z_sync_group_is_closed(const _z_sync_group_t* sync_group) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    if (_z_mutex_lock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex) != _Z_RES_OK) {
+        return true;
+    }
+#endif
+    bool ret = _Z_RC_IN_VAL(&sync_group->_state)->is_closed;
+#if Z_FEATURE_MULTI_THREAD == 1
+    _z_mutex_unlock(&_Z_RC_IN_VAL(&sync_group->_state)->counter_mutex);
+#endif
+    return ret;
 }

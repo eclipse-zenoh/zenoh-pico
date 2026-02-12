@@ -100,6 +100,28 @@ void _z_hashmap_remove(_z_hashmap_t *map, const void *k, z_element_free_f f) {
     }
 }
 
+_z_hashmap_entry_t _z_hashmap_extract(_z_hashmap_t *map, const void *key) {
+    _z_hashmap_entry_t out;
+    out._key = NULL;
+    out._val = NULL;
+    if (map->_vals != NULL) {
+        size_t idx = map->_f_hash(key) % map->_capacity;
+        _z_hashmap_entry_t e;
+        e._key = (void *)key;  // k will not be mutated by this operation
+        e._val = NULL;
+        _z_list_t *extracted;
+        map->_vals[idx] = _z_list_extract_filter(map->_vals[idx], map->_f_equals, &e, &extracted, true);
+        if (extracted != NULL) {
+            _z_hashmap_entry_t *kv = (_z_hashmap_entry_t *)((extracted)->_val);
+            out._key = kv->_key;
+            out._val = kv->_val;
+            z_free(kv);
+            z_free(extracted);
+        }
+    }
+    return out;
+}
+
 void *_z_hashmap_insert(_z_hashmap_t *map, void *k, void *v, z_element_free_f f_f, bool replace) {
     if (map->_vals == NULL) {
         // Lazily allocate and initialize to NULL all the pointers
