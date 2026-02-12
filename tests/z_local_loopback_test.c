@@ -97,7 +97,7 @@ static void local_query_callback(_z_query_rc_t *query_rc, void *arg) {
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
 
     _z_network_message_t msg;
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(query_rc)->_key, &g_session);
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(query_rc)->_key, &g_session);
     _z_n_msg_make_reply_ok_put(&msg, &g_session._local_zid, _Z_RC_IN_VAL(query_rc)->_request_id, &wireexpr,
                                Z_RELIABILITY_DEFAULT, Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info,
                                &payload, &encoding, NULL);
@@ -159,20 +159,20 @@ static void cleanup_session(void) {
     _z_transport_set_send_n_msg_override(NULL);
 }
 
-static _z_keyexpr_t create_local_resource(const char *key_str) {
-    _z_keyexpr_t ke = _z_keyexpr_alias_from_str(key_str);
-    _z_keyexpr_t keyexpr;
-    assert(_z_keyexpr_declare(&g_session_rc, &keyexpr, &ke) == _Z_RES_OK);
+static _z_declared_keyexpr_t create_local_resource(const char *key_str) {
+    _z_declared_keyexpr_t ke = _z_declared_keyexpr_alias_from_str(key_str);
+    _z_declared_keyexpr_t keyexpr;
+    assert(_z_declared_keyexpr_declare(&g_session_rc, &keyexpr, &ke) == _Z_RES_OK);
     return keyexpr;
 }
 
-static void cleanup_local_resource(_z_keyexpr_t *keyexpr) { _z_keyexpr_clear(keyexpr); }
+static void cleanup_local_resource(_z_declared_keyexpr_t *keyexpr) { _z_declared_keyexpr_clear(keyexpr); }
 
-static _z_subscription_rc_t register_local_subscription(const _z_keyexpr_t *keyexpr, atomic_uint *counter,
+static _z_subscription_rc_t register_local_subscription(const _z_declared_keyexpr_t *keyexpr, atomic_uint *counter,
                                                         z_locality_t allowed_origin) {
     _z_subscription_t sub_entry = {0};
     sub_entry._id = _z_get_entity_id(&g_session);
-    sub_entry._key = _z_keyexpr_duplicate(keyexpr);
+    _z_declared_keyexpr_copy(&sub_entry._key, keyexpr);
     sub_entry._callback = local_sample_callback;
     sub_entry._dropper = NULL;
     sub_entry._arg = counter;
@@ -184,10 +184,10 @@ static _z_subscription_rc_t register_local_subscription(const _z_keyexpr_t *keye
     return subscription_rc;
 }
 
-static _z_session_queryable_rc_t register_local_queryable(const _z_keyexpr_t *keyexpr, atomic_uint *counter,
+static _z_session_queryable_rc_t register_local_queryable(const _z_declared_keyexpr_t *keyexpr, atomic_uint *counter,
                                                           z_locality_t allowed_origin) {
     _z_session_queryable_t queryable_entry = {0};
-    queryable_entry._key = _z_keyexpr_duplicate(keyexpr);
+    _z_declared_keyexpr_copy(&queryable_entry._key, keyexpr);
     queryable_entry._callback = local_query_callback;
     queryable_entry._dropper = NULL;
     queryable_entry._arg = counter;
@@ -201,38 +201,43 @@ static _z_session_queryable_rc_t register_local_queryable(const _z_keyexpr_t *ke
 
 static void test_put_local_only_single(void) {
     setup_session();
-
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put");
+    printf("1\n");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put");
+    printf("1.5\n");
     _z_subscription_rc_t subscription_rc =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_SESSION_LOCAL);
-
+    printf("2\n");
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_local_put_delivery_count, 0, memory_order_relaxed);
 
     const char payload_data[] = "payload";
     _z_bytes_t payload;
     assert(_z_bytes_from_buf(&payload, (const uint8_t *)payload_data, sizeof(payload_data) - 1) == _Z_RES_OK);
-
+    printf("3\n");
     _z_n_qos_t qos = _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT);
     _z_encoding_t encoding = _z_encoding_null();
     _z_timestamp_t ts = _z_timestamp_null();
     _z_source_info_t source_info = _z_source_info_null();
-    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT,
-                                                           qos, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info);
+    z_result_t delivered =
+        _z_session_deliver_push_locally(&g_session, &keyexpr._inner, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts,
+                                        NULL, Z_RELIABILITY_RELIABLE, &source_info);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&g_network_send_count, memory_order_relaxed) == 0);
-
+    printf("4\n");
     _z_bytes_drop(&payload);
     _z_unregister_subscription(&g_session, _Z_SUBSCRIBER_KIND_SUBSCRIBER, &subscription_rc);
+    printf("5\n");
     cleanup_local_resource(&keyexpr);
+    printf("6\n");
     cleanup_session();
+    printf("7\n");
 }
 
 static void test_put_local_only_via_api(void) {
     setup_session();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/api");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/api");
     _z_subscription_rc_t subscription_rc =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_SESSION_LOCAL);
 
@@ -272,7 +277,7 @@ static void test_put_local_and_remote_via_api(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/api-mixed");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/api-mixed");
     _z_subscription_rc_t subscription_rc =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_ANY);
 
@@ -310,7 +315,7 @@ static void test_put_local_and_remote_via_api(void) {
 static void test_query_local_only_single(void) {
     setup_session();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query");
 
     _z_session_queryable_rc_t queryable_rc =
         register_local_queryable(&keyexpr, &g_local_query_delivery_count, Z_LOCALITY_SESSION_LOCAL);
@@ -346,7 +351,7 @@ static void test_query_local_only_single(void) {
 static void test_put_local_only_multiple(void) {
     setup_session();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/multi");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/multi");
 
     _z_subscription_rc_t sub_primary =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_SESSION_LOCAL);
@@ -366,8 +371,9 @@ static void test_put_local_only_multiple(void) {
     _z_encoding_t encoding = _z_encoding_null();
     _z_timestamp_t ts = _z_timestamp_null();
     _z_source_info_t source_info = _z_source_info_null();
-    z_result_t delivered = _z_session_deliver_push_locally(&g_session, &keyexpr, &payload, &encoding, Z_SAMPLE_KIND_PUT,
-                                                           qos, &ts, NULL, Z_RELIABILITY_RELIABLE, &source_info);
+    z_result_t delivered =
+        _z_session_deliver_push_locally(&g_session, &keyexpr._inner, &payload, &encoding, Z_SAMPLE_KIND_PUT, qos, &ts,
+                                        NULL, Z_RELIABILITY_RELIABLE, &source_info);
     assert(delivered == _Z_RES_OK);
     assert(atomic_load_explicit(&g_local_put_delivery_count, memory_order_relaxed) == 1);
     assert(atomic_load_explicit(&local_put_secondary_count, memory_order_relaxed) == 1);
@@ -385,7 +391,7 @@ static void test_put_local_and_remote(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/mixed");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/mixed");
 
     _z_subscription_rc_t sub_primary =
         register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_ANY);
@@ -427,7 +433,7 @@ static void test_put_local_and_remote(void) {
 static void test_query_local_only_multiple(void) {
     setup_session();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/multi");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/multi");
 
     _z_session_queryable_rc_t queryable_primary =
         register_local_queryable(&keyexpr, &g_local_query_delivery_count, Z_LOCALITY_SESSION_LOCAL);
@@ -467,7 +473,7 @@ static void test_query_local_and_remote(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/mixed");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/mixed");
     _z_session_queryable_rc_t queryable_primary =
         register_local_queryable(&keyexpr, &g_local_query_delivery_count, Z_LOCALITY_SESSION_LOCAL);
 
@@ -523,7 +529,7 @@ static void test_query_local_and_remote(void) {
     _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&keyexpr, &g_session);
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
     _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &wireexpr, Z_RELIABILITY_RELIABLE,
                                Z_CONSOLIDATION_MODE_DEFAULT, qos, &timestamp, &source_info, &remote_payload, &encoding,
                                NULL);
@@ -559,7 +565,7 @@ static void test_query_local_and_remote_via_api(void) {
 
     const char *kestr = "zenoh-pico/tests/local/query/api-mixed";
 
-    _z_keyexpr_t keyexpr = create_local_resource(kestr);
+    _z_declared_keyexpr_t keyexpr = create_local_resource(kestr);
 
     atomic_store_explicit(&g_network_send_count, 0, memory_order_relaxed);
     atomic_store_explicit(&g_network_final_send_count, 0, memory_order_relaxed);
@@ -609,7 +615,7 @@ static void test_query_local_and_remote_via_api(void) {
     _z_source_info_t source_info = _z_source_info_null();
 
     _z_network_message_t reply_msg;
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&keyexpr, &g_session);
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&keyexpr, &g_session);
     _z_n_msg_make_reply_ok_put(&reply_msg, &remote_zid, request_id, &wireexpr, Z_RELIABILITY_RELIABLE,
                                Z_CONSOLIDATION_MODE_DEFAULT, _z_n_qos_make(false, false, Z_PRIORITY_DEFAULT),
                                &timestamp, &source_info, &remote_payload, &encoding, NULL);
@@ -638,7 +644,7 @@ static void test_put_remote_only_destination(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/remote-only");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/remote-only");
 
     _z_subscription_rc_t sub = register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_ANY);
 
@@ -670,7 +676,7 @@ static void test_subscriber_remote_only_origin(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/remote-origin");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/put/remote-origin");
 
     _z_subscription_rc_t sub = register_local_subscription(&keyexpr, &g_local_put_delivery_count, Z_LOCALITY_REMOTE);
 
@@ -702,7 +708,7 @@ static void test_query_remote_only_destination(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/remote-only");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/remote-only");
 
     _z_session_queryable_rc_t queryable_rc =
         register_local_queryable(&keyexpr, &g_local_query_delivery_count, Z_LOCALITY_ANY);
@@ -739,7 +745,7 @@ static void test_queryable_remote_only_origin(void) {
     setup_session();
     add_fake_peer();
 
-    _z_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/remote-origin");
+    _z_declared_keyexpr_t keyexpr = create_local_resource("zenoh-pico/tests/local/query/remote-origin");
 
     _z_session_queryable_rc_t queryable_rc =
         register_local_queryable(&keyexpr, &g_local_query_delivery_count, Z_LOCALITY_REMOTE);

@@ -40,11 +40,10 @@ static z_result_t _z_interest_send_decl_resource(_z_session_t *zn, uint32_t inte
     _z_resource_slist_t *xs = res_list;
     while (xs != NULL) {
         _z_resource_t *res = _z_resource_slist_value(xs);
-        _z_keyexpr_t key = _z_keyexpr_alias_from_string(&res->_key);
         // Check if key is concerned
-        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &key)) {
+        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &res->_key)) {
             // Build the declare message to send on the wire
-            _z_wireexpr_t wireexpr = _z_wireexpr_alias_string(&res->_key);
+            _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&res->_key);
             _z_declaration_t declaration = _z_make_decl_keyexpr(res->_id, &wireexpr);
             _z_network_message_t n_msg;
             _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_some(interest_id));
@@ -71,9 +70,9 @@ static z_result_t _z_interest_send_decl_subscriber(_z_session_t *zn, uint32_t in
     while (xs != NULL) {
         _z_subscription_rc_t *sub = _z_subscription_rc_slist_value(xs);
         // Check if key is concerned
-        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &_Z_RC_IN_VAL(sub)->_key)) {
+        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &_Z_RC_IN_VAL(sub)->_key._inner)) {
             // Build the declare message to send on the wire
-            _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(sub)->_key, zn);
+            _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(sub)->_key, zn);
             _z_declaration_t declaration = _z_make_decl_subscriber(&wireexpr, _Z_RC_IN_VAL(sub)->_id);
             _z_network_message_t n_msg;
             _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_some(interest_id));
@@ -110,9 +109,9 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
     while (xs != NULL) {
         _z_session_queryable_rc_t *qle = _z_session_queryable_rc_slist_value(xs);
         // Check if key is concerned
-        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &_Z_RC_IN_VAL(qle)->_key)) {
+        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, &_Z_RC_IN_VAL(qle)->_key._inner)) {
             // Build the declare message to send on the wire
-            _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(qle)->_key, zn);
+            _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(qle)->_key, zn);
             _z_declaration_t declaration = _z_make_decl_queryable(
                 &wireexpr, _Z_RC_IN_VAL(qle)->_id, _Z_RC_IN_VAL(qle)->_complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
             _z_network_message_t n_msg;
@@ -143,27 +142,29 @@ static z_result_t _z_interest_send_decl_queryable(_z_session_t *zn, uint32_t int
 static z_result_t _z_interest_send_decl_token(_z_session_t *zn, uint32_t interest_id, void *peer,
                                               const _z_keyexpr_t *restr_key) {
     _z_session_mutex_lock(zn);
-    _z_keyexpr_intmap_t token_list = _z_keyexpr_intmap_clone(&zn->_local_tokens);
+    _z_declared_keyexpr_intmap_t token_list = _z_declared_keyexpr_intmap_clone(&zn->_local_tokens);
     _z_session_mutex_unlock(zn);
-    _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&token_list);
+    _z_declared_keyexpr_intmap_iterator_t iter = _z_declared_keyexpr_intmap_iterator_make(&token_list);
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
         uint32_t id = (uint32_t)_z_keyexpr_intmap_iterator_key(&iter);
-        _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(_z_keyexpr_intmap_iterator_value(&iter), zn);
         // Check if key is concerned
-        if (restr_key == NULL || _z_keyexpr_intersects(restr_key, _z_keyexpr_intmap_iterator_value(&iter))) {
+        if (restr_key == NULL ||
+            _z_keyexpr_intersects(restr_key, &_z_declared_keyexpr_intmap_iterator_value(&iter)->_inner)) {
             // Build the declare message to send on the wire
+            _z_wireexpr_t wireexpr =
+                _z_declared_keyexpr_alias_to_wire(_z_declared_keyexpr_intmap_iterator_value(&iter), zn);
             _z_declaration_t declaration = _z_make_decl_token(&wireexpr, id);
             _z_network_message_t n_msg;
             _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_some(interest_id));
             z_result_t ret = _z_send_n_msg(zn, &n_msg, Z_RELIABILITY_RELIABLE, Z_CONGESTION_CONTROL_BLOCK, peer);
             _z_n_msg_clear(&n_msg);
             if (ret != _Z_RES_OK) {
-                _z_keyexpr_intmap_clear(&token_list);
+                _z_declared_keyexpr_intmap_clear(&token_list);
                 _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
             }
         }
     }
-    _z_keyexpr_intmap_clear(&token_list);
+    _z_declared_keyexpr_intmap_clear(&token_list);
     return _Z_RES_OK;
 }
 #else

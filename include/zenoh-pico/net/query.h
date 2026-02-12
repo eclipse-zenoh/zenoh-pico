@@ -31,7 +31,7 @@ extern "C" {
  * The query to be answered by a queryable.
  */
 typedef struct _z_query_t {
-    _z_keyexpr_t _key;
+    _z_declared_keyexpr_t _key;
     _z_value_t _value;
     uint32_t _request_id;
     _z_session_weak_t _zn;
@@ -45,8 +45,8 @@ typedef struct _z_query_t {
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_query_t _z_query_null(void) { return (_z_query_t){0}; }
 static inline bool _z_query_check(const _z_query_t *query) {
-    return _z_keyexpr_check(&query->_key) || _z_value_check(&query->_value) || _z_bytes_check(&query->_attachment) ||
-           _z_string_check(&query->_parameters);
+    return _z_declared_keyexpr_check(&query->_key) || _z_value_check(&query->_value) ||
+           _z_bytes_check(&query->_attachment) || _z_string_check(&query->_parameters);
 }
 z_result_t _z_query_send_reply_final(_z_query_t *q);
 z_result_t _z_session_send_reply_final(_z_session_t *session, uint32_t query_id, bool is_local);
@@ -59,7 +59,7 @@ _Z_REFCOUNT_DEFINE(_z_query, _z_query)
  * Return type when declaring a querier.
  */
 typedef struct _z_querier_t {
-    _z_keyexpr_t _key;
+    _z_declared_keyexpr_t _key;
     _z_zint_t _id;
     _z_session_weak_t _zn;
     _z_encoding_t _encoding;
@@ -96,7 +96,7 @@ static inline z_result_t _z_query_move_data(_z_query_t *dst, _z_value_t *value, 
                                             _z_slice_t *parameters, const _z_session_weak_t *zn, uint32_t request_id,
                                             _z_bytes_t *attachment, bool anyke, const _z_source_info_t *source_info) {
     *dst = _z_query_null();
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_move(&dst->_key, key), _z_query_clear(dst));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_move(&dst->_key._inner, key), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_value_move(&dst->_value, value), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_bytes_move(&dst->_attachment, attachment), _z_query_clear(dst));
     _Z_CLEAN_RETURN_IF_ERR(_z_slice_move(&dst->_parameters._slice, parameters), _z_query_clear(dst));

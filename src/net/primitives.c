@@ -137,10 +137,10 @@ z_result_t _z_undeclare_resource(_z_session_t *zn, uint16_t rid) {
 
 #if Z_FEATURE_PUBLICATION == 1
 /*------------------  Publisher Declaration ------------------*/
-z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                _z_encoding_t *encoding, z_congestion_control_t congestion_control,
-                                z_priority_t priority, bool is_express, z_reliability_t reliability,
-                                z_locality_t allowed_destination) {
+z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, _z_encoding_t *encoding,
+                                z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
+                                z_reliability_t reliability, z_locality_t allowed_destination) {
     publisher->_id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     publisher->_congestion_control = congestion_control;
     publisher->_priority = priority;
@@ -150,7 +150,8 @@ z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t
     publisher->_encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     publisher->_allowed_destination = allowed_destination;
     publisher->_filter = (_z_write_filter_t){0};
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare(zn, &publisher->_key, keyexpr), _z_undeclare_publisher(publisher));
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &publisher->_key, keyexpr),
+                           _z_undeclare_publisher(publisher));
     return _Z_RES_OK;
 }
 
@@ -159,7 +160,7 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
     _z_write_filter_clear(&pub->_filter);
-    _z_keyexpr_clear(&pub->_key);
+    _z_declared_keyexpr_clear(&pub->_key);
     _z_session_weak_drop(&pub->_zn);
     _z_encoding_clear(&pub->_encoding);
     *pub = _z_publisher_null();
@@ -167,15 +168,16 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub) {
 }
 
 /*------------------ Write ------------------*/
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                    z_sample_kind_t kind, z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
-                    const _z_timestamp_t *timestamp, _z_bytes_t *attachment, z_reliability_t reliability,
-                    const _z_source_info_t *source_info, z_locality_t allowed_destination) {
+z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                    _z_encoding_t *encoding, z_sample_kind_t kind, z_congestion_control_t cong_ctrl,
+                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+                    z_reliability_t reliability, const _z_source_info_t *source_info,
+                    z_locality_t allowed_destination) {
     z_result_t ret = _Z_RES_OK;
     _z_qos_t qos = _z_n_qos_make(is_express, cong_ctrl == Z_CONGESTION_CONTROL_BLOCK, priority);
 
     if (_z_locality_allows_remote(allowed_destination)) {
-        _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
+        _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_network_message_t msg;
         switch (kind) {
             case Z_SAMPLE_KIND_PUT:
@@ -196,7 +198,7 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *p
 
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     if (ret == _Z_RES_OK && _z_locality_allows_local(allowed_destination)) {
-        ret = _z_session_deliver_push_locally(zn, keyexpr, payload, encoding, kind, qos, timestamp, attachment,
+        ret = _z_session_deliver_push_locally(zn, &keyexpr->_inner, payload, encoding, kind, qos, timestamp, attachment,
                                               reliability, source_info);
     }
 #endif
@@ -206,9 +208,9 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *p
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                 _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                                 z_locality_t allowed_origin) {
+z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                 _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin) {
     *subscriber = _z_subscriber_null();
     _z_subscription_t s;
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
@@ -216,7 +218,8 @@ z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_r
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr), _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr),
+                           _z_subscription_clear(&s));
 
     _z_subscription_rc_t sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (_Z_RC_IS_NULL(&sp_s)) {
@@ -224,7 +227,7 @@ z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_r
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     if (_z_locality_allows_remote(allowed_origin)) {
-        _z_wireexpr_t wire_expr = _z_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
+        _z_wireexpr_t wire_expr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zn));
         _z_declaration_t declaration = _z_make_decl_subscriber(&wire_expr, s._id);
         _z_network_message_t n_msg;
         _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
@@ -275,7 +278,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         if (zn->_mode == Z_WHATAMI_CLIENT) {
             declaration = _z_make_undecl_subscriber(sub->_entity_id, NULL);
         } else {
-            _z_wireexpr_t expr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&s)->_key, zn);
+            _z_wireexpr_t expr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&s)->_key, zn);
             declaration = _z_make_undecl_subscriber(sub->_entity_id, &expr);
         }
         _z_network_message_t n_msg;
@@ -295,9 +298,10 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                bool complete, _z_closure_query_callback_t callback, _z_drop_handler_t dropper,
-                                void *arg, z_locality_t allowed_origin) {
+z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                z_locality_t allowed_origin) {
     *queryable = _z_queryable_null();
     _z_session_queryable_t q;
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
@@ -306,7 +310,8 @@ z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t
     q._dropper = dropper;
     q._arg = arg;
     q._allowed_origin = allowed_origin;
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr), _z_session_queryable_clear(&q));
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr),
+                           _z_session_queryable_clear(&q));
 
     // Create session_queryable entry, stored at session-level, do not drop it by the end of this function.
     _z_session_queryable_rc_t sp_q = _z_register_session_queryable(_Z_RC_IN_VAL(zn), &q);
@@ -316,7 +321,7 @@ z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t
     }
     if (_z_locality_allows_remote(allowed_origin)) {
         // Build the declare message to send on the wire
-        _z_wireexpr_t wire_expr = _z_keyexpr_alias_to_wire(&q._key, _Z_RC_IN_VAL(zn));
+        _z_wireexpr_t wire_expr = _z_declared_keyexpr_alias_to_wire(&q._key, _Z_RC_IN_VAL(zn));
         _z_declaration_t declaration =
             _z_make_decl_queryable(&wire_expr, q._id, q._complete, _Z_QUERYABLE_DISTANCE_DEFAULT);
         _z_network_message_t n_msg;
@@ -365,7 +370,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         if (zn->_mode == Z_WHATAMI_CLIENT) {
             declaration = _z_make_undecl_queryable(qle->_entity_id, NULL);
         } else {
-            _z_wireexpr_t expr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&q)->_key, zn);
+            _z_wireexpr_t expr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&q)->_key, zn);
             declaration = _z_make_undecl_queryable(qle->_entity_id, &expr);
         }
         _z_network_message_t n_msg;
@@ -383,14 +388,14 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
     return ret;
 }
 
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_declared_keyexpr_t *keyexpr,
                          _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
                          const _z_timestamp_t *timestamp, _z_bytes_t *att, _z_source_info_t *source_info) {
     _z_session_t *zn = _Z_RC_IN_VAL(zsrc);
     _Z_DEBUG("send_reply: rid=%jd kind=%d", (intmax_t)query->_request_id, (int)kind);
     // Check key expression
-    if (!query->_anyke && !_z_keyexpr_intersects(&query->_key, keyexpr)) {
+    if (!query->_anyke && !_z_declared_keyexpr_intersects(&query->_key, keyexpr)) {
         _Z_ERROR_RETURN(_Z_ERR_KEYEXPR_NOT_MATCH);
     }
     // Build the reply context decorator. This is NOT the final reply.
@@ -400,7 +405,7 @@ z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, c
                                                 source_info);
     }
 
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zsrc));
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, _Z_RC_IN_VAL(zsrc));
     _z_zenoh_message_t z_msg;
     switch (kind) {
         case Z_SAMPLE_KIND_PUT:
@@ -449,7 +454,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
 
 #if Z_FEATURE_QUERY == 1
 /*------------------  Querier Declaration ------------------*/
-z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
+z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
                               _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination) {
@@ -465,7 +470,7 @@ z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, 
     querier->_allowed_destination = allowed_destination;
     querier->_zn = _z_session_rc_clone_as_weak(zn);
     querier->_filter = (_z_write_filter_t){0};
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare(zn, &querier->_key, keyexpr), _z_undeclare_querier(querier));
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &querier->_key, keyexpr), _z_undeclare_querier(querier));
     return _Z_RES_OK;
 }
 
@@ -474,7 +479,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
     _z_write_filter_clear(&querier->_filter);
-    _z_keyexpr_clear(&querier->_key);
+    _z_declared_keyexpr_clear(&querier->_key);
     _z_session_weak_drop(&querier->_zn);
     _z_encoding_clear(&querier->_encoding);
     *querier = _z_querier_null();
@@ -482,7 +487,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 }
 
 /*------------------ Query ------------------*/
-z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr, const char *parameters,
+z_result_t _z_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr, const char *parameters,
                     size_t parameters_len, z_query_target_t target, z_consolidation_mode_t consolidation,
                     _z_bytes_t *payload, _z_encoding_t *encoding, _z_closure_reply_callback_t callback,
                     _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos,
@@ -494,7 +499,7 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
         return Z_EINVAL;
     }
     _z_keyexpr_t ke_query;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, keyexpr));
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner));
 
     if (consolidation == Z_CONSOLIDATION_MODE_AUTO) {
         if (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_TIME) != NULL) {
@@ -550,7 +555,7 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
     _z_slice_t params =
         (parameters == NULL) ? _z_slice_null() : _z_slice_alias_buf((uint8_t *)parameters, parameters_len);
     if (ret == _Z_RES_OK && remote_possible) {
-        _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
+        _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_zenoh_message_t z_msg;
         _z_n_msg_make_query(&z_msg, &wireexpr, &params, qid, Z_RELIABILITY_DEFAULT, consolidation, payload, encoding,
                             timeout_ms, attachment, qos, source_info);
@@ -558,8 +563,8 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
     }
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     if (ret == _Z_RES_OK && allow_local) {
-        ret = _z_session_deliver_query_locally(zn, keyexpr, &params, consolidation, payload, encoding, attachment,
-                                               source_info, qid, timeout_ms, qos);
+        ret = _z_session_deliver_query_locally(zn, &keyexpr->_inner, &params, consolidation, payload, encoding,
+                                               attachment, source_info, qid, timeout_ms, qos);
     }
 #endif
     _Z_CLEAN_RETURN_IF_ERR(ret, _z_unregister_pending_query(zn, qid));
@@ -569,15 +574,15 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
 
 #if Z_FEATURE_INTEREST == 1
 /*------------------ Interest Declaration ------------------*/
-uint32_t _z_add_interest(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_interest_handler_t callback, uint8_t flags,
-                         _z_void_rc_t *arg) {
+uint32_t _z_add_interest(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_interest_handler_t callback,
+                         uint8_t flags, _z_void_rc_t *arg) {
     _z_session_interest_t intr;
     intr._id = _z_get_entity_id(zn);
     intr._flags = flags;
     intr._callback = callback;
     intr._arg = *arg;
     *arg = _z_void_rc_null();
-    if (_z_keyexpr_copy(&intr._key, keyexpr) != _Z_RES_OK) {
+    if (_z_keyexpr_copy(&intr._key, &keyexpr->_inner) != _Z_RES_OK) {
         _z_void_rc_drop(&intr._arg);
         return 0;
     }
@@ -596,7 +601,7 @@ uint32_t _z_add_interest(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_inter
         || (zn->_tp._type == _Z_TRANSPORT_MULTICAST_TYPE)
 #endif
     ) {
-        _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
+        _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_interest_t interest = _z_make_interest(&wireexpr, intr._id, intr._flags);
         _z_network_message_t n_msg;
         _z_n_msg_make_interest(&n_msg, interest);

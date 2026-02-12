@@ -52,13 +52,10 @@ static bool _z_pending_query_timeout(const _z_pending_query_t *foo, const _z_pen
 }
 
 void _z_pending_query_process_timeout(_z_session_t *zn) {
-    _z_pending_query_slist_t *queries_to_drop;
     _z_session_mutex_lock(zn);
     // Extract all queries with timeout elapsed
-    zn->_pending_queries = _z_pending_query_slist_extract_all_filter(zn->_pending_queries, &queries_to_drop,
-                                                                     _z_pending_query_timeout, NULL);
+    zn->_pending_queries = _z_pending_query_slist_drop_all_filter(zn->_pending_queries, _z_pending_query_timeout, NULL);
     _z_session_mutex_unlock(zn);
-    _z_pending_query_slist_free(&queries_to_drop);
 }
 
 /*------------------ Query ------------------*/
@@ -133,7 +130,8 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
         while (curr_node != NULL) {
             pen_rep = _z_pending_reply_slist_value(curr_node);
             // Check if this is the same resource key
-            if (_z_keyexpr_equals(&pen_rep->_reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr)) {
+            if (_z_declared_keyexpr_equals(&pen_rep->_reply.data._result.sample.keyexpr,
+                                           &reply.data._result.sample.keyexpr)) {
                 if (msg->_commons._timestamp.time <= pen_rep->_tstamp.time) {
                     drop = true;
                 } else {
@@ -151,10 +149,10 @@ static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _
                 // No need to store the whole reply in the monotonic mode.
                 tmp_rep._reply = _z_reply_null();
                 tmp_rep._reply.data._tag = _Z_REPLY_TAG_DATA;
-                _Z_CLEAN_RETURN_IF_ERR(
-                    _z_keyexpr_copy(&tmp_rep._reply.data._result.sample.keyexpr, &reply.data._result.sample.keyexpr),
-                    _z_reply_clear(&reply);
-                    _z_session_mutex_unlock(zn));
+                _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_copy(&tmp_rep._reply.data._result.sample.keyexpr,
+                                                                &reply.data._result.sample.keyexpr),
+                                       _z_reply_clear(&reply);
+                                       _z_session_mutex_unlock(zn));
             } else {
                 // Copy the reply to store it out of context
                 _Z_CLEAN_RETURN_IF_ERR(_z_reply_move(&tmp_rep._reply, &reply), _z_reply_clear(&reply);
@@ -239,25 +237,20 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     }
     // Finalize query if requested: drop pending query and trigger dropper callback,
     // which is equivalent to a reply with FINAL.
-    _z_pending_query_slist_t *queries_to_drop = _z_pending_query_slist_new();
     if (do_finalize) {
-        zn->_pending_queries = _z_pending_query_slist_extract_first_filter(zn->_pending_queries, &queries_to_drop,
-                                                                           _z_pending_query_eq, pen_qry);
+        zn->_pending_queries =
+            _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, pen_qry);
     }
     _z_session_mutex_unlock(zn);
-    _z_pending_query_slist_free(&queries_to_drop);
     return _Z_RES_OK;
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t qid) {
     _z_pending_query_t target;
     target._id = qid;
-    _z_pending_query_slist_t *queries_to_drop;
     _z_session_mutex_lock(zn);
-    zn->_pending_queries = _z_pending_query_slist_extract_first_filter(zn->_pending_queries, &queries_to_drop,
-                                                                       _z_pending_query_eq, &target);
+    zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, &target);
     _z_session_mutex_unlock(zn);
-    _z_pending_query_slist_free(&queries_to_drop);
 }
 
 void _z_flush_pending_queries(_z_session_t *zn) {

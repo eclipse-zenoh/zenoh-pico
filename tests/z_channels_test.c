@@ -27,7 +27,7 @@
         _z_slice_t slice = {.start = (const uint8_t *)v, .len = strlen(v)}; \
         _z_bytes_from_slice(&payload, &slice);                              \
         z_loaned_sample_t sample = {                                        \
-            .keyexpr = _z_keyexpr_alias_from_str("key"),                    \
+            .keyexpr = _z_declared_keyexpr_alias_from_str("key"),           \
             .payload = payload,                                             \
             .timestamp = _z_timestamp_null(),                               \
             .encoding = _z_encoding_null(),                                 \

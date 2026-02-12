@@ -108,10 +108,10 @@ _z_keyexpr_t _z_update_keyexpr_to_declared(_z_session_t *zs, _z_keyexpr_t keyexp
  * Returns:
  *    0 in case of success, negative error code otherwise.
  */
-z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                _z_encoding_t *encoding, z_congestion_control_t congestion_control,
-                                z_priority_t priority, bool is_express, z_reliability_t reliability,
-                                z_locality_t allowed_destination);
+z_result_t _z_declare_publisher(_z_publisher_t *publisher, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, _z_encoding_t *encoding,
+                                z_congestion_control_t congestion_control, z_priority_t priority, bool is_express,
+                                z_reliability_t reliability, z_locality_t allowed_destination);
 
 /**
  * Undeclare a :c:type:`_z_publisher_t`.
@@ -146,9 +146,9 @@ z_result_t _z_undeclare_publisher(_z_publisher_t *pub);
  * Returns:
  *     ``0`` in case of success, ``-1`` in case of failure.
  */
-z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                    const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl, z_priority_t priority,
-                    bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                    _z_encoding_t *encoding, const z_sample_kind_t kind, const z_congestion_control_t cong_ctrl,
+                    z_priority_t priority, bool is_express, const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
                     z_reliability_t reliability, const _z_source_info_t *source_info, z_locality_t allowed_destination);
 #endif
 
@@ -166,9 +166,9 @@ z_result_t _z_write(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_bytes_t *p
  * Returns:
  *    0 in case of success, negative error code otherwise.
  */
-z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                 _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                                 z_locality_t allowed_origin);
+z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                 _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -197,9 +197,10 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub);
  * Returns:
  *    0 in case of success, negative error code otherwise.
  */
-z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
-                                bool complete, _z_closure_query_callback_t callback, _z_drop_handler_t dropper,
-                                void *arg, z_locality_t allowed_origin);
+z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                z_locality_t allowed_origin);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -232,7 +233,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle);
  *     timestamp: The timestamp of this reply. The API level timestamp (e.g. of the data when it was created).
  *     source_info: The message source info.
  */
-z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_keyexpr_t *keyexpr,
+z_result_t _z_send_reply(const _z_query_t *query, const _z_session_rc_t *zsrc, const _z_declared_keyexpr_t *keyexpr,
                          _z_bytes_t *payload, _z_encoding_t *encoding, const z_sample_kind_t kind,
                          const z_congestion_control_t cong_ctrl, z_priority_t priority, bool is_express,
                          const _z_timestamp_t *timestamp, _z_bytes_t *attachment, _z_source_info_t *source_info);
@@ -270,7 +271,7 @@ z_result_t _z_send_reply_err(const _z_query_t *query, const _z_session_rc_t *zsr
  * Returns:
  *    0 in case of success, negative error code otherwise.
  */
-z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_keyexpr_t *keyexpr,
+z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
                               _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination);
@@ -308,7 +309,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     opt_cancellation_token: Optional cancellation token to cancel the query, can be null.
  *
  */
-z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr, const char *parameters,
+z_result_t _z_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr, const char *parameters,
                     size_t parameters_len, z_query_target_t target, z_consolidation_mode_t consolidation,
                     _z_bytes_t *payload, _z_encoding_t *encoding, _z_closure_reply_callback_t callback,
                     _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos,
@@ -317,8 +318,8 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
 #endif
 
 #if Z_FEATURE_INTEREST == 1
-uint32_t _z_add_interest(_z_session_t *zn, const _z_keyexpr_t *keyexpr, _z_interest_handler_t callback, uint8_t flags,
-                         _z_void_rc_t *arg);
+uint32_t _z_add_interest(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_interest_handler_t callback,
+                         uint8_t flags, _z_void_rc_t *arg);
 z_result_t _z_remove_interest(_z_session_t *zn, uint32_t interest_id);
 #endif
 

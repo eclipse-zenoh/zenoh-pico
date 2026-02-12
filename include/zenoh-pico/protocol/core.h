@@ -174,11 +174,6 @@ static inline _z_wireexpr_t _z_wireexpr_null(void) {
     _z_wireexpr_t expr = {0};
     return expr;
 }
-static inline _z_wireexpr_t _z_wireexpr_alias_string(const _z_string_t *src) {
-    _z_wireexpr_t dst = _z_wireexpr_null();
-    dst._suffix = _z_string_alias(*src);
-    return dst;
-}
 static inline _z_wireexpr_t _z_wireexpr_steal(_z_wireexpr_t *expr) {
     _z_wireexpr_t expr2 = *expr;
     *expr = _z_wireexpr_null();
