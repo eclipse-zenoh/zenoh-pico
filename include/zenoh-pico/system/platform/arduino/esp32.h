@@ -56,7 +56,7 @@ typedef struct BluetoothSerial BluetoothSerial;  // Forward declaration to be us
 typedef struct HardwareSerial HardwareSerial;    // Forward declaration to be used in _z_sys_net_socket_t
 
 typedef struct {
-    union {
+    struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         int _fd;
 #endif
@@ -66,11 +66,14 @@ typedef struct {
 #if Z_FEATURE_LINK_SERIAL == 1
         HardwareSerial *_serial;  // As pointer to cross the boundary between C and C++
 #endif
+#if Z_FEATURE_LINK_TLS == 1
+        void* _tls_sock;  // Pointer to _z_tls_socket_t
+#endif
     };
 } _z_sys_net_socket_t;
 
 typedef struct {
-    union {
+    struct {
 #if Z_FEATURE_LINK_TCP == 1 || Z_FEATURE_LINK_UDP_MULTICAST == 1 || Z_FEATURE_LINK_UDP_UNICAST == 1
         struct addrinfo *_iptcp;
 #endif
