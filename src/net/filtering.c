@@ -331,7 +331,7 @@ z_result_t _z_write_filter_ctx_add_callback(_z_write_filter_ctx_t *ctx, size_t i
     _z_write_filter_mutex_lock(ctx);
     if (!_z_write_filter_ctx_active(ctx)) {
         _z_matching_status_t s = (_z_matching_status_t){.matching = true};
-        v->call(&s, v->context);
+        ptr->call(&s, ptr->context);
     }
     _z_closure_matching_status_intmap_insert(&ctx->callbacks, id, ptr);
     _z_write_filter_mutex_unlock(ctx);
