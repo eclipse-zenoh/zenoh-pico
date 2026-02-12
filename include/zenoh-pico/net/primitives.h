@@ -161,7 +161,9 @@ z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_b
  *     zn: The zenoh-net session. The caller keeps its ownership.
  *     keyexpr: The resource key to subscribe.
  *     callback: The callback function that will be called each time a data matching the subscribed resource is
- * received. arg: A pointer that will be passed to the **callback** on each call.
+ * received.
+ *     dropper: A function that will be called once subscriber is undeclared.
+ *     arg: A pointer that will be passed to the **callback** on each call.
  *
  * Returns:
  *    0 in case of success, negative error code otherwise.
@@ -169,6 +171,10 @@ z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_b
 z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
                                  const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
                                  _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin);
+
+z_result_t _z_register_subscriber(uint32_t *out_sub_id, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
+                                  _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                  z_locality_t allowed_origin, const _z_sync_group_t *opt_callback_drop_sync_group);
 
 /**
  * Undeclare a :c:type:`_z_subscriber_t`.
@@ -201,6 +207,11 @@ z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t
                                 const _z_declared_keyexpr_t *keyexpr, bool complete,
                                 _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
                                 z_locality_t allowed_origin);
+
+z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                 _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                 z_locality_t allowed_origin, const _z_sync_group_t *sync_group);
 
 /**
  * Undeclare a :c:type:`_z_queryable_t`.
@@ -292,6 +303,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *
  * Parameters:
  *     session: The zenoh-net session.
+ *     querier_id: Optional id of querier.
  *     keyexpr: The resource key to query.
  *     parameters: An indication to matching queryables about the queried data.
  *     parameters_len: Length of the parameters string.
@@ -309,12 +321,12 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier);
  *     opt_cancellation_token: Optional cancellation token to cancel the query, can be null.
  *
  */
-z_result_t _z_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr, const char *parameters,
-                    size_t parameters_len, z_query_target_t target, z_consolidation_mode_t consolidation,
-                    _z_bytes_t *payload, _z_encoding_t *encoding, _z_closure_reply_callback_t callback,
-                    _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos,
-                    _z_source_info_t *source_info, z_locality_t allowed_destination,
-                    _z_cancellation_token_rc_t *opt_cancellation_token);
+z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id, const _z_declared_keyexpr_t *keyexpr,
+                    const char *parameters, size_t parameters_len, z_query_target_t target,
+                    z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
+                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
+                    _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
+                    z_locality_t allowed_destination, _z_cancellation_token_rc_t *opt_cancellation_token);
 #endif
 
 #if Z_FEATURE_INTEREST == 1

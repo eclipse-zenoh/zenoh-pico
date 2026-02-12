@@ -72,6 +72,7 @@ void _z_query_free(_z_query_t **query) {
 #if Z_FEATURE_QUERYABLE == 1
 void _z_queryable_clear(_z_queryable_t *qbl) {
     _z_session_weak_drop(&qbl->_zn);
+    _z_sync_group_drop(&qbl->_callback_drop_sync_group);
     *qbl = _z_queryable_null();
 }
 

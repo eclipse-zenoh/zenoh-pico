@@ -60,7 +60,7 @@ _Z_REFCOUNT_DEFINE(_z_query, _z_query)
  */
 typedef struct _z_querier_t {
     _z_declared_keyexpr_t _key;
-    _z_zint_t _id;
+    uint32_t _id;
     _z_session_weak_t _zn;
     _z_encoding_t _encoding;
     z_consolidation_mode_t _consolidation_mode;
@@ -86,6 +86,7 @@ static inline bool _z_querier_check(const _z_querier_t *querier) { return !_Z_RC
 typedef struct {
     uint32_t _entity_id;
     _z_session_weak_t _zn;
+    _z_sync_group_t _callback_drop_sync_group;
 } _z_queryable_t;
 
 #if Z_FEATURE_QUERYABLE == 1

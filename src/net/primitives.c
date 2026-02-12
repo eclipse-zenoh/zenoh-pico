@@ -208,16 +208,20 @@ z_result_t _z_write(_z_session_t *zn, const _z_declared_keyexpr_t *keyexpr, _z_b
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 /*------------------ Subscriber Declaration ------------------*/
-z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
-                                 const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
-                                 _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin) {
-    *subscriber = _z_subscriber_null();
-    _z_subscription_t s;
+z_result_t _z_register_subscriber(uint32_t *sub_id, const _z_session_rc_t *zn, const _z_declared_keyexpr_t *keyexpr,
+                                  _z_closure_sample_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                  z_locality_t allowed_origin, const _z_sync_group_t *callback_drop_sync_group) {
+    _z_subscription_t s = {0};
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
+    _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
+    if (callback_drop_sync_group != NULL) {
+        _z_sync_group_create_notifier(callback_drop_sync_group, &s._subscriber_callback_drop_notifier);
+    }
+
     _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr),
                            _z_subscription_clear(&s));
 
@@ -238,11 +242,21 @@ z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_r
             return res;
         }
     }
-    // Fill subscriber
-    subscriber->_entity_id = s._id;
-    subscriber->_zn = _z_session_rc_clone_as_weak(zn);
+    *sub_id = s._id;
     _z_subscription_rc_drop(&sp_s);  // we do not keep this data for the time being inside subscriber, and rc copy is
                                      // still stored inside the session
+    return _Z_RES_OK;
+}
+
+z_result_t _z_declare_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                 _z_drop_handler_t dropper, void *arg, z_locality_t allowed_origin) {
+    *subscriber = _z_subscriber_null();
+    subscriber->_zn = _z_session_rc_clone_as_weak(zn);
+    _z_sync_group_create(&subscriber->_callback_drop_sync_group);
+    _Z_CLEAN_RETURN_IF_ERR(_z_register_subscriber(&subscriber->_entity_id, zn, keyexpr, callback, dropper, arg,
+                                                  allowed_origin, &subscriber->_callback_drop_sync_group),
+                           _z_subscriber_clear(subscriber));
     return _Z_RES_OK;
 }
 
@@ -292,24 +306,28 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
 #if Z_FEATURE_SESSION_CHECK == 1
     _z_session_rc_drop(&sess_rc);
 #endif
+    _z_sync_group_wait(&sub->_callback_drop_sync_group);
     return ret;
 }
 #endif
 
 #if Z_FEATURE_QUERYABLE == 1
 /*------------------ Queryable Declaration ------------------*/
-z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn,
-                                const _z_declared_keyexpr_t *keyexpr, bool complete,
-                                _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
-                                z_locality_t allowed_origin) {
-    *queryable = _z_queryable_null();
-    _z_session_queryable_t q;
+z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *zn,
+                                 const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                 _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                 z_locality_t allowed_origin, const _z_sync_group_t *callback_drop_sync_group) {
+    _z_session_queryable_t q = {0};
     q._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     q._complete = complete;
     q._callback = callback;
     q._dropper = dropper;
     q._arg = arg;
     q._allowed_origin = allowed_origin;
+    _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &q._session_callback_drop_notifier);
+    if (callback_drop_sync_group != NULL) {
+        _z_sync_group_create_notifier(callback_drop_sync_group, &q._queryable_callback_drop_notifier);
+    }
     _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr),
                            _z_session_queryable_clear(&q));
 
@@ -335,10 +353,22 @@ z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t
         }
         _z_n_msg_clear(&n_msg);
     }
-    queryable->_entity_id = q._id;
-    queryable->_zn = _z_session_rc_clone_as_weak(zn);
+    *queryable_id = q._id;
     _z_session_queryable_rc_drop(&sp_q);  // we do not keep this data for the time being inside queryable, and rc copy
                                           // is still stored inside the session
+    return _Z_RES_OK;
+}
+
+z_result_t _z_declare_queryable(_z_queryable_t *queryable, const _z_session_rc_t *zn,
+                                const _z_declared_keyexpr_t *keyexpr, bool complete,
+                                _z_closure_query_callback_t callback, _z_drop_handler_t dropper, void *arg,
+                                z_locality_t allowed_origin) {
+    *queryable = _z_queryable_null();
+    _z_sync_group_create(&queryable->_callback_drop_sync_group);
+    queryable->_zn = _z_session_rc_clone_as_weak(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_register_queryable(&queryable->_entity_id, zn, keyexpr, complete, callback, dropper, arg,
+                                                 allowed_origin, &queryable->_callback_drop_sync_group),
+                           _z_queryable_clear(queryable);)
     return _Z_RES_OK;
 }
 
@@ -382,6 +412,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         _z_n_msg_clear(&n_msg);
     }
     _z_unregister_session_queryable(zn, &q);
+    _z_sync_group_wait(&qle->_callback_drop_sync_group);
 #if Z_FEATURE_SESSION_CHECK == 1
     _z_session_rc_drop(&sess_rc);
 #endif
@@ -458,6 +489,7 @@ z_result_t _z_declare_querier(_z_querier_t *querier, const _z_session_rc_t *zn, 
                               z_consolidation_mode_t consolidation_mode, z_congestion_control_t congestion_control,
                               z_query_target_t target, z_priority_t priority, bool is_express, uint64_t timeout_ms,
                               _z_encoding_t *encoding, z_reliability_t reliability, z_locality_t allowed_destination) {
+    *querier = _z_querier_null();
     querier->_encoding = encoding == NULL ? _z_encoding_null() : _z_encoding_steal(encoding);
     querier->reliability = reliability;
     querier->_id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
@@ -478,6 +510,11 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
     if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
+    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&querier->_zn);
+    if (!_Z_RC_IS_NULL(&s)) {
+        _z_unregister_pending_queries_from_querier(_Z_RC_IN_VAL(&s), querier->_id);
+        _z_session_rc_drop(&s);
+    }
     _z_write_filter_clear(&querier->_filter);
     _z_declared_keyexpr_clear(&querier->_key);
     _z_session_weak_drop(&querier->_zn);
@@ -487,12 +524,12 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
 }
 
 /*------------------ Query ------------------*/
-z_result_t _z_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr, const char *parameters,
-                    size_t parameters_len, z_query_target_t target, z_consolidation_mode_t consolidation,
-                    _z_bytes_t *payload, _z_encoding_t *encoding, _z_closure_reply_callback_t callback,
-                    _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms, _z_bytes_t *attachment, _z_n_qos_t qos,
-                    _z_source_info_t *source_info, z_locality_t allowed_destination,
-                    _z_cancellation_token_rc_t *opt_cancellation_token) {
+z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id, const _z_declared_keyexpr_t *keyexpr,
+                    const char *parameters, size_t parameters_len, z_query_target_t target,
+                    z_consolidation_mode_t consolidation, _z_bytes_t *payload, _z_encoding_t *encoding,
+                    _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg, uint64_t timeout_ms,
+                    _z_bytes_t *attachment, _z_n_qos_t qos, _z_source_info_t *source_info,
+                    z_locality_t allowed_destination, _z_cancellation_token_rc_t *opt_cancellation_token) {
     _z_session_t *zn = _Z_RC_IN_VAL(session);
     if (parameters == NULL && parameters_len > 0) {
         _Z_ERROR("Non-zero length string should not be NULL");
@@ -525,6 +562,7 @@ z_result_t _z_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t 
     }
     // Fill the pending query object
     qid = pq->_id;
+    pq->_querier_id = querier_id;
     pq->_key = ke_query;
     pq->_target = target;
     pq->_consolidation = consolidation;

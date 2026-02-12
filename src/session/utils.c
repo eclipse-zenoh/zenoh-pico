@@ -128,7 +128,7 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
-
+    _z_sync_group_create(&zn->_callback_drop_sync_group);
     return ret;
 }
 
@@ -198,6 +198,8 @@ void _z_session_clear(_z_session_t *zn) {
         _z_mutex_drop(&zn->_mutex_inner);
     }
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+    _z_sync_group_wait(&zn->_callback_drop_sync_group);
+    _z_sync_group_drop(&zn->_callback_drop_sync_group);
 }
 
 z_result_t _z_session_close(_z_session_t *zn, uint8_t reason) {

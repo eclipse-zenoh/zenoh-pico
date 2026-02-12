@@ -137,7 +137,7 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
     _z_session_mutex_lock(zn);
     // TODO: could we call callbacks inside the mutex? - this would allow to avoid extra keyexpr copies, list
     // allocations, in addition it would also allow to stay consistent with respect to eventual remote undeclarations,
-    // i.e. if they arrive during callback execution - they will only delivered after initial history calls,
+    // i.e. if they arrive during callback execution - they will only be delivered after initial history calls,
     // thus preventing potential declare/undeclare order inversion.
     // TODO: add support for local tokens
     _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&zn->_remote_tokens);
@@ -163,16 +163,20 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
 }
 
 #if Z_FEATURE_SUBSCRIPTION == 1
-z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
-                                            const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
-                                            _z_drop_handler_t dropper, bool history, void *arg) {
-    *subscriber = _z_subscriber_null();
-    _z_subscription_t s;
+z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_session_rc_t *zn,
+                                             const _z_declared_keyexpr_t *keyexpr,
+                                             _z_closure_sample_callback_t callback, _z_drop_handler_t dropper,
+                                             bool history, void *arg, const _z_sync_group_t *callback_sync_group) {
+    _z_subscription_t s = {0};
     s._id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
     s._callback = callback;
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = z_locality_default();
+    _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
+    if (callback_sync_group != NULL) {
+        _z_sync_group_create_notifier(callback_sync_group, &s._subscriber_callback_drop_notifier);
+    }
     _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
 
     // Register subscription, stored at session-level, do not drop it by the end of this function.
@@ -182,6 +186,11 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
         _z_subscription_clear(&s);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
+    if (history) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_liveliness_subscription_trigger_history(_Z_RC_IN_VAL(zn), _Z_RC_IN_VAL(&sp_s)),
+            _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s));
+    }
     // Build the declare message to send on the wire
     uint8_t mode = history ? (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE) : _Z_INTEREST_FLAG_FUTURE;
     _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&sp_s)->_key, _Z_RC_IN_VAL(zn));
@@ -190,22 +199,26 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
 
     _z_network_message_t n_msg;
     _z_n_msg_make_interest(&n_msg, interest);
-    if (_z_send_declare(_Z_RC_IN_VAL(zn), &n_msg) != _Z_RES_OK) {
-        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s);
-        return _Z_ERR_TRANSPORT_TX_FAILED;
-    }
+    z_result_t res = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
     _z_n_msg_clear(&n_msg);
-    subscriber->_entity_id = s._id;
-    subscriber->_zn = _z_session_rc_clone_as_weak(zn);
-
-    z_result_t res = _Z_RES_OK;
-    if (history) {
-        res = _z_liveliness_subscription_trigger_history(_Z_RC_IN_VAL(zn), _Z_RC_IN_VAL(&sp_s));
-    }
-    _z_subscription_rc_drop(&sp_s);
     if (res != _Z_RES_OK) {
-        _z_undeclare_liveliness_subscriber(subscriber);
+        _z_unregister_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &sp_s);
+        res = _Z_ERR_TRANSPORT_TX_FAILED;
+    } else {
+        *out_sub_id = _Z_RC_IN_VAL(&sp_s)->_id;
+        _z_subscription_rc_drop(&sp_s);
     }
+    return res;
+}
+z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
+                                            const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                            _z_drop_handler_t dropper, bool history, void *arg) {
+    *subscriber = _z_subscriber_null();
+    subscriber->_zn = _z_session_rc_clone_as_weak(zn);
+    _z_sync_group_create(&subscriber->_callback_drop_sync_group);
+    _Z_CLEAN_RETURN_IF_ERR(_z_register_liveliness_subscriber(&subscriber->_entity_id, zn, keyexpr, callback, dropper,
+                                                             history, arg, &subscriber->_callback_drop_sync_group),
+                           _z_subscriber_clear(subscriber));
     return _Z_RES_OK;
 }
 
@@ -229,6 +242,7 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub) {
     _z_n_msg_clear(&n_msg);
 
     _z_unregister_subscription(_Z_RC_IN_VAL(&sub->_zn), _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &s);
+    _z_sync_group_wait(&sub->_callback_drop_sync_group);
     return _Z_RES_OK;
 }
 #endif  // Z_FEATURE_SUBSCRIPTION == 1

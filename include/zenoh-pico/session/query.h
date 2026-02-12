@@ -34,6 +34,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
                                       _z_entity_global_id_t *replier_id);
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id);
 void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t query_id);
+void _z_unregister_pending_queries_from_querier(_z_session_t *zn, uint32_t querier_id);
 void _z_flush_pending_queries(_z_session_t *zn);
 #endif
 

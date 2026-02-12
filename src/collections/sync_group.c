@@ -22,6 +22,7 @@ static inline bool __unsafe_z_sync_group_has_no_alive_notifiers(const _z_sync_gr
 }
 
 z_result_t _z_sync_group_state_create(_z_sync_group_state_t* state) {
+    state->is_closed = true;
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&state->counter_mutex));
     _Z_CLEAN_RETURN_IF_ERR(_z_condvar_init(&state->counter_condvar), _z_mutex_drop(&state->counter_mutex));
@@ -140,7 +141,7 @@ z_result_t _z_sync_group_create(_z_sync_group_t* sync_group) {
 
 void _z_sync_group_drop(_z_sync_group_t* sync_group) { _z_sync_group_state_rc_drop(&sync_group->_state); }
 
-z_result_t _z_sync_group_create_notifier(_z_sync_group_t* sync_group, _z_sync_group_notifier_t* notifier) {
+z_result_t _z_sync_group_create_notifier(const _z_sync_group_t* sync_group, _z_sync_group_notifier_t* notifier) {
     if (_Z_RC_IS_NULL(&sync_group->_state)) {
         return _Z_ERR_NULL;
     }

@@ -73,6 +73,8 @@ void _z_session_queryable_clear(_z_session_queryable_t *qle) {
         qle->_dropper = NULL;
     }
     _z_declared_keyexpr_clear(&qle->_key);
+    _z_sync_group_notifier_drop(&qle->_session_callback_drop_notifier);
+    _z_sync_group_notifier_drop(&qle->_queryable_callback_drop_notifier);
 }
 
 /*------------------ Queryable ------------------*/

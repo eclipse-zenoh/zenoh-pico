@@ -126,6 +126,7 @@ typedef struct _z_session_t {
     uint32_t _admin_space_queryable_id;
 #endif
 #endif
+    _z_sync_group_t _callback_drop_sync_group;
 } _z_session_t;
 
 /**

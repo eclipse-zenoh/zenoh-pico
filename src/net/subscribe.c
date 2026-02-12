@@ -17,6 +17,7 @@
 
 void _z_subscriber_clear(_z_subscriber_t *sub) {
     _z_session_weak_drop(&sub->_zn);
+    _z_sync_group_drop(&sub->_callback_drop_sync_group);
     *sub = _z_subscriber_null();
 }
 

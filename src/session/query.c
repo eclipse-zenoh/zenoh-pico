@@ -41,6 +41,9 @@ void _z_pending_query_clear(_z_pending_query_t *pen_qry) {
 }
 
 bool _z_pending_query_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) { return one->_id == two->_id; }
+bool _z_pending_query_querier_eq(const _z_pending_query_t *one, const _z_pending_query_t *two) {
+    return one->_querier_id.has_value == two->_querier_id.has_value && one->_querier_id.value == two->_querier_id.value;
+}
 
 static bool _z_pending_query_timeout(const _z_pending_query_t *foo, const _z_pending_query_t *pq) {
     _ZP_UNUSED(foo);
@@ -250,6 +253,15 @@ void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t qid) {
     target._id = qid;
     _z_session_mutex_lock(zn);
     zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, &target);
+    _z_session_mutex_unlock(zn);
+}
+
+void _z_unregister_pending_queries_from_querier(_z_session_t *zn, uint32_t querier_id) {
+    _z_pending_query_t target;
+    target._querier_id = _z_optional_id_make_some(querier_id);
+    _z_session_mutex_lock(zn);
+    zn->_pending_queries =
+        _z_pending_query_slist_drop_all_filter(zn->_pending_queries, _z_pending_query_querier_eq, &target);
     _z_session_mutex_unlock(zn);
 }
 

@@ -30,6 +30,7 @@ extern "C" {
 typedef struct {
     uint32_t _entity_id;
     _z_session_weak_t _zn;
+    _z_sync_group_t _callback_drop_sync_group;
 } _z_subscriber_t;
 
 #if Z_FEATURE_SUBSCRIPTION == 1

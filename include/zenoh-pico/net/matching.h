@@ -27,8 +27,10 @@ typedef struct _z_matching_listener_t {
 } _z_matching_listener_t;
 
 #if Z_FEATURE_MATCHING == 1
-_z_matching_listener_t _z_matching_listener_declare(const _z_write_filter_ctx_rc_t *ctx, uint32_t id,
-                                                    _z_closure_matching_status_t *callback);
+z_result_t _z_matching_listener_declare(_z_matching_listener_t *listener, _z_session_t *s,
+                                        const _z_write_filter_ctx_rc_t *ctx, _z_closure_matching_status_t *callback);
+z_result_t _z_matching_listener_register(uint32_t *listener_id, _z_session_t *s, const _z_write_filter_ctx_rc_t *ctx,
+                                         _z_closure_matching_status_t *callback);
 z_result_t _z_matching_listener_undeclare(_z_matching_listener_t *listener);
 // Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
 static inline _z_matching_listener_t _z_matching_listener_null(void) { return (_z_matching_listener_t){0}; }
