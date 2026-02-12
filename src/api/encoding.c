@@ -183,7 +183,7 @@ static z_result_t _z_encoding_convert_into_string(const z_loaned_encoding_t *enc
         prefix = ENCODING_VALUES_ID_TO_STR[encoding->id];
         prefix_len = strlen(prefix);
     }
-    _Bool has_schema = _z_string_len(&encoding->schema) > 0;
+    bool has_schema = _z_string_len(&encoding->schema) > 0;
     // Size include null terminator
     size_t total_len = prefix_len + _z_string_len(&encoding->schema) + 1;
     // Check for schema separator

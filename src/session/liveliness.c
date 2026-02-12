@@ -31,52 +31,6 @@
 #include "zenoh-pico/utils/result.h"
 
 #if Z_FEATURE_LIVELINESS == 1
-
-/**************** Liveliness Token ****************/
-
-z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr) {
-    _Z_DEBUG("Register liveliness token (%.*s)", (int)_z_string_len(&keyexpr->_keyexpr),
-             _z_string_data(&keyexpr->_keyexpr));
-    z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
-
-    const _z_keyexpr_t *pkeyexpr = _z_keyexpr_intmap_get(&zn->_local_tokens, id);
-    if (pkeyexpr != NULL) {
-        // Already received this token
-        _Z_ERROR("Duplicate token id %i", (int)id);
-        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
-    } else {
-        _z_keyexpr_t *ke = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-        if (ke == NULL || _z_keyexpr_intmap_insert(&zn->_local_tokens, id, ke) == NULL) {
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
-            z_free(ke);
-        } else {
-            // TODO: As of now it is safe to insert ke alias here since, we do not have background tokens
-            // and undeclaring a token automatically cleans up zn->_local_tokens.
-            // This should be better addressed by implementing ke refcount.
-            *ke = _z_keyexpr_alias(keyexpr);
-        }
-    }
-    _z_session_mutex_unlock(zn);
-    return ret;
-}
-
-void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id) {
-    _z_keyexpr_t ke = _z_keyexpr_null();
-    _z_session_mutex_lock(zn);
-
-    _Z_DEBUG("Unregister liveliness token (%i)", (int)id);
-
-    _z_keyexpr_t *ke_ptr = _z_keyexpr_intmap_get(&zn->_local_tokens, id);
-    if (ke_ptr != NULL) {
-        ke = *ke_ptr;
-        *ke_ptr = _z_keyexpr_null();
-        _z_keyexpr_intmap_remove(&zn->_local_tokens, id);
-    }
-    _z_session_mutex_unlock(zn);
-    _z_keyexpr_clear(&ke);  // ke needs to be undeclared outside of mutex, since it might trigger resources update
-}
-
 /**************** Liveliness Subscriber ****************/
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -248,7 +202,6 @@ z_result_t _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id)
     _z_session_mutex_lock(zn);
     pq = _z_liveliness_pending_query_intmap_extract(&zn->_liveliness_pending_queries, id);
     _z_session_mutex_unlock(zn);
-    // drop query outside of session mutex to avoid deadlocks
     if (pq != NULL) {
         _z_liveliness_pending_query_clear(pq);
         z_free(pq);

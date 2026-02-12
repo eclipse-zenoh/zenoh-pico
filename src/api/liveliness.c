@@ -25,14 +25,10 @@
 
 /**************** Liveliness Token ****************/
 
-_Bool _z_liveliness_token_check(const _z_liveliness_token_t *token) {
-    _z_keyexpr_check(&token->_key);
-    return true;
-}
+bool _z_liveliness_token_check(const _z_liveliness_token_t *token) { return !_Z_RC_IS_NULL(&token->_zn); }
 
 _z_liveliness_token_t _z_liveliness_token_null(void) {
     _z_liveliness_token_t s = {0};
-    s._key = _z_keyexpr_null();
     return s;
 }
 
@@ -47,7 +43,6 @@ z_result_t _z_liveliness_token_clear(_z_liveliness_token_t *token) {
         _z_session_rc_drop(&sess_rc);
     }
     _z_session_weak_drop(&token->_zn);
-    _z_keyexpr_clear(&token->_key);
     *token = _z_liveliness_token_null();
 
     return ret;

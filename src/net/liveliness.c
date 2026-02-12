@@ -29,32 +29,64 @@
 #if Z_FEATURE_LIVELINESS == 1
 
 /**************** Liveliness Token ****************/
-
-z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_token_t *ret_token,
-                                       const _z_keyexpr_t *keyexpr) {
-    *ret_token = _z_liveliness_token_null();
-    uint32_t id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
-
-    _z_keyexpr_t ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_declare(zn, &ke, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(_z_liveliness_register_token(_Z_RC_IN_VAL(zn), id, &ke), _z_keyexpr_clear(&ke));
-
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&ke, _Z_RC_IN_VAL(zn));
+z_result_t _z_liveliness_send_declare_token(_z_session_t *zn, uint32_t id, const _z_declared_keyexpr_t *keyexpr) {
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
     _z_declaration_t declaration = _z_make_decl_token(&wireexpr, id);
     _z_network_message_t n_msg;
     _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    z_result_t ret = _z_send_declare(_Z_RC_IN_VAL(zn), &n_msg);
+    z_result_t ret = _z_send_declare(zn, &n_msg);
     _z_n_msg_clear(&n_msg);
+    return ret;
+}
+
+z_result_t _z_liveliness_send_undeclare_token(_z_session_t *zn, uint32_t id, const _z_declared_keyexpr_t *keyexpr) {
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
+    _z_declaration_t declaration = _z_make_undecl_token(id, &wireexpr);
+    _z_network_message_t n_msg;
+    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
+    z_result_t ret = _z_send_undeclare(zn, &n_msg);
+    _z_n_msg_clear(&n_msg);
+    return ret;
+}
+
+z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_token_t *ret_token,
+                                       const _z_declared_keyexpr_t *keyexpr) {
+    *ret_token = _z_liveliness_token_null();
+    _Z_DEBUG("Declare liveliness token (%.*s)", (int)_z_string_len(&keyexpr->_inner._keyexpr),
+             _z_string_data(&keyexpr->_inner._keyexpr));
+
+    uint32_t id = _z_get_entity_id(_Z_RC_IN_VAL(zn));
+
+    _z_declared_keyexpr_t ke;
+    _Z_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &ke, keyexpr));
+    _Z_CLEAN_RETURN_IF_ERR(_z_liveliness_send_declare_token(_Z_RC_IN_VAL(zn), id, &ke), _z_declared_keyexpr_clear(&ke));
+    z_result_t ret = _Z_RES_OK;
+
+    _z_session_mutex_lock(_Z_RC_IN_VAL(zn));
+    const _z_declared_keyexpr_t *pkeyexpr = _z_declared_keyexpr_intmap_get(&_Z_RC_IN_VAL(zn)->_local_tokens, id);
+    if (pkeyexpr != NULL) {
+        // Already received this token
+        _Z_ERROR("Duplicate token id %i", (int)id);
+        ret = _Z_ERR_ENTITY_DECLARATION_FAILED;
+    } else {
+        _z_declared_keyexpr_t *ke_on_heap = (_z_declared_keyexpr_t *)z_malloc(sizeof(_z_declared_keyexpr_t));
+        if (ke_on_heap == NULL ||
+            _z_declared_keyexpr_intmap_insert(&_Z_RC_IN_VAL(zn)->_local_tokens, id, ke_on_heap) == NULL) {
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
+            z_free(ke_on_heap);
+        } else {
+            *ke_on_heap = ke;
+        }
+    }
+    _z_session_mutex_unlock(_Z_RC_IN_VAL(zn));
 
     if (ret != _Z_RES_OK) {
-        _z_liveliness_unregister_token(_Z_RC_IN_VAL(zn), id);
-        _z_keyexpr_clear(&ke);
+        _z_liveliness_send_undeclare_token(_Z_RC_IN_VAL(zn), id, &ke);
+        _z_declared_keyexpr_clear(&ke);
         return ret;
     }
-
     ret_token->_id = id;
     ret_token->_zn = _z_session_rc_clone_as_weak(zn);
-    ret_token->_key = ke;
 
     return _Z_RES_OK;
 }
@@ -72,16 +104,20 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
 #else
     _z_session_t *zn = _z_session_weak_as_unsafe_ptr(&token->_zn);
 #endif
-
     z_result_t ret;
-
-    _z_liveliness_unregister_token(zn, token->_id);
-    _z_wireexpr_t expr = _z_keyexpr_alias_to_wire(&token->_key, zn);
-    _z_declaration_t declaration = _z_make_undecl_token(token->_id, &expr);
-    _z_network_message_t n_msg;
-    _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-    ret = _z_send_undeclare(zn, &n_msg);
-    _z_n_msg_clear(&n_msg);
+    _z_declared_keyexpr_t *ke = NULL;
+    _Z_DEBUG("Unregister liveliness token (%i)", (int)token->_id);
+    _z_session_mutex_lock(zn);
+    ke = _z_declared_keyexpr_intmap_extract(&zn->_local_tokens, token->_id);
+    _z_session_mutex_unlock(zn);
+    if (ke != NULL) {
+        ret = _z_liveliness_send_undeclare_token(zn, token->_id, ke);
+        _z_declared_keyexpr_clear(
+            ke);  // ke needs to be undeclared outside of mutex, since it might trigger resources update
+        z_free(ke);
+    } else {
+        ret = _Z_ERR_ENTITY_UNKNOWN;
+    }
 
 #if Z_FEATURE_SESSION_CHECK == 1
     _z_session_rc_drop(&sess_rc);
@@ -94,8 +130,8 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
 z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z_subscription_t *sub) {
     z_result_t ret = _Z_RES_OK;
 
-    _Z_DEBUG("Retrieve liveliness history for %.*s", (int)_z_string_len(&sub->_key._keyexpr),
-             _z_string_data(&sub->_key._keyexpr));
+    _Z_DEBUG("Retrieve liveliness history for %.*s", (int)_z_string_len(&sub->_key._inner._keyexpr),
+             _z_string_data(&sub->_key._inner._keyexpr));
 
     _z_keyexpr_slist_t *tokens_list = _z_keyexpr_slist_new();
     _z_session_mutex_lock(zn);
@@ -106,7 +142,7 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
     // TODO: add support for local tokens
     _z_keyexpr_intmap_iterator_t iter = _z_keyexpr_intmap_iterator_make(&zn->_remote_tokens);
     while (_z_keyexpr_intmap_iterator_next(&iter)) {
-        if (_z_keyexpr_intersects(&sub->_key, _z_keyexpr_intmap_iterator_value(&iter))) {
+        if (_z_keyexpr_intersects(&sub->_key._inner, _z_keyexpr_intmap_iterator_value(&iter))) {
             tokens_list = _z_keyexpr_slist_push(tokens_list, _z_keyexpr_intmap_iterator_value(&iter));
         }
     }
@@ -116,7 +152,7 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
     while (pos != NULL) {
         _z_sample_t s = _z_sample_null();
         s.kind = Z_SAMPLE_KIND_PUT;
-        s.keyexpr = _z_keyexpr_alias(_z_keyexpr_slist_value(pos));
+        s.keyexpr._inner = _z_keyexpr_alias(_z_keyexpr_slist_value(pos));
         sub->_callback(&s, sub->_arg);
         _z_sample_clear(&s);
         pos = _z_keyexpr_slist_next(pos);
@@ -128,7 +164,7 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
 
 #if Z_FEATURE_SUBSCRIPTION == 1
 z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
-                                            const _z_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                            const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
                                             _z_drop_handler_t dropper, bool history, void *arg) {
     *subscriber = _z_subscriber_null();
     _z_subscription_t s;
@@ -137,7 +173,7 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = z_locality_default();
-    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
 
     // Register subscription, stored at session-level, do not drop it by the end of this function.
     _z_subscription_rc_t sp_s =
@@ -148,7 +184,7 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
     }
     // Build the declare message to send on the wire
     uint8_t mode = history ? (_Z_INTEREST_FLAG_CURRENT | _Z_INTEREST_FLAG_FUTURE) : _Z_INTEREST_FLAG_FUTURE;
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&sp_s)->_key, _Z_RC_IN_VAL(zn));
+    _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(&_Z_RC_IN_VAL(&sp_s)->_key, _Z_RC_IN_VAL(zn));
     _z_interest_t interest = _z_make_interest(
         &wireexpr, s._id, _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS | _Z_INTEREST_FLAG_RESTRICTED | mode);
 
@@ -254,16 +290,16 @@ z_result_t _z_liveliness_pending_query_register_cancellation(_z_liveliness_pendi
 }
 #endif
 
-z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
+z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr,
                                _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
                                uint64_t timeout_ms, _z_cancellation_token_rc_t *opt_cancellation_token) {
     z_result_t ret = _Z_RES_OK;
     _z_session_t *zn = _Z_RC_IN_VAL(session);
-    _Z_DEBUG("Register liveliness query for (%.*s)", (int)_z_string_len(&keyexpr->_keyexpr),
-             _z_string_data(&keyexpr->_keyexpr));
+    _Z_DEBUG("Register liveliness query for (%.*s)", (int)_z_string_len(&keyexpr->_inner._keyexpr),
+             _z_string_data(&keyexpr->_inner._keyexpr));
 
     _z_keyexpr_t query_ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, keyexpr));
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, &keyexpr->_inner));
 
     uint32_t query_id;
     _z_session_mutex_lock(zn);
@@ -287,7 +323,7 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_
 
     if (ret == _Z_RES_OK) {
         _ZP_UNUSED(timeout_ms);  // Current interest in pico don't support timeout
-        _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
+        _z_wireexpr_t wireexpr = _z_declared_keyexpr_alias_to_wire(keyexpr, zn);
         _z_interest_t interest = _z_make_interest(&wireexpr, query_id,
                                                   _Z_INTEREST_FLAG_KEYEXPRS | _Z_INTEREST_FLAG_TOKENS |
                                                       _Z_INTEREST_FLAG_RESTRICTED | _Z_INTEREST_FLAG_CURRENT);

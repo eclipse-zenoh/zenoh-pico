@@ -80,8 +80,9 @@ typedef struct _z_write_filter_t {
     _z_write_filter_ctx_rc_t ctx;
 } _z_write_filter_t;
 
-z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter, const _z_keyexpr_t *keyexpr,
-                                  uint8_t interest_flag, bool complete, z_locality_t locality);
+z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *filter,
+                                  const _z_declared_keyexpr_t *keyexpr, uint8_t interest_flag, bool complete,
+                                  z_locality_t locality);
 z_result_t _z_write_filter_clear(_z_write_filter_t *filter);
 void _z_write_filter_notify_subscriber(struct _z_session_t *session, const _z_keyexpr_t *key,
                                        z_locality_t allowed_origin, bool add);

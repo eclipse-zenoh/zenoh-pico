@@ -26,7 +26,7 @@ extern "C" {
 #if Z_FEATURE_LIVELINESS == 1
 
 z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_token_t *ret_token,
-                                       const _z_keyexpr_t *keyexpr);
+                                       const _z_declared_keyexpr_t *keyexpr);
 z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
 
 #if Z_FEATURE_SUBSCRIPTION == 1
@@ -45,7 +45,7 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token);
  *     0 in case of success, negative error code otherwise.
  */
 z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _z_session_rc_t *zn,
-                                            const _z_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
+                                            const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
                                             _z_drop_handler_t dropper, bool history, void *arg);
 
 /**
@@ -73,7 +73,7 @@ z_result_t _z_undeclare_liveliness_subscriber(_z_subscriber_t *sub);
  *     timeout_ms: The timeout value of this query.
  *     opt_cancellation_token: Optional cancellation token, can be NULL.
  */
-z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_keyexpr_t *keyexpr,
+z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared_keyexpr_t *keyexpr,
                                _z_closure_reply_callback_t callback, _z_drop_handler_t dropper, void *arg,
                                uint64_t timeout_ms, _z_cancellation_token_rc_t *opt_cancellation_token);
 #endif  // Z_FEATURE_QUERY == 1

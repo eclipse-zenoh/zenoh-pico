@@ -84,7 +84,7 @@ typedef struct _z_session_t {
 #endif
 
 #if Z_FEATURE_LIVELINESS == 1
-    _z_keyexpr_intmap_t _local_tokens;
+    _z_declared_keyexpr_intmap_t _local_tokens;
     _z_keyexpr_intmap_t _remote_tokens;
 #if Z_FEATURE_QUERY == 1
     uint32_t _liveliness_query_id;

@@ -21,7 +21,7 @@
 #include "zenoh-pico/utils/logging.h"
 
 static void _z_query_clear_inner(_z_query_t *q) {
-    _z_keyexpr_clear(&q->_key);
+    _z_declared_keyexpr_clear(&q->_key);
     _z_value_clear(&q->_value);
     _z_bytes_drop(&q->_attachment);
     _z_string_clear(&q->_parameters);

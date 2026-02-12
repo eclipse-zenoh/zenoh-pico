@@ -60,20 +60,6 @@ void _z_keyexpr_wire_declaration_clear(_z_keyexpr_wire_declaration_t *declaratio
     _z_keyexpr_wire_declaration_undeclare(declaration);
 }
 
-int _z_keyexpr_compare(const _z_keyexpr_t *first, const _z_keyexpr_t *second) {
-    // Compare ids only if they are valid and originate from the same location
-    size_t prefix_len = 0;
-    if (!_Z_RC_IS_NULL(&first->_declaration) && !_Z_RC_IS_NULL(&second->_declaration) &&
-        _z_keyexpr_wire_declaration_equals(_Z_RC_IN_VAL(&first->_declaration), _Z_RC_IN_VAL(&second->_declaration))) {
-        prefix_len = _Z_RC_IN_VAL(&first->_declaration)->_prefix_len;
-    }
-    size_t first_suffix_len = _z_string_len(&first->_keyexpr) - prefix_len;
-    size_t second_suffix_len = _z_string_len(&second->_keyexpr) - prefix_len;
-
-    return _z_substring_compare(&first->_keyexpr, prefix_len, first_suffix_len, &second->_keyexpr, prefix_len,
-                                second_suffix_len);
-}
-
 _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str) {
     _z_keyexpr_t ke = _z_keyexpr_null();
     ke._keyexpr = _z_string_alias(*str);
@@ -83,6 +69,18 @@ _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str) {
 _z_keyexpr_t _z_keyexpr_alias_from_substr(const char *str, size_t len) {
     _z_keyexpr_t ke = _z_keyexpr_null();
     ke._keyexpr = _z_string_alias_substr(str, len);
+    return ke;
+}
+
+_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_string(const _z_string_t *str) {
+    _z_declared_keyexpr_t ke = _z_declared_keyexpr_null();
+    ke._inner = _z_keyexpr_alias_from_string(str);
+    return ke;
+}
+
+_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_substr(const char *str, size_t len) {
+    _z_declared_keyexpr_t ke = _z_declared_keyexpr_null();
+    ke._inner = _z_keyexpr_alias_from_substr(str, len);
     return ke;
 }
 
@@ -96,58 +94,21 @@ z_result_t _z_keyexpr_from_substr(_z_keyexpr_t *dst, const char *str, size_t len
     return _z_string_check(&dst->_keyexpr) ? _Z_RES_OK : _Z_ERR_SYSTEM_OUT_OF_MEMORY;
 }
 
-size_t _z_keyexpr_size(_z_keyexpr_t *p) {
-    _ZP_UNUSED(p);
-    return sizeof(_z_keyexpr_t);
-}
-
-z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
-    *dst = _z_keyexpr_null();
-    _Z_RETURN_IF_ERR(_z_string_copy(&dst->_keyexpr, &src->_keyexpr));
+z_result_t _z_declared_keyexpr_copy(_z_declared_keyexpr_t *dst, const _z_declared_keyexpr_t *src) {
+    *dst = _z_declared_keyexpr_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&dst->_inner, &src->_inner));
     if (!_Z_RC_IS_NULL(&src->_declaration)) {
         dst->_declaration = _z_keyexpr_wire_declaration_rc_clone(&src->_declaration);
     }
     return _Z_RES_OK;
 }
 
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src) {
-    _z_keyexpr_t dst;
-    _z_keyexpr_copy(&dst, src);
-    return dst;
-}
-
-_z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src) {
-    _z_keyexpr_t *dst = (_z_keyexpr_t *)z_malloc(sizeof(_z_keyexpr_t));
-    if (dst == NULL) {
-        return NULL;
-    }
-    if (_z_keyexpr_copy(dst, src) != _Z_RES_OK) {
-        z_free(dst);
-    }
-    return dst;
-}
-
-z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
-    *dst = _z_keyexpr_null();
-    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_keyexpr, &src->_keyexpr), _z_keyexpr_clear(src));
+z_result_t _z_declared_keyexpr_move(_z_declared_keyexpr_t *dst, _z_declared_keyexpr_t *src) {
+    *dst = _z_declared_keyexpr_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_move(&dst->_inner, &src->_inner));
     dst->_declaration = src->_declaration;
     src->_declaration = _z_keyexpr_wire_declaration_rc_null();
     return _Z_RES_OK;
-}
-
-void _z_keyexpr_free(_z_keyexpr_t **rk) {
-    _z_keyexpr_t *ptr = *rk;
-
-    if (ptr != NULL) {
-        _z_keyexpr_clear(ptr);
-
-        z_free(ptr);
-        *rk = NULL;
-    }
-}
-
-bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
-    return _z_keyexpr_compare(left, right) == 0;
 }
 
 /*------------------ Canonize helpers ------------------*/
@@ -409,11 +370,15 @@ bool _z_ke_chunk_includes_stardsl(_z_str_se_t l1, _z_str_se_t r) {
     return result;
 }
 
-bool _z_keyexpr_is_wild_chunk(_z_str_se_t s) { return _z_ptr_char_diff(s.end, s.start) == 1 && s.start[0] == '*'; }
+bool _z_declared_keyexpr_is_wild_chunk(_z_str_se_t s) {
+    return _z_ptr_char_diff(s.end, s.start) == 1 && s.start[0] == '*';
+}
 
-bool _z_keyexpr_is_superwild_chunk(_z_str_se_t s) { return _z_ptr_char_diff(s.end, s.start) == 2 && s.start[0] == '*'; }
+bool _z_declared_keyexpr_is_superwild_chunk(_z_str_se_t s) {
+    return _z_ptr_char_diff(s.end, s.start) == 2 && s.start[0] == '*';
+}
 
-bool _z_keyexpr_has_verbatim(_z_str_se_t s) {
+bool _z_declared_keyexpr_has_verbatim(_z_str_se_t s) {
     _z_splitstr_t it = {.s = s, .delimiter = _Z_DELIMITER};
     _z_str_se_t chunk = _z_splitstr_next(&it);
     while (chunk.start != NULL) {
@@ -425,14 +390,14 @@ bool _z_keyexpr_has_verbatim(_z_str_se_t s) {
     return false;
 }
 
-bool _z_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_chunk_matcher chunk_includer) {
+bool _z_declared_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_chunk_matcher chunk_includer) {
     for (;;) {
         _z_str_se_t lchunk = {0};
         _z_str_se_t lrest = _z_splitstr_split_once((_z_splitstr_t){.s = left, .delimiter = _Z_DELIMITER}, &lchunk);
         bool lempty = lrest.start == NULL;
-        if (_z_keyexpr_is_superwild_chunk(lchunk)) {
-            if (lempty ? !_z_keyexpr_has_verbatim(right)
-                       : _z_keyexpr_includes_superwild(lrest, right, chunk_includer)) {
+        if (_z_declared_keyexpr_is_superwild_chunk(lchunk)) {
+            if (lempty ? !_z_declared_keyexpr_has_verbatim(right)
+                       : _z_declared_keyexpr_includes_superwild(lrest, right, chunk_includer)) {
                 return true;
             }
             if (right.start[0] == _Z_VERBATIM) {
@@ -445,7 +410,8 @@ bool _z_keyexpr_includes_superwild(_z_str_se_t left, _z_str_se_t right, _z_ke_ch
         } else {
             _z_str_se_t rchunk = {0};
             _z_str_se_t rrest = _z_splitstr_split_once((_z_splitstr_t){.s = right, .delimiter = _Z_DELIMITER}, &rchunk);
-            if (rchunk.start == NULL || _z_keyexpr_is_superwild_chunk(rchunk) || !chunk_includer(lchunk, rchunk)) {
+            if (rchunk.start == NULL || _z_declared_keyexpr_is_superwild_chunk(rchunk) ||
+                !chunk_includer(lchunk, rchunk)) {
                 return false;
             }
             if (lempty) {
@@ -478,7 +444,7 @@ bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
                 ? _z_ke_chunk_includes_stardsl
                 : _z_ke_chunk_includes_nodsl;
         if ((lwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) {
-            return _z_keyexpr_includes_superwild(l, r, chunk_includer);
+            return _z_declared_keyexpr_includes_superwild(l, r, chunk_includer);
         } else if (((rwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == 0) && (ln_chunks == rn_chunks)) {
             _z_splitstr_t lchunks = {.s = l, .delimiter = _Z_DELIMITER};
             _z_splitstr_t rchunks = {.s = r, .delimiter = _Z_DELIMITER};
@@ -664,7 +630,7 @@ bool _z_ke_intersect_rhassuperchunks(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_m
     return result;
 }
 
-bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_matcher chunk_intersector) {
+bool _z_declared_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_matcher chunk_intersector) {
     _z_splitstr_t it1 = {.s = l, .delimiter = _Z_DELIMITER};
     _z_splitstr_t it2 = {.s = r, .delimiter = _Z_DELIMITER};
     _z_str_se_t current1 = {0};
@@ -672,20 +638,20 @@ bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_ma
     while (!_z_splitstr_is_empty(&it1) && !_z_splitstr_is_empty(&it2)) {
         _z_str_se_t advanced1 = _z_splitstr_split_once(it1, &current1);
         _z_str_se_t advanced2 = _z_splitstr_split_once(it2, &current2);
-        if (_z_keyexpr_is_superwild_chunk(current1)) {
+        if (_z_declared_keyexpr_is_superwild_chunk(current1)) {
             if (advanced1.start == NULL) {
-                return !_z_keyexpr_has_verbatim(it2.s);
+                return !_z_declared_keyexpr_has_verbatim(it2.s);
             }
-            return _z_keyexpr_intersect_bothsuper(advanced1, it2.s, chunk_intersector) ||
+            return _z_declared_keyexpr_intersect_bothsuper(advanced1, it2.s, chunk_intersector) ||
                    (current2.start[0] != _Z_VERBATIM &&
-                    _z_keyexpr_intersect_bothsuper(it1.s, advanced2, chunk_intersector));
-        } else if (_z_keyexpr_is_superwild_chunk(current2)) {
+                    _z_declared_keyexpr_intersect_bothsuper(it1.s, advanced2, chunk_intersector));
+        } else if (_z_declared_keyexpr_is_superwild_chunk(current2)) {
             if (advanced2.start == NULL) {
-                return !_z_keyexpr_has_verbatim(it1.s);
+                return !_z_declared_keyexpr_has_verbatim(it1.s);
             }
-            return _z_keyexpr_intersect_bothsuper(advanced2, it1.s, chunk_intersector) ||
+            return _z_declared_keyexpr_intersect_bothsuper(advanced2, it1.s, chunk_intersector) ||
                    (current1.start[0] != _Z_VERBATIM &&
-                    _z_keyexpr_intersect_bothsuper(it2.s, advanced1, chunk_intersector));
+                    _z_declared_keyexpr_intersect_bothsuper(it2.s, advanced1, chunk_intersector));
         } else if (chunk_intersector(current1, current2)) {
             it1.s = advanced1;
             it2.s = advanced2;
@@ -693,8 +659,8 @@ bool _z_keyexpr_intersect_bothsuper(_z_str_se_t l, _z_str_se_t r, _z_ke_chunk_ma
             return false;
         }
     }
-    return (_z_splitstr_is_empty(&it1) || _z_keyexpr_is_superwild_chunk(it1.s)) &&
-           (_z_splitstr_is_empty(&it2) || _z_keyexpr_is_superwild_chunk(it2.s));
+    return (_z_splitstr_is_empty(&it1) || _z_declared_keyexpr_is_superwild_chunk(it1.s)) &&
+           (_z_splitstr_is_empty(&it2) || _z_declared_keyexpr_is_superwild_chunk(it2.s));
 }
 
 bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right) {
@@ -718,7 +684,7 @@ bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right) 
                 : _z_ke_chunk_intersect_nodsl;
         if (wildness != (int8_t)0 && rn_verbatim == ln_verbatim) {
             if ((lwildness & rwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) {
-                result = _z_keyexpr_intersect_bothsuper(l, r, chunk_intersector);
+                result = _z_declared_keyexpr_intersect_bothsuper(l, r, chunk_intersector);
             } else if (((lwildness & (int8_t)_ZP_WILDNESS_SUPERCHUNKS) == (int8_t)_ZP_WILDNESS_SUPERCHUNKS) &&
                        (ln_chunks <= (rn_chunks * (size_t)2 + (size_t)1))) {
                 result = _z_ke_intersect_rhassuperchunks(r, l, chunk_intersector);
@@ -888,6 +854,13 @@ z_result_t _z_keyexpr_concat(_z_keyexpr_t *key, const _z_keyexpr_t *left, const 
     }
     _Z_RETURN_IF_ERR(_z_string_concat_substr(&key->_keyexpr, &left->_keyexpr, right, len, NULL, 0));
 
+    return _Z_RES_OK;
+}
+
+z_result_t _z_declared_keyexpr_concat(_z_declared_keyexpr_t *key, const _z_declared_keyexpr_t *left, const char *right,
+                                      size_t len) {
+    *key = _z_declared_keyexpr_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_concat(&key->_inner, &left->_inner, right, len));
     if (!_Z_RC_IS_NULL(&left->_declaration)) {
         key->_declaration = _z_keyexpr_wire_declaration_rc_clone(&left->_declaration);
     }
@@ -901,16 +874,23 @@ z_result_t _z_keyexpr_join(_z_keyexpr_t *key, const _z_keyexpr_t *left, const _z
                                              _z_string_len(&right->_keyexpr), "/", 1));
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_canonize((char *)key->_keyexpr._slice.start, &key->_keyexpr._slice.len),
                            _z_keyexpr_clear(key));
+    return _Z_RES_OK;
+}
+
+z_result_t _z_declared_keyexpr_join(_z_declared_keyexpr_t *key, const _z_declared_keyexpr_t *left,
+                                    const _z_declared_keyexpr_t *right) {
+    *key = _z_declared_keyexpr_null();
+    _Z_RETURN_IF_ERR(_z_keyexpr_join(&key->_inner, &left->_inner, &right->_inner));
     if (!_Z_RC_IS_NULL(&left->_declaration)) {
         key->_declaration = _z_keyexpr_wire_declaration_rc_clone(&left->_declaration);
     }
     return _Z_RES_OK;
 }
 
-_z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key, const _z_session_t *session) {
+_z_wireexpr_t _z_declared_keyexpr_alias_to_wire(const _z_declared_keyexpr_t *key, const _z_session_t *session) {
     _z_wireexpr_t expr = _z_wireexpr_null();
-    const char *suffix_str = _z_string_data(&key->_keyexpr);
-    size_t suffix_len = _z_string_len(&key->_keyexpr);
+    const char *suffix_str = _z_string_data(&key->_inner._keyexpr);
+    size_t suffix_len = _z_string_len(&key->_inner._keyexpr);
     if (!_Z_RC_IS_NULL(&key->_declaration) &&
         _z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(&key->_declaration), session)) {
         expr._id = _Z_RC_IN_VAL(&key->_declaration)->_id;
@@ -924,11 +904,17 @@ _z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key, const _z_session
     return expr;
 }
 
-z_result_t _z_keyexpr_declare_prefix(const _z_session_rc_t *zs, _z_keyexpr_t *out, const _z_keyexpr_t *keyexpr,
+_z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key) {
+    _z_wireexpr_t expr = _z_wireexpr_null();
+    expr._suffix = _z_string_alias(key->_keyexpr);
+    return expr;
+}
+
+z_result_t _z_keyexpr_declare_prefix(const _z_session_rc_t *zs, _z_declared_keyexpr_t *out, const _z_keyexpr_t *keyexpr,
                                      size_t prefix_len) {
     assert(prefix_len <= _z_string_len(&keyexpr->_keyexpr));
-    *out = _z_keyexpr_null();
-    _Z_RETURN_IF_ERR(_z_string_copy(&out->_keyexpr, &keyexpr->_keyexpr));
+    *out = _z_declared_keyexpr_null();
+    _Z_RETURN_IF_ERR(_z_string_copy(&out->_inner._keyexpr, &keyexpr->_keyexpr));
     if (prefix_len == 0) {
         return _Z_RES_OK;
     }
@@ -942,20 +928,21 @@ z_result_t _z_keyexpr_declare_prefix(const _z_session_rc_t *zs, _z_keyexpr_t *ou
     _z_keyexpr_wire_declaration_t declaration = _z_keyexpr_wire_declaration_null();
     out->_declaration = _z_keyexpr_wire_declaration_rc_new_from_val(&declaration);
     if (_Z_RC_IS_NULL(&out->_declaration)) {
-        _z_keyexpr_clear(out);
+        _z_declared_keyexpr_clear(out);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _z_string_t prefix = _z_string_alias_substr(_z_string_data(&out->_keyexpr), prefix_len);
+    _z_string_t prefix = _z_string_alias_substr(_z_string_data(&out->_inner._keyexpr), prefix_len);
     _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_wire_declaration_new(_Z_RC_IN_VAL(&out->_declaration), &prefix, zs),
-                           _z_keyexpr_clear(out));
+                           _z_declared_keyexpr_clear(out));
     return _Z_RES_OK;
 }
 
-z_result_t _z_keyexpr_declare(const _z_session_rc_t *zs, _z_keyexpr_t *out, const _z_keyexpr_t *keyexpr) {
-    if (_z_keyexpr_is_fully_optimized(keyexpr, _Z_RC_IN_VAL(zs))) {
-        return _z_keyexpr_copy(out, keyexpr);
+z_result_t _z_declared_keyexpr_declare(const _z_session_rc_t *zs, _z_declared_keyexpr_t *out,
+                                       const _z_declared_keyexpr_t *keyexpr) {
+    if (_z_declared_keyexpr_is_fully_optimized(keyexpr, _Z_RC_IN_VAL(zs))) {
+        return _z_declared_keyexpr_copy(out, keyexpr);
     } else {
-        return _z_keyexpr_declare_prefix(zs, out, keyexpr, _z_string_len(&keyexpr->_keyexpr));
+        return _z_keyexpr_declare_prefix(zs, out, &keyexpr->_inner, _z_string_len(&keyexpr->_inner._keyexpr));
     }
 }
 
@@ -973,11 +960,11 @@ size_t _z_keyexpr_non_wild_prefix_len(const _z_keyexpr_t *key) {
     return _z_ptr_char_diff(pos, data);
 }
 
-z_result_t _z_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs, _z_keyexpr_t *out,
-                                              const _z_keyexpr_t *keyexpr) {
-    if (_z_keyexpr_is_non_wild_prefix_optimized(keyexpr, _Z_RC_IN_VAL(zs))) {
-        return _z_keyexpr_copy(out, keyexpr);
+z_result_t _z_declared_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs, _z_declared_keyexpr_t *out,
+                                                       const _z_declared_keyexpr_t *keyexpr) {
+    if (_z_declared_keyexpr_is_non_wild_prefix_optimized(keyexpr, _Z_RC_IN_VAL(zs))) {
+        return _z_declared_keyexpr_copy(out, keyexpr);
     } else {
-        return _z_keyexpr_declare_prefix(zs, out, keyexpr, _z_keyexpr_non_wild_prefix_len(keyexpr));
+        return _z_keyexpr_declare_prefix(zs, out, &keyexpr->_inner, _z_keyexpr_non_wild_prefix_len(&keyexpr->_inner));
     }
 }
