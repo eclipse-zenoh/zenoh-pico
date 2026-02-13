@@ -172,7 +172,7 @@ z_result_t _z_cancellation_token_add_on_cancel_handler(_z_cancellation_token_t *
                                                        size_t *out_handler_id) {
     _Z_RETURN_IF_ERR(_z_cancellation_token_lock(ct));
     z_result_t ret = _z_unsafe_cancellation_token_has_started_cancel(ct)
-                         ? Z_CANCELLATION_TOKEN_ALREADY_CANCELLED
+                         ? Z_ERR_CANCELLED
                          : _z_cancellation_handlers_storage_add(&ct->_handlers, handler, out_handler_id);
     _z_cancellation_token_unlock(ct);
     return ret;
@@ -187,5 +187,5 @@ z_result_t _z_cancellation_token_remove_on_cancel_handler(_z_cancellation_token_
 
 z_result_t _z_cancellation_token_get_notifier(_z_cancellation_token_t *ct, _z_sync_group_notifier_t *notifier) {
     z_result_t ret = _z_sync_group_create_notifier(&ct->_sync_group, notifier);
-    return ret == Z_SYNC_GROUP_CLOSED ? Z_CANCELLATION_TOKEN_ALREADY_CANCELLED : ret;
+    return ret == Z_SYNC_GROUP_CLOSED ? Z_ERR_CANCELLED : ret;
 }

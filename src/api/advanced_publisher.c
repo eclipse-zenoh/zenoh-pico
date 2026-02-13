@@ -357,9 +357,7 @@ z_result_t ze_declare_advanced_publisher(const z_loaned_session_t *zs, ze_owned_
             _Z_CLEAN_RETURN_IF_ERR(
                 _zp_periodic_task_add(_Z_RC_IN_VAL(zs), &closure, opt.sample_miss_detection.heartbeat_period_ms,
                                       &state->_state_publisher_task_id),
-
                 z_keyexpr_drop(z_keyexpr_move(&ke));
-                _ze_advanced_publisher_state_weak_drop(ctx); z_free(ctx);
                 _ze_advanced_publisher_state_rc_drop(&pub->_val._state);
                 z_publisher_drop(z_publisher_move(&pub->_val._publisher));
                 z_liveliness_token_drop(z_liveliness_token_move(&pub->_val._liveliness));

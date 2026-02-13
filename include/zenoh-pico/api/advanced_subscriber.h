@@ -82,7 +82,22 @@ _Z_HASHMAP_DEFINE(_z_entity_global_id, _ze_advanced_subscriber_sequenced_state, 
                   _ze_advanced_subscriber_sequenced_state_t)
 _Z_HASHMAP_DEFINE(_z_id, _ze_advanced_subscriber_timestamped_state, z_id_t, _ze_advanced_subscriber_timestamped_state_t)
 
-static void _ze_closure_miss_copy(_ze_closure_miss_t *dst, const _ze_closure_miss_t *src) { *dst = *src; }
+static inline _ze_closure_miss_t _ze_closure_miss_null(void) {
+    _ze_closure_miss_t miss = {0};
+    return miss;
+}
+static inline void _ze_closure_miss_drop(_ze_closure_miss_t *closure) {
+    if (closure->drop != NULL) {
+        closure->drop(closure->context);
+    }
+    *closure = _ze_closure_miss_null();
+}
+
+static inline void _ze_closure_miss_copy(_ze_closure_miss_t *dst, const _ze_closure_miss_t *src) { *dst = *src; }
+static inline void _ze_closure_miss_move(_ze_closure_miss_t *dst, _ze_closure_miss_t *src) {
+    *dst = *src;
+    *src = _ze_closure_miss_null();
+}
 
 _Z_ELEM_DEFINE(_ze_closure_miss, _ze_closure_miss_t, _z_noop_size, _z_noop_clear, _ze_closure_miss_copy, _z_noop_move,
                _z_noop_eq, _z_noop_cmp, _z_noop_hash)
@@ -111,6 +126,8 @@ typedef struct {
     _ze_closure_miss_intmap_t _miss_handlers;
     bool _has_token;
     z_owned_liveliness_token_t _token;
+    z_owned_cancellation_token_t _cancellation_token;
+    bool _is_undeclaring;
 } _ze_advanced_subscriber_state_t;
 
 _ze_advanced_subscriber_state_t _ze_advanced_subscriber_state_null(void);

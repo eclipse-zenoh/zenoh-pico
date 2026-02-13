@@ -261,7 +261,7 @@ z_result_t _zp_process_periodic_tasks(_z_session_t *z);
  * Returns:
  *     ``0`` in case of success, ``negative`` in case of failure.
  */
-z_result_t _zp_periodic_task_add(_z_session_t *z, const _zp_closure_periodic_task_t *closure, uint64_t period_ms,
+z_result_t _zp_periodic_task_add(_z_session_t *z, _zp_closure_periodic_task_t *closure, uint64_t period_ms,
                                  uint32_t *id);
 
 /*

@@ -111,24 +111,26 @@ void _zp_periodic_scheduler_clear(_zp_periodic_scheduler_t *scheduler) {
     *scheduler = (_zp_periodic_scheduler_t){0};
 }
 
-z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, const _zp_closure_periodic_task_t *closure,
+z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, _zp_closure_periodic_task_t *closure,
                                       uint64_t period_ms, uint32_t *id) {
-    if (scheduler == NULL || closure == NULL || id == NULL || period_ms == 0) {
+    if (closure == NULL || closure->call == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    if (scheduler == NULL || id == NULL || period_ms == 0) {
+        _zp_closure_periodic_task_drop(closure);
         _Z_ERROR_RETURN(_Z_ERR_INVALID);
     }
 
     z_result_t res = _Z_RES_OK;
 #if Z_FEATURE_MULTI_THREAD == 1
-    res = _z_mutex_lock(&scheduler->_mutex);
-    if (res != _Z_RES_OK) {
-        _Z_ERROR_RETURN(res);
-    }
+    _Z_CLEAN_RETURN_IF_ERR(_z_mutex_lock(&scheduler->_mutex), _zp_closure_periodic_task_drop(closure));
 #endif
 
     if (scheduler->_task_count >= ZP_PERIODIC_SCHEDULER_MAX_TASKS) {
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_unlock(&scheduler->_mutex);
 #endif
+        _zp_closure_periodic_task_drop(closure);
         _Z_ERROR("Periodic scheduler task limit reached: %zu >= %u", scheduler->_task_count,
                  ZP_PERIODIC_SCHEDULER_MAX_TASKS);
         return _Z_ERR_GENERIC;
@@ -141,6 +143,7 @@ z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, const
 #if Z_FEATURE_MULTI_THREAD == 1
         _z_mutex_unlock(&scheduler->_mutex);
 #endif
+        _zp_closure_periodic_task_drop(closure);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     *task =
@@ -149,7 +152,7 @@ z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, const
                               ._next_due_ms = now_ms + period_ms,
                               ._closure = {.context = closure->context, .call = closure->call, .drop = closure->drop},
                               ._cancelled = false};
-
+    *closure = _zp_closure_periodic_task_null();
     size_t expected_len = (scheduler->_inflight != NULL) ? scheduler->_task_count : scheduler->_task_count + 1;
     scheduler->_tasks = _zp_periodic_task_list_push_sorted(scheduler->_tasks, task);
     size_t new_len = _zp_periodic_task_list_len(scheduler->_tasks);
