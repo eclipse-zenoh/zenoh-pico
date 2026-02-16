@@ -759,11 +759,13 @@ if(UNIX OR MSVC)
 if(UNIX)
       add_executable(z_api_advanced_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_api_advanced_pubsub_test.c
                                                 ${PROJECT_SOURCE_DIR}/tests/utils/tcp_proxy.c)
+      add_executable(z_api_callback_drop_on_undeclare_test ${PROJECT_SOURCE_DIR}/tests/z_api_callback_drop_on_undeclare_test.c
+                                                ${PROJECT_SOURCE_DIR}/tests/utils/tcp_proxy.c)
       add_compile_definitions(Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY)
 else()
       add_executable(z_api_advanced_pubsub_test ${PROJECT_SOURCE_DIR}/tests/z_api_advanced_pubsub_test.c)
-endif()
       add_executable(z_api_callback_drop_on_undeclare_test ${PROJECT_SOURCE_DIR}/tests/z_api_callback_drop_on_undeclare_test.c)
+endif()
 
       target_link_libraries(z_client_test zenohpico::lib)
       target_link_libraries(z_api_alignment_test zenohpico::lib)

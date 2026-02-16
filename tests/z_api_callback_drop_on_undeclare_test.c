@@ -24,6 +24,10 @@
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/api/types.h"
 
+#ifdef Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY
+#include "utils/tcp_proxy.h"
+#endif
+
 #undef NDEBUG
 #include <assert.h>
 
@@ -143,6 +147,55 @@ void test_subscriber_callback_drop_on_undeclare(bool background) {
     z_session_drop(z_session_move(&session1));
     z_session_drop(z_session_move(&session2));
 }
+
+#if Z_FEATURE_LIVELINESS == 1
+void test_liveliness_subscriber_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1, session2;
+    z_owned_subscriber_t subscriber;
+    z_view_keyexpr_t ke;
+    z_owned_closure_sample_t closure;
+
+    assert(open_session(&session1) == Z_OK);
+    assert(open_session(&session2) == Z_OK);
+
+    if (!background) {
+        assert(z_view_keyexpr_from_str(&ke, "test/undeclare/liveliness_subscriber_callback_drop") == Z_OK);
+    } else {
+        assert(z_view_keyexpr_from_str(&ke, "test/undeclare_background/liveliness_subscriber_callback_drop") == Z_OK);
+    }
+
+    callback_arg_t arg;
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Liveliness Subscriber callback drop on undeclare: background = %d\n", background);
+    z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler, (void*)&arg);
+    if (!background) {
+        assert(z_liveliness_declare_subscriber(z_session_loan(&session1), &subscriber, z_view_keyexpr_loan(&ke),
+                                               z_closure_sample_move(&closure), NULL) == Z_OK);
+    } else {
+        assert(z_liveliness_declare_background_subscriber(z_session_loan(&session1), z_view_keyexpr_loan(&ke),
+                                                          z_closure_sample_move(&closure), NULL) == Z_OK);
+    }
+    z_sleep_s(2);
+
+    z_owned_liveliness_token_t token;
+    assert(z_liveliness_declare_token(z_session_loan(&session2), &token, z_view_keyexpr_loan(&ke), NULL) == Z_OK);
+    z_sleep_s(1);
+
+    if (!background) {
+        z_undeclare_subscriber(z_subscriber_move(&subscriber));
+    } else {
+        z_close(z_session_loan_mut(&session1), NULL);
+    }
+    assert(arg.called == true);
+    assert(arg.dropped == true);
+
+    z_liveliness_token_drop(z_liveliness_token_move(&token));
+    z_session_drop(z_session_move(&session1));
+    z_session_drop(z_session_move(&session2));
+}
+#endif
 
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1 && Z_FEATURE_ADVANCED_PUBLICATION == 1
 void test_advanced_subscriber_callback_drop_on_undeclare(bool background) {
@@ -278,6 +331,119 @@ void test_advanced_subscriber_late_join_callback_drop_on_undeclare(bool backgrou
     z_session_drop(z_session_move(&session1));
     z_session_drop(z_session_move(&session2));
 }
+
+#if Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY == 1
+DECLARE_ON_RECEIVE_HANDLER(ze_miss_t, const)
+void put_str(const ze_loaned_advanced_publisher_t* pub, const char* str) {
+    z_owned_bytes_t payload;
+    z_bytes_from_static_str(&payload, str);
+    ze_advanced_publisher_put(pub, z_bytes_move(&payload), NULL);
+}
+void setup_two_peers_with_proxy(z_owned_session_t* s1, z_owned_session_t* s2, tcp_proxy_t** proxy,
+                                uint16_t upstream_listen_port) {
+    *proxy = tcp_proxy_create("127.0.0.1", "127.0.0.1", upstream_listen_port);
+    assert(*proxy != NULL);
+
+    int port = tcp_proxy_start(*proxy, 100);
+    assert(port > 0);
+
+    z_owned_config_t c1, c2;
+    z_config_default(&c1);
+    z_config_default(&c2);
+
+    char uri[128];
+
+    // s1 listens on the fixed upstream port
+    zp_config_insert(z_loan_mut(c1), Z_CONFIG_MODE_KEY, "peer");
+    snprintf(uri, sizeof(uri), "tcp/127.0.0.1:%u#iface=lo", (unsigned)upstream_listen_port);
+    zp_config_insert(z_loan_mut(c1), Z_CONFIG_LISTEN_KEY, uri);
+
+    // s2 connects via proxy ephemeral port
+    zp_config_insert(z_loan_mut(c2), Z_CONFIG_MODE_KEY, "peer");
+    snprintf(uri, sizeof(uri), "tcp/127.0.0.1:%u#iface=lo", (unsigned)port);
+    zp_config_insert(z_loan_mut(c2), Z_CONFIG_CONNECT_KEY, uri);
+
+    assert(z_open(s1, z_config_move(&c1), NULL) == Z_OK);
+    assert(z_open(s2, z_config_move(&c2), NULL) == Z_OK);
+}
+
+void test_advanced_sample_miss_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1, session2;
+    z_view_keyexpr_t ke;
+
+    if (!background) {
+        assert(z_view_keyexpr_from_str(&ke, "test/undeclare/sample_miss_listener_callback_drop") == Z_OK);
+    } else {
+        assert(z_view_keyexpr_from_str(&ke, "test/undeclare_background/sample_miss_listener_callback_drop") == Z_OK);
+    }
+    printf("Test: Sample Miss Listener callback drop on undeclare: background = %d\n", background);
+
+    tcp_proxy_t* tcp_proxy;
+    setup_two_peers_with_proxy(&session1, &session2, &tcp_proxy, 9000);
+
+    ze_owned_advanced_subscriber_t sub;
+    ze_advanced_subscriber_options_t sub_opts;
+    ze_advanced_subscriber_options_default(&sub_opts);
+    z_owned_closure_sample_t closure;
+    z_owned_fifo_handler_sample_t handler;
+    assert(z_fifo_channel_sample_new(&closure, &handler, 10) == Z_OK);
+    assert(ze_declare_advanced_subscriber(z_session_loan(&session2), &sub, z_loan(ke), z_move(closure), &sub_opts) ==
+           Z_OK);
+
+    ze_owned_sample_miss_listener_t miss_listener;
+    ze_owned_closure_miss_t miss_closure;
+    callback_arg_t arg;
+    arg.called = false;
+    arg.dropped = false;
+    ze_closure_miss(&miss_closure, on_receive_ze_miss_t_handler, on_drop_ze_miss_t_handler, (void*)&arg);
+    if (!background) {
+        assert(ze_advanced_subscriber_declare_sample_miss_listener(ze_advanced_subscriber_loan(&sub), &miss_listener,
+                                                                   ze_closure_miss_move(&miss_closure)) == Z_OK);
+    } else {
+        assert(ze_advanced_subscriber_declare_background_sample_miss_listener(
+                   ze_advanced_subscriber_loan(&sub), ze_closure_miss_move(&miss_closure)) == Z_OK);
+    }
+    z_sleep_s(1);
+
+    ze_owned_advanced_publisher_t pub;
+    ze_advanced_publisher_options_t pub_opts;
+    ze_advanced_publisher_options_default(&pub_opts);
+    ze_advanced_publisher_sample_miss_detection_options_default(&pub_opts.sample_miss_detection);
+    assert(ze_declare_advanced_publisher(z_session_loan(&session1), &pub, z_loan(ke), &pub_opts) == Z_OK);
+
+    put_str(z_loan(pub), "1");
+    z_sleep_ms(500);
+    put_str(z_loan(pub), "2");
+    z_sleep_ms(500);
+
+    tcp_proxy_set_enabled(tcp_proxy, false);
+    z_sleep_ms(500);
+
+    put_str(z_loan(pub), "3");
+    z_sleep_ms(500);
+
+    tcp_proxy_set_enabled(tcp_proxy, true);
+    z_sleep_s(1);
+
+    put_str(z_loan(pub), "4");
+    z_sleep_ms(500);
+
+    if (!background) {
+        ze_undeclare_sample_miss_listener(ze_sample_miss_listener_move(&miss_listener));
+    } else {
+        ze_undeclare_advanced_subscriber(ze_advanced_subscriber_move(&sub));
+    }
+    assert(arg.dropped == true);
+    assert(arg.called == true);
+
+    ze_advanced_publisher_drop(ze_advanced_publisher_move(&pub));
+    z_session_drop(z_session_move(&session1));
+    z_session_drop(z_session_move(&session2));
+
+    tcp_proxy_stop(tcp_proxy);
+    tcp_proxy_destroy(tcp_proxy);
+}
+#endif
 #endif
 
 #if Z_FEATURE_MATCHING == 1
@@ -602,6 +768,39 @@ void test_querier_callback_drop_on_undeclare(bool background) {
     z_session_drop(z_session_move(&session2));
 }
 
+#if Z_FEATURE_LIVELINESS == 1
+void test_liveliness_get_callback_drop_on_undeclare(void) {
+    z_owned_session_t session1, session2;
+    z_view_keyexpr_t ke;
+    z_owned_closure_reply_t closure;
+
+    assert(open_session(&session1) == Z_OK);
+    assert(open_session(&session2) == Z_OK);
+    assert(z_view_keyexpr_from_str(&ke, "test/undeclare/liveliness_get_callback_drop") == Z_OK);
+
+    callback_arg_t arg;
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Liveliness Get callback drop on undeclare\n");
+    z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
+    z_owned_liveliness_token_t token;
+    assert(z_liveliness_declare_token(z_session_loan(&session2), &token, z_view_keyexpr_loan(&ke), NULL) == Z_OK);
+    z_sleep_s(1);
+    assert(z_liveliness_get(z_session_loan(&session1), z_view_keyexpr_loan(&ke), z_closure_reply_move(&closure),
+                            NULL) == Z_OK);
+    z_sleep_s(1);
+    z_close(z_session_loan_mut(&session1), NULL);
+
+    assert(arg.called == true);
+    assert(arg.dropped == true);
+
+    z_liveliness_token_drop(z_liveliness_token_move(&token));
+    z_session_drop(z_session_move(&session1));
+    z_session_drop(z_session_move(&session2));
+}
+#endif
+
 #endif
 
 int main(void) {
@@ -612,18 +811,29 @@ int main(void) {
     test_matching_callback_drop_on_undeclare(false);
     test_matching_callback_drop_on_undeclare(true);
 #endif
+#if Z_FEATURE_LIVELINESS == 1
+    test_liveliness_subscriber_callback_drop_on_undeclare(false);
+    test_liveliness_subscriber_callback_drop_on_undeclare(true);
+#endif
 #endif
 #if Z_FEATURE_QUERYABLE == 1 && Z_FEATURE_QUERY == 1
     test_queryable_callback_drop_on_undeclare(false);
     test_queryable_callback_drop_on_undeclare(true);
     test_querier_callback_drop_on_undeclare(false);
     test_querier_callback_drop_on_undeclare(true);
+#if Z_FEATURE_LIVELINESS == 1
+    test_liveliness_get_callback_drop_on_undeclare();
+#endif
 #endif
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1 && Z_FEATURE_ADVANCED_PUBLICATION == 1
     test_advanced_subscriber_callback_drop_on_undeclare(false);
     test_advanced_subscriber_callback_drop_on_undeclare(true);
     test_advanced_subscriber_late_join_callback_drop_on_undeclare(false);
     test_advanced_subscriber_late_join_callback_drop_on_undeclare(true);
+#if Z_ADVANCED_PUBSUB_TEST_USE_TCP_PROXY == 1
+    test_advanced_sample_miss_callback_drop_on_undeclare(false);
+    test_advanced_sample_miss_callback_drop_on_undeclare(true);
+#endif
 #endif
     return 0;
 }

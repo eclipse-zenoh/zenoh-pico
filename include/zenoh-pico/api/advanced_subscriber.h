@@ -99,8 +99,8 @@ static inline void _ze_closure_miss_move(_ze_closure_miss_t *dst, _ze_closure_mi
     *src = _ze_closure_miss_null();
 }
 
-_Z_ELEM_DEFINE(_ze_closure_miss, _ze_closure_miss_t, _z_noop_size, _z_noop_clear, _ze_closure_miss_copy, _z_noop_move,
-               _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_ELEM_DEFINE(_ze_closure_miss, _ze_closure_miss_t, _z_noop_size, _ze_closure_miss_drop, _ze_closure_miss_copy,
+               _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_ze_closure_miss, _ze_closure_miss_t)
 
 typedef struct {
