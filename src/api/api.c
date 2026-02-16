@@ -109,14 +109,14 @@ z_result_t z_keyexpr_canonize_null_terminated(char *start) {
 void z_view_keyexpr_from_str_unchecked(z_view_keyexpr_t *keyexpr, const char *name) {
     // SAFETY: Documentation specifies that string should be null-terminated.
     // Flawfinder: ignore [CWE-126]
-    keyexpr->_val = _z_keyexpr_alias_from_substr(name, strlen(name));
+    keyexpr->_val = _z_declared_keyexpr_alias_from_substr(name, strlen(name));
 }
 
 z_result_t z_view_keyexpr_from_substr(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
     if (_z_keyexpr_is_canon(name, len) != Z_KEYEXPR_CANON_SUCCESS) {
         return Z_EINVAL;
     }
-    keyexpr->_val = _z_keyexpr_alias_from_substr(name, len);
+    keyexpr->_val = _z_declared_keyexpr_alias_from_substr(name, len);
     return _Z_RES_OK;
 }
 
@@ -127,7 +127,7 @@ z_result_t z_view_keyexpr_from_str(z_view_keyexpr_t *keyexpr, const char *name) 
 
 z_result_t z_view_keyexpr_from_substr_autocanonize(z_view_keyexpr_t *keyexpr, char *name, size_t *len) {
     _Z_RETURN_IF_ERR(z_keyexpr_canonize(name, len));
-    keyexpr->_val = _z_keyexpr_alias_from_substr(name, *len);
+    keyexpr->_val = _z_declared_keyexpr_alias_from_substr(name, *len);
     return _Z_RES_OK;
 }
 
@@ -137,32 +137,32 @@ z_result_t z_view_keyexpr_from_str_autocanonize(z_view_keyexpr_t *keyexpr, char 
 }
 
 void z_view_keyexpr_from_substr_unchecked(z_view_keyexpr_t *keyexpr, const char *name, size_t len) {
-    keyexpr->_val = _z_keyexpr_alias_from_substr(name, len);
+    keyexpr->_val = _z_declared_keyexpr_alias_from_substr(name, len);
 }
 
 z_result_t z_keyexpr_as_view_string(const z_loaned_keyexpr_t *keyexpr, z_view_string_t *s) {
-    s->_val = _z_string_alias(keyexpr->_keyexpr);
+    s->_val = _z_string_alias(keyexpr->_inner._keyexpr);
     return _Z_RES_OK;
 }
 
 z_result_t z_keyexpr_concat(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const char *right, size_t len) {
-    return _z_keyexpr_concat(&key->_val, left, right, len);
+    return _z_declared_keyexpr_concat(&key->_val, left, right, len);
 }
 
 z_result_t z_keyexpr_join(z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *left, const z_loaned_keyexpr_t *right) {
-    return _z_keyexpr_join(&key->_val, left, right);
+    return _z_declared_keyexpr_join(&key->_val, left, right);
 }
 
 z_result_t _z_keyexpr_append_suffix(z_owned_keyexpr_t *prefix, const z_loaned_keyexpr_t *right) {
     z_owned_keyexpr_t tmp;
-    if (_z_string_len(&prefix->_val._keyexpr) == 0) {
-        if (_z_string_len(&right->_keyexpr) == 0) {
+    if (_z_string_len(&prefix->_val._inner._keyexpr) == 0) {
+        if (_z_string_len(&right->_inner._keyexpr) == 0) {
             _Z_ERROR_RETURN(_Z_ERR_INVALID);
         }
         return z_keyexpr_clone(prefix, right);
     }
     _Z_RETURN_IF_ERR(z_keyexpr_join(&tmp, z_keyexpr_loan(prefix), right));
-    _z_keyexpr_clear(&prefix->_val);
+    _z_declared_keyexpr_clear(&prefix->_val);
     z_keyexpr_take(prefix, z_keyexpr_move(&tmp));
     return _Z_RES_OK;
 }
@@ -192,13 +192,17 @@ z_keyexpr_intersection_level_t z_keyexpr_relation_to(const z_loaned_keyexpr_t *l
     return Z_KEYEXPR_INTERSECTION_LEVEL_DISJOINT;
 }
 
-bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) { return _z_keyexpr_includes(l, r); }
-
-bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
-    return _z_keyexpr_intersects(l, r);
+bool z_keyexpr_includes(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+    return _z_declared_keyexpr_includes(l, r);
 }
 
-bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) { return _z_keyexpr_equals(l, r); }
+bool z_keyexpr_intersects(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+    return _z_declared_keyexpr_intersects(l, r);
+}
+
+bool z_keyexpr_equals(const z_loaned_keyexpr_t *l, const z_loaned_keyexpr_t *r) {
+    return _z_declared_keyexpr_equals(l, r);
+}
 
 z_result_t z_config_default(z_owned_config_t *config) { return _z_config_default(&config->_val); }
 
@@ -531,9 +535,9 @@ _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_string_t, string, _z_string_check, _z_string_nu
 _Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_value_t, reply_err, _z_value_check, _z_value_null, _z_value_copy, _z_value_move,
                               _z_value_clear)
 
-_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null, _z_keyexpr_copy,
-                              _z_keyexpr_move, _z_keyexpr_clear)
-_Z_VIEW_FUNCTIONS_IMPL(_z_keyexpr_t, keyexpr, _z_keyexpr_check, _z_keyexpr_null)
+_Z_OWNED_FUNCTIONS_VALUE_IMPL(_z_declared_keyexpr_t, keyexpr, _z_declared_keyexpr_check, _z_declared_keyexpr_null,
+                              _z_declared_keyexpr_copy, _z_declared_keyexpr_move, _z_declared_keyexpr_clear)
+_Z_VIEW_FUNCTIONS_IMPL(_z_declared_keyexpr_t, keyexpr, _z_declared_keyexpr_check, _z_declared_keyexpr_null)
 _Z_VIEW_FUNCTIONS_IMPL(_z_string_t, string, _z_string_check, _z_string_null)
 _Z_VIEW_FUNCTIONS_IMPL(_z_slice_t, slice, _z_slice_check, _z_slice_null)
 
@@ -1084,8 +1088,8 @@ z_result_t z_declare_publisher(const z_loaned_session_t *zs, z_owned_publisher_t
     z_result_t res =
         _z_declare_publisher(&pub->_val, zs, keyexpr, opt.encoding == NULL ? NULL : &opt.encoding->_this._val,
                              opt.congestion_control, opt.priority, opt.is_express, reliability, allowed_destination);
-    _Z_SET_IF_OK(res, _z_write_filter_create(zs, &pub->_val._filter, keyexpr, _Z_INTEREST_FLAG_SUBSCRIBERS, false,
-                                             allowed_destination));
+    _Z_SET_IF_OK(res, _z_write_filter_create(zs, &pub->_val._filter, &pub->_val._key, _Z_INTEREST_FLAG_SUBSCRIBERS,
+                                             false, allowed_destination));
     if (res != _Z_RES_OK) {
         _z_publisher_drop(&pub->_val);
     }
@@ -1495,7 +1499,7 @@ z_result_t z_declare_querier(const z_loaned_session_t *zs, z_owned_querier_t *qu
                            opt.priority, opt.is_express, opt.timeout_ms,
                            opt.encoding == NULL ? NULL : &opt.encoding->_this._val, reliability, allowed_destination);
     _Z_SET_IF_OK(res,
-                 _z_write_filter_create(zs, &querier->_val._filter, keyexpr, _Z_INTEREST_FLAG_QUERYABLES,
+                 _z_write_filter_create(zs, &querier->_val._filter, &querier->_val._key, _Z_INTEREST_FLAG_QUERYABLES,
                                         querier->_val._target == Z_QUERY_TARGET_ALL_COMPLETE, allowed_destination));
     return res;
 }
@@ -1916,9 +1920,9 @@ z_result_t z_keyexpr_from_substr_autocanonize(z_owned_keyexpr_t *key, const char
     _Z_RETURN_IF_ERR(z_keyexpr_from_substr(key, name, *len));
 
     _Z_CLEAN_RETURN_IF_ERR(
-        z_keyexpr_canonize((char *)_z_string_data(&key->_val._keyexpr), &key->_val._keyexpr._slice.len),
-        _z_keyexpr_clear(&key->_val));
-    *len = _z_string_len(&key->_val._keyexpr);
+        z_keyexpr_canonize((char *)_z_string_data(&key->_val._inner._keyexpr), &key->_val._inner._keyexpr._slice.len),
+        _z_declared_keyexpr_clear(&key->_val));
+    *len = _z_string_len(&key->_val._inner._keyexpr);
     return _Z_RES_OK;
 }
 
@@ -1928,7 +1932,7 @@ z_result_t z_keyexpr_from_str(z_owned_keyexpr_t *key, const char *name) {
 
 z_result_t z_keyexpr_from_substr(z_owned_keyexpr_t *key, const char *name, size_t len) {
     z_internal_keyexpr_null(key);
-    return _z_keyexpr_from_substr(&key->_val, name, len);
+    return _z_declared_keyexpr_from_substr(&key->_val, name, len);
 }
 
 z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *key, const z_loaned_keyexpr_t *keyexpr) {
@@ -1939,7 +1943,7 @@ z_result_t z_declare_keyexpr(const z_loaned_session_t *zs, z_owned_keyexpr_t *ke
             "during communications\n");
     }
 #endif
-    return _z_keyexpr_declare(zs, &key->_val, keyexpr);
+    return _z_declared_keyexpr_declare(zs, &key->_val, keyexpr);
 }
 
 z_result_t z_undeclare_keyexpr(const z_loaned_session_t *zs, z_moved_keyexpr_t *keyexpr) {

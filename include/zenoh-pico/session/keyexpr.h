@@ -54,29 +54,27 @@ static inline bool _z_keyexpr_wire_declaration_is_declared_on_session(const _z_k
 _Z_REFCOUNT_DEFINE(_z_keyexpr_wire_declaration, _z_keyexpr_wire_declaration)
 
 typedef struct {
-    _z_keyexpr_wire_declaration_rc_t _declaration;
     _z_string_t _keyexpr;
 } _z_keyexpr_t;
+
+static inline _z_keyexpr_t _z_keyexpr_null(void) {
+    _z_keyexpr_t ke = {0};
+    return ke;
+}
+
+bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
+bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
 
 zp_keyexpr_canon_status_t _z_keyexpr_is_canon(const char *start, size_t len);
 zp_keyexpr_canon_status_t _z_keyexpr_canonize(char *start, size_t *len);
 z_result_t _z_keyexpr_concat(_z_keyexpr_t *key, const _z_keyexpr_t *left, const char *right, size_t len);
 z_result_t _z_keyexpr_join(_z_keyexpr_t *key, const _z_keyexpr_t *left, const _z_keyexpr_t *right);
-
-bool _z_keyexpr_includes(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
-bool _z_keyexpr_intersects(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
-
-/*------------------ clone/Copy/Free helpers ------------------*/
-// Warning: None of the sub-types require a non-0 initialization. Add a init function if it changes.
-static inline _z_keyexpr_t _z_keyexpr_null(void) { return (_z_keyexpr_t){0}; }
 static inline _z_keyexpr_t _z_keyexpr_alias(const _z_keyexpr_t *src) {
-    _z_keyexpr_t ret = _z_keyexpr_null();
-    if (!_Z_RC_IS_NULL(&src->_declaration)) {
-        ret._declaration = _z_keyexpr_wire_declaration_rc_clone(&src->_declaration);
-    }
+    _z_keyexpr_t ret;
     ret._keyexpr = _z_string_alias(src->_keyexpr);
     return ret;
 }
+
 _z_keyexpr_t _z_keyexpr_alias_from_string(const _z_string_t *str);
 _z_keyexpr_t _z_keyexpr_alias_from_substr(const char *str, size_t len);
 static inline _z_keyexpr_t _z_keyexpr_alias_from_str(const char *str) {
@@ -84,50 +82,131 @@ static inline _z_keyexpr_t _z_keyexpr_alias_from_str(const char *str) {
     // Flawfinder: ignore [CWE-126]
     return _z_keyexpr_alias_from_substr(str, strlen(str));
 }
+
 z_result_t _z_keyexpr_from_string(_z_keyexpr_t *dst, const _z_string_t *str);
 z_result_t _z_keyexpr_from_substr(_z_keyexpr_t *dst, const char *str, size_t len);
 
-int _z_keyexpr_compare(const _z_keyexpr_t *first, const _z_keyexpr_t *second);
-size_t _z_keyexpr_size(_z_keyexpr_t *p);
-z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src);
-_z_keyexpr_t _z_keyexpr_duplicate(const _z_keyexpr_t *src);
-_z_keyexpr_t *_z_keyexpr_clone(const _z_keyexpr_t *src);
-z_result_t _z_keyexpr_remove_wilds(_z_keyexpr_t *base_key, char **wild_loc, size_t *wild_suffix_size);
+static inline void _z_keyexpr_clear(_z_keyexpr_t *key) { _z_string_clear(&key->_keyexpr); }
+
+static inline bool _z_keyexpr_check(const _z_keyexpr_t *key) { return _z_string_check(&key->_keyexpr); }
+static inline z_result_t _z_keyexpr_copy(_z_keyexpr_t *dst, const _z_keyexpr_t *src) {
+    *dst = _z_keyexpr_null();
+    return _z_string_copy(&dst->_keyexpr, &src->_keyexpr);
+}
+
+static inline z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src) {
+    *dst = _z_keyexpr_null();
+    _Z_CLEAN_RETURN_IF_ERR(_z_string_move(&dst->_keyexpr, &src->_keyexpr), _z_keyexpr_clear(src));
+    return _Z_RES_OK;
+}
+
 static inline _z_keyexpr_t _z_keyexpr_steal(_Z_MOVE(_z_keyexpr_t) src) {
     _z_keyexpr_t stolen = *src;
     *src = _z_keyexpr_null();
     return stolen;
 }
 
-static inline void _z_keyexpr_clear(_z_keyexpr_t *key) {
-    _z_keyexpr_wire_declaration_rc_drop(&key->_declaration);
-    _z_string_clear(&key->_keyexpr);
-}
-
-static inline bool _z_keyexpr_check(const _z_keyexpr_t *key) { return _z_string_check(&key->_keyexpr); }
-
-static inline bool _z_keyexpr_is_fully_optimized(const _z_keyexpr_t *key, const _z_session_t *session) {
-    return !_Z_RC_IS_NULL(&key->_declaration) &&
-           _z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(&key->_declaration), session) &&
-           _Z_RC_IN_VAL(&key->_declaration)->_prefix_len == _z_string_len(&key->_keyexpr);
-}
-
 size_t _z_keyexpr_non_wild_prefix_len(const _z_keyexpr_t *key);
 
-static inline bool _z_keyexpr_is_non_wild_prefix_optimized(const _z_keyexpr_t *key, const _z_session_t *session) {
-    return !_Z_RC_IS_NULL(&key->_declaration) &&
-           _z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(&key->_declaration), session) &&
-           _Z_RC_IN_VAL(&key->_declaration)->_prefix_len == _z_keyexpr_non_wild_prefix_len(key);
+static inline int _z_keyexpr_compare(const _z_keyexpr_t *first, const _z_keyexpr_t *second) {
+    return _z_string_compare(&first->_keyexpr, &second->_keyexpr);
+}
+static inline bool _z_keyexpr_equals(const _z_keyexpr_t *first, const _z_keyexpr_t *second) {
+    return _z_keyexpr_compare(first, second) == 0;
+}
+static inline size_t _z_keyexpr_size(_z_keyexpr_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_keyexpr_t);
 }
 
-bool _z_keyexpr_equals(const _z_keyexpr_t *left, const _z_keyexpr_t *right);
-z_result_t _z_keyexpr_move(_z_keyexpr_t *dst, _z_keyexpr_t *src);
-void _z_keyexpr_free(_z_keyexpr_t **rk);
+_z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key);
 
-_z_wireexpr_t _z_keyexpr_alias_to_wire(const _z_keyexpr_t *key, const _z_session_t *session);
-z_result_t _z_keyexpr_declare(const _z_session_rc_t *zs, _z_keyexpr_t *out, const _z_keyexpr_t *keyexpr);
-z_result_t _z_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs, _z_keyexpr_t *out,
-                                              const _z_keyexpr_t *keyexpr);
+typedef struct {
+    _z_keyexpr_wire_declaration_rc_t _declaration;
+    _z_keyexpr_t _inner;
+} _z_declared_keyexpr_t;
+
+static inline bool _z_declared_keyexpr_includes(const _z_declared_keyexpr_t *left, const _z_declared_keyexpr_t *right) {
+    return _z_keyexpr_includes(&left->_inner, &right->_inner);
+}
+static inline bool _z_declared_keyexpr_intersects(const _z_declared_keyexpr_t *left,
+                                                  const _z_declared_keyexpr_t *right) {
+    return _z_keyexpr_intersects(&left->_inner, &right->_inner);
+}
+
+z_result_t _z_declared_keyexpr_concat(_z_declared_keyexpr_t *key, const _z_declared_keyexpr_t *left, const char *right,
+                                      size_t len);
+z_result_t _z_declared_keyexpr_join(_z_declared_keyexpr_t *key, const _z_declared_keyexpr_t *left,
+                                    const _z_declared_keyexpr_t *right);
+
+static inline _z_declared_keyexpr_t _z_declared_keyexpr_null(void) {
+    _z_declared_keyexpr_t ke = {0};
+    return ke;
+}
+
+_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_string(const _z_string_t *str);
+_z_declared_keyexpr_t _z_declared_keyexpr_alias_from_substr(const char *str, size_t len);
+static inline _z_declared_keyexpr_t _z_declared_keyexpr_alias_from_str(const char *str) {
+    // SAFETY: By convention in pico code-base passing const char* without len implies that it is null-terminated.
+    // Flawfinder: ignore [CWE-126]
+    return _z_declared_keyexpr_alias_from_substr(str, strlen(str));
+}
+static inline z_result_t _z_declared_keyexpr_from_string(_z_declared_keyexpr_t *dst, const _z_string_t *str) {
+    *dst = _z_declared_keyexpr_null();
+    return _z_keyexpr_from_string(&dst->_inner, str);
+}
+
+static inline z_result_t _z_declared_keyexpr_from_substr(_z_declared_keyexpr_t *dst, const char *str, size_t len) {
+    *dst = _z_declared_keyexpr_null();
+    return _z_keyexpr_from_substr(&dst->_inner, str, len);
+}
+
+z_result_t _z_declared_keyexpr_copy(_z_declared_keyexpr_t *dst, const _z_declared_keyexpr_t *src);
+
+static inline _z_declared_keyexpr_t _z_declared_keyexpr_steal(_Z_MOVE(_z_declared_keyexpr_t) src) {
+    _z_declared_keyexpr_t stolen = *src;
+    *src = _z_declared_keyexpr_null();
+    return stolen;
+}
+
+static inline void _z_declared_keyexpr_clear(_z_declared_keyexpr_t *key) {
+    _z_keyexpr_wire_declaration_rc_drop(&key->_declaration);
+    _z_keyexpr_clear(&key->_inner);
+}
+
+static inline bool _z_declared_keyexpr_check(const _z_declared_keyexpr_t *key) {
+    return _z_keyexpr_check(&key->_inner);
+}
+
+static inline bool _z_declared_keyexpr_is_fully_optimized(const _z_declared_keyexpr_t *key,
+                                                          const _z_session_t *session) {
+    return !_Z_RC_IS_NULL(&key->_declaration) &&
+           _z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(&key->_declaration), session) &&
+           _Z_RC_IN_VAL(&key->_declaration)->_prefix_len == _z_string_len(&key->_inner._keyexpr);
+}
+
+static inline bool _z_declared_keyexpr_is_non_wild_prefix_optimized(const _z_declared_keyexpr_t *key,
+                                                                    const _z_session_t *session) {
+    return !_Z_RC_IS_NULL(&key->_declaration) &&
+           _z_keyexpr_wire_declaration_is_declared_on_session(_Z_RC_IN_VAL(&key->_declaration), session) &&
+           _Z_RC_IN_VAL(&key->_declaration)->_prefix_len == _z_keyexpr_non_wild_prefix_len(&key->_inner);
+}
+
+static inline bool _z_declared_keyexpr_equals(const _z_declared_keyexpr_t *left, const _z_declared_keyexpr_t *right) {
+    return _z_keyexpr_equals(&left->_inner, &right->_inner);
+}
+z_result_t _z_declared_keyexpr_move(_z_declared_keyexpr_t *dst, _z_declared_keyexpr_t *src);
+
+_z_wireexpr_t _z_declared_keyexpr_alias_to_wire(const _z_declared_keyexpr_t *key, const _z_session_t *session);
+z_result_t _z_declared_keyexpr_declare(const _z_session_rc_t *zs, _z_declared_keyexpr_t *out,
+                                       const _z_declared_keyexpr_t *keyexpr);
+z_result_t _z_declared_keyexpr_declare_non_wild_prefix(const _z_session_rc_t *zs, _z_declared_keyexpr_t *out,
+                                                       const _z_declared_keyexpr_t *keyexpr);
+
+static inline size_t _z_declared_keyexpr_size(_z_declared_keyexpr_t *p) {
+    _ZP_UNUSED(p);
+    return sizeof(_z_declared_keyexpr_t);
+}
 
 #ifdef __cplusplus
 }

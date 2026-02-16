@@ -68,7 +68,7 @@ void _z_subscription_clear(_z_subscription_t *sub) {
         sub->_dropper(sub->_arg);
         sub->_dropper = NULL;
     }
-    _z_keyexpr_clear(&sub->_key);
+    _z_declared_keyexpr_clear(&sub->_key);
 }
 
 _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_slist_t *subs, const _z_zint_t id) {
@@ -119,7 +119,7 @@ static z_result_t __unsafe_z_get_subscriptions_by_key(_z_session_t *zn, _z_subsc
         const _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
         bool origin_allowed = is_remote ? _z_locality_allows_remote(sub_val->_allowed_origin)
                                         : _z_locality_allows_local(sub_val->_allowed_origin);
-        if (origin_allowed && _z_keyexpr_intersects(&sub_val->_key, key)) {
+        if (origin_allowed && _z_keyexpr_intersects(&sub_val->_key._inner, key)) {
             _z_subscription_rc_t sub_clone = _z_subscription_rc_clone(sub);
             _Z_CLEAN_RETURN_IF_ERR(_z_subscription_rc_svec_append(sub_infos, &sub_clone, false),
                                    _z_subscription_rc_svec_clear(sub_infos));
@@ -160,8 +160,8 @@ _z_subscription_rc_t _z_get_subscription_by_id(_z_session_t *zn, _z_subscriber_k
 }
 
 _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_subscription_t *s) {
-    _Z_DEBUG(">>> Allocating sub decl for (%.*s)", (int)_z_string_len(&s->_key._keyexpr),
-             _z_string_data(&s->_key._keyexpr));
+    _Z_DEBUG(">>> Allocating sub decl for (%.*s)", (int)_z_string_len(&s->_key._inner._keyexpr),
+             _z_string_data(&s->_key._inner._keyexpr));
 
     _z_subscription_rc_t *ret = NULL;
     _z_subscription_rc_t out = _z_subscription_rc_new_from_val(s);
@@ -188,7 +188,7 @@ _z_subscription_rc_t _z_register_subscription(_z_session_t *zn, _z_subscriber_ki
     if (!_Z_RC_IS_NULL(&out) && kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         _z_subscription_t *sub_val = _Z_RC_IN_VAL(&out);
         if (_z_locality_allows_local(sub_val->_allowed_origin)) {
-            _z_write_filter_notify_subscriber(zn, &sub_val->_key, sub_val->_allowed_origin, true);
+            _z_write_filter_notify_subscriber(zn, &sub_val->_key._inner, sub_val->_allowed_origin, true);
         }
     }
 #endif
@@ -214,7 +214,7 @@ z_result_t _z_trigger_liveliness_subscriptions_undeclare(_z_session_t *zn, const
     _z_encoding_t encoding = _z_encoding_null();
     _z_bytes_t payload = _z_bytes_null();
     _z_bytes_t attachment = _z_bytes_null();
-    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr, zn);
+    _z_wireexpr_t wireexpr = _z_keyexpr_alias_to_wire(keyexpr);
     _z_source_info_t source_info = _z_source_info_null();
     return _z_trigger_subscriptions_impl(zn, _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER, &wireexpr, &payload, &encoding,
                                          Z_SAMPLE_KIND_DELETE, timestamp, _Z_N_QOS_DEFAULT, &attachment,
@@ -305,7 +305,7 @@ void _z_unregister_subscription(_z_session_t *zn, _z_subscriber_kind_t kind, _z_
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     if (kind == _Z_SUBSCRIBER_KIND_SUBSCRIBER) {
         _z_subscription_t *sub_val = _Z_RC_IN_VAL(sub);
-        _z_write_filter_notify_subscriber(zn, &sub_val->_key, sub_val->_allowed_origin, false);
+        _z_write_filter_notify_subscriber(zn, &sub_val->_key._inner, sub_val->_allowed_origin, false);
     }
 #endif
     _z_session_mutex_lock(zn);

@@ -41,9 +41,10 @@ z_result_t _z_session_deliver_query_locally(_z_session_t *zn, const _z_keyexpr_t
                                             _z_n_qos_t qos);
 
 z_result_t _z_session_deliver_reply_locally(const _z_query_t *query, const _z_session_rc_t *zn,
-                                            const _z_keyexpr_t *keyexpr, _z_bytes_t *payload, _z_encoding_t *encoding,
-                                            z_sample_kind_t kind, _z_n_qos_t qos, const _z_timestamp_t *timestamp,
-                                            _z_bytes_t *attachment, const _z_source_info_t *source_info);
+                                            const _z_declared_keyexpr_t *keyexpr, _z_bytes_t *payload,
+                                            _z_encoding_t *encoding, z_sample_kind_t kind, _z_n_qos_t qos,
+                                            const _z_timestamp_t *timestamp, _z_bytes_t *attachment,
+                                            const _z_source_info_t *source_info);
 
 z_result_t _z_session_deliver_reply_err_locally(const _z_query_t *query, const _z_session_rc_t *zn, _z_bytes_t *payload,
                                                 _z_encoding_t *encoding, _z_n_qos_t qos);

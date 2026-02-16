@@ -48,9 +48,6 @@ _Z_ELEM_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t, _z_no
                _z_liveliness_pending_query_clear, _z_noop_copy, _z_noop_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
 _Z_INT_MAP_DEFINE(_z_liveliness_pending_query, _z_liveliness_pending_query_t)
 
-z_result_t _z_liveliness_register_token(_z_session_t *zn, uint32_t id, const _z_keyexpr_t *keyexpr);
-void _z_liveliness_unregister_token(_z_session_t *zn, uint32_t id);
-
 #if Z_FEATURE_SUBSCRIPTION == 1
 z_result_t _z_liveliness_process_remote_token_declare(_z_session_t *zn, uint32_t id, const _z_wireexpr_t *keyexpr,
                                                       const _z_timestamp_t *timestamp,

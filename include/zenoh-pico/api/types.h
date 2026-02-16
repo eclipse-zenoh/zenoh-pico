@@ -95,8 +95,8 @@ _Z_VIEW_TYPE(_z_string_t, string)
 /**
  * Represents a key expression in Zenoh.
  */
-_Z_OWNED_TYPE_VALUE(_z_keyexpr_t, keyexpr)
-_Z_VIEW_TYPE(_z_keyexpr_t, keyexpr)
+_Z_OWNED_TYPE_VALUE(_z_declared_keyexpr_t, keyexpr)
+_Z_VIEW_TYPE(_z_declared_keyexpr_t, keyexpr)
 
 /**
  * Represents a Zenoh configuration, used to configure Zenoh sessions upon opening.
