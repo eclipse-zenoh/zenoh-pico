@@ -179,8 +179,8 @@ void on_drop(void *context) {
     _context_notify(c, DROP);
 }
 
-void test_matching_listener_publisher(bool background) {
-    printf("test_matching_listener_publisher: background=%d\n", background);
+void test_matching_listener_publisher(bool background, bool history) {
+    printf("test_matching_listener_publisher: background=%d, history=%d\n", background, history);
     context_t context = {0};
     _context_init(&context);
 
@@ -212,22 +212,36 @@ void test_matching_listener_publisher(bool background) {
     z_closure_matching_status(&closure, on_receive, on_drop, (void *)(&context));
 
     z_owned_matching_listener_t matching_listener;
-    if (background) {
-        assert_ok(z_publisher_declare_background_matching_listener(z_publisher_loan(&pub),
-                                                                   z_closure_matching_status_move(&closure)));
-    } else {
-        assert_ok(z_publisher_declare_matching_listener(z_publisher_loan(&pub), &matching_listener,
-                                                        z_closure_matching_status_move(&closure)));
-    }
     z_owned_subscriber_t sub, sub2;
     z_owned_closure_sample_t callback, callback2;
     z_closure_sample(&callback, NULL, NULL, NULL);
-    assert_ok(z_declare_subscriber(z_session_loan(&s2), &sub, z_view_keyexpr_loan(&k_pub),
-                                   z_closure_sample_move(&callback), NULL));
+    z_closure_sample(&callback2, NULL, NULL, NULL);
+
+    if (history) {
+        assert_ok(z_declare_subscriber(z_session_loan(&s2), &sub, z_view_keyexpr_loan(&k_pub),
+                                       z_closure_sample_move(&callback), NULL));
+        z_sleep_s(3);
+        if (background) {
+            assert_ok(z_publisher_declare_background_matching_listener(z_publisher_loan(&pub),
+                                                                       z_closure_matching_status_move(&closure)));
+        } else {
+            assert_ok(z_publisher_declare_matching_listener(z_publisher_loan(&pub), &matching_listener,
+                                                            z_closure_matching_status_move(&closure)));
+        }
+    } else {
+        if (background) {
+            assert_ok(z_publisher_declare_background_matching_listener(z_publisher_loan(&pub),
+                                                                       z_closure_matching_status_move(&closure)));
+        } else {
+            assert_ok(z_publisher_declare_matching_listener(z_publisher_loan(&pub), &matching_listener,
+                                                            z_closure_matching_status_move(&closure)));
+        }
+        assert_ok(z_declare_subscriber(z_session_loan(&s2), &sub, z_view_keyexpr_loan(&k_pub),
+                                       z_closure_sample_move(&callback), NULL));
+    }
 
     assert(_context_wait(&context, MATCH, DEFAULT_TIMEOUT_S));
 
-    z_closure_sample(&callback2, NULL, NULL, NULL);
     assert_ok(z_declare_subscriber(z_session_loan(&s2), &sub2, z_view_keyexpr_loan(&k_sub),
                                    z_closure_sample_move(&callback2), NULL));
     z_sleep_s(1);
@@ -747,8 +761,10 @@ static void test_matching_status_querier_locality(z_locality_t locality, bool cr
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
-    test_matching_listener_publisher(true);
-    test_matching_listener_publisher(false);
+    test_matching_listener_publisher(true, false);
+    test_matching_listener_publisher(false, false);
+    test_matching_listener_publisher(true, true);
+    test_matching_listener_publisher(false, true);
     test_matching_status_publisher();
 
     test_matching_listener_querier(false, false);

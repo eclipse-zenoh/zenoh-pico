@@ -630,6 +630,7 @@ z_result_t _z_network_message_encode(_z_wbuf_t *wbf, const _z_network_message_t 
 z_result_t _z_network_message_decode(_z_network_message_t *msg, _z_zbuf_t *zbf, _z_arc_slice_t *arcs,
                                      uintptr_t mapping) {
     uint8_t *header;
+    *msg = (_z_network_message_t){0};
     _Z_RETURN_IF_ERR(_z_uint8_decode_as_ref(&header, zbf));
     switch (_Z_MID(*header)) {
         case _Z_MID_N_DECLARE: {
