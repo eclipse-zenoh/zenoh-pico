@@ -265,7 +265,7 @@ void test_advanced_subscriber_callback_drop_on_undeclare(bool background) {
     } else {
         z_close(z_session_loan_mut(&session2), NULL);
     }
-    ze_undeclare_advanced_subscriber(ze_advanced_subscriber_move(&subscriber));
+
     assert(arg.called == true);
     assert(arg.dropped == true);
     z_task_join(z_task_move(&task));

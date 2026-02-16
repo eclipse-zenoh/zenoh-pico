@@ -1361,6 +1361,8 @@ z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *pub
         if (matching_listener != NULL) {
             matching_listener->_val = _z_matching_listener_null();
         }
+        _z_closure_matching_status_clear(&callback->_this._val);
+        z_internal_closure_matching_status_null(&callback->_this);
         ret = _Z_ERR_GENERIC;
     }
     return ret;
@@ -1643,6 +1645,8 @@ z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier
         if (matching_listener != NULL) {
             matching_listener->_val = _z_matching_listener_null();
         }
+        _z_closure_matching_status_clear(&callback->_this._val);
+        z_internal_closure_matching_status_null(&callback->_this);
         ret = _Z_ERR_GENERIC;
     }
     return ret;
