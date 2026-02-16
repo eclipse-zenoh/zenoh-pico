@@ -670,6 +670,7 @@ void* reply_from_another_thread(void* targ) {
     assert(z_fifo_handler_query_try_recv(z_fifo_handler_query_loan(arg->receiver), &query) == Z_OK);
 
     z_owned_bytes_t payload;
+    z_bytes_from_static_str(&payload, "payload");
     z_query_reply(z_query_loan(&query), z_view_keyexpr_loan(arg->ke), z_bytes_move(&payload), NULL);
     z_query_drop(z_query_move(&query));
     z_fifo_handler_query_drop(z_fifo_handler_query_move(arg->receiver));
