@@ -272,17 +272,6 @@ z_result_t _ze_advanced_subscriber_undeclare(_ze_advanced_subscriber_t *sub) {
     if (sub == NULL || !_ze_advanced_subscriber_check(sub)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-
-    _Z_RETURN_IF_ERR(_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(_Z_RC_IN_VAL(&sub->_state)));
-    // signal undeclaring state to prevent new queries or miss handlers from being added
-    _Z_RC_IN_VAL(&sub->_state)->_is_undeclaring = true;
-    // clear miss handlers to release user callbacks
-    _ze_closure_miss_intmap_clear(&_Z_RC_IN_VAL(&sub->_state)->_miss_handlers);
-    // clear sequenced state to remove any periodic query tasks
-    _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(
-        &_Z_RC_IN_VAL(&sub->_state)->_sequenced_states);
-    _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&_Z_RC_IN_VAL(&sub->_state)->_timestamped_states);
-    _ze_advanced_subscriber_state_unlock_mutex(_Z_RC_IN_VAL(&sub->_state));
     z_result_t ret = z_undeclare_subscriber(z_subscriber_move(&sub->_subscriber));
     if (sub->_has_liveliness_subscriber) {
         z_result_t ret2 = z_undeclare_subscriber(z_subscriber_move(&sub->_liveliness_subscriber));
@@ -292,18 +281,27 @@ z_result_t _ze_advanced_subscriber_undeclare(_ze_advanced_subscriber_t *sub) {
         z_result_t ret2 = z_undeclare_subscriber(z_subscriber_move(&sub->_heartbeat_subscriber));
         _Z_SET_IF_OK(ret, ret2);
     }
-    if (z_internal_cancellation_token_check(&_Z_RC_IN_VAL(&sub->_state)->_cancellation_token)) {
-        z_result_t ret2 = z_cancellation_token_cancel(
-            z_cancellation_token_loan_mut(&_Z_RC_IN_VAL(&sub->_state)->_cancellation_token));
-        _Z_SET_IF_OK(ret, ret2);
-    }
     _ze_advanced_subscriber_state_rc_drop(&sub->_state);
 
     *sub = _ze_advanced_subscriber_null();
     return ret;
 }
 
-void _ze_advanced_subscriber_clear(_ze_advanced_subscriber_t *sub) { _ze_advanced_subscriber_undeclare(sub); }
+void _ze_advanced_subscriber_clear(_ze_advanced_subscriber_t *sub) {
+    if (sub == NULL || !_ze_advanced_subscriber_check(sub)) {
+        return;
+    }
+    _z_subscriber_clear(&sub->_subscriber._val);
+    if (sub->_has_liveliness_subscriber) {
+        _z_subscriber_clear(&sub->_liveliness_subscriber._val);
+    }
+    if (sub->_has_heartbeat_subscriber) {
+        _z_subscriber_clear(&sub->_heartbeat_subscriber._val);
+    }
+    _ze_advanced_subscriber_state_rc_drop(&sub->_state);
+
+    *sub = _ze_advanced_subscriber_null();
+}
 
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX(ze, _ze_advanced_subscriber_t, advanced_subscriber,
                                                      _ze_advanced_subscriber_check, _ze_advanced_subscriber_null,
@@ -1214,6 +1212,22 @@ void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
         if (state->_dropper != NULL) {
             state->_dropper(state->_ctx);
         }
+        if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(state) != _Z_RES_OK) {
+            _Z_WARN("Failed to lock mutex for subscriber drop handler");
+            return;
+        }
+        // signal undeclaring state to prevent new queries or miss handlers from being added
+        state->_is_undeclaring = true;
+        // clear miss handlers to release user callbacks
+        _ze_closure_miss_intmap_clear(&state->_miss_handlers);
+        // clear sequenced state to remove any periodic query tasks
+        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
+        _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
+        _ze_advanced_subscriber_state_unlock_mutex(state);
+        if (z_internal_cancellation_token_check(&state->_cancellation_token)) {
+            z_cancellation_token_cancel(z_cancellation_token_loan_mut(&state->_cancellation_token));
+        }
+
         _ze_advanced_subscriber_state_rc_drop(rc_state);
         z_free(ctx);
     }

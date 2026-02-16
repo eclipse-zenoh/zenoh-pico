@@ -92,6 +92,7 @@ void _z_write_filter_notify_queryable(struct _z_session_t *session, const _z_key
 #if Z_FEATURE_MATCHING
 z_result_t _z_write_filter_ctx_add_callback(_z_write_filter_ctx_t *filter, size_t id, _z_closure_matching_status_t *v);
 void _z_write_filter_ctx_remove_callback(_z_write_filter_ctx_t *filter, size_t id);
+void _z_write_filter_ctx_remove_callbacks(_z_write_filter_ctx_t *ctx);
 #endif
 
 #if Z_FEATURE_INTEREST == 1
