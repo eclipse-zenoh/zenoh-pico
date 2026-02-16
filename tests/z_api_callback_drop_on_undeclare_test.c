@@ -436,6 +436,10 @@ void test_advanced_sample_miss_callback_drop_on_undeclare(bool background) {
     assert(arg.dropped == true);
     assert(arg.called == true);
 
+    z_fifo_handler_sample_drop(z_fifo_handler_sample_move(&handler));
+    if (!background) {
+        ze_advanced_subscriber_drop(ze_advanced_subscriber_move(&sub));
+    }
     ze_advanced_publisher_drop(ze_advanced_publisher_move(&pub));
     z_session_drop(z_session_move(&session1));
     z_session_drop(z_session_move(&session2));
