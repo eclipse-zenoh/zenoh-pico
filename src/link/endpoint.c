@@ -541,6 +541,12 @@ _z_string_t _z_endpoint_to_string(const _z_endpoint_t *endpoint) {
     // Reconstruct the endpoint as a string
     ret = _z_string_preallocate(curr_len);
     if (!_z_string_check(&ret)) {
+        // cppcheck-suppress misra-c2012-17.3
+        _z_string_clear(&locator);
+        if (config != NULL) {
+            // cppcheck-suppress misra-c2012-17.3
+            z_free(config);
+        }
         return ret;
     }
     // Copy locator
@@ -550,6 +556,8 @@ _z_string_t _z_endpoint_to_string(const _z_endpoint_t *endpoint) {
     // Copy config
     if (config != NULL) {
         memcpy(curr_dst, config, config_len);
+        // cppcheck-suppress misra-c2012-17.3
+        z_free(config);
     }
     // Clean up
     _z_string_clear(&locator);
