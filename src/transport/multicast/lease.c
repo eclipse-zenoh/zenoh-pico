@@ -145,6 +145,9 @@ void *_zp_multicast_lease_task(void *ztm_arg) {
                 // Drop if needed
                 if (drop_peer) {
                     _z_session_t *s = _z_transport_common_get_session(&ztm->_common);
+#if Z_FEATURE_CONNECTIVITY == 1
+                    _z_connectivity_peer_disconnected_from_transport(s, &ztm->_common, &curr_peer->common, true);
+#endif
                     _z_interest_peer_disconnected(s, &curr_peer->common);
                     ztm->_peers = _z_transport_peer_multicast_slist_drop_element(ztm->_peers, prev_drop);
                 }

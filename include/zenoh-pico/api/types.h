@@ -591,6 +591,128 @@ _Z_OWNED_TYPE_VALUE(_z_reply_t, reply)
  */
 _Z_OWNED_TYPE_VALUE(_z_string_svec_t, string_array)
 
+#if Z_FEATURE_CONNECTIVITY == 1
+/**
+ * Represents a transport connected to the current session.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_info_transport_t {
+    z_id_t _zid;
+    z_whatami_t _whatami;
+    bool _is_qos;
+    bool _is_multicast;
+    bool _is_shm;
+} _z_info_transport_t;
+_Z_OWNED_TYPE_VALUE(_z_info_transport_t, transport)
+
+/**
+ * Represents a link connected to the current session.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_info_link_t {
+    z_id_t _zid;
+    _z_string_t _src;
+    _z_string_t _dst;
+    uint16_t _mtu;
+    bool _is_streamed;
+    bool _is_reliable;
+} _z_info_link_t;
+_Z_OWNED_TYPE_VALUE(_z_info_link_t, link)
+
+/**
+ * Represents a transport connectivity event.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_info_transport_event_t {
+    z_sample_kind_t kind;
+    _z_info_transport_t transport;
+} _z_info_transport_event_t;
+_Z_OWNED_TYPE_VALUE(_z_info_transport_event_t, transport_event)
+
+/**
+ * Represents a link connectivity event.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_info_link_event_t {
+    z_sample_kind_t kind;
+    _z_info_link_t link;
+} _z_info_link_event_t;
+_Z_OWNED_TYPE_VALUE(_z_info_link_event_t, link_event)
+
+/**
+ * Represents a transport events listener entity.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_transport_events_listener_t {
+    size_t _id;
+    _z_session_weak_t _session;
+} _z_transport_events_listener_t;
+_Z_OWNED_TYPE_VALUE(_z_transport_events_listener_t, transport_events_listener)
+
+/**
+ * Represents a link events listener entity.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct _z_link_events_listener_t {
+    size_t _id;
+    _z_session_weak_t _session;
+} _z_link_events_listener_t;
+_Z_OWNED_TYPE_VALUE(_z_link_events_listener_t, link_events_listener)
+
+/**
+ * Options passed to the :c:func:`z_declare_transport_events_listener()` function.
+ *
+ * Members:
+ *   bool history: If set, the listener receives current transports as ``PUT`` events before future events.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct z_transport_events_listener_options_t {
+    bool history;
+} z_transport_events_listener_options_t;
+
+/**
+ * Options passed to the :c:func:`z_declare_link_events_listener()` function.
+ *
+ * Members:
+ *   bool history: If set, the listener receives current links as ``PUT`` events before future events.
+ *   z_moved_transport_t *transport: Optional transport filter. If set, only events for this transport are delivered.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct z_link_events_listener_options_t {
+    bool history;
+    z_moved_transport_t *transport;
+} z_link_events_listener_options_t;
+
+/**
+ * Options passed to the :c:func:`z_info_links()` function.
+ *
+ * Members:
+ *   z_moved_transport_t *transport: Optional transport filter. If set, only links for this transport are returned.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+typedef struct z_info_links_options_t {
+    z_moved_transport_t *transport;
+} z_info_links_options_t;
+#endif
+
 typedef _z_drop_handler_t z_closure_drop_callback_t;
 typedef _z_closure_sample_callback_t z_closure_sample_callback_t;
 
@@ -656,6 +778,72 @@ typedef struct {
  * Represents the Zenoh ID callback closure.
  */
 _Z_OWNED_TYPE_VALUE(_z_closure_zid_t, closure_zid)
+
+#if Z_FEATURE_CONNECTIVITY == 1
+typedef void (*z_closure_transport_callback_t)(z_loaned_transport_t *transport, void *arg);
+
+typedef struct {
+    void *context;
+    z_closure_transport_callback_t call;
+    z_closure_drop_callback_t drop;
+} _z_closure_transport_t;
+
+/**
+ * Represents the transport callback closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_transport_t, closure_transport)
+
+typedef void (*z_closure_link_callback_t)(z_loaned_link_t *link, void *arg);
+
+typedef struct {
+    void *context;
+    z_closure_link_callback_t call;
+    z_closure_drop_callback_t drop;
+} _z_closure_link_t;
+
+/**
+ * Represents the link callback closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_link_t, closure_link)
+
+typedef void (*z_closure_transport_event_callback_t)(z_loaned_transport_event_t *event, void *arg);
+
+typedef struct {
+    void *context;
+    z_closure_transport_event_callback_t call;
+    z_closure_drop_callback_t drop;
+} _z_closure_transport_event_t;
+
+/**
+ * Represents the transport event callback closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_transport_event_t, closure_transport_event)
+
+typedef void (*z_closure_link_event_callback_t)(z_loaned_link_event_t *event, void *arg);
+
+typedef struct {
+    void *context;
+    z_closure_link_event_callback_t call;
+    z_closure_drop_callback_t drop;
+} _z_closure_link_event_t;
+
+/**
+ * Represents the link event callback closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+_Z_OWNED_TYPE_VALUE(_z_closure_link_event_t, closure_link_event)
+#endif
 
 typedef _z_closure_matching_status_callback_t z_closure_matching_status_callback_t;
 typedef _z_closure_matching_status_t z_closure_matching_status_t;

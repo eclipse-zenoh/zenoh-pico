@@ -1260,6 +1260,114 @@ z_result_t z_closure_zid(z_owned_closure_zid_t *closure, z_closure_zid_callback_
  */
 void z_closure_zid_call(const z_loaned_closure_zid_t *closure, const z_id_t *id);
 
+#if Z_FEATURE_CONNECTIVITY == 1
+/**
+ * Builds a new transport closure.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_transport_t`.
+ *   call: Pointer to the callback function.
+ *   drop: Pointer to callback-state cleanup function.
+ *   context: Pointer to arbitrary callback state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_closure_transport(z_owned_closure_transport_t *closure, z_closure_transport_callback_t call,
+                               z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a transport closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_closure_transport_call(const z_loaned_closure_transport_t *closure, z_loaned_transport_t *transport);
+
+/**
+ * Builds a new link closure.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_link_t`.
+ *   call: Pointer to the callback function.
+ *   drop: Pointer to callback-state cleanup function.
+ *   context: Pointer to arbitrary callback state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_closure_link(z_owned_closure_link_t *closure, z_closure_link_callback_t call,
+                          z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a link closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_closure_link_call(const z_loaned_closure_link_t *closure, z_loaned_link_t *link);
+
+/**
+ * Builds a new transport event closure.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_transport_event_t`.
+ *   call: Pointer to the callback function.
+ *   drop: Pointer to callback-state cleanup function.
+ *   context: Pointer to arbitrary callback state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_closure_transport_event(z_owned_closure_transport_event_t *closure,
+                                     z_closure_transport_event_callback_t call, z_closure_drop_callback_t drop,
+                                     void *context);
+
+/**
+ * Calls a transport event closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_closure_transport_event_call(const z_loaned_closure_transport_event_t *closure,
+                                    z_loaned_transport_event_t *event);
+
+/**
+ * Builds a new link event closure.
+ *
+ * Parameters:
+ *   closure: Pointer to an uninitialized :c:type:`z_owned_closure_link_event_t`.
+ *   call: Pointer to the callback function.
+ *   drop: Pointer to callback-state cleanup function.
+ *   context: Pointer to arbitrary callback state.
+ *
+ * Return:
+ *   ``0`` in case of success, negative error code otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_closure_link_event(z_owned_closure_link_event_t *closure, z_closure_link_event_callback_t call,
+                                z_closure_drop_callback_t drop, void *context);
+
+/**
+ * Calls a link event closure.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_closure_link_event_call(const z_loaned_closure_link_event_t *closure, z_loaned_link_event_t *event);
+#endif
+
 /**
  * Builds a new matching status closure.
  * It consists of a structure that contains all the elements for stateful, memory-leak-free callbacks.
@@ -1339,6 +1447,15 @@ _Z_OWNED_FUNCTIONS_DEF(encoding)
 
 _Z_OWNED_FUNCTIONS_DEF(cancellation_token)
 
+#if Z_FEATURE_CONNECTIVITY == 1
+_Z_OWNED_FUNCTIONS_DEF(transport)
+_Z_OWNED_FUNCTIONS_DEF(link)
+_Z_OWNED_FUNCTIONS_DEF(transport_event)
+_Z_OWNED_FUNCTIONS_DEF(link_event)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(transport_events_listener)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(link_events_listener)
+#endif
+
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_sample)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_query)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_reply)
@@ -1346,6 +1463,12 @@ _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_hello)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_zid)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_matching_status)
 _Z_OWNED_FUNCTIONS_CLOSURE_DEF_PREFIX(ze, closure_miss)
+#if Z_FEATURE_CONNECTIVITY == 1
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_transport)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_link)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_transport_event)
+_Z_OWNED_FUNCTIONS_CLOSURE_DEF(closure_link_event)
+#endif
 
 _Z_VIEW_FUNCTIONS_DEF(keyexpr)
 _Z_VIEW_FUNCTIONS_DEF(string)
@@ -1640,6 +1763,290 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
  *   The local Zenoh ID of the session as :c:type:`z_id_t`.
  */
 z_id_t z_info_zid(const z_loaned_session_t *zs);
+
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_info_transport_from_peer(_z_info_transport_t *out, const _z_transport_peer_common_t *peer, bool is_multicast);
+bool _z_info_transport_filter_match(const _z_info_transport_t *transport, const _z_info_transport_t *filter);
+
+/**
+ * Fetches all currently connected transports.
+ *
+ * The callback is called once for each transport and is dropped before this function exits.
+ *
+ * Parameters:
+ *   zs: Pointer to :c:type:`z_loaned_session_t`.
+ *   callback: Moved :c:type:`z_owned_closure_transport_t` callback.
+ *
+ * Return:
+ *   ``0`` if operation was successfully triggered, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_transport_t *callback);
+
+/**
+ * Constructs default value for :c:type:`z_info_links_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_info_links_options_default(z_info_links_options_t *options);
+
+/**
+ * Fetches all currently connected links.
+ *
+ * The callback is called once for each link and is dropped before this function exits.
+ *
+ * Parameters:
+ *   zs: Pointer to :c:type:`z_loaned_session_t`.
+ *   callback: Moved :c:type:`z_owned_closure_link_t` callback.
+ *   options: Optional :c:type:`z_info_links_options_t`.
+ *
+ * Return:
+ *   ``0`` if operation was successfully triggered, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *callback,
+                        z_info_links_options_t *options);
+
+/**
+ * Constructs default value for :c:type:`z_transport_events_listener_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_transport_events_listener_options_default(z_transport_events_listener_options_t *options);
+
+/**
+ * Declares a transport events listener.
+ *
+ * Parameters:
+ *   zs: Pointer to :c:type:`z_loaned_session_t`.
+ *   listener: Uninitialized location where listener will be constructed.
+ *   callback: Moved :c:type:`z_owned_closure_transport_event_t`.
+ *   options: Optional :c:type:`z_transport_events_listener_options_t`.
+ *
+ * Return:
+ *   ``0`` on success, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_declare_transport_events_listener(const z_loaned_session_t *zs,
+                                               z_owned_transport_events_listener_t *listener,
+                                               z_moved_closure_transport_event_t *callback,
+                                               const z_transport_events_listener_options_t *options);
+
+/**
+ * Declares a background transport events listener.
+ *
+ * The listener runs in background and cannot be undeclared explicitly.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_declare_background_transport_events_listener(const z_loaned_session_t *zs,
+                                                          z_moved_closure_transport_event_t *callback,
+                                                          const z_transport_events_listener_options_t *options);
+
+/**
+ * Undeclares a transport events listener.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_undeclare_transport_events_listener(z_moved_transport_events_listener_t *listener);
+
+/**
+ * Constructs default value for :c:type:`z_link_events_listener_options_t`.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+void z_link_events_listener_options_default(z_link_events_listener_options_t *options);
+
+/**
+ * Declares a link events listener.
+ *
+ * Parameters:
+ *   zs: Pointer to :c:type:`z_loaned_session_t`.
+ *   listener: Uninitialized location where listener will be constructed.
+ *   callback: Moved :c:type:`z_owned_closure_link_event_t`.
+ *   options: Optional :c:type:`z_link_events_listener_options_t`.
+ *
+ * Return:
+ *   ``0`` on success, ``negative value`` otherwise.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_declare_link_events_listener(const z_loaned_session_t *zs, z_owned_link_events_listener_t *listener,
+                                          z_moved_closure_link_event_t *callback,
+                                          z_link_events_listener_options_t *options);
+
+/**
+ * Declares a background link events listener.
+ *
+ * The listener runs in background and cannot be undeclared explicitly.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_declare_background_link_events_listener(const z_loaned_session_t *zs,
+                                                     z_moved_closure_link_event_t *callback,
+                                                     z_link_events_listener_options_t *options);
+
+/**
+ * Undeclares a link events listener.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_undeclare_link_events_listener(z_moved_link_events_listener_t *listener);
+
+/**
+ * Gets a transport remote Zenoh ID.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_id_t z_transport_zid(const z_loaned_transport_t *transport);
+
+/**
+ * Gets a transport remote entity kind.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_whatami_t z_transport_whatami(const z_loaned_transport_t *transport);
+
+/**
+ * Returns whether QoS is enabled for this transport.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_transport_is_qos(const z_loaned_transport_t *transport);
+
+/**
+ * Returns whether this transport is multicast.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_transport_is_multicast(const z_loaned_transport_t *transport);
+
+/**
+ * Returns whether shared memory is enabled for this transport.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_transport_is_shm(const z_loaned_transport_t *transport);
+
+/**
+ * Gets a link remote Zenoh ID.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_id_t z_link_zid(const z_loaned_link_t *link);
+
+/**
+ * Gets a link source endpoint string.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_link_src(const z_loaned_link_t *link, z_owned_string_t *str_out);
+
+/**
+ * Gets a link destination endpoint string.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_result_t z_link_dst(const z_loaned_link_t *link, z_owned_string_t *str_out);
+
+/**
+ * Gets a link MTU.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+uint16_t z_link_mtu(const z_loaned_link_t *link);
+
+/**
+ * Returns whether the link is stream-based.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_link_is_streamed(const z_loaned_link_t *link);
+
+/**
+ * Returns whether the link transport is reliable.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+bool z_link_is_reliable(const z_loaned_link_t *link);
+
+/**
+ * Gets transport event kind.
+ *
+ * Returns ``Z_SAMPLE_KIND_PUT`` when a transport is connected and ``Z_SAMPLE_KIND_DELETE`` when disconnected.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_sample_kind_t z_transport_event_kind(const z_loaned_transport_event_t *event);
+
+/**
+ * Gets transport event transport.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+const z_loaned_transport_t *z_transport_event_transport(const z_loaned_transport_event_t *event);
+
+/**
+ * Gets mutable transport event transport.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_loaned_transport_t *z_transport_event_transport_mut(z_loaned_transport_event_t *event);
+
+/**
+ * Gets link event kind.
+ *
+ * Returns ``Z_SAMPLE_KIND_PUT`` when a link is added and ``Z_SAMPLE_KIND_DELETE`` when removed.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_sample_kind_t z_link_event_kind(const z_loaned_link_event_t *event);
+
+/**
+ * Gets link event link.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+const z_loaned_link_t *z_link_event_link(const z_loaned_link_event_t *event);
+
+/**
+ * Gets mutable link event link.
+ *
+ * .. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future
+ * release.
+ */
+z_loaned_link_t *z_link_event_link_mut(z_loaned_link_event_t *event);
+#endif
 
 /**
  * Converts a Zenoh ID into a string for print purposes.

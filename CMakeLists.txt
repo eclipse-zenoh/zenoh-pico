@@ -242,6 +242,7 @@ set(Z_TRANSPORT_LEASE_EXPIRE_FACTOR 3 CACHE STRING "Default session lease expire
 set(ZP_PERIODIC_SCHEDULER_MAX_TASKS 64 CACHE STRING "Maximum number of tasks in the periodic scheduler")
 
 set(Z_FEATURE_UNSTABLE_API 0 CACHE STRING "Toggle unstable Zenoh-C API")
+set(Z_FEATURE_CONNECTIVITY 1 CACHE STRING "Toggle connectivity status/events API (unstable)")
 set(Z_FEATURE_PUBLICATION 1 CACHE STRING "Toggle publication feature")
 set(Z_FEATURE_ADVANCED_PUBLICATION 0 CACHE STRING "Toggle advanced publication feature")
 set(Z_FEATURE_SUBSCRIPTION 1 CACHE STRING "Toggle subscription feature")
@@ -287,6 +288,11 @@ if(Z_FEATURE_LINK_SERIAL_USB AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links" FORCE)
 endif()
 
+if(Z_FEATURE_CONNECTIVITY AND NOT Z_FEATURE_UNSTABLE_API)
+  message(WARNING "Z_FEATURE_CONNECTIVITY can only be enabled when Z_FEATURE_UNSTABLE_API is also enabled. Disabling Z_FEATURE_CONNECTIVITY.")
+  set(Z_FEATURE_CONNECTIVITY 0 CACHE STRING "Toggle connectivity status/events API (unstable)" FORCE)
+endif()
+
 if(Z_FEATURE_UNICAST_PEER AND NOT Z_FEATURE_MULTI_THREAD)
   message(WARNING "Z_FEATURE_UNICAST_PEER can only be enabled when Z_FEATURE_MULTI_THREAD is also enabled. Disabling Z_FEATURE_UNICAST_PEER.")
   set(Z_FEATURE_UNICAST_PEER 0 CACHE STRING "Toggle Unicast peer mode" FORCE)
@@ -329,6 +335,7 @@ endif()
 
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
+* CONNECTIVITY: ${Z_FEATURE_CONNECTIVITY}\n\
 * MULTI-THREAD: ${Z_FEATURE_MULTI_THREAD}\n\
 * PUBLICATION: ${Z_FEATURE_PUBLICATION}\n\
 * ADVANCED PUBLICATION: ${Z_FEATURE_ADVANCED_PUBLICATION}\n\
@@ -748,6 +755,7 @@ if(UNIX OR MSVC)
       add_executable(z_api_liveliness_test ${PROJECT_SOURCE_DIR}/tests/z_api_liveliness_test.c)
       add_executable(z_api_matching_test ${PROJECT_SOURCE_DIR}/tests/z_api_matching_test.c)
       add_executable(z_api_source_info_test ${PROJECT_SOURCE_DIR}/tests/z_api_source_info_test.c)
+      add_executable(z_api_connectivity_test ${PROJECT_SOURCE_DIR}/tests/z_api_connectivity_test.c)
       add_executable(z_api_queryable_test ${PROJECT_SOURCE_DIR}/tests/z_api_queryable_test.c)
       add_executable(z_api_scheduler_test ${PROJECT_SOURCE_DIR}/tests/z_api_scheduler_test.c)
       add_executable(z_api_cancellation_test ${PROJECT_SOURCE_DIR}/tests/z_api_cancellation_test.c)
@@ -774,6 +782,7 @@ endif()
       target_link_libraries(z_api_liveliness_test zenohpico::lib)
       target_link_libraries(z_api_matching_test zenohpico::lib)
       target_link_libraries(z_api_source_info_test zenohpico::lib)
+      target_link_libraries(z_api_connectivity_test zenohpico::lib)
       target_link_libraries(z_api_queryable_test zenohpico::lib)
       target_link_libraries(z_api_scheduler_test zenohpico::lib)
       target_link_libraries(z_api_advanced_pubsub_test zenohpico::lib)
@@ -803,6 +812,7 @@ endif()
       add_test(z_api_cancellation_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_cancellation_test)
       add_test(z_api_matching_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_matching_test)
       add_test(z_api_source_info_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_source_info_test)
+      add_test(z_api_connectivity_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_connectivity_test)
       add_test(z_api_queryable_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_queryable_test)
       add_test(z_api_scheduler_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_scheduler_test)
       add_test(z_api_advanced_pubsub_test bash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh z_api_advanced_pubsub_test)

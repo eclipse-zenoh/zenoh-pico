@@ -21,6 +21,7 @@
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/refcount.h"
 #include "zenoh-pico/collections/slice.h"
+#include "zenoh-pico/collections/string.h"
 #include "zenoh-pico/config.h"
 #include "zenoh-pico/link/link.h"
 #include "zenoh-pico/protocol/core.h"
@@ -50,6 +51,10 @@ typedef struct {
     z_whatami_t _remote_whatami;
     volatile bool _received;
     _z_resource_slist_t *_remote_resources;
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_string_t _link_src;
+    _z_string_t _link_dst;
+#endif
 #if Z_FEATURE_FRAGMENTATION == 1
     // Defragmentation buffers
     uint8_t _state_reliable;

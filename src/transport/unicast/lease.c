@@ -47,6 +47,15 @@ static void _zp_unicast_failed(_z_transport_unicast_t *ztu) {
 #if Z_FEATURE_LIVELINESS == 1 && Z_FEATURE_SUBSCRIPTION == 1
     _z_liveliness_subscription_undeclare_all(_z_transport_common_get_session(&ztu->_common));
 #endif
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_transport_peer_mutex_lock(&ztu->_common);
+    _z_transport_peer_unicast_t *curr_peer = _z_transport_peer_unicast_slist_value(ztu->_peers);
+    if (curr_peer != NULL) {
+        _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+        _z_connectivity_peer_disconnected_from_transport(zs, &ztu->_common, &curr_peer->common, false);
+    }
+    _z_transport_peer_mutex_unlock(&ztu->_common);
+#endif
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_session_rc_t zs = _z_session_weak_upgrade(&ztu->_common._session);
 #endif
@@ -144,6 +153,9 @@ void *_zp_unicast_lease_task(void *ztu_arg) {
                     // Drop if needed
                     if (drop_peer) {
                         _z_session_t *zs = _z_transport_common_get_session(&ztu->_common);
+#if Z_FEATURE_CONNECTIVITY == 1
+                        _z_connectivity_peer_disconnected_from_transport(zs, &ztu->_common, &curr_peer->common, false);
+#endif
                         _z_interest_peer_disconnected(zs, &curr_peer->common);
                         ztu->_peers = _z_transport_peer_unicast_slist_drop_element(ztu->_peers, prev_drop);
                     }

@@ -16,14 +16,18 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "zenoh-pico/config.h"
+#include "zenoh-pico/link/endpoint.h"
+#include "zenoh-pico/net/session.h"
 #include "zenoh-pico/protocol/codec/network.h"
 #include "zenoh-pico/protocol/codec/transport.h"
 #include "zenoh-pico/protocol/definitions/network.h"
 #include "zenoh-pico/protocol/definitions/transport.h"
 #include "zenoh-pico/protocol/iobuf.h"
 #include "zenoh-pico/session/utils.h"
+#include "zenoh-pico/system/common/platform.h"
 #include "zenoh-pico/transport/multicast/rx.h"
 #include "zenoh-pico/transport/multicast/transport.h"
 #include "zenoh-pico/transport/utils.h"
@@ -99,6 +103,48 @@ z_result_t _z_multicast_recv_t_msg(_z_transport_multicast_t *ztm, _z_transport_m
 #endif  // Z_FEATURE_MULTICAST_TRANSPORT == 1
 
 #if Z_FEATURE_MULTICAST_TRANSPORT == 1 || Z_FEATURE_RAWETH_TRANSPORT == 1
+
+#if Z_FEATURE_CONNECTIVITY == 1
+static z_result_t _z_multicast_remote_addr_to_endpoint(const _z_transport_multicast_t *ztm,
+                                                       const _z_slice_t *remote_addr, _z_string_t *endpoint) {
+    char addr[96] = {0};
+    _z_locator_t locator;
+    const uint8_t *bytes = remote_addr->start;
+    size_t address_len = 0;
+    uint16_t port = 0;
+
+    *endpoint = _z_string_null();
+    if (ztm == NULL || ztm->_common._link == NULL || remote_addr == NULL || bytes == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    if (remote_addr->len == sizeof(uint32_t) + sizeof(uint16_t)) {
+        address_len = sizeof(uint32_t);
+        port = ((uint16_t)bytes[4] << 8) | (uint16_t)bytes[5];
+    } else if (remote_addr->len == 16 + sizeof(uint16_t)) {
+        address_len = 16;
+        port = ((uint16_t)bytes[16] << 8) | (uint16_t)bytes[17];
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    _Z_RETURN_IF_ERR(_z_ip_port_to_endpoint(bytes, address_len, port, addr, sizeof(addr)));
+
+    _z_locator_init(&locator);
+    if (_z_string_check(&ztm->_common._link->_endpoint._locator._protocol)) {
+        locator._protocol = _z_string_alias(ztm->_common._link->_endpoint._locator._protocol);
+    } else {
+        locator._protocol = _z_string_alias_str("udp");
+    }
+    locator._address = _z_string_alias_str(addr);
+
+    *endpoint = _z_locator_to_string(&locator);
+    _z_locator_clear(&locator);
+    if (!_z_string_check(endpoint)) {
+        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
+    }
+    return _Z_RES_OK;
+}
+#endif
 
 static _z_transport_peer_multicast_t *_z_find_peer_entry(_z_transport_peer_multicast_slist_t *l,
                                                          _z_slice_t *remote_addr) {
@@ -338,12 +384,34 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         entry->common._remote_whatami = msg->_whatami;
         entry->common._received = true;
         entry->common._remote_resources = NULL;
+#if Z_FEATURE_CONNECTIVITY == 1
+        entry->common._link_src = _z_string_null();
+        entry->common._link_dst = _z_string_null();
+        if (ztm->_common._link != NULL) {
+            entry->common._link_src = _z_endpoint_to_string(&ztm->_common._link->_endpoint);
+            (void)_z_multicast_remote_addr_to_endpoint(ztm, addr, &entry->common._link_dst);
+        }
+#endif
 #if Z_FEATURE_FRAGMENTATION == 1
         entry->common._patch = msg->_patch < _Z_CURRENT_PATCH ? msg->_patch : _Z_CURRENT_PATCH;
         entry->common._state_reliable = _Z_DBUF_STATE_NULL;
         entry->common._state_best_effort = _Z_DBUF_STATE_NULL;
         entry->common._dbuf_reliable = _z_wbuf_null();
         entry->common._dbuf_best_effort = _z_wbuf_null();
+#endif
+#if Z_FEATURE_CONNECTIVITY == 1
+        uint16_t mtu = 0;
+        bool is_streamed = false;
+        bool is_reliable = false;
+        if (ztm->_common._link != NULL) {
+            mtu = ztm->_common._link->_mtu;
+            is_streamed = ztm->_common._link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
+            is_reliable = ztm->_common._link->_cap._is_reliable;
+        }
+        _z_connectivity_peer_connected(_z_transport_common_get_session(&ztm->_common), &entry->common, true, mtu,
+                                       is_streamed, is_reliable,
+                                       _z_string_check(&entry->common._link_src) ? &entry->common._link_src : NULL,
+                                       _z_string_check(&entry->common._link_dst) ? &entry->common._link_dst : NULL);
 #endif
     } else {  // Existing peer
         // Note that we receive data from the peer
@@ -352,6 +420,10 @@ static z_result_t _z_multicast_handle_join_inner(_z_transport_multicast_t *ztm, 
         // Check representing capabilities
         if ((msg->_seq_num_res != Z_SN_RESOLUTION) || (msg->_req_id_res != Z_REQ_RESOLUTION) ||
             (msg->_batch_size != Z_BATCH_MULTICAST_SIZE)) {
+#if Z_FEATURE_CONNECTIVITY == 1
+            _z_connectivity_peer_disconnected_from_transport(_z_transport_common_get_session(&ztm->_common),
+                                                             &ztm->_common, &entry->common, true);
+#endif
             // TODO: cleanup here should also be done on mappings/subs/etc...
             _z_transport_peer_multicast_slist_drop_first_filter(ztm->_peers, _z_transport_peer_multicast_eq, entry);
             return _Z_RES_OK;
@@ -420,6 +492,10 @@ z_result_t _z_multicast_handle_transport_message(_z_transport_multicast_t *ztm, 
         case _Z_MID_T_CLOSE: {
             _Z_INFO("Closing connection as requested by the remote peer");
             if (entry != NULL) {
+#if Z_FEATURE_CONNECTIVITY == 1
+                _z_connectivity_peer_disconnected_from_transport(_z_transport_common_get_session(&ztm->_common),
+                                                                 &ztm->_common, &entry->common, true);
+#endif
                 ztm->_peers = _z_transport_peer_multicast_slist_drop_first_filter(
                     ztm->_peers, _z_transport_peer_multicast_eq, entry);
             }
