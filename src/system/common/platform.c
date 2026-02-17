@@ -62,3 +62,25 @@ z_result_t z_condvar_wait_until(z_loaned_condvar_t *cv, z_loaned_mutex_t *m, con
 }
 
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#if !defined(ZENOH_WINDOWS) && !defined(ZENOH_LINUX) && !defined(ZENOH_MACOS) && !defined(ZENOH_BSD) && \
+    !defined(ZENOH_ZEPHYR)
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
+                                  size_t dst_len) {
+    _ZP_UNUSED(address);
+    _ZP_UNUSED(address_len);
+    _ZP_UNUSED(port);
+    _ZP_UNUSED(dst);
+    _ZP_UNUSED(dst_len);
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+}
+z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
+                                   size_t remote_len) {
+    _ZP_UNUSED(sock);
+    _ZP_UNUSED(local);
+    _ZP_UNUSED(local_len);
+    _ZP_UNUSED(remote);
+    _ZP_UNUSED(remote_len);
+    _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_NOT_AVAILABLE);
+}
+#endif
