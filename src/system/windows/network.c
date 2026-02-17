@@ -15,6 +15,7 @@
 #include <winsock2.h>
 // The following includes must come after winsock2
 #include <iphlpapi.h>
+#include <stdio.h>
 #include <ws2tcpip.h>
 
 #include "zenoh-pico/collections/string.h"
@@ -68,6 +69,89 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     }
     // Note socket
     sock_out->_sock._fd = con_socket;
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_ipv4_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (inet_ntop(AF_INET, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "%s:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+
+static z_result_t _z_ipv6_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
+    char ip[INET6_ADDRSTRLEN] = {0};
+    int written = -1;
+
+    if (inet_ntop(AF_INET6, address, ip, sizeof(ip)) == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    written = snprintf(dst, dst_len, "[%s]:%u", ip, (unsigned)port);
+    if ((written < 0) || ((size_t)written >= dst_len)) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    return _Z_RES_OK;
+}
+
+z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
+                                  size_t dst_len) {
+    if (address == NULL || dst == NULL || dst_len == 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+
+    if (address_len == sizeof(uint32_t)) {
+        return _z_ipv4_port_to_endpoint(address, port, dst, dst_len);
+    } else if (address_len == 16) {
+        return _z_ipv6_port_to_endpoint(address, port, dst, dst_len);
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+}
+
+static z_result_t _z_sockaddr_to_endpoint(const SOCKADDR *addr, char *dst, size_t dst_len) {
+    if (addr->sa_family == AF_INET) {
+        const SOCKADDR_IN *addr4 = (const SOCKADDR_IN *)addr;
+        const uint8_t *bytes = (const uint8_t *)&addr4->sin_addr;
+        return _z_ip_port_to_endpoint(bytes, sizeof(addr4->sin_addr), ntohs(addr4->sin_port), dst, dst_len);
+    } else if (addr->sa_family == AF_INET6) {
+        const SOCKADDR_IN6 *addr6 = (const SOCKADDR_IN6 *)addr;
+        const uint8_t *bytes = (const uint8_t *)&addr6->sin6_addr;
+        return _z_ip_port_to_endpoint(bytes, sizeof(addr6->sin6_addr), ntohs(addr6->sin6_port), dst, dst_len);
+    } else {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+}
+
+z_result_t _z_socket_get_endpoints(const _z_sys_net_socket_t *sock, char *local, size_t local_len, char *remote,
+                                   size_t remote_len) {
+    SOCKADDR_STORAGE local_addr = {0};
+    SOCKADDR_STORAGE remote_addr = {0};
+    int local_addr_len = sizeof(local_addr);
+    int remote_addr_len = sizeof(remote_addr);
+    SOCKET fd;
+
+    if (sock == NULL || local == NULL || remote == NULL || local_len == 0 || remote_len == 0) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    fd = sock->_sock._fd;
+    if (fd == INVALID_SOCKET) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
+    if (getsockname(fd, (SOCKADDR *)&local_addr, &local_addr_len) != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    if (getpeername(fd, (SOCKADDR *)&remote_addr, &remote_addr_len) != 0) {
+        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
+    }
+    _Z_RETURN_IF_ERR(_z_sockaddr_to_endpoint((const SOCKADDR *)&local_addr, local, local_len));
+    _Z_RETURN_IF_ERR(_z_sockaddr_to_endpoint((const SOCKADDR *)&remote_addr, remote, remote_len));
     return _Z_RES_OK;
 }
 
