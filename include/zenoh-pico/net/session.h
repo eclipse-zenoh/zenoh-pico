@@ -39,6 +39,84 @@ extern "C" {
  */
 struct _z_write_filter_registration_t;
 
+#if Z_FEATURE_CONNECTIVITY == 1
+typedef struct {
+    _z_void_rc_t _callback;
+} _z_connectivity_transport_listener_t;
+
+static inline size_t _z_connectivity_transport_listener_size(const _z_connectivity_transport_listener_t *listener) {
+    _ZP_UNUSED(listener);
+    return sizeof(_z_connectivity_transport_listener_t);
+}
+
+static inline void _z_connectivity_transport_listener_clear(_z_connectivity_transport_listener_t *listener) {
+    _z_void_rc_drop(&listener->_callback);
+    listener->_callback = _z_void_rc_null();
+}
+
+static inline void _z_connectivity_transport_listener_copy(_z_connectivity_transport_listener_t *dst,
+                                                           const _z_connectivity_transport_listener_t *src) {
+    dst->_callback = _z_void_rc_clone(&src->_callback);
+}
+
+static inline void _z_connectivity_transport_listener_move(_z_connectivity_transport_listener_t *dst,
+                                                           _z_connectivity_transport_listener_t *src) {
+    dst->_callback = src->_callback;
+    src->_callback = _z_void_rc_null();
+}
+
+_Z_ELEM_DEFINE(_z_connectivity_transport_listener, _z_connectivity_transport_listener_t,
+               _z_connectivity_transport_listener_size, _z_connectivity_transport_listener_clear,
+               _z_connectivity_transport_listener_copy, _z_connectivity_transport_listener_move, _z_noop_eq,
+               _z_noop_cmp, _z_noop_hash)
+_Z_INT_MAP_DEFINE(_z_connectivity_transport_listener, _z_connectivity_transport_listener_t)
+
+typedef struct {
+    _z_void_rc_t _callback;
+    bool _has_transport_filter;
+    _z_id_t _transport_zid;
+    bool _transport_is_multicast;
+} _z_connectivity_link_listener_t;
+
+static inline size_t _z_connectivity_link_listener_size(const _z_connectivity_link_listener_t *listener) {
+    _ZP_UNUSED(listener);
+    return sizeof(_z_connectivity_link_listener_t);
+}
+
+static inline void _z_connectivity_link_listener_clear(_z_connectivity_link_listener_t *listener) {
+    _z_void_rc_drop(&listener->_callback);
+    listener->_callback = _z_void_rc_null();
+    listener->_has_transport_filter = false;
+    listener->_transport_zid = (_z_id_t){0};
+    listener->_transport_is_multicast = false;
+}
+
+static inline void _z_connectivity_link_listener_copy(_z_connectivity_link_listener_t *dst,
+                                                      const _z_connectivity_link_listener_t *src) {
+    dst->_callback = _z_void_rc_clone(&src->_callback);
+    dst->_has_transport_filter = src->_has_transport_filter;
+    dst->_transport_zid = src->_transport_zid;
+    dst->_transport_is_multicast = src->_transport_is_multicast;
+}
+
+static inline void _z_connectivity_link_listener_move(_z_connectivity_link_listener_t *dst,
+                                                      _z_connectivity_link_listener_t *src) {
+    dst->_callback = src->_callback;
+    dst->_has_transport_filter = src->_has_transport_filter;
+    dst->_transport_zid = src->_transport_zid;
+    dst->_transport_is_multicast = src->_transport_is_multicast;
+    src->_callback = _z_void_rc_null();
+    src->_has_transport_filter = false;
+    src->_transport_zid = (_z_id_t){0};
+    src->_transport_is_multicast = false;
+}
+
+_Z_ELEM_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t, _z_connectivity_link_listener_size,
+               _z_connectivity_link_listener_clear, _z_connectivity_link_listener_copy,
+               _z_connectivity_link_listener_move, _z_noop_eq, _z_noop_cmp, _z_noop_hash)
+_Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t)
+#endif
+
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool _mutex_inner_initialized;
@@ -124,6 +202,12 @@ typedef struct _z_session_t {
 #if Z_FEATURE_ADMIN_SPACE == 1
     // entity Id for admin space queryable (0 if not started)
     uint32_t _admin_space_queryable_id;
+#endif
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    size_t _connectivity_next_listener_id;
+    _z_connectivity_transport_listener_intmap_t _connectivity_transport_event_listeners;
+    _z_connectivity_link_listener_intmap_t _connectivity_link_event_listeners;
 #endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;
@@ -356,6 +440,17 @@ z_result_t _zp_stop_periodic_scheduler_task(_z_session_t *z);
 #endif  // Z_FEATURE_PERIODIC_TASKS == 1
 #endif  // Z_FEATURE_UNSTABLE_API
 #endif  // Z_FEATURE_MULTI_THREAD == 1
+
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_connectivity_peer_connected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
+                                    uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
+                                    const _z_string_t *dst);
+void _z_connectivity_peer_disconnected(_z_session_t *session, const _z_transport_peer_common_t *peer, bool is_multicast,
+                                       uint16_t mtu, bool is_streamed, bool is_reliable, const _z_string_t *src,
+                                       const _z_string_t *dst);
+void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, const _z_transport_common_t *transport,
+                                                      const _z_transport_peer_common_t *peer, bool is_multicast);
+#endif
 
 static inline _z_session_t *_z_transport_common_get_session(_z_transport_common_t *transport) {
     // the session should always outlive the transport, so it should be safe

@@ -116,6 +116,12 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 #if Z_FEATURE_ADMIN_SPACE == 1
     zn->_admin_space_queryable_id = 0;
 #endif
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    zn->_connectivity_next_listener_id = 1;
+    _z_connectivity_transport_listener_intmap_init(&zn->_connectivity_transport_event_listeners);
+    _z_connectivity_link_listener_intmap_init(&zn->_connectivity_link_event_listeners);
+#endif
 #endif
     zn->_callback_drop_sync_group = _z_sync_group_null();
     _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
@@ -180,6 +186,12 @@ void _z_session_clear(_z_session_t *zn) {
     if (_zp_periodic_scheduler_check(&zn->_periodic_scheduler)) {
         _zp_periodic_scheduler_clear(&zn->_periodic_scheduler);
     }
+#endif
+
+#if Z_FEATURE_CONNECTIVITY == 1
+    _z_connectivity_transport_listener_intmap_clear(&zn->_connectivity_transport_event_listeners);
+    _z_connectivity_link_listener_intmap_clear(&zn->_connectivity_link_event_listeners);
+    zn->_connectivity_next_listener_id = 1;
 #endif
 #endif
 
