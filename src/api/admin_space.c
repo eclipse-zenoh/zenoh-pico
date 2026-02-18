@@ -14,6 +14,7 @@
 
 #include "zenoh-pico/api/admin_space.h"
 
+#include "zenoh-pico/api/encoding.h"
 #include "zenoh-pico/api/primitives.h"
 #include "zenoh-pico/net/primitives.h"
 #include "zenoh-pico/session/utils.h"
@@ -471,15 +472,25 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     _ze_admin_space_reply_list_t *next = replies;
     while (next != NULL) {
         _ze_admin_space_reply_t *reply = _ze_admin_space_reply_list_value(next);
-        z_result_t res = z_query_reply(query, z_keyexpr_loan(&reply->ke), z_bytes_move(&reply->payload), NULL);
-        if (res != _Z_RES_OK) {
-            z_view_string_t keystr;
-            if (z_keyexpr_as_view_string(z_keyexpr_loan(&reply->ke), &keystr) == _Z_RES_OK) {
-                _Z_ERROR("Failed to reply to admin space query on key expression: %.*s",
-                         (int)z_string_len(z_view_string_loan(&keystr)), z_string_data(z_view_string_loan(&keystr)));
-            } else {
-                _Z_ERROR("Failed to reply to admin space query");
+        z_query_reply_options_t opt;
+        z_query_reply_options_default(&opt);
+        z_owned_encoding_t encoding;
+        if (z_encoding_clone(&encoding, z_encoding_application_json()) == _Z_RES_OK) {
+            opt.encoding = z_encoding_move(&encoding);
+            z_result_t res = z_query_reply(query, z_keyexpr_loan(&reply->ke), z_bytes_move(&reply->payload), &opt);
+            if (res != _Z_RES_OK) {
+                z_view_string_t keystr;
+                if (z_keyexpr_as_view_string(z_keyexpr_loan(&reply->ke), &keystr) == _Z_RES_OK) {
+                    _Z_ERROR("Failed to reply to admin space query on key expression: %.*s",
+                             (int)z_string_len(z_view_string_loan(&keystr)),
+                             z_string_data(z_view_string_loan(&keystr)));
+                } else {
+                    _Z_ERROR("Failed to reply to admin space query");
+                }
             }
+        } else {
+            _Z_ERROR("Failed to clone JSON encoding for admin space query reply");
+            break;
         }
         next = _ze_admin_space_reply_list_next(next);
     }

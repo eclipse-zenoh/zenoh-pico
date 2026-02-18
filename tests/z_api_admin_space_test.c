@@ -66,12 +66,14 @@ void test_auto_start_admin_space(void) {
 typedef struct admin_space_query_reply_t {
     z_owned_keyexpr_t ke;
     z_owned_string_t payload;
+    z_owned_encoding_t encoding;
 
 } admin_space_query_reply_t;
 
 void admin_space_query_reply_clear(admin_space_query_reply_t *reply) {
     z_drop(z_move(reply->ke));
     z_drop(z_move(reply->payload));
+    z_drop(z_move(reply->encoding));
 }
 
 bool admin_space_query_reply_eq(const admin_space_query_reply_t *left, const admin_space_query_reply_t *right) {
@@ -113,6 +115,8 @@ static admin_space_query_reply_list_t *run_admin_space_query(const z_loaned_sess
                 const z_loaned_sample_t *sample = z_reply_ok(z_loan(reply));
                 ASSERT_OK(z_bytes_to_string(z_sample_payload(sample), &result->payload));
                 ASSERT_OK(z_keyexpr_clone(&result->ke, z_sample_keyexpr(sample)));
+                const z_loaned_encoding_t *encoding = z_sample_encoding(sample);
+                ASSERT_OK(z_encoding_clone(&result->encoding, encoding));
 
                 admin_space_query_reply_list_t *old = results;
                 admin_space_query_reply_list_t *tmp = admin_space_query_reply_list_push(old, result);
@@ -343,6 +347,7 @@ static void verify_admin_space_query_unicast(const z_loaned_session_t *zs,
     const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
     ASSERT_NOT_NULL(reply);
     admin_space_query_reply_elem_clear(&expected);
+    ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
 
     verify_transport_reply_json(z_string_loan(&reply->payload), _Z_RC_IN_VAL(zs)->_mode, unicast->_common._link);
 
@@ -354,6 +359,7 @@ static void verify_admin_space_query_unicast(const z_loaned_session_t *zs,
         admin_space_query_reply_t peer_expected;
         z_internal_keyexpr_null(&peer_expected.ke);
         z_internal_string_null(&peer_expected.payload);
+        z_internal_encoding_null(&peer_expected.encoding);
         build_peer_ke(&peer_expected.ke, base_ke, _Z_KEYEXPR_TRANSPORT_UNICAST, &peer->common._remote_zid);
 
         entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &peer_expected);
@@ -387,6 +393,7 @@ static void verify_admin_space_query_multicast(const z_loaned_session_t *zs,
     const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
     ASSERT_NOT_NULL(reply);
     admin_space_query_reply_elem_clear(&expected);
+    ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
 
     verify_transport_reply_json(z_string_loan(&reply->payload), session->_mode, multicast->_common._link);
 
@@ -398,6 +405,7 @@ static void verify_admin_space_query_multicast(const z_loaned_session_t *zs,
         admin_space_query_reply_t peer_expected;
         z_internal_keyexpr_null(&peer_expected.ke);
         z_internal_string_null(&peer_expected.payload);
+        z_internal_encoding_null(&peer_expected.encoding);
         build_peer_ke(&peer_expected.ke, base_ke, transport, &peer->common._remote_zid);
 
         entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &peer_expected);
