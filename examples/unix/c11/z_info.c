@@ -18,14 +18,68 @@
 #include <unistd.h>
 #include <zenoh-pico.h>
 
+static void fprint_zid(FILE *stream, const z_id_t *id) {
+    for (int i = 15; i >= 0; i--) {
+        fprintf(stream, "%02X", id->id[i]);
+    }
+}
+
 void print_zid(const z_id_t *id, void *ctx) {
     (void)(ctx);
     printf(" ");
-    for (int i = 15; i >= 0; i--) {
-        printf("%02X", id->id[i]);
-    }
+    fprint_zid(stdout, id);
     printf("\n");
 }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+static const char *bool_to_str(bool value) { return value ? "true" : "false"; }
+
+static void print_transport(z_loaned_transport_t *transport, void *ctx) {
+    (void)(ctx);
+    z_id_t zid = z_transport_zid(transport);
+    z_view_string_t whatami;
+    z_whatami_to_view_string(z_transport_whatami(transport), &whatami);
+
+    printf("  transport{zid=");
+    fprint_zid(stdout, &zid);
+    printf(", whatami=%.*s, is_qos=%s, is_multicast=%s, is_shm=%s}\n", (int)z_string_len(z_loan(whatami)),
+           z_string_data(z_loan(whatami)), bool_to_str(z_transport_is_qos(transport)),
+           bool_to_str(z_transport_is_multicast(transport)), bool_to_str(z_transport_is_shm(transport)));
+}
+
+static void print_link(z_loaned_link_t *link, void *ctx) {
+    (void)(ctx);
+    z_id_t zid = z_link_zid(link);
+    z_owned_string_t src;
+    z_owned_string_t dst;
+    bool has_src = z_link_src(link, &src) == 0;
+    bool has_dst = z_link_dst(link, &dst) == 0;
+
+    printf("  link{zid=");
+    fprint_zid(stdout, &zid);
+    printf(", src=");
+    if (has_src) {
+        printf("%.*s", (int)z_string_len(z_loan(src)), z_string_data(z_loan(src)));
+    } else {
+        printf("<n/a>");
+    }
+    printf(", dst=");
+    if (has_dst) {
+        printf("%.*s", (int)z_string_len(z_loan(dst)), z_string_data(z_loan(dst)));
+    } else {
+        printf("<n/a>");
+    }
+    printf(", mtu=%u, is_streamed=%s, is_reliable=%s}\n", (unsigned)z_link_mtu(link),
+           bool_to_str(z_link_is_streamed(link)), bool_to_str(z_link_is_reliable(link)));
+
+    if (has_src) {
+        z_drop(z_move(src));
+    }
+    if (has_dst) {
+        z_drop(z_move(dst));
+    }
+}
+#endif
 
 static int parse_args(int argc, char **argv, z_owned_config_t *config);
 
@@ -68,7 +122,28 @@ int main(int argc, char **argv) {
     z_closure(&callback2, print_zid, NULL, NULL);
     z_info_peers_zid(z_loan(s), z_move(callback2));
 
+#if Z_FEATURE_CONNECTIVITY == 1
+    printf("Connected transports:\n");
+    z_owned_closure_transport_t transport_cb;
+    if (z_closure_transport(&transport_cb, print_transport, NULL, NULL) < 0 ||
+        z_info_transports(z_loan(s), z_closure_transport_move(&transport_cb)) < 0) {
+        printf("Unable to fetch connected transports\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+
+    printf("Connected links:\n");
+    z_owned_closure_link_t link_cb;
+    if (z_closure_link(&link_cb, print_link, NULL, NULL) < 0 ||
+        z_info_links(z_loan(s), z_closure_link_move(&link_cb), NULL) < 0) {
+        printf("Unable to fetch connected links\n");
+        z_drop(z_move(s));
+        return -1;
+    }
+#endif
+
     z_drop(z_move(s));
+    return 0;
 }
 
 // Note: All args can be specified multiple times. For "-e" it will append the list of endpoints, for the other it will
