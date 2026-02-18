@@ -34,6 +34,7 @@ c_autodoc_roots = ['../include/zenoh-pico/api/',
 c_autodoc_compilation_args = [
     "-DSPHINX_DOCS",
     "-DZ_FEATURE_UNSTABLE_API=1",
+    "-DZ_FEATURE_CONNECTIVITY=1",
     "-DZ_FEATURE_PUBLICATION=1",
     "-DZ_FEATURE_ADVANCED_PUBLICATION=1",
     "-DZ_FEATURE_ADVANCED_SUBSCRIPTION=1",

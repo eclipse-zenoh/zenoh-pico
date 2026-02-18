@@ -700,6 +700,62 @@ See details at :ref:`owned_types_concept`
 .. c:function:: const z_loaned_closure_matching_status_t * z_closure_matching_status_loan(const z_owned_closure_matching_status_t * closure)
 .. c:function:: void z_closure_matching_status_drop(z_moved_closure_matching_status_t * closure) 
 
+Connectivity closures
+---------------------
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_closure_transport_t
+.. c:type:: z_loaned_closure_transport_t
+.. c:type:: z_moved_closure_transport_t
+
+.. c:type:: z_owned_closure_link_t
+.. c:type:: z_loaned_closure_link_t
+.. c:type:: z_moved_closure_link_t
+
+.. c:type:: z_owned_closure_transport_event_t
+.. c:type:: z_loaned_closure_transport_event_t
+.. c:type:: z_moved_closure_transport_event_t
+
+.. c:type:: z_owned_closure_link_event_t
+.. c:type:: z_loaned_closure_link_event_t
+.. c:type:: z_moved_closure_link_event_t
+
+.. c:type:: void (* z_closure_transport_callback_t)(z_loaned_transport_t * transport, void * arg);
+.. c:type:: void (* z_closure_link_callback_t)(z_loaned_link_t * link, void * arg);
+.. c:type:: void (* z_closure_transport_event_callback_t)(z_loaned_transport_event_t * event, void * arg);
+.. c:type:: void (* z_closure_link_event_callback_t)(z_loaned_link_event_t * event, void * arg);
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_closure_transport
+.. autocfunction:: primitives.h::z_closure_transport_call
+.. autocfunction:: primitives.h::z_closure_link
+.. autocfunction:: primitives.h::z_closure_link_call
+.. autocfunction:: primitives.h::z_closure_transport_event
+.. autocfunction:: primitives.h::z_closure_transport_event_call
+.. autocfunction:: primitives.h::z_closure_link_event
+.. autocfunction:: primitives.h::z_closure_link_event_call
+
+Ownership Functions
+^^^^^^^^^^^^^^^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:function:: const z_loaned_closure_transport_t * z_closure_transport_loan(const z_owned_closure_transport_t * closure)
+.. c:function:: void z_closure_transport_drop(z_moved_closure_transport_t * closure)
+.. c:function:: const z_loaned_closure_link_t * z_closure_link_loan(const z_owned_closure_link_t * closure)
+.. c:function:: void z_closure_link_drop(z_moved_closure_link_t * closure)
+.. c:function:: const z_loaned_closure_transport_event_t * z_closure_transport_event_loan(const z_owned_closure_transport_event_t * closure)
+.. c:function:: void z_closure_transport_event_drop(z_moved_closure_transport_event_t * closure)
+.. c:function:: const z_loaned_closure_link_event_t * z_closure_link_event_loan(const z_owned_closure_link_event_t * closure)
+.. c:function:: void z_closure_link_event_drop(z_moved_closure_link_event_t * closure)
+
 Sample miss closure
 -------------------
 
@@ -1067,6 +1123,86 @@ See details at :ref:`owned_types_concept`
 
 .. c:function:: const z_loaned_session_t * z_session_loan(const z_owned_session_t * closure)
 .. c:function:: void z_session_drop(z_moved_session_t * closure) 
+
+Connectivity
+------------
+
+.. warning:: This API has been marked as unstable: it works as advertised, but it may be changed in a future release.
+
+The connectivity API is available only when both ``Z_FEATURE_UNSTABLE_API`` and
+``Z_FEATURE_CONNECTIVITY`` are enabled.
+
+Types
+^^^^^
+
+See details at :ref:`owned_types_concept`
+
+.. c:type:: z_owned_transport_t
+.. c:type:: z_loaned_transport_t
+.. c:type:: z_moved_transport_t
+
+.. c:type:: z_owned_link_t
+.. c:type:: z_loaned_link_t
+.. c:type:: z_moved_link_t
+
+.. c:type:: z_owned_transport_event_t
+.. c:type:: z_loaned_transport_event_t
+.. c:type:: z_moved_transport_event_t
+
+.. c:type:: z_owned_link_event_t
+.. c:type:: z_loaned_link_event_t
+.. c:type:: z_moved_link_event_t
+
+.. c:type:: z_owned_transport_events_listener_t
+.. c:type:: z_loaned_transport_events_listener_t
+.. c:type:: z_moved_transport_events_listener_t
+
+.. c:type:: z_owned_link_events_listener_t
+.. c:type:: z_loaned_link_events_listener_t
+.. c:type:: z_moved_link_events_listener_t
+
+Option Types
+^^^^^^^^^^^^
+
+.. autoctype:: types.h::z_info_links_options_t
+.. autoctype:: types.h::z_transport_events_listener_options_t
+.. autoctype:: types.h::z_link_events_listener_options_t
+
+Functions
+^^^^^^^^^
+.. autocfunction:: primitives.h::z_info_transports
+.. autocfunction:: primitives.h::z_info_links_options_default
+.. autocfunction:: primitives.h::z_info_links
+
+.. autocfunction:: primitives.h::z_transport_events_listener_options_default
+.. autocfunction:: primitives.h::z_declare_transport_events_listener
+.. autocfunction:: primitives.h::z_declare_background_transport_events_listener
+.. autocfunction:: primitives.h::z_undeclare_transport_events_listener
+
+.. autocfunction:: primitives.h::z_link_events_listener_options_default
+.. autocfunction:: primitives.h::z_declare_link_events_listener
+.. autocfunction:: primitives.h::z_declare_background_link_events_listener
+.. autocfunction:: primitives.h::z_undeclare_link_events_listener
+
+.. autocfunction:: primitives.h::z_transport_zid
+.. autocfunction:: primitives.h::z_transport_whatami
+.. autocfunction:: primitives.h::z_transport_is_qos
+.. autocfunction:: primitives.h::z_transport_is_multicast
+.. autocfunction:: primitives.h::z_transport_is_shm
+
+.. autocfunction:: primitives.h::z_link_zid
+.. autocfunction:: primitives.h::z_link_src
+.. autocfunction:: primitives.h::z_link_dst
+.. autocfunction:: primitives.h::z_link_mtu
+.. autocfunction:: primitives.h::z_link_is_streamed
+.. autocfunction:: primitives.h::z_link_is_reliable
+
+.. autocfunction:: primitives.h::z_transport_event_kind
+.. autocfunction:: primitives.h::z_transport_event_transport
+.. autocfunction:: primitives.h::z_transport_event_transport_mut
+.. autocfunction:: primitives.h::z_link_event_kind
+.. autocfunction:: primitives.h::z_link_event_link
+.. autocfunction:: primitives.h::z_link_event_link_mut
 
 
 Matching
