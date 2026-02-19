@@ -351,7 +351,6 @@ z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *
             _z_unregister_session_queryable(_Z_RC_IN_VAL(zn), &sp_q);
             return res;
         }
-        _z_n_msg_clear(&n_msg);
     }
     *queryable_id = q._id;
     _z_session_queryable_rc_drop(&sp_q);  // we do not keep this data for the time being inside queryable, and rc copy

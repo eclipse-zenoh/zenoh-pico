@@ -1200,9 +1200,7 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
         }
         return;
     }
-#if Z_FEATURE_MULTI_THREAD == 1
     _ze_advanced_subscriber_state_unlock_mutex(states);
-#endif
 }
 
 void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {

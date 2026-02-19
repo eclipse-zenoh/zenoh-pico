@@ -249,7 +249,7 @@ z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
 }
 
 void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t qid) {
-    _z_pending_query_t target;
+    _z_pending_query_t target = {0};
     target._id = qid;
     _z_session_mutex_lock(zn);
     zn->_pending_queries = _z_pending_query_slist_drop_first_filter(zn->_pending_queries, _z_pending_query_eq, &target);
@@ -257,7 +257,7 @@ void _z_unregister_pending_query(_z_session_t *zn, _z_zint_t qid) {
 }
 
 void _z_unregister_pending_queries_from_querier(_z_session_t *zn, uint32_t querier_id) {
-    _z_pending_query_t target;
+    _z_pending_query_t target = {0};
     target._querier_id = _z_optional_id_make_some(querier_id);
     _z_session_mutex_lock(zn);
     zn->_pending_queries =
