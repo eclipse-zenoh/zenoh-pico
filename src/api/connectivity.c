@@ -58,19 +58,6 @@ static inline const _z_string_t *_z_connectivity_optional_link_endpoint(const _z
     return _z_string_check(endpoint) ? endpoint : NULL;
 }
 
-static inline void _z_connectivity_link_properties_from_transport(const _z_transport_common_t *transport, uint16_t *mtu,
-                                                                  bool *is_streamed, bool *is_reliable) {
-    *mtu = 0;
-    *is_streamed = false;
-    *is_reliable = false;
-
-    if (transport != NULL && transport->_link != NULL) {
-        *mtu = transport->_link->_mtu;
-        *is_streamed = transport->_link->_cap._flow == Z_LINK_CAP_FLOW_STREAM;
-        *is_reliable = transport->_link->_cap._is_reliable;
-    }
-}
-
 static bool _z_connectivity_dispatch_link_put_for_peer(_z_closure_link_event_t *callback,
                                                        const _z_transport_common_t *transport_common,
                                                        const _z_transport_peer_common_t *peer, bool is_multicast,
@@ -85,7 +72,7 @@ static bool _z_connectivity_dispatch_link_put_for_peer(_z_closure_link_event_t *
     uint16_t mtu = 0;
     bool is_streamed = false;
     bool is_reliable = false;
-    _z_connectivity_link_properties_from_transport(transport_common, &mtu, &is_streamed, &is_reliable);
+    _z_transport_link_properties_from_transport(transport_common, &mtu, &is_streamed, &is_reliable);
 
     _z_info_link_event_t event = {0};
     event.kind = Z_SAMPLE_KIND_PUT;
@@ -672,7 +659,7 @@ void _z_connectivity_peer_disconnected_from_transport(_z_session_t *session, con
     uint16_t mtu = 0;
     bool is_streamed = false;
     bool is_reliable = false;
-    _z_connectivity_link_properties_from_transport(transport, &mtu, &is_streamed, &is_reliable);
+    _z_transport_link_properties_from_transport(transport, &mtu, &is_streamed, &is_reliable);
 
     _z_connectivity_peer_disconnected(session, peer, is_multicast, mtu, is_streamed, is_reliable,
                                       _z_connectivity_optional_link_endpoint(&peer->_link_src),

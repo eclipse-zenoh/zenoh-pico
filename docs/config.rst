@@ -166,4 +166,4 @@ The following options are here to reduce binary sizes for users that don't need 
 * `Z_FEATURE_LINK_SERIAL`: (DEFAULT: OFF) Toggle compilation of Serial link support.
 * `Z_FEATURE_LINK_SERIAL_USB`: (DEFAULT: OFF) Toggle compilation of Serial USB link support.
 * `Z_FEATURE_LINK_TLS`: (DEFAULT: OFF) Toggle compilation of TLS support.
-* `Z_FEATURE_ADMIN_SPACE`: (DEFAULT: OFF) Toggle compilation of admin space API functions.
+* `Z_FEATURE_ADMIN_SPACE`: (DEFAULT: OFF) Toggle compilation of admin space API functions. This feature requires both `Z_FEATURE_UNSTABLE_API` and `Z_FEATURE_CONNECTIVITY`.

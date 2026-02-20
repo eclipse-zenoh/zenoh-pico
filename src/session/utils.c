@@ -115,6 +115,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 
 #if Z_FEATURE_ADMIN_SPACE == 1
     zn->_admin_space_queryable_id = 0;
+#if Z_FEATURE_CONNECTIVITY == 1
+    zn->_admin_space_transport_listener_id = 0;
+    zn->_admin_space_link_listener_id = 0;
+#endif
 #endif
 
 #if Z_FEATURE_CONNECTIVITY == 1
@@ -192,6 +196,10 @@ void _z_session_clear(_z_session_t *zn) {
     _z_connectivity_transport_listener_intmap_clear(&zn->_connectivity_transport_event_listeners);
     _z_connectivity_link_listener_intmap_clear(&zn->_connectivity_link_event_listeners);
     zn->_connectivity_next_listener_id = 1;
+#if Z_FEATURE_ADMIN_SPACE == 1
+    zn->_admin_space_transport_listener_id = 0;
+    zn->_admin_space_link_listener_id = 0;
+#endif
 #endif
 #endif
 

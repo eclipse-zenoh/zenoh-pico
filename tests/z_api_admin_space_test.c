@@ -203,173 +203,101 @@ static const char *whatami_to_str(z_whatami_t w) {
     }
 }
 
-static const char *link_type_to_str(int t) {
-    switch (t) {
-        case _Z_LINK_TYPE_TCP:
-            return "tcp";
-        case _Z_LINK_TYPE_UDP:
-            return "udp";
-        case _Z_LINK_TYPE_BT:
-            return "bt";
-        case _Z_LINK_TYPE_SERIAL:
-            return "serial";
-        case _Z_LINK_TYPE_WS:
-            return "ws";
-        case _Z_LINK_TYPE_TLS:
-            return "tls";
-        case _Z_LINK_TYPE_RAWETH:
-            return "raweth";
-        default:
-            return NULL;
-    }
-}
-
-static const char *cap_transport_to_str(int t) {
-    switch (t) {
-        case Z_LINK_CAP_TRANSPORT_UNICAST:
-            return "unicast";
-        case Z_LINK_CAP_TRANSPORT_MULTICAST:
-            return "multicast";
-        case Z_LINK_CAP_TRANSPORT_RAWETH:
-            return "raweth";
-        default:
-            return NULL;
-    }
-}
-
-static const char *cap_flow_to_str(int f) {
-    switch (f) {
-        case Z_LINK_CAP_FLOW_DATAGRAM:
-            return "datagram";
-        case Z_LINK_CAP_FLOW_STREAM:
-            return "stream";
-        default:
-            return NULL;
-    }
-}
-
-static void verify_transport_reply_json(const z_loaned_string_t *payload, z_whatami_t mode, const _z_link_t *link) {
-    assert_json_object(payload);
-
-    // top-level
-    assert_contains(payload, "\"mode\"");
-    assert_contains(payload, "\"link\"");
-
-    // exact mode value
-    const char *mode_s = whatami_to_str(mode);
-    ASSERT_NOT_NULL(mode_s);
-    assert_contains_quoted_value(payload, "mode", mode_s);
-
-    // link.type
-    const char *lt = link_type_to_str(link->_type);
-    ASSERT_NOT_NULL(lt);
-    assert_contains(payload, "\"type\"");
-    assert_contains_quoted_value(payload, "type", lt);
-
-    // endpoint structure
-    assert_contains(payload, "\"endpoint\"");
-    assert_contains(payload, "\"locator\"");
-    assert_contains(payload, "\"metadata\":{");
-    assert_contains(payload, "\"protocol\"");
-    assert_contains(payload, "\"address\"");
-    assert_contains(payload, "\"config\":{");
-
-    // verify protocol and address values are present
-    assert_contains_z_string(payload, &link->_endpoint._locator._protocol);
-    assert_contains_z_string(payload, &link->_endpoint._locator._address);
-
-    // capabilities
-    assert_contains(payload, "\"capabilities\"");
-    assert_contains(payload, "\"transport\"");
-    assert_contains(payload, "\"flow\"");
-    assert_contains(payload, "\"is_reliable\"");
-
-    const char *ct = cap_transport_to_str(link->_cap._transport);
-    const char *cf = cap_flow_to_str(link->_cap._flow);
-    ASSERT_NOT_NULL(ct);
-    ASSERT_NOT_NULL(cf);
-    assert_contains_quoted_value(payload, "transport", ct);
-    assert_contains_quoted_value(payload, "flow", cf);
-
-    // verify is_reliable matches link capability
-    assert_contains(payload, link->_cap._is_reliable ? "\"is_reliable\":true" : "\"is_reliable\":false");
-}
-
-static void verify_peer_common_json(const z_loaned_string_t *payload, const z_id_t *expected_zid,
-                                    z_whatami_t expected_whatami) {
+static void verify_transport_reply_json(const z_loaned_string_t *payload, const z_id_t *expected_zid,
+                                        z_whatami_t expected_whatami, bool is_multicast) {
     assert_json_object(payload);
     assert_contains(payload, "\"zid\"");
     assert_contains(payload, "\"whatami\"");
+    assert_contains(payload, "\"is_qos\"");
+    assert_contains(payload, "\"is_multicast\"");
+    assert_contains(payload, "\"is_shm\"");
 
     z_owned_string_t zid_str;
     ASSERT_OK(z_id_to_string(expected_zid, &zid_str));
-
-    // Check zid string appears somewhere
     assert_contains_z_string(payload, z_loan(zid_str));
-
     z_drop(z_move(zid_str));
 
     const char *ws = whatami_to_str(expected_whatami);
     ASSERT_NOT_NULL(ws);
     assert_contains_quoted_value(payload, "whatami", ws);
+    assert_contains(payload, is_multicast ? "\"is_multicast\":true" : "\"is_multicast\":false");
 }
 
-static void build_transport_ke(z_owned_keyexpr_t *out, const z_loaned_keyexpr_t *base_ke, const char *transport) {
-    ASSERT_OK(z_keyexpr_clone(out, base_ke));
-    ASSERT_OK(_z_keyexpr_append_str(out, transport));
+static void verify_link_reply_json(const z_loaned_string_t *payload, const z_id_t *expected_zid) {
+    assert_json_object(payload);
+    assert_contains(payload, "\"zid\"");
+    assert_contains(payload, "\"src\"");
+    assert_contains(payload, "\"dst\"");
+    assert_contains(payload, "\"mtu\"");
+    assert_contains(payload, "\"is_streamed\"");
+    assert_contains(payload, "\"is_reliable\"");
+
+    z_owned_string_t zid_str;
+    ASSERT_OK(z_id_to_string(expected_zid, &zid_str));
+    assert_contains_z_string(payload, z_loan(zid_str));
+    z_drop(z_move(zid_str));
 }
 
-static void build_peer_ke(z_owned_keyexpr_t *out, const z_loaned_keyexpr_t *base_ke, const char *transport,
-                          const z_id_t *peer_zid) {
-    ASSERT_OK(z_keyexpr_clone(out, base_ke));
-    ASSERT_OK(_z_keyexpr_append_str(out, transport));
-    ASSERT_OK(_z_keyexpr_append_str(out, _Z_KEYEXPR_LINK));
-
-    /* append peer zid */
+static void append_zid_to_keyexpr(z_owned_keyexpr_t *out, const z_id_t *zid) {
     z_owned_string_t s;
-    ASSERT_OK(z_id_to_string(peer_zid, &s));
+    ASSERT_OK(z_id_to_string(zid, &s));
     ASSERT_OK(_z_keyexpr_append_substr(out, z_string_data(z_string_loan(&s)), z_string_len(z_string_loan(&s))));
     z_string_drop(z_string_move(&s));
 }
 
-static void verify_admin_space_query_unicast(const z_loaned_session_t *zs,
-                                             const admin_space_query_reply_list_t *results,
+static void build_transport_peer_ke(z_owned_keyexpr_t *out, const z_loaned_keyexpr_t *base_ke, const char *transport,
+                                    const z_id_t *peer_zid) {
+    ASSERT_OK(z_keyexpr_clone(out, base_ke));
+    ASSERT_OK(_z_keyexpr_append_str(out, transport));
+    append_zid_to_keyexpr(out, peer_zid);
+}
+
+static void build_peer_link_ke(z_owned_keyexpr_t *out, const z_loaned_keyexpr_t *base_ke, const char *transport,
+                               const z_id_t *peer_zid, const z_id_t *link_id) {
+    ASSERT_OK(z_keyexpr_clone(out, base_ke));
+    ASSERT_OK(_z_keyexpr_append_str(out, transport));
+    append_zid_to_keyexpr(out, peer_zid);
+    ASSERT_OK(_z_keyexpr_append_str(out, _Z_KEYEXPR_LINK));
+    append_zid_to_keyexpr(out, link_id);
+}
+
+static void verify_admin_space_query_unicast(const admin_space_query_reply_list_t *results,
                                              const z_loaned_keyexpr_t *base_ke, const _z_transport_unicast_t *unicast) {
-    // Transport reply
-    admin_space_query_reply_t expected;
-    z_internal_keyexpr_null(&expected.ke);
-    z_internal_string_null(&expected.payload);
-    build_transport_ke(&expected.ke, base_ke, _Z_KEYEXPR_TRANSPORT_UNICAST);
-
-    admin_space_query_reply_list_t *entry =
-        admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &expected);
-    ASSERT_NOT_NULL(entry);
-    const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
-    ASSERT_NOT_NULL(reply);
-    admin_space_query_reply_elem_clear(&expected);
-    ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
-
-    verify_transport_reply_json(z_string_loan(&reply->payload), _Z_RC_IN_VAL(zs)->_mode, unicast->_common._link);
-
-    // Peer replies
     for (_z_transport_peer_unicast_slist_t *it = unicast->_peers; it != NULL;
          it = _z_transport_peer_unicast_slist_next(it)) {
         _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(it);
 
-        admin_space_query_reply_t peer_expected;
-        z_internal_keyexpr_null(&peer_expected.ke);
-        z_internal_string_null(&peer_expected.payload);
-        z_internal_encoding_null(&peer_expected.encoding);
-        build_peer_ke(&peer_expected.ke, base_ke, _Z_KEYEXPR_TRANSPORT_UNICAST, &peer->common._remote_zid);
+        admin_space_query_reply_t transport_expected;
+        z_internal_keyexpr_null(&transport_expected.ke);
+        z_internal_string_null(&transport_expected.payload);
+        z_internal_encoding_null(&transport_expected.encoding);
+        build_transport_peer_ke(&transport_expected.ke, base_ke, _Z_KEYEXPR_TRANSPORT_UNICAST,
+                                &peer->common._remote_zid);
 
-        entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &peer_expected);
+        admin_space_query_reply_list_t *entry =
+            admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &transport_expected);
+        ASSERT_NOT_NULL(entry);
+        const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
+        ASSERT_NOT_NULL(reply);
+        admin_space_query_reply_elem_clear(&transport_expected);
+        ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
+        verify_transport_reply_json(z_string_loan(&reply->payload), &peer->common._remote_zid,
+                                    peer->common._remote_whatami, false);
+
+        admin_space_query_reply_t link_expected;
+        z_internal_keyexpr_null(&link_expected.ke);
+        z_internal_string_null(&link_expected.payload);
+        z_internal_encoding_null(&link_expected.encoding);
+        build_peer_link_ke(&link_expected.ke, base_ke, _Z_KEYEXPR_TRANSPORT_UNICAST, &peer->common._remote_zid,
+                           &peer->common._remote_zid);
+
+        entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &link_expected);
         ASSERT_NOT_NULL(entry);
         reply = admin_space_query_reply_list_value(entry);
         ASSERT_NOT_NULL(reply);
-        admin_space_query_reply_elem_clear(&peer_expected);
-
-        verify_peer_common_json(z_string_loan(&reply->payload), &peer->common._remote_zid,
-                                peer->common._remote_whatami);
+        admin_space_query_reply_elem_clear(&link_expected);
+        ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
+        verify_link_reply_json(z_string_loan(&reply->payload), &peer->common._remote_zid);
     }
 }
 
@@ -381,42 +309,39 @@ static void verify_admin_space_query_multicast(const z_loaned_session_t *zs,
     const char *transport =
         (session->_tp._type == _Z_TRANSPORT_RAWETH_TYPE) ? _Z_KEYEXPR_TRANSPORT_RAWETH : _Z_KEYEXPR_TRANSPORT_MULTICAST;
 
-    // Transport reply
-    admin_space_query_reply_t expected;
-    z_internal_keyexpr_null(&expected.ke);
-    z_internal_string_null(&expected.payload);
-    build_transport_ke(&expected.ke, base_ke, transport);
-
-    admin_space_query_reply_list_t *entry =
-        admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &expected);
-    ASSERT_NOT_NULL(entry);
-    const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
-    ASSERT_NOT_NULL(reply);
-    admin_space_query_reply_elem_clear(&expected);
-    ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
-
-    verify_transport_reply_json(z_string_loan(&reply->payload), session->_mode, multicast->_common._link);
-
-    // Peer replies
     for (_z_transport_peer_multicast_slist_t *it = multicast->_peers; it != NULL;
          it = _z_transport_peer_multicast_slist_next(it)) {
         _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(it);
 
-        admin_space_query_reply_t peer_expected;
-        z_internal_keyexpr_null(&peer_expected.ke);
-        z_internal_string_null(&peer_expected.payload);
-        z_internal_encoding_null(&peer_expected.encoding);
-        build_peer_ke(&peer_expected.ke, base_ke, transport, &peer->common._remote_zid);
+        admin_space_query_reply_t transport_expected;
+        z_internal_keyexpr_null(&transport_expected.ke);
+        z_internal_string_null(&transport_expected.payload);
+        z_internal_encoding_null(&transport_expected.encoding);
+        build_transport_peer_ke(&transport_expected.ke, base_ke, transport, &peer->common._remote_zid);
 
-        entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &peer_expected);
+        admin_space_query_reply_list_t *entry =
+            admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &transport_expected);
+        ASSERT_NOT_NULL(entry);
+        const admin_space_query_reply_t *reply = admin_space_query_reply_list_value(entry);
+        ASSERT_NOT_NULL(reply);
+        admin_space_query_reply_elem_clear(&transport_expected);
+        ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
+        verify_transport_reply_json(z_string_loan(&reply->payload), &peer->common._remote_zid,
+                                    peer->common._remote_whatami, true);
+
+        admin_space_query_reply_t link_expected;
+        z_internal_keyexpr_null(&link_expected.ke);
+        z_internal_string_null(&link_expected.payload);
+        z_internal_encoding_null(&link_expected.encoding);
+        build_peer_link_ke(&link_expected.ke, base_ke, transport, &peer->common._remote_zid, &peer->common._remote_zid);
+
+        entry = admin_space_query_reply_list_find(results, admin_space_query_reply_eq, &link_expected);
         ASSERT_NOT_NULL(entry);
         reply = admin_space_query_reply_list_value(entry);
         ASSERT_NOT_NULL(reply);
-        admin_space_query_reply_elem_clear(&peer_expected);
-
-        verify_peer_common_json(z_string_loan(&reply->payload), &peer->common._remote_zid,
-                                peer->common._remote_whatami);
-        assert_contains(z_string_loan(&reply->payload), "\"remote_addr\"");
+        admin_space_query_reply_elem_clear(&link_expected);
+        ASSERT_TRUE(z_encoding_equals(z_loan(reply->encoding), z_encoding_application_json()));
+        verify_link_reply_json(z_string_loan(&reply->payload), &peer->common._remote_zid);
     }
 }
 
@@ -424,18 +349,18 @@ static void verify_admin_space_query(const z_loaned_session_t *zs, const admin_s
                                      const z_loaned_keyexpr_t *base_ke) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
 
-    size_t expected_replies = 1;
+    size_t expected_replies = 0;
     switch (session->_tp._type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            expected_replies += _z_transport_peer_unicast_slist_len(session->_tp._transport._unicast._peers);
-            verify_admin_space_query_unicast(zs, results, base_ke, &session->_tp._transport._unicast);
+            expected_replies = 2 * _z_transport_peer_unicast_slist_len(session->_tp._transport._unicast._peers);
+            verify_admin_space_query_unicast(results, base_ke, &session->_tp._transport._unicast);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            expected_replies += _z_transport_peer_multicast_slist_len(session->_tp._transport._multicast._peers);
+            expected_replies = 2 * _z_transport_peer_multicast_slist_len(session->_tp._transport._multicast._peers);
             verify_admin_space_query_multicast(zs, results, base_ke, &session->_tp._transport._multicast);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            expected_replies += _z_transport_peer_multicast_slist_len(session->_tp._transport._raweth._peers);
+            expected_replies = 2 * _z_transport_peer_multicast_slist_len(session->_tp._transport._raweth._peers);
             verify_admin_space_query_multicast(zs, results, base_ke, &session->_tp._transport._raweth);
             break;
         default:
@@ -539,6 +464,163 @@ void test_admin_space_query_fails_when_not_running(void) {
     z_drop(z_move(s2));
 }
 
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_LINK_TCP == 1 && \
+    Z_FEATURE_MULTI_THREAD == 1
+static void open_listener_session(z_owned_session_t *session, const char *listen_locator) {
+    z_owned_config_t cfg;
+    z_config_default(&cfg);
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_LISTEN_KEY, listen_locator));
+    ASSERT_OK(z_open(session, z_config_move(&cfg), NULL));
+    ASSERT_OK(zp_start_read_task(z_session_loan_mut(session), NULL));
+    ASSERT_OK(zp_start_lease_task(z_session_loan_mut(session), NULL));
+}
+
+static void open_connector_session(z_owned_session_t *session, const char *connect_locator) {
+    z_owned_config_t cfg;
+    z_config_default(&cfg);
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_MODE_KEY, "peer"));
+    ASSERT_OK(zp_config_insert(z_config_loan_mut(&cfg), Z_CONFIG_CONNECT_KEY, connect_locator));
+    ASSERT_OK(z_open(session, z_config_move(&cfg), NULL));
+    ASSERT_OK(zp_start_read_task(z_session_loan_mut(session), NULL));
+    ASSERT_OK(zp_start_lease_task(z_session_loan_mut(session), NULL));
+}
+
+static void close_session_with_tasks(z_owned_session_t *session) {
+    ASSERT_OK(zp_stop_read_task(z_session_loan_mut(session)));
+    ASSERT_OK(zp_stop_lease_task(z_session_loan_mut(session)));
+    z_session_drop(z_session_move(session));
+}
+
+static void wait_for_sample_kind(z_owned_fifo_handler_sample_t *handler, z_sample_kind_t expected_kind,
+                                 z_owned_string_t *payload_out) {
+    if (payload_out != NULL) {
+        z_internal_string_null(payload_out);
+    }
+
+    for (unsigned i = 0; i < 50; ++i) {
+        z_owned_sample_t sample;
+        z_result_t res = z_fifo_handler_sample_try_recv(z_fifo_handler_sample_loan(handler), &sample);
+        if (res == Z_CHANNEL_NODATA) {
+            z_sleep_ms(100);
+            continue;
+        }
+
+        ASSERT_OK(res);
+        if (z_sample_kind(z_loan(sample)) == expected_kind) {
+            if (payload_out != NULL && expected_kind == Z_SAMPLE_KIND_PUT) {
+                ASSERT_OK(z_bytes_to_string(z_sample_payload(z_loan(sample)), payload_out));
+            }
+            z_drop(z_move(sample));
+            return;
+        }
+        z_drop(z_move(sample));
+    }
+
+    ASSERT_TRUE(false);
+}
+
+static void wait_admin_space_ready(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *probe_ke) {
+    bool ready = false;
+    for (unsigned i = 0; i < 50; ++i) {
+        admin_space_query_reply_list_t *results = run_admin_space_query(zs, probe_ke);
+        ready = admin_space_query_reply_list_len(results) > 0;
+        admin_space_query_reply_list_free(&results);
+        if (ready) {
+            break;
+        }
+        z_sleep_ms(100);
+    }
+    ASSERT_TRUE(ready);
+}
+
+void test_admin_space_connectivity_events(void) {
+    z_owned_session_t s1, s2, s3;
+    open_listener_session(&s1, "tcp/127.0.0.1:7457");
+    ASSERT_OK(zp_start_admin_space(z_session_loan_mut(&s1)));
+
+    z_id_t s1_zid = z_info_zid(z_session_loan(&s1));
+    z_owned_string_t s1_zid_str;
+    ASSERT_OK(z_id_to_string(&s1_zid, &s1_zid_str));
+
+    char transport_sub_ke_str[256];
+    int transport_sub_ke_len =
+        snprintf(transport_sub_ke_str, sizeof(transport_sub_ke_str), "@/%.*s/%s/%s/%s/*",
+                 (int)z_string_len(z_string_loan(&s1_zid_str)), z_string_data(z_string_loan(&s1_zid_str)),
+                 _Z_KEYEXPR_PICO, _Z_KEYEXPR_SESSION, _Z_KEYEXPR_TRANSPORT_UNICAST);
+    ASSERT_TRUE(transport_sub_ke_len > 0 && (size_t)transport_sub_ke_len < sizeof(transport_sub_ke_str));
+
+    char link_sub_ke_str[320];
+    int link_sub_ke_len =
+        snprintf(link_sub_ke_str, sizeof(link_sub_ke_str), "@/%.*s/%s/%s/%s/*/%s/*",
+                 (int)z_string_len(z_string_loan(&s1_zid_str)), z_string_data(z_string_loan(&s1_zid_str)),
+                 _Z_KEYEXPR_PICO, _Z_KEYEXPR_SESSION, _Z_KEYEXPR_TRANSPORT_UNICAST, _Z_KEYEXPR_LINK);
+    ASSERT_TRUE(link_sub_ke_len > 0 && (size_t)link_sub_ke_len < sizeof(link_sub_ke_str));
+
+    z_drop(z_move(s1_zid_str));
+
+    z_view_keyexpr_t transport_sub_ke;
+    z_view_keyexpr_t link_sub_ke;
+    ASSERT_OK(z_view_keyexpr_from_str(&transport_sub_ke, transport_sub_ke_str));
+    ASSERT_OK(z_view_keyexpr_from_str(&link_sub_ke, link_sub_ke_str));
+
+    open_connector_session(&s2, "tcp/127.0.0.1:7457");
+
+    z_owned_closure_sample_t transport_sub_closure;
+    z_owned_fifo_handler_sample_t transport_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&transport_sub_closure, &transport_sub_handler, 8));
+    z_owned_subscriber_t transport_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s2), &transport_sub, z_view_keyexpr_loan(&transport_sub_ke),
+                                   z_closure_sample_move(&transport_sub_closure), NULL));
+
+    z_owned_closure_sample_t link_sub_closure;
+    z_owned_fifo_handler_sample_t link_sub_handler;
+    ASSERT_OK(z_fifo_channel_sample_new(&link_sub_closure, &link_sub_handler, 8));
+    z_owned_subscriber_t link_sub;
+    ASSERT_OK(z_declare_subscriber(z_session_loan(&s2), &link_sub, z_view_keyexpr_loan(&link_sub_ke),
+                                   z_closure_sample_move(&link_sub_closure), NULL));
+    wait_admin_space_ready(z_session_loan(&s2), z_view_keyexpr_loan(&transport_sub_ke));
+    wait_admin_space_ready(z_session_loan(&s2), z_view_keyexpr_loan(&link_sub_ke));
+    z_sleep_ms(500);
+    open_connector_session(&s3, "tcp/127.0.0.1:7457");
+
+    z_owned_string_t transport_put_payload;
+    z_owned_string_t link_put_payload;
+    wait_for_sample_kind(&transport_sub_handler, Z_SAMPLE_KIND_PUT, &transport_put_payload);
+    wait_for_sample_kind(&link_sub_handler, Z_SAMPLE_KIND_PUT, &link_put_payload);
+
+    assert_contains(z_string_loan(&transport_put_payload), "\"zid\"");
+    assert_contains(z_string_loan(&transport_put_payload), "\"whatami\"");
+    assert_contains(z_string_loan(&transport_put_payload), "\"is_qos\"");
+    assert_contains(z_string_loan(&transport_put_payload), "\"is_multicast\"");
+    assert_contains(z_string_loan(&transport_put_payload), "\"is_shm\"");
+
+    assert_contains(z_string_loan(&link_put_payload), "\"zid\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"src\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"dst\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"mtu\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"is_streamed\"");
+    assert_contains(z_string_loan(&link_put_payload), "\"is_reliable\"");
+
+    z_drop(z_move(transport_put_payload));
+    z_drop(z_move(link_put_payload));
+
+    close_session_with_tasks(&s3);
+
+    wait_for_sample_kind(&link_sub_handler, Z_SAMPLE_KIND_DELETE, NULL);
+    wait_for_sample_kind(&transport_sub_handler, Z_SAMPLE_KIND_DELETE, NULL);
+
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&transport_sub)));
+    ASSERT_OK(z_undeclare_subscriber(z_subscriber_move(&link_sub)));
+    z_drop(z_move(transport_sub_handler));
+    z_drop(z_move(link_sub_handler));
+
+    close_session_with_tasks(&s2);
+    ASSERT_OK(zp_stop_admin_space(z_session_loan_mut(&s1)));
+    close_session_with_tasks(&s1);
+}
+#endif
+
 int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -546,6 +628,10 @@ int main(int argc, char **argv) {
     test_auto_start_admin_space();
     test_admin_space_query_succeeds();
     test_admin_space_query_fails_when_not_running();
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_LINK_TCP == 1 && \
+    Z_FEATURE_MULTI_THREAD == 1
+    test_admin_space_connectivity_events();
+#endif
     return 0;
 }
 

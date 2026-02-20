@@ -1900,6 +1900,7 @@ Enabling the Admin Space
 
 The Admin Space is an **optional feature** and must be explicitly enabled at
 build time by defining the ``Z_FEATURE_ADMIN_SPACE`` configuration flag.
+It requires both ``Z_FEATURE_UNSTABLE_API`` and ``Z_FEATURE_CONNECTIVITY``.
 
 When building Zenoh-Pico with CMake, this can be enabled via:
 
