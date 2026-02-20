@@ -917,14 +917,13 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     }
 
     z_owned_cancellation_token_t ct;
-    z_cancellation_token_clone(&ct, z_cancellation_token_loan(&state->_cancellation_token));
-    get_opts.cancellation_token = z_cancellation_token_move(&ct);
-
-    _Z_CLEAN_RETURN_IF_ERR(z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts),
+    _Z_CLEAN_RETURN_IF_ERR(z_cancellation_token_clone(&ct, z_cancellation_token_loan(&state->_cancellation_token)),
                            _z_session_rc_drop(&sess_rc);
                            _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref));
+    get_opts.cancellation_token = z_cancellation_token_move(&ct);
+    z_result_t ret = z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts);
     _z_session_rc_drop(&sess_rc);
-    return _Z_RES_OK;
+    return ret;
 }
 
 static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subscriber_state_rc_t *state,

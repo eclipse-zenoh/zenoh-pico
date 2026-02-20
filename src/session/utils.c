@@ -111,24 +111,26 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     zn->_periodic_scheduler_task_attr = NULL;
 #endif
     ret = _zp_periodic_scheduler_init(&zn->_periodic_scheduler);
-    if (ret != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        zn->_mutex_inner_initialized = false;
-        _z_mutex_drop(&zn->_mutex_inner);
-#endif
-        _Z_ERROR_RETURN(ret);
-    }
 #endif
 
 #if Z_FEATURE_ADMIN_SPACE == 1
     zn->_admin_space_queryable_id = 0;
 #endif
 #endif
+    zn->_callback_drop_sync_group = _z_sync_group_null();
+    _Z_SET_IF_OK(ret, _z_sync_group_create(&zn->_callback_drop_sync_group));
+    if (ret != _Z_RES_OK) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        zn->_mutex_inner_initialized = false;
+        _z_mutex_drop(&zn->_mutex_inner);
+#endif
+        _z_sync_group_drop(&zn->_callback_drop_sync_group);
+        _Z_ERROR_RETURN(ret);
+    }
 
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
-    _z_sync_group_create(&zn->_callback_drop_sync_group);
     return ret;
 }
 

@@ -125,10 +125,10 @@ bool _z_cancellation_token_is_cancelled(const _z_cancellation_token_t *ct) {
     return _z_sync_group_is_closed(&ct->_sync_group);
 }
 
-void _z_cancellation_token_call_handlers(_z_cancellation_token_t *ct) {
+z_result_t _z_cancellation_token_call_handlers(_z_cancellation_token_t *ct) {
     bool set_cancel_result = false;
     if (_z_cancellation_token_lock(ct) != _Z_RES_OK) {
-        return;
+        return _Z_ERR_SYSTEM_GENERIC;
     }
     set_cancel_result = _z_sync_group_notifier_check(&ct->_handlers._cancel_sync_notifier);
     _z_cancellation_handlers_storage_t s = ct->_handlers;
@@ -140,10 +140,11 @@ void _z_cancellation_token_call_handlers(_z_cancellation_token_t *ct) {
             _z_sync_group_close(&ct->_sync_group);
         }
     }
+    return _Z_RES_OK;
 }
 
 z_result_t _z_cancellation_token_cancel(_z_cancellation_token_t *ct) {
-    _z_cancellation_token_call_handlers(ct);
+    _Z_RETURN_IF_ERR(_z_cancellation_token_call_handlers(ct));
     _z_sync_group_wait(&ct->_sync_group);
     return ct->_cancel_result;
 }
@@ -152,7 +153,7 @@ z_result_t _z_cancellation_token_cancel_with_timeout(_z_cancellation_token_t *ct
     z_clock_t deadline = z_clock_now();
     z_clock_advance_ms(&deadline, timeout_ms);
 
-    _z_cancellation_token_call_handlers(ct);
+    _Z_RETURN_IF_ERR(_z_cancellation_token_call_handlers(ct));
     if (_z_sync_group_wait_deadline(&ct->_sync_group, &deadline) == Z_ETIMEDOUT) {
         return Z_ETIMEDOUT;
     } else {
