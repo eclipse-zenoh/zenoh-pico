@@ -737,6 +737,7 @@ static z_result_t _z_session_rc_init(z_owned_session_t *zs, _z_id_t *zid) {
 }
 
 z_result_t z_open(z_owned_session_t *zs, z_moved_config_t *config, const z_open_options_t *options) {
+    z_internal_session_null(zs);
 #if Z_FEATURE_MULTI_THREAD == 1
     z_open_options_t opts;
     if (options == NULL) {
@@ -1337,26 +1338,34 @@ z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher) {
 #if Z_FEATURE_MATCHING == 1
 z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publisher_t *publisher,
                                                             z_moved_closure_matching_status_t *callback) {
-    z_owned_matching_listener_t listener;
-    _Z_RETURN_IF_ERR(z_publisher_declare_matching_listener(publisher, &listener, callback));
-    _z_matching_listener_clear(&listener._val);
-    return _Z_RES_OK;
+    return z_publisher_declare_matching_listener(publisher, NULL, callback);
 }
 
 z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
                                                  z_owned_matching_listener_t *matching_listener,
                                                  z_moved_closure_matching_status_t *callback) {
-    matching_listener->_val = _z_matching_listener_null();
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
+    z_result_t ret = _Z_RES_OK;
     if (!_Z_RC_IS_NULL(&sess_rc)) {
-        matching_listener->_val = _z_matching_listener_declare(
-            &publisher->_filter.ctx, _z_get_entity_id(_Z_RC_IN_VAL(&sess_rc)), &callback->_this._val);
+        if (matching_listener != NULL) {
+            matching_listener->_val = _z_matching_listener_null();
+            ret = _z_matching_listener_declare(&matching_listener->_val, _Z_RC_IN_VAL(&sess_rc),
+                                               &publisher->_filter.ctx, &callback->_this._val);
+        } else {
+            uint32_t _listener_id;
+            ret = _z_matching_listener_register(&_listener_id, _Z_RC_IN_VAL(&sess_rc), &publisher->_filter.ctx,
+                                                &callback->_this._val);
+        }
         _z_session_rc_drop(&sess_rc);
     } else {
-        matching_listener->_val = _z_matching_listener_null();
+        if (matching_listener != NULL) {
+            matching_listener->_val = _z_matching_listener_null();
+        }
+        _z_closure_matching_status_clear(&callback->_this._val);
         z_internal_closure_matching_status_null(&callback->_this);
+        ret = _Z_ERR_GENERIC;
     }
-    return _z_matching_listener_check(&matching_listener->_val) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    return ret;
 }
 
 z_result_t z_publisher_get_matching_status(const z_loaned_publisher_t *publisher,
@@ -1433,10 +1442,10 @@ z_result_t z_get_with_parameters_substr(const z_loaned_session_t *zs, const z_lo
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     allowed_destination = opt.allowed_destination;
 #endif
-    ret = _z_query(zs, keyexpr, parameters, parameters_len, opt.target, opt.consolidation.mode,
-                   _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding), closure.call, closure.drop,
-                   closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment), qos, source_info,
-                   allowed_destination, cancellation_token);
+    ret = _z_query(zs, _z_optional_id_make_none(), keyexpr, parameters, parameters_len, opt.target,
+                   opt.consolidation.mode, _z_bytes_from_moved(opt.payload), _z_encoding_from_moved(opt.encoding),
+                   closure.call, closure.drop, closure.context, opt.timeout_ms, _z_bytes_from_moved(opt.attachment),
+                   qos, source_info, allowed_destination, cancellation_token);
     // Clean-up
 #ifdef Z_FEATURE_UNSTABLE_API
     z_cancellation_token_drop(opt.cancellation_token);
@@ -1557,10 +1566,11 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
     if (should_proceed) {
         _z_n_qos_t qos = _z_n_qos_make(querier->_is_express, querier->_congestion_control == Z_CONGESTION_CONTROL_BLOCK,
                                        querier->_priority);
-        ret = _z_query(&sess_rc, &querier->_key, parameters, parameters_len, querier->_target,
-                       querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding, closure.call,
-                       closure.drop, closure.context, querier->_timeout_ms, _z_bytes_from_moved(opt.attachment), qos,
-                       source_info, querier->_allowed_destination, cancellation_token);
+        ret = _z_query(&sess_rc, _z_optional_id_make_some(querier->_id), &querier->_key, parameters, parameters_len,
+                       querier->_target, querier->_consolidation_mode, _z_bytes_from_moved(opt.payload), &encoding,
+                       closure.call, closure.drop, closure.context, querier->_timeout_ms,
+                       _z_bytes_from_moved(opt.attachment), qos, source_info, querier->_allowed_destination,
+                       cancellation_token);
     } else if (closure.drop != NULL) {
         closure.drop(closure.context);
     }
@@ -1613,25 +1623,33 @@ z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier) {
 #if Z_FEATURE_MATCHING == 1
 z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier_t *querier,
                                                           z_moved_closure_matching_status_t *callback) {
-    z_owned_matching_listener_t listener;
-    _Z_RETURN_IF_ERR(z_querier_declare_matching_listener(querier, &listener, callback));
-    _z_matching_listener_clear(&listener._val);
-    return _Z_RES_OK;
+    return z_querier_declare_matching_listener(querier, NULL, callback);
 }
 z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
                                                z_owned_matching_listener_t *matching_listener,
                                                z_moved_closure_matching_status_t *callback) {
-    matching_listener->_val = _z_matching_listener_null();
     _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
+    z_result_t ret = _Z_RES_OK;
     if (!_Z_RC_IS_NULL(&sess_rc)) {
-        matching_listener->_val = _z_matching_listener_declare(
-            &querier->_filter.ctx, _z_get_entity_id(_Z_RC_IN_VAL(&sess_rc)), &callback->_this._val);
+        if (matching_listener != NULL) {
+            matching_listener->_val = _z_matching_listener_null();
+            ret = _z_matching_listener_declare(&matching_listener->_val, _Z_RC_IN_VAL(&sess_rc), &querier->_filter.ctx,
+                                               &callback->_this._val);
+        } else {
+            uint32_t _listener_id;
+            ret = _z_matching_listener_register(&_listener_id, _Z_RC_IN_VAL(&sess_rc), &querier->_filter.ctx,
+                                                &callback->_this._val);
+        }
         _z_session_rc_drop(&sess_rc);
     } else {
-        matching_listener->_val = _z_matching_listener_null();
+        if (matching_listener != NULL) {
+            matching_listener->_val = _z_matching_listener_null();
+        }
+        _z_closure_matching_status_clear(&callback->_this._val);
         z_internal_closure_matching_status_null(&callback->_this);
+        ret = _Z_ERR_GENERIC;
     }
-    return _z_matching_listener_check(&matching_listener->_val) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    return ret;
 }
 
 z_result_t z_querier_get_matching_status(const z_loaned_querier_t *querier, z_matching_status_t *matching_status) {
@@ -1691,10 +1709,7 @@ void z_queryable_options_default(z_queryable_options_t *options) {
 
 z_result_t z_declare_background_queryable(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                           z_moved_closure_query_t *callback, const z_queryable_options_t *options) {
-    z_owned_queryable_t qle;
-    _Z_RETURN_IF_ERR(z_declare_queryable(zs, &qle, keyexpr, callback, options));
-    _z_queryable_clear(&qle._val);
-    return _Z_RES_OK;
+    return z_declare_queryable(zs, NULL, keyexpr, callback, options);
 }
 
 z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t *queryable,
@@ -1713,8 +1728,14 @@ z_result_t z_declare_queryable(const z_loaned_session_t *zs, z_owned_queryable_t
 #if Z_FEATURE_LOCAL_QUERYABLE == 1
     allowed_origin = opt.allowed_origin;
 #endif
-    return _z_declare_queryable(&queryable->_val, zs, keyexpr, opt.complete, closure.call, closure.drop,
-                                closure.context, allowed_origin);
+    if (queryable != NULL) {
+        return _z_declare_queryable(&queryable->_val, zs, keyexpr, opt.complete, closure.call, closure.drop,
+                                    closure.context, allowed_origin);
+    } else {
+        uint32_t _queryable_id;
+        return _z_register_queryable(&_queryable_id, zs, keyexpr, opt.complete, closure.call, closure.drop,
+                                     closure.context, allowed_origin, NULL);
+    }
 }
 
 z_result_t z_undeclare_queryable(z_moved_queryable_t *queryable) {
@@ -1979,10 +2000,7 @@ void z_subscriber_options_default(z_subscriber_options_t *options) {
 
 z_result_t z_declare_background_subscriber(const z_loaned_session_t *zs, const z_loaned_keyexpr_t *keyexpr,
                                            z_moved_closure_sample_t *callback, const z_subscriber_options_t *options) {
-    z_owned_subscriber_t sub;
-    _Z_RETURN_IF_ERR(z_declare_subscriber(zs, &sub, keyexpr, callback, options));
-    _z_subscriber_clear(&sub._val);
-    return _Z_RES_OK;
+    return z_declare_subscriber(zs, NULL, keyexpr, callback, options);
 }
 
 z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber_t *sub,
@@ -1990,7 +2008,6 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
                                 const z_subscriber_options_t *options) {
     _z_closure_sample_t closure = callback->_this._val;
     z_internal_closure_sample_null(&callback->_this);
-    sub->_val = _z_subscriber_null();
 
     z_subscriber_options_t opt;
     z_subscriber_options_default(&opt);
@@ -2002,7 +2019,15 @@ z_result_t z_declare_subscriber(const z_loaned_session_t *zs, z_owned_subscriber
 #if Z_FEATURE_LOCAL_SUBSCRIBER == 1
     allowed_origin = opt.allowed_origin;
 #endif
-    return _z_declare_subscriber(&sub->_val, zs, keyexpr, closure.call, closure.drop, closure.context, allowed_origin);
+    if (sub != NULL) {
+        sub->_val = _z_subscriber_null();
+        return _z_declare_subscriber(&sub->_val, zs, keyexpr, closure.call, closure.drop, closure.context,
+                                     allowed_origin);
+    } else {
+        uint32_t _sub_id;
+        return _z_register_subscriber(&_sub_id, zs, keyexpr, closure.call, closure.drop, closure.context,
+                                      allowed_origin, NULL);
+    }
 }
 
 z_result_t z_undeclare_subscriber(z_moved_subscriber_t *sub) {

@@ -39,6 +39,18 @@ typedef struct {
     z_closure_drop_callback_t drop;
 } _zp_closure_periodic_task_t;
 
+static inline _zp_closure_periodic_task_t _zp_closure_periodic_task_null(void) {
+    _zp_closure_periodic_task_t c = {0};
+    return c;
+}
+
+static inline void _zp_closure_periodic_task_drop(_zp_closure_periodic_task_t *closure) {
+    if (closure->drop != NULL) {
+        closure->drop(closure->context);
+    };
+    *closure = _zp_closure_periodic_task_null();
+}
+
 typedef struct {
     uint32_t _id;
     uint64_t _period_ms;
@@ -101,7 +113,7 @@ static inline bool _zp_periodic_scheduler_check(const _zp_periodic_scheduler_t *
 }
 z_result_t _zp_periodic_scheduler_init(_zp_periodic_scheduler_t *scheduler);
 void _zp_periodic_scheduler_clear(_zp_periodic_scheduler_t *scheduler);
-z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, const _zp_closure_periodic_task_t *closure,
+z_result_t _zp_periodic_scheduler_add(_zp_periodic_scheduler_t *scheduler, _zp_closure_periodic_task_t *closure,
                                       uint64_t period_ms, uint32_t *id);
 z_result_t _zp_periodic_scheduler_remove(_zp_periodic_scheduler_t *scheduler, uint32_t id);
 

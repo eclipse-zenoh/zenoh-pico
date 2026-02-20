@@ -48,6 +48,12 @@ z_result_t _z_declare_liveliness_subscriber(_z_subscriber_t *subscriber, const _
                                             const _z_declared_keyexpr_t *keyexpr, _z_closure_sample_callback_t callback,
                                             _z_drop_handler_t dropper, bool history, void *arg);
 
+z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_session_rc_t *zn,
+                                             const _z_declared_keyexpr_t *keyexpr,
+                                             _z_closure_sample_callback_t callback, _z_drop_handler_t dropper,
+                                             bool history, void *arg,
+                                             const _z_sync_group_t *opt_callback_drop_sync_group);
+
 /**
  * Undeclare a liveliness :c:type:`_z_subscriber_t`.
  *

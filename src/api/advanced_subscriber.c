@@ -34,6 +34,25 @@
 // Space for 10 digits + NULL
 #define ZE_ADVANCED_SUBSCRIBER_UINT32_STR_BUF_LEN 11
 
+z_result_t _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(_ze_advanced_subscriber_state_t *state) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    _Z_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)));
+#endif
+    if (state->_is_undeclaring) {
+#if Z_FEATURE_MULTI_THREAD == 1
+        z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
+#endif
+        return Z_ERR_CANCELLED;
+    }
+    return _Z_RES_OK;
+}
+
+void _ze_advanced_subscriber_state_unlock_mutex(_ze_advanced_subscriber_state_t *state) {
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
+#endif
+}
+
 void _ze_sample_miss_listener_clear(_ze_sample_miss_listener_t *listener) {
     _ze_advanced_subscriber_state_weak_drop(&listener->_statesref);
     *listener = _ze_sample_miss_listener_null();
@@ -50,14 +69,14 @@ z_result_t _ze_sample_miss_listener_drop(_ze_sample_miss_listener_t *listener) {
     }
 
     _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&state_rc);
-
-#if Z_FEATURE_MULTI_THREAD == 1
-    _Z_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)));
-#endif
+    z_result_t ret = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(state);
+    if (ret != _Z_RES_OK) {
+        _ze_advanced_subscriber_state_rc_drop(&state_rc);
+        _ze_sample_miss_listener_clear(listener);
+        return ret == Z_ERR_CANCELLED ? _Z_RES_OK : ret;
+    }
     _ze_closure_miss_intmap_remove(&state->_miss_handlers, listener->_id);
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-#endif
+    _ze_advanced_subscriber_state_unlock_mutex(state);
     _ze_advanced_subscriber_state_rc_drop(&state_rc);
     _ze_sample_miss_listener_clear(listener);
     return _Z_RES_OK;
@@ -151,6 +170,7 @@ _ze_advanced_subscriber_state_t _ze_advanced_subscriber_state_null(void) {
     state._zn = _z_session_weak_null();
     z_internal_keyexpr_null(&state._keyexpr);
     z_internal_liveliness_token_null(&state._token);
+    z_internal_cancellation_token_null(&state._cancellation_token);
     return state;
 }
 
@@ -158,13 +178,9 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
                                                      z_moved_closure_sample_t *callback,
                                                      const z_loaned_keyexpr_t *keyexpr,
                                                      const ze_advanced_subscriber_options_t *options) {
+    *state = _ze_advanced_subscriber_state_null();
     state->_next_id = 0;
     state->_global_pending_queries = options->history.is_enabled ? 1 : 0;
-    z_internal_keyexpr_null(&state->_keyexpr);
-    _Z_RETURN_IF_ERR(z_keyexpr_clone(&state->_keyexpr, keyexpr));
-#if Z_FEATURE_MULTI_THREAD == 1
-    _Z_CLEAN_RETURN_IF_ERR(z_mutex_init(&state->_mutex), z_keyexpr_drop(z_keyexpr_move(&state->_keyexpr)));
-#endif
     _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_init(&state->_sequenced_states);
     _z_id__ze_advanced_subscriber_timestamped_state_hashmap_init(&state->_timestamped_states);
     state->_zn = _z_session_rc_clone_as_weak(zn);
@@ -182,8 +198,18 @@ static z_result_t _ze_advanced_subscriber_state_init(_ze_advanced_subscriber_sta
     z_internal_closure_sample_null(&callback->_this);
     _ze_closure_miss_intmap_init(&state->_miss_handlers);
     state->_has_token = false;
-    z_internal_liveliness_token_null(&state->_token);
-
+#if Z_FEATURE_MULTI_THREAD == 1
+    z_result_t ret = z_mutex_init(&state->_mutex);
+    if (ret != _Z_RES_OK) {
+        if (state->_dropper != NULL) {
+            state->_dropper(state->_ctx);
+        }
+        return ret;
+    }
+#endif
+    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&state->_keyexpr, keyexpr), _ze_advanced_subscriber_state_clear(state));
+    _Z_CLEAN_RETURN_IF_ERR(z_cancellation_token_new(&state->_cancellation_token),
+                           _ze_advanced_subscriber_state_clear(state));
     return _Z_RES_OK;
 }
 
@@ -208,6 +234,7 @@ void _ze_advanced_subscriber_state_clear(_ze_advanced_subscriber_state_t *state)
     _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
     _ze_closure_miss_intmap_clear(&state->_miss_handlers);
     z_keyexpr_drop(z_keyexpr_move(&state->_keyexpr));
+    z_cancellation_token_drop(z_cancellation_token_move(&state->_cancellation_token));
     if (state->_has_token) {
         z_liveliness_token_drop(z_liveliness_token_move(&state->_token));
     }
@@ -241,27 +268,18 @@ _ze_advanced_subscriber_t _ze_advanced_subscriber_null(void) {
     return subscriber;
 }
 
-z_result_t _ze_advanced_subscriber_clear(_ze_advanced_subscriber_t *sub) {
-    _z_subscriber_clear(&sub->_subscriber._val);
-    _z_subscriber_clear(&sub->_liveliness_subscriber._val);
-    _z_subscriber_clear(&sub->_heartbeat_subscriber._val);
-    _ze_advanced_subscriber_state_rc_drop(&sub->_state);
-
-    *sub = _ze_advanced_subscriber_null();
-    return _Z_RES_OK;
-}
-
-z_result_t _ze_advanced_subscriber_drop(_ze_advanced_subscriber_t *sub) {
+z_result_t _ze_advanced_subscriber_undeclare(_ze_advanced_subscriber_t *sub) {
     if (sub == NULL || !_ze_advanced_subscriber_check(sub)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-
     z_result_t ret = z_undeclare_subscriber(z_subscriber_move(&sub->_subscriber));
     if (sub->_has_liveliness_subscriber) {
-        z_undeclare_subscriber(z_subscriber_move(&sub->_liveliness_subscriber));
+        z_result_t ret2 = z_undeclare_subscriber(z_subscriber_move(&sub->_liveliness_subscriber));
+        _Z_SET_IF_OK(ret, ret2)
     }
     if (sub->_has_heartbeat_subscriber) {
-        z_undeclare_subscriber(z_subscriber_move(&sub->_heartbeat_subscriber));
+        z_result_t ret2 = z_undeclare_subscriber(z_subscriber_move(&sub->_heartbeat_subscriber));
+        _Z_SET_IF_OK(ret, ret2);
     }
     _ze_advanced_subscriber_state_rc_drop(&sub->_state);
 
@@ -269,9 +287,25 @@ z_result_t _ze_advanced_subscriber_drop(_ze_advanced_subscriber_t *sub) {
     return ret;
 }
 
+void _ze_advanced_subscriber_clear(_ze_advanced_subscriber_t *sub) {
+    if (sub == NULL || !_ze_advanced_subscriber_check(sub)) {
+        return;
+    }
+    _z_subscriber_clear(&sub->_subscriber._val);
+    if (sub->_has_liveliness_subscriber) {
+        _z_subscriber_clear(&sub->_liveliness_subscriber._val);
+    }
+    if (sub->_has_heartbeat_subscriber) {
+        _z_subscriber_clear(&sub->_heartbeat_subscriber._val);
+    }
+    _ze_advanced_subscriber_state_rc_drop(&sub->_state);
+
+    *sub = _ze_advanced_subscriber_null();
+}
+
 _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_NO_MOVE_IMPL_PREFIX(ze, _ze_advanced_subscriber_t, advanced_subscriber,
                                                      _ze_advanced_subscriber_check, _ze_advanced_subscriber_null,
-                                                     _ze_advanced_subscriber_drop)
+                                                     _ze_advanced_subscriber_undeclare)
 
 static bool _ze_advanced_subscriber_populate_query_params(char *buf, size_t buf_len, size_t max_samples,
                                                           uint64_t max_age_ms,
@@ -735,12 +769,10 @@ void _ze_advanced_subscriber_query_reply_handler(z_loaned_reply_t *reply, void *
         const z_loaned_keyexpr_t *keyexpr = z_sample_keyexpr(sample);
 
         if (z_keyexpr_intersects(z_keyexpr_loan(&states->_keyexpr), keyexpr)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-                _Z_ERROR("Failed to lock mutex for query reply handling");
+            if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+                _Z_WARN("Failed to lock mutex for query reply handling");
                 return;
             }
-#endif
             z_owned_sample_t sample_copy;
             if (z_sample_clone(&sample_copy, sample) == _Z_RES_OK) {
                 bool new_source = false;
@@ -753,10 +785,7 @@ void _ze_advanced_subscriber_query_reply_handler(z_loaned_reply_t *reply, void *
             } else {
                 _Z_ERROR("Failed to clone sample for query reply handling");
             }
-
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
         }
     }
 }
@@ -886,11 +915,15 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
         _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
-    _Z_CLEAN_RETURN_IF_ERR(z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts),
+
+    z_owned_cancellation_token_t ct;
+    _Z_CLEAN_RETURN_IF_ERR(z_cancellation_token_clone(&ct, z_cancellation_token_loan(&state->_cancellation_token)),
                            _z_session_rc_drop(&sess_rc);
                            _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref));
+    get_opts.cancellation_token = z_cancellation_token_move(&ct);
+    z_result_t ret = z_get(&sess_rc, keyexpr, params, z_closure_reply_move(&callback), &get_opts);
     _z_session_rc_drop(&sess_rc);
-    return _Z_RES_OK;
+    return ret;
 }
 
 static inline z_result_t _ze_advanced_subscriber_initial_query(_ze_advanced_subscriber_state_rc_t *state,
@@ -936,7 +969,30 @@ static inline z_result_t _ze_advanced_subscriber_timestamped_query(_ze_advanced_
 typedef struct {
     z_entity_global_id_t source_id;
     _ze_advanced_subscriber_state_rc_t _statesref;
+    _z_sync_group_notifier_t _task_finished_notifier;
 } _ze_advanced_subscriber_periodic_query_ctx_t;
+
+_ze_advanced_subscriber_periodic_query_ctx_t _ze_advanced_subscriber_periodic_query_ctx_null(void) {
+    _ze_advanced_subscriber_periodic_query_ctx_t ctx = {0};
+    return ctx;
+}
+
+void _ze_advanced_subscriber_periodic_query_ctx_drop(_ze_advanced_subscriber_periodic_query_ctx_t *ctx) {
+    if (ctx == NULL) {
+        return;
+    }
+    _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
+    _z_sync_group_notifier_drop(&ctx->_task_finished_notifier);
+}
+
+void _ze_advanced_subscriber_periodic_query_ctx_free(_ze_advanced_subscriber_periodic_query_ctx_t **ctx) {
+    if (ctx == NULL) {
+        return;
+    }
+    _ze_advanced_subscriber_periodic_query_ctx_drop(*ctx);
+    z_free(*ctx);
+    *ctx = NULL;
+}
 
 static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
     _ze_advanced_subscriber_periodic_query_ctx_t *query_ctx = (_ze_advanced_subscriber_periodic_query_ctx_t *)ctx;
@@ -946,19 +1002,15 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
     }
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(&query_ctx->_statesref);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_result_t res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+    z_result_t res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
     if (res != _Z_RES_OK) {
         _Z_WARN("Failed to lock mutex when running periodic query: %d", res);
         return;
     }
-#endif
 
     // Global history still running? Don’t schedule a per-source query yet.
     if (states->_global_pending_queries != 0) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         return;
     }
 
@@ -966,18 +1018,14 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                 &query_ctx->source_id);
     if (state == NULL) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         return;
     }
 
     // Don’t pile up queries; wait until the previous one finishes.
     if (state->_pending_queries != 0) {
         // Nothing to do this tick.
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         return;
     }
 
@@ -989,47 +1037,35 @@ static void _ze_advanced_subscriber_periodic_query_handler(void *ctx) {
         ._end = 0};
 
     if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         _Z_WARN("Failed to prepare periodic query");
         return;
     }
 
     state->_pending_queries++;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+    _ze_advanced_subscriber_state_unlock_mutex(states);
     res = _ze_advanced_subscriber_sequenced_query(&query_ctx->_statesref, z_keyexpr_loan(&state->_query_keyexpr),
                                                   params, &query_ctx->source_id);
     if (res != _Z_RES_OK) {
         _Z_WARN("Failed to run periodic query");
-#if Z_FEATURE_MULTI_THREAD == 1
-        res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+        res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
         if (res != _Z_RES_OK) {
-            _Z_ERROR(
-                "FATAL: failed to relock mutex after periodic query failure (%d); "
-                "advanced subscriber invariants are violated; terminating process",
-                res);
-            abort();
+            _Z_WARN("Failed to lock mutex for periodic query failure (%d)", res);
+            return;
         }
-#endif
         state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                         &query_ctx->source_id);
         if (state != NULL) {
             state->_pending_queries--;
         }
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
     }
 }
 
 static void _ze_advanced_subscriber_periodic_query_dropper(void *ctx) {
     _ze_advanced_subscriber_periodic_query_ctx_t *query_ctx = (_ze_advanced_subscriber_periodic_query_ctx_t *)ctx;
-    _ze_advanced_subscriber_state_rc_drop(&query_ctx->_statesref);
-    z_free(ctx);
+    _ze_advanced_subscriber_periodic_query_ctx_free(&query_ctx);
 }
 
 // SAFETY: Must be called with _ze_advanced_subscriber_state_t mutex locked
@@ -1051,15 +1087,21 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     if (!states->_has_period) {
         return _Z_RES_OK;
     }
+    _z_sync_group_notifier_t notifier;
+    _Z_RETURN_IF_ERR(_z_cancellation_token_get_notifier(
+        z_cancellation_token_loan_mut(&states->_cancellation_token)->_val, &notifier));
 
     _ze_advanced_subscriber_periodic_query_ctx_t *ctx = z_malloc(sizeof(_ze_advanced_subscriber_periodic_query_ctx_t));
     if (ctx == NULL) {
+        _z_sync_group_notifier_drop(&notifier);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
+    *ctx = _ze_advanced_subscriber_periodic_query_ctx_null();
     ctx->source_id = *source_id;
     ctx->_statesref = _ze_advanced_subscriber_state_rc_clone(rc_states);
+    ctx->_task_finished_notifier = notifier;
     if (_Z_RC_IS_NULL(&ctx->_statesref)) {
-        z_free(ctx);
+        _ze_advanced_subscriber_periodic_query_ctx_free(&ctx);
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
@@ -1069,7 +1111,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&states->_zn);
 #endif
     if (_Z_RC_IS_NULL(&sess_rc)) {
-        z_free(ctx);
+        _ze_advanced_subscriber_periodic_query_ctx_free(&ctx);
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
 
@@ -1082,7 +1124,6 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
 
     _z_session_rc_drop(&sess_rc);
     if (res != _Z_RES_OK) {
-        z_free(ctx);
         _Z_ERROR_RETURN(res);
     }
     return _Z_RES_OK;
@@ -1095,28 +1136,22 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
     }
 
     _ze_advanced_subscriber_state_t *states = _Z_RC_IN_VAL(rc_states);
-#if Z_FEATURE_MULTI_THREAD == 1
-    if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-        _Z_ERROR("Failed to lock subscriber callback mutex");
+    if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock subscriber callback mutex");
         return;
     }
-#endif
 
     bool new_source = false;
     z_result_t ret = __unsafe_ze_advanced_subscriber_handle_sample(states, sample, &new_source);
     if (ret != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         _Z_ERROR("Failed to handle sample in subscriber callback: %i", ret);
         return;
     }
 
     const z_source_info_t *source_info = z_sample_source_info(sample);
     if (source_info == NULL) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         return;
     }
     z_entity_global_id_t source_id = z_source_info_id(source_info);
@@ -1136,48 +1171,35 @@ void _ze_advanced_subscriber_subscriber_callback(z_loaned_sample_t *sample, void
             ._end = 0};
 
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to prepare query for missing samples");
             return;
         }
 
         state->_pending_queries++;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
 
         z_result_t res = _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr),
                                                                  params, &source_id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for missing samples");
-#if Z_FEATURE_MULTI_THREAD == 1
-            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
-            if (res != _Z_RES_OK) {
-                _Z_ERROR(
-                    "FATAL: failed to relock mutex after missing sample query failure (%d); "
-                    "advanced subscriber invariants are violated; terminating process",
-                    res);
-                abort();
+            if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+                _Z_WARN("Failed to lock mutex missing sample query failure (%d)", res);
+                return;
             }
-#endif
 
             state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                             &source_id);
             if (state != NULL) {
                 state->_pending_queries--;
             }
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+
+            _ze_advanced_subscriber_state_unlock_mutex(states);
         }
         return;
     }
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+    _ze_advanced_subscriber_state_unlock_mutex(states);
 }
 
 void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
@@ -1187,6 +1209,22 @@ void _ze_advanced_subscriber_subscriber_drop_handler(void *ctx) {
         if (state->_dropper != NULL) {
             state->_dropper(state->_ctx);
         }
+        if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(state) != _Z_RES_OK) {
+            _Z_WARN("Failed to lock mutex for subscriber drop handler");
+            return;
+        }
+        // signal undeclaring state to prevent new queries or miss handlers from being added
+        state->_is_undeclaring = true;
+        // clear miss handlers to release user callbacks
+        _ze_closure_miss_intmap_clear(&state->_miss_handlers);
+        // clear sequenced state to remove any periodic query tasks
+        _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_clear(&state->_sequenced_states);
+        _z_id__ze_advanced_subscriber_timestamped_state_hashmap_clear(&state->_timestamped_states);
+        _ze_advanced_subscriber_state_unlock_mutex(state);
+        if (z_internal_cancellation_token_check(&state->_cancellation_token)) {
+            z_cancellation_token_cancel(z_cancellation_token_loan_mut(&state->_cancellation_token));
+        }
+
         _ze_advanced_subscriber_state_rc_drop(rc_state);
         z_free(ctx);
     }
@@ -1310,12 +1348,10 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
     }
 
     if (id.eid == _ZE_ADVANCED_SUBSCRIBER_UHLC_EID) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-            _Z_ERROR("Failed to lock liveliness subscriber callback mutex");
+        if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+            _Z_WARN("Failed to lock liveliness subscriber callback mutex");
             return;
         }
-#endif
 
         _ze_advanced_subscriber_timestamped_state_t *state =
             _z_id__ze_advanced_subscriber_timestamped_state_hashmap_get(&states->_timestamped_states, &id.zid);
@@ -1323,9 +1359,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
             z_id_t *new_zid = z_malloc(sizeof(z_id_t));
             if (new_zid == NULL) {
                 _Z_ERROR("Failed to allocate memory for new timestamped state ID");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 return;
             }
             *new_zid = id.zid;
@@ -1333,9 +1367,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
                 z_malloc(sizeof(_ze_advanced_subscriber_timestamped_state_t));
             if (new_state == NULL) {
                 _Z_ERROR("Failed to allocate memory for new timestamped state");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 z_free(new_zid);
                 return;
             }
@@ -1344,9 +1376,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
                                                                                    new_zid, new_state);
             if (state == NULL) {
                 _Z_ERROR("Failed to insert new timestamped state into hashmap");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 z_free(new_zid);
                 z_free(new_state);
                 return;
@@ -1356,48 +1386,35 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
         char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), states->_history_depth,
                                                            states->_history_age, NULL)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to prepare query for timestamped samples");
             return;
         }
 
         state->_pending_queries++;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         if (_ze_advanced_subscriber_timestamped_query(rc_states, ke, params, &id.zid) != _Z_RES_OK) {
             _Z_ERROR("Failed to query for timestamped samples");
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_result_t res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            z_result_t res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
             if (res != _Z_RES_OK) {
-                _Z_ERROR(
-                    "FATAL: failed to relock mutex after timestamped sample query failure (%d); "
-                    "advanced subscriber invariants are violated; terminating process",
-                    res);
-                abort();
+                _Z_WARN("Failed to lock mutex to relock mutex after timestamped sample query failure (%d)", res);
+                return;
             }
-#endif
 
             state = _z_id__ze_advanced_subscriber_timestamped_state_hashmap_get(&states->_timestamped_states, &id.zid);
             if (state != NULL) {
                 state->_pending_queries--;
             }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
         }
         return;
     } else {
-#if Z_FEATURE_MULTI_THREAD == 1
-        if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-            _Z_ERROR("Failed to lock mutex when processing liveliness subscriber callback");
+        if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+            _Z_WARN("Failed to lock mutex when processing liveliness subscriber callback");
             return;
         }
-#endif
 
         _ze_advanced_subscriber_sequenced_state_t *state =
             _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states, &id);
@@ -1408,9 +1425,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
             z_entity_global_id_t *new_id = z_malloc(sizeof(z_entity_global_id_t));
             if (new_id == NULL) {
                 _Z_ERROR("Failed to allocate memory for new sequenced state ID");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 return;
             }
             *new_id = id;
@@ -1419,18 +1434,14 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
                 z_malloc(sizeof(_ze_advanced_subscriber_sequenced_state_t));
             if (new_state == NULL) {
                 _Z_ERROR("Failed to allocate memory for new sequenced state");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 z_free(new_id);
                 return;
             }
             if (_ze_advanced_subscriber_sequenced_state_init(new_state, &states->_zn, z_keyexpr_loan(&states->_keyexpr),
                                                              &id) != _Z_RES_OK) {
                 _Z_ERROR("Failed to initialize new sequenced state");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 z_free(new_id);
                 z_free(new_state);
                 return;
@@ -1439,9 +1450,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
                 &states->_sequenced_states, new_id, new_state);
             if (state == NULL) {
                 _Z_ERROR("Failed to insert new sequenced state into hashmap");
-#if Z_FEATURE_MULTI_THREAD == 1
-                z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+                _ze_advanced_subscriber_state_unlock_mutex(states);
                 z_free(new_id);
                 z_free(new_state);
                 return;
@@ -1451,9 +1460,7 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
         char params[ZE_ADVANCED_SUBSCRIBER_QUERY_PARAM_BUF_SIZE];
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), states->_history_depth,
                                                            states->_history_age, NULL)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to prepare query for sequenced samples");
             return;
         }
@@ -1464,31 +1471,22 @@ void _ze_advanced_subscriber_liveliness_callback(z_loaned_sample_t *sample, void
 
         state->_pending_queries++;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         z_result_t res =
             _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params, &id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for sequenced samples");
-#if Z_FEATURE_MULTI_THREAD == 1
-            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
             if (res != _Z_RES_OK) {
-                _Z_ERROR(
-                    "FATAL: failed to relock mutex after sequenced sample query failure (%d); "
-                    "advanced subscriber invariants are violated; terminating process",
-                    res);
-                abort();
+                _Z_WARN("Failed to relock mutex after sequenced sample query failure (%d)", res);
+                return;
             }
-#endif
             state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                             &id);
             if (state != NULL) {
                 state->_pending_queries--;
             }
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
         }
         return;
     }
@@ -1546,29 +1544,23 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
         return;
     }
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    if (z_mutex_lock(z_mutex_loan_mut(&states->_mutex)) != _Z_RES_OK) {
-        _Z_ERROR("Failed to lock heartbeat subscriber callback mutex");
+    if (_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock heartbeat subscriber callback mutex");
         return;
     }
-#endif
 
     _ze_advanced_subscriber_sequenced_state_t *state =
         _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states, &id);
     if (state == NULL) {
         if (states->_global_pending_queries > 0) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_TRACE("Skipping heartbeat due to pending global query");
             return;
         }
 
         z_entity_global_id_t *new_id = z_malloc(sizeof(z_entity_global_id_t));
         if (new_id == NULL) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to allocate memory for new sequenced state ID");
             return;
         }
@@ -1577,9 +1569,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
         _ze_advanced_subscriber_sequenced_state_t *new_state =
             z_malloc(sizeof(_ze_advanced_subscriber_sequenced_state_t));
         if (new_state == NULL) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to allocate memory for new sequenced state");
             z_free(new_id);
             return;
@@ -1587,9 +1577,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
         z_result_t res = _ze_advanced_subscriber_sequenced_state_init(new_state, &states->_zn,
                                                                       z_keyexpr_loan(&states->_keyexpr), &id);
         if (res != _Z_RES_OK) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to initialize new sequenced state: %i", res);
             z_free(new_id);
             z_free(new_state);
@@ -1598,9 +1586,7 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
         state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_insert(&states->_sequenced_states,
                                                                                            new_id, new_state);
         if (state == NULL) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to insert new sequenced state into hashmap");
             z_free(new_id);
             z_free(new_state);
@@ -1618,47 +1604,34 @@ void _ze_advanced_subscriber_heartbeat_callback(z_loaned_sample_t *sample, void 
             ._end = heartbeat_sn};
 
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), 0, 0, &range)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
             _Z_ERROR("Failed to prepare query for missing samples");
             return;
         }
 
         state->_pending_queries++;
 
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(states);
         z_result_t res =
             _ze_advanced_subscriber_sequenced_query(rc_states, z_keyexpr_loan(&state->_query_keyexpr), params, &id);
         if (res != _Z_RES_OK) {
             _Z_ERROR("Failed to query for missing samples");
-#if Z_FEATURE_MULTI_THREAD == 1
-            res = z_mutex_lock(z_mutex_loan_mut(&states->_mutex));
+            res = _ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(states);
             if (res != _Z_RES_OK) {
-                _Z_ERROR(
-                    "FATAL: failed to relock mutex after missing sample query failure (%d); "
-                    "advanced subscriber invariants are violated; terminating process",
-                    res);
-                abort();
+                _Z_WARN("failed to relock mutex after missing sample query failure (%d)", res);
+                return;
             }
-#endif
             state = _z_entity_global_id__ze_advanced_subscriber_sequenced_state_hashmap_get(&states->_sequenced_states,
                                                                                             &id);
 
             if (state != NULL) {
                 state->_pending_queries--;
             }
-#if Z_FEATURE_MULTI_THREAD == 1
-            z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+            _ze_advanced_subscriber_state_unlock_mutex(states);
         }
         return;
     }
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(z_mutex_loan_mut(&states->_mutex));
-#endif
+    _ze_advanced_subscriber_state_unlock_mutex(states);
 }
 
 void _ze_advanced_subscriber_heartbeat_drop_handler(void *ctx) {
@@ -1711,16 +1684,16 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         opt = *options;
     }
 
+    // Create Advanced Subscriber state
+    _Z_RETURN_IF_ERR(_ze_advanced_subscriber_state_new(&sub->_val._state, zs, callback, keyexpr, &opt));
+
     // Common keyexpr for subscribing to publisher liveliness and heartbeat
     z_owned_keyexpr_t ke_pub;
-    _Z_RETURN_IF_ERR(z_keyexpr_clone(&ke_pub, keyexpr));
+    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&ke_pub, keyexpr), _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
     _Z_CLEAN_RETURN_IF_ERR(
         _Z_KEYEXPR_APPEND_STR_ARRAY(&ke_pub, _Z_KEYEXPR_ADV_PREFIX, _Z_KEYEXPR_PUB, _Z_KEYEXPR_STARSTAR),
-        z_keyexpr_drop(z_keyexpr_move(&ke_pub)));
-
-    // Create Advanced Subscriber state
-    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_new(&sub->_val._state, zs, callback, keyexpr, &opt),
-                           z_keyexpr_drop(z_keyexpr_move(&ke_pub)));
+        z_keyexpr_drop(z_keyexpr_move(&ke_pub));
+        _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
 
     // Declare subscriber
     _ze_advanced_subscriber_state_rc_t *sub_state = _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
@@ -1748,22 +1721,22 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         if (!_ze_advanced_subscriber_populate_query_params(params, sizeof(params), opt.history.max_samples,
                                                            opt.history.max_age_ms, NULL)) {
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-            _ze_advanced_subscriber_drop(&sub->_val);
+            _ze_advanced_subscriber_undeclare(&sub->_val);
             _Z_ERROR_RETURN(_Z_ERR_GENERIC);
         }
 
         z_owned_keyexpr_t query_keyexpr;
         _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&query_keyexpr, keyexpr), z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
         _Z_CLEAN_RETURN_IF_ERR(_Z_KEYEXPR_APPEND_STR_ARRAY(&query_keyexpr, _Z_KEYEXPR_ADV_PREFIX, _Z_KEYEXPR_STARSTAR),
                                z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
 
         _Z_CLEAN_RETURN_IF_ERR(
             _ze_advanced_subscriber_initial_query(&sub->_val._state, z_keyexpr_loan(&query_keyexpr), params),
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-            z_keyexpr_drop(z_keyexpr_move(&query_keyexpr)); _ze_advanced_subscriber_drop(&sub->_val));
+            z_keyexpr_drop(z_keyexpr_move(&query_keyexpr)); _ze_advanced_subscriber_undeclare(&sub->_val));
         z_keyexpr_drop(z_keyexpr_move(&query_keyexpr));
 
         // Declare liveliness subscriber on keyexpr / KE_ADV_PREFIX / KE_PUB / KE_STARSTAR
@@ -1776,7 +1749,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
                 _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
             if (_Z_RC_IS_NULL(liveliness_sub_state)) {
                 z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                _ze_advanced_subscriber_drop(&sub->_val);
+                _ze_advanced_subscriber_undeclare(&sub->_val);
                 _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
             }
 
@@ -1786,13 +1759,13 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
                                  _ze_advanced_subscriber_liveliness_drop_handler, liveliness_sub_state),
                 _ze_advanced_subscriber_state_rc_drop(liveliness_sub_state);
                 z_free(liveliness_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                _ze_advanced_subscriber_drop(&sub->_val));
+                _ze_advanced_subscriber_undeclare(&sub->_val));
             _Z_CLEAN_RETURN_IF_ERR(
                 z_liveliness_declare_subscriber(zs, &sub->_val._liveliness_subscriber, z_keyexpr_loan(&ke_pub),
                                                 z_closure_sample_move(&liveliness_callback), &liveliness_options),
                 _ze_advanced_subscriber_state_rc_drop(liveliness_sub_state);
                 z_free(liveliness_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                _ze_advanced_subscriber_drop(&sub->_val));
+                _ze_advanced_subscriber_undeclare(&sub->_val));
             sub->_val._has_liveliness_subscriber = true;
         }
     }
@@ -1804,7 +1777,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
             _ze_advanced_subscriber_state_rc_clone_as_ptr(&sub->_val._state);
         if (_Z_RC_IS_NULL(heartbeat_sub_state)) {
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-            _ze_advanced_subscriber_drop(&sub->_val);
+            _ze_advanced_subscriber_undeclare(&sub->_val);
             _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
         }
 
@@ -1813,12 +1786,12 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
                                                 _ze_advanced_subscriber_heartbeat_drop_handler, heartbeat_sub_state),
                                _ze_advanced_subscriber_state_rc_drop(heartbeat_sub_state);
                                z_free(heartbeat_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
         _Z_CLEAN_RETURN_IF_ERR(z_declare_subscriber(zs, &sub->_val._heartbeat_subscriber, z_keyexpr_loan(&ke_pub),
                                                     z_closure_sample_move(&heartbeat_callback), NULL),
                                _ze_advanced_subscriber_state_rc_drop(heartbeat_sub_state);
                                z_free(heartbeat_sub_state); z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
         sub->_val._has_heartbeat_subscriber = true;
     }
 
@@ -1830,16 +1803,16 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
         z_owned_keyexpr_t suffix;
         _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_ke_suffix(&suffix, id, opt.subscriber_detection_metadata),
                                z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
         z_owned_keyexpr_t ke;
         _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_join(&ke, keyexpr, z_keyexpr_loan(&suffix)),
                                z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                               z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_subscriber_drop(&sub->_val));
+                               z_keyexpr_drop(z_keyexpr_move(&suffix)); _ze_advanced_subscriber_undeclare(&sub->_val));
 
 #if Z_FEATURE_MULTI_THREAD == 1
         _Z_CLEAN_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)), z_keyexpr_drop(z_keyexpr_move(&ke_pub));
                                z_keyexpr_drop(z_keyexpr_move(&suffix)); z_keyexpr_drop(z_keyexpr_move(&ke));
-                               _ze_advanced_subscriber_drop(&sub->_val));
+                               _ze_advanced_subscriber_undeclare(&sub->_val));
 #endif
 
         z_result_t res = z_liveliness_declare_token(zs, &state->_token, z_keyexpr_loan(&ke), NULL);
@@ -1850,7 +1823,7 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
             z_keyexpr_drop(z_keyexpr_move(&ke_pub));
             z_keyexpr_drop(z_keyexpr_move(&suffix));
             z_keyexpr_drop(z_keyexpr_move(&ke));
-            _ze_advanced_subscriber_drop(&sub->_val);
+            _ze_advanced_subscriber_undeclare(&sub->_val);
             _Z_ERROR_RETURN(res);
         }
         state->_has_token = true;
@@ -1875,7 +1848,7 @@ z_result_t ze_declare_background_advanced_subscriber(const z_loaned_session_t *z
 }
 
 z_result_t ze_undeclare_advanced_subscriber(ze_moved_advanced_subscriber_t *sub) {
-    return _ze_advanced_subscriber_drop(&sub->_this._val);
+    return _ze_advanced_subscriber_undeclare(&sub->_this._val);
 }
 
 const z_loaned_keyexpr_t *ze_advanced_subscriber_keyexpr(const ze_loaned_advanced_subscriber_t *sub) {
@@ -1897,39 +1870,28 @@ z_result_t ze_advanced_subscriber_declare_sample_miss_listener(const ze_loaned_a
 
     _ze_advanced_subscriber_state_t *state = _Z_RC_IN_VAL(&subscriber->_state);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-    _Z_RETURN_IF_ERR(z_mutex_lock(z_mutex_loan_mut(&state->_mutex)));
-#endif
+    _Z_CLEAN_RETURN_IF_ERR(_ze_advanced_subscriber_state_lock_mutex_if_not_cancelled(state),
+                           _ze_closure_miss_drop(&callback->_this._val));
 
     sample_miss_listener->_val._statesref = _ze_advanced_subscriber_state_rc_clone_as_weak(&subscriber->_state);
     if (_Z_RC_IS_NULL(&sample_miss_listener->_val._statesref)) {
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-#endif
+        _ze_closure_miss_drop(&callback->_this._val);
+        _ze_advanced_subscriber_state_unlock_mutex(state);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
     sample_miss_listener->_val._id = state->_next_id++;
 
     _ze_closure_miss_t *closure = z_malloc(sizeof(_ze_closure_miss_t));
-    if (closure == NULL) {
-        _ze_sample_miss_listener_clear(&sample_miss_listener->_val);
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-#endif
-        _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
-    }
-    _ze_closure_miss_copy(closure, &callback->_this._val);
-    if (_ze_closure_miss_intmap_insert(&state->_miss_handlers, sample_miss_listener->_val._id, closure) == NULL) {
+    if (closure == NULL ||
+        _ze_closure_miss_intmap_insert(&state->_miss_handlers, sample_miss_listener->_val._id, closure) == NULL) {
         z_free(closure);
+        _ze_closure_miss_drop(&callback->_this._val);
         _ze_sample_miss_listener_clear(&sample_miss_listener->_val);
-#if Z_FEATURE_MULTI_THREAD == 1
-        z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-#endif
+        _ze_advanced_subscriber_state_unlock_mutex(state);
         _Z_ERROR_RETURN(_Z_ERR_SYSTEM_OUT_OF_MEMORY);
     }
-#if Z_FEATURE_MULTI_THREAD == 1
-    z_mutex_unlock(z_mutex_loan_mut(&state->_mutex));
-#endif
+    _ze_closure_miss_move(closure, &callback->_this._val);
+    _ze_advanced_subscriber_state_unlock_mutex(state);
     return _Z_RES_OK;
 }
 

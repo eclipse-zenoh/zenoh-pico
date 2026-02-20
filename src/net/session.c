@@ -435,7 +435,7 @@ z_result_t _zp_process_periodic_tasks(_z_session_t *zn) {
     return _zp_periodic_scheduler_process_tasks(&zn->_periodic_scheduler);
 }
 
-z_result_t _zp_periodic_task_add(_z_session_t *zn, const _zp_closure_periodic_task_t *closure, uint64_t period_ms,
+z_result_t _zp_periodic_task_add(_z_session_t *zn, _zp_closure_periodic_task_t *closure, uint64_t period_ms,
                                  uint32_t *id) {
     return _zp_periodic_scheduler_add(&zn->_periodic_scheduler, closure, period_ms, id);
 }

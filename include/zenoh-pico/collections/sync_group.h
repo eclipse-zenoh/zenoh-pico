@@ -51,6 +51,12 @@ static inline _z_sync_group_notifier_t _z_sync_group_notifier_null(void) {
     return n;
 }
 
+static inline _z_sync_group_notifier_t _z_sync_group_notifier_steal(_z_sync_group_notifier_t* notifier) {
+    _z_sync_group_notifier_t n = *notifier;
+    *notifier = _z_sync_group_notifier_null();
+    return n;
+}
+
 z_result_t _z_sync_group_create(_z_sync_group_t* sync_group);
 z_result_t _z_sync_group_wait(_z_sync_group_t* sync_group);
 void _z_sync_group_close(_z_sync_group_t* sync_group);
@@ -60,7 +66,7 @@ static inline bool _z_sync_group_check(const _z_sync_group_t* sync_group) {
 }
 bool _z_sync_group_is_closed(const _z_sync_group_t* sync_group);
 void _z_sync_group_drop(_z_sync_group_t* sync_group);
-z_result_t _z_sync_group_create_notifier(_z_sync_group_t* sync_group, _z_sync_group_notifier_t* notifier);
+z_result_t _z_sync_group_create_notifier(const _z_sync_group_t* sync_group, _z_sync_group_notifier_t* notifier);
 void _z_sync_group_notifier_drop(_z_sync_group_notifier_t* notifier);
 static inline bool _z_sync_group_notifier_check(const _z_sync_group_notifier_t* notifier) {
     return !_Z_RC_IS_NULL(&notifier->_state);

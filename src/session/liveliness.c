@@ -198,16 +198,17 @@ static z_result_t _z_liveliness_pending_query_reply(_z_session_t *zn, uint32_t i
 }
 
 z_result_t _z_liveliness_unregister_pending_query(_z_session_t *zn, uint32_t id) {
-    _z_liveliness_pending_query_t *pq;
+    z_result_t ret = _Z_ERR_ENTITY_UNKNOWN;
     _z_session_mutex_lock(zn);
-    pq = _z_liveliness_pending_query_intmap_extract(&zn->_liveliness_pending_queries, id);
-    _z_session_mutex_unlock(zn);
+    _z_liveliness_pending_query_t *pq =
+        _z_liveliness_pending_query_intmap_extract(&zn->_liveliness_pending_queries, id);
     if (pq != NULL) {
         _z_liveliness_pending_query_clear(pq);
         z_free(pq);
-        return _Z_RES_OK;
+        ret = _Z_RES_OK;
     }
-    return _Z_ERR_ENTITY_UNKNOWN;
+    _z_session_mutex_unlock(zn);
+    return ret;
 }
 
 #endif  // Z_FEATURE_QUERY == 1
@@ -268,7 +269,7 @@ void _z_liveliness_init(_z_session_t *zn) {
     _z_session_mutex_lock(zn);
 
     zn->_remote_tokens = _z_keyexpr_intmap_make();
-    zn->_local_tokens = _z_keyexpr_intmap_make();
+    zn->_local_tokens = _z_declared_keyexpr_intmap_make();
 #if Z_FEATURE_QUERY == 1
     zn->_liveliness_query_id = 1;
     zn->_liveliness_pending_queries = _z_liveliness_pending_query_intmap_make();
@@ -278,27 +279,16 @@ void _z_liveliness_init(_z_session_t *zn) {
 }
 
 void _z_liveliness_clear(_z_session_t *zn) {
-#if Z_FEATURE_QUERY == 1
-    _z_liveliness_pending_query_intmap_t queries;
-#endif
-    _z_keyexpr_intmap_t local, remote;
-
     _z_session_mutex_lock(zn);
 #if Z_FEATURE_QUERY == 1
-    queries = zn->_liveliness_pending_queries;
-    zn->_liveliness_pending_queries = _z_liveliness_pending_query_intmap_make();
+    _z_liveliness_pending_query_intmap_clear(&zn->_liveliness_pending_queries);
 #endif
-    local = zn->_local_tokens;
-    remote = zn->_remote_tokens;
-    zn->_local_tokens = _z_keyexpr_intmap_make();
-    zn->_remote_tokens = _z_keyexpr_intmap_make();
+    _z_declared_keyexpr_intmap_t local_tokens = zn->_local_tokens;
+    _z_keyexpr_intmap_t remote_tokens = zn->_remote_tokens;
     _z_session_mutex_unlock(zn);
     // drop maps outside of session mutex to avoid deadlock
-#if Z_FEATURE_QUERY == 1
-    _z_liveliness_pending_query_intmap_clear(&queries);
-#endif
-    _z_keyexpr_intmap_clear(&local);
-    _z_keyexpr_intmap_clear(&remote);
+    _z_declared_keyexpr_intmap_clear(&local_tokens);
+    _z_keyexpr_intmap_clear(&remote_tokens);
 }
 
 #else  // Z_FEATURE_LIVELINESS == 0

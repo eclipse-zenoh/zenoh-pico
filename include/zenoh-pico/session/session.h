@@ -82,6 +82,8 @@ typedef struct {
     _z_closure_sample_callback_t _callback;
     _z_drop_handler_t _dropper;
     void *_arg;
+    _z_sync_group_notifier_t _session_callback_drop_notifier;
+    _z_sync_group_notifier_t _subscriber_callback_drop_notifier;
 } _z_subscription_t;
 
 bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
@@ -115,6 +117,8 @@ typedef struct {
     void *_arg;
     bool _complete;
     z_locality_t _allowed_origin;
+    _z_sync_group_notifier_t _session_callback_drop_notifier;
+    _z_sync_group_notifier_t _queryable_callback_drop_notifier;
 } _z_session_queryable_t;
 
 bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
@@ -166,6 +170,7 @@ void _z_pending_query_cancellation_data_clear(_z_pending_query_cancellation_data
 #endif
 struct _z_pending_query_t {
     _z_keyexpr_t _key;
+    _z_optional_id_t _querier_id;
     _z_zint_t _id;
     _z_closure_reply_callback_t _callback;
     _z_drop_handler_t _dropper;

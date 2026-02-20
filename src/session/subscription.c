@@ -69,6 +69,8 @@ void _z_subscription_clear(_z_subscription_t *sub) {
         sub->_dropper = NULL;
     }
     _z_declared_keyexpr_clear(&sub->_key);
+    _z_sync_group_notifier_drop(&sub->_session_callback_drop_notifier);
+    _z_sync_group_notifier_drop(&sub->_subscriber_callback_drop_notifier);
 }
 
 _z_subscription_rc_t *__z_get_subscription_by_id(_z_subscription_rc_slist_t *subs, const _z_zint_t id) {

@@ -312,6 +312,7 @@ z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
         _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
         _z_session_rc_drop(&s);
     }
+    _z_write_filter_ctx_remove_callbacks(_Z_RC_IN_VAL(&filter->ctx));
     _z_write_filter_ctx_rc_drop(&filter->ctx);
     return _Z_RES_OK;
 }
@@ -320,6 +321,12 @@ z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
 void _z_write_filter_ctx_remove_callback(_z_write_filter_ctx_t *ctx, size_t id) {
     _z_write_filter_mutex_lock(ctx);
     _z_closure_matching_status_intmap_remove(&ctx->callbacks, id);
+    _z_write_filter_mutex_unlock(ctx);
+}
+
+void _z_write_filter_ctx_remove_callbacks(_z_write_filter_ctx_t *ctx) {
+    _z_write_filter_mutex_lock(ctx);
+    _z_closure_matching_status_intmap_clear(&ctx->callbacks);
     _z_write_filter_mutex_unlock(ctx);
 }
 
