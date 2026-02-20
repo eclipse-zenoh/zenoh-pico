@@ -179,9 +179,13 @@ static size_t _z_f_link_read_exact_tls(const _z_link_t *self, uint8_t *ptr, size
             rb = _z_read_tls(&self->_socket._tls, &ptr[n], len - n);
         }
 
-        if (rb == SIZE_MAX) {
-            n = rb;
+        if (rb == 0) {
+            // Socket closed
+            n = 0;
             break;
+        } else if (rb == SIZE_MAX) {
+            // WANT_READ or timeout - continue loop to retry
+            continue;
         }
         n += rb;
     } while (n != len);

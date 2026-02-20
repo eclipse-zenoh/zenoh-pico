@@ -662,11 +662,13 @@ size_t _z_read_tls(const _z_tls_socket_t *sock, uint8_t *ptr, size_t len) {
     }
 
     if (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE) {
-        return 0;
+        // Like EAGAIN from recv() with SO_RCVTIMEO
+        return SIZE_MAX;
     }
 
     if (ret == 0 || ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == MBEDTLS_ERR_SSL_CONN_EOF) {
-        return SIZE_MAX;
+        // Connection closed gracefully, like TCP recv() returning 0
+        return 0;
     }
 
     _Z_ERROR("TLS read error: %d", ret);
