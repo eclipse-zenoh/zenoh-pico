@@ -781,9 +781,11 @@ endif()
       target_link_libraries(z_multi_pubsub_test zenohpico::lib)
       target_link_libraries(z_multi_queryable_test zenohpico::lib)
 
-      configure_file(${PROJECT_SOURCE_DIR}/tests/routed.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/routed.sh COPYONLY)
-      configure_file(${PROJECT_SOURCE_DIR}/tests/tls_verify.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tls_verify.sh COPYONLY)
-      configure_file(${PROJECT_SOURCE_DIR}/tests/api.sh ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/api.sh COPYONLY)
+      file(COPY ${PROJECT_SOURCE_DIR}/tests/routed.sh 
+                ${PROJECT_SOURCE_DIR}/tests/tls_verify.sh 
+                ${PROJECT_SOURCE_DIR}/tests/api.sh
+           DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+           FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
       enable_testing()
       if(Z_FEATURE_LINK_TLS)
