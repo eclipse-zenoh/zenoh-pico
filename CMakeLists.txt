@@ -29,13 +29,13 @@ set(ZENOH_PICO_TWEAK ${PROJECT_VERSION_TWEAK})
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
   @ONLY
 )
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/library.json.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/library.json
+  ${CMAKE_CURRENT_BINARY_DIR}/library.json
   @ONLY
 )
 
@@ -344,13 +344,13 @@ message(STATUS "Building with feature config:\n\
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
   @ONLY
 )
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico/config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
   @ONLY
 )
 
@@ -397,12 +397,14 @@ file(GLOB_RECURSE PublicHeaders
 if(PICO_STATIC)
   target_include_directories(${Libname}_static
     PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
 endif()
 if(PICO_SHARED)
   target_include_directories(${Libname}_shared
     PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>)
 endif()
@@ -567,12 +569,17 @@ install(TARGETS ${PICO_LIBS}
   ARCHIVE COMPONENT Dev
   RUNTIME COMPONENT Runtime
 )
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico.h
   DESTINATION include
   COMPONENT Headers
 )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/zenoh-pico
   DESTINATION include
+  COMPONENT Headers
+  PATTERN "config.h" EXCLUDE
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/zenoh-pico/config.h
+  DESTINATION include/zenoh-pico
   COMPONENT Headers
 )
 if(BUILD_SHARED_LIBS)
@@ -609,8 +616,8 @@ install(
   COMPONENT Dev)
 
 if(UNIX)
-  configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_SOURCE_DIR}/zenohpico.pc" @ONLY)
-  install(FILES "${CMAKE_SOURCE_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
+  configure_file("${CMAKE_SOURCE_DIR}/zenohpico.pc.in" "${CMAKE_BINARY_DIR}/zenohpico.pc" @ONLY)
+  install(FILES "${CMAKE_BINARY_DIR}/zenohpico.pc" CONFIGURATIONS Release RelWithDebInfo DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig" COMPONENT Dev)
 endif()
 
 if(ASAN AND NOT MSVC)
