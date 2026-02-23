@@ -108,7 +108,7 @@ static z_result_t _ze_admin_space_peer_link_ke(z_owned_keyexpr_t *ke, const z_id
     return z_keyexpr_from_str(ke, buf);
 }
 
-#if Z_FEATURE_CONNECTIVITY == 1
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
 static inline const char *_ze_admin_space_transport_kind_from_session(const _z_session_t *session, bool is_multicast) {
     if (session != NULL && session->_tp._type == _Z_TRANSPORT_RAWETH_TYPE) {
         return _Z_KEYEXPR_TRANSPORT_RAWETH;
@@ -359,7 +359,7 @@ static inline void _ze_admin_space_link_listener_handle_clear(z_owned_link_event
     _z_session_weak_drop(&listener->_val._session);
     listener->_val = (_z_link_events_listener_t){0};
 }
-#endif  // Z_FEATURE_CONNECTIVITY == 1
+#endif  // Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
 
 static z_result_t _ze_admin_space_encode_whatami(_z_json_encoder_t *je, z_whatami_t mode) {
     switch (mode) {
@@ -689,7 +689,7 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
     _z_queryable_clear(&admin_space_queryable._val);
 
     _z_session_t *session = _Z_RC_IN_VAL(zs);
-#if Z_FEATURE_CONNECTIVITY != 1
+#if Z_FEATURE_CONNECTIVITY != 1 || Z_FEATURE_PUBLICATION != 1
     return _Z_RES_OK;
 #else
     session->_admin_space_transport_listener_id = 0;
@@ -771,13 +771,13 @@ err_queryable: {
     }
 }
     return ret;
-#endif  // Z_FEATURE_CONNECTIVITY == 1
+#endif  // Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
 }
 
 z_result_t zp_stop_admin_space(z_loaned_session_t *zs) {
     _z_session_t *session = _Z_RC_IN_VAL(zs);
     uint32_t admin_space_queryable_id = session->_admin_space_queryable_id;
-#if Z_FEATURE_CONNECTIVITY == 1
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
     size_t admin_space_transport_listener_id = session->_admin_space_transport_listener_id;
     size_t admin_space_link_listener_id = session->_admin_space_link_listener_id;
 
@@ -794,7 +794,7 @@ z_result_t zp_stop_admin_space(z_loaned_session_t *zs) {
 
     z_result_t ret = _Z_RES_OK;
 
-#if Z_FEATURE_CONNECTIVITY == 1
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
     if (admin_space_transport_listener_id != 0) {
         z_result_t listener_ret = _ze_admin_space_undeclare_transport_listener(zs, admin_space_transport_listener_id);
         if (listener_ret == _Z_RES_OK) {
