@@ -208,9 +208,11 @@ static void verify_transport_reply_json(const z_loaned_string_t *payload, const 
     assert_json_object(payload);
     assert_contains(payload, "\"zid\"");
     assert_contains(payload, "\"whatami\"");
-    assert_contains(payload, "\"is_qos\"");
     assert_contains(payload, "\"is_multicast\"");
+#if Z_FEATURE_CONNECTIVITY == 1
+    assert_contains(payload, "\"is_qos\"");
     assert_contains(payload, "\"is_shm\"");
+#endif
 
     z_owned_string_t zid_str;
     ASSERT_OK(z_id_to_string(expected_zid, &zid_str));
@@ -226,8 +228,10 @@ static void verify_transport_reply_json(const z_loaned_string_t *payload, const 
 static void verify_link_reply_json(const z_loaned_string_t *payload, const z_id_t *expected_zid) {
     assert_json_object(payload);
     assert_contains(payload, "\"zid\"");
+#if Z_FEATURE_CONNECTIVITY == 1
     assert_contains(payload, "\"src\"");
     assert_contains(payload, "\"dst\"");
+#endif
     assert_contains(payload, "\"mtu\"");
     assert_contains(payload, "\"is_streamed\"");
     assert_contains(payload, "\"is_reliable\"");
