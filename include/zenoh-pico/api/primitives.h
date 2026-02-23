@@ -1764,9 +1764,6 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
  */
 z_id_t z_info_zid(const z_loaned_session_t *zs);
 
-#if Z_FEATURE_CONNECTIVITY == 1
-void _z_info_transport_from_peer(_z_info_transport_t *out, const _z_transport_peer_common_t *peer, bool is_multicast);
-bool _z_info_transport_filter_match(const _z_info_transport_t *transport, const _z_info_transport_t *filter);
 static inline void _z_transport_link_properties_from_transport(const _z_transport_common_t *transport, uint16_t *mtu,
                                                                bool *is_streamed, bool *is_reliable) {
     *mtu = 0;
@@ -1779,6 +1776,10 @@ static inline void _z_transport_link_properties_from_transport(const _z_transpor
         *is_reliable = transport->_link->_cap._is_reliable;
     }
 }
+
+#if Z_FEATURE_CONNECTIVITY == 1
+void _z_info_transport_from_peer(_z_info_transport_t *out, const _z_transport_peer_common_t *peer, bool is_multicast);
+bool _z_info_transport_filter_match(const _z_info_transport_t *transport, const _z_info_transport_t *filter);
 
 /**
  * Fetches all currently connected transports.
