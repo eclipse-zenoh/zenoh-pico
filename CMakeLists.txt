@@ -332,6 +332,11 @@ if(Z_FEATURE_ADMIN_SPACE AND NOT Z_FEATURE_UNSTABLE_API)
   set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support" FORCE)
 endif()
 
+if(Z_FEATURE_ADMIN_SPACE AND NOT Z_FEATURE_QUERYABLE)
+  message(WARNING "Z_FEATURE_ADMIN_SPACE can only be enabled when Z_FEATURE_QUERYABLE is enabled. Disabling Z_FEATURE_ADMIN_SPACE.")
+  set(Z_FEATURE_ADMIN_SPACE 0 CACHE STRING "Toggle admin space support" FORCE)
+endif()
+
 
 message(STATUS "Building with feature config:\n\
 * UNSTABLE_API: ${Z_FEATURE_UNSTABLE_API}\n\
