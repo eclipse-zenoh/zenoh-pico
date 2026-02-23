@@ -94,49 +94,6 @@ z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socke
     return _Z_RES_OK;
 }
 
-static z_result_t _z_ipv4_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
-    char ip[INET_ADDRSTRLEN] = {0};
-    int written = -1;
-
-    if (inet_ntop(AF_INET, address, ip, sizeof(ip)) == NULL) {
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-    written = snprintf(dst, dst_len, "%s:%u", ip, (unsigned)port);
-    if ((written < 0) || ((size_t)written >= dst_len)) {
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-    return _Z_RES_OK;
-}
-
-static z_result_t _z_ipv6_port_to_endpoint(const uint8_t *address, uint16_t port, char *dst, size_t dst_len) {
-    char ip[INET6_ADDRSTRLEN] = {0};
-    int written = -1;
-
-    if (inet_ntop(AF_INET6, address, ip, sizeof(ip)) == NULL) {
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-    written = snprintf(dst, dst_len, "[%s]:%u", ip, (unsigned)port);
-    if ((written < 0) || ((size_t)written >= dst_len)) {
-        _Z_ERROR_RETURN(_Z_ERR_GENERIC);
-    }
-    return _Z_RES_OK;
-}
-
-z_result_t _z_ip_port_to_endpoint(const uint8_t *address, size_t address_len, uint16_t port, char *dst,
-                                  size_t dst_len) {
-    if (address == NULL || dst == NULL || dst_len == 0) {
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);
-    }
-
-    if (address_len == sizeof(uint32_t)) {
-        return _z_ipv4_port_to_endpoint(address, port, dst, dst_len);
-    } else if (address_len == 16) {
-        return _z_ipv6_port_to_endpoint(address, port, dst, dst_len);
-    } else {
-        _Z_ERROR_RETURN(_Z_ERR_INVALID);
-    }
-}
-
 static z_result_t _z_sockaddr_to_endpoint(const struct sockaddr *addr, char *dst, size_t dst_len) {
     if (addr->sa_family == AF_INET) {
         const struct sockaddr_in *addr4 = (const struct sockaddr_in *)addr;
