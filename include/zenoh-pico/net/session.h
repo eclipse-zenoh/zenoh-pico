@@ -121,6 +121,7 @@ typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     bool _mutex_inner_initialized;
     _z_mutex_t _mutex_inner;
+    _z_mutex_rec_t _mutex_transport;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.

@@ -40,9 +40,15 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
 #if Z_FEATURE_MULTI_THREAD == 1
 static inline void _z_session_mutex_lock(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
+static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { (void)_z_mutex_rec_lock(&zn->_mutex_transport); }
+static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) {
+    (void)_z_mutex_rec_unlock(&zn->_mutex_transport);
+}
 #else
 static inline void _z_session_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif
 
 #ifdef __cplusplus

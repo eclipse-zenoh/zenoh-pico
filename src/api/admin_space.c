@@ -109,25 +109,27 @@ static z_result_t _ze_admin_space_peer_link_ke(z_owned_keyexpr_t *ke, const z_id
 }
 
 #if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
-static inline const char *_ze_admin_space_transport_kind_from_session(const _z_session_t *session) {
-    if (session == NULL) {
-        return _Z_KEYEXPR_TRANSPORT_UNICAST;
-    }
-
-    switch (session->_tp._type) {
+static inline const char *_ze_admin_space_transport_kind_from_type(_z_transport_type_t transport_type) {
+    const char *transport_kind = _Z_KEYEXPR_TRANSPORT_UNICAST;
+    switch (transport_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
-            return _Z_KEYEXPR_TRANSPORT_UNICAST;
+            transport_kind = _Z_KEYEXPR_TRANSPORT_UNICAST;
+            break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            return _Z_KEYEXPR_TRANSPORT_MULTICAST;
+            transport_kind = _Z_KEYEXPR_TRANSPORT_MULTICAST;
+            break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            return _Z_KEYEXPR_TRANSPORT_RAWETH;
+            transport_kind = _Z_KEYEXPR_TRANSPORT_RAWETH;
+            break;
         default:
-            return _Z_KEYEXPR_TRANSPORT_UNICAST;
+            break;
     }
+    return transport_kind;
 }
 
 typedef struct {
     _z_session_weak_t _session;
+    const char *_transport_kind;
 } _ze_admin_space_connectivity_listener_ctx_t;
 
 static void _ze_admin_space_connectivity_listener_ctx_drop(void *ctx) {
@@ -139,7 +141,7 @@ static void _ze_admin_space_connectivity_listener_ctx_drop(void *ctx) {
 }
 
 static _ze_admin_space_connectivity_listener_ctx_t *_ze_admin_space_connectivity_listener_ctx_new(
-    const z_loaned_session_t *zs) {
+    const z_loaned_session_t *zs, const char *transport_kind) {
     _ze_admin_space_connectivity_listener_ctx_t *ctx =
         (_ze_admin_space_connectivity_listener_ctx_t *)z_malloc(sizeof(_ze_admin_space_connectivity_listener_ctx_t));
     if (ctx == NULL) {
@@ -151,6 +153,7 @@ static _ze_admin_space_connectivity_listener_ctx_t *_ze_admin_space_connectivity
         z_free(ctx);
         return NULL;
     }
+    ctx->_transport_kind = transport_kind != NULL ? transport_kind : _Z_KEYEXPR_TRANSPORT_UNICAST;
 
     return ctx;
 }
@@ -234,7 +237,7 @@ static void _ze_admin_space_publish_transport_event(z_loaned_transport_event_t *
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
     const z_loaned_transport_t *transport = z_transport_event_transport(event);
-    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session);
+    const char *transport_kind = listener_ctx->_transport_kind;
 
     z_owned_keyexpr_t ke;
     z_result_t ret = _ze_admin_space_peer_transport_ke(&ke, &session->_local_zid, transport_kind, &transport->_zid);
@@ -288,7 +291,7 @@ static void _ze_admin_space_publish_link_event(z_loaned_link_event_t *event, voi
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
     const z_loaned_link_t *link = z_link_event_link(event);
-    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session);
+    const char *transport_kind = listener_ctx->_transport_kind;
 
     z_owned_keyexpr_t ke;
     z_result_t ret = _ze_admin_space_peer_link_ke(&ke, &session->_local_zid, transport_kind, &link->_zid, &link->_zid);
@@ -544,6 +547,11 @@ static z_result_t _ze_admin_space_add_link_reply_for_peer(const z_loaned_query_t
 
 static void _ze_admin_space_query_handle_unicast(const z_loaned_query_t *query, _z_session_t *session,
                                                  _ze_admin_space_reply_list_t **replies) {
+    _z_session_transport_mutex_lock(session);
+    if (session->_tp._type != _Z_TRANSPORT_UNICAST_TYPE) {
+        _z_session_transport_mutex_unlock(session);
+        return;
+    }
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_lock(&session->_tp._transport._unicast._common);
 #endif
@@ -570,12 +578,22 @@ static void _ze_admin_space_query_handle_unicast(const z_loaned_query_t *query, 
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_unlock(&session->_tp._transport._unicast._common);
 #endif
+    _z_session_transport_mutex_unlock(session);
 }
 
 static void _ze_admin_space_query_handle_multicast_common(const z_loaned_query_t *query, _z_session_t *session,
-                                                          _z_transport_multicast_t *transport,
+                                                          _z_transport_type_t expected_transport_type,
                                                           const char *transport_keyexpr,
                                                           _ze_admin_space_reply_list_t **replies) {
+    _z_session_transport_mutex_lock(session);
+    if (session->_tp._type != expected_transport_type) {
+        _z_session_transport_mutex_unlock(session);
+        return;
+    }
+
+    _z_transport_multicast_t *transport = expected_transport_type == _Z_TRANSPORT_RAWETH_TYPE
+                                              ? &session->_tp._transport._raweth
+                                              : &session->_tp._transport._multicast;
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_lock(&transport->_common);
 #endif
@@ -602,6 +620,7 @@ static void _ze_admin_space_query_handle_multicast_common(const z_loaned_query_t
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_transport_peer_mutex_unlock(&transport->_common);
 #endif
+    _z_session_transport_mutex_unlock(session);
 }
 
 static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
@@ -616,16 +635,20 @@ static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     _ze_admin_space_reply_list_t *replies = _ze_admin_space_reply_list_new();
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
-    switch (session->_tp._type) {
+    _z_transport_type_t transport_type;
+    _z_session_transport_mutex_lock(session);
+    transport_type = session->_tp._type;
+    _z_session_transport_mutex_unlock(session);
+    switch (transport_type) {
         case _Z_TRANSPORT_UNICAST_TYPE:
             _ze_admin_space_query_handle_unicast(query, session, &replies);
             break;
         case _Z_TRANSPORT_MULTICAST_TYPE:
-            _ze_admin_space_query_handle_multicast_common(query, session, &session->_tp._transport._multicast,
+            _ze_admin_space_query_handle_multicast_common(query, session, _Z_TRANSPORT_MULTICAST_TYPE,
                                                           _Z_KEYEXPR_TRANSPORT_MULTICAST, &replies);
             break;
         case _Z_TRANSPORT_RAWETH_TYPE:
-            _ze_admin_space_query_handle_multicast_common(query, session, &session->_tp._transport._raweth,
+            _ze_admin_space_query_handle_multicast_common(query, session, _Z_TRANSPORT_RAWETH_TYPE,
                                                           _Z_KEYEXPR_TRANSPORT_RAWETH, &replies);
             break;
         default:
@@ -702,11 +725,17 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
 #if Z_FEATURE_CONNECTIVITY != 1 || Z_FEATURE_PUBLICATION != 1
     return _Z_RES_OK;
 #else
+    _z_session_transport_mutex_lock(session);
+    _z_transport_type_t transport_type = session->_tp._type;
+    _z_session_transport_mutex_unlock(session);
+    const char *transport_kind = _ze_admin_space_transport_kind_from_type(transport_type);
+
     session->_admin_space_transport_listener_id = 0;
     session->_admin_space_link_listener_id = 0;
     z_result_t ret = _Z_ERR_GENERIC;
 
-    _ze_admin_space_connectivity_listener_ctx_t *transport_ctx = _ze_admin_space_connectivity_listener_ctx_new(zs);
+    _ze_admin_space_connectivity_listener_ctx_t *transport_ctx =
+        _ze_admin_space_connectivity_listener_ctx_new(zs, transport_kind);
     if (transport_ctx == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         goto err_queryable;
@@ -731,7 +760,8 @@ z_result_t zp_start_admin_space(z_loaned_session_t *zs) {
     session->_admin_space_transport_listener_id = transport_listener._val._id;
     _ze_admin_space_transport_listener_handle_clear(&transport_listener);
 
-    _ze_admin_space_connectivity_listener_ctx_t *link_ctx = _ze_admin_space_connectivity_listener_ctx_new(zs);
+    _ze_admin_space_connectivity_listener_ctx_t *link_ctx =
+        _ze_admin_space_connectivity_listener_ctx_new(zs, transport_kind);
     if (link_ctx == NULL) {
         ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;
         goto err_transport_listener;

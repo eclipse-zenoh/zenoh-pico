@@ -173,6 +173,13 @@ typedef struct _z_transport_multicast_t {
     _zp_f_send_tmsg _send_f;
 } _z_transport_multicast_t;
 
+typedef enum {
+    _Z_TRANSPORT_UNICAST_TYPE,
+    _Z_TRANSPORT_MULTICAST_TYPE,
+    _Z_TRANSPORT_RAWETH_TYPE,
+    _Z_TRANSPORT_NONE
+} _z_transport_type_t;
+
 typedef struct {
     union {
         _z_transport_unicast_t _unicast;
@@ -180,7 +187,7 @@ typedef struct {
         _z_transport_multicast_t _raweth;
     } _transport;
 
-    enum { _Z_TRANSPORT_UNICAST_TYPE, _Z_TRANSPORT_MULTICAST_TYPE, _Z_TRANSPORT_RAWETH_TYPE, _Z_TRANSPORT_NONE } _type;
+    _z_transport_type_t _type;
 } _z_transport_t;
 
 typedef struct {
@@ -209,7 +216,7 @@ z_result_t _z_transport_peer_unicast_add(_z_transport_unicast_t *ztu, _z_transpo
                                          _z_transport_peer_unicast_t **output_peer);
 _z_transport_common_t *_z_transport_get_common(_z_transport_t *zt);
 z_result_t _z_transport_close(_z_transport_t *zt, uint8_t reason);
-void _z_transport_clear(_z_transport_t *zt);
+void _z_transport_clear(_z_transport_t *zt, bool detach_tasks);
 void _z_transport_free(_z_transport_t **zt);
 
 #if Z_FEATURE_BATCHING == 1

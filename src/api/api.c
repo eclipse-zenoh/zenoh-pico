@@ -1075,6 +1075,7 @@ z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_trans
     z_result_t ret = _Z_RES_OK;
     _z_session_t *session = _Z_RC_IN_VAL(zs);
     _z_transport_t *transport = &session->_tp;
+    _z_session_transport_mutex_lock(session);
     _z_transport_common_t *transport_common = _z_transport_get_common(transport);
     if (transport_common != NULL) {
         _z_transport_peer_mutex_lock(transport_common);
@@ -1109,6 +1110,7 @@ z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_trans
     if (transport_common != NULL) {
         _z_transport_peer_mutex_unlock(transport_common);
     }
+    _z_session_transport_mutex_unlock(session);
 
     void *ctx = callback->_this._val.context;
     callback->_this._val.context = NULL;
@@ -1141,65 +1143,68 @@ z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *ca
 
     _z_session_t *session = _Z_RC_IN_VAL(zs);
     _z_transport_t *transport = &session->_tp;
+    if (ret != _Z_RES_OK) {
+        goto out;
+    }
+
+    _z_session_transport_mutex_lock(session);
     _z_transport_common_t *transport_common = _z_transport_get_common(transport);
-    bool transport_locked = false;
-    if (ret == _Z_RES_OK && transport_common != NULL) {
+    if (transport_common != NULL) {
         _z_transport_peer_mutex_lock(transport_common);
-        transport_locked = true;
     }
 
-    if (ret == _Z_RES_OK) {
-        switch (transport->_type) {
-            case _Z_TRANSPORT_UNICAST_TYPE: {
-                _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
-                for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
-                    _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
-                    _z_info_transport_t info_transport;
-                    _z_info_transport_from_peer(&info_transport, &peer->common, false);
-                    if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
-                        continue;
-                    }
-
-                    _z_info_link_t info_link;
-                    ret = _z_info_link_make(&info_link, &peer->common, transport_common);
-                    if (ret != _Z_RES_OK) {
-                        break;
-                    }
-                    z_closure_link_call(&callback->_this._val, &info_link);
-                    _z_info_link_clear(&info_link);
+    switch (transport->_type) {
+        case _Z_TRANSPORT_UNICAST_TYPE: {
+            _z_transport_peer_unicast_slist_t *curr = transport->_transport._unicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_unicast_slist_next(curr)) {
+                _z_transport_peer_unicast_t *peer = _z_transport_peer_unicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, false);
+                if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
+                    continue;
                 }
-                break;
-            }
-            case _Z_TRANSPORT_MULTICAST_TYPE:
-            case _Z_TRANSPORT_RAWETH_TYPE: {
-                _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
-                for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
-                    _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
-                    _z_info_transport_t info_transport;
-                    _z_info_transport_from_peer(&info_transport, &peer->common, true);
-                    if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
-                        continue;
-                    }
 
-                    _z_info_link_t info_link;
-                    ret = _z_info_link_make(&info_link, &peer->common, transport_common);
-                    if (ret != _Z_RES_OK) {
-                        break;
-                    }
-                    z_closure_link_call(&callback->_this._val, &info_link);
-                    _z_info_link_clear(&info_link);
+                _z_info_link_t info_link;
+                ret = _z_info_link_make(&info_link, &peer->common, transport_common);
+                if (ret != _Z_RES_OK) {
+                    break;
                 }
-                break;
+                z_closure_link_call(&callback->_this._val, &info_link);
+                _z_info_link_clear(&info_link);
             }
-            default:
-                break;
+            break;
         }
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+        case _Z_TRANSPORT_RAWETH_TYPE: {
+            _z_transport_peer_multicast_slist_t *curr = transport->_transport._multicast._peers;
+            for (; curr != NULL; curr = _z_transport_peer_multicast_slist_next(curr)) {
+                _z_transport_peer_multicast_t *peer = _z_transport_peer_multicast_slist_value(curr);
+                _z_info_transport_t info_transport;
+                _z_info_transport_from_peer(&info_transport, &peer->common, true);
+                if (has_transport_filter && !_z_info_transport_filter_match(&info_transport, &transport_filter)) {
+                    continue;
+                }
+
+                _z_info_link_t info_link;
+                ret = _z_info_link_make(&info_link, &peer->common, transport_common);
+                if (ret != _Z_RES_OK) {
+                    break;
+                }
+                z_closure_link_call(&callback->_this._val, &info_link);
+                _z_info_link_clear(&info_link);
+            }
+            break;
+        }
+        default:
+            break;
     }
 
-    if (transport_locked) {
+    if (transport_common != NULL) {
         _z_transport_peer_mutex_unlock(transport_common);
     }
+    _z_session_transport_mutex_unlock(session);
 
+out:
     z_transport_drop(opt.transport);
 
     void *ctx = callback->_this._val.context;
