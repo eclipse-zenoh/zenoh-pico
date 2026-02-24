@@ -75,7 +75,7 @@ typedef struct {
 } _ze_advanced_publisher_t;
 
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_publisher_t, advanced_publisher)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_publisher)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(ze, advanced_publisher)
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADVANCED_PUBLICATION == 1

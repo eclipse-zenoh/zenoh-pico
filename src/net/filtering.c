@@ -101,20 +101,25 @@ static void _z_write_filter_ctx_remove_local_match(_z_write_filter_ctx_t *ctx) {
 }
 #endif
 
-static void _z_write_filter_session_register(_z_session_t *session, _z_write_filter_ctx_t *ctx,
-                                             _z_write_filter_ctx_rc_t *ctx_rc) {
+static z_result_t _z_write_filter_session_register(_z_session_t *session, _z_write_filter_ctx_t *ctx,
+                                                   _z_write_filter_ctx_rc_t *ctx_rc) {
     _z_write_filter_registration_t *registration =
         (_z_write_filter_registration_t *)z_malloc(sizeof(_z_write_filter_registration_t));
     if (registration == NULL) {
-        return;
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
 
     registration->ctx_rc = _z_write_filter_ctx_rc_clone(ctx_rc);
     if (_Z_RC_IS_NULL(&registration->ctx_rc)) {
         z_free(registration);
-        return;
+        return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
-    _z_session_mutex_lock(session);
+    if (_z_session_mutex_lock_if_open(session) != _Z_RES_OK) {
+        _Z_WARN("Failed to lock session for write filter registration - session may be closing");
+        _z_write_filter_ctx_rc_drop(&registration->ctx_rc);
+        z_free(registration);
+        return _Z_ERR_SESSION_CLOSED;
+    }
     registration->next = session->_write_filters;
     session->_write_filters = registration;
 
@@ -154,6 +159,7 @@ static void _z_write_filter_session_register(_z_session_t *session, _z_write_fil
     _z_session_mutex_unlock(session);
 
     ctx->registration = registration;
+    return _Z_RES_OK;
 }
 
 static void _z_write_filter_session_unregister(_z_write_filter_ctx_t *ctx) {
@@ -279,7 +285,9 @@ z_result_t _z_write_filter_create(const _z_session_rc_t *zn, _z_write_filter_t *
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
     }
 
-    _z_write_filter_session_register(_Z_RC_IN_VAL(zn), ctx, &filter->ctx);
+    _Z_CLEAN_RETURN_IF_ERR(_z_write_filter_session_register(_Z_RC_IN_VAL(zn), ctx, &filter->ctx),
+                           _z_remove_interest(_Z_RC_IN_VAL(zn), filter->_interest_id);
+                           _z_write_filter_ctx_rc_drop(&filter->ctx));
 
     return _Z_RES_OK;
 }
@@ -367,7 +375,9 @@ static void _z_write_filter_notify_local_entity(_z_session_t *session, const _z_
         return;
     }
 
-    _z_session_mutex_lock(session);
+    if (_z_session_mutex_lock_if_open(session) != _Z_RES_OK) {
+        return;
+    }
 
     _z_list_t *matches = NULL;
     for (_z_write_filter_registration_t *registration = session->_write_filters; registration != NULL;

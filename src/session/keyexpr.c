@@ -44,7 +44,7 @@ z_result_t _z_keyexpr_wire_declaration_undeclare(_z_keyexpr_wire_declaration_t *
         return ret;
     }
 
-    _z_session_rc_t session_rc = _z_session_weak_upgrade_if_open(&declaration->_session);
+    _z_session_rc_t session_rc = _z_session_weak_upgrade(&declaration->_session);
 
     if (!_Z_RC_IS_NULL(&session_rc)) {
         ret = _z_undeclare_resource(_Z_RC_IN_VAL(&session_rc), declaration->_id);

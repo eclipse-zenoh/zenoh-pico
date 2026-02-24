@@ -113,14 +113,6 @@ static z_result_t _z_get_keyexpr_from_wireexpr_inner(_z_keyexpr_t *ret, _z_resou
     }
 }
 
-_z_resource_t *_z_get_resource_by_id(_z_session_t *zn, _z_zint_t rid, _z_transport_peer_common_t *peer) {
-    _z_session_mutex_lock(zn);
-    _z_resource_slist_t *decls = peer == NULL ? zn->_local_resources : peer->_remote_resources;
-    _z_resource_t *res = _z_get_resource_by_id_inner(decls, rid);
-    _z_session_mutex_unlock(zn);
-    return res;
-}
-
 z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, const _z_wireexpr_t *expr,
                                         _z_transport_peer_common_t *peer, bool alias_wireexpr_if_possible) {
     *out = _z_keyexpr_null();
@@ -188,7 +180,9 @@ uint16_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr,
 /// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
 uint16_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
                               _z_transport_peer_common_t *peer) {
-    _z_session_mutex_lock(zn);
+    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
+        return Z_RESOURCE_ID_NONE;
+    }
     uint16_t ret = _z_register_resource_inner(zn, expr, id, peer);
     _z_session_mutex_unlock(zn);
 

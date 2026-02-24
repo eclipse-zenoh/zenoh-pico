@@ -41,7 +41,7 @@ z_result_t _z_session_send_reply_final(_z_session_t *session, uint32_t query_id,
 }
 
 z_result_t _z_query_send_reply_final(_z_query_t *q) {
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&q->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&q->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_TRANSPORT_TX_FAILED);
     }

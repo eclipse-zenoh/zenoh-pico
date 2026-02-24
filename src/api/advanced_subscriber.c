@@ -132,7 +132,7 @@ void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_seque
 
     if (state->_periodic_query_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
 #if Z_FEATURE_SESSION_CHECK == 1
-        _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
+        _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #else
         _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #endif
@@ -907,7 +907,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     get_opts.timeout_ms = state->_query_timeout;
 
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #else
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #endif
@@ -1106,7 +1106,7 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     }
 
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&states->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&states->_zn);
 #else
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&states->_zn);
 #endif
@@ -1931,7 +1931,7 @@ z_result_t ze_advanced_subscriber_detect_publishers(const ze_loaned_advanced_sub
         z_keyexpr_drop(z_keyexpr_move(&keyexpr)));
 
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #else
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #endif
