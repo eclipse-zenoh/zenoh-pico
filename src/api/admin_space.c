@@ -361,11 +361,13 @@ static z_result_t _ze_admin_space_undeclare_link_listener(z_loaned_session_t *zs
 
 static inline void _ze_admin_space_transport_listener_handle_clear(z_owned_transport_events_listener_t *listener) {
     _z_session_weak_drop(&listener->_val._session);
+    _z_sync_group_drop(&listener->_val._callback_drop_sync_group);
     listener->_val = (_z_transport_events_listener_t){0};
 }
 
 static inline void _ze_admin_space_link_listener_handle_clear(z_owned_link_events_listener_t *listener) {
     _z_session_weak_drop(&listener->_val._session);
+    _z_sync_group_drop(&listener->_val._callback_drop_sync_group);
     listener->_val = (_z_link_events_listener_t){0};
 }
 #endif  // Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1

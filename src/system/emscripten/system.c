@@ -65,6 +65,8 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
+_z_thread_id_t _z_thread_id_self(void) { return (_z_thread_id_t)pthread_self(); }
+
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) { _Z_CHECK_SYS_ERR(pthread_mutex_init(m, NULL)); }
 

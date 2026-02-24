@@ -90,6 +90,14 @@ typedef struct link_info_capture_t {
     bool first_dst_non_empty;
 } link_info_capture_t;
 
+typedef struct transport_self_undeclare_ctx_t {
+    z_owned_transport_events_listener_t *listener;
+    atomic_uint put;
+    atomic_bool undeclare_called;
+    atomic_bool undeclare_done;
+    atomic_int undeclare_ret;
+} transport_self_undeclare_ctx_t;
+
 static void events_ctx_reset(events_ctx_t *ctx) {
     atomic_store_explicit(&ctx->transport_put, 0, memory_order_relaxed);
     atomic_store_explicit(&ctx->transport_delete, 0, memory_order_relaxed);
@@ -120,6 +128,14 @@ static void link_events_ctx_reset(link_events_ctx_t *ctx) {
     ctx->put_mtu = 0;
     ctx->put_is_streamed = false;
     ctx->put_is_reliable = false;
+}
+
+static void transport_self_undeclare_ctx_reset(transport_self_undeclare_ctx_t *ctx) {
+    ctx->listener = NULL;
+    atomic_store_explicit(&ctx->put, 0, memory_order_relaxed);
+    atomic_store_explicit(&ctx->undeclare_called, false, memory_order_relaxed);
+    atomic_store_explicit(&ctx->undeclare_done, false, memory_order_relaxed);
+    atomic_store_explicit(&ctx->undeclare_ret, _Z_ERR_GENERIC, memory_order_relaxed);
 }
 
 static bool wait_counter_at_least(atomic_uint *counter, unsigned expected) {
@@ -186,6 +202,24 @@ static void on_transport_event(z_loaned_transport_event_t *event, void *arg) {
             break;
         default:
             break;
+    }
+}
+
+static void on_transport_event_undeclare_self(z_loaned_transport_event_t *event, void *arg) {
+    transport_self_undeclare_ctx_t *ctx = (transport_self_undeclare_ctx_t *)arg;
+    if (z_transport_event_kind(event) != Z_SAMPLE_KIND_PUT) {
+        return;
+    }
+
+    atomic_fetch_add_explicit(&ctx->put, 1, memory_order_release);
+
+    bool expected = false;
+    if (atomic_compare_exchange_strong_explicit(&ctx->undeclare_called, &expected, true, memory_order_acq_rel,
+                                                memory_order_acquire) &&
+        ctx->listener != NULL) {
+        z_result_t ret = z_undeclare_transport_events_listener(z_transport_events_listener_move(ctx->listener));
+        atomic_store_explicit(&ctx->undeclare_ret, ret, memory_order_release);
+        atomic_store_explicit(&ctx->undeclare_done, true, memory_order_release);
     }
 }
 
@@ -593,6 +627,43 @@ static void test_transport_events_undeclare(void) {
     close_session_with_tasks(&s1);
 }
 
+static void test_transport_events_undeclare_from_callback(void) {
+    printf("test_transport_events_undeclare_from_callback\n");
+
+    z_owned_session_t s1, s2, s3;
+    transport_self_undeclare_ctx_t ctx;
+    transport_self_undeclare_ctx_reset(&ctx);
+
+    open_listener_session(&s1, "tcp/127.0.0.1:7465");
+
+    z_owned_closure_transport_event_t callback;
+    assert_ok(z_closure_transport_event(&callback, on_transport_event_undeclare_self, NULL, &ctx));
+    z_owned_transport_events_listener_t listener;
+    ctx.listener = &listener;
+    assert_ok(z_declare_transport_events_listener(z_session_loan(&s1), &listener,
+                                                  z_closure_transport_event_move(&callback), NULL));
+
+    open_connector_session(&s2, "tcp/127.0.0.1:7465");
+    assert(wait_counter_at_least(&ctx.put, 1));
+    for (unsigned i = 0; i < 50; ++i) {
+        if (atomic_load_explicit(&ctx.undeclare_done, memory_order_acquire)) {
+            break;
+        }
+        z_sleep_ms(100);
+    }
+    assert(atomic_load_explicit(&ctx.undeclare_done, memory_order_acquire));
+    assert(atomic_load_explicit(&ctx.undeclare_ret, memory_order_acquire) == _Z_RES_OK);
+
+    close_session_with_tasks(&s2);
+
+    open_connector_session(&s3, "tcp/127.0.0.1:7465");
+    z_sleep_ms(500);
+    assert(atomic_load_explicit(&ctx.put, memory_order_acquire) == 1);
+
+    close_session_with_tasks(&s3);
+    close_session_with_tasks(&s1);
+}
+
 static void test_link_events_undeclare(void) {
     printf("test_link_events_undeclare\n");
 
@@ -704,6 +775,7 @@ int main(int argc, char **argv) {
     test_transport_events_background();
     test_transport_events_background_history();
     test_transport_events_undeclare();
+    test_transport_events_undeclare_from_callback();
     test_link_events_no_history();
     test_link_events_history();
     test_link_events_background();
