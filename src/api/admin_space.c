@@ -385,18 +385,17 @@ void _ze_admin_space_reply_clear(_ze_admin_space_reply_t *reply) {
     _ze_admin_space_reply_null(reply);
 }
 
-static z_result_t _ze_admin_space_add_reply_payload(const z_loaned_keyexpr_t *ke, z_owned_bytes_t *payload,
+static z_result_t _ze_admin_space_add_reply_payload(const z_loaned_keyexpr_t *ke, z_moved_bytes_t *payload,
                                                     _ze_admin_space_reply_list_t **replies) {
     _ze_admin_space_reply_t *reply = z_malloc(sizeof(_ze_admin_space_reply_t));
     if (reply == NULL) {
-        z_bytes_drop(z_bytes_move(payload));
+        z_bytes_drop(payload);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     _ze_admin_space_reply_null(reply);
 
-    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&reply->ke, ke), z_bytes_drop(z_bytes_move(payload)); z_free(reply));
-    reply->payload._val = payload->_val;
-    z_internal_bytes_null(payload);
+    _Z_CLEAN_RETURN_IF_ERR(z_keyexpr_clone(&reply->ke, ke), z_bytes_drop(payload); z_free(reply));
+    z_bytes_take(&reply->payload, payload);
 
     _ze_admin_space_reply_list_t *old = *replies;
     _ze_admin_space_reply_list_t *tmp = _ze_admin_space_reply_list_push(*replies, reply);
@@ -498,7 +497,7 @@ static z_result_t _ze_admin_space_add_transport_reply_for_peer(const z_loaned_qu
         z_owned_bytes_t payload;
         ret = _ze_admin_space_encode_transport_payload_from_peer(&payload, peer, is_multicast);
         if (ret == _Z_RES_OK) {
-            ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&ke), &payload, replies);
+            ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&ke), z_bytes_move(&payload), replies);
         }
     }
 
@@ -524,7 +523,7 @@ static z_result_t _ze_admin_space_add_link_reply_for_peer(const z_loaned_query_t
         z_owned_bytes_t payload;
         ret = _ze_admin_space_encode_link_payload_from_peer(&payload, peer, mtu, is_streamed, is_reliable);
         if (ret == _Z_RES_OK) {
-            ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&ke), &payload, replies);
+            ret = _ze_admin_space_add_reply_payload(z_keyexpr_loan(&ke), z_bytes_move(&payload), replies);
         }
     }
 
