@@ -109,11 +109,21 @@ static z_result_t _ze_admin_space_peer_link_ke(z_owned_keyexpr_t *ke, const z_id
 }
 
 #if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_PUBLICATION == 1
-static inline const char *_ze_admin_space_transport_kind_from_session(const _z_session_t *session, bool is_multicast) {
-    if (session != NULL && session->_tp._type == _Z_TRANSPORT_RAWETH_TYPE) {
-        return _Z_KEYEXPR_TRANSPORT_RAWETH;
+static inline const char *_ze_admin_space_transport_kind_from_session(const _z_session_t *session) {
+    if (session == NULL) {
+        return _Z_KEYEXPR_TRANSPORT_UNICAST;
     }
-    return is_multicast ? _Z_KEYEXPR_TRANSPORT_MULTICAST : _Z_KEYEXPR_TRANSPORT_UNICAST;
+
+    switch (session->_tp._type) {
+        case _Z_TRANSPORT_UNICAST_TYPE:
+            return _Z_KEYEXPR_TRANSPORT_UNICAST;
+        case _Z_TRANSPORT_MULTICAST_TYPE:
+            return _Z_KEYEXPR_TRANSPORT_MULTICAST;
+        case _Z_TRANSPORT_RAWETH_TYPE:
+            return _Z_KEYEXPR_TRANSPORT_RAWETH;
+        default:
+            return _Z_KEYEXPR_TRANSPORT_UNICAST;
+    }
 }
 
 typedef struct {
@@ -224,7 +234,7 @@ static void _ze_admin_space_publish_transport_event(z_loaned_transport_event_t *
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
     const z_loaned_transport_t *transport = z_transport_event_transport(event);
-    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session, transport->_is_multicast);
+    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session);
 
     z_owned_keyexpr_t ke;
     z_result_t ret = _ze_admin_space_peer_transport_ke(&ke, &session->_local_zid, transport_kind, &transport->_zid);
@@ -278,8 +288,7 @@ static void _ze_admin_space_publish_link_event(z_loaned_link_event_t *event, voi
 
     _z_session_t *session = _Z_RC_IN_VAL(&session_rc);
     const z_loaned_link_t *link = z_link_event_link(event);
-    const bool is_multicast = session->_tp._type != _Z_TRANSPORT_UNICAST_TYPE;
-    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session, is_multicast);
+    const char *transport_kind = _ze_admin_space_transport_kind_from_session(session);
 
     z_owned_keyexpr_t ke;
     z_result_t ret = _ze_admin_space_peer_link_ke(&ke, &session->_local_zid, transport_kind, &link->_zid, &link->_zid);
