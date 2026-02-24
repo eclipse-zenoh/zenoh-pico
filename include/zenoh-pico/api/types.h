@@ -656,6 +656,7 @@ _Z_OWNED_TYPE_VALUE(_z_info_link_event_t, link_event)
 typedef struct _z_transport_events_listener_t {
     size_t _id;
     _z_session_weak_t _session;
+    _z_sync_group_t _callback_drop_sync_group;
 } _z_transport_events_listener_t;
 _Z_OWNED_TYPE_VALUE(_z_transport_events_listener_t, transport_events_listener)
 
@@ -668,6 +669,7 @@ _Z_OWNED_TYPE_VALUE(_z_transport_events_listener_t, transport_events_listener)
 typedef struct _z_link_events_listener_t {
     size_t _id;
     _z_session_weak_t _session;
+    _z_sync_group_t _callback_drop_sync_group;
 } _z_link_events_listener_t;
 _Z_OWNED_TYPE_VALUE(_z_link_events_listener_t, link_events_listener)
 
