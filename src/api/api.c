@@ -2103,7 +2103,7 @@ z_result_t zp_batch_start(const z_loaned_session_t *zs) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
     _z_session_t *session = _Z_RC_IN_VAL(zs);
-    return _z_transport_start_batching(&session->_tp) ? _Z_RES_OK : _Z_ERR_GENERIC;
+    return _z_transport_start_batching(&session->_tp);
 }
 
 z_result_t zp_batch_flush(const z_loaned_session_t *zs) {
