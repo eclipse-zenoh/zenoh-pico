@@ -135,12 +135,10 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
 z_result_t _z_session_close(_z_session_t *zn) {
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     zn->_is_closed = true;
-    _z_session_mutex_unlock(zn);
 #if Z_FEATURE_AUTO_RECONNECT == 1
-    _Z_RETURN_IF_ERR(_z_session_mutex_lock(zn));
     _z_network_message_slist_free(&zn->_declaration_cache);
-    _z_session_mutex_unlock(zn);
 #endif
+    _z_session_mutex_unlock(zn);
     _z_flush_local_resources(zn);
 #if Z_FEATURE_SUBSCRIPTION == 1
     _z_flush_subscriptions(zn);

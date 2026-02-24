@@ -1704,15 +1704,11 @@ z_result_t ze_declare_advanced_subscriber(const z_loaned_session_t *zs, ze_owned
     }
 
     z_owned_closure_sample_t subscriber_callback;
-    _Z_CLEAN_RETURN_IF_ERR(z_closure_sample(&subscriber_callback, _ze_advanced_subscriber_subscriber_callback,
-                                            _ze_advanced_subscriber_subscriber_drop_handler, sub_state),
-                           z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                           _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
-                           _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
+    z_closure_sample(&subscriber_callback, _ze_advanced_subscriber_subscriber_callback,
+                     _ze_advanced_subscriber_subscriber_drop_handler, sub_state);
     _Z_CLEAN_RETURN_IF_ERR(z_declare_subscriber(zs, &sub->_val._subscriber, keyexpr,
                                                 z_closure_sample_move(&subscriber_callback), &opt.subscriber_options),
                            z_keyexpr_drop(z_keyexpr_move(&ke_pub));
-                           _ze_advanced_subscriber_state_rc_drop(sub_state); z_free(sub_state);
                            _ze_advanced_subscriber_state_rc_drop(&sub->_val._state));
 
     if (opt.history.is_enabled) {

@@ -319,14 +319,16 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared
              _z_string_data(&keyexpr->_inner._keyexpr));
 
     _z_keyexpr_t query_ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, &keyexpr->_inner));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
     uint32_t query_id;
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&query_ke));
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&query_ke);
+                           _z_drop_handler_execute(dropper, arg););
     _z_liveliness_pending_query_t *pq = _z_unsafe_liveliness_register_pending_query(zn);
     if (pq == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&query_ke);
+        _z_drop_handler_execute(dropper, arg);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     query_id = pq->_id;

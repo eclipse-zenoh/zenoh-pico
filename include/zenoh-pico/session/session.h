@@ -38,6 +38,12 @@ extern "C" {
  */
 typedef void (*_z_drop_handler_t)(void *arg);
 
+static inline void _z_drop_handler_execute(_z_drop_handler_t dropper, void *arg) {
+    if (dropper != NULL) {
+        dropper(arg);
+    }
+}
+
 typedef enum {
     _Z_SUBSCRIBER_KIND_SUBSCRIBER = 0,
     _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER = 1,

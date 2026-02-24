@@ -541,7 +541,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         return Z_EINVAL;
     }
     _z_keyexpr_t ke_query;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
     if (consolidation == Z_CONSOLIDATION_MODE_AUTO) {
         if (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_TIME) != NULL) {
@@ -558,11 +558,13 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     // Add the pending query to the current session
     _z_zint_t qid;
     z_result_t ret = _Z_RES_OK;
-    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock(zn), _z_keyexpr_clear(&ke_query));
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke_query);
+                           _z_drop_handler_execute(dropper, arg));
     _z_pending_query_t *pq = _z_unsafe_register_pending_query(zn);
     if (pq == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&ke_query);
+        _z_drop_handler_execute(dropper, arg);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill the pending query object
