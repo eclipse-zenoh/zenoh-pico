@@ -121,6 +121,7 @@ _Z_INT_MAP_DEFINE(_z_connectivity_link_listener, _z_connectivity_link_listener_t
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
     _z_mutex_t _mutex_inner;
+    _z_mutex_rec_t _mutex_transport;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
     // Zenoh-pico is considering a single transport per session.

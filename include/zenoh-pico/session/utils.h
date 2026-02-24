@@ -48,6 +48,10 @@ static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
     return _Z_RES_OK;
 }
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
+static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { (void)_z_mutex_rec_lock(&zn->_mutex_transport); }
+static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) {
+    (void)_z_mutex_rec_unlock(&zn->_mutex_transport);
+}
 #else
 static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) {
     _ZP_UNUSED(zn);
@@ -57,6 +61,8 @@ static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
     return _z_session_is_closed(zn) ? _Z_ERR_SESSION_CLOSED : _Z_RES_OK;
 }
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_transport_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline void _z_session_transport_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif
 
 #ifdef __cplusplus
