@@ -2120,7 +2120,7 @@ z_result_t zp_batch_stop(const z_loaned_session_t *zs) {
     if (_Z_RC_IS_NULL(zs)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
-    _z_transport_stop_batching(&session->_tp);
+    _Z_RETURN_IF_ERR(_z_transport_stop_batching(&session->_tp));
     // Send remaining batch without dropping
     return _z_send_n_batch(session, Z_CONGESTION_CONTROL_BLOCK);
 }
