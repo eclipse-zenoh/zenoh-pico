@@ -28,14 +28,12 @@
 z_result_t _z_keyexpr_wire_declaration_new(_z_keyexpr_wire_declaration_t *declaration, const _z_string_t *keyexpr,
                                            const _z_session_rc_t *session) {
     *declaration = _z_keyexpr_wire_declaration_null();
-    uint16_t id = _z_declare_resource(_Z_RC_IN_VAL(session), keyexpr);
-    if (id == Z_RESOURCE_ID_NONE) {
-        return _Z_ERR_GENERIC;
+    z_result_t ret = _z_declare_resource(_Z_RC_IN_VAL(session), keyexpr, &declaration->_id);
+    if (ret == _Z_RES_OK) {
+        declaration->_prefix_len = (uint16_t)_z_string_len(keyexpr);
+        declaration->_session = _z_session_rc_clone_as_weak(session);
     }
-    declaration->_id = id;
-    declaration->_prefix_len = (uint16_t)_z_string_len(keyexpr);
-    declaration->_session = _z_session_rc_clone_as_weak(session);
-    return _Z_RES_OK;
+    return ret;
 }
 
 z_result_t _z_keyexpr_wire_declaration_undeclare(_z_keyexpr_wire_declaration_t *declaration) {

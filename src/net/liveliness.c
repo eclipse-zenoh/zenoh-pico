@@ -176,14 +176,15 @@ z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_sess
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = z_locality_default();
-    z_result_t ret = _Z_RES_OK;
-    ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
-    if (callback_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_sync_group, &s._subscriber_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier),
+        _z_subscription_clear(&s));
+    if (callback_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_sync_group, &s._subscriber_callback_drop_notifier),
+            _z_subscription_clear(&s));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare(zn, &s._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_subscription_clear(&s));
 
     // Register subscription, stored at session-level, do not drop it by the end of this function.
     _z_subscription_rc_t sp_s =

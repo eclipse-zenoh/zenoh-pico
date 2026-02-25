@@ -828,7 +828,7 @@ void test_no_declare_after_session_close(void) {
         z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
                          (void*)&arg);
         assert(z_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
-                                    z_closure_sample_move(&closure), NULL) != Z_OK);
+                                    z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));
@@ -853,7 +853,7 @@ void test_no_declare_after_session_close(void) {
 
         z_closure_query(&closure, on_receive_z_loaned_query_t_handler, on_drop_z_loaned_query_t_handler, (void*)&arg);
         assert(z_declare_queryable(z_session_loan(&session), &queryable, z_view_keyexpr_loan(&ke),
-                                   z_closure_query_move(&closure), NULL) != Z_OK);
+                                   z_closure_query_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));
@@ -880,7 +880,7 @@ void test_no_declare_after_session_close(void) {
         z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
                          (void*)&arg);
         assert(z_liveliness_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
-                                               z_closure_sample_move(&closure), NULL) != Z_OK);
+                                               z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));
@@ -904,7 +904,7 @@ void test_no_declare_after_session_close(void) {
 
         z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
         assert(z_liveliness_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), z_closure_reply_move(&closure),
-                                NULL) != Z_OK);
+                                NULL) == _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));
@@ -921,7 +921,8 @@ void test_no_declare_after_session_close(void) {
         assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_token") == Z_OK);
         z_close(z_session_loan_mut(&session), NULL);
 
-        assert(z_liveliness_declare_token(z_session_loan(&session), &token, z_view_keyexpr_loan(&ke), NULL) != Z_OK);
+        assert(z_liveliness_declare_token(z_session_loan(&session), &token, z_view_keyexpr_loan(&ke), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
         z_session_drop(z_session_move(&session));
     }
 #endif
@@ -942,8 +943,8 @@ void test_no_declare_after_session_close(void) {
         z_close(z_session_loan_mut(&session), NULL);
 
         z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
-        assert(z_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&closure), NULL) !=
-               Z_OK);
+        assert(z_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&closure), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));
@@ -968,7 +969,7 @@ void test_no_declare_after_session_close(void) {
         z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
                          (void*)&arg);
         assert(ze_declare_advanced_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
-                                              z_closure_sample_move(&closure), NULL) != Z_OK);
+                                              z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
         assert(arg.called == false);
         assert(arg.dropped == true);
         z_session_drop(z_session_move(&session));

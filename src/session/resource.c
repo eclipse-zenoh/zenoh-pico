@@ -127,8 +127,8 @@ z_result_t _z_get_keyexpr_from_wireexpr(_z_session_t *zn, _z_keyexpr_t *out, con
     return ret;
 }
 
-uint16_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
-                                    _z_transport_peer_common_t *peer) {
+z_result_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
+                                      _z_transport_peer_common_t *peer, uint16_t *out_id) {
     _z_resource_slist_t **resources = (peer == NULL) ? &zn->_local_resources : &peer->_remote_resources;
     _z_resource_slist_t *parent_resources =
         (expr->_mapping == _Z_KEYEXPR_MAPPING_LOCAL) ? zn->_local_resources : peer->_remote_resources;
@@ -138,17 +138,18 @@ uint16_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr,
         _z_resource_t *res = _z_get_resource_by_id_inner(parent_resources, expr->_id);
         if (res == NULL) {
             _Z_ERROR("Unknown scope: %d, for mapping: %zu", (unsigned int)expr->_id, (size_t)expr->_mapping);
-            return Z_RESOURCE_ID_NONE;
+            return _Z_ERR_ENTITY_DECLARATION_FAILED;
         }
         if (_z_wireexpr_has_suffix(expr)) {
             if (_z_string_concat(&new_key._keyexpr, &res->_key._keyexpr, &expr->_suffix, NULL, 0) != _Z_RES_OK) {
                 _Z_ERROR("Failed to allocate memory for new string");
-                return Z_RESOURCE_ID_NONE;
+                return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
             }
         } else if (id == Z_RESOURCE_ID_NONE && *resources == parent_resources) {
             // declaration of already declared resource
             res->_refcount++;
-            return res->_id;
+            *out_id = res->_id;
+            return _Z_RES_OK;
         } else {  // redeclaration of exisiting resource
             new_key = _z_keyexpr_alias(&res->_key);
         }
@@ -161,29 +162,26 @@ uint16_t _z_register_resource_inner(_z_session_t *zn, const _z_wireexpr_t *expr,
         if (res != NULL) {  // declaration of already declared resource
             res->_refcount++;
             _z_keyexpr_clear(&new_key);
-            return res->_id;
+            *out_id = res->_id;
+            return _Z_RES_OK;
         }
     }
     _z_keyexpr_t ke;
-    if (_z_keyexpr_move(&ke, &new_key) != _Z_RES_OK) {
-        return Z_RESOURCE_ID_NONE;
-    }
+    _Z_RETURN_IF_ERR(_z_keyexpr_move(&ke, &new_key));
 
     *resources = _z_resource_slist_push_empty(*resources);
     _z_resource_t *res = _z_resource_slist_value(*resources);
     res->_refcount = 1;
     res->_key = ke;
     res->_id = id == Z_RESOURCE_ID_NONE ? _z_get_resource_id(zn) : id;
-    return res->_id;
+    *out_id = res->_id;
+    return _Z_RES_OK;
 }
 
-/// Returns the ID of the registered keyexpr. Returns 0 if registration failed.
-uint16_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
-                              _z_transport_peer_common_t *peer) {
-    if (_z_session_mutex_lock_if_open(zn) != _Z_RES_OK) {
-        return Z_RESOURCE_ID_NONE;
-    }
-    uint16_t ret = _z_register_resource_inner(zn, expr, id, peer);
+z_result_t _z_register_resource(_z_session_t *zn, const _z_wireexpr_t *expr, uint16_t id,
+                                _z_transport_peer_common_t *peer, uint16_t *out_id) {
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
+    z_result_t ret = _z_register_resource_inner(zn, expr, id, peer, out_id);
     _z_session_mutex_unlock(zn);
 
     return ret;
