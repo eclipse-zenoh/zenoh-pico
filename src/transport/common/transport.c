@@ -20,7 +20,7 @@
 #include "zenoh-pico/transport/unicast/accept.h"
 #include "zenoh-pico/utils/result.h"
 
-void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
+void _z_transport_common_stop_tasks(_z_transport_common_t *ztc, bool detach_tasks) {
 #if Z_FEATURE_MULTI_THREAD == 1
     // Clean up tasks
     if (ztc->_read_task != NULL) {
@@ -44,15 +44,19 @@ void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks) {
         ztc->_lease_task = NULL;
     }
     _zp_unicast_stop_accept_task(ztc);
+#else
+    _ZP_UNUSED(ztc);
+    _ZP_UNUSED(detach_tasks);
+#endif  // Z_FEATURE_MULTI_THREAD == 1
+}
 
+void _z_transport_common_clear(_z_transport_common_t *ztc) {
+#if Z_FEATURE_MULTI_THREAD == 1
     // Clean up the mutexes
     _z_mutex_drop(&ztc->_mutex_tx);
     _z_mutex_drop(&ztc->_mutex_rx);
     _z_mutex_rec_drop(&ztc->_mutex_peer);
-#else
-    _ZP_UNUSED(detach_tasks);
-#endif  // Z_FEATURE_MULTI_THREAD == 1
-
+#endif
     // Clean up the buffers
     _z_wbuf_clear(&ztc->_wbuf);
     _z_zbuf_clear(&ztc->_zbuf);
