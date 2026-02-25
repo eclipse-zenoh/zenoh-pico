@@ -21,7 +21,11 @@
 extern "C" {
 #endif
 
-void _z_common_transport_clear(_z_transport_common_t *ztc, bool detach_tasks);
+void _z_transport_common_stop_tasks(_z_transport_common_t *ztc, bool detach_tasks);
+
+// Important: This function does not stop the tasks, so when destroying transport, make sure to call
+// _z_transport_common_stop_tasks before calling this function
+void _z_transport_common_clear(_z_transport_common_t *ztc);
 
 #ifdef __cplusplus
 }
