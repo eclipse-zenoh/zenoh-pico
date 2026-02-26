@@ -193,10 +193,33 @@ static inline void _z_atomic_thread_fence(_z_memory_order_t order) {
 }
 #endif
 
-//_ZP_DEFINE_ATOMIC(bool, bool) - not supported on gcc.
 _ZP_DEFINE_ATOMIC(uint8_t, uint8)
 _ZP_DEFINE_ATOMIC(uint16_t, uint16)
 _ZP_DEFINE_ATOMIC(uint32_t, uint32)
-//_ZP_DEFINE_ATOMIC(size_t, size)
+
+// _Atomic bool is not supported by gcc, so we implement it using uint8_t
+typedef _z_atomic_uint8_t _z_atomic_bool_t;
+static inline void _z_atomic_bool_init(_z_atomic_bool_t *var, bool value) { _z_atomic_uint8_init(var, value ? 1 : 0); }
+static inline bool _z_atomic_bool_load(_z_atomic_bool_t *var, _z_memory_order_t order) {
+    return _z_atomic_uint8_load(var, order) != 0;
+}
+static inline void _z_atomic_bool_store(_z_atomic_bool_t *var, bool val, _z_memory_order_t order) {
+    _z_atomic_uint8_store(var, val ? 1 : 0, order);
+}
+static inline bool _z_atomic_bool_compare_exchange_strong(_z_atomic_bool_t *var, bool *expected, bool desired,
+                                                          _z_memory_order_t success, _z_memory_order_t failure) {
+    uint8_t expected_val = *expected ? 1 : 0;
+    bool result = _z_atomic_uint8_compare_exchange_strong(var, &expected_val, desired ? 1 : 0, success, failure);
+    *expected = expected_val != 0;
+    return result;
+}
+static inline bool _z_atomic_bool_compare_exchange_weak(_z_atomic_bool_t *var, bool *expected, bool desired,
+                                                        _z_memory_order_t success, _z_memory_order_t failure) {
+    uint8_t expected_val = *expected ? 1 : 0;
+    bool result = _z_atomic_uint8_compare_exchange_weak(var, &expected_val, desired ? 1 : 0, success, failure);
+    *expected = expected_val != 0;
+    return result;
+}
+
 #undef _ZP_DEFINE_ATOMIC
 #endif
