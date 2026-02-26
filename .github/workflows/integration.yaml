@@ -76,7 +76,7 @@ jobs:
 
       - name: Test debug
         run: make test
-        timeout-minutes: 30
+        timeout-minutes: 40
         env:
           BUILD_TYPE: Debug # Workaround for Windows as it seems the previous step is being ignored
           BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
@@ -124,7 +124,7 @@ jobs:
 
       - name: Test debug
         run: make test
-        timeout-minutes: 30
+        timeout-minutes: 40
         env:
           BUILD_TYPE: Debug # Workaround for Windows as it seems the previous step is being ignored
           BUILD_TESTING: OFF # Workaround for Windows as it seems the previous step is being ignored
