@@ -47,15 +47,15 @@
     static inline bool _z_atomic_##name##_compare_exchange_strong(_z_atomic_##name##_t *var, type *expected,        \
                                                                   type desired, _z_memory_order_t success,          \
                                                                   _z_memory_order_t failure) {                      \
-        success = success;                                                                                          \
-        failure = failure;                                                                                          \
+        (void)success;                                                                                              \
+        (void)failure;                                                                                              \
         return atomic_compare_exchange_strong_explicit(var, expected, desired, success, failure);                   \
     }                                                                                                               \
     static inline bool _z_atomic_##name##_compare_exchange_weak(_z_atomic_##name##_t *var, type *expected,          \
                                                                 type desired, _z_memory_order_t success,            \
                                                                 _z_memory_order_t failure) {                        \
-        success = success;                                                                                          \
-        failure = failure;                                                                                          \
+        (void)success;                                                                                              \
+        (void)failure;                                                                                              \
         return atomic_compare_exchange_weak_explicit(var, expected, desired, success, failure);                     \
     }
 static inline void _z_atomic_thread_fence(_z_memory_order_t order) { atomic_thread_fence(order); }
