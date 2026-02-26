@@ -199,7 +199,4 @@ _ZP_DEFINE_ATOMIC(uint16_t, uint16)
 _ZP_DEFINE_ATOMIC(uint32_t, uint32)
 //_ZP_DEFINE_ATOMIC(size_t, size)
 #undef _ZP_DEFINE_ATOMIC
-#else
-#error \
-    "atomic.h should never be included in a header, since atomic types have compiler-dependent layout, and thus should not be visible outside of zenoh-pico."
 #endif
