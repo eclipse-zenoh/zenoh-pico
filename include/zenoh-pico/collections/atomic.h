@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "zenoh-pico/config.h"
+
 #if Z_FEATURE_MULTI_THREAD == 1
 #if ZENOH_C_STANDARD != 99
 #ifndef __cplusplus

@@ -42,6 +42,9 @@ z_result_t _z_rc_init(void** cnt) {
 
 z_result_t _z_rc_increase_strong(void* cnt) {
     _z_inner_rc_t* c = (_z_inner_rc_t*)cnt;
+    if (c == NULL) {
+        _Z_ERROR_RETURN(_Z_ERR_INVALID);
+    }
     if (_z_atomic_uint32_fetch_add(&c->_strong_cnt, 1, _z_memory_order_relaxed) >= _Z_RC_MAX_COUNT) {
         _Z_ERROR("Rc strong count overflow");
         _Z_ERROR_RETURN(_Z_ERR_OVERFLOW);
