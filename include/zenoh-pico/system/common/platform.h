@@ -146,12 +146,6 @@ z_result_t _z_task_cancel(_z_task_t *task);
 void _z_task_exit(void);
 void _z_task_free(_z_task_t **task);
 
-#if Z_FEATURE_MULTI_THREAD == 1
-typedef uintptr_t _z_thread_id_t;
-
-_z_thread_id_t _z_thread_id_self(void);
-#endif
-
 /**
  * Constructs a new task.
  *
