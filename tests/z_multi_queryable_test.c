@@ -180,6 +180,7 @@ static void test_multi_queryables(int num_q) {
 
     bool *seen = (bool *)z_malloc((size_t)num_q * sizeof(bool));
     ASSERT_NOT_NULL(seen);
+    (void)memset(seen, 0, (size_t)num_q * sizeof(bool));
 
     size_t got = collect_seen_queriables(z_loan(rh), TEST_SLEEP_MS, 50, seen, num_q);
 

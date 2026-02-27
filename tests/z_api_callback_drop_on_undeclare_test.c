@@ -808,6 +808,78 @@ void test_liveliness_get_callback_drop_on_undeclare(void) {
 
 #endif
 
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+DECLARE_ON_RECEIVE_HANDLER(z_loaned_transport_event_t, _ZP_NOTHING)
+void test_transport_events_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1;
+    callback_arg_t arg;
+    z_owned_closure_transport_event_t callback;
+    z_transport_events_listener_options_t options;
+
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Transport events callback drop on undeclare: background = %d\n", background);
+    assert(open_session(&session1) == Z_OK);
+    z_closure_transport_event(&callback, on_receive_z_loaned_transport_event_t_handler,
+                              on_drop_z_loaned_transport_event_t_handler, (void*)&arg);
+    z_transport_events_listener_options_default(&options);
+    options.history = true;
+
+    if (!background) {
+        z_owned_transport_events_listener_t listener;
+        assert(z_declare_transport_events_listener(z_session_loan(&session1), &listener,
+                                                   z_closure_transport_event_move(&callback), &options) == Z_OK);
+        assert(z_undeclare_transport_events_listener(z_transport_events_listener_move(&listener)) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    } else {
+        assert(z_declare_background_transport_events_listener(
+                   z_session_loan(&session1), z_closure_transport_event_move(&callback), &options) == Z_OK);
+        assert(z_close(z_session_loan_mut(&session1), NULL) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    }
+}
+
+DECLARE_ON_RECEIVE_HANDLER(z_loaned_link_event_t, _ZP_NOTHING)
+void test_link_events_callback_drop_on_undeclare(bool background) {
+    z_owned_session_t session1;
+    callback_arg_t arg;
+    z_owned_closure_link_event_t callback;
+    z_link_events_listener_options_t options;
+
+    arg.called = false;
+    arg.dropped = false;
+
+    printf("Test: Link events callback drop on undeclare: background = %d\n", background);
+    assert(open_session(&session1) == Z_OK);
+    z_closure_link_event(&callback, on_receive_z_loaned_link_event_t_handler, on_drop_z_loaned_link_event_t_handler,
+                         (void*)&arg);
+    z_link_events_listener_options_default(&options);
+    options.history = true;
+
+    if (!background) {
+        z_owned_link_events_listener_t listener;
+        assert(z_declare_link_events_listener(z_session_loan(&session1), &listener,
+                                              z_closure_link_event_move(&callback), &options) == Z_OK);
+        assert(z_undeclare_link_events_listener(z_link_events_listener_move(&listener)) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    } else {
+        assert(z_declare_background_link_events_listener(z_session_loan(&session1),
+                                                         z_closure_link_event_move(&callback), &options) == Z_OK);
+        assert(z_close(z_session_loan_mut(&session1), NULL) == Z_OK);
+        assert(arg.called == true);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session1));
+    }
+}
+#endif
+
 int main(void) {
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
     test_subscriber_callback_drop_on_undeclare(false);
@@ -839,6 +911,12 @@ int main(void) {
     test_advanced_sample_miss_callback_drop_on_undeclare(false);
     test_advanced_sample_miss_callback_drop_on_undeclare(true);
 #endif
+#endif
+#if Z_FEATURE_CONNECTIVITY == 1 && Z_FEATURE_UNICAST_TRANSPORT == 1 && Z_FEATURE_MULTI_THREAD == 1
+    test_transport_events_callback_drop_on_undeclare(false);
+    test_transport_events_callback_drop_on_undeclare(true);
+    test_link_events_callback_drop_on_undeclare(false);
+    test_link_events_callback_drop_on_undeclare(true);
 #endif
     return 0;
 }
