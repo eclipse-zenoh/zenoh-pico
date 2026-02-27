@@ -37,7 +37,7 @@ z_result_t _z_liveliness_token_clear(_z_liveliness_token_t *token) {
     if (_Z_RC_IS_NULL(&token->_zn)) {
         return ret;
     }
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&token->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         ret = _z_undeclare_liveliness_token(token);
         _z_session_rc_drop(&sess_rc);

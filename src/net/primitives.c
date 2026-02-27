@@ -92,21 +92,19 @@ void _z_scout(const z_what_t what, const _z_id_t zid, _z_string_t *locator, cons
 #endif
 
 /*------------------ Resource Declaration ------------------*/
-uint16_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key) {
-    uint16_t ret = Z_RESOURCE_ID_NONE;
+z_result_t _z_declare_resource(_z_session_t *zn, const _z_string_t *key, uint16_t *out_id) {
     _z_wireexpr_t expr = _z_wireexpr_null();
     expr._id = Z_RESOURCE_ID_NONE;
     expr._suffix = _z_string_alias(*key);
-    uint16_t id = _z_register_resource(zn, &expr, Z_RESOURCE_ID_NONE, NULL);
-    if (id != 0) {
+    z_result_t ret = _z_register_resource(zn, &expr, Z_RESOURCE_ID_NONE, NULL, out_id);
+    if (ret == _Z_RES_OK) {
         // Build the declare message to send on the wire
-        _z_declaration_t declaration = _z_make_decl_keyexpr(id, &expr);
+        _z_declaration_t declaration = _z_make_decl_keyexpr(*out_id, &expr);
         _z_network_message_t n_msg;
         _z_n_msg_make_declare(&n_msg, declaration, _z_optional_id_make_none());
-        if (_z_send_declare(zn, &n_msg) == _Z_RES_OK) {
-            ret = id;
-        } else {
-            _z_unregister_resource(zn, id, NULL);
+        ret = _z_send_declare(zn, &n_msg);
+        if (ret != _Z_RES_OK) {
+            _z_unregister_resource(zn, *out_id, NULL);
         }
         _z_n_msg_clear(&n_msg);
     }
@@ -217,13 +215,16 @@ z_result_t _z_register_subscriber(uint32_t *sub_id, const _z_session_rc_t *zn, c
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = allowed_origin;
-    z_result_t ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
-    if (callback_drop_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_drop_sync_group, &s._subscriber_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr),
+                           _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier),
+        _z_subscription_clear(&s));
+    if (callback_drop_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_drop_sync_group, &s._subscriber_callback_drop_notifier),
+            _z_subscription_clear(&s));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare_non_wild_prefix(zn, &s._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_subscription_clear(&s));
 
     _z_subscription_rc_t sp_s = _z_register_subscription(_Z_RC_IN_VAL(zn), _Z_SUBSCRIBER_KIND_SUBSCRIBER, &s);
     if (_Z_RC_IS_NULL(&sp_s)) {
@@ -265,7 +266,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&sub->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&sub->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -326,13 +327,16 @@ z_result_t _z_register_queryable(uint32_t *queryable_id, const _z_session_rc_t *
     q._dropper = dropper;
     q._arg = arg;
     q._allowed_origin = allowed_origin;
-    z_result_t ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &q._session_callback_drop_notifier);
-    if (callback_drop_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_drop_sync_group, &q._queryable_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr),
+                           _z_session_queryable_clear(&q));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &q._session_callback_drop_notifier),
+        _z_session_queryable_clear(&q));
+    if (callback_drop_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_drop_sync_group, &q._queryable_callback_drop_notifier),
+            _z_session_queryable_clear(&q));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare_non_wild_prefix(zn, &q._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_session_queryable_clear(&q));
 
     // Create session_queryable entry, stored at session-level, do not drop it by the end of this function.
     _z_session_queryable_rc_t sp_q = _z_register_session_queryable(_Z_RC_IN_VAL(zn), &q);
@@ -379,7 +383,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&qle->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&qle->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -515,7 +519,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
     if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&querier->_zn);
+    _z_session_rc_t s = _z_session_weak_upgrade(&querier->_zn);
     if (!_Z_RC_IS_NULL(&s)) {
         _z_unregister_pending_queries_from_querier(_Z_RC_IN_VAL(&s), querier->_id);
         _z_session_rc_drop(&s);
@@ -541,7 +545,7 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
         return Z_EINVAL;
     }
     _z_keyexpr_t ke_query;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&ke_query, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
     if (consolidation == Z_CONSOLIDATION_MODE_AUTO) {
         if (parameters != NULL && _z_strstr(parameters, parameters + parameters_len, Z_SELECTOR_TIME) != NULL) {
@@ -558,11 +562,13 @@ z_result_t _z_query(const _z_session_rc_t *session, _z_optional_id_t querier_id,
     // Add the pending query to the current session
     _z_zint_t qid;
     z_result_t ret = _Z_RES_OK;
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&ke_query);
+                           _z_drop_handler_execute(dropper, arg));
     _z_pending_query_t *pq = _z_unsafe_register_pending_query(zn);
     if (pq == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&ke_query);
+        _z_drop_handler_execute(dropper, arg);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     // Fill the pending query object

@@ -145,7 +145,7 @@ typedef struct {
 } _ze_advanced_subscriber_t;
 
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_advanced_subscriber_t, advanced_subscriber)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, advanced_subscriber)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(ze, advanced_subscriber)
 
 typedef struct {
     size_t _id;
@@ -158,7 +158,7 @@ static inline bool _ze_sample_miss_listener_check(const _ze_sample_miss_listener
 }
 
 _Z_OWNED_TYPE_VALUE_PREFIX(ze, _ze_sample_miss_listener_t, sample_miss_listener)
-_Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(ze, sample_miss_listener)
+_Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(ze, sample_miss_listener)
 
 #ifdef Z_FEATURE_UNSTABLE_API
 #if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1

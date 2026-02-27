@@ -32,16 +32,30 @@ _z_hello_slist_t *_z_scout_inner(const z_what_t what, _z_id_t id, _z_string_t *l
 
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid);
 void _z_session_clear(_z_session_t *zn);
-z_result_t _z_session_close(_z_session_t *zn, uint8_t reason);
+z_result_t _z_session_close(_z_session_t *zn);
 
 z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_message_t *z_msg,
                                      _z_transport_peer_common_t *peer);
 
 #if Z_FEATURE_MULTI_THREAD == 1
-static inline void _z_session_mutex_lock(_z_session_t *zn) { (void)_z_mutex_lock(&zn->_mutex_inner); }
+static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) { return _z_mutex_lock(&zn->_mutex_inner); }
+static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
+    _Z_RETURN_IF_ERR(_z_mutex_lock(&zn->_mutex_inner));
+    if (zn->_is_closed) {
+        _z_mutex_unlock(&zn->_mutex_inner);
+        return _Z_ERR_SESSION_CLOSED;
+    }
+    return _Z_RES_OK;
+}
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { (void)_z_mutex_unlock(&zn->_mutex_inner); }
 #else
-static inline void _z_session_mutex_lock(_z_session_t *zn) { _ZP_UNUSED(zn); }
+static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) {
+    _ZP_UNUSED(zn);
+    return _Z_RES_OK;
+}
+static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
+    return zn->_is_closed ? _Z_ERR_SESSION_CLOSED : _Z_RES_OK;
+}
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif
 

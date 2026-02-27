@@ -41,7 +41,6 @@ struct _z_write_filter_registration_t;
 
 typedef struct _z_session_t {
 #if Z_FEATURE_MULTI_THREAD == 1
-    bool _mutex_inner_initialized;
     _z_mutex_t _mutex_inner;
 #endif  // Z_FEATURE_MULTI_THREAD == 1
 
@@ -127,6 +126,7 @@ typedef struct _z_session_t {
 #endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;
+    bool _is_closed;
 } _z_session_t;
 
 /**
@@ -172,14 +172,6 @@ void _z_cache_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 void _z_prune_declaration(_z_session_t *zs, const _z_network_message_t *n_msg);
 
 /**
- * Close a zenoh-net session.
- *
- * Parameters:
- *     session: A zenoh-net session. The callee releases session upon successful return.
- */
-void _z_close(_z_session_t *session);
-
-/**
  * Return true is session and all associated transports were closed.
  */
 bool _z_session_is_closed(const _z_session_t *session);
@@ -188,11 +180,6 @@ bool _z_session_is_closed(const _z_session_t *session);
  * Return true if session is connected to at least one router peer.
  */
 bool _z_session_has_router_peer(const _z_session_t *session);
-
-/**
- * Upgrades weak session session, than resets it to null if session is closed.
- */
-_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *session);
 
 /**
  * Get informations about an zenoh-net session.

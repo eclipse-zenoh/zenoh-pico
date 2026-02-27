@@ -54,7 +54,7 @@ void _ze_advanced_publisher_state_clear(_ze_advanced_publisher_state_t *state) {
     if (state->_heartbeat_mode != ZE_ADVANCED_PUBLISHER_HEARTBEAT_MODE_NONE &&
         state->_state_publisher_task_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
 #if Z_FEATURE_SESSION_CHECK == 1
-        _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
+        _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #else
         _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
 #endif
@@ -383,7 +383,7 @@ static z_result_t _ze_advanced_publisher_sequencing_options(const ze_loaned_adva
 
     // Set timestamp
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&publisher->_zn);
 #else
     _z_session_rc_t sess_rc = _z_session_weak_upgrade(&publisher->_zn);
 #endif

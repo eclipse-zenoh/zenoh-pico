@@ -808,6 +808,175 @@ void test_liveliness_get_callback_drop_on_undeclare(void) {
 
 #endif
 
+void test_no_declare_after_session_close(void) {
+#if Z_FEATURE_SUBSCRIPTION == 1
+    {
+        printf("Test: No subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(z_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                    z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERYABLE == 1
+    {
+        printf("Test: No queryable can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_queryable_t queryable;
+        z_view_keyexpr_t ke;
+        z_owned_closure_query_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/queryable") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_query(&closure, on_receive_z_loaned_query_t_handler, on_drop_z_loaned_query_t_handler, (void*)&arg);
+        assert(z_declare_queryable(z_session_loan(&session), &queryable, z_view_keyexpr_loan(&ke),
+                                   z_closure_query_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_LIVELINESS == 1
+#if Z_FEATURE_SUBSCRIPTION == 1
+    {
+        printf("Test: No liveliness subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(z_liveliness_declare_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                               z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERY == 1
+    {
+        printf("Test: No z_liveliness_get can be issued after session close\n");
+        z_owned_session_t session;
+        z_view_keyexpr_t ke;
+        z_owned_closure_reply_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_get") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
+        assert(z_liveliness_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), z_closure_reply_move(&closure),
+                                NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+    {
+        printf("Test: No liveliness token can be declared after session close\n");
+        z_owned_session_t session;
+        z_owned_liveliness_token_t token;
+        z_view_keyexpr_t ke;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/liveliness_token") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        assert(z_liveliness_declare_token(z_session_loan(&session), &token, z_view_keyexpr_loan(&ke), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_QUERY == 1
+    {
+        printf("Test: No z_get can be issued after session close\n");
+        z_owned_session_t session;
+        z_view_keyexpr_t ke;
+        z_owned_closure_reply_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/get") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+
+        z_closure_reply(&closure, on_receive_z_loaned_reply_t_handler, on_drop_z_loaned_reply_t_handler, (void*)&arg);
+        assert(z_get(z_session_loan(&session), z_view_keyexpr_loan(&ke), "", z_closure_reply_move(&closure), NULL) ==
+               _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+
+#if Z_FEATURE_ADVANCED_SUBSCRIPTION == 1
+    {
+        printf("Test: No advanced subscriber can be declared after session close\n");
+        z_owned_session_t session;
+        ze_owned_advanced_subscriber_t subscriber;
+        z_view_keyexpr_t ke;
+        z_owned_closure_sample_t closure;
+
+        callback_arg_t arg;
+        arg.called = false;
+        arg.dropped = false;
+
+        assert(open_session(&session) == Z_OK);
+        assert(z_view_keyexpr_from_str(&ke, "test/closed/advanced_subscriber") == Z_OK);
+        z_close(z_session_loan_mut(&session), NULL);
+        z_closure_sample(&closure, on_receive_z_loaned_sample_t_handler, on_drop_z_loaned_sample_t_handler,
+                         (void*)&arg);
+        assert(ze_declare_advanced_subscriber(z_session_loan(&session), &subscriber, z_view_keyexpr_loan(&ke),
+                                              z_closure_sample_move(&closure), NULL) == _Z_ERR_SESSION_CLOSED);
+        assert(arg.called == false);
+        assert(arg.dropped == true);
+        z_session_drop(z_session_move(&session));
+    }
+#endif
+}
+
 int main(void) {
 #if Z_FEATURE_SUBSCRIPTION == 1 && Z_FEATURE_PUBLICATION == 1
     test_subscriber_callback_drop_on_undeclare(false);
@@ -840,5 +1009,6 @@ int main(void) {
     test_advanced_sample_miss_callback_drop_on_undeclare(true);
 #endif
 #endif
+    test_no_declare_after_session_close();
     return 0;
 }

@@ -99,7 +99,7 @@ _z_pending_query_t *_z_unsafe_register_pending_query(_z_session_t *zn) {
 static z_result_t _z_trigger_query_reply_partial_inner(_z_session_t *zn, const _z_zint_t id, _z_keyexpr_t *keyexpr,
                                                        _z_msg_put_t *msg, z_sample_kind_t kind,
                                                        _z_entity_global_id_t *replier_id) {
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(keyexpr); _z_msg_put_clear(msg));
 
     // Get query infos
     _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
@@ -194,7 +194,8 @@ z_result_t _z_trigger_query_reply_partial(_z_session_t *zn, const _z_zint_t id, 
 z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err_t *msg,
                                       _z_entity_global_id_t *replier_id) {
     // Retrieve query
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_bytes_drop(&msg->_payload);
+                           _z_encoding_clear(&msg->_encoding));
     _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     _z_session_mutex_unlock(zn);
     if (pen_qry == NULL) {
@@ -213,7 +214,7 @@ z_result_t _z_trigger_query_reply_err(_z_session_t *zn, _z_zint_t id, _z_msg_err
 
 z_result_t _z_trigger_query_reply_final(_z_session_t *zn, _z_zint_t id) {
     // Retrieve query
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     _z_pending_query_t *pen_qry = _z_unsafe_get_pending_query_by_id(zn, id);
     if (pen_qry == NULL) {
         _z_session_mutex_unlock(zn);

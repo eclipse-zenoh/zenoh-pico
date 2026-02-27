@@ -62,7 +62,10 @@ z_result_t _z_declare_liveliness_token(const _z_session_rc_t *zn, _z_liveliness_
     _Z_CLEAN_RETURN_IF_ERR(_z_liveliness_send_declare_token(_Z_RC_IN_VAL(zn), id, &ke), _z_declared_keyexpr_clear(&ke));
     z_result_t ret = _Z_RES_OK;
 
-    _z_session_mutex_lock(_Z_RC_IN_VAL(zn));
+    if (_z_session_mutex_lock_if_open(_Z_RC_IN_VAL(zn)) != _Z_RES_OK) {
+        _z_declared_keyexpr_clear(&ke);
+        return _Z_ERR_SESSION_CLOSED;
+    }
     const _z_declared_keyexpr_t *pkeyexpr = _z_declared_keyexpr_intmap_get(&_Z_RC_IN_VAL(zn)->_local_tokens, id);
     if (pkeyexpr != NULL) {
         // Already received this token
@@ -96,7 +99,7 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&token->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -134,7 +137,7 @@ z_result_t _z_liveliness_subscription_trigger_history(_z_session_t *zn, const _z
              _z_string_data(&sub->_key._inner._keyexpr));
 
     _z_keyexpr_slist_t *tokens_list = _z_keyexpr_slist_new();
-    _z_session_mutex_lock(zn);
+    _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
     // TODO: could we call callbacks inside the mutex? - this would allow to avoid extra keyexpr copies, list
     // allocations, in addition it would also allow to stay consistent with respect to eventual remote undeclarations,
     // i.e. if they arrive during callback execution - they will only be delivered after initial history calls,
@@ -173,14 +176,15 @@ z_result_t _z_register_liveliness_subscriber(uint32_t *out_sub_id, const _z_sess
     s._dropper = dropper;
     s._arg = arg;
     s._allowed_origin = z_locality_default();
-    z_result_t ret = _Z_RES_OK;
-    ret =
-        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier);
-    if (callback_sync_group != NULL && ret == _Z_RES_OK) {
-        ret = _z_sync_group_create_notifier(callback_sync_group, &s._subscriber_callback_drop_notifier);
+    _Z_CLEAN_RETURN_IF_ERR(_z_declared_keyexpr_declare(zn, &s._key, keyexpr), _z_subscription_clear(&s));
+    _Z_CLEAN_RETURN_IF_ERR(
+        _z_sync_group_create_notifier(&_Z_RC_IN_VAL(zn)->_callback_drop_sync_group, &s._session_callback_drop_notifier),
+        _z_subscription_clear(&s));
+    if (callback_sync_group != NULL) {
+        _Z_CLEAN_RETURN_IF_ERR(
+            _z_sync_group_create_notifier(callback_sync_group, &s._subscriber_callback_drop_notifier),
+            _z_subscription_clear(&s));
     }
-    _Z_SET_IF_OK(ret, _z_declared_keyexpr_declare(zn, &s._key, keyexpr));
-    _Z_CLEAN_RETURN_IF_ERR(ret, _z_subscription_clear(&s));
 
     // Register subscription, stored at session-level, do not drop it by the end of this function.
     _z_subscription_rc_t sp_s =
@@ -316,14 +320,16 @@ z_result_t _z_liveliness_query(const _z_session_rc_t *session, const _z_declared
              _z_string_data(&keyexpr->_inner._keyexpr));
 
     _z_keyexpr_t query_ke;
-    _Z_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, &keyexpr->_inner));
+    _Z_CLEAN_RETURN_IF_ERR(_z_keyexpr_copy(&query_ke, &keyexpr->_inner), _z_drop_handler_execute(dropper, arg));
 
     uint32_t query_id;
-    _z_session_mutex_lock(zn);
+    _Z_CLEAN_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn), _z_keyexpr_clear(&query_ke);
+                           _z_drop_handler_execute(dropper, arg););
     _z_liveliness_pending_query_t *pq = _z_unsafe_liveliness_register_pending_query(zn);
     if (pq == NULL) {
         _z_session_mutex_unlock(zn);
         _z_keyexpr_clear(&query_ke);
+        _z_drop_handler_execute(dropper, arg);
         return _Z_ERR_SYSTEM_OUT_OF_MEMORY;
     }
     query_id = pq->_id;

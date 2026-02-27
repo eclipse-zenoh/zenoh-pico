@@ -38,6 +38,12 @@ extern "C" {
  */
 typedef void (*_z_drop_handler_t)(void *arg);
 
+static inline void _z_drop_handler_execute(_z_drop_handler_t dropper, void *arg) {
+    if (dropper != NULL) {
+        dropper(arg);
+    }
+}
+
 typedef enum {
     _Z_SUBSCRIBER_KIND_SUBSCRIBER = 0,
     _Z_SUBSCRIBER_KIND_LIVELINESS_SUBSCRIBER = 1,
@@ -89,6 +95,11 @@ typedef struct {
 bool _z_subscription_eq(const _z_subscription_t *one, const _z_subscription_t *two);
 void _z_subscription_clear(_z_subscription_t *sub);
 
+static inline _z_subscription_t _z_subscription_null(void) {
+    _z_subscription_t s = {0};
+    return s;
+}
+
 _Z_REFCOUNT_DEFINE(_z_subscription, _z_subscription)
 _Z_ELEM_DEFINE(_z_subscriber, _z_subscription_t, _z_noop_size, _z_subscription_clear, _z_noop_copy, _z_noop_move,
                _z_subscription_eq, _z_noop_cmp, _z_noop_hash)
@@ -120,6 +131,11 @@ typedef struct {
     _z_sync_group_notifier_t _session_callback_drop_notifier;
     _z_sync_group_notifier_t _queryable_callback_drop_notifier;
 } _z_session_queryable_t;
+
+static inline _z_session_queryable_t _z_session_queryable_null(void) {
+    _z_session_queryable_t qle = {0};
+    return qle;
+}
 
 bool _z_session_queryable_eq(const _z_session_queryable_t *one, const _z_session_queryable_t *two);
 void _z_session_queryable_clear(_z_session_queryable_t *res);

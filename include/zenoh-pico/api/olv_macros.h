@@ -62,7 +62,7 @@
         type _val;               \
     } z_view_##name##_t;
 
-#define _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(prefix, name)                                 \
+#define _Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(prefix, name)                     \
     void prefix##_internal_##name##_null(prefix##_owned_##name##_t *obj);                           \
     bool prefix##_internal_##name##_check(const prefix##_owned_##name##_t *obj);                    \
     const prefix##_loaned_##name##_t *prefix##_##name##_loan(const prefix##_owned_##name##_t *obj); \
@@ -71,15 +71,15 @@
     void prefix##_##name##_take(prefix##_owned_##name##_t *obj, prefix##_moved_##name##_t *src);    \
     void prefix##_##name##_drop(prefix##_moved_##name##_t *obj);
 
-#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name)     \
-    _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(prefix, name) \
+#define _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name)                 \
+    _Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(prefix, name) \
     z_result_t prefix##_##name##_take_from_loaned(prefix##_owned_##name##_t *dst, prefix##_loaned_##name##_t *src);
 
 #define _Z_OWNED_FUNCTIONS_DEF_PREFIX(prefix, name)     \
     _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(prefix, name) \
     z_result_t prefix##_##name##_clone(prefix##_owned_##name##_t *obj, const prefix##_loaned_##name##_t *src);
 
-#define _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(name) _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF_PREFIX(z, name)
+#define _Z_OWNED_FUNCTIONS_NO_COPY_NO_MOVE_DEF(name) _Z_OWNED_FUNCTIONS_NO_COPY_NO_TAKE_FROM_LOANED_DEF_PREFIX(z, name)
 #define _Z_OWNED_FUNCTIONS_NO_COPY_DEF(name) _Z_OWNED_FUNCTIONS_NO_COPY_DEF_PREFIX(z, name)
 #define _Z_OWNED_FUNCTIONS_DEF(name) _Z_OWNED_FUNCTIONS_DEF_PREFIX(z, name)
 
@@ -169,29 +169,41 @@
 #define _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_INLINE_IMPL(type, name, f_check, f_null, f_move, f_drop) \
     _Z_OWNED_FUNCTIONS_VALUE_NO_COPY_IMPL_PREFIX_INNER(z, type, name, f_check, f_null, f_move, f_drop, static inline)
 
-#define _Z_OWNED_FUNCTIONS_RC_IMPL_INNER(name, attribute)                                                         \
+#define _Z_OWNED_FUNCTIONS_RC_IMPL_CLONE_DROP_INNER(name, attribute)                                 \
+    attribute z_result_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) { \
+        z_result_t ret = _Z_RES_OK;                                                                  \
+        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                 \
+        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                              \
+            _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                               \
+            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                       \
+        }                                                                                            \
+        return ret;                                                                                  \
+    }                                                                                                \
+    attribute void z_##name##_drop(z_moved_##name##_t *obj) {                                        \
+        if (obj != NULL && !_Z_RC_IS_NULL(&obj->_this._rc)) {                                        \
+            _z_##name##_rc_drop(&obj->_this._rc);                                                    \
+        }                                                                                            \
+    }
+
+#define _Z_OWNED_FUNCTIONS_RC_IMPL_NULL_CHECK_LOAN_INNER(name, attribute)                                         \
     attribute void z_internal_##name##_null(z_owned_##name##_t *val) { val->_rc = _z_##name##_rc_null(); }        \
     attribute bool z_internal_##name##_check(const z_owned_##name##_t *val) { return !_Z_RC_IS_NULL(&val->_rc); } \
     attribute const z_loaned_##name##_t *z_##name##_loan(const z_owned_##name##_t *val) { return &val->_rc; }     \
-    attribute z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }             \
-    attribute z_result_t z_##name##_clone(z_owned_##name##_t *obj, const z_loaned_##name##_t *src) {              \
-        z_result_t ret = _Z_RES_OK;                                                                               \
-        obj->_rc = _z_##name##_rc_clone((z_loaned_##name##_t *)src);                                              \
-        if (_Z_RC_IS_NULL(&obj->_rc)) {                                                                           \
-            _Z_ERROR_LOG(_Z_ERR_SYSTEM_OUT_OF_MEMORY);                                                            \
-            ret = _Z_ERR_SYSTEM_OUT_OF_MEMORY;                                                                    \
-        }                                                                                                         \
-        return ret;                                                                                               \
-    }                                                                                                             \
-    attribute void z_##name##_drop(z_moved_##name##_t *obj) {                                                     \
-        if (obj != NULL && !_Z_RC_IS_NULL(&obj->_this._rc)) {                                                     \
-            _z_##name##_rc_drop(&obj->_this._rc);                                                                 \
-        }                                                                                                         \
-    }                                                                                                             \
+    attribute z_loaned_##name##_t *z_##name##_loan_mut(z_owned_##name##_t *val) { return &val->_rc; }
+
+#define _Z_OWNED_FUNCTIONS_RC_IMPL_INNER(name, attribute)             \
+    _Z_OWNED_FUNCTIONS_RC_IMPL_NULL_CHECK_LOAN_INNER(name, attribute) \
+    _Z_OWNED_FUNCTIONS_RC_IMPL_CLONE_DROP_INNER(name, attribute)      \
+    _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(z, name, attribute)
+
+#define _Z_OWNED_FUNCTIONS_RC_IMPL_NO_DROP_CLONE_INNER(name, attribute) \
+    _Z_OWNED_FUNCTIONS_RC_IMPL_NULL_CHECK_LOAN_INNER(name, attribute)   \
     _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE_PREFIX_INNER(z, name, attribute)
 
 #define _Z_OWNED_FUNCTIONS_RC_IMPL(name) _Z_OWNED_FUNCTIONS_RC_IMPL_INNER(name, _ZP_NOTHING)
 #define _Z_OWNED_FUNCTIONS_RC_INLINE_IMPL(name) _Z_OWNED_FUNCTIONS_RC_IMPL_INNER(name, static inline)
+
+#define _Z_OWNED_FUNCTIONS_RC_IMPL_NO_DROP_CLONE(name) _Z_OWNED_FUNCTIONS_RC_IMPL_NO_DROP_CLONE_INNER(name, _ZP_NOTHING)
 
 #define _Z_OWNED_FUNCTIONS_SYSTEM_IMPL(type, name)                                                   \
     _Z_OWNED_FUNCTIONS_IMPL_MOVE_TAKE(name)                                                          \
