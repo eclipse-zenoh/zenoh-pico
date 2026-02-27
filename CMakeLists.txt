@@ -259,7 +259,7 @@ set(Z_FEATURE_LINK_BLUETOOTH 0 CACHE STRING "Toggle Bluetooth links")
 set(Z_FEATURE_LINK_WS 0 CACHE STRING "Toggle WebSocket links")
 set(Z_FEATURE_LINK_SERIAL 0 CACHE STRING "Toggle Serial links")
 set(Z_FEATURE_LINK_SERIAL_USB 0 CACHE STRING "Toggle Serial USB links")
-set(Z_FEATURE_LINK_TLS 0 CACHE STRING "Toggle TLS links")
+set(Z_FEATURE_LINK_TLS 1 CACHE STRING "Toggle TLS links")
 set(Z_FEATURE_SCOUTING 1 CACHE STRING "Toggle UDP scouting")
 set(Z_FEATURE_LINK_UDP_MULTICAST 1 CACHE STRING "Toggle UDP multicast links")
 set(Z_FEATURE_LINK_UDP_UNICAST 1 CACHE STRING "Toggle UDP unicast links")
@@ -407,68 +407,68 @@ if(PICO_SHARED)
       $<INSTALL_INTERFACE:include>)
 endif()
 
-# TLS support via Mbed TLS
-if(Z_FEATURE_LINK_TLS)
-  find_package(PkgConfig REQUIRED)
+# # TLS support via Mbed TLS
+# if(Z_FEATURE_LINK_TLS)
+#   find_package(PkgConfig REQUIRED)
 
-  # Prefer Mbed TLS 3.x, fall back to 2.x
-  # Never accept 4.x or newer
-  #
-  pkg_search_module(MBEDTLS REQUIRED
-    mbedtls-3>=3.0.0
-    mbedtls>=3.0.0
-    mbedtls>=2.0.0
-  )
-  if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
-    message(FATAL_ERROR
-      "Mbed TLS ${MBEDTLS_VERSION} is not supported. "
-      "Please install Mbed TLS 2.x or 3.x.")
-  endif()
-  message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
+#   # Prefer Mbed TLS 3.x, fall back to 2.x
+#   # Never accept 4.x or newer
+#   #
+#   pkg_search_module(MBEDTLS REQUIRED
+#     mbedtls-3>=3.0.0
+#     mbedtls>=3.0.0
+#     mbedtls>=2.0.0
+#   )
+#   if(NOT MBEDTLS_VERSION VERSION_LESS "4.0.0")
+#     message(FATAL_ERROR
+#       "Mbed TLS ${MBEDTLS_VERSION} is not supported. "
+#       "Please install Mbed TLS 2.x or 3.x.")
+#   endif()
+#   message(STATUS "Using Mbed TLS ${MBEDTLS_VERSION}")
 
-  pkg_search_module(MBEDX509 OPTIONAL
-    mbedx509-3>=3.0.0
-    mbedx509>=3.0.0
-    mbedx509>=2.0.0)
+#   pkg_search_module(MBEDX509 OPTIONAL
+#     mbedx509-3>=3.0.0
+#     mbedx509>=3.0.0
+#     mbedx509>=2.0.0)
 
-  pkg_search_module(MBEDCRYPTO OPTIONAL
-    mbedcrypto-3>=3.0.0
-    mbedcrypto>=3.0.0
-    mbedcrypto>=2.0.0)
+#   pkg_search_module(MBEDCRYPTO OPTIONAL
+#     mbedcrypto-3>=3.0.0
+#     mbedcrypto>=3.0.0
+#     mbedcrypto>=2.0.0)
 
-  set(MBEDTLS_LINK_LIBRARIES
-    ${MBEDTLS_LIBRARIES}
-  )
+#   set(MBEDTLS_LINK_LIBRARIES
+#     ${MBEDTLS_LIBRARIES}
+#   )
 
-  if(MBEDX509_FOUND)
-    if(MBEDX509_VERSION AND NOT MBEDX509_VERSION VERSION_EQUAL MBEDTLS_VERSION)
-      message(FATAL_ERROR
-        "mbedtls (${MBEDTLS_VERSION}) and mbedx509 (${MBEDX509_VERSION}) "
-        "versions do not match.")
-    endif()
-    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDX509_LIBRARIES})
-  endif()
+#   if(MBEDX509_FOUND)
+#     if(MBEDX509_VERSION AND NOT MBEDX509_VERSION VERSION_EQUAL MBEDTLS_VERSION)
+#       message(FATAL_ERROR
+#         "mbedtls (${MBEDTLS_VERSION}) and mbedx509 (${MBEDX509_VERSION}) "
+#         "versions do not match.")
+#     endif()
+#     list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDX509_LIBRARIES})
+#   endif()
 
-  if(MBEDCRYPTO_FOUND)
-    if(MBEDCRYPTO_VERSION AND NOT MBEDCRYPTO_VERSION VERSION_EQUAL MBEDTLS_VERSION)
-      message(FATAL_ERROR
-        "mbedtls (${MBEDTLS_VERSION}) and mbedcrypto (${MBEDCRYPTO_VERSION}) "
-        "versions do not match.")
-    endif()
-    list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDCRYPTO_LIBRARIES})
-  endif()
+#   if(MBEDCRYPTO_FOUND)
+#     if(MBEDCRYPTO_VERSION AND NOT MBEDCRYPTO_VERSION VERSION_EQUAL MBEDTLS_VERSION)
+#       message(FATAL_ERROR
+#         "mbedtls (${MBEDTLS_VERSION}) and mbedcrypto (${MBEDCRYPTO_VERSION}) "
+#         "versions do not match.")
+#     endif()
+#     list(APPEND MBEDTLS_LINK_LIBRARIES ${MBEDCRYPTO_LIBRARIES})
+#   endif()
 
-  if(PICO_STATIC)
-    target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-    target_link_directories(${Libname}_static PUBLIC ${MBEDTLS_LIBRARY_DIRS})
-    target_link_libraries(${Libname}_static PUBLIC ${MBEDTLS_LINK_LIBRARIES})
-  endif()
-  if(PICO_SHARED)
-    target_include_directories(${Libname}_shared PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-    target_link_directories(${Libname}_shared PUBLIC ${MBEDTLS_LIBRARY_DIRS})
-    target_link_libraries(${Libname}_shared PUBLIC ${MBEDTLS_LINK_LIBRARIES})
-  endif()
-endif()
+#   if(PICO_STATIC)
+#     target_include_directories(${Libname}_static PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+#     target_link_directories(${Libname}_static PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+#     target_link_libraries(${Libname}_static PUBLIC ${MBEDTLS_LINK_LIBRARIES})
+#   endif()
+#   if(PICO_SHARED)
+#     target_include_directories(${Libname}_shared PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+#     target_link_directories(${Libname}_shared PUBLIC ${MBEDTLS_LIBRARY_DIRS})
+#     target_link_libraries(${Libname}_shared PUBLIC ${MBEDTLS_LINK_LIBRARIES})
+#   endif()
+# endif()
 
 file(GLOB_RECURSE Sources
   "src/api/*.c"
