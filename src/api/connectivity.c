@@ -734,9 +734,7 @@ exit:
     if (locked_transport_common != NULL) {
         _z_transport_peer_mutex_unlock(locked_transport_common);
     }
-    if (_z_sync_group_check(&callback_drop_sync_group)) {
-        _z_sync_group_drop(&callback_drop_sync_group);
-    }
+    _z_sync_group_drop(&callback_drop_sync_group);
     return ret;
 }
 
@@ -878,9 +876,7 @@ exit:
     if (locked_transport_common != NULL) {
         _z_transport_peer_mutex_unlock(locked_transport_common);
     }
-    if (_z_sync_group_check(&callback_drop_sync_group)) {
-        _z_sync_group_drop(&callback_drop_sync_group);
-    }
+    _z_sync_group_drop(&callback_drop_sync_group);
     return ret;
 }
 

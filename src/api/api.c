@@ -1005,14 +1005,7 @@ z_result_t z_info_peers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_t 
         default:
             break;
     }
-    // Note and clear context
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    // Drop if needed
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_zid_null(&callback->_this);
+    z_closure_zid_drop(callback);
     return _Z_RES_OK;
 }
 
@@ -1028,14 +1021,7 @@ z_result_t z_info_routers_zid(const z_loaned_session_t *zs, z_moved_closure_zid_
         default:
             break;
     }
-    // Note and clear context
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    // Drop if needed
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_zid_null(&callback->_this);
+    z_closure_zid_drop(callback);
     return _Z_RES_OK;
 }
 
@@ -1112,12 +1098,7 @@ z_result_t z_info_transports(const z_loaned_session_t *zs, z_moved_closure_trans
     }
     _z_session_transport_mutex_unlock(session);
 
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_transport_null(&callback->_this);
+    z_closure_transport_drop(callback);
     return ret;
 }
 
@@ -1207,12 +1188,7 @@ z_result_t z_info_links(const z_loaned_session_t *zs, z_moved_closure_link_t *ca
 out:
     z_transport_drop(opt.transport);
 
-    void *ctx = callback->_this._val.context;
-    callback->_this._val.context = NULL;
-    if (callback->_this._val.drop != NULL) {
-        callback->_this._val.drop(ctx);
-    }
-    z_internal_closure_link_null(&callback->_this);
+    z_closure_link_drop(callback);
     return ret;
 }
 
