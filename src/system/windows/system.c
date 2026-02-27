@@ -111,8 +111,6 @@ void _z_task_free(_z_task_t **task) {
     *task = NULL;
 }
 
-_z_thread_id_t _z_thread_id_self(void) { return (_z_thread_id_t)GetCurrentThreadId(); }
-
 /*------------------ Mutex ------------------*/
 z_result_t _z_mutex_init(_z_mutex_t *m) {
     z_result_t ret = _Z_RES_OK;
