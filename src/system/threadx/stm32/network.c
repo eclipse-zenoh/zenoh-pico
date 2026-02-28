@@ -203,9 +203,10 @@ void zptxstm32_rx_event_cb(UART_HandleTypeDef *huart, uint16_t offset) {
 
     while (last_offset < offset) {
         if (dma_buffer[last_offset] == (uint8_t)0x00) {
-            tx_semaphore_get(&data_processing_semaphore, TX_WAIT_FOREVER);  // Block if data isnt processed yet
-            delimiter_offset = last_offset + 1;
-            tx_semaphore_put(&data_ready_semaphore);  // Notify waiting task
+            if (tx_semaphore_get(&data_processing_semaphore, TX_NO_WAIT) == TX_SUCCESS) {
+                delimiter_offset = last_offset + 1;
+                tx_semaphore_put(&data_ready_semaphore);
+            }
         }
         ++last_offset;
     }
