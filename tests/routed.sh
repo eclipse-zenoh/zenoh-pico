@@ -14,7 +14,7 @@
 #
 
 TESTBIN="$1"
-TESTDIR=$(dirname "$0")
+TESTDIR=$(cd "$(dirname "$0")" && pwd)
 
 if [ "$OSTYPE" = "msys" ]; then
   TESTBIN="$TESTDIR/Debug/$TESTBIN.exe"
@@ -28,19 +28,38 @@ echo "------------------ Running test $TESTBIN -------------------"
 
 sleep 5
 
+# Clean up if zenohd exists but is not a regular file (handles corrupted state from interrupted runs)
+if [ -e zenohd ] && [ ! -f zenohd ]; then
+    echo "Warning: zenohd exists but is not a regular file, removing..."
+    rm -rf zenohd
+fi
+
 if [ ! -f zenohd ]; then
-    git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
+    if [ ! -d zenoh-git ]; then
+        git clone https://github.com/eclipse-zenoh/zenoh.git zenoh-git
+    fi
     cd zenoh-git || exit
     if [ -n "$ZENOH_BRANCH" ]; then
         git switch "$ZENOH_BRANCH"
     fi
     rustup show
     cargo build --lib --bin zenohd
-    cp ./target/debug/zenohd "$TESTDIR"/
+    cp -f ./target/debug/zenohd "$TESTDIR"/
     cd "$TESTDIR" || exit
 fi
 
 chmod +x zenohd
+
+# Verify zenohd is ready to use
+if [ ! -f zenohd ]; then
+    echo "ERROR: zenohd binary not found after build attempt"
+    exit 1
+fi
+
+if [ ! -x zenohd ]; then
+    echo "ERROR: zenohd binary is not executable"
+    exit 1
+fi
 
 LOCATORS="tcp/127.0.0.1:7447 tcp/[::1]:7447 udp/127.0.0.1:7447 udp/[::1]:7447"
 ENABLE_TLS=0
@@ -95,13 +114,25 @@ EOF
 
     sleep 5
 
+    # Verify zenohd is actually running
+    if ! kill -0 "$ZPID" 2>/dev/null; then
+        echo "> ERROR: zenohd failed to start (PID: $ZPID)"
+        echo "> Logs of zenohd ..."
+        cat zenohd."$1".log
+        exit 1
+    fi
+
     echo "> Running $TESTBIN ..."
     "$TESTBIN" "$LOCATOR" > client."$1".log 2>&1
     RETCODE=$?
 
     echo "> Stopping zenohd ..."
-    kill -9 "$ZPID"
-    wait "$ZPID"
+    if kill -0 "$ZPID" 2>/dev/null; then
+        kill -9 "$ZPID"
+        wait "$ZPID" 2>/dev/null
+    else
+        echo "> WARNING: zenohd (PID: $ZPID) was not running"
+    fi
     sleep 1
 
     if [ "$RETCODE" -lt 0 ]; then
