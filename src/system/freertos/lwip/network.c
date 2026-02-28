@@ -45,7 +45,7 @@ z_result_t _z_socket_set_non_blocking(const _z_sys_net_socket_t *sock) {
 z_result_t _z_socket_accept(const _z_sys_net_socket_t *sock_in, _z_sys_net_socket_t *sock_out) {
     struct sockaddr naddr;
     socklen_t nlen = sizeof(naddr);
-    sock_out->_fd = -1;
+    sock_out->_socket = -1;
     int con_socket = lwip_accept(sock_in->_socket, &naddr, &nlen);
     if (con_socket < 0) {
         _Z_ERROR_RETURN(_Z_ERR_GENERIC);
@@ -444,7 +444,7 @@ long unsigned int __get_ip_from_iface(const char *iface, int sa_family, struct s
         if (lsockaddr != NULL) {
             (void)memset(lsockaddr_in, 0, sizeof(struct sockaddr_in));
             const ip4_addr_t *ip4_addr = netif_ip4_addr(netif);
-            inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, ip_2_ip4(ip4_addr));
+            inet_addr_from_ip4addr(&lsockaddr_in->sin_addr, ip4_addr);
             lsockaddr_in->sin_family = AF_INET;
             lsockaddr_in->sin_port = htons(0);
 
@@ -611,7 +611,7 @@ z_result_t _z_listen_udp_multicast(_z_sys_net_socket_t *sock, const _z_sys_net_e
 
 void _z_close_udp_multicast(_z_sys_net_socket_t *sockrecv, _z_sys_net_socket_t *socksend,
                             const _z_sys_net_endpoint_t rep, const _z_sys_net_endpoint_t lep) {
-    if (sockrecv->socket >= 0) {
+    if (sockrecv->_socket >= 0) {
         if (rep._iptcp->ai_family == AF_INET) {
             struct ip_mreq mreq;
             (void)memset(&mreq, 0, sizeof(mreq));
