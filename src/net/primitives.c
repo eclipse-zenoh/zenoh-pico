@@ -266,7 +266,7 @@ z_result_t _z_undeclare_subscriber(_z_subscriber_t *sub) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&sub->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&sub->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -383,7 +383,7 @@ z_result_t _z_undeclare_queryable(_z_queryable_t *qle) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&qle->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&qle->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -519,7 +519,7 @@ z_result_t _z_undeclare_querier(_z_querier_t *querier) {
     if (querier == NULL || _Z_RC_IS_NULL(&querier->_zn)) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
-    _z_session_rc_t s = _z_session_weak_upgrade(&querier->_zn);
+    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&querier->_zn);
     if (!_Z_RC_IS_NULL(&s)) {
         _z_unregister_pending_queries_from_querier(_Z_RC_IN_VAL(&s), querier->_id);
         _z_session_rc_drop(&s);

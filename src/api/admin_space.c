@@ -435,7 +435,7 @@ static z_result_t _ze_admin_space_query_handle_multicast_common(const z_loaned_q
 static void _ze_admin_space_query_handler(z_loaned_query_t *query, void *ctx) {
     _z_session_weak_t *session_weak = (_z_session_weak_t *)ctx;
 
-    _z_session_rc_t session_rc = _z_session_weak_upgrade(session_weak);
+    _z_session_rc_t session_rc = _z_session_weak_upgrade_if_open(session_weak);
     if (_Z_RC_IS_NULL(&session_rc)) {
         _Z_ERROR("Dropped admin space query - session closed");
         return;

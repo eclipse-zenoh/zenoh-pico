@@ -54,7 +54,7 @@ z_result_t _z_session_generate_zid(_z_id_t *bs, uint8_t size) {
 /*------------------ Init/Free/Close session ------------------*/
 z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     z_result_t ret = _Z_RES_OK;
-    zn->_is_closed = true;
+    _z_atomic_bool_init(&zn->_is_closed, true);
 #if Z_FEATURE_MULTI_THREAD == 1
     _Z_RETURN_IF_ERR(_z_mutex_init(&zn->_mutex_inner));
 #endif
@@ -128,13 +128,13 @@ z_result_t _z_session_init(_z_session_t *zn, const _z_id_t *zid) {
     _z_interest_init(zn);
 
     zn->_local_zid = *zid;
-    zn->_is_closed = false;
+    _z_atomic_bool_store(&zn->_is_closed, false, _z_memory_order_release);
     return ret;
 }
 
 z_result_t _z_session_close(_z_session_t *zn) {
     _Z_RETURN_IF_ERR(_z_session_mutex_lock_if_open(zn));
-    zn->_is_closed = true;
+    _z_atomic_bool_store(&zn->_is_closed, true, _z_memory_order_release);
 #if Z_FEATURE_AUTO_RECONNECT == 1
     _z_network_message_slist_free(&zn->_declaration_cache);
 #endif

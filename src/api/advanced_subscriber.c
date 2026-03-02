@@ -131,7 +131,7 @@ void _ze_advanced_subscriber_sequenced_state_clear(_ze_advanced_subscriber_seque
     state->_pending_queries = 0;
 
     if (state->_periodic_query_id != _ZP_PERIODIC_SCHEDULER_INVALID_ID) {
-        _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
+        _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
         if (!_Z_RC_IS_NULL(&sess_rc)) {
             z_result_t res = _zp_periodic_task_remove(_Z_RC_IN_VAL(&sess_rc), state->_periodic_query_id);
             if (res != _Z_RES_OK) {
@@ -901,7 +901,7 @@ static z_result_t _ze_advanced_subscriber_run_query(_ze_advanced_subscriber_quer
     get_opts.consolidation.mode = Z_CONSOLIDATION_MODE_NONE;
     get_opts.target = Z_QUERY_TARGET_ALL;
     get_opts.timeout_ms = state->_query_timeout;
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _ze_advanced_subscriber_state_rc_drop(&ctx->_statesref);
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
@@ -1097,9 +1097,9 @@ static z_result_t __unsafe_ze_advanced_subscriber_spawn_periodic_query(_ze_advan
     }
 
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&states->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&states->_zn);
 #else
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&states->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&states->_zn);
 #endif
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _ze_advanced_subscriber_periodic_query_ctx_free(&ctx);
@@ -1916,7 +1916,7 @@ z_result_t ze_advanced_subscriber_detect_publishers(const ze_loaned_advanced_sub
     _Z_CLEAN_RETURN_IF_ERR(
         _Z_KEYEXPR_APPEND_STR_ARRAY(&keyexpr, _Z_KEYEXPR_ADV_PREFIX, _Z_KEYEXPR_PUB, _Z_KEYEXPR_STARSTAR),
         z_keyexpr_drop(z_keyexpr_move(&keyexpr)));
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&state->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&state->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         z_keyexpr_drop(z_keyexpr_move(&keyexpr));
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);

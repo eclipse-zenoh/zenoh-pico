@@ -169,7 +169,7 @@ static void _z_write_filter_session_unregister(_z_write_filter_ctx_t *ctx) {
     }
     ctx->registration = NULL;
 
-    _z_session_rc_t session_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(&registration->ctx_rc)->zn);
+    _z_session_rc_t session_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(&registration->ctx_rc)->zn);
     if (_Z_RC_IS_NULL(&session_rc)) {
         _z_write_filter_ctx_rc_drop(&registration->ctx_rc);
         z_free(registration);
@@ -315,7 +315,7 @@ z_result_t _z_write_filter_clear(_z_write_filter_t *filter) {
         return _Z_RES_OK;
     }
     _z_write_filter_session_unregister(_Z_RC_IN_VAL(&filter->ctx));
-    _z_session_rc_t s = _z_session_weak_upgrade(&_Z_RC_IN_VAL(&filter->ctx)->zn);
+    _z_session_rc_t s = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(&filter->ctx)->zn);
     if (!_Z_RC_IS_NULL(&s)) {
         _z_remove_interest(_Z_RC_IN_VAL(&s), filter->_interest_id);
         _z_session_rc_drop(&s);

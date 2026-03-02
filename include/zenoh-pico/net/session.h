@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include "zenoh-pico/collections/atomic.h"
 #include "zenoh-pico/collections/element.h"
 #include "zenoh-pico/collections/list.h"
 #include "zenoh-pico/config.h"
@@ -126,7 +127,7 @@ typedef struct _z_session_t {
 #endif
 #endif
     _z_sync_group_t _callback_drop_sync_group;
-    bool _is_closed;
+    _z_atomic_bool_t _is_closed;
 } _z_session_t;
 
 /**
@@ -181,6 +182,10 @@ bool _z_session_is_closed(const _z_session_t *session);
  */
 bool _z_session_has_router_peer(const _z_session_t *session);
 
+/**
+ * Upgrade a weak session reference to a strong one if the session is open, otherwise return null.
+ */
+_z_session_rc_t _z_session_weak_upgrade_if_open(const _z_session_weak_t *weak);
 /**
  * Get informations about an zenoh-net session.
  *

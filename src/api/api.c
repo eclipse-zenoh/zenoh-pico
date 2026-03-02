@@ -1157,7 +1157,7 @@ z_result_t _z_publisher_put_impl(const z_loaned_publisher_t *pub, z_moved_bytes_
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&pub->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -1252,7 +1252,7 @@ z_result_t _z_publisher_delete_impl(const z_loaned_publisher_t *pub, const z_pub
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&pub->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&pub->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -1319,7 +1319,7 @@ z_entity_global_id_t z_publisher_id(const z_loaned_publisher_t *publisher) {
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&publisher->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -1352,7 +1352,7 @@ z_result_t z_publisher_declare_background_matching_listener(const z_loaned_publi
 z_result_t z_publisher_declare_matching_listener(const z_loaned_publisher_t *publisher,
                                                  z_owned_matching_listener_t *matching_listener,
                                                  z_moved_closure_matching_status_t *callback) {
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&publisher->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&publisher->_zn);
     z_result_t ret = _Z_RES_OK;
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         if (matching_listener != NULL) {
@@ -1553,7 +1553,7 @@ z_result_t z_querier_get_with_parameters_substr(const z_loaned_querier_t *querie
     _z_session_t *session = NULL;
 
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&querier->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -1604,7 +1604,7 @@ z_entity_global_id_t z_querier_id(const z_loaned_querier_t *querier) {
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&querier->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -1636,7 +1636,7 @@ z_result_t z_querier_declare_background_matching_listener(const z_loaned_querier
 z_result_t z_querier_declare_matching_listener(const z_loaned_querier_t *querier,
                                                z_owned_matching_listener_t *matching_listener,
                                                z_moved_closure_matching_status_t *callback) {
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&querier->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&querier->_zn);
     z_result_t ret = _Z_RES_OK;
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         if (matching_listener != NULL) {
@@ -1757,7 +1757,7 @@ const z_loaned_keyexpr_t *z_queryable_keyexpr(const z_loaned_queryable_t *querya
     const z_loaned_keyexpr_t *ret = NULL;
     uint32_t lookup = queryable->_entity_id;
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&queryable->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&queryable->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return ret;
     }
@@ -1803,7 +1803,7 @@ void z_query_reply_options_default(z_query_reply_options_t *options) {
 z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr, z_moved_bytes_t *payload,
                          const z_query_reply_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
@@ -1833,7 +1833,7 @@ z_result_t z_query_reply(const z_loaned_query_t *query, const z_loaned_keyexpr_t
 z_result_t _z_query_reply_sample(const z_loaned_query_t *query, z_loaned_sample_t *sample,
                                  const z_query_reply_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
@@ -1867,7 +1867,7 @@ void z_query_reply_del_options_default(z_query_reply_del_options_t *options) {
 z_result_t z_query_reply_del(const z_loaned_query_t *query, const z_loaned_keyexpr_t *keyexpr,
                              const z_query_reply_del_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
@@ -1895,7 +1895,7 @@ void z_query_reply_err_options_default(z_query_reply_err_options_t *options) { o
 z_result_t z_query_reply_err(const z_loaned_query_t *query, z_moved_bytes_t *payload,
                              const z_query_reply_err_options_t *options) {
     // Try upgrading session weak to rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&_Z_RC_IN_VAL(query)->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&_Z_RC_IN_VAL(query)->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         _Z_ERROR_RETURN(_Z_ERR_SESSION_CLOSED);
     }
@@ -1920,7 +1920,7 @@ z_entity_global_id_t z_queryable_id(const z_loaned_queryable_t *queryable) {
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&queryable->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&queryable->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {
@@ -2055,7 +2055,7 @@ const z_loaned_keyexpr_t *z_subscriber_keyexpr(const z_loaned_subscriber_t *sub)
     // Retrieve keyexpr from session
     uint32_t lookup = sub->_entity_id;
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&sub->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&sub->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return ret;
     }
@@ -2092,7 +2092,7 @@ z_entity_global_id_t z_subscriber_id(const z_loaned_subscriber_t *subscriber) {
     _z_session_t *session = NULL;
 #if Z_FEATURE_SESSION_CHECK == 1
     // Try to upgrade session rc
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&subscriber->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&subscriber->_zn);
     if (!_Z_RC_IS_NULL(&sess_rc)) {
         session = _Z_RC_IN_VAL(&sess_rc);
     } else {

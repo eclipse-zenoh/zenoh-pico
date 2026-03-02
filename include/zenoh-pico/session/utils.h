@@ -41,7 +41,7 @@ z_result_t _z_handle_network_message(_z_transport_common_t *transport, _z_zenoh_
 static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) { return _z_mutex_lock(&zn->_mutex_inner); }
 static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
     _Z_RETURN_IF_ERR(_z_mutex_lock(&zn->_mutex_inner));
-    if (zn->_is_closed) {
+    if (_z_session_is_closed(zn)) {
         _z_mutex_unlock(&zn->_mutex_inner);
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -54,7 +54,7 @@ static inline z_result_t _z_session_mutex_lock(_z_session_t *zn) {
     return _Z_RES_OK;
 }
 static inline z_result_t _z_session_mutex_lock_if_open(_z_session_t *zn) {
-    return zn->_is_closed ? _Z_ERR_SESSION_CLOSED : _Z_RES_OK;
+    return _z_session_is_closed(zn) ? _Z_ERR_SESSION_CLOSED : _Z_RES_OK;
 }
 static inline void _z_session_mutex_unlock(_z_session_t *zn) { _ZP_UNUSED(zn); }
 #endif

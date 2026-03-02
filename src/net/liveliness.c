@@ -99,7 +99,7 @@ z_result_t _z_undeclare_liveliness_token(_z_liveliness_token_t *token) {
         _Z_ERROR_RETURN(_Z_ERR_ENTITY_UNKNOWN);
     }
 #if Z_FEATURE_SESSION_CHECK == 1
-    _z_session_rc_t sess_rc = _z_session_weak_upgrade(&token->_zn);
+    _z_session_rc_t sess_rc = _z_session_weak_upgrade_if_open(&token->_zn);
     if (_Z_RC_IS_NULL(&sess_rc)) {
         return _Z_ERR_SESSION_CLOSED;
     }
@@ -266,7 +266,7 @@ typedef struct _z_cancel_liveliness_pending_query_arg_t {
 
 z_result_t _z_cancel_liveliness_pending_query(void *arg) {
     _z_cancel_liveliness_pending_query_arg_t *a = (_z_cancel_liveliness_pending_query_arg_t *)arg;
-    _z_session_rc_t s_rc = _z_session_weak_upgrade(&a->_zn);
+    _z_session_rc_t s_rc = _z_session_weak_upgrade_if_open(&a->_zn);
     if (!_Z_RC_IS_NULL(&s_rc)) {
         _z_liveliness_unregister_pending_query(_Z_RC_IN_VAL(&s_rc), a->_qid);
         _z_session_rc_drop(&s_rc);
