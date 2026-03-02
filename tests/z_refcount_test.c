@@ -39,8 +39,8 @@ void _dummy_clear(_dummy_t *val) {
 _Z_REFCOUNT_DEFINE(_dummy, _dummy)
 
 typedef struct {
-    unsigned int _strong_cnt;
-    unsigned int _weak_cnt;
+    size_t _strong_cnt;
+    size_t _weak_cnt;
 } _dummy_inner_rc_t;
 
 void test_rc_null(void) {

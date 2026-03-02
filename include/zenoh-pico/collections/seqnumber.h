@@ -25,22 +25,6 @@
 extern "C" {
 #endif
 
-typedef struct {
-#if (Z_FEATURE_MULTI_THREAD == 1) && (ZENOH_C_STANDARD != 99) && !defined(__cplusplus)
-    _Atomic uint32_t _seq;
-#else
-    uint32_t _seq;
-#endif
-#if Z_FEATURE_MULTI_THREAD == 1 && ZENOH_C_STANDARD == 99 && !defined(ZENOH_COMPILER_GCC)
-    _z_mutex_t _mutex;
-#endif
-} _z_seqnumber_t;
-
-z_result_t _z_seqnumber_init(_z_seqnumber_t *seq);
-z_result_t _z_seqnumber_drop(_z_seqnumber_t *seq);
-z_result_t _z_seqnumber_fetch(_z_seqnumber_t *seq, uint32_t *value);
-z_result_t _z_seqnumber_fetch_and_increment(_z_seqnumber_t *seq, uint32_t *value);
-
 /*
  * Compute the next sequence number after `last` in 32-bit serial number space.
  * Wraps from UINT32_MAX back to 0.
