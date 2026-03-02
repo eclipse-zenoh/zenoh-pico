@@ -11,7 +11,6 @@
 // Contributors:
 //   ZettaScale Zenoh Team, <zenoh@zettascale.tech>
 //
-// filepath: /Users/denisbiryukov/repositories/work/zenoh-pico/tests/z_background_executor_test.c
 
 #include <stddef.h>
 #include <stdio.h>
